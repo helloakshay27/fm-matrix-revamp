@@ -37,9 +37,10 @@ interface TaskSubmissionStep {
 interface ChecklistItem {
   id: string;
   question: string;
-  type: "radio" | "checkbox" | "text" | "date";
+  type: "radio" | "checkbox" | "text" | "date" | "options-inputs";
   required: boolean;
   options?: string[];
+  values?: string[];
   value?: any;
   comment?: string;
   attachment?: File | null;
@@ -102,24 +103,32 @@ export const TaskSubmissionPage: React.FC = () => {
           item.type === "radio-group"
             ? ("radio" as const)
             : item.type === "checkbox-group"
-            ? ("checkbox" as const)
-            : item.type === "select"
-            ? ("radio" as const) // Treat select as radio for UI consistency
-            : item.type === "number"
-            ? ("text" as const) // Treat number as text input
-            : item.type === "date"
-            ? ("date" as const) // Support date input
-            : ("text" as const);
+              ? ("checkbox" as const)
+              : item.type === "select"
+                ? ("radio" as const)
+                : item.type === "number"
+                  ? ("text" as const)
+                  : item.type === "date"
+                    ? ("date" as const)
+                    : item.type === "options-inputs"
+                      ? ("options-inputs" as const)
+                      : ("text" as const);
         return {
           id: item.name || `question_${index}`,
           question: item.label || item.hint || `Question ${index + 1}`,
           type: itemType,
           required: item.required === "true" || item.required === true,
           options:
-            extractOptions(item.values) ||
-            (item.type === "radio-group" || item.type === "select"
-              ? ["Yes", "No"]
-              : []),
+            itemType !== "options-inputs"
+              ? extractOptions(item.values) ||
+                (item.type === "radio-group" || item.type === "select"
+                  ? ["Yes", "No"]
+                  : [])
+              : [],
+          values:
+            itemType === "options-inputs"
+              ? (Array.isArray(item.values) ? item.values.map((v: any) => (typeof v === "string" ? v : v.label || v.value || String(v))) : [])
+              : undefined,
         };
       });
       console.log("Final checklist from checklist_questions:", questions);
@@ -145,14 +154,16 @@ export const TaskSubmissionPage: React.FC = () => {
                   item.type === "radio-group"
                     ? ("radio" as const)
                     : item.type === "checkbox-group"
-                    ? ("checkbox" as const)
-                    : item.type === "select"
-                    ? ("radio" as const) // Treat select as radio for UI consistency
-                    : item.type === "number"
-                    ? ("text" as const) // Treat number as text input
-                    : item.type === "date"
-                    ? ("date" as const) // Support date input
-                    : ("text" as const);
+                      ? ("checkbox" as const)
+                      : item.type === "select"
+                        ? ("radio" as const)
+                        : item.type === "number"
+                          ? ("text" as const)
+                          : item.type === "date"
+                            ? ("date" as const)
+                            : item.type === "options-inputs"
+                              ? ("options-inputs" as const)
+                              : ("text" as const);
                 allQuestions.push({
                   id:
                     item.name ||
@@ -164,10 +175,16 @@ export const TaskSubmissionPage: React.FC = () => {
                   type: itemType,
                   required: item.required === "true" || item.required === true,
                   options:
-                    extractOptions(item.values) ||
-                    (item.type === "radio-group" || item.type === "select"
-                      ? ["Yes", "No"]
-                      : []),
+                    itemType !== "options-inputs"
+                      ? extractOptions(item.values) ||
+                        (item.type === "radio-group" || item.type === "select"
+                          ? ["Yes", "No"]
+                          : [])
+                      : [],
+                  values:
+                    itemType === "options-inputs"
+                      ? (Array.isArray(item.values) ? item.values.map((v: any) => (typeof v === "string" ? v : v.label || v.value || String(v))) : [])
+                      : undefined,
                 });
               });
             }
@@ -194,8 +211,8 @@ export const TaskSubmissionPage: React.FC = () => {
         item.type === "radio-group"
           ? ("radio" as const)
           : item.type === "checkbox-group"
-          ? ("checkbox" as const)
-          : ("text" as const);
+            ? ("checkbox" as const)
+            : ("text" as const);
       return {
         id: item.name || `item_${index}`,
         question: item.label || item.hint || `Question ${index + 1}`,
@@ -213,46 +230,50 @@ export const TaskSubmissionPage: React.FC = () => {
   // Group checklist by group_id and sub_group_id for section-wise display
   const getGroupedChecklistData = () => {
     const checklistQuestions = taskDetails?.checklist_questions;
-    
+
     if (!checklistQuestions || !Array.isArray(checklistQuestions)) {
       return [];
     }
 
     // Group by group_id and sub_group_id
     const grouped: { [key: string]: any[] } = {};
-    
+
     checklistQuestions.forEach((item: any) => {
       const groupId = item.group_id || 'ungrouped';
       const subGroupId = item.sub_group_id || 'ungrouped';
       const key = `${groupId}_${subGroupId}`;
-      
+
       if (!grouped[key]) {
         grouped[key] = [];
       }
-      
+
       // Map to ChecklistItem format
       const itemType =
         item.type === "radio-group"
           ? ("radio" as const)
           : item.type === "checkbox-group"
-          ? ("checkbox" as const)
-          : item.type === "select"
-          ? ("radio" as const)
-          : item.type === "number"
-          ? ("text" as const)
-          : item.type === "date"
-          ? ("date" as const)
-          : ("text" as const);
+            ? ("checkbox" as const)
+            : item.type === "select"
+              ? ("radio" as const)
+              : item.type === "number"
+                ? ("text" as const)
+                : item.type === "date"
+                  ? ("date" as const)
+                  : item.type === "options-inputs"
+                    ? ("options-inputs" as const)
+                    : ("text" as const);
+
+      const mappedValues = Array.isArray(item.values)
+        ? item.values.map((val: any) => (typeof val === "string" ? val : val.label || val.value || val.name || String(val)))
+        : [];
 
       grouped[key].push({
         id: item.name,
         question: item.label || item.hint || '',
         type: itemType,
         required: item.required === "true" || item.required === true,
-        options: item.values?.map((val: any) => {
-          if (typeof val === "string") return val;
-          return val.label || val.value || val.name || String(val);
-        }) || [],
+        options: itemType !== "options-inputs" ? mappedValues : [],
+        values: itemType === "options-inputs" ? mappedValues : undefined,
         group_id: groupId,
         sub_group_id: subGroupId,
         group_name: item.group_name || 'Ungrouped',
@@ -495,7 +516,7 @@ export const TaskSubmissionPage: React.FC = () => {
     // Allow navigation to completed steps or current step, or next step if current is valid
     const maxAccessibleStep = Math.max(...completedSteps, currentStep);
     const canProceedToNext = currentStep < steps.length && isStepDataValid(currentStep);
-    
+
     if (stepId <= maxAccessibleStep || (stepId === currentStep + 1 && canProceedToNext)) {
       setCurrentStep(stepId);
       setIsEditMode(false); // Reset edit mode when manually navigating
@@ -530,7 +551,7 @@ export const TaskSubmissionPage: React.FC = () => {
   // Auto-mark steps as completed when they have valid data
   useEffect(() => {
     const newCompletedSteps: number[] = [];
-    
+
     steps.forEach((step) => {
       if (step.id < currentStep && isStepDataValid(step.id)) {
         newCompletedSteps.push(step.id);
@@ -647,13 +668,13 @@ export const TaskSubmissionPage: React.FC = () => {
           // Validate checklist items
           console.log("Validating checklist items:", dynamicChecklist);
           console.log("Current form data:", formData.checklist);
-          
+
           for (const item of dynamicChecklist) {
             if (item.required) {
               console.log(`Checking required item: ${item.question}`);
               const answer = formData.checklist[item.id]?.value;
               console.log(`Answer for ${item.id}:`, answer);
-              
+
               if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
                 sonnerToast.error(
                   `Required Field. Please answer: ${item.question}`
@@ -682,13 +703,13 @@ export const TaskSubmissionPage: React.FC = () => {
           // Validate checklist items
           console.log("Validating multi-step checklist items:", dynamicChecklist);
           console.log("Current form data:", formData.checklist);
-          
+
           for (const item of dynamicChecklist) {
             if (item.required) {
               console.log(`Checking required item: ${item.question}`);
               const answer = formData.checklist[item.id]?.value;
               console.log(`Answer for ${item.id}:`, answer);
-              
+
               if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
                 sonnerToast.error(
                   `Required Field. Please answer: ${item.question}`
@@ -782,9 +803,11 @@ export const TaskSubmissionPage: React.FC = () => {
             comment: checklistItem?.comment || "",
             value: Array.isArray(checklistItem?.value)
               ? checklistItem.value
-              : checklistItem?.value
-              ? [checklistItem.value]
-              : [""],
+              : checklistItem?.value && typeof checklistItem.value === "object"
+                ? [JSON.stringify(checklistItem.value)]
+                : checklistItem?.value
+                  ? [checklistItem.value]
+                  : [""],
             rating: "Good", // Default rating - can be made dynamic if needed
             attachments: attachments,
           };
@@ -823,7 +846,7 @@ export const TaskSubmissionPage: React.FC = () => {
       if (response && response.code === 500) {
         // Handle application-level 500 error in successful HTTP response
         let errorMessage = "Failed to submit task. Please try again.";
-        
+
         if (response.error === "Task not available for submission") {
           errorMessage = "This task is no longer available for submission. It may have been completed or cancelled.";
         } else if (response.error) {
@@ -857,11 +880,11 @@ export const TaskSubmissionPage: React.FC = () => {
 
       // Handle specific error scenarios
       let errorMessage = "Failed to submit task. Please try again.";
-      
+
       // Check for API response errors
       if (error?.response?.data) {
         const errorData = error.response.data;
-        
+
         // Handle specific 500 error with "Task not available for submission"
         if (errorData.code === 500 && errorData.error === "Task not available for submission") {
           errorMessage = "This task is no longer available for submission. It may have been completed or cancelled.";
@@ -910,16 +933,16 @@ export const TaskSubmissionPage: React.FC = () => {
     }).length;
 
     const totalQuestions = dynamicChecklist.length;
-    
+
     // Count photos based on workflow type
     let savedItems = [];
-    
+
     // Only show photos for multi-step workflow (apiSteps !== 1)
     if (apiSteps !== 1) {
       if (formData.beforePhoto) savedItems.push("Before Photo");
       if (formData.afterPhoto) savedItems.push("After Photo");
     }
-    
+
     // Always show checklist items if answered
     if (answeredCount > 0) savedItems.push(`${answeredCount}/${totalQuestions} Checklist Items`);
 
@@ -939,7 +962,7 @@ export const TaskSubmissionPage: React.FC = () => {
 
     try {
       localStorage.setItem(`task_draft_${id}`, JSON.stringify(draftData));
-      
+
       sonnerToast.success(
         `Draft saved successfully! ${savedItems.length > 0 ? savedItems.join(", ") : "No data"} saved.`,
         {
@@ -1012,226 +1035,265 @@ export const TaskSubmissionPage: React.FC = () => {
                           {/* Section Questions */}
                           <div className="space-y-8">
                             {section.questions.map((item: any, index: number) => (
-                        <div key={item.id} className="space-y-4">
-                          <Typography
-                            variant="body2"
-                            className="font-medium text-gray-900"
-                          >
-                            {index + 1}. {item.question}
-                            {item.required && <span className="text-red-500 ml-1">*</span>}
-                          </Typography>
-
-                          {item.type === "text" && (
-                            <TextField
-                              placeholder="Enter your value..."
-                              fullWidth
-                              variant="outlined"
-                              type={
-                                item.question
-                                  .toLowerCase()
-                                  .includes("voltage") ||
-                                item.question
-                                  .toLowerCase()
-                                  .includes("current") ||
-                                item.question.toLowerCase().includes("power") ||
-                                item.question.toLowerCase().includes("time")
-                                  ? "number"
-                                  : "text"
-                              }
-                              value={formData.checklist[item.id]?.value || ""}
-                              onChange={(e) =>
-                                handleChecklistChange(
-                                  item.id,
-                                  "value",
-                                  e.target.value
-                                )
-                              }
-                              className=""
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  backgroundColor: "white",
-                                  "& fieldset": {
-                                    borderColor: "#D1D5DB",
-                                  },
-                                  "&:hover fieldset": {
-                                    borderColor: "#9CA3AF",
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-
-                          {item.type === "date" && (
-                            <TextField
-                              placeholder="Select date..."
-                              fullWidth
-                              variant="outlined"
-                              type="date"
-                              value={formData.checklist[item.id]?.value || ""}
-                              onChange={(e) =>
-                                handleChecklistChange(
-                                  item.id,
-                                  "value",
-                                  e.target.value
-                                )
-                              }
-                              InputLabelProps={{
-                                shrink: true,
-                              }}
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  backgroundColor: "white",
-                                  "& fieldset": {
-                                    borderColor: "#D1D5DB",
-                                  },
-                                  "&:hover fieldset": {
-                                    borderColor: "#9CA3AF",
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-
-                          {item.type === "radio" && (
-                            <RadioGroup
-                              value={formData.checklist[item.id]?.value || ""}
-                              onChange={(e) =>
-                                handleChecklistChange(
-                                  item.id,
-                                  "value",
-                                  e.target.value
-                                )
-                              }
-                              className=""
-                            >
-                              {item.options?.map((option) => (
-                                <FormControlLabel
-                                  key={option}
-                                  value={option}
-                                  control={
-                                    <Radio
-                                      sx={{
-                                        color: "#C72030",
-                                        "&.Mui-checked": { color: "#C72030" },
-                                      }}
-                                    />
-                                  }
-                                  label={option}
-                                  className="mb-1"
-                                />
-                              ))}
-                            </RadioGroup>
-                          )}
-
-                          {item.type === "checkbox" && (
-                            <div className="">
-                              {item.options?.map((option) => (
-                                <FormControlLabel
-                                  key={option}
-                                  control={
-                                    <Checkbox
-                                      checked={
-                                        Array.isArray(formData.checklist[item.id]?.value) &&
-                                        formData.checklist[item.id].value.includes(option)
-                                      }
-                                      onChange={(e) => {
-                                        const currentValues = Array.isArray(formData.checklist[item.id]?.value)
-                                          ? formData.checklist[item.id].value
-                                          : [];
-                                        const newValues = e.target.checked
-                                          ? [...currentValues, option]
-                                          : currentValues.filter((v: string) => v !== option);
-                                        handleChecklistChange(item.id, "value", newValues);
-                                      }}
-                                      sx={{
-                                        color: "#C72030",
-                                        "&.Mui-checked": { color: "#C72030" },
-                                      }}
-                                    />
-                                  }
-                                  label={option}
-                                  className="block mb-1"
-                                />
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="">
-                            <TextField
-                              placeholder="Add your comment..."
-                              fullWidth
-                              multiline
-                              minRows={3}
-                              variant="outlined"
-                              value={formData.checklist[item.id]?.comment || ""}
-                              onChange={(e) =>
-                                handleChecklistChange(
-                                  item.id,
-                                  "comment",
-                                  e.target.value
-                                )
-                              }
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  backgroundColor: "white",
-                                  "& fieldset": {
-                                    borderColor: "#D1D5DB",
-                                  },
-                                  "&:hover fieldset": {
-                                    borderColor: "#9CA3AF",
-                                  },
-                                },
-                              }}
-                            />
-                          </div>
-
-                          {formData.checklist[item.id]?.attachment && (
-                            <div className="">
-                              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
-                                <img
-                                  src={URL.createObjectURL(
-                                    formData.checklist[item.id].attachment
-                                  )}
-                                  alt="Attachment"
-                                  className="w-16 h-16 object-cover rounded border"
-                                />
+                              <div key={item.id} className="space-y-4">
                                 <Typography
                                   variant="body2"
-                                  className="flex-1 text-gray-700"
+                                  className="font-medium text-gray-900"
                                 >
-                                  {formData.checklist[item.id].attachment.name}
+                                  {index + 1}. {item.question}
+                                  {item.required && <span className="text-red-500 ml-1">*</span>}
                                 </Typography>
-                              </div>
-                            </div>
-                          )}
 
-                          <div className="">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-[#C72030] border-[#C72030] hover:bg-red-50"
-                              onClick={() => {
-                                const input = document.createElement("input");
-                                input.type = "file";
-                                input.accept = "image/*";
-                                input.onchange = (e) => {
-                                  const file = (e.target as HTMLInputElement)
-                                    .files?.[0];
-                                  if (file) {
-                                    handleChecklistChange(
-                                      item.id,
-                                      "attachment",
-                                      file
-                                    );
-                                  }
-                                };
-                                input.click();
-                              }}
-                            >
-                              Add Attachment
-                            </Button>
-                          </div>
-                        </div>
+                                {item.type === "text" && (
+                                  <TextField
+                                    placeholder="Enter your value..."
+                                    fullWidth
+                                    variant="outlined"
+                                    type={
+                                      item.question
+                                        .toLowerCase()
+                                        .includes("voltage") ||
+                                        item.question
+                                          .toLowerCase()
+                                          .includes("current") ||
+                                        item.question.toLowerCase().includes("power") ||
+                                        item.question.toLowerCase().includes("time")
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                    className=""
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "white",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                        "&:hover fieldset": {
+                                          borderColor: "#9CA3AF",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                )}
+
+                                {item.type === "date" && (
+                                  <TextField
+                                    placeholder="Select date..."
+                                    fullWidth
+                                    variant="outlined"
+                                    type="date"
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                    InputLabelProps={{
+                                      shrink: true,
+                                    }}
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "white",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                        "&:hover fieldset": {
+                                          borderColor: "#9CA3AF",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                )}
+
+                                {item.type === "radio" && (
+                                  <RadioGroup
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                    className=""
+                                  >
+                                    {item.options?.map((option) => (
+                                      <FormControlLabel
+                                        key={option}
+                                        value={option}
+                                        control={
+                                          <Radio
+                                            sx={{
+                                              color: "#C72030",
+                                              "&.Mui-checked": { color: "#C72030" },
+                                            }}
+                                          />
+                                        }
+                                        label={option}
+                                        className="mb-1"
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                )}
+
+                                {item.type === "checkbox" && (
+                                  <div className="">
+                                    {item.options?.map((option) => (
+                                      <FormControlLabel
+                                        key={option}
+                                        control={
+                                          <Checkbox
+                                            checked={
+                                              Array.isArray(formData.checklist[item.id]?.value) &&
+                                              formData.checklist[item.id].value.includes(option)
+                                            }
+                                            onChange={(e) => {
+                                              const currentValues = Array.isArray(formData.checklist[item.id]?.value)
+                                                ? formData.checklist[item.id].value
+                                                : [];
+                                              const newValues = e.target.checked
+                                                ? [...currentValues, option]
+                                                : currentValues.filter((v: string) => v !== option);
+                                              handleChecklistChange(item.id, "value", newValues);
+                                            }}
+                                            sx={{
+                                              color: "#C72030",
+                                              "&.Mui-checked": { color: "#C72030" },
+                                            }}
+                                          />
+                                        }
+                                        label={option}
+                                        className="block mb-1"
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+
+                                {item.type === "options-inputs" && item.values && item.values.length > 0 && (
+                                  <div className="space-y-3">
+                                    {item.values.map((label: string) => (
+                                      <div key={label} className="flex items-center gap-3">
+                                        <label className="w-20 text-sm font-medium text-gray-700 shrink-0">{label}</label>
+                                        <TextField
+                                          placeholder={`Enter ${label}...`}
+                                          size="small"
+                                          variant="outlined"
+                                          value={
+                                            formData.checklist[item.id]?.value &&
+                                            typeof formData.checklist[item.id].value === "object" &&
+                                            !Array.isArray(formData.checklist[item.id].value)
+                                              ? (formData.checklist[item.id].value as Record<string, string>)[label] ?? ""
+                                              : ""
+                                          }
+                                          onChange={(e) => {
+                                            const prev =
+                                              formData.checklist[item.id]?.value &&
+                                              typeof formData.checklist[item.id].value === "object" &&
+                                              !Array.isArray(formData.checklist[item.id].value)
+                                                ? { ...(formData.checklist[item.id].value as Record<string, string>) }
+                                                : {};
+                                            handleChecklistChange(item.id, "value", { ...prev, [label]: e.target.value });
+                                          }}
+                                          sx={{
+                                            flex: 1,
+                                            "& .MuiOutlinedInput-root": {
+                                              backgroundColor: "white",
+                                              "& fieldset": { borderColor: "#D1D5DB" },
+                                              "&:hover fieldset": { borderColor: "#9CA3AF" },
+                                            },
+                                          }}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="">
+                                  <TextField
+                                    placeholder="Add your comment..."
+                                    fullWidth
+                                    multiline
+                                    minRows={3}
+                                    variant="outlined"
+                                    value={formData.checklist[item.id]?.comment || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "comment",
+                                        e.target.value
+                                      )
+                                    }
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "white",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                        "&:hover fieldset": {
+                                          borderColor: "#9CA3AF",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                </div>
+
+                                {formData.checklist[item.id]?.attachment && (
+                                  <div className="">
+                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
+                                      <img
+                                        src={URL.createObjectURL(
+                                          formData.checklist[item.id].attachment
+                                        )}
+                                        alt="Attachment"
+                                        className="w-16 h-16 object-cover rounded border"
+                                      />
+                                      <Typography
+                                        variant="body2"
+                                        className="flex-1 text-gray-700"
+                                      >
+                                        {formData.checklist[item.id].attachment.name}
+                                      </Typography>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-[#C72030] border-[#C72030] hover:bg-red-50"
+                                    onClick={() => {
+                                      const input = document.createElement("input");
+                                      input.type = "file";
+                                      input.accept = "image/*";
+                                      input.onchange = (e) => {
+                                        const file = (e.target as HTMLInputElement)
+                                          .files?.[0];
+                                        if (file) {
+                                          handleChecklistChange(
+                                            item.id,
+                                            "attachment",
+                                            file
+                                          );
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                  >
+                                    Add Attachment
+                                  </Button>
+                                </div>
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -1344,11 +1406,11 @@ export const TaskSubmissionPage: React.FC = () => {
                                       </td>
                                       <td className="px-4 py-3 text-xs border-b border-gray-100">
                                         <span className="text-xs">
-                                          {Array.isArray(answer) 
-                                            ? answer.length > 0 
-                                              ? answer.join(", ") 
-                                              : "-"
-                                            : answer || "-"}
+                                          {Array.isArray(answer)
+                                            ? answer.length > 0 ? answer.join(", ") : "-"
+                                            : answer && typeof answer === "object"
+                                              ? Object.entries(answer as Record<string, string>).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(" | ") || "-"
+                                              : answer || "-"}
                                         </span>
                                       </td>
                                       <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
@@ -1396,7 +1458,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                               Comments
                             </th>
-                          
+
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                               Attachment
                             </th>
@@ -1407,7 +1469,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             const answer = formData.checklist[item.id]?.value;
                             const comment = formData.checklist[item.id]?.comment;
                             const attachment = formData.checklist[item.id]?.attachment;
-                            
+
                             // Calculate score based on answer (similar to TaskDetailsPage logic)
                             const calculateScore = () => {
                               if (answer === "Yes") return "100";
@@ -1426,17 +1488,17 @@ export const TaskSubmissionPage: React.FC = () => {
                                 </td>
                                 <td className="px-4 py-3 text-xs border-b border-gray-100">
                                   <span className="text-xs">
-                                    {Array.isArray(answer) 
-                                      ? answer.length > 0 
-                                        ? answer.join(", ") 
-                                        : "-"
-                                      : answer || "-"}
+                                    {Array.isArray(answer)
+                                      ? answer.length > 0 ? answer.join(", ") : "-"
+                                      : answer && typeof answer === "object"
+                                        ? Object.entries(answer as Record<string, string>).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(" | ") || "-"
+                                        : answer || "-"}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                   <span className="text-xs">{comment || "-"}</span>
                                 </td>
-  
+
                                 <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                   {attachment ? (
                                     <div className="flex items-center gap-2">
@@ -1707,6 +1769,45 @@ export const TaskSubmissionPage: React.FC = () => {
                                   {item.required && <span className="text-red-500 ml-1">*</span>}
                                 </Typography>
 
+                                {item.type === "options-inputs" && item.values && item.values.length > 0 && (
+                                  <div className="space-y-3">
+                                    {item.values.map((label: string) => (
+                                      <div key={label} className="flex items-center gap-3">
+                                        <label className="w-20 text-sm font-medium text-gray-700 shrink-0">{label}</label>
+                                        <TextField
+                                          placeholder={`Enter ${label}...`}
+                                          size="small"
+                                          variant="outlined"
+                                          value={
+                                            formData.checklist[item.id]?.value &&
+                                            typeof formData.checklist[item.id].value === "object" &&
+                                            !Array.isArray(formData.checklist[item.id].value)
+                                              ? (formData.checklist[item.id].value as Record<string, string>)[label] ?? ""
+                                              : ""
+                                          }
+                                          onChange={(e) => {
+                                            const prev =
+                                              formData.checklist[item.id]?.value &&
+                                              typeof formData.checklist[item.id].value === "object" &&
+                                              !Array.isArray(formData.checklist[item.id].value)
+                                                ? { ...(formData.checklist[item.id].value as Record<string, string>) }
+                                                : {};
+                                            handleChecklistChange(item.id, "value", { ...prev, [label]: e.target.value });
+                                          }}
+                                          sx={{
+                                            flex: 1,
+                                            "& .MuiOutlinedInput-root": {
+                                              backgroundColor: "white",
+                                              "& fieldset": { borderColor: "#D1D5DB" },
+                                              "&:hover fieldset": { borderColor: "#9CA3AF" },
+                                            },
+                                          }}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
                                 {item.type === "text" && (
                                   <TextField
                                     placeholder="Enter your value..."
@@ -1716,11 +1817,11 @@ export const TaskSubmissionPage: React.FC = () => {
                                       item.question
                                         .toLowerCase()
                                         .includes("voltage") ||
-                                      item.question
-                                        .toLowerCase()
-                                        .includes("current") ||
-                                      item.question.toLowerCase().includes("power") ||
-                                      item.question.toLowerCase().includes("time")
+                                        item.question
+                                          .toLowerCase()
+                                          .includes("current") ||
+                                        item.question.toLowerCase().includes("power") ||
+                                        item.question.toLowerCase().includes("time")
                                         ? "number"
                                         : "text"
                                     }
@@ -1944,11 +2045,11 @@ export const TaskSubmissionPage: React.FC = () => {
                                 item.question
                                   .toLowerCase()
                                   .includes("voltage") ||
-                                item.question
-                                  .toLowerCase()
-                                  .includes("current") ||
-                                item.question.toLowerCase().includes("power") ||
-                                item.question.toLowerCase().includes("time")
+                                  item.question
+                                    .toLowerCase()
+                                    .includes("current") ||
+                                  item.question.toLowerCase().includes("power") ||
+                                  item.question.toLowerCase().includes("time")
                                   ? "number"
                                   : "text"
                               }
@@ -2066,6 +2167,44 @@ export const TaskSubmissionPage: React.FC = () => {
                                   label={option}
                                   className="block mb-1"
                                 />
+                              ))}
+                            </div>
+                          )}
+                          {item.type === "options-inputs" && item.values && item.values.length > 0 && (
+                            <div className="space-y-3">
+                              {item.values.map((label: string) => (
+                                <div key={label} className="flex items-center gap-3">
+                                  <label className="w-20 text-sm font-medium text-gray-700 shrink-0">{label}</label>
+                                  <TextField
+                                    placeholder={`Enter ${label}...`}
+                                    size="small"
+                                    variant="outlined"
+                                    value={
+                                      formData.checklist[item.id]?.value &&
+                                      typeof formData.checklist[item.id].value === "object" &&
+                                      !Array.isArray(formData.checklist[item.id].value)
+                                        ? (formData.checklist[item.id].value as Record<string, string>)[label] ?? ""
+                                        : ""
+                                    }
+                                    onChange={(e) => {
+                                      const prev =
+                                        formData.checklist[item.id]?.value &&
+                                        typeof formData.checklist[item.id].value === "object" &&
+                                        !Array.isArray(formData.checklist[item.id].value)
+                                          ? { ...(formData.checklist[item.id].value as Record<string, string>) }
+                                          : {};
+                                      handleChecklistChange(item.id, "value", { ...prev, [label]: e.target.value });
+                                    }}
+                                    sx={{
+                                      flex: 1,
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "white",
+                                        "& fieldset": { borderColor: "#D1D5DB" },
+                                        "&:hover fieldset": { borderColor: "#9CA3AF" },
+                                      },
+                                    }}
+                                  />
+                                </div>
                               ))}
                             </div>
                           )}
@@ -2681,7 +2820,7 @@ export const TaskSubmissionPage: React.FC = () => {
         case 4: // Preview
           return (
             <div className="space-y-6">
-          
+
 
               {/* Photo Preview */}
               <Card className="border border-gray-200 shadow-sm">
@@ -2886,9 +3025,9 @@ export const TaskSubmissionPage: React.FC = () => {
                                       </td>
                                       <td className="px-4 py-3 text-xs border-b border-gray-100">
                                         <span className="text-xs">
-                                          {Array.isArray(answer) 
-                                            ? answer.length > 0 
-                                              ? answer.join(", ") 
+                                          {Array.isArray(answer)
+                                            ? answer.length > 0
+                                              ? answer.join(", ")
                                               : "-"
                                             : answer || "-"}
                                         </span>
@@ -2938,7 +3077,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                               Comments
                             </th>
-                           
+
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                               Attachment
                             </th>
@@ -2949,7 +3088,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             const answer = formData.checklist[item.id]?.value;
                             const comment = formData.checklist[item.id]?.comment;
                             const attachment = formData.checklist[item.id]?.attachment;
-                            
+
                             // Calculate score based on answer (similar to TaskDetailsPage logic)
                             const calculateScore = () => {
                               if (answer === "Yes") return "100";
@@ -2968,9 +3107,9 @@ export const TaskSubmissionPage: React.FC = () => {
                                 </td>
                                 <td className="px-4 py-3 text-xs border-b border-gray-100">
                                   <span className="text-xs">
-                                    {Array.isArray(answer) 
-                                      ? answer.length > 0 
-                                        ? answer.join(", ") 
+                                    {Array.isArray(answer)
+                                      ? answer.length > 0
+                                        ? answer.join(", ")
                                         : "-"
                                       : answer || "-"}
                                   </span>
@@ -2978,7 +3117,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                 <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                   <span className="text-xs">{comment || "-"}</span>
                                 </td>
-                               
+
                                 <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
                                   {attachment ? (
                                     <div className="flex items-center gap-2">
@@ -3055,11 +3194,10 @@ export const TaskSubmissionPage: React.FC = () => {
             {steps.map((step, index) => (
               <div
                 key={step.id}
-                className={`flex flex-col items-center ${
-                  step.id <= Math.max(...completedSteps, currentStep)
-                    ? "cursor-pointer"
-                    : "cursor-not-allowed opacity-100"
-                }`}
+                className={`flex flex-col items-center ${step.id <= Math.max(...completedSteps, currentStep)
+                  ? "cursor-pointer"
+                  : "cursor-not-allowed opacity-100"
+                  }`}
                 onClick={() => handleStepClick(step.id)}
               >
                 {/* Step Header Bar */}
@@ -3096,13 +3234,13 @@ export const TaskSubmissionPage: React.FC = () => {
       </div>
 
       {/* Step Content */}
-             {renderStepContent()}
+      {renderStepContent()}
 
 
       <div className="text-center mt-6 mb-4">
         <Typography variant="body2" className="text-gray-600">
           You've completed {completedSteps.length} out of{" "}
-          {steps.length} steps. 
+          {steps.length} steps.
           {dynamicChecklist.length > 0 && (
             <span className="ml-2">
               ({Math.round((Object.keys(formData.checklist).filter(key => {
@@ -3167,6 +3305,6 @@ export const TaskSubmissionPage: React.FC = () => {
         onViewDetails={handleSuccessClose}
         stats={submissionStats}
       />
-       </div>
+    </div>
   );
 };
