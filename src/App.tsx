@@ -1142,6 +1142,7 @@ import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
 import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
+import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 
 const queryClient = new QueryClient();
 
@@ -2492,6 +2493,10 @@ function App() {
                           <Route
                             path="/accounting/reports/account-transactions/details"
                             element={<AccountTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/cash-flow-statement"
+                            element={<CashFlowStatementReport />}
                           />
                           <Route
                             path="/accounting/reports/sales-by-customer"

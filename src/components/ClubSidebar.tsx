@@ -311,6 +311,7 @@ const modulesByPackage = {
             subItems: [
                 { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
                 { name: "Trial Balance", href: "/accounting/reports/trial-balance" },
+                { name: "Cash Flow Statement", href: "/accounting/reports/cash-flow-statement" },
                 {
                     name: "Profit & Loss",
                     href: "/accounting/reports/profit-and-loss",
@@ -319,27 +320,23 @@ const modulesByPackage = {
                     name: "GST Payable",
                     href: "/accounting/reports/gst-payable",
                 },
-                {
-                    name: "TDS Summary",
-                    href: "/accounting/reports/tds-summary",
+                 {
+                    name: "GST Receivable",
+                    href: "/accounting/reports/gst-receivable",
                 },
                 {
-                    name: "TDS Receivables Summary",
-                    href: "/accounting/reports/tds-receivables-summary",
+                    name: "Tax Summary",
+                    href: "/accounting/reports/tax-summary",
                 },
                 {
-                    name: "Account Type Summary",
-                    href: "/accounting/reports/account-type-summary",
+                    name: "GSTR-7",
+                    href: "/accounting/reports/gstr-7",
                 },
                 {
-                    name: "Account Type Transactions",
-                    href: "/accounting/reports/account-type-transactions",
+                    name: "GSTR-3B Summary",
+                    href: "/accounting/reports/gstr-3b-summary",
                 },
-                {
-                    name: "Account Transactions",
-                    href: "/accounting/reports/account-transactions",
-                },
-
+                
                 {
                     name: "Sales Reports",
                     icon: FileText,
@@ -362,26 +359,33 @@ const modulesByPackage = {
                         },
                     ],
                 },
-                {
-                    name: "GST Receivable",
-                    href: "/accounting/reports/gst-receivable",
-                },
-                {
-                    name: "Tax Summary",
-                    href: "/accounting/reports/tax-summary",
-                },
-                {
-                    name: "GSTR-7",
-                    href: "/accounting/reports/gstr-7",
-                },
-                {
-                    name: "GSTR-3B Summary",
-                    href: "/accounting/reports/gstr-3b-summary",
-                },
+               
                 // {
                 //     name: "GSTR-9",
                 //     href: "/accounting/reports/gstr-9"
                 // }
+
+                {
+                    name: "TDS Summary",
+                    href: "/accounting/reports/tds-summary",
+                },
+                {
+                    name: "TDS Receivables Summary",
+                    href: "/accounting/reports/tds-receivables-summary",
+                },
+                {
+                    name: "Account Type Summary",
+                    href: "/accounting/reports/account-type-summary",
+                },
+                {
+                    name: "Account Type Transactions",
+                    href: "/accounting/reports/account-type-transactions",
+                },
+                {
+                    name: "Account Transactions",
+                    href: "/accounting/reports/account-transactions",
+                },
+
 
             ],
         },
