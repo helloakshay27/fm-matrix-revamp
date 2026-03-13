@@ -1132,6 +1132,10 @@ import TrialBalanceReport from "./pages/ClubManagement/TrialBalanceReport";
 import { TrialBalanceDetails } from "./pages/ClubManagement/TrialBalanceDetails";
 import { RoleDashboardVi } from "./pages/settings/RoleDashboardVi";
 import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
+import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
+import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
+import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
+import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 
 const queryClient = new QueryClient();
 
@@ -2486,6 +2490,20 @@ function App() {
                             path="/accounting/reports/sales-summary"
                             element={<SalesSummaryReport />}
                           />
+                          <Route
+                            path="/accounting/reports/gstr-7"
+                            element={<GSTR7Report />}
+                          />
+                          <Route
+                            path="/accounting/reports/gstr-3b-summary"
+                            element={<GSTR3BSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/gstr-3b-summary/details"
+                            element={<GSTR3BSummaryDetails />}
+                          />
+                          <Route path="/accounting/reports/gstr-9" element={<GSTR9Summary />} />
+
 
                           <Route
                             path="/accounting/reports/balance-sheet/details/:id"
