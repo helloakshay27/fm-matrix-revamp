@@ -831,7 +831,8 @@ const ProjectTasksPage = () => {
                 params['q[end_date_eq]'] = dates.endDate;
             }
             if (dates.completedAt) {
-                params['q[completed_at_eq]'] = dates.completedAt;
+                params['q[completed_at_gteq]'] = `${dates.completedAt}T00:00:00`;
+                params['q[completed_at_lteq]'] = `${dates.completedAt}T23:59:59`;
             }
             if (mid) {
                 params['q[milestone_id_eq]'] = mid;
@@ -886,7 +887,8 @@ const ProjectTasksPage = () => {
             filters['q[end_date_eq]'] = dates.endDate;
         }
         if (dates.completedAt) {
-            filters['q[completed_at_eq]'] = dates.completedAt;
+            filters['q[completed_at_gteq]'] = `${dates.completedAt}T00:00:00`;
+            filters['q[completed_at_lteq]'] = `${dates.completedAt}T23:59:59`;
         }
 
         return filters;
