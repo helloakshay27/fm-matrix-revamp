@@ -265,7 +265,7 @@ export const MilestoneDetailsPage = () => {
           : await axios.get(`/milestones/${mid}.json`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-        setMilestoneName(milestoneResponse.data.title || '');
+        setMilestoneName(milestoneResponse?.data?.title || '');
       }
     } catch (error) {
       console.error('Failed to fetch project/milestone names:', error);
