@@ -165,7 +165,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com"
+          userEmail === "jevosak839@cimario.com" ||
+          userEmail === "deveshjain928@gmail.com"
         ) {
           return <EmployeeSidebar />;
         }
@@ -198,7 +199,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
-      userEmail === "jevosak839@cimario.com"
+      userEmail === "jevosak839@cimario.com" ||
+      userEmail === "deveshjain928@gmail.com"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -280,7 +282,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
-      userEmail === "jevosak839@cimario.com"
+      userEmail === "jevosak839@cimario.com" ||
+      userEmail === "deveshjain928@gmail.com"
     ) {
       return <ActionHeader />;
     }
