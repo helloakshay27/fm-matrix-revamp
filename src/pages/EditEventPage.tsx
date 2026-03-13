@@ -60,10 +60,9 @@ export const EditEventPage = () => {
     eventDescription: "",
     shareWith: "all",
     shareWithCommunities: "no",
-    attachment: null as File | null,
   });
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [newAttachments, setNewAttachments] = useState<Array<{ file: File, preview: string | null }>>([]);
   const [isActive, setIsActive] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
@@ -315,19 +314,20 @@ export const EditEventPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        attachment: file,
-      }));
+      // Create preview for image files
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setImagePreview(reader.result as string);
+          setNewAttachments(prev => [...prev, { file, preview: reader.result as string }]);
         };
         reader.readAsDataURL(file);
       } else {
-        setImagePreview(null);
+        setNewAttachments(prev => [...prev, { file, preview: null }]);
       }
+    }
+    // Reset the input
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
     }
   };
 
@@ -335,16 +335,11 @@ export const EditEventPage = () => {
     attachmentInputRef.current?.click();
   };
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFormData((prev) => ({
-      ...prev,
-      attachment: null,
-    }));
-    setImagePreview(null);
-    if (attachmentInputRef.current) {
-      attachmentInputRef.current.value = "";
+  const handleRemoveNewAttachment = (index: number, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
     }
+    setNewAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleRemoveExistingAttachment = async (attachmentId: number) => {
@@ -434,8 +429,11 @@ export const EditEventPage = () => {
         });
       }
 
-      if (formData.attachment) {
-        formDataToSend.append("event[documents][]", formData.attachment);
+      // Add all new attachments
+      if (newAttachments.length > 0) {
+        newAttachments.forEach(({ file }) => {
+          formDataToSend.append("event[documents][]", file);
+        });
       }
 
       await dispatch(updateEvent({ id: id!, baseUrl, token, data: formDataToSend })).unwrap();
@@ -993,7 +991,7 @@ export const EditEventPage = () => {
                   Upload Document
                 </Label>
 
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-6">
                   {/* Existing Attachments */}
                   {existingAttachments.map((att) => (
                     <div key={att.id} className="relative border-2 border-gray-200 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
@@ -1014,65 +1012,70 @@ export const EditEventPage = () => {
                     </div>
                   ))}
 
-                  {/* New Attachment Preview */}
-                  {formData.attachment ? (
-                    <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
+                  {/* Display new attachments */}
+                  {newAttachments.map((attachment, index) => (
+                    <div
+                      key={index}
+                      className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white"
+                    >
                       <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
-                        {formData.attachment.name}
+                        {attachment.file.name}
                       </span>
                       <button
-                        onClick={handleRemoveImage}
+                        type="button"
+                        onClick={(e) => handleRemoveNewAttachment(index, e)}
                         className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
                       >
                         <XCircle size={20} />
                       </button>
-                      {imagePreview ? (
+                      {attachment.preview ? (
                         <img
-                          src={imagePreview}
-                          alt="Preview"
+                          src={attachment.preview}
+                          alt={`Preview ${index}`}
                           className="w-20 h-20 object-contain mt-6"
                         />
                       ) : (
                         <File size={40} className="text-gray-400 mt-6" />
                       )}
                     </div>
-                  ) : (
-                    <div
-                      onClick={triggerFileInput}
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="absolute top-2 right-2 text-gray-400">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info size={18} />
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                              <p>Upload a document or image.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
+                  ))}
 
-                      <input
-                        type="file"
-                        ref={attachmentInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/*"
-                      />
-
-                      <div className="text-center text-gray-500 text-sm">
-                        Choose a file or<br />drag & drop it here
-                      </div>
-                      <Button
-                        type="button"
-                        className="bg-[#EBEBEB] text-[#C72030] hover:bg-[#dcdcdc] border-none font-medium px-8"
-                      >
-                        Browse
-                      </Button>
+                  {/* Add new attachment box */}
+                  <div
+                    onClick={triggerFileInput}
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="absolute top-2 right-2 text-gray-400">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info size={18} />
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
+                            <p>Upload a document or image.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
-                  )}
+
+                    <input
+                      type="file"
+                      ref={attachmentInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept="image/*"
+                    />
+
+                    <div className="text-center text-gray-500 text-sm">
+                      Choose a file or<br />drag & drop it here
+                    </div>
+                    <Button
+                      type="button"
+                      className="bg-[#EBEBEB] text-[#C72030] hover:bg-[#dcdcdc] border-none font-medium px-8"
+                    >
+                      Browse
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
