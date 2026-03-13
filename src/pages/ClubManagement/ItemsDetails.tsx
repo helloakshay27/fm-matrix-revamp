@@ -134,6 +134,15 @@ export const ItemsDetails = () => {
         purchaseAccount: "",
         purchaseDescription: "",
         reportingTags: [],
+        tax_preference: "",
+        tax_exemption_reason: "",
+        sale_mrp: "",
+        sku: "",
+        hsn_code: "",
+        sac: "",
+        supplier:"",
+        intra_state_tax_rate: "",
+        inter_state_tax_rate:"",
     });
 
 
@@ -159,9 +168,9 @@ export const ItemsDetails = () => {
                 // Use your API config if available, else fallback to localStorage
                 let apiBase = baseUrl;
                 if (!apiBase) {
-                  apiBase = "https://club-uat-api.lockated.com";
+                    apiBase = "https://club-uat-api.lockated.com";
                 } else if (!apiBase.startsWith("http")) {
-                  apiBase = `https://${apiBase}`;
+                    apiBase = `https://${apiBase}`;
                 }
                 const response = await axios.get(`${apiBase}/lock_account_items/${id}.json`, {
                     headers: {
@@ -175,12 +184,21 @@ export const ItemsDetails = () => {
                     unit: data.unit || "",
                     createdSource: data.created_source || "",
                     sellingPrice: data.sale_rate?.toString() || "",
+                    sale_mrp: data.sale_mrp?.toString() || "",
                     salesAccount: data.sale_lock_account_ledger || "",
                     salesDescription: data.sale_description || "",
                     costPrice: data.purchase_rate?.toString() || "",
                     purchaseAccount: data.purchase_lock_account_ledger || "",
                     purchaseDescription: data.purchase_description || "",
+                    supplier:data.supplier || "",
                     reportingTags: data.reporting_tags || [],
+                    tax_preference: data.tax_preference || "",
+                    tax_exemption_reason: data.tax_exemption_reason || "",
+                    sku: data.sku || "",
+                    hsn_code: data.hsn_code || "",
+                    sac: data.sac || "",
+                    intra_state_tax_rate:data.intra_state_tax_rate || "",
+                    inter_state_tax_rate: data.inter_state_tax_rate || "",
                 });
             } catch (error) {
                 toast.error("Failed to fetch item details");
@@ -209,6 +227,8 @@ export const ItemsDetails = () => {
         );
     }
 
+    const formatText = (text: string) =>
+        text?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="p-6 bg-white">
@@ -368,6 +388,13 @@ export const ItemsDetails = () => {
                                         {formData.itemType || "-"}
                                     </span>
                                 </div>
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">SKU</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.sku || "-"}
+                                    </span>
+                                </div>
 
                                 <div className="flex">
                                     <span className="text-gray-500 min-w-[150px]">Unit</span>
@@ -376,12 +403,44 @@ export const ItemsDetails = () => {
                                         {formData.unit || "-"}
                                     </span>
                                 </div>
-
-                                <div className="flex">
+                                {formData.itemType === "goods" && (
+                                    <div className="flex">
+                                        <span className="text-gray-500 min-w-[150px]">HSN Code</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">
+                                            {formData.hsn_code || "-"}
+                                        </span>
+                                    </div>
+                                )}
+                                {formData.itemType === "service" && (
+                                    <div className="flex">
+                                        <span className="text-gray-500 min-w-[150px]">SAC</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">
+                                            {formData.sac || "-"}
+                                        </span>
+                                    </div>
+                                )}
+                                {/* <div className="flex">
                                     <span className="text-gray-500 min-w-[150px]">Created Source</span>
                                     <span className="text-gray-500 mx-2">:</span>
                                     <span className="text-gray-900 font-medium">
                                         {formData.createdSource || "-"}
+                                    </span>
+                                </div> */}
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Tax Preference</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formatText(formData.tax_preference || "-")}
+                                    </span>
+                                </div>
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Exemption Reason</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.tax_exemption_reason || "-"}
                                     </span>
                                 </div>
                             </div>
@@ -396,6 +455,13 @@ export const ItemsDetails = () => {
                                     <span className="text-gray-500 mx-2">:</span>
                                     <span className="text-gray-900 font-medium">
                                         {formData.sellingPrice || "-"}
+                                    </span>
+                                </div>
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">MRP</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.sale_mrp || "-"}
                                     </span>
                                 </div>
 
@@ -442,6 +508,34 @@ export const ItemsDetails = () => {
                                     <span className="text-gray-500 mx-2">:</span>
                                     <span className="text-gray-900 font-medium">
                                         {formData.purchaseDescription || "-"}
+                                    </span>
+                                </div>
+                                 <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Preferred Vendor</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.supplier || "-"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                         <div>
+                            <h4 className="font-semibold text-gray-800 mb-3">Default Tax Rates</h4>
+                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Intra State Tax Rate</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.intra_state_tax_rate || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex">
+                                    <span className="text-gray-500 min-w-[150px]">Inter State Tax Rate</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {formData.inter_state_tax_rate || "-"}
                                     </span>
                                 </div>
                             </div>

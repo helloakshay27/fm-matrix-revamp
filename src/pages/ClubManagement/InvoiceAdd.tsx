@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
+import { toast } from "sonner";
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -559,20 +560,104 @@ export const InvoiceAdd: React.FC = () => {
     };
 
     // Validation
-    const validate = (): boolean => {
-        const newErrors: Record<string, string> = {};
+    // const validate = (): boolean => {
+    //     const newErrors: Record<string, string> = {};
 
-        if (!selectedCustomer) newErrors.customer = 'Customer is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
-        if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
-        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+    //     if (!selectedCustomer) newErrors.customer = 'Customer is required';
+    //     if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
+    //     if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
+    //     if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
 
-        const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+    //     const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
+    //     if (!hasValidItems) newErrors.items = 'At least one valid item is required';
 
+    //     setErrors(newErrors);
+    //     return Object.keys(newErrors).length === 0;
+    // };
+
+
+//     const validate = (): boolean => {
+//     const newErrors: Record<string, string> = {};
+
+//     if (!selectedCustomer) {
+//         newErrors.customer = 'Customer is required';
+//         toast.error('Customer is required');
+//     }
+
+//     if (!salesOrderDate) {
+//         newErrors.salesOrderDate = 'Sales order date is required';
+//         toast.error('Sales order date is required');
+//     }
+
+//     if (!expectedShipmentDate) {
+//         newErrors.expectedShipmentDate = 'Expected shipment date is required';
+//         toast.error('Expected shipment date is required');
+//     }
+
+//     if (!paymentTerms) {
+//         newErrors.paymentTerms = 'Payment terms is required';
+//         toast.error('Payment terms is required');
+//     }
+
+//     const hasValidItems = items.some(
+//         item => item.name && item.quantity > 0 && item.rate > 0
+//     );
+
+//     if (!hasValidItems) {
+//         newErrors.items = 'At least one valid item is required';
+//         toast.error('Please add at least one valid item');
+//     }
+
+//     setErrors(newErrors);
+//     return Object.keys(newErrors).length === 0;
+// };
+
+
+const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!selectedCustomer) {
+        // newErrors.customer = 'Customer is required';
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+        toast.error('Customer is required');
+        return false;
+    }
+
+    if (!salesOrderDate) {
+        // newErrors.salesOrderDate = 'Sales order date is required';
+        setErrors(newErrors);
+        toast.error('Invoice date is required');
+        return false;
+    }
+
+    if (!expectedShipmentDate) {
+        // newErrors.expectedShipmentDate = 'Expected shipment date is required';
+        setErrors(newErrors);
+        toast.error('Due date is required');
+        return false;
+    }
+
+    if (!selectedTerm) {
+        // newErrors.paymentTerms = 'Payment terms is required';
+        setErrors(newErrors);
+        toast.error('Payment terms is required');
+        return false;
+    }
+
+    const hasValidItems = items.some(
+        item => item.name && item.quantity > 0 && item.rate > 0
+    );
+
+    if (!hasValidItems) {
+        // newErrors.items = 'At least one valid item is required';
+        setErrors(newErrors);
+        toast.error('Please add at least one valid item');
+        return false;
+    }
+
+    setErrors({});
+    return true;
+};
 
 
     // --- INVOICE PAYLOADS ---
@@ -619,7 +704,7 @@ export const InvoiceAdd: React.FC = () => {
     console.log("date:", salesOrderDate)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
+        if (!validate()) {
             return;
         }
 

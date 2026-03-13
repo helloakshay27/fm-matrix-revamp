@@ -28,38 +28,39 @@ const SalesByItemReport: React.FC = () => {
     toDate: "",
   });
 
-  // Fetch sales data from API
-  useEffect(() => {
-    const fetchSalesData = async () => {
-      setLoading(true);
-      try {
-        if (!baseUrl || !token) {
-          toast.error('Missing base URL or token');
-          setLoading(false);
-          return;
-        }
-
-        const url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=1`;
-        const response = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        const data = Array.isArray(response.data) ? response.data : [];
-        setSalesByItemData(data);
-        console.log('Fetched sales by item:', data);
-      } catch (error) {
-        console.error('Error fetching sales data:', error);
-        toast.error('Failed to fetch sales data');
-        setSalesByItemData([]);
-      } finally {
+  // Fetch sales data from API with optional date filter
+  const fetchSalesData = async (fromDate?: string, toDate?: string) => {
+    setLoading(true);
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or token');
         setLoading(false);
+        return;
       }
-    };
+      let url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=1`;
+      if (fromDate && toDate) {
+        url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;
+      }
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = Array.isArray(response.data) ? response.data : [];
+      setSalesByItemData(data);
+      console.log('Fetched sales by item:', data);
+    } catch (error) {
+      console.error('Error fetching sales data:', error);
+      toast.error('Failed to fetch sales data');
+      setSalesByItemData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchSalesData();
+  useEffect(() => {
+    fetchSalesData(); // initial load without date filter
   }, [baseUrl, token]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,9 +73,14 @@ const SalesByItemReport: React.FC = () => {
       alert("Please select From Date and To Date");
       return;
     }
-
-    console.log("From:", filters.fromDate);
-    console.log("To:", filters.toDate);
+    // Convert YYYY-MM-DD to DD/MM/YYYY for API
+    const formatDate = (date: string) => {
+      const [yyyy, mm, dd] = date.split('-');
+      return `${dd}/${mm}/${yyyy}`;
+    };
+    const fromDate = formatDate(filters.fromDate);
+    const toDate = formatDate(filters.toDate);
+    fetchSalesData(fromDate, toDate);
   };
 
   const handleQuantityClick = (itemName: string, itemData: SalesItem) => {
@@ -85,12 +91,12 @@ const SalesByItemReport: React.FC = () => {
   };
 
   const totalQty = salesByItemData.reduce(
-    (sum, row) => sum + row.quantity_sold,
+    (sum, row) => sum + (row.quantity_sold || 0),
     0
   );
 
   const totalAmount = salesByItemData.reduce(
-    (sum, row) => sum + row.amount,
+    (sum, row) => sum + (row.amount || 0),
     0
   );
 
@@ -134,12 +140,12 @@ const SalesByItemReport: React.FC = () => {
                     onClick={() => handleQuantityClick(row.name, row)}
                     className="text-[#C72030] hover:text-[#A01020] underline font-medium"
                   >
-                    {row.quantity_sold.toFixed(2)}
+                    {(row.quantity_sold || 0).toFixed(2)}
                   </button>
                 </td>
 
                 <td className="border px-4 py-3 text-right">
-                  ₹{row.amount.toFixed(2)}
+                  ₹{(row.amount || 0).toFixed(2)}
                 </td>
 
                 <td className="border px-4 py-3 text-right">

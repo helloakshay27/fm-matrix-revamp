@@ -323,7 +323,7 @@ maximumFractionDigits:2
 
           <tbody>
 
-            {/* <tr className="bg-gray-100 font-bold">
+            <tr className="bg-gray-100 font-bold">
 
               <td className="border border-gray-300 px-4 py-3 text-center">-</td>
 
@@ -355,7 +355,7 @@ maximumFractionDigits:2
 
               <td className="border border-gray-300 px-4 py-3 text-center">-</td>
 
-            </tr> */}
+            </tr>
 
             {(() => {
 

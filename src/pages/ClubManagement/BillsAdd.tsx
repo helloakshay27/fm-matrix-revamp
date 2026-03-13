@@ -134,7 +134,13 @@ export const BillsAdd: React.FC = () => {
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+                    setItemOptions(res.data.map(item => ({
+                        id: item.id, name: item.name, rate: item.purchase_rate, description: item.sale_description,
+                        account: item.purchase_lock_account_ledger_id,
+                        tax_preference: item.tax_preference,
+                        tax_exemption_id: item.tax_exemption_id,
+                        tax_group_id: item.intra_state_tax_rate_id
+                    })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -770,9 +776,9 @@ export const BillsAdd: React.FC = () => {
     console.log("items:", items)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
-            return;
-        }
+        // if (!saveAsDraft && !validate()) {
+        //     return;
+        // }
 
         setIsSubmitting(true);
 
@@ -810,7 +816,11 @@ export const BillsAdd: React.FC = () => {
             // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_bill[notes]', customerNotes);
             // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_bill[status]', 'draft');
+            // formData.append('lock_account_bill[status]', 'draft');
+            formData.append(
+                'lock_account_bill[status]',
+                saveAsDraft ? 'draft' : 'open'
+            );
             formData.append('lock_account_bill[subject]', subject || '');
             formData.append('lock_account_bill[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
@@ -1401,6 +1411,27 @@ export const BillsAdd: React.FC = () => {
                                                                 updateItem(index, 'name', selectedItem.name);
                                                                 updateItem(index, 'rate', selectedItem.rate);
                                                                 updateItem(index, 'description', selectedItem.description);
+                                                                // ✅ Account preselect
+                                                                updateItem(index, "account", selectedItem.account);
+
+                                                                // TAX HANDLING
+                                                                if (selectedItem.tax_preference === "non_taxable") {
+                                                                    updateItem(index, "item_tax_type", "non_taxable");
+                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "taxable") {
+                                                                    updateItem(index, "item_tax_type", "tax_group");
+                                                                    updateItem(index, "tax_group_id", selectedItem.tax_group_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "out_of_scope") {
+                                                                    updateItem(index, "item_tax_type", "out_of_scope");
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "non_gst_supply") {
+                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
+                                                                }
                                                             }
                                                         }}
                                                         displayEmpty
@@ -1964,7 +1995,7 @@ export const BillsAdd: React.FC = () => {
                         textTransform: 'none'
                     }}
                 >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    {isSubmitting ? 'Submitting...' : 'Save as Open'}
                 </Button>
             </div>
 
