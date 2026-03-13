@@ -204,7 +204,7 @@ const IssuesListPage = ({
     const [filterSuccess, setFilterSuccess] = useState(false);
     const [filteredIssues, setFilteredIssues] = useState<any[]>([]);
     const [filteredLoading, setFilteredLoading] = useState(false);
-    const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(false);
+    const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(true);
     const [appliedFilters, setAppliedFilters] = useState(""); // For IssueFilterModal
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -1023,7 +1023,7 @@ const IssuesListPage = ({
             )}
 
             <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
-                <span className="text-gray-700 font-medium text-sm">Total Milestones:</span>
+                <span className="text-gray-700 font-medium text-sm">Total Issues:</span>
                 <span className="text-lg font-bold text-[#C72030]">
                     {pagination?.total_count || 0}
                 </span>
@@ -1033,9 +1033,9 @@ const IssuesListPage = ({
 
     const rightActions = (
         <div className="flex items-center gap-1 mr-4">
-            <span className="text-gray-700 font-medium text-sm">All Issues</span>
+            <span className="text-gray-700 font-medium text-sm">My Issues</span>
             <Switch
-                checked={showMyIssuesOnly}
+                checked={!showMyIssuesOnly}
                 onChange={() => setShowMyIssuesOnly(!showMyIssuesOnly)}
                 sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
@@ -1046,7 +1046,7 @@ const IssuesListPage = ({
                     },
                 }}
             />
-            <span className="text-gray-700 font-medium text-sm">My Issues</span>
+            <span className="text-gray-700 font-medium text-sm">All Issues</span>
         </div>
     )
 
