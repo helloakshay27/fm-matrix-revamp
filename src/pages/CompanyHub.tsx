@@ -33,6 +33,16 @@ import {
   Volume2,
   VolumeX,
   X,
+  ThumbsUp,
+  Flame,
+  MapPin,
+  Crown,
+  Trophy,
+  Sparkles,
+  Dumbbell,
+  Trash2,
+  BarChart3,
+  Sparkle,
 } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import {
@@ -147,11 +157,22 @@ interface CompanyData {
       photo_relation?: string;
       video_relation?: string;
     };
+    employee_of_the_month?: {
+      userId: string;
+      userName: string;
+      role: string;
+      month: string;
+      points: string[];
+      profileImage?: string;
+    };
   };
   ceo_photo?: {
     document_url: string;
   };
   ceo_video?: {
+    document_url: string;
+  };
+  employee_photo?: {
     document_url: string;
   };
 }
@@ -164,6 +185,52 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   const navigate = useNavigate();
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentEmployee, setCurrentEmployee] = useState<{
+    extra_field_id: number | null;
+    month: string | null;
+    id: number | null;
+    full_name: string | null;
+    profile_image: string | null;
+    field_description: string | null;
+  } | null>(null);
+
+  // Employee of Month data cached locally by CompanySetup on save
+  const cachedEOM = React.useMemo(() => {
+    try {
+      const raw = localStorage.getItem("company_hub_eom");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const cachedWelcome = React.useMemo(() => {
+    try {
+      const raw = localStorage.getItem("company_hub_welcome_data");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }, []);
+
+  const cachedVision = React.useMemo(() => {
+    try {
+      const raw = localStorage.getItem("company_hub_vision_data");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }, []);
+
+  const cachedMission = React.useMemo(() => {
+    try {
+      const raw = localStorage.getItem("company_hub_mission_data");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }, []);
+
+  const cachedCEO = React.useMemo(() => {
+    try {
+      const raw = localStorage.getItem("company_hub_ceo_data");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }, []);
   const [taskStats, setTaskStats] = useState({
     task_count: 0,
     todo_count: 0,
@@ -198,20 +265,37 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
     const fetchCompanyData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const baseUrl =
-          localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+        const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
         const protocol = baseUrl.startsWith("http") ? "" : "https://";
 
+        // Priority order for Organization ID: localStorage -> user session -> fallback
+        const effectiveCompanyId = localStorage.getItem("org_id") || companyId;
+        
+        console.log("🔍 Fetching Organization Data for ID:", effectiveCompanyId);
+
         const response = await axios.get(
-          `${protocol}${baseUrl}/organizations/${companyId}.json`,
+          `${protocol}${baseUrl}/organizations/${effectiveCompanyId}.json`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-        console.log("🏢 Company Hub Data:", response.data);
-        setCompanyData(response.data);
+        
+        const result = response.data;
+        const data = result.organization || result.data || result;
+        
+        // Handle case where other_config might be returned as a string
+        if (data && typeof data.other_config === "string") {
+          try {
+            data.other_config = JSON.parse(data.other_config);
+          } catch (e) {
+            console.error("Failed to parse other_config string:", e);
+          }
+        }
+        
+        console.log("🏢 Company Hub Data Loaded:", data);
+        setCompanyData(data);
       } catch (error) {
         console.error("Failed to fetch company data:", error);
       } finally {
@@ -219,10 +303,65 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       }
     };
 
-    if (userId) {
-      fetchCompanyData();
-    }
-  }, [userId, companyId]);
+    fetchCompanyData();
+  }, [companyId]);
+
+  // Fetch current Employee of the Month from extra_fields API
+  useEffect(() => {
+    const fetchCurrentEmployee = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+        const response = await axios.get(
+          `${protocol}${baseUrl}/extra_fields/employee_of_the_month`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.data?.employee_of_the_month) {
+          const data = response.data.employee_of_the_month;
+          let newest = null;
+
+          if (Array.isArray(data) && data.length > 0) {
+            // Sort by extra_field_id descending → newest record first
+            const sorted = [...data].sort(
+              (a, b) => (b.extra_field_id ?? 0) - (a.extra_field_id ?? 0)
+            );
+            newest = sorted[0];
+          } else if (data && typeof data === "object" && !Array.isArray(data)) {
+            newest = data;
+          }
+
+          if (newest) {
+            setCurrentEmployee(newest);
+
+            // Fetch the full extra_field record to get field_description (stored name)
+            if (newest.extra_field_id) {
+              try {
+                const detailRes = await axios.get(
+                  `${protocol}${baseUrl}/extra_fields/${newest.extra_field_id}`,
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const detailData = detailRes.data?.data;
+                if (detailData?.field_description) {
+                  setCurrentEmployee(prev =>
+                    prev ? { ...prev, field_description: detailData.field_description } : prev
+                  );
+                }
+              } catch {
+                // Detail fetch is optional — silently ignore
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch employee of month:", error);
+      }
+    };
+
+    fetchCurrentEmployee();
+  }, []);
 
   // Fetch Task Stats
   useEffect(() => {
@@ -291,18 +430,59 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
     }
   }, [userId, companyId, fetchPosts]);
 
-  // Helper function to extract text from nested description structure
-  const getExtractedText = (
-    descObj: { description?: { [key: string]: { text: string } } } | undefined,
-    defaultText: string
-  ) => {
+  const RenderDescription = ({ 
+    descObj, 
+    defaultText, 
+    className = "",
+    isWelcome = false
+  }: { 
+    descObj: any, 
+    defaultText: string | React.ReactNode, 
+    className?: string,
+    isWelcome?: boolean
+  }) => {
+    if (!descObj || !descObj.description || Object.keys(descObj.description).length === 0) {
+      if (typeof defaultText === "string") {
+        return <p className={className}>{defaultText}</p>;
+      }
+      return <div className={className}>{defaultText}</div>;
+    }
+    
+    const descriptions = descObj.description;
+    const sortedEntries = Object.entries(descriptions).sort(([a], [b]) => Number(a) - Number(b));
+    
+    return (
+      <div className="space-y-4 flex flex-col items-center">
+        {sortedEntries.map(([key, item]: [string, any], idx: number) => {
+          if (isWelcome && idx === 0) {
+            return (
+              <h2 key={key} className="text-2xl sm:text-3xl font-bold text-red-700 mb-2 relative z-10 inline-block">
+                {item.text}
+              </h2>
+            );
+          }
+          return (
+            <p 
+              key={key} 
+              className={`${className} ${item.bold === 'true' || item.bold === true ? 'font-bold text-gray-900' : ''}`}
+            >
+              {item.text}
+            </p>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const getExtractedText = (descObj: any, defaultText: string) => {
     if (!descObj || !descObj.description) return defaultText;
     const descriptions = descObj.description;
     const texts = Object.values(descriptions)
-      .map((item: { text: string }) => item.text)
+      .map((item: any) => item.text)
       .filter((text: string) => text && text.trim() !== "");
     return texts.length > 0 ? texts.join(" ") : defaultText;
   };
+
 
   // State for Audio Player
   const [isPlaying, setIsPlaying] = useState(() => {
@@ -521,7 +701,11 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       name: "Emily Doe",
       image: "https://randomuser.me/api/portraits/women/22.jpg",
       time: "15m ago",
-      text: "Inspiring! 💪",
+      text: (
+        <span>
+          Inspiring! <Dumbbell className="w-4 h-4 inline-block text-gray-700" />
+        </span>
+      ),
       likes: 2,
       isLiked: false,
       replyLabel: "Reply",
@@ -675,22 +859,24 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
         <div className="relative">
           <Quote className="w-12 h-12 sm:w-16 sm:h-16 text-red-300 absolute -top-6 sm:-top-8 -left-1 transform -scale-x-100 opacity-50" />
-          <h2 className="text-2xl sm:text-3xl font-bold text-red-700 mb-4 relative z-10 inline-block">
-            {getExtractedText(
-              companyData?.other_config?.welcome,
-              'Taking "Make in India\'s" PropTech products Global,'
-            )}
-          </h2>
-          <p className="text-[#d64545] font-sans font-medium text-base sm:text-[19px] leading-[1.65] tracking-normal">
-            {!companyData?.other_config?.welcome && (
+          <RenderDescription
+            isWelcome={true}
+            descObj={companyData?.other_config?.welcome || cachedWelcome}
+            className="text-[#d64545] font-sans font-medium text-base sm:text-[19px] leading-[1.65] tracking-normal"
+            defaultText={
               <>
-                by transforming every touch point of the real estate journey
-                from building, buying, managing to living — and to further spark
-                new ventures and entrepreneurs who turn industry challenges into
-                breakthrough opportunities.
+                <h2 className="text-2xl sm:text-3xl font-bold text-red-700 mb-4 relative z-10 inline-block">
+                  Taking "Make in India's" PropTech products Global,
+                </h2>
+                <p className="text-[#d64545] font-sans font-medium text-base sm:text-[19px] leading-[1.65] tracking-normal">
+                  by transforming every touch point of the real estate journey
+                  from building, buying, managing to living — and to further spark
+                  new ventures and entrepreneurs who turn industry challenges into
+                  breakthrough opportunities.
+                </p>
               </>
-            )}
-          </p>
+            }
+          />
         </div>
       </header>
 
@@ -703,12 +889,11 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-200 mb-4">
                 Vision
               </h2>
-              <p className="text-base sm:text-lg text-gray-700">
-                {getExtractedText(
-                  companyData?.other_config?.vision,
-                  "To build a connected and intelligent real estate world where every journey is seamless, sparks innovation, and every idea has the power to become a breakthrough business."
-                )}
-              </p>
+              <RenderDescription
+                descObj={companyData?.other_config?.vision || cachedVision}
+                className="text-base sm:text-lg text-gray-700"
+                defaultText="To build a connected and intelligent real estate world where every journey is seamless, sparks innovation, and every idea has the power to become a breakthrough business."
+              />
             </div>
 
             {/* Mission */}
@@ -716,12 +901,11 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-200 mb-4">
                 Mission
               </h2>
-              <p className="text-base sm:text-lg text-gray-700">
-                {getExtractedText(
-                  companyData?.other_config?.mission,
-                  "Our mission is to simplify and connect the entire real estate lifecycle through innovative technology, while enabling entrepreneurs and intrapreneurs to create impactful solutions that move the industry forward."
-                )}
-              </p>
+              <RenderDescription
+                descObj={companyData?.other_config?.mission || cachedMission}
+                className="text-base sm:text-lg text-gray-700"
+                defaultText="Our mission is to simplify and connect the entire real estate lifecycle through innovative technology, while enabling entrepreneurs and intrapreneurs to create impactful solutions that move the industry forward."
+              />
             </div>
           </div>
         </div>
@@ -923,7 +1107,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   {/* Poll Options Display */}
                   {post.poll_options && post.poll_options.length > 0 && (
                     <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200 mt-3">
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📊 Poll</p>
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+                        <BarChart3 className="w-4 h-4 text-gray-500" />
+                        Poll
+                      </p>
                       <div className="space-y-2.5">
                         {post.poll_options.map((option: any, index: number) => {
                           const totalVotes = post.poll_options.reduce((sum: number, opt: any) => sum + (opt.votes_count || 0), 0);
@@ -957,25 +1144,25 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   <div className="flex items-center gap-6 text-sm text-gray-600 border-t border-gray-100 pt-4">
                     {thumbsUpCount > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-base">👍</span>
+                        <ThumbsUp className="w-4 h-4 text-blue-500" />
                         <span className="font-medium">{thumbsUpCount}</span>
                       </div>
                     )}
                     {heartCount > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-base">❤️</span>
+                        <Heart className="w-4 h-4 text-red-500 fill-red-500" />
                         <span className="font-medium">{heartCount}</span>
                       </div>
                     )}
                     {fireCount > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-base">🔥</span>
+                        <Flame className="w-4 h-4 text-orange-500" />
                         <span className="font-medium">{fireCount}</span>
                       </div>
                     )}
                     {clapCount > 0 && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-base">👏</span>
+                        <Sparkles className="w-4 h-4 text-yellow-500" />
                         <span className="font-medium">{clapCount}</span>
                       </div>
                     )}
@@ -1344,8 +1531,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 Panchshil Cricket Championship 2025
               </h3>
               <p className="text-sm text-gray-700 leading-relaxed">
-                🏏 Exciting news! Lorem Ipsum is simply dummy text of the
-                printing and typesetting industry. Lorem Ipsum has been the
+                <Trophy className="w-5 h-5 text-yellow-600 inline-block mr-2" />
+                <span className="text-sm text-gray-700 leading-relaxed inline">
+                  Exciting news! Lorem Ipsum is simply dummy text of the
+                </span>                printing and typesetting industry. Lorem Ipsum has been the
                 industry's standard dummy text ever since the 1500s, when an
                 unknown printer took a galley of type and scrambled it to make a
                 type specimen book. Lorem Ipsum is simply dummy text of the
@@ -1363,7 +1552,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 <span>Friday 12th May, 2025 @ 03 - 09 PM</span>
               </div>
               <div className="flex items-center gap-1">
-                <span>📍</span>
+                <MapPin className="w-4 h-4 text-gray-500" />
                 <span>Cama Assembly Hall, Business Park</span>
               </div>
             </div>
@@ -1389,15 +1578,15 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             {/* Footer with reactions and comments */}
             <div className="flex items-center gap-4 py-3 border-t border-gray-100 mt-auto">
               <div className="flex items-center gap-1 text-sm text-gray-600">
-                <span className="text-base">❤️</span>
+                <Heart className="w-4 h-4 text-red-500 fill-red-500" />
                 <span>49</span>
               </div>
               <div className="flex items-center gap-1 text-sm text-gray-600">
-                <span className="text-base">🔥</span>
+                <Flame className="w-4 h-4 text-orange-500" />
                 <span>56</span>
               </div>
               <div className="flex items-center gap-1 text-sm text-gray-600">
-                <span className="text-base">👍</span>
+                <ThumbsUp className="w-4 h-4 text-blue-500" />
                 <span>43</span>
               </div>
               <div className="flex items-center gap-1 text-sm text-gray-600">
@@ -1416,8 +1605,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             <div className="relative h-[400px] bg-gray-200 overflow-hidden group">
               <img
                 src={
-                  companyData?.ceo_photo?.document_url ||
-                  "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                  companyData?.ceo_photo?.document_url || ceoImage
                 }
                 alt="CEO's Message"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -1451,11 +1639,12 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
             {/* Content Section */}
             <div className="absolute bottom-0 left-0 right-0 h-[300px] pointer-events-none">
               {/* CEO Image - Flush to Bottom Left */}
-              <div className="absolute bottom-0 left-0 w-[200px] z-20">
+              <div className="absolute bottom-0 left-0 w-[260px] sm:w-[320px] z-20">
                 <img
-                  src={companyData?.ceo_photo?.document_url || ceoImage}
+                  src={ceoImage}
                   alt={companyData?.other_config?.ceo_info?.name || "CEO"}
-                  className="w-full object-bottom drop-shadow-2xl"
+                  className="w-full h-auto object-contain object-bottom drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-95 transition-all duration-500"
+                  style={{ maxHeight: "420px" }}
                 />
               </div>
 
@@ -1535,46 +1724,87 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           </div>
 
           {/* Employee of the Month Card */}
-          <div className="bg-[#C4B89D] border border-[#C4B89D] rounded-lg p-4 sm:p-6 w-full aspect-square flex flex-col justify-between text-[#1f1f1f] relative">
+          <div className="bg-[#C4B89D] border border-[#C4B89D] rounded-lg p-4 sm:p-6 w-full flex flex-col justify-between text-[#1f1f1f] relative min-h-[400px]">
             {/* Crown Icon + Title */}
-            <div className="flex items-center gap-3">
-              <span className="text-2xl leading-none">👑</span>
-              <h3 className="font-bold text-xl leading-none">
-                Employee of the Month
-              </h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Crown className="w-6 h-6 text-[#1f1f1f]" />
+                <h3 className="font-bold text-xl leading-none">
+                  Employee of the Month
+                </h3>
+              </div>
+              {(currentEmployee?.month ||
+                companyData?.other_config?.employee_of_the_month?.month ||
+                cachedEOM?.month) && (
+                <span className="text-xs font-bold bg-white/30 px-2 py-1 rounded">
+                  {currentEmployee?.month ||
+                    companyData?.other_config?.employee_of_the_month?.month ||
+                    cachedEOM?.month}
+                </span>
+              )}
             </div>
 
-            {/* Avatar - Aligned Left */}
-            <div className="flex-1 flex items-center justify-start pl-2">
-              <div className="w-48 h-48 rounded-full border-4 border-white/20 overflow-hidden shadow-sm">
+            <div className="flex flex-col md:flex-row gap-6 items-center flex-1">
+              {/* Avatar — Prioritize profile image from setup payload */}
+              <div className="w-40 h-40 rounded-full border-4 border-white/40 overflow-hidden shadow-lg flex-shrink-0">
                 <img
-                  src={employeeImage}
+                  src={
+                    companyData?.other_config?.employee_of_the_month?.profileImage ||
+                    currentEmployee?.profile_image ||
+                    (currentEmployee?.field_description && currentEmployee.field_description.includes("/") ? currentEmployee.field_description : null) ||
+                    companyData?.employee_photo?.document_url ||
+                    employeeImage
+                  }
                   alt="Employee"
                   className="w-full h-full object-cover"
                 />
               </div>
+
+              {/* Points/Achievements */}
+              <div className="flex-1 space-y-2">
+                <h4 className="text-2xl font-bold leading-tight">
+                  {currentEmployee?.full_name ||
+                    companyData?.other_config?.employee_of_the_month?.userName ||
+                    cachedEOM?.name ||
+                    "Winner"}
+                </h4>
+                <p className="text-sm font-medium opacity-80 mb-2">
+                  {companyData?.other_config?.employee_of_the_month?.role ||
+                    cachedEOM?.role ||
+                    ""}
+                </p>
+                <div className="space-y-1">
+                  {(() => {
+                    const points =
+                      companyData?.other_config?.employee_of_the_month?.points?.filter(Boolean) ||
+                      cachedEOM?.points?.filter(Boolean);
+                    if (points && points.length > 0) {
+                      return points.map((point: string, idx: number) =>
+                        point && (
+                          <div key={idx} className="flex items-start gap-2 text-sm">
+                            <Sparkle className="w-3.5 h-3.5 text-[#C72030] mt-1 flex-shrink-0" />
+                            <p className="leading-tight">{point}</p>
+                          </div>
+                        )
+                      );
+                    }
+                    return (
+                      <p className="text-sm italic opacity-60">Excellence in performance and dedication to the team growth.</p>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
 
-            {/* Footer Info */}
-            <div className="flex justify-between items-end w-full pb-2">
-              {/* Name & Role */}
-              <div className="flex flex-col items-start gap-1">
-                <h4 className="text-2xl font-bold leading-tight">Akshay</h4>
-                <p className="text-sm font-medium opacity-80 mb-1">
-                  Frontend Developer
-                </p>
+            {/* Footer Stats (keeping them but making them look nicer) */}
+            <div className="flex justify-end items-center gap-6 text-sm font-semibold text-[#1f1f1f] pt-4 mt-4 border-t border-black/10">
+              <div className="flex items-center gap-1.5">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <span>32</span>
               </div>
-
-              {/* Stats */}
-              <div className="flex items-center gap-6 text-sm font-semibold text-[#1f1f1f] pb-1">
-                <div className="flex items-center gap-1.5 ">
-                  <span className="text-lg">🔥</span>
-                  <span>32</span>
-                </div>
-                <div className="flex items-center gap-1.5 ">
-                  <MessageSquare className="w-5 h-5 fill-current" />
-                  <span>23 comments</span>
-                </div>
+              <div className="flex items-center gap-1.5">
+                <MessageSquare className="w-5 h-5 fill-current" />
+                <span>23</span>
               </div>
             </div>
           </div>
@@ -2429,7 +2659,12 @@ const PostCard = ({ post }: { post: Post }) => {
             id: "2",
             name: "Michael Chen",
             time: "3h ago",
-            text: "Great progress! Keep up the amazing work 💪",
+            text: (
+              <span>
+                Great progress! Keep up the amazing work{" "}
+                <Dumbbell className="w-4 h-4 inline-block text-gray-700" />
+              </span>
+            ),
             likes: 8,
             replies: 0,
             avatar: "https://randomuser.me/api/portraits/men/2.jpg",
@@ -2447,7 +2682,12 @@ const PostCard = ({ post }: { post: Post }) => {
             id: "4",
             name: "David Martinez",
             time: "6h ago",
-            text: "Consistency is definitely key! Inspiring stuff 🔥",
+            text: (
+              <span>
+                Consistency is definitely key! Inspiring stuff{" "}
+                <Flame className="w-4 h-4 inline-block text-orange-500" />
+              </span>
+            ),
             likes: 6,
             replies: 0,
             avatar: "https://randomuser.me/api/portraits/men/4.jpg",
@@ -2508,19 +2748,7 @@ const PostCard = ({ post }: { post: Post }) => {
                 {/* Delete Button - Moved to Bottom */}
                 <div className="flex justify-end">
                   <button className="flex items-center gap-1 px-3 py-1 text-xs text-red-600 border border-red-200 rounded hover:bg-red-50 transition-colors">
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
+                    <Trash2 className="w-3 h-3" />
                     Delete
                   </button>
                 </div>
@@ -2552,15 +2780,15 @@ const PostCard = ({ post }: { post: Post }) => {
       <div className="flex items-center gap-6 pt-3 border-t border-gray-100 mt-auto">
         <div className="flex items-center gap-4">
           <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors">
-            👍
+            <ThumbsUp className="w-4 h-4 text-blue-500" />
             <span className="text-sm font-medium">{thumbsUpCount}</span>
           </button>
           <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
-            ❤️
+            <Heart className="w-4 h-4 text-red-500 fill-red-500" />
             <span className="text-sm font-medium">{heartCount}</span>
           </button>
           <button className="flex items-center gap-1 text-gray-600 hover:text-orange-600 transition-colors">
-            🔥
+            <Flame className="w-4 h-4 text-orange-500" />
             <span className="text-sm font-medium">{fireCount}</span>
           </button>
         </div>
