@@ -319,6 +319,14 @@ const modulesByPackage = {
                     name: "GST Payable",
                     href: "/accounting/reports/gst-payable",
                 },
+                {
+                    name: "TDS Summary",
+                    href: "/accounting/reports/tds-summary",
+                },
+                {
+                    name: "TDS Receivables Summary",
+                    href: "/accounting/reports/tds-receivables-summary",
+                },
 
 {
   name: "Sales Reports",

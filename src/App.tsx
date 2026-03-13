@@ -1073,6 +1073,9 @@ import ManualJournalEdit from "./pages/ClubManagement/ManualJournalEdit";
 import OpeningBalance from "./pages/ClubManagement/OpeningBalance";
 import ProfitAndLossReport from "./pages/ClubManagement/ProfitAndLossReport";
 import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
+import TDSReceivablesSummaryDetails from "./pages/ClubManagement/TDSReceivablesSummaryDetails";
+import TDSReceivablesSummaryReport from "./pages/ClubManagement/TDSReceivablesSummaryReport";
+import TDSSummaryReport from "./pages/ClubManagement/TDSSummaryReport";
 import TaxSetup from "./pages/ClubManagement/TaxSetup";
 import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
 import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
@@ -2519,6 +2522,18 @@ function App() {
                           <Route
                             path="/accounting/reports/gst-payable"
                             element={<GstPayableReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/tds-summary"
+                            element={<TDSSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/tds-receivables-summary"
+                            element={<TDSReceivablesSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/tds-receivables-summary/details/:sectionCode"
+                            element={<TDSReceivablesSummaryDetails />}
                           />
                           <Route
                             path="/accounting/reports/gst-payable/details/:id"
