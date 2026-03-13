@@ -314,16 +314,21 @@ export const EditEventPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Create preview for image files
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setNewAttachments(prev => [...prev, { file, preview: reader.result as string }]);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setNewAttachments(prev => [...prev, { file, preview: null }]);
+      // Validate that file is an image
+      if (!file.type.startsWith('image/')) {
+        toast.error("Only image files are allowed. Please select an image.");
+        if (attachmentInputRef.current) {
+          attachmentInputRef.current.value = "";
+        }
+        return;
       }
+
+      // Create preview for image files
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewAttachments(prev => [...prev, { file, preview: reader.result as string }]);
+      };
+      reader.readAsDataURL(file);
     }
     // Reset the input
     if (attachmentInputRef.current) {

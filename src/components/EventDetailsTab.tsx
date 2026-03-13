@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Pencil, QrCode, Share2, Info } from 'lucide-react';
+import { ArrowLeft, Pencil, QrCode, Share2, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
@@ -52,6 +52,7 @@ export const EventDetailsTab = () => {
 
     const [eventData, setEventData] = useState<Event>({} as Event);
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -97,6 +98,18 @@ export const EventDetailsTab = () => {
         } finally {
             setUpdatingStatus(false);
         }
+    };
+
+    const handlePrevAttachment = () => {
+        setCurrentAttachmentIndex((prev) =>
+            prev === 0 ? (eventData.documents?.length ?? 1) - 1 : prev - 1
+        );
+    };
+
+    const handleNextAttachment = () => {
+        setCurrentAttachmentIndex((prev) =>
+            prev === (eventData.documents?.length ?? 1) - 1 ? 0 : prev + 1
+        );
     };
 
     if (!eventData.id) {
@@ -174,13 +187,36 @@ export const EventDetailsTab = () => {
                 {/* Card Body */}
                 <div className="p-6 bg-white border-b border-gray-200">
                     <div className="flex flex-col lg:flex-row gap-8 mb-8">
-                        {/* Banner Image */}
-                        <div className="lg:w-1/2 aspect-[16/6] relative rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                        {/* Banner Image Carousel */}
+                        <div className="lg:w-1/2 aspect-[16/6] relative rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
                             <img
-                                src={(eventData.documents && eventData.documents.length > 0) ? eventData.documents[0].document : "https://images.unsplash.com/photo-1540747913346-19e3adbb17c3?q=80&w=1600&auto=format&fit=crop"}
+                                src={(eventData.documents && eventData.documents.length > 0) ? eventData.documents[currentAttachmentIndex].document : "https://images.unsplash.com/photo-1540747913346-19e3adbb17c3?q=80&w=1600&auto=format&fit=crop"}
                                 alt="Event Banner"
-                                className="w-full h-full object-contain"
+                                className="w-full h-full object-contain transition-opacity duration-300"
                             />
+
+                            {/* Navigation Arrows */}
+                            {eventData.documents && eventData.documents.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={handlePrevAttachment}
+                                        className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        title="Previous"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <button
+                                        onClick={handleNextAttachment}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        title="Next"
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-medium px-3 py-1 rounded-full">
+                                        {currentAttachmentIndex + 1} / {eventData.documents.length}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Description */}
