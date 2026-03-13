@@ -242,6 +242,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   });
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
 
   // Get user data from localStorage
   const user = React.useMemo(() => getUser(), []);
@@ -296,6 +297,47 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         
         console.log("🏢 Company Hub Data Loaded:", data);
         setCompanyData(data);
+
+        // Fetch Announcements
+        try {
+          const annEndpoint = `${protocol}${baseUrl}/extra_fields/announcements?resource_id=${effectiveCompanyId}&resource_type=CompanySetup`;
+          let fetchedAnns = [];
+          
+          try {
+            const annRes = await axios.get(annEndpoint, { headers: { Authorization: `Bearer ${token}` } });
+            if (annRes.data?.data && Array.isArray(annRes.data.data)) {
+              fetchedAnns = annRes.data.data;
+            } else if (Array.isArray(annRes.data)) {
+              fetchedAnns = annRes.data;
+            }
+          } catch (e) {
+            console.error("Primary announcement fetch failed", e);
+          }
+
+          // Fallback if the specific endpoint returns empty (this handles group_name mismatch "announcement" vs "announcements")
+          if (fetchedAnns.length === 0) {
+            try {
+              const fallbackEndpoint = `${protocol}${baseUrl}/extra_fields?resource_id=${effectiveCompanyId}&resource_type=CompanySetup&group_name=announcement`;
+              const fallbackRes = await axios.get(fallbackEndpoint, { headers: { Authorization: `Bearer ${token}` } });
+              
+              if (Array.isArray(fallbackRes.data)) {
+                 fetchedAnns = fallbackRes.data;
+              } else if (Array.isArray(fallbackRes.data?.data)) {
+                 fetchedAnns = fallbackRes.data.data;
+              } else if (Array.isArray(fallbackRes.data?.announcement)) {
+                 fetchedAnns = fallbackRes.data.announcement;
+              }
+            } catch (fallbackError) {
+              console.error("Fallback announcement fetch failed", fallbackError);
+            }
+          }
+          
+          if (fetchedAnns.length > 0) {
+            setAnnouncements(fetchedAnns);
+          }
+        } catch (annError) {
+          console.error("Failed to fetch announcements:", annError);
+        }
       } catch (error) {
         console.error("Failed to fetch company data:", error);
       } finally {
@@ -1824,21 +1866,32 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
           {/* Announcements */}
           <div
-            className="bg-white rounded-lg shadow-sm w-full h-[180px] p-4"
+            className="bg-white rounded-lg shadow-sm w-full h-[180px] p-4 flex flex-col"
             style={{
               border: "1px solid #E5E7EB",
             }}
           >
-            <div className="flex items-center gap-2 mb-3 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 mb-3 border-b border-gray-100 pb-2 flex-shrink-0">
               <Bell className="w-5 h-5 text-gray-700" />
               <h3 className="font-bold text-gray-800">Announcements</h3>
             </div>
-            <div>
-              <h4 className="font-bold text-sm">Welcome Deshna Pande</h4>
-              <p className="text-xs text-gray-600 mt-1">
-                We welcome Deshna to Lockated. Designed as a Senior Data
-                Analyst.
-              </p>
+            <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200">
+              {announcements.length > 0 ? (
+                <div className="space-y-4">
+                  {announcements.map((ann, i) => (
+                    <div key={ann.id || ann.extra_field_id || i} className="border-b border-gray-50 last:border-0 pb-2">
+                      <h4 className="font-bold text-sm text-gray-900">{ann.field_name}</h4>
+                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                        {ann.field_value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-xs text-gray-400 italic">No announcements found</p>
+                </div>
+              )}
             </div>
           </div>
 
