@@ -345,20 +345,21 @@ const BalanceSheetReport: React.FC = () => {
 
           {left ? (
             <>
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+             
 
               {left.props.children[1]}
 
               {left.props.children[0]}
 
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+              {/* <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+               <td className="border border-gray-300 px-4 py-3 text-center">0.00</td> */}
             </>
           ) : (
             <>
               <td className="border border-gray-300 px-4 py-3"></td>
               <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
+              {/* <td className="border border-gray-300 px-4 py-3"></td>
+              <td className="border border-gray-300 px-4 py-3"></td> */}
             </>
           )}
 
@@ -366,222 +367,27 @@ const BalanceSheetReport: React.FC = () => {
 
           {right ? (
             <>
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+              
 
               {right.props.children[1]}
 
               {right.props.children[0]}
 
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+              {/* <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td> */}
             </>
           ) : (
             <>
               <td className="border border-gray-300 px-4 py-3"></td>
               <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
+              {/* <td className="border border-gray-300 px-4 py-3"></td>
+              <td className="border border-gray-300 px-4 py-3"></td> */}
             </>
           )}
 
         </tr>
       );
     }
-
-
-    const BalanceSheetTable = () => {
-      if (!balanceSheetData) return null;
-
-      const liabilitiesRows: JSX.Element[] = [];
-      const assetsRows: JSX.Element[] = [];
-
-      balanceSheetData.liabilities.children.forEach((group) => {
-        liabilitiesRows.push(...renderGroupRows(group, 1));
-      });
-
-      balanceSheetData.assets.children.forEach((group) => {
-        assetsRows.push(...renderGroupRows(group, 1));
-      });
-
-      const maxRows = Math.max(liabilitiesRows.length, assetsRows.length);
-
-      const rows = [];
-
-      // for (let i = 0; i < maxRows; i++) {
-      //   const left = liabilitiesRows[i];
-      //   const right = assetsRows[i];
-
-      //   rows.push(
-      //     <tr key={i}>
-
-      //       {/* LIABILITIES SIDE */}
-      //       {left ? (
-      //         <>
-      //           {left.props.children[0]}
-      //           {left.props.children[1]}
-      //         </>
-      //       ) : (
-      //         <>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //         </>
-      //       )}
-
-      //       {/* ASSETS SIDE */}
-      //       {right ? (
-      //         <>
-      //           {right.props.children[0]}
-      //           {right.props.children[1]}
-      //         </>
-      //       ) : (
-      //         <>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //         </>
-      //       )}
-
-      //     </tr>
-      //   );
-      // }
-
-
-      for (let i = 0; i < maxRows; i++) {
-        const left = liabilitiesRows[i];
-        const right = assetsRows[i];
-
-        rows.push(
-          <tr key={i}>
-
-            {/* LIABILITIES SIDE */}
-
-            {left ? (
-              <>
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-
-                {left.props.children[1]}
-
-                {left.props.children[0]}
-
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-              </>
-            ) : (
-              <>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-              </>
-            )}
-
-            {/* ASSETS SIDE */}
-
-            {right ? (
-              <>
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-
-                {right.props.children[1]}
-
-                {right.props.children[0]}
-
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-              </>
-            ) : (
-              <>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-              </>
-            )}
-
-          </tr>
-        );
-      }
-
-      return (
-        <div className="overflow-x-auto">
-
-          <h3 className="text-center font-semibold mb-4">
-            BALANCE SHEET
-          </h3>
-
-          <table className="w-full border-collapse border border-gray-300">
-
-            {/* <thead>
-          <tr className="bg-[#E5E0D3]">
-            <th className="border border-gray-300 px-4 py-3 text-left">
-              Liabilities
-            </th>
-            <th className="border border-gray-300 px-4 py-3 text-center">
-              Amount
-            </th>
-
-            <th className="border border-gray-300 px-4 py-3 text-left">
-              Assets
-            </th>
-            <th className="border border-gray-300 px-4 py-3 text-center">
-              Amount
-            </th>
-          </tr>
-        </thead> */}
-
-
-            <thead>
-              <tr className="bg-[#E5E0D3]">
-
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Previous Year
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-left">
-                  Liabilities
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Amount
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Current Year
-                </th>
-
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Previous Year
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-left">
-                  Assets
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Amount
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Current Year
-                </th>
-
-              </tr>
-            </thead>
-
-            <tbody>{rows}</tbody>
-
-            <tfoot>
-              <tr className="bg-gray-200 font-bold">
-                <td className="border border-gray-300 px-4 py-3">
-                  Total Liabilities
-                </td>
-                <td className="border border-gray-300 px-4 py-3 text-center">
-                  {balanceSheetData.totals.total_liabilities.toFixed(2)}
-                </td>
-
-                <td className="border border-gray-300 px-4 py-3">
-                  Total Assets
-                </td>
-                <td className="border border-gray-300 px-4 py-3 text-center">
-                  {balanceSheetData.totals.total_assets.toFixed(2)}
-                </td>
-              </tr>
-            </tfoot>
-
-          </table>
-        </div>
-      );
-    };
-
 
     return (
       <div className="overflow-x-auto">
@@ -614,31 +420,33 @@ const BalanceSheetReport: React.FC = () => {
           <thead>
             <tr className="bg-[#E5E0D3]">
 
-              <th className="border border-gray-300 px-4 py-3 text-center">
-                Previous Year
-              </th>
+              
               <th className="border border-gray-300 px-4 py-3 text-left">
                 Liabilities
               </th>
               <th className="border border-gray-300 px-4 py-3 text-center">
-                Amount
+                Amount(Total)
               </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
+              {/* <th className="border border-gray-300 px-4 py-3 text-center">
                 Current Year
               </th>
-
               <th className="border border-gray-300 px-4 py-3 text-center">
                 Previous Year
-              </th>
+              </th> */}
+
+            
               <th className="border border-gray-300 px-4 py-3 text-left">
                 Assets
               </th>
               <th className="border border-gray-300 px-4 py-3 text-center">
-                Amount
+                Amount(Total)
               </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
+              {/* <th className="border border-gray-300 px-4 py-3 text-center">
                 Current Year
               </th>
+                <th className="border border-gray-300 px-4 py-3 text-center">
+                Previous Year
+              </th> */}
 
             </tr>
           </thead>
@@ -668,7 +476,7 @@ const BalanceSheetReport: React.FC = () => {
             <tr className="bg-gray-200 font-bold">
 
               {/* Liabilities Side */}
-              <td className="border border-gray-300 px-4 py-3"></td>
+              {/* <td className="border border-gray-300 px-4 py-3"></td> */}
 
               <td className="border border-gray-300 px-4 py-3">
                 Total Liabilities
@@ -678,11 +486,11 @@ const BalanceSheetReport: React.FC = () => {
                 {balanceSheetData.totals.total_liabilities.toFixed(2)}
               </td>
 
-              <td className="border border-gray-300 px-4 py-3"></td>
+              {/* <td className="border border-gray-300 px-4 py-3"></td> */}
 
 
               {/* Assets Side */}
-              <td className="border border-gray-300 px-4 py-3"></td>
+              {/* <td className="border border-gray-300 px-4 py-3"></td> */}
 
               <td className="border border-gray-300 px-4 py-3">
                 Total Assets
@@ -692,7 +500,7 @@ const BalanceSheetReport: React.FC = () => {
                 {balanceSheetData.totals.total_assets.toFixed(2)}
               </td>
 
-              <td className="border border-gray-300 px-4 py-3"></td>
+              {/* <td className="border border-gray-300 px-4 py-3"></td> */}
 
             </tr>
           </tfoot>

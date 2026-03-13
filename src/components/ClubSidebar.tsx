@@ -289,7 +289,7 @@ const modulesByPackage = {
                     icon: Calculator,
                     href: "/accounting/tax-setup-master",
                 },
-                 {
+                {
                     name: "Tax Rates Setup",
                     icon: Calculator,
                     href: "/accounting/tax-rates-setup",
@@ -311,6 +311,7 @@ const modulesByPackage = {
             subItems: [
                 { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
                 { name: "Trial Balance", href: "/accounting/reports/trial-balance" },
+                { name: "Cash Flow Statement", href: "/accounting/reports/cash-flow-statement" },
                 {
                     name: "Profit & Loss",
                     href: "/accounting/reports/profit-and-loss",
@@ -319,30 +320,7 @@ const modulesByPackage = {
                     name: "GST Payable",
                     href: "/accounting/reports/gst-payable",
                 },
-
-{
-  name: "Sales Reports",
-  icon: FileText, 
-  subItems: [
-    {
-      name: "Sales by Customer",
-      href: "/accounting/reports/sales-by-customer",
-    },
-    {
-      name: "Sales by Item",
-      href: "/accounting/reports/sales-by-item",
-    },
-    // {
-    //   name: "Sales by Sales Person",
-    //   href: "/accounting/reports/sales-by-sales-person",
-    // },
-    {
-      name: "Sales Summary",
-      href: "/accounting/reports/sales-summary",
-    },
-  ],
-},
-                {
+                 {
                     name: "GST Receivable",
                     href: "/accounting/reports/gst-receivable",
                 },
@@ -350,7 +328,65 @@ const modulesByPackage = {
                     name: "Tax Summary",
                     href: "/accounting/reports/tax-summary",
                 },
-             
+                {
+                    name: "GSTR-7",
+                    href: "/accounting/reports/gstr-7",
+                },
+                {
+                    name: "GSTR-3B Summary",
+                    href: "/accounting/reports/gstr-3b-summary",
+                },
+                
+                {
+                    name: "Sales Reports",
+                    icon: FileText,
+                    subItems: [
+                        {
+                            name: "Sales by Customer",
+                            href: "/accounting/reports/sales-by-customer",
+                        },
+                        {
+                            name: "Sales by Item",
+                            href: "/accounting/reports/sales-by-item",
+                        },
+                        // {
+                        //   name: "Sales by Sales Person",
+                        //   href: "/accounting/reports/sales-by-sales-person",
+                        // },
+                        {
+                            name: "Sales Summary",
+                            href: "/accounting/reports/sales-summary",
+                        },
+                    ],
+                },
+               
+                // {
+                //     name: "GSTR-9",
+                //     href: "/accounting/reports/gstr-9"
+                // }
+
+                {
+                    name: "TDS Summary",
+                    href: "/accounting/reports/tds-summary",
+                },
+                {
+                    name: "TDS Receivables Summary",
+                    href: "/accounting/reports/tds-receivables-summary",
+                },
+                {
+                    name: "Account Type Summary",
+                    href: "/accounting/reports/account-type-summary",
+                },
+                {
+                    name: "Account Type Transactions",
+                    href: "/accounting/reports/account-type-transactions",
+                },
+                {
+                    name: "Account Transactions",
+                    href: "/accounting/reports/account-transactions",
+                },
+
+
             ],
         },
     ],
@@ -586,58 +622,57 @@ export const ClubSidebar: React.FC = () => {
     // };
 
     const renderMenuItem = (item: any) => {
-  const key = item.href || item.name;
-  const hasSubItems = item.subItems && item.subItems.length > 0;
-  const isExpanded = expandedItems.includes(key);
-  const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
+        const key = item.href || item.name;
+        const hasSubItems = item.subItems && item.subItems.length > 0;
+        const isExpanded = expandedItems.includes(key);
+        const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
 
-  if (hasSubItems) {
-    return (
-      <div key={key}>
-        <button
-          onClick={() => toggleExpand(key)}
-          className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold text-[#1a1a1a] hover:bg-[#DBC2A9] relative"
-        >
-          <div className="flex items-center gap-3">
-            {item.icon && <item.icon className="w-5 h-5" />}
-            <span>{item.name}</span>
-          </div>
+        if (hasSubItems) {
+            return (
+                <div key={key}>
+                    <button
+                        onClick={() => toggleExpand(key)}
+                        className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold text-[#1a1a1a] hover:bg-[#DBC2A9] relative"
+                    >
+                        <div className="flex items-center gap-3">
+                            {item.icon && <item.icon className="w-5 h-5" />}
+                            <span>{item.name}</span>
+                        </div>
 
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-        </button>
+                        {isExpanded ? (
+                            <ChevronDown className="w-4 h-4" />
+                        ) : (
+                            <ChevronRight className="w-4 h-4" />
+                        )}
+                    </button>
 
-        {isExpanded && (
-          <div className="ml-4 space-y-1">
-            {item.subItems.map((subItem: any) =>
-              renderMenuItem(subItem)
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
+                    {isExpanded && (
+                        <div className="ml-4 space-y-1">
+                            {item.subItems.map((subItem: any) =>
+                                renderMenuItem(subItem)
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
 
-  return (
-    <button
-      key={key}
-      onClick={() => handleNavigation(item.href)}
-      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${
-        item.color || "text-[#1a1a1a]"
-      }`}
-    >
-      {isActive && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
-      )}
+        return (
+            <button
+                key={key}
+                onClick={() => handleNavigation(item.href)}
+                className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
+                    }`}
+            >
+                {isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
+                )}
 
-      {item.icon && <item.icon className="w-5 h-5" />}
-      <span>{item.name}</span>
-    </button>
-  );
-};
+                {item.icon && <item.icon className="w-5 h-5" />}
+                <span>{item.name}</span>
+            </button>
+        );
+    };
 
     const CollapsedMenuItem = ({ item, level = 0 }) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;

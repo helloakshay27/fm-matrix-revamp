@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
-    Button,
+    // Button,
     Autocomplete,
     FormControlLabel,
     Checkbox,
@@ -25,6 +25,8 @@ import {
     InputAdornment,
     Chip
 } from '@mui/material';
+
+import { Button } from "@/components/ui/button";
 import {
     Close,
     Add,
@@ -36,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
+import { toast } from "sonner";
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -116,7 +119,12 @@ export const QuotesAdd: React.FC = () => {
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+                    setItemOptions(res.data.map(item => ({
+                        id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
+                        tax_preference: item.tax_preference,
+                        tax_exemption_id: item.tax_exemption_id,
+                        tax_group_id: item.intra_state_tax_rate_id
+                    })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -344,8 +352,6 @@ export const QuotesAdd: React.FC = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [selectedProject, setSelectedProject] = useState<string>("");
 
-
-
     const projects = [
         { id: "1", name: "Recess Club Phase 1" },
         { id: "2", name: "Accounting Revamp" },
@@ -566,18 +572,68 @@ export const QuotesAdd: React.FC = () => {
 
     // Validation
     const validate = (): boolean => {
+        // const newErrors: Record<string, string> = {};
+
+        // if (!selectedCustomer) newErrors.customer = 'Customer is required';
+        // if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
+        // if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
+        // if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+
+        // const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
+        // if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+
+        // setErrors(newErrors);
+        // return Object.keys(newErrors).length === 0;
+
+
         const newErrors: Record<string, string> = {};
 
-        if (!selectedCustomer) newErrors.customer = 'Customer is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
-        if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
-        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
-
-        const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
-
+        if (!selectedCustomer) {
+            // newErrors.customer = 'Customer is required';
+            setErrors(newErrors);
+            toast.error('Customer is required');
+            return false;
+        }
+        if (!placeOfSupply) {
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        toast.error('Place of Supply is required');
+        return false;
+    }
+
+        if (!salesOrderDate) {
+            // newErrors.salesOrderDate = 'Sales order date is required';
+            setErrors(newErrors);
+            toast.error('Quote date is required');
+            return false;
+        }
+
+        // if (!expectedShipmentDate) {
+        //     // newErrors.expectedShipmentDate = 'Expected shipment date is required';
+        //     setErrors(newErrors);
+        //     toast.error('Expiry is required');
+        //     return false;
+        // }
+
+        // if (!selectedTerm) {
+        //     // newErrors.paymentTerms = 'Payment terms is required';
+        //     setErrors(newErrors);
+        //     toast.error('Payment terms is required');
+        //     return false;
+        // }
+
+        const hasValidItems = items.some(
+            item => item.name && item.quantity > 0 && item.rate > 0
+        );
+
+        if (!hasValidItems) {
+            // newErrors.items = 'At least one valid item is required';
+            setErrors(newErrors);
+            toast.error('Please add at least one valid item');
+            return false;
+        }
+
+        setErrors({});
+        return true;
     };
 
 
@@ -628,7 +684,7 @@ export const QuotesAdd: React.FC = () => {
 
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
+        if (!validate()) {
             return;
         }
         setIsSubmitting(true);
@@ -827,6 +883,17 @@ export const QuotesAdd: React.FC = () => {
     console.log("tax gst amount total:", totalGSTAmount)
     console.log("sub total :", subTotal)
     console.log("tax amount 2 tds :", taxAmount2)
+
+    const states = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+        "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+        "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
+    ];
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
@@ -858,7 +925,7 @@ export const QuotesAdd: React.FC = () => {
                                         displayEmpty
                                         sx={fieldStyles}
                                     >
-                                        <MenuItem value="" disabled>Select a customer</MenuItem>
+                                        <MenuItem value="">Select a customer</MenuItem>
                                         {customers.map((customer) => (
                                             <MenuItem key={customer.id} value={customer.id}>
                                                 {customer.name}
@@ -885,7 +952,7 @@ export const QuotesAdd: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
-                                        Place of Supply
+                                        Place of Supply<span className="text-red-500">*</span>
                                     </label>
 
                                     <TextField
@@ -894,13 +961,21 @@ export const QuotesAdd: React.FC = () => {
                                         value={placeOfSupply}
                                         onChange={(e) => setPlaceOfSupply(e.target.value)}
                                         sx={fieldStyles}
+                                        SelectProps={{
+                                            displayEmpty: true
+                                        }}
                                     >
-                                        <MenuItem value="">Select Country</MenuItem>
-                                        <MenuItem value="India">India</MenuItem>
+                                        <MenuItem value="">Select Place of Supply</MenuItem>
+                                        {/* <MenuItem value="India">India</MenuItem>
                                         <MenuItem value="United States">United States</MenuItem>
                                         <MenuItem value="United Kingdom">United Kingdom</MenuItem>
                                         <MenuItem value="Australia">Australia</MenuItem>
-                                        <MenuItem value="Canada">Canada</MenuItem>
+                                        <MenuItem value="Canada">Canada</MenuItem> */}
+                                        {states.map((state) => (
+                                            <MenuItem key={state} value={state}>
+                                                {state}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
                                 </div>
                             </div>
@@ -928,6 +1003,7 @@ export const QuotesAdd: React.FC = () => {
                             </label>
                             <TextField
                                 fullWidth
+                                variant="outlined"
                                 multiline
                                 rows={4}
                                 value={selectedCustomer?.billing_address?.address
@@ -936,6 +1012,27 @@ export const QuotesAdd: React.FC = () => {
                                 onChange={(e) => setBillingAddress(e.target.value)}
                                 placeholder="Enter billing address"
                                 disabled={!!selectedCustomer?.billing_address?.address}
+
+                                InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+
+                                    "& .MuiInputBase-inputMultiline": {
+                                        resize: "none !important", // ✅ removes resize handle
+                                    },
+                                }}
+
+                            //   helperText={
+                            //     <span style={{ textAlign: "right", display: "block" }}>
+                            //       {(billingAddress?.length || 0) + "/500 characters"}
+                            //     </span>
+                            //   }
                             />
                         </div>
 
@@ -953,6 +1050,26 @@ export const QuotesAdd: React.FC = () => {
                                 onChange={(e) => setShippingAddress(e.target.value)}
                                 placeholder="Enter shipping address"
                                 disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+
+                                    "& .MuiInputBase-inputMultiline": {
+                                        resize: "none !important", // ✅ removes resize handle
+                                    },
+                                }}
+
+                            //   helperText={
+                            //     <span style={{ textAlign: "right", display: "block" }}>
+                            //       {(billingAddress?.length || 0) + "/500 characters"}
+                            //     </span>
+                            //   }
                             />
                             {/* <FormControlLabel
                                 control={
@@ -968,8 +1085,9 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </Section>
 
+
                 {/* Sales Order Details */}
-                <Section title="Sales Order Details" icon={<Calendar className="w-5 h-5" />}>
+                <Section title="Quote Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <div>
@@ -980,7 +1098,7 @@ export const QuotesAdd: React.FC = () => {
                                 fullWidth
                                 value={referenceNumber}
                                 onChange={(e) => setReferenceNumber(e.target.value)}
-                                placeholder="Enter order number"
+                                placeholder="Enter Reference number"
                                 sx={fieldStyles}
                             />
                         </div>
@@ -1003,7 +1121,7 @@ export const QuotesAdd: React.FC = () => {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Expiry Date<span className="text-red-500">*</span>
+                                Expiry Date
                             </label>
                             <TextField
                                 fullWidth
@@ -1048,7 +1166,27 @@ export const QuotesAdd: React.FC = () => {
                                 value={subject}
                                 onChange={e => setSubject(e.target.value)}
                                 placeholder="Enter subject"
-                                sx={fieldStyles}
+                                // sx={fieldStyles}
+                                InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+
+                                    "& .MuiInputBase-inputMultiline": {
+                                        resize: "none !important", // ✅ removes resize handle
+                                    },
+
+                                }}
+                                helperText={
+                                    <span style={{ textAlign: "right", display: "block" }}>
+                                        {(subject?.length || 0) + "/500 characters"}
+                                    </span>
+                                }
                             />
                         </div>
                     </div>
@@ -1061,8 +1199,8 @@ export const QuotesAdd: React.FC = () => {
                             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
+                        <div className="border border-border rounded-lg overflow-x-auto">
+                            <table className="w-full min-w-[900px]">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
@@ -1088,6 +1226,24 @@ export const QuotesAdd: React.FC = () => {
                                                                 updateItem(index, 'name', selectedItem.name);
                                                                 updateItem(index, 'rate', selectedItem.rate);
                                                                 updateItem(index, 'description', selectedItem.description);
+                                                                // TAX HANDLING
+                                                                if (selectedItem.tax_preference === "non_taxable") {
+                                                                    updateItem(index, "item_tax_type", "non_taxable");
+                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "taxable") {
+                                                                    updateItem(index, "item_tax_type", "tax_group");
+                                                                    updateItem(index, "tax_group_id", selectedItem.tax_group_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "out_of_scope") {
+                                                                    updateItem(index, "item_tax_type", "out_of_scope");
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "non_gst_supply") {
+                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
+                                                                }
                                                             }
                                                         }}
                                                         displayEmpty
@@ -1103,11 +1259,13 @@ export const QuotesAdd: React.FC = () => {
                                                 </FormControl>
                                                 <TextField
                                                     fullWidth
+                                                    label="Item Description"
                                                     size="small"
                                                     placeholder="Description"
                                                     value={item.description}
                                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 1 }}
+                                                    sx={{ mt: 2 }}
+                                                    InputLabelProps={{ shrink: true }}
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
@@ -1224,7 +1382,7 @@ export const QuotesAdd: React.FC = () => {
                             <Button
                                 startIcon={<Add />}
                                 onClick={addItem}
-                                variant="outlined"
+                                variant="outline"
                                 sx={{ textTransform: 'none' }}
                             >
                                 Add New Row
@@ -1251,6 +1409,15 @@ export const QuotesAdd: React.FC = () => {
                             <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
+                                    <Select
+                                        size="small"
+                                        value={discountTypeOnTotal}
+                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
+                                        sx={{ width: 110 }}
+                                    >
+                                        <MenuItem value="percentage">%</MenuItem>
+                                        <MenuItem value="amount">Amount</MenuItem>
+                                    </Select>
                                     <TextField
                                         type="number"
                                         size="small"
@@ -1259,15 +1426,6 @@ export const QuotesAdd: React.FC = () => {
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
-                                    <Select
-                                        size="small"
-                                        value={discountTypeOnTotal}
-                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
-                                        sx={{ width: 100 }}
-                                    >
-                                        <MenuItem value="percentage">%</MenuItem>
-                                        <MenuItem value="amount">Amount</MenuItem>
-                                    </Select>
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
@@ -1374,6 +1532,26 @@ export const QuotesAdd: React.FC = () => {
                         value={customerNotes}
                         onChange={(e) => setCustomerNotes(e.target.value)}
                         placeholder="Enter any notes for the customer"
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ maxLength: 500 }}
+                        sx={{
+                            mt: 1,
+                            "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                                display: "flex",
+                            },
+
+                            "& .MuiInputBase-inputMultiline": {
+                                resize: "none !important", // ✅ removes resize handle
+                            },
+
+                        }}
+                        helperText={
+                            <span style={{ textAlign: "right", display: "block" }}>
+                                {(customerNotes?.length || 0) + "/500 characters"}
+                            </span>
+                        }
                     />
                 </Section>
 
@@ -1386,6 +1564,26 @@ export const QuotesAdd: React.FC = () => {
                         value={termsAndConditions}
                         onChange={(e) => setTermsAndConditions(e.target.value)}
                         placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ maxLength: 500 }}
+                        sx={{
+                            mt: 1,
+                            "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                                display: "flex",
+                            },
+
+                            "& .MuiInputBase-inputMultiline": {
+                                resize: "none !important", // ✅ removes resize handle
+                            },
+
+                        }}
+                        helperText={
+                            <span style={{ textAlign: "right", display: "block" }}>
+                                {(termsAndConditions?.length || 0) + "/500 characters"}
+                            </span>
+                        }
                     />
                 </Section>
 
@@ -1520,65 +1718,67 @@ export const QuotesAdd: React.FC = () => {
                 </Section>
 
                 {/* Additional Fields */}
-                <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
+                <Section title="Additional Fields" icon={<FileText className="w-5 h-5" />}>
                     <Typography variant="body2" className="text-gray-600">
-                        Add custom fields to your sales orders by going to Settings → Sales → Sales Orders → Field Customization
+                        Start adding custom fields for your quotes by going to Settings → Sales → Quotes.
                     </Typography>
                 </Section>
             </div>
 
-            <div className="flex items-center gap-3 justify-center pt-2">
+            <div className="flex gap-3 mt-10 mb-10 justify-center pb-5">
+
                 <Button
-                    variant="outlined"
-                    onClick={() => navigate('/accounting/invoices/list')}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="outlined"
+                    // variant="outlined"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
-                        '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
+                // sx={{
+                //     textTransform: 'none',
+                //     px: 4,
+                //     borderColor: 'primary.main',
+                //     color: 'primary.main',
+                //     '&:hover': {
+                //         borderColor: 'primary.dark',
+                //         bgcolor: 'primary.main',
+                //         color: 'white'
+                //     }
+                // }}
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    variant="contained"
+                    // variant="contained"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: 'primary.dark'
-                        },
-                        textTransform: 'none'
-                    }}
+                // sx={{
+                //     bgcolor: 'primary.main',
+                //     color: 'white',
+                //     px: 4,
+                //     '&:hover': {
+                //         bgcolor: 'primary.dark'
+                //     },
+                //     textTransform: 'none'
+                // }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                </Button>
+
+                <Button
+                    variant="outline"
+                    onClick={() => navigate('/accounting/invoices/list')}
+                    disabled={isSubmitting}
+                // sx={{
+                //     textTransform: 'none',
+                //     px: 4,
+                //     borderColor: 'divider',
+                //     color: 'text.secondary',
+                //     '&:hover': {
+                //         borderColor: 'primary.main',
+                //         bgcolor: 'primary.main',
+                //         color: 'white'
+                //     }
+                // }}
+                >
+                    Cancel
                 </Button>
             </div>
 
@@ -1847,6 +2047,7 @@ export const QuotesAdd: React.FC = () => {
                         <Select
                             value={selectedExemption}
                             onChange={(e) => setSelectedExemption(e.target.value)}
+                            displayEmpty
                         >
 
                             <MenuItem value="">Select Reason</MenuItem>

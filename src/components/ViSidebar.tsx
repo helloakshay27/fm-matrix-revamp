@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User, Target, Wrench, UserCheck, Shield, Star, Circle } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing, FileText, Calendar, User, Target, Wrench, UserCheck, Shield, Star, Circle, Database } from 'lucide-react';
 
 interface ModuleItem {
     name: string;
@@ -13,6 +13,7 @@ interface ModuleItem {
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage: Record<string, ModuleItem[]> = {
+   
     Maintenance: [
         { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
     ],
@@ -80,6 +81,16 @@ const modulesByPackage: Record<string, ModuleItem[]> = {
         { name: 'Employee Deletion History', icon: Trash, href: '/safety/employee-deletion-history' },
         // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
+    ],
+     Master: [
+        {
+            name: "User",
+            icon: Users,
+            href: "/master/user",
+            subItems: [
+                { name: "Fte Users", href: "/master/user/vi-users", color: "text-[#1a1a1a]" },
+            ],
+        },
     ],
     Settings: [
         {

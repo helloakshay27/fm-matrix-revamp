@@ -90,7 +90,12 @@ const navigationStructure = {
         subItems: [
           { name: "General", href: "/settings/account/general" },
           {
+            name: "Company Setup",
+            href: "/settings/company-hub/Company-setup",
+          },
+          {
             name: "Holiday Calendar",
+
             href: "/settings/account/holiday-calendar",
           },
           { name: "About", href: "/settings/account/about", isActive: true },
@@ -367,6 +372,8 @@ const modulesByPackage = {
           href: "/master/user/lockated-users",
           color: "text-[#1a1a1a]",
         },
+        { name: "Fte Users", href: "/master/user/vi-users", color: "text-[#1a1a1a]" },
+
       ],
     },
     {
@@ -1479,6 +1486,16 @@ const modulesByPackage = {
       name: "Circle",
       href: "/safety/m-safe/circle",
     },
+    {
+      icon: Globe,
+      name: "Company-hub",
+      subItems: [
+        {
+          name: "Setup",
+          href: "/settings/company-hub/Company-setup",
+        },
+      ],
+    },
   ],
   // Accounting: [
   //             {
@@ -1648,6 +1665,18 @@ const modulesByPackage = {
         {
           name: "Tax Summary",
           href: "/accounting/reports/tax-summary",
+        },
+        {
+          name: "Account Type Summary",
+          href: "/accounting/reports/account-type-summary",
+        },
+        {
+          name: "Account Type Transactions",
+          href: "/accounting/reports/account-type-transactions",
+        },
+        {
+          name: "Account Transactions",
+          href: "/accounting/reports/account-transactions",
         },
       ],
     },
@@ -2078,7 +2107,7 @@ export const StacticSidebar = () => {
   return (
     <div
       className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+        } bg-[#f6f4ee] border-r border-[#D5DbDB]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
