@@ -89,7 +89,7 @@ interface PnlResponse {
   totals: Totals;
 }
 
-const ProfitAndLossReport: React.FC = () => {
+const CashFlowStatementReport: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const [pnlData, setPnlData] = useState<PnlResponse | null>(null);
@@ -177,12 +177,12 @@ const ProfitAndLossReport: React.FC = () => {
                   maximumFractionDigits: 2,
                 })}
               </td>
-              <td className="border border-gray-300 px-4 py-3 text-center">
+              {/* <td className="border border-gray-300 px-4 py-3 text-center">
                 0.00
               </td>
               <td className="border border-gray-300 px-4 py-3 text-center">
                 0.00
-              </td>
+              </td> */}
             </tr>,
           );
           rows.push(...renderGroupRows(child, depth + 1));
@@ -197,7 +197,7 @@ const ProfitAndLossReport: React.FC = () => {
       <div className="overflow-x-auto">
 
         <h3 className="text-center font-semibold mb-4">
-          PROFIT & LOSS
+          CASH FLOW STATEMENT 
         </h3>
 
         <table className="w-full border-collapse border border-gray-300 bg-white">
@@ -207,31 +207,31 @@ const ProfitAndLossReport: React.FC = () => {
 
              
               <th className="border border-gray-300 px-4 py-3 text-left">
-                Expenditure
+                 Account
               </th>
               <th className="border border-gray-300 px-4 py-3 text-center">
-                Amount
+                Total
               </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
+              {/* <th className="border border-gray-300 px-4 py-3 text-center">
                 Current Year(Apr 2025 - Mar 2026)
               </th>
                <th className="border border-gray-300 px-4 py-3 text-center">
                 Previous Year(Apr 2024 - Mar 2025)
-              </th>
+              </th> */}
 
               
               <th className="border border-gray-300 px-4 py-3 text-left">
-                Income
+               Account
               </th>
               <th className="border border-gray-300 px-4 py-3 text-center">
-                Amount
+                Total
               </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
+              {/* <th className="border border-gray-300 px-4 py-3 text-center">
                 Current Year(Apr 2025 - Mar 2026)
               </th>
               <th className="border border-gray-300 px-4 py-3 text-center">
                 Previous Year(Apr 2024 - Mar 2025)
-              </th>
+              </th> */}
 
             </tr>
           </thead>
@@ -293,8 +293,8 @@ const ProfitAndLossReport: React.FC = () => {
                       <>
                         <td className="border px-4 py-3"></td>
                         <td className="border px-4 py-3"></td>
-                        <td className="border px-4 py-3"></td>
-                        <td className="border px-4 py-3"></td>
+                        {/* <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td> */}
                       </>
                     )}
 
@@ -304,8 +304,8 @@ const ProfitAndLossReport: React.FC = () => {
                       <>
                         <td className="border px-4 py-3"></td>
                         <td className="border px-4 py-3"></td>
-                        <td className="border px-4 py-3"></td>
-                        <td className="border px-4 py-3"></td>
+                        {/* <td className="border px-4 py-3"></td>
+                        <td className="border px-4 py-3"></td> */}
                       </>
                     )}
 
@@ -328,33 +328,33 @@ const ProfitAndLossReport: React.FC = () => {
               
 
               <td className="border border-gray-300 px-4 py-3">
-                Total Expenditure
+                Total 
               </td>
 
-              <td className="border border-gray-300 px-4 py-3 text-right">
+              <td className="border border-gray-300 px-4 py-3 text-center">
                 {Number(pnlData?.totals.expense_total).toLocaleString(undefined, {
                   minimumFractionDigits: 2
                 })}
               </td>
 
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+              {/* <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td> */}
 
 
              
 
               <td className="border border-gray-300 px-4 py-3">
-                Total Income
+                Total 
               </td>
 
-              <td className="border border-gray-300 px-4 py-3 text-right">
+              <td className="border border-gray-300 px-4 py-3 text-center">
                 {Number(pnlData?.totals.income_total).toLocaleString(undefined, {
                   minimumFractionDigits: 2
                 })}
               </td>
 
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-               <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+              {/* <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
+               <td className="border border-gray-300 px-4 py-3 text-center">0.00</td> */}
 
             </tr>
 
@@ -425,7 +425,7 @@ const ProfitAndLossReport: React.FC = () => {
               <NotepadText className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Profit and Loss Report
+              Cash Flow Statement Report
             </h3>
           </div>
 
@@ -476,4 +476,4 @@ const ProfitAndLossReport: React.FC = () => {
   );
 };
 
-export default ProfitAndLossReport;
+export default CashFlowStatementReport;
