@@ -436,6 +436,9 @@ import { OccupantUserMasterDashboard } from "./pages/master/OccupantUserMasterDa
 import { AddFMUserPage } from "./pages/master/AddFMUserPage";
 import { EditFMUserPage } from "./pages/master/EditFMUserPage";
 import { ViewFMUserPage } from "./pages/master/ViewFMUserPage";
+import { ViUsersMasterDashboard } from "./pages/master/ViUsersMasterDashboard";
+import { ViewViUserPage } from "./pages/master/ViewViUserPage";
+import { EditViUserPage } from "./pages/master/EditViUserPage";
 
 // Import Material Master page
 import { MaterialMasterPage } from "./pages/MaterialMasterPage";
@@ -4750,6 +4753,18 @@ function App() {
                           <Route
                             path="/master/user/occupant-users"
                             element={<OccupantUserMasterDashboard />}
+                          />
+                          <Route
+                            path="/master/user/vi-users"
+                            element={<ViUsersMasterDashboard />}
+                          />
+                          <Route
+                            path="/master/user/vi-users/view/:id"
+                            element={<ViewViUserPage />}
+                          />
+                          <Route
+                            path="/master/user/vi-users/edit/:id"
+                            element={<EditViUserPage />}
                           />
                           <Route
                             path="/master/user/lockated-users"
