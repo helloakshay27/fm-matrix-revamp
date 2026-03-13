@@ -1039,6 +1039,12 @@ import { ViewGuestUserPage } from "./pages/ClubManagement/ViewGuestUserPage";
 import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
 import AddGroupMembershipPage from "./pages/ClubManagement/AddGroupMembershipPage";
 import AmenityBookingListClub from "./pages/ClubManagement/AmenityBookingList";
+import AccountTypeSummaryReport from "./pages/ClubManagement/AccountTypeSummaryReport";
+import AccountTypeSummaryDetailReport from "./pages/ClubManagement/AccountTypeSummaryDetailReport";
+import AccountTypeTransactionsReport from "./pages/ClubManagement/AccountTypeTransactionsReport";
+import AccountTypeTransactionsDetailPage from "./pages/ClubManagement/AccountTypeTransactionsDetailPage";
+import AccountTransactionsDetailPage from "./pages/ClubManagement/AccountTransactionsDetailPage";
+import AccountTransactionsReport from "./pages/ClubManagement/AccountTransactionsReport";
 import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
@@ -2462,6 +2468,30 @@ function App() {
                           <Route
                             path="/accounting/reports/balance-sheet"
                             element={<BalanceSheetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-type-summary"
+                            element={<AccountTypeSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-type-summary/details/:accountName"
+                            element={<AccountTypeSummaryDetailReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-type-transactions"
+                            element={<AccountTypeTransactionsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-type-transactions/details"
+                            element={<AccountTypeTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-transactions"
+                            element={<AccountTransactionsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-transactions/details"
+                            element={<AccountTransactionsDetailPage />}
                           />
                           <Route
                             path="/accounting/reports/sales-by-customer"

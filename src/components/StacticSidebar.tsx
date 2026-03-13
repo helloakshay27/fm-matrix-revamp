@@ -1664,6 +1664,18 @@ const modulesByPackage = {
           name: "Tax Summary",
           href: "/accounting/reports/tax-summary",
         },
+        {
+          name: "Account Type Summary",
+          href: "/accounting/reports/account-type-summary",
+        },
+        {
+          name: "Account Type Transactions",
+          href: "/accounting/reports/account-type-transactions",
+        },
+        {
+          name: "Account Transactions",
+          href: "/accounting/reports/account-transactions",
+        },
       ],
     },
   ],
