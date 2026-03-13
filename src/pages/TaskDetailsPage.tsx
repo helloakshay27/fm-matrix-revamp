@@ -960,9 +960,24 @@ export const TaskDetailsPage = () => {
           </span>
         );
       case "input": {
+        const formatInputValue = (val: string): string => {
+          if (!val || val === "-") return val || "-";
+          try {
+            const parsed = JSON.parse(val);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              return Object.entries(parsed as Record<string, string>)
+                .filter(([, v]) => v)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(" | ") || val;
+            }
+          } catch {
+            // not JSON, use as-is
+          }
+          return val;
+        };
         const inputText = Array.isArray(item.input)
-          ? item.input.join(", ")
-          : item.input;
+          ? item.input.map(formatInputValue).join(", ")
+          : formatInputValue(item.input);
         return (
           <span
             className="text-xs cursor-help truncate max-w-[200px] block"
