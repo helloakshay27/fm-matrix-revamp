@@ -42,7 +42,7 @@ const ReportStep: React.FC<ReportStepProps> = ({
         <div className="p-4 space-y-4">
             {/* Select Incident Over Time */}
             <div className="shadow-sm rounded-md p-3 flex items-center gap-3">
-                <span className="text-sm font-medium whitespace-nowrap">Select Incident Date & Time</span>
+                <span className="text-sm font-medium whitespace-nowrap">Select Incident Over Time</span>
                 <FormControl size="small" sx={{ minWidth: 200 }}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DateTimePicker
