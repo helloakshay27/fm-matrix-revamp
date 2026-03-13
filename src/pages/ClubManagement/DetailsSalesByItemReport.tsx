@@ -113,9 +113,9 @@ const DetailsSalesByItemReport = () => {
         ) : error ? (
           <div className="p-6 text-red-600">{error}</div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-100 text-sm">
-              <tr>
+        <table className="w-full border-collapse border border-gray-300">
+            <thead >
+            <tr className="bg-[#E5E0D3]">
                 <th className="text-left p-3">Customer Name</th>
                 <th className="text-center p-3">Quantity</th>
                 <th className="text-right p-3">Amount</th>
@@ -132,7 +132,7 @@ const DetailsSalesByItemReport = () => {
               ) : (
                 tableData.map((row, index) => (
                   <tr key={index} className="border-t">
-                    <td className="p-3 text-blue-600">
+                    <td className="p-3 text-black">
                       {row.customer}
                     </td>
                     <td className="p-3 text-center">

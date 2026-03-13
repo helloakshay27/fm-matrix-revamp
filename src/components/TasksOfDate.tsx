@@ -222,12 +222,12 @@ const DroppableDay = ({
     >
       <span
         className={`absolute left-0 top-0 h-full w-[4px] ${isWeekOff
-            ? "bg-red-500"
-            : durationPercentage <= 33
-              ? "bg-[#1FCFB3]"
-              : durationPercentage <= 66
-                ? "bg-[#ED9017]"
-                : "bg-[#C72030]"
+          ? "bg-red-500"
+          : durationPercentage <= 33
+            ? "bg-[#1FCFB3]"
+            : durationPercentage <= 66
+              ? "bg-[#ED9017]"
+              : "bg-[#C72030]"
           }`}
       />
       <div className="font-medium text-xs text-left">{dateInfo.day}</div>
@@ -428,7 +428,7 @@ const TasksOfDate = ({
 
       const dateField = task.type === "issue" ? "end_date" : "target_date";
 
-      const payload = {
+      const basePayload = {
         ...(task[dateField] == formatedSelectedDate && {
           [dateField]: fullDate,
           allocation_date: fullDate,
@@ -440,6 +440,11 @@ const TasksOfDate = ({
           task_management_id: task.task_management_id,
         }),
       };
+
+      const payload =
+        task.type === "issue"
+          ? { issue: basePayload }
+          : { task_management: basePayload };
 
       // Use different API based on task type
       if (task.type === "issue") {
