@@ -539,7 +539,7 @@ const ProjectTasksPage = () => {
     const [selectedCreators, setSelectedCreators] = useState<number[]>([]);
     const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
     const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState<string[]>([]);
-    const [dates, setDates] = useState({ startDate: '', endDate: '' });
+    const [dates, setDates] = useState({ startDate: '', endDate: '', completedAt: '' });
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
     const [dropdowns, setDropdowns] = useState({
         status: false,
@@ -547,6 +547,9 @@ const ProjectTasksPage = () => {
         responsiblePerson: false,
         createdBy: false,
         project: false,
+        startDate: false,
+        endDate: false,
+        completedAt: false,
     });
     const [searchTerms, setSearchTerms] = useState({
         status: '',
@@ -723,7 +726,8 @@ const ProjectTasksPage = () => {
             selectedProjects?.length > 0 ||
             selectedWorkflowStatus?.length > 0 ||
             dates.startDate ||
-            dates.endDate
+            dates.endDate ||
+            dates.completedAt
         ) {
             localStorage.setItem('taskFilters', JSON.stringify(filters));
         }
@@ -749,6 +753,9 @@ const ProjectTasksPage = () => {
                 responsiblePerson: false,
                 createdBy: false,
                 project: false,
+                startDate: false,
+                endDate: false,
+                completedAt: false,
                 [key]: true,
             };
         });
@@ -823,6 +830,9 @@ const ProjectTasksPage = () => {
             if (dates.endDate) {
                 params['q[end_date_eq]'] = dates.endDate;
             }
+            if (dates.completedAt) {
+                params['q[completed_at_eq]'] = dates.completedAt;
+            }
             if (mid) {
                 params['q[milestone_id_eq]'] = mid;
             }
@@ -875,6 +885,9 @@ const ProjectTasksPage = () => {
         if (dates.endDate) {
             filters['q[end_date_eq]'] = dates.endDate;
         }
+        if (dates.completedAt) {
+            filters['q[completed_at_eq]'] = dates.completedAt;
+        }
 
         return filters;
     };
@@ -916,7 +929,7 @@ const ProjectTasksPage = () => {
         setSelectedCreators([]);
         setSelectedProjects([]);
         setSelectedWorkflowStatus([]);
-        setDates({ startDate: '', endDate: '' });
+        setDates({ startDate: '', endDate: '', completedAt: '' });
         setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '' });
         localStorage.removeItem('taskFilters');
         setCurrentPage(1);
@@ -2545,11 +2558,21 @@ const ProjectTasksPage = () => {
                             )}
                         </div>
 
-                        {/* Date Range */}
+                        {/* Start Date */}
                         <div className="p-6 py-3">
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="font-medium text-sm select-none block mb-2">Start Date</label>
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown('startDate')}
+                            >
+                                <span className="font-medium text-sm select-none">Start Date</span>
+                                {dropdowns.startDate ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
+                                )}
+                            </div>
+                            {dropdowns.startDate && (
+                                <div className="mt-4">
                                     <input
                                         type="date"
                                         value={dates.startDate}
@@ -2557,8 +2580,24 @@ const ProjectTasksPage = () => {
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
                                 </div>
-                                <div>
-                                    <label className="font-medium text-sm select-none block mb-2">End Date</label>
+                            )}
+                        </div>
+
+                        {/* End Date */}
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown('endDate')}
+                            >
+                                <span className="font-medium text-sm select-none">End Date</span>
+                                {dropdowns.endDate ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
+                                )}
+                            </div>
+                            {dropdowns.endDate && (
+                                <div className="mt-4">
                                     <input
                                         type="date"
                                         value={dates.endDate}
@@ -2566,7 +2605,32 @@ const ProjectTasksPage = () => {
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
                                 </div>
+                            )}
+                        </div>
+
+                        {/* Completed At */}
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown('completedAt')}
+                            >
+                                <span className="font-medium text-sm select-none">Completed At</span>
+                                {dropdowns.completedAt ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
+                                )}
                             </div>
+                            {dropdowns.completedAt && (
+                                <div className="mt-4">
+                                    <input
+                                        type="date"
+                                        value={dates.completedAt}
+                                        onChange={(e) => setDates({ ...dates, completedAt: e.target.value })}
+                                        className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 
