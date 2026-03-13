@@ -96,6 +96,7 @@ export const AddRolePage = () => {
   const [permissions, setPermissions] = useState<NewRolePermission[]>([]);
   const [activeModuleTab, setActiveModuleTab] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const org_id = localStorage.getItem("org_id");
 
   useEffect(() => {
     const fetchModules = async () => {
@@ -368,9 +369,29 @@ export const AddRolePage = () => {
         lock_modules: enabledModuleIds,
       };
 
+
+      const viPayload = {
+        role: {
+          user_id: localStorage.getItem("userId"),
+          title: displayName.trim(),
+          name: roleName.trim(),
+          active: 1,
+          description: "",
+          resource_id: localStorage.getItem("selectedCompanyId"),
+          resource_type: "Pms::CompanySetup",
+
+          the_role: permissionsHash,
+          modules: enabledModuleIds,
+
+
+        },
+      };
+
       console.log("Creating role with payload:", payload);
 
-      await roleService.createRoleWithPayload(payload);
+      await roleService.createRoleWithPayload(
+        window.location.hostname === "web.gophygital.work" && org_id === "34"  ? viPayload : payload
+      );
       toast.success("Role created successfully");
       navigate("/settings/roles/role");
     } catch (error) {
@@ -536,11 +557,10 @@ export const AddRolePage = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveModuleTab(tab.id)}
-                    className={`px-4 py-2 rounded border text-sm font-medium transition-colors whitespace-nowrap ${
-                      activeModuleTab === tab.id
-                        ? "bg-[#C72030] text-white border-[#C72030]"
-                        : "bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
-                    }`}
+                    className={`px-4 py-2 rounded border text-sm font-medium transition-colors whitespace-nowrap ${activeModuleTab === tab.id
+                      ? "bg-[#C72030] text-white border-[#C72030]"
+                      : "bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
+                      }`}
                   >
                     {tab.name}
                   </button>
