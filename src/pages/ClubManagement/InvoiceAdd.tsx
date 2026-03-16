@@ -903,6 +903,16 @@ const validate = (): boolean => {
 
     }, [afterDiscount, totalTax, taxAmount2, adjustment]);
     console.log('Tax Options:', taxOptions);
+     const states = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+        "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+        "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
+    ];
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
@@ -969,13 +979,21 @@ const validate = (): boolean => {
                                         value={placeOfSupply}
                                         onChange={(e) => setPlaceOfSupply(e.target.value)}
                                         sx={fieldStyles}
+                                          SelectProps={{
+                                            displayEmpty: true
+                                        }}
                                     >
-                                        <MenuItem value="">Select Country</MenuItem>
-                                        <MenuItem value="India">India</MenuItem>
+                                        <MenuItem value="">Select Place of Supply</MenuItem>
+                                        {/* <MenuItem value="India">India</MenuItem>
                                         <MenuItem value="United States">United States</MenuItem>
                                         <MenuItem value="United Kingdom">United Kingdom</MenuItem>
                                         <MenuItem value="Australia">Australia</MenuItem>
-                                        <MenuItem value="Canada">Canada</MenuItem>
+                                        <MenuItem value="Canada">Canada</MenuItem> */}
+                                         {states.map((state) => (
+                                                                                    <MenuItem key={state} value={state}>
+                                                                                        {state}
+                                                                                    </MenuItem>
+                                                                                ))}
                                     </TextField>
                                 </div>
                             </div>
@@ -1044,7 +1062,7 @@ const validate = (): boolean => {
                 </Section>
 
                 {/* Sales Order Details */}
-                <Section title="Sales Order Details" icon={<Calendar className="w-5 h-5" />}>
+                <Section title="Invoice Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <div>
@@ -1578,7 +1596,7 @@ const validate = (): boolean => {
                 </Section>
 
                 {/* Attachments */}
-                <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
+                <Section title="Attach Files to Invoice" icon={<AttachFile className="w-5 h-5" />}>
                     <div className="space-y-4">
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                             <input

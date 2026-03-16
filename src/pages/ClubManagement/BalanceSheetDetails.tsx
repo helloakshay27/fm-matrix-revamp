@@ -20,6 +20,7 @@ export const BalanceSheetDetails = () => {
     const [description, setDescription] = useState("");
     const [transactions, setTransactions] = useState<any[]>([]);
     const [date, setDate] = useState("");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     // Fetch ledger details from correct API
     const formatDate = (dateString: string) => {
@@ -34,7 +35,7 @@ export const BalanceSheetDetails = () => {
         setLedgerLoading(true);
         try {
             const res = await axios.get(
-                `https://club-uat-api.lockated.com/lock_accounts/1/lock_account_ledgers/${id}.json`,
+                `https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/lock_account_ledgers/${id}.json`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -77,7 +78,7 @@ export const BalanceSheetDetails = () => {
     //     setLoading(true);
     //     try {
     //         const res = await axios.get(
-    //             `https://${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`,
+    //             `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/${id}.json`,
     //             {
     //                 headers: { Authorization: `Bearer ${token}` },
     //             }
