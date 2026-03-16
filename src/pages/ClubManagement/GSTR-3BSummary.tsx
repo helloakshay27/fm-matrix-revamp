@@ -125,7 +125,7 @@ const GSTR3BSummary: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+      const lockAccountId = localStorage.getItem("lock_account_id");
       const response = await axios.get(
         `${API_CONFIG.BASE_URL}/lock_accounts/${lockAccountId}/lock_account_transactions/gstr3b.json`,
         {

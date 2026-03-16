@@ -109,6 +109,7 @@ export const DefaultTaxPreferencesPage: React.FC = () => {
 
 const [intraTaxes, setIntraTaxes] = useState<TaxGroup[]>([]);
 const [interTaxes, setInterTaxes] = useState<TaxRate[]>([]);
+ const lock_account_id = localStorage.getItem('lock_account_id');
 
   useEffect(() => {
     fetchInitialData();
@@ -228,13 +229,13 @@ const fetchInitialData = async () => {
 
   try {
     const [groupResponse, rateResponse, settingsResponse] = await Promise.all([
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/3/tax_groups_view.json`, {
+      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/3/tax_rates.json`, {
+      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_rates.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/3/tax_settings.json`, {
+      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_settings.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
     ]);
@@ -285,7 +286,7 @@ const fetchInitialData = async () => {
       };
 
       const response = await fetch(
-        `https://club-uat-api.lockated.com/lock_accounts/3/tax_settings.json`,
+        `https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_settings.json`,
         {
           method: "POST",
           headers: {

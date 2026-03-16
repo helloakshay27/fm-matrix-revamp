@@ -553,10 +553,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     // When delivery address is selected, update shipping address
     useEffect(() => {
         if (selectedDeliveryAddress) {
-            const addressString = `${selectedDeliveryAddress.address || ''}, ${selectedDeliveryAddress.address_line_two || ''}, ${selectedDeliveryAddress.city || ''}, ${selectedDeliveryAddress.state || ''}, ${selectedDeliveryAddress.zip_code || selectedDeliveryAddress.pincode || ''}`;
-            // Clean up double commas or leading/trailing separators
-            const cleanAddress = addressString.replace(/, ,/g, ',').replace(/^, /, '').replace(/, $/, '');
-            setShippingAddress(cleanAddress);
+            // Keep shippingAddress as an ID (for API) rather than a free-form string.
+            // If you want to display the formatted address, use selectedDeliveryAddress directly.
+            setShippingAddress(String(selectedDeliveryAddress.id ?? ''));
         }
     }, [selectedDeliveryAddress]);
 
@@ -1344,7 +1343,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
+                                        onChange={(e) => {
+                                            const value = parseFloat(e.target.value);
+                                            setDiscountOnTotal(Number.isFinite(value) ? value : 0);
+                                        }}
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
@@ -1433,7 +1435,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
+                                        onChange={(e) => {
+                                            const value = parseFloat(e.target.value);
+                                            setAdjustment(Number.isFinite(value) ? value : 0);
+                                        }}
                                         inputProps={{ step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />
@@ -1444,7 +1449,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
+                                <span className="font-bold text-primary text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

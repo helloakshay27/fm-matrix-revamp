@@ -39,13 +39,15 @@ const ManualJournalAdd = () => {
 	const [accountOptions, setAccountOptions] = useState([]);
 	const fileInputRef = useRef(null);
 	const [contactOptions, setContactOptions] = useState([]);
+	const lock_account_id = localStorage.getItem("lock_account_id");
+
 	// Fetch account options from API using axios, with baseUrl and token
 	useEffect(() => {
 		const fetchAccounts = async () => {
 			const baseUrl = API_CONFIG.BASE_URL;
 			const token = API_CONFIG.TOKEN;
 			try {
-				const url = `${baseUrl}/lock_accounts/1/lock_account_ledgers.json`;
+				const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_ledgers.json`;
 				const response = await axios.get(url, {
 					headers: {
 						'Content-Type': 'application/json',
@@ -67,7 +69,7 @@ const ManualJournalAdd = () => {
 			const token = API_CONFIG.TOKEN;
 
 			try {
-				const url = `${baseUrl}/lock_accounts/1/contact_list.json`;
+				const url = `${baseUrl}/lock_accounts/${lock_account_id}/contact_list.json`;
 
 				const response = await axios.get(url, {
 					headers: {
@@ -292,7 +294,7 @@ const ManualJournalAdd = () => {
 		const baseUrl = API_CONFIG.BASE_URL;
 		const token = API_CONFIG.TOKEN;
 		try {
-			const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+			const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions.json`;
 			const response = await axios.post(url, formData, {
 				headers: {
 					// 'Content-Type': 'application/json',

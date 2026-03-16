@@ -263,11 +263,12 @@ export const RecurringBillCreatePage: React.FC = () => {
   useEffect(() => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const lock_account_id = localStorage.getItem('lock_account_id');
 
     setLoadingTaxGroups(true);
 
     axios
-      .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+      .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
           "Content-Type": "application/json"

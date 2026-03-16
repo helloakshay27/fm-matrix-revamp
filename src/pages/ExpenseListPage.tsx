@@ -141,7 +141,7 @@ export const ExpenseListPage: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
-                const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+                const lockAccountId = localStorage.getItem('lock_account_id');
                 const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 
                 const response = await fetch(
@@ -211,10 +211,11 @@ export const ExpenseListPage: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 
             const response = await fetch(
-                `${apiUrl}/expenses.json`,
+                `${apiUrl}/expenses.json?lock_account_id=${lock_account_id}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,

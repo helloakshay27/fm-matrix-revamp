@@ -220,7 +220,7 @@ const GSTR3BSummaryDetails: React.FC = () => {
       try {
         const baseUrl = API_CONFIG.BASE_URL;
         const token = API_CONFIG.TOKEN;
-        const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+        const lockAccountId = localStorage.getItem("lock_account_id");
 
         const response = await axios.get(
           `${baseUrl}/lock_accounts/${lockAccountId}/lock_account_transactions/gstr3b_transactions.json`,

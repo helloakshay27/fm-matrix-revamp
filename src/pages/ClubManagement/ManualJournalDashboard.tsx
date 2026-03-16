@@ -148,6 +148,7 @@ export const ManualJournalDashboard = () => {
   });
 
   const perPage = 20;
+  const lock_account_id = localStorage.getItem("lock_account_id");
 
   // Fetch journal entries
   const fetchJournals = useCallback(async () => {
@@ -155,7 +156,7 @@ export const ManualJournalDashboard = () => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json?q[transaction_type_eq]=Journal Entry`;
+      const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions.json?q[transaction_type_eq]=Journal Entry`;
       const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json',

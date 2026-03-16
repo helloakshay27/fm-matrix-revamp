@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+     const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState({
@@ -26,7 +27,7 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
     useEffect(() => {
         const fetchParentGroups = async () => {
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -99,7 +100,7 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
         console.log('Submitting group data:', groupData);
         try {
             await axios.post(
-                `https://${baseUrl}/lock_accounts/1/lock_account_groups.json`,
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups.json`,
                 { lock_account_group: groupData },
                 {
                     headers: {
