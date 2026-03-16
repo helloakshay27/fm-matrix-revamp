@@ -624,9 +624,9 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
 
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
-            return;
-        }
+        // if (!saveAsDraft && !validate()) {
+        //     return;
+        // }
 
         setIsSubmitting(true);
 
@@ -664,7 +664,11 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             formData.append('lock_account_invoice[customer_notes]', customerNotes);
             formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_invoice[subject]', subject);
-            formData.append('lock_account_invoice[status]', 'draft');
+            // formData.append('lock_account_invoice[status]', 'draft');
+            formData.append(
+                'lock_account_invoice[status]',
+                saveAsDraft ? 'draft' : 'submit'
+            );
             formData.append('lock_account_invoice[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('lock_account_invoice[discount_per]', String(discountOnTotal));
@@ -1778,7 +1782,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         textTransform: 'none'
                     }}
                 >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
                 </Button>
             </div>
 
