@@ -134,7 +134,34 @@ export const isAuthenticated = (): boolean => {
   return !!(user && token);
 };
 
-// Clear all auth data
+// Fetch lock account and store lock_account_id in localStorage
+export const fetchLockAccount = async (): Promise<void> => {
+  try {
+    const baseUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
+    const token = localStorage.getItem(AUTH_KEYS.TOKEN);
+
+    if (!baseUrl || !token) return;
+
+    const base = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+    const url = `${base.replace(/\/+$/, "")}/get_lock_account.json`;
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+    if (data?.lock_account?.id) {
+      localStorage.setItem("lock_account_id", String(data.lock_account.id));
+    }
+  } catch {
+    // Silently fail - lock_account_id is not critical for app to function
+  }
+};
 
 // Clear all auth data
 export const clearAuth = (): void => {
@@ -151,7 +178,7 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") ;
 
 const isFmSite =
   hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com";
@@ -165,7 +192,7 @@ const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
 
 const isClubSite =
-  hostname.includes("club.lockated.com");
+  hostname.includes("club.lockated.com") || hostname === "localhost";
 
 const isPanchshilClubSite =
   // hostname.includes("club.lockated.com");
