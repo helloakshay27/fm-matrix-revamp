@@ -202,7 +202,8 @@ export const  CreditNoteDetails = () => {
             try {
                 const baseUrl = localStorage.getItem("baseUrl");
                 const token = localStorage.getItem("token");
-                const apiUrl = `https://${baseUrl}/lock_account_credit_notes/${id}.json?lock_account_id=1&show=true`;
+                const lock_account_id = localStorage.getItem("lock_account_id");
+                const apiUrl = `https://${baseUrl}/lock_account_credit_notes/${id}.json?lock_account_id=${lock_account_id}&show=true`;
                 const response = await axios.get(apiUrl, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,

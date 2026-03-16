@@ -329,8 +329,8 @@ export const ChartOfAccountsDashboard = () => {
       try {
         const baseUrl = API_CONFIG.BASE_URL;
         const token = API_CONFIG.TOKEN;
-        // Use lock_account_id = 1 for now (could be dynamic)
-        const url = new URL(`${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_accounts/1/lock_account_groups`);
+        const lock_account_id = localStorage.getItem("lock_account_id");
+        const url = new URL(`${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_accounts/${lock_account_id}/lock_account_groups`);
         url.searchParams.append("access_token", token || "");
         url.searchParams.append("format", "tree");
         const response = await fetch(url.toString(), {

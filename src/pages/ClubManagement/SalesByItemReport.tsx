@@ -22,6 +22,7 @@ const SalesByItemReport: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const lock_account_id = localStorage.getItem('lock_account_id');
 
   const [filters, setFilters] = useState({
     fromDate: "",
@@ -37,7 +38,7 @@ const SalesByItemReport: React.FC = () => {
         setLoading(false);
         return;
       }
-      let url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=1`;
+      let url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=${lock_account_id}`;
       if (fromDate && toDate) {
         url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;
       }

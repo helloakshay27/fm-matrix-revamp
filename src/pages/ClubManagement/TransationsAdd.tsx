@@ -112,6 +112,7 @@ const TransactionsAdd = () => {
     console.log('Rows transation type:', transactionType);
     // Helper to build the payload for API
     const buildJournalPayload = () => {
+        const lock_account_id = localStorage.getItem("lock_account_id");
         return {
             lock_account_transaction: {
                 transaction_type: transactionType,
@@ -120,7 +121,7 @@ const TransactionsAdd = () => {
                 description: notes,
                 reference: reference,
                 publish: false, // Set true if publishing
-                lock_account_id: 1, // You may want to make this dynamic
+                lock_account_id: lock_account_id,
             },
             lock_account_transaction_records: rows.map(row => {
                 const record = {

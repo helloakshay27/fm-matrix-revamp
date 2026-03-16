@@ -123,10 +123,11 @@ export const VendorCreditsListPage: React.FC = () => {
         setLoading(true);
  const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
 
         try {
                     const response = await axios.get(
-                        `https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=1`,
+                        `https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`,
                         {
                             params: {
                                 // lock_account_id: 1,
