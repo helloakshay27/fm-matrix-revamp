@@ -49,6 +49,7 @@ interface BalanceSheetResponse {
 const TrialBalanceReport: React.FC = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
     const navigate = useNavigate();
     const [balanceSheetData, setBalanceSheetData] =
         useState<BalanceSheetResponse | null>(null);
@@ -70,7 +71,7 @@ const TrialBalanceReport: React.FC = () => {
 
             // Note: The balance sheet endpoint is on club-uat-api, not the regular baseUrl
             const response = await axios.get(
-                `https://${baseUrl}/lock_accounts/1/lock_account_transactions/trial_balance_sheet.json`,
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/trial_balance_sheet.json`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
