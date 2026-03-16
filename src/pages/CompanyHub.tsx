@@ -59,7 +59,6 @@ import "swiper/css/scrollbar";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../utils/auth";
 import ceoImage from "../assets/ceo/ceoimage.jpeg";
-import employeeImage from "../assets/employee/employee1.jpeg";
 
 import businessPlanIcon from "@/assets/business_plan.png";
 import ourGroupIcon from "@/assets/our_group.png";
@@ -192,6 +191,8 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
     full_name: string | null;
     profile_image: string | null;
     field_description: string | null;
+    role?: string;
+    points?: string[];
   } | null>(null);
 
   // Employee of Month data cached locally by CompanySetup on save
@@ -333,7 +334,24 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           }
           
           if (fetchedAnns.length > 0) {
-            setAnnouncements(fetchedAnns);
+            const processedAnns = fetchedAnns.map((a: any) => {
+              let description = a.field_value || "";
+              let isActive = true;
+
+              if (a.field_value && a.field_value.trim().startsWith("{")) {
+                try {
+                  const parsed = JSON.parse(a.field_value);
+                  description = parsed.description || parsed.content || a.field_value;
+                  isActive = parsed.isActive !== undefined ? parsed.isActive : true;
+                } catch (e) {
+                  // Fallback to raw value
+                }
+              }
+
+              return { ...a, displayDescription: description, isActive };
+            }).filter((a: any) => a.isActive);
+
+            setAnnouncements(processedAnns);
           }
         } catch (annError) {
           console.error("Failed to fetch announcements:", annError);
@@ -368,7 +386,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           if (Array.isArray(data) && data.length > 0) {
             // Sort by extra_field_id descending → newest record first
             const sorted = [...data].sort(
-              (a, b) => (b.extra_field_id ?? 0) - (a.extra_field_id ?? 0)
+              (a: any, b: any) => (b.extra_field_id ?? 0) - (a.extra_field_id ?? 0)
             );
             newest = sorted[0];
           } else if (data && typeof data === "object" && !Array.isArray(data)) {
@@ -378,21 +396,46 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           if (newest) {
             setCurrentEmployee(newest);
 
-            // Fetch the full extra_field record to get field_description (stored name)
+            // Fetch the full extra_field record to get field_value (JSON) and field_description (stored image)
             if (newest.extra_field_id) {
               try {
+                // Try specialized EOM show endpoint
                 const detailRes = await axios.get(
-                  `${protocol}${baseUrl}/extra_fields/${newest.extra_field_id}`,
+                  `${protocol}${baseUrl}/extra_fields/employee_of_the_month?id=${newest.extra_field_id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                const detailData = detailRes.data?.data;
-                if (detailData?.field_description) {
-                  setCurrentEmployee(prev =>
-                    prev ? { ...prev, field_description: detailData.field_description } : prev
+                
+                const detailData = detailRes.data?.employee_of_the_month;
+                
+                // Also fetch raw record for fallback (points, role)
+                let parsedData: any = {};
+                try {
+                  const rawRes = await axios.get(
+                    `${protocol}${baseUrl}/extra_fields/${newest.extra_field_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
                   );
+                  const rawData = rawRes.data?.data;
+                  if (rawData?.field_value && rawData.field_value.startsWith("{")) {
+                    parsedData = JSON.parse(rawData.field_value);
+                  }
+                } catch (e) {
+                  console.error("Raw fallback fetch failed:", e);
                 }
-              } catch {
-                // Detail fetch is optional — silently ignore
+
+                if (detailData) {
+                  setCurrentEmployee(prev => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      full_name: detailData.full_name || parsedData.userName || prev.full_name,
+                      role: parsedData.role || (prev as any).role,
+                      points: parsedData.points || (prev as any).points,
+                      profile_image: detailData.profile_image || parsedData.profileImage || prev.profile_image
+                    };
+                  });
+                }
+              } catch (e) {
+                console.error("Detail fetch failed:", e);
               }
             }
           }
@@ -1788,18 +1831,20 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
             <div className="flex flex-col md:flex-row gap-6 items-center flex-1">
               {/* Avatar — Prioritize profile image from setup payload */}
-              <div className="w-40 h-40 rounded-full border-4 border-white/40 overflow-hidden shadow-lg flex-shrink-0">
-                <img
-                  src={
-                    companyData?.other_config?.employee_of_the_month?.profileImage ||
-                    currentEmployee?.profile_image ||
-                    (currentEmployee?.field_description && currentEmployee.field_description.includes("/") ? currentEmployee.field_description : null) ||
-                    companyData?.employee_photo?.document_url ||
-                    employeeImage
-                  }
-                  alt="Employee"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-40 h-40 rounded-full border-4 border-white/40 overflow-hidden shadow-lg flex-shrink-0 bg-white/10 flex items-center justify-center">
+                {(() => {
+                  const imgUrl = companyData?.other_config?.employee_of_the_month?.profileImage ||
+                                currentEmployee?.profile_image ||
+                                (currentEmployee?.field_description && currentEmployee.field_description.includes("/") ? currentEmployee.field_description : null);
+                  
+                  return (imgUrl && imgUrl.trim()) ? (
+                    <img
+                      src={imgUrl}
+                      alt="Employee"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null;
+                })()}
               </div>
 
               {/* Points/Achievements */}
@@ -1811,13 +1856,15 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                     "Winner"}
                 </h4>
                 <p className="text-sm font-medium opacity-80 mb-2">
-                  {companyData?.other_config?.employee_of_the_month?.role ||
+                  {currentEmployee?.role ||
+                    companyData?.other_config?.employee_of_the_month?.role ||
                     cachedEOM?.role ||
                     ""}
                 </p>
                 <div className="space-y-1">
                   {(() => {
                     const points =
+                      currentEmployee?.points ||
                       companyData?.other_config?.employee_of_the_month?.points?.filter(Boolean) ||
                       cachedEOM?.points?.filter(Boolean);
                     if (points && points.length > 0) {
@@ -1882,7 +1929,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                     <div key={ann.id || ann.extra_field_id || i} className="border-b border-gray-50 last:border-0 pb-2">
                       <h4 className="font-bold text-sm text-gray-900">{ann.field_name}</h4>
                       <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        {ann.field_value}
+                        {ann.displayDescription || ann.field_value}
                       </p>
                     </div>
                   ))}
