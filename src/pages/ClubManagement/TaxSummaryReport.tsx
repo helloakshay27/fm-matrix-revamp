@@ -48,6 +48,7 @@ import { useNavigate } from "react-router-dom";
 //     },
 // ];
 
+
 const TaxSummaryReport: React.FC = () => {
 
     // const balanceTabs = ["Tax Summary"];
@@ -68,9 +69,10 @@ const TaxSummaryReport: React.FC = () => {
 
         try {
             setLoading(true);
+            const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
             const response = await axios.get(
-                `https://${baseUrl}/lock_accounts/1/lock_account_ledgers/tax_summary_report.json`,
+                `https://${baseUrl}/lock_accounts/${lockAccountId}/lock_account_ledgers/tax_summary_report.json`,
                 {
                     params: {
                         start_date: filters.fromDate,

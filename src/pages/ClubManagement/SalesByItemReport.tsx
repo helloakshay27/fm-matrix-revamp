@@ -38,7 +38,9 @@ const SalesByItemReport: React.FC = () => {
         setLoading(false);
         return;
       }
-      let url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=${lock_account_id}`;
+
+      const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+      let url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=${lockAccountId}`;
       if (fromDate && toDate) {
         url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;
       }
@@ -47,7 +49,7 @@ const SalesByItemReport: React.FC = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
-      });
+    });
       const data = Array.isArray(response.data) ? response.data : [];
       setSalesByItemData(data);
       console.log('Fetched sales by item:', data);

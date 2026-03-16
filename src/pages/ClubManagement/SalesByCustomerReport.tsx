@@ -52,7 +52,8 @@ const SalesByCustomerReport: React.FC = () => {
                 setLoading(false);
                 return;
             }
-            let url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=${lock_account_id}`;
+            const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+            let url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=${lockAccountId}`;
             if (fromDate && toDate) {
                 // Format dates as DD/MM/YYYY
                 url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;
