@@ -429,7 +429,7 @@ export const RecordPaymentPage: React.FC = () => {
                         </div>
 
                         {/* Payment Mode & Deposit To & Reference */}
-                        <div className="grid grid-cols-12 gap-8 items-center">
+                        {/* <div className="grid grid-cols-12 gap-8 items-center">
                             <Label className="col-span-2 text-gray-700 font-medium text-sm">Payment Mode</Label>
                             <div className="col-span-3">
                                 <Select value={paymentMode} onValueChange={setPaymentMode}>
@@ -462,6 +462,60 @@ export const RecordPaymentPage: React.FC = () => {
                             <div className="col-span-12 md:col-span-6 lg:col-span-3">
                                 <Input value={reference} onChange={(e) => setReference(e.target.value)} className="h-9 text-sm" />
                             </div>
+                        </div> */}
+
+                        <div className="grid grid-cols-12 gap-8 items-center">
+
+                            {/* Payment Mode */}
+                            <Label className="col-span-2 text-gray-700 font-medium text-sm">
+                                Payment Mode
+                            </Label>
+                            <div className="col-span-4">
+                                <Select value={paymentMode} onValueChange={setPaymentMode}>
+                                    <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                                        <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {PAYMENT_MODES.map((mode) => (
+                                            <SelectItem key={mode} value={mode}>
+                                                {mode}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Deposit To */}
+                            <Label className="col-span-2 text-red-500 font-medium text-sm">
+                                Deposit To*
+                            </Label>
+                            <div className="col-span-4">
+                                <Select value={depositTo} onValueChange={setDepositTo}>
+                                    <SelectTrigger className="border-gray-200 bg-white text-gray-700 h-9 text-sm">
+                                        <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {ledgers.map((l) => (
+                                            <SelectItem key={l.id} value={String(l.id)}>
+                                                {l.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Reference Row (Below) */}
+                            <Label className="col-span-2 text-gray-700 font-medium text-sm">
+                                Reference#
+                            </Label>
+                            <div className="col-span-4">
+                                <Input
+                                    value={reference}
+                                    onChange={(e) => setReference(e.target.value)}
+                                    className="h-9 text-sm"
+                                />
+                            </div>
+
                         </div>
 
                         {/* Tax Deducted? */}
