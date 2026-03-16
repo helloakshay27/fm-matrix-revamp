@@ -39,7 +39,7 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth } from "@/utils/auth";
+import { getUser, clearAuth, fetchLockAccount } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
@@ -202,7 +202,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -246,6 +246,9 @@ export const Header = () => {
   const handleCompanyChange = async (companyId: number) => {
     try {
       const response = await dispatch(changeCompany(companyId)).unwrap();
+      // Re-fetch lock_account_id for the new company
+      localStorage.removeItem("lock_account_id");
+      await fetchLockAccount();
       // Reload page smoothly after successful company change
       window.location.reload();
     } catch (error) {
@@ -257,6 +260,9 @@ export const Header = () => {
   const handleSiteChange = async (siteId: number) => {
     try {
       await dispatch(changeSite(siteId)).unwrap();
+      // Re-fetch lock_account_id for the new site
+      localStorage.removeItem("lock_account_id");
+      await fetchLockAccount();
       // Reload page smoothly after successful site change
       window.location.reload();
     } catch (error) {
@@ -672,15 +678,17 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
                                 ? "bg-[#C72030]"
                                 : "bg-gray-300"
-                              }`}
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -766,7 +774,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">

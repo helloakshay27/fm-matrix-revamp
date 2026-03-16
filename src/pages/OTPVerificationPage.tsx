@@ -13,6 +13,7 @@ import {
   saveToken,
   saveBaseUrl,
   getBaseUrl,
+  fetchLockAccount,
 } from "@/utils/auth";
 import { ArrowLeft } from "lucide-react";
 
@@ -110,7 +111,10 @@ export const OTPVerificationPage = () => {
         }
 
         localStorage.setItem("userId", response.id.toString());
-        
+
+        // Fetch and store lock_account_id
+        await fetchLockAccount();
+
         // Clear temporary data after successful login
         localStorage.removeItem("temp_email");
         localStorage.removeItem("temp_token");
@@ -125,7 +129,7 @@ export const OTPVerificationPage = () => {
         setTimeout(() => {
           navigate(isViSite ? "/safety/m-safe/internal" : "/maintenance/asset");
         }, 1000);
-      } 
+      }
     } catch (error) {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
