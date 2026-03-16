@@ -63,7 +63,7 @@ const muiTheme = createTheme({
 
 // ─────────────────────────── Types ───────────────────────────────────────────
 
-/** Shape returned by /lock_accounts/1/tax_rates.json */
+/** Shape returned by /lock_accounts/3/tax_rates.json */
 interface TaxRate {
   id: number;
   name: string;
@@ -75,7 +75,7 @@ interface TaxRate {
   updated_at: string;
 }
 
-/** Shape returned by /lock_accounts/1/tax_groups_view.json */
+/** Shape returned by /lock_accounts/3/tax_groups_view.json */
 interface TaxGroup {
   id: number;
   name: string;
@@ -141,7 +141,7 @@ const TaxRatesTable: React.FC = () => {
   const fetchTaxes = useCallback(async () => {
     setLoading(true);
     try {
-      const url = `${getBaseUrl()}/lock_accounts/1/tax_rates.json`;
+      const url = `${getBaseUrl()}/lock_accounts/3/tax_rates.json`;
       const res = await axios.get<TaxRate[]>(url, { headers: authHeaders() });
       const list: TaxRate[] = Array.isArray(res.data) ? res.data : [];
       setTaxes(list);
@@ -196,7 +196,7 @@ const TaxRatesTable: React.FC = () => {
           },
         };
         await axios.patch(
-          `${baseUrl}/lock_accounts/1/tax_rates/${editingTax.id}.json`,
+          `${baseUrl}/lock_accounts/3/tax_rates/${editingTax.id}.json`,
           payload,
           { headers: authHeaders() }
         );
@@ -211,7 +211,7 @@ const TaxRatesTable: React.FC = () => {
           },
         };
         await axios.post(
-          `${baseUrl}/lock_accounts/1/tax_rates.json`,
+          `${baseUrl}/lock_accounts/3/tax_rates.json`,
           payload,
           { headers: authHeaders() }
         );
@@ -439,7 +439,7 @@ const TaxSetupTab: React.FC = () => (
 // ════════════════════════════════════════════════════════════════════════════
 //  GroupTaxTab  – list + add + edit for tax groups
 //  APIs:
-//    GET  /lock_accounts/1/tax_groups_view.json          → list
+//    GET  /lock_accounts/3/tax_groups_view.json          → list
 //    GET  /lock_accounts/1/tax_groups/{id}.json          → detail for edit
 //    POST /lock_accounts/1/create_tax_group.json         → create
 //    POST /lock_accounts/1/edit_tax_group.json           → edit
@@ -471,7 +471,7 @@ const GroupTaxTab: React.FC = () => {
     setLoadingGroups(true);
     try {
       const res = await axios.get<TaxGroup[]>(
-        `${getBaseUrl()}/lock_accounts/1/tax_groups_view.json`,
+        `${getBaseUrl()}/lock_accounts/3/tax_groups_view.json`,
         { headers: authHeaders() }
       );
       const list: TaxGroup[] = Array.isArray(res.data) ? res.data : [];
@@ -491,7 +491,7 @@ const GroupTaxTab: React.FC = () => {
     setLoadingRates(true);
     try {
       const res = await axios.get<TaxRate[]>(
-        `${getBaseUrl()}/lock_accounts/1/tax_rates.json`,
+        `${getBaseUrl()}/lock_accounts/3/tax_rates.json`,
         { headers: authHeaders() }
       );
       setAllRates(Array.isArray(res.data) ? res.data : []);
@@ -533,7 +533,7 @@ const GroupTaxTab: React.FC = () => {
     setLoadingDetail(true);
     try {
       const res = await axios.get<TaxGroup>(
-        `${getBaseUrl()}/lock_accounts/1/tax_groups/${group.id}.json`,
+        `${getBaseUrl()}/lock_accounts/3/tax_groups/${group.id}.json`,
         { headers: authHeaders() }
       );
       const detail = res.data;
@@ -567,14 +567,14 @@ const GroupTaxTab: React.FC = () => {
     try {
       if (editingGroup) {
         await axios.post(
-          `${getBaseUrl()}/lock_accounts/1/edit_tax_group.json`,
+          `${getBaseUrl()}/lock_accounts/3/edit_tax_group.json`,
           { tax_group: { id: editingGroup.id, name: groupName, tax_rates: selectedIds } },
           { headers: authHeaders() }
         );
         toast.success('Tax group updated successfully!');
       } else {
         await axios.post(
-          `${getBaseUrl()}/lock_accounts/1/create_tax_group.json`,
+          `${getBaseUrl()}/lock_accounts/3/create_tax_group.json`,
           { tax_group: { name: groupName, tax_rates: selectedIds } },
           { headers: authHeaders() }
         );
@@ -862,7 +862,7 @@ export const AddTaxGroupPage: React.FC = () => {
     const fetchRates = async () => {
       setLoading(true);
       try {
-        const url = `${getBaseUrl()}/lock_accounts/1/tax_rates.json`;
+        const url = `${getBaseUrl()}/lock_accounts/3/tax_rates.json`;
         const res = await axios.get<TaxRate[]>(url, { headers: authHeaders() });
         const list = Array.isArray(res.data) ? res.data : [];
         setAllRates(list);
@@ -905,7 +905,7 @@ export const AddTaxGroupPage: React.FC = () => {
     const selectedIds = orderedRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
     try {
       await axios.post(
-        `${getBaseUrl()}/lock_accounts/1/create_tax_group.json`,
+        `${getBaseUrl()}/lock_accounts/3/create_tax_group.json`,
         { tax_group: { name: groupName, tax_rates: selectedIds } },
         { headers: authHeaders() }
       );

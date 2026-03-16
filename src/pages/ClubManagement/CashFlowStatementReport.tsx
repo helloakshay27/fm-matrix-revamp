@@ -430,8 +430,9 @@ const CashFlowStatementReport: React.FC = () => {
     setLoading(true);
 
     try {
+      const lockAccountId = localStorage.getItem("lock_account_id") || "1";
       const response = await axios.get(
-        `https://${baseUrl}/lock_accounts/1/lock_account_transactions/cash_flow.json`,
+        `https://${baseUrl}/lock_accounts/${lockAccountId}/lock_account_transactions/cash_flow.json`,
         {
           params: {
             start_date: filters.fromDate,

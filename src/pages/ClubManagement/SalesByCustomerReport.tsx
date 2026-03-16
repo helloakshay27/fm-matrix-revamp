@@ -37,6 +37,7 @@ const SalesByCustomerReport: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const lock_account_id = localStorage.getItem('lock_account_id');
 
     const balanceTabs = ["Sales by Customer"];
     const [activeBalanceTab, setActiveBalanceTab] = useState<"Sales by Customer">("Sales by Customer");
@@ -51,7 +52,8 @@ const SalesByCustomerReport: React.FC = () => {
                 setLoading(false);
                 return;
             }
-            let url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=1`;
+            const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+            let url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=${lockAccountId}`;
             if (fromDate && toDate) {
                 // Format dates as DD/MM/YYYY
                 url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;

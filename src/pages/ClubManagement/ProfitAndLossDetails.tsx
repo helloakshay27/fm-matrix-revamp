@@ -33,8 +33,9 @@ export const ProfitAndLossDetails = () => {
     const fetchLedgerDetails = async () => {
         setLedgerLoading(true);
         try {
+            const lockAccountId = localStorage.getItem("lock_account_id") || "1";
             const res = await axios.get(
-                `https://club-uat-api.lockated.com/lock_accounts/1/lock_account_ledgers/${id}.json`,
+                `https://club-uat-api.lockated.com/lock_accounts/${lockAccountId}/lock_account_ledgers/${id}.json`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }

@@ -228,13 +228,13 @@ const fetchInitialData = async () => {
 
   try {
     const [groupResponse, rateResponse, settingsResponse] = await Promise.all([
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/1/tax_groups_view.json`, {
+      fetch(`https://club-uat-api.lockated.com/lock_accounts/3/tax_groups_view.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/1/tax_rates.json`, {
+      fetch(`https://club-uat-api.lockated.com/lock_accounts/3/tax_rates.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/1/tax_settings.json`, {
+      fetch(`https://club-uat-api.lockated.com/lock_accounts/3/tax_settings.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
     ]);
@@ -285,7 +285,7 @@ const fetchInitialData = async () => {
       };
 
       const response = await fetch(
-        `https://club-uat-api.lockated.com/lock_accounts/1/tax_settings.json`,
+        `https://club-uat-api.lockated.com/lock_accounts/3/tax_settings.json`,
         {
           method: "POST",
           headers: {

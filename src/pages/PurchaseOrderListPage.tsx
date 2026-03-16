@@ -125,6 +125,7 @@ export const PurchaseOrderListPage: React.FC = () => {
             // Get base URL and token from API_CONFIG
             const baseUrl = API_CONFIG.BASE_URL;
             const token = API_CONFIG.TOKEN;
+            const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
             if (!baseUrl || !token) {
                 sonnerToast.error('Missing configuration. Please login again.');
@@ -141,6 +142,7 @@ export const PurchaseOrderListPage: React.FC = () => {
             url.searchParams.append('page', String(page));
             url.searchParams.append('per_page', String(per_page));
             url.searchParams.append('access_token', token);
+            url.searchParams.append('lock_account_id', lockAccountId);
 
             // Add search if present
             if (search.trim()) {

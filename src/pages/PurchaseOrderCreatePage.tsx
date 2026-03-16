@@ -105,7 +105,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl")
+    const baseUrl = localStorage.getItem("baseUrl");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     useEffect(() => {
         document.title = 'New Purchase Order';
@@ -323,8 +324,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         // Payment terms dropdown data
         const fetchPaymentTerms = async () => {
             try {
+                const lockAccountId = localStorage.getItem("lock_account_id") || "1";
                 const res = await axios.get(
-                    `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+                    `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
+
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
@@ -356,8 +359,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
+                const lockAccountId = localStorage.getItem("lock_account_id") || "1";
                 const type = taxType.toLowerCase();
-                const url = `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                const url = `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lockAccountId}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
@@ -379,11 +383,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lockAccountId}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json",
@@ -404,11 +409,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
         setLoadingExemptions(true);
 
         axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lockAccountId}&q[exemption_type_eq]=item`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json",

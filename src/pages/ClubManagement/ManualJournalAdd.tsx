@@ -149,6 +149,7 @@ const ManualJournalAdd = () => {
 
 	// Helper to build the payload for API
 	const buildJournalPayload = () => {
+		const lock_account_id = localStorage.getItem("lock_account_id");
 		return {
 			lock_account_transaction: {
 				transaction_type: 'Journal Entry',
@@ -158,7 +159,7 @@ const ManualJournalAdd = () => {
 				reference: reference,
 				publish: false, // Set true if publishing
 				reporting_method: reportingMethod,
-				lock_account_id: 1, // You may want to make this dynamic
+				lock_account_id: lock_account_id,
 			},
 			lock_account_transaction_records: rows.map(row => {
 				const record = {
