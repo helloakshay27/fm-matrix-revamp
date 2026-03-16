@@ -980,6 +980,20 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 onChange={(e) => setBillingAddress(e.target.value)}
                                 placeholder="Enter billing address"
                                 disabled={!!selectedCustomer?.billing_address?.address}
+                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+
+                                    "& .MuiInputBase-inputMultiline": {
+                                        resize: "none !important", // ✅ removes resize handle
+                                    },
+                                }}
                             />
                         </div>
 
@@ -997,6 +1011,20 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 onChange={(e) => setShippingAddress(e.target.value)}
                                 placeholder="Enter shipping address"
                                 disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                  InputLabelProps={{ shrink: true }}
+                                inputProps={{ maxLength: 500 }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+
+                                    "& .MuiInputBase-inputMultiline": {
+                                        resize: "none !important", // ✅ removes resize handle
+                                    },
+                                }}
                             />
                             {/* <FormControlLabel
                                 control={
@@ -1060,6 +1088,34 @@ export const SalesOrderCreatePage: React.FC = () => {
                             />
                         </div>
 
+                            <div>
+  <label className="block text-sm font-medium mb-2">
+    Payment Terms<span className="text-red-500">*</span>
+  </label>
+
+  <FormControl fullWidth error={!!errors.paymentTerms}>
+    <Select
+      value={selectedTerm}
+      onChange={(e) => setSelectedTerm(e.target.value)}
+      renderValue={(val) => {
+        const found = filteredTerms.find(term => term.id === val);
+        return found ? found.name : val;
+      }}
+      displayEmpty
+      sx={fieldStyles}
+    >
+      <MenuItem value="" disabled>
+        Select payment term
+      </MenuItem>
+
+      {filteredTerms.map((term) => (
+        <MenuItem key={term.id || term.name} value={term.id}>
+          {term.name}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+</div>
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Payment Terms<span className="text-red-500">*</span>
@@ -1083,6 +1139,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 
                                 </Select>
                             </FormControl>
+
                             {/* Configure Payment Terms Modal */}
                             {showConfig && (
                                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

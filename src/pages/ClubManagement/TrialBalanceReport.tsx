@@ -70,7 +70,7 @@ const TrialBalanceReport: React.FC = () => {
 
             // Note: The balance sheet endpoint is on club-uat-api, not the regular baseUrl
             const response = await axios.get(
-                `https://${baseUrl}/lock_accounts/1/lock_account_transactions/balance_sheet.json`,
+                `https://${baseUrl}/lock_accounts/1/lock_account_transactions/trial_balance_sheet.json`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
