@@ -117,6 +117,7 @@ export const Header = () => {
     hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -134,7 +135,10 @@ export const Header = () => {
   };
   const userId = user.id;
   const isRestrictedUser =
-    user?.email === "karan.balsara@zycus.com" || org_id === "90" || isPulseSite; // Example condition for restricted user
+    user?.email === "karan.balsara@zycus.com" ||
+    org_id === "90" ||
+    isPulseSite ||
+    isClubSite; // Example condition for restricted user
 
   const assetSuggestions = [
     "sdcdsc",
