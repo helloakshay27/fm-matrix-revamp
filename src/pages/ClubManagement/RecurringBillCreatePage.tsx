@@ -117,7 +117,7 @@ export const RecurringBillCreatePage: React.FC = () => {
           }
         });
         if (res && res.data && Array.isArray(res.data)) {
-          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
           console.log('Fetched items:', res.data);
         }
       } catch (err) {
@@ -1374,6 +1374,21 @@ export const RecurringBillCreatePage: React.FC = () => {
                                 updateItem(index, 'name', selectedItem.name);
                                 updateItem(index, 'rate', selectedItem.rate);
                                 updateItem(index, 'description', selectedItem.description);
+                                // TAX HANDLING
+                                if (selectedItem.tax_preference === 'non_taxable') {
+                                    updateItem(index, 'item_tax_type', 'non_taxable');
+                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                }
+                                if (selectedItem.tax_preference === 'taxable') {
+                                    updateItem(index, 'item_tax_type', 'tax_group');
+                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                }
+                                if (selectedItem.tax_preference === 'out_of_scope') {
+                                    updateItem(index, 'item_tax_type', 'out_of_scope');
+                                }
+                                if (selectedItem.tax_preference === 'non_gst_supply') {
+                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                }
                               }
                             }}
                             displayEmpty

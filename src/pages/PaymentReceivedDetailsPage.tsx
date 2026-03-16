@@ -130,16 +130,16 @@ const lock_account_id = localStorage.getItem("lock_account_id");
                         </div>
                     </div>
                     <div>
-                        {sidebarList.map((item) => (
+                        {sidebarList?.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => navigate(`/accounting/payments-received/${item.id}`)}
                                 className={`w-full text-left p-4 border-b hover:bg-gray-50 flex items-center justify-between ${String(item.id) === String(selected?.id) ? 'bg-gray-50' : ''}`}
                             >
                                 <div>
-                                    <div className="font-medium">{item.customer_name}</div>
-                                    <div className="text-xs text-gray-500 mt-1">{item.payment_number} · {format(new Date(item.date), 'dd/MM/yyyy')}</div>
-                                    <div className="text-xs text-green-600 font-semibold mt-1">PAID · {item.mode}</div>
+                                    <div className="font-medium">{item?.customer_name}</div>
+                                    {/* <div className="text-xs text-gray-500 mt-1">{item?.payment_number} · {format(new Date(item?.date), 'dd/MM/yyyy')}</div> */}
+                                    <div className="text-xs text-green-600 font-semibold mt-1">PAID · {item?.mode}</div>
                                 </div>
                                 <div className="text-sm font-semibold">₹{item.amount.toLocaleString('en-IN')}</div>
                             </button>
@@ -190,7 +190,7 @@ const lock_account_id = localStorage.getItem("lock_account_id");
                                         <div>
                                             <div className="text-gray-500">Payment Date</div>
                                             <div className="font-semibold">
-                                                {selected ? format(new Date(selected.date), 'dd/MM/yyyy') : '-'}
+                                                {/* {selected ? format(new Date(selected?.date), 'dd/MM/yyyy') : '-'} */}
                                             </div>                                        </div>
                                         <div>
                                             <div className="text-sm text-gray-600">Notes</div>
