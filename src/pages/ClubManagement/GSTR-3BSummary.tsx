@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { API_CONFIG } from "@/config/apiConfig";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "lucide-react";
 
 interface Supply {
   taxable_amount_formatted: string;
@@ -37,11 +42,128 @@ const GSTR3BSummary: React.FC = () => {
   const [data, setData] = useState<GSTR3BResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [selectedFilter, setSelectedFilter] = useState("This Month");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [showCustom, setShowCustom] = useState(false);
+
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const calculateDates = (filter: string) => {
+    const now = new Date();
+    let start: Date, end: Date;
+
+    switch (filter) {
+      case "Today":
+        start = end = new Date(now);
+        break;
+      case "Yesterday":
+        start = end = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case "This Week":
+        const dayOfWeek = now.getDay();
+        start = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
+        end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+        break;
+      case "Previous Week":
+        const prevWeekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const prevDayOfWeek = prevWeekStart.getDay();
+        start = new Date(prevWeekStart.getTime() - prevDayOfWeek * 24 * 60 * 60 * 1000);
+        end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+        break;
+      case "This Month":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case "Previous Month":
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case "This Quarter":
+        const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+        start = new Date(now.getFullYear(), (currentQuarter - 1) * 3, 1);
+        end = new Date(now.getFullYear(), currentQuarter * 3, 0);
+        break;
+      case "Previous Quarter":
+        const prevQuarter = Math.floor(now.getMonth() / 3);
+        if (prevQuarter === 0) {
+          start = new Date(now.getFullYear() - 1, 9, 1);
+          end = new Date(now.getFullYear() - 1, 11, 31);
+        } else {
+          start = new Date(now.getFullYear(), (prevQuarter - 1) * 3, 1);
+          end = new Date(now.getFullYear(), prevQuarter * 3, 0);
+        }
+        break;
+      case "This Year":
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31);
+        break;
+      case "Previous Year":
+        start = new Date(now.getFullYear() - 1, 0, 1);
+        end = new Date(now.getFullYear() - 1, 11, 31);
+        break;
+      default:
+        start = end = now;
+    }
+
+    setStartDate(formatDate(start));
+    setEndDate(formatDate(end));
+  };
+
+  const handleFilterSelect = (option: string) => {
+    setSelectedFilter(option);
+    if (option === "Custom") {
+      setShowCustom(true);
+    } else {
+      setShowCustom(false);
+      calculateDates(option);
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}/lock_accounts/${lockAccountId}/lock_account_transactions/gstr3b.json`,
+        {
+          params: {
+            start_date: startDate,
+            end_date: endDate,
+          },
+          headers: {
+            Authorization: `Bearer ${API_CONFIG.TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const result = response.data;
+
+      if (result.code === 0) {
+        setData(result.tax_return);
+      }
+    } catch (error) {
+      console.error("GSTR3B API Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    calculateDates("This Month");
+  }, []);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      fetchData();
+    }
+  }, [startDate, endDate]);
 
   const handleRowClick = (boxType: string) => {
     if (!data) return;
-    const startDate = data.from_date || "";
-    const endDate = data.to_date || "";
 
     navigate(
       `/accounting/reports/gstr-3b-summary/details?box_type=${encodeURIComponent(
@@ -51,34 +173,6 @@ const GSTR3BSummary: React.FC = () => {
       )}`
     );
   };
-
-  useEffect(() => {
-    const fetchGSTR3B = async () => {
-      try {
-        const response = await fetch(
-          `${API_CONFIG.BASE_URL}/lock_accounts/1/lock_account_transactions/gstr3b.json`,
-          {
-            headers: {
-              Authorization: `Bearer ${API_CONFIG.TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const result = await response.json();
-
-        if (result.code === 0) {
-          setData(result.tax_return);
-        }
-      } catch (error) {
-        console.error("GSTR3B API Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGSTR3B();
-  }, []);
 
   if (loading) {
     return <div className="p-6">Loading GSTR-3B Summary...</div>;
@@ -96,10 +190,61 @@ const GSTR3BSummary: React.FC = () => {
 
         <h2 className="text-xl font-semibold mt-2">GSTR-3B Summary</h2>
 
-        <div className="text-sm text-gray-600 mt-1">
-          {data?.from_date} to {data?.to_date}
+        <div className="flex items-center justify-center gap-4 mt-1">
+          <div className="text-sm text-gray-600">
+            {startDate} to {endDate}
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Calendar className="w-4 h-4 mr-2" />
+                {selectedFilter}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {[
+                "Today",
+                "This Week",
+                "This Month",
+                "This Quarter",
+                "This Year",
+                "Yesterday",
+                "Previous Week",
+                "Previous Month",
+                "Previous Quarter",
+                "Previous Year",
+                "Custom",
+              ].map((option) => (
+                <DropdownMenuItem
+                  key={option}
+                  onClick={() => handleFilterSelect(option)}
+                >
+                  {option}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      {showCustom && (
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            placeholder="Start Date"
+          />
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            placeholder="End Date"
+          />
+          <Button onClick={fetchData}>Apply</Button>
+        </div>
+      )}
 
       {/* SECTION 3.1 */}
 
