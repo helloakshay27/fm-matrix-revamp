@@ -1,172 +1,389 @@
-import React, { useState } from "react";
-import TextField from "@mui/material/TextField";
+// import React, { useEffect, useState } from "react";
+// import { API_CONFIG } from "@/config/apiConfig";
+// import { Button } from "@/components/ui/button";
+// import { FileText } from "lucide-react";
+// import axios from "axios";
+// import { useLocation, useNavigate } from "react-router-dom";
+
+// const GSTR3BSummaryDetails: React.FC = () => {
+//     const [columns, setColumns] = useState<string[]>([]);
+//     const [rows, setRows] = useState<any[][]>([]);
+//     const [totals, setTotals] = useState<Record<string, any>>({});
+//     const [loading, setLoading] = useState(true);
+//     const [error, setError] = useState<string | null>(null);
+
+//     const location = useLocation();
+//     const navigate = useNavigate();
+
+//     const searchParams = new URLSearchParams(location.search);
+//     const boxType = searchParams.get("box_type") || "";
+//     const startDate = searchParams.get("start_date") || "";
+//     const endDate = searchParams.get("end_date") || "";
+
+//     useEffect(() => {
+//         if (!boxType || !startDate || !endDate) {
+//             setError("Missing required query parameters.");
+//             setLoading(false);
+//             return;
+//         }
+
+//         const fetchTransactions = async () => {
+//             setLoading(true);
+//             setError(null);
+
+//             try {
+//                 const baseUrl = API_CONFIG.BASE_URL;
+//                 const token = API_CONFIG.TOKEN;
+
+//                 if (!baseUrl) {
+//                     throw new Error("Base URL not configured.");
+//                 }
+//                 if (!token) {
+//                     throw new Error("Auth token not found.");
+//                 }
+
+//                 const response = await axios.get(
+//                     `${baseUrl}/lock_accounts/1/lock_account_transactions/gstr3b_transactions.json`,
+//                     {
+//                         params: {
+//                             start_date: startDate,
+//                             end_date: endDate,
+//                             box_type: boxType,
+//                         },
+//                         headers: {
+//                             Authorization: `Bearer ${token}`,
+//                         },
+//                     }
+//                 );
+
+//                 const transactions = response.data?.transactions;
+
+//                 if (transactions) {
+//                     setColumns(Array.isArray(transactions.columns) ? transactions.columns : []);
+//                     setRows(Array.isArray(transactions.data) ? transactions.data : []);
+//                     setTotals(transactions.totals || {});
+//                 } else {
+//                     setError("Unexpected response format from server.");
+//                 }
+//             } catch (err: any) {
+//                 const status = err?.response?.status;
+//                 const statusText = err?.response?.statusText;
+//                 const responseData = err?.response?.data;
+
+//                 console.error("GSTR3B details API error", {
+//                     error: err,
+//                     status,
+//                     statusText,
+//                     responseData,
+//                 });
+
+//                 setError(
+//                     `Failed to load transaction details${
+//                         status ? ` (${status} ${statusText || ""})` : ""
+//                     }.`
+//                 );
+//             } finally {
+//                 setLoading(false);
+//             }
+//         };
+
+//         fetchTransactions();
+//     }, [boxType, endDate, startDate]);
+
+//     const renderTable = () => {
+//         if (!columns.length) {
+//             return (
+//                 <div className="p-6 text-center text-sm text-muted-foreground">
+//                     No transaction columns available.
+//                 </div>
+//             );
+//         }
+
+//         return (
+//             <div className="overflow-x-auto">
+//                 <table className="w-full border-collapse border border-gray-300 text-sm">
+//                     <thead>
+//                         <tr className="bg-[#E5E0D3]">
+//                             {columns.map((col, idx) => (
+//                                 <th
+//                                     key={idx}
+//                                     className="border px-4 py-3 text-left font-semibold text-[#1A1A1A]"
+//                                 >
+//                                     {col}
+//                                 </th>
+//                             ))}
+//                         </tr>
+//                     </thead>
+//                     <tbody>
+//                         {rows.map((row, rowIndex) => (
+//                             <tr key={rowIndex} className="hover:bg-gray-50">
+//                                 {row.map((cell: any, cellIndex: number) => (
+//                                     <td key={cellIndex} className="border px-4 py-3">
+//                                         {cell ?? ""}
+//                                     </td>
+//                                 ))}
+//                             </tr>
+//                         ))}
+
+//                         {Object.keys(totals).length > 0 ? (
+//                             <tr className="bg-[#E5E0D3] font-semibold">
+//                                 <td className="border px-4 py-3" colSpan={columns.length}>
+//                                     Totals: {Object.entries(totals)
+//                                         .map(([k, v]) => `${k}: ${v}`)
+//                                         .join(" • ")}
+//                                 </td>
+//                             </tr>
+//                         ) : null}
+//                     </tbody>
+//                 </table>
+//             </div>
+//         );
+//     };
+
+//     return (
+//         <div className="space-y-6">
+//             <div className="flex items-center justify-between gap-6">
+//                 <div className="flex items-center gap-4">
+//                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+//                         <FileText className="w-6 h-6" />
+//                     </div>
+//                     <div>
+//                         <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+//                             GSTR-3B Summary Details
+//                         </h3>
+//                         <p className="text-sm text-muted-foreground">
+//                             {boxType ? `Details for ${boxType}` : ""}
+//                         </p>
+//                     </div>
+//                 </div>
+
+//                 <Button
+//                     variant="outline"
+//                     onClick={() => navigate(-1)}
+//                     className="h-[40px]"
+//                 >
+//                     Back
+//                 </Button>
+//             </div>
+
+//             {loading ? (
+//                 <div className="p-6 text-center text-sm text-muted-foreground">
+//                     Loading transactions...
+//                 </div>
+//             ) : error ? (
+//                 <div className="p-6 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+//                     {error}
+//                 </div>
+//             ) : (
+//                 <div className="bg-white rounded-lg border p-6">{renderTable()}</div>
+//             )}
+//         </div>
+//     );
+// };
+
+// export default GSTR3BSummaryDetails;
+
+import React, { useEffect, useState } from "react";
+import { API_CONFIG } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, ArrowLeft } from "lucide-react";
+import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const GSTR3BSummaryDetails: React.FC = () => {
-    const [filters, setFilters] = useState({ fromDate: "", toDate: "" });
+  const [columns, setColumns] = useState<string[]>([]);
+  const [rows, setRows] = useState<any[][]>([]);
+  const [totals, setTotals] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFilters((prev) => ({ ...prev, [name]: value }));
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const searchParams = new URLSearchParams(location.search);
+
+  const boxType = searchParams.get("box_type") || "";
+  const startDate = searchParams.get("start_date") || "";
+  const endDate = searchParams.get("end_date") || "";
+
+  useEffect(() => {
+    if (!boxType || !startDate || !endDate) {
+      setError("Missing required query parameters.");
+      setLoading(false);
+      return;
+    }
+
+    const fetchTransactions = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
+
+        const response = await axios.get(
+          `${baseUrl}/lock_accounts/1/lock_account_transactions/gstr3b_transactions.json`,
+          {
+            params: {
+              start_date: startDate,
+              end_date: endDate,
+              box_type: boxType,
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const transactions = response.data?.transactions;
+
+        if (!transactions) {
+          throw new Error("Invalid API response");
+        }
+
+        setColumns(transactions.columns || []);
+
+        // Correctly map only required fields
+        const formattedRows =
+          Array.isArray(transactions.data) &&
+          transactions.data.map((row: any) => [
+            row.date,
+            row.entry_number,
+            row.transaction_type,
+            row.amount_formatted ?? row.amount,
+            row.igst_amount_formatted ?? row.igst_amount,
+            row.cgst_amount_formatted ?? row.cgst_amount,
+            row.sgst_amount_formatted ?? row.sgst_amount,
+            row.cess_amount_formatted ?? row.cess_amount,
+          ]);
+
+        setRows(formattedRows || []);
+        setTotals(transactions.totals || {});
+      } catch (err: any) {
+        console.error("GSTR3B details API error", err);
+        setError("Failed to load transaction details.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const mockData = [
-        {
-            date: "09/03/2026",
-            entryNumber: "INV-0393",
-            transactionType: "Invoice",
-            amount: "₹500.00",
-            igst: "₹0.00",
-            cgst: "₹12.50",
-            sgst: "₹12.50",
-            cess: "₹0.00",
-        },
-        {
-            date: "09/03/2026",
-            entryNumber: "10",
-            transactionType: "Customer Payment",
-            amount: "₹81.30",
-            igst: "₹0.00",
-            cgst: "₹11.38",
-            sgst: "₹7.32",
-            cess: "₹0.00",
-        },
-        {
-            date: "09/03/2026",
-            entryNumber: "CN-00002",
-            transactionType: "Credit Note",
-            amount: "₹-500.00",
-            igst: "₹0.00",
-            cgst: "₹-12.50",
-            sgst: "₹-12.50",
-            cess: "₹0.00",
-        },
-        {
-            date: "10/03/2026",
-            entryNumber: "INV-0395",
-            transactionType: "Invoice",
-            amount: "₹490.00",
-            igst: "₹0.00",
-            cgst: "₹12.25",
-            sgst: "₹12.25",
-            cess: "₹0.00",
-        },
-        {
-            date: "10/03/2026",
-            entryNumber: "INV-0396",
-            transactionType: "Invoice",
-            amount: "₹300.00",
-            igst: "₹0.00",
-            cgst: "₹7.50",
-            sgst: "₹7.50",
-            cess: "₹0.00",
-        },
-        {
-            date: "18/03/2026",
-            entryNumber: "INV-0394",
-            transactionType: "Invoice",
-            amount: "₹90.00",
-            igst: "₹0.00",
-            cgst: "₹2.25",
-            sgst: "₹2.25",
-            cess: "₹0.00",
-        },
-    ];
+    fetchTransactions();
+  }, [boxType, startDate, endDate]);
+
+  const renderTable = () => {
+    if (!columns.length) {
+      return (
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          No transaction columns available.
+        </div>
+      );
+    }
 
     return (
-        <div
-            className="w-full bg-[#f9f7f2] p-6"
-            style={{ minHeight: "100vh", boxSizing: "border-box" }}
-        >
-            {/* FILTER CARD */}
-            <div className="bg-white rounded-lg border-2 p-6 mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                        <FileText className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                        GSTR-3B Summary Details
-                    </h3>
-                </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300 text-sm">
+          <thead>
+            <tr className="bg-[#E5E0D3]">
+              {columns.map((col, idx) => (
+                <th
+                  key={idx}
+                  className="border px-4 py-3 text-left font-semibold text-[#1A1A1A]"
+                >
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                    <TextField
-                        label="From Date"
-                        type="date"
-                        name="fromDate"
-                        value={filters.fromDate}
-                        onChange={handleDateChange}
-                        InputLabelProps={{ shrink: true }}
-                        fullWidth
-                        size="small"
-                    />
-                    <TextField
-                        label="To Date"
-                        type="date"
-                        name="toDate"
-                        value={filters.toDate}
-                        onChange={handleDateChange}
-                        InputLabelProps={{ shrink: true }}
-                        fullWidth
-                        size="small"
-                    />
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]">
-                        View
-                    </Button>
-                </div>
-            </div>
+          <tbody>
+            {/* DATA ROWS */}
+            {rows.length > 0 ? (
+              rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="hover:bg-gray-50">
+                  {row.map((cell: any, cellIndex: number) => (
+                    <td key={cellIndex} className="border px-4 py-3">
+                      {cell ?? ""}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="text-center py-6 text-gray-500"
+                >
+                  No transactions found for selected period.
+                </td>
+              </tr>
+            )}
 
-            {/* TABLE CARD */}
-            <div className="bg-white rounded-lg border p-6">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-gray-300 text-sm">
-                        <thead>
-                            <tr className="bg-[#E5E0D3]">
-                                <th className="border px-4 py-3 text-left font-semibold text-[#1A1A1A]">Date</th>
-                                <th className="border px-4 py-3 text-left font-semibold text-[#1A1A1A]">Entry Number</th>
-                                <th className="border px-4 py-3 text-left font-semibold text-[#1A1A1A]">Transaction Type</th>
-                                <th className="border px-4 py-3 text-right font-semibold text-[#1A1A1A]">Amount</th>
-                                <th className="border px-4 py-3 text-right font-semibold text-[#1A1A1A]">IGST Amount</th>
-                                <th className="border px-4 py-3 text-right font-semibold text-[#1A1A1A]">CGST Amount</th>
-                                <th className="border px-4 py-3 text-right font-semibold text-[#1A1A1A]">SGST Amount</th>
-                                <th className="border px-4 py-3 text-right font-semibold text-[#1A1A1A]">Cess Amount</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {mockData.map((row, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="border px-4 py-3">{row.date}</td>
-                                    <td className="border px-4 py-3">
-                                        <button className="text-[#1565C0] hover:underline font-medium">
-                                            {row.entryNumber}
-                                        </button>
-                                    </td>
-                                    <td className="border px-4 py-3">{row.transactionType}</td>
-                                    <td className="border px-4 py-3 text-right">{row.amount}</td>
-                                    <td className="border px-4 py-3 text-right">{row.igst}</td>
-                                    <td className="border px-4 py-3 text-right">{row.cgst}</td>
-                                    <td className="border px-4 py-3 text-right">{row.sgst}</td>
-                                    <td className="border px-4 py-3 text-right">{row.cess}</td>
-                                </tr>
-                            ))}
-
-                            {/* TOTAL ROW */}
-                            <tr className="bg-[#E5E0D3] font-semibold">
-                                <td className="border px-4 py-3" colSpan={3}>Total</td>
-                                <td className="border px-4 py-3 text-right">₹961.30</td>
-                                <td className="border px-4 py-3 text-right">₹0.00</td>
-                                <td className="border px-4 py-3 text-right">₹33.38</td>
-                                <td className="border px-4 py-3 text-right">₹29.32</td>
-                                <td className="border px-4 py-3 text-right">₹0.00</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+            {/* TOTALS ROW */}
+            {Object.keys(totals).length > 0 && (
+              <tr className="bg-[#E5E0D3] font-semibold">
+                <td className="border px-4 py-3">Totals</td>
+                <td className="border px-4 py-3"></td>
+                <td className="border px-4 py-3"></td>
+                <td className="border px-4 py-3">
+                  {totals.amount_formatted ?? "₹0.00"}
+                </td>
+                <td className="border px-4 py-3">
+                  {totals.igst_amount_formatted ?? "₹0.00"}
+                </td>
+                <td className="border px-4 py-3">
+                  {totals.cgst_amount_formatted ?? "₹0.00"}
+                </td>
+                <td className="border px-4 py-3">
+                  {totals.sgst_amount_formatted ?? "₹0.00"}
+                </td>
+                <td className="border px-4 py-3">
+                  {totals.cess_amount_formatted ?? "₹0.00"}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="flex items-center gap-4">
+        <ArrowLeft
+          onClick={() => navigate(-1)}
+          className="w-6 h-6 cursor-pointer text-[#1A1A1A] hover:text-[#C72030]"
+        />
+        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+          <FileText className="w-6 h-6" />
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            GSTR-3B Summary Details
+          </h3>
+
+          <p className="text-sm text-muted-foreground">
+            {boxType ? `Details for ${boxType}` : ""}
+          </p>
+        </div>
+      </div>
+
+      {/* CONTENT */}
+      {loading ? (
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          Loading transactions...
+        </div>
+      ) : error ? (
+        <div className="p-6 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+          {error}
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border p-6">{renderTable()}</div>
+      )}
+    </div>
+  );
 };
 
 export default GSTR3BSummaryDetails;

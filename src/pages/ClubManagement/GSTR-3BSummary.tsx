@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { API_CONFIG } from "@/config/apiConfig";
+import { useNavigate } from "react-router-dom";
 
 interface Supply {
   taxable_amount_formatted: string;
@@ -35,6 +36,21 @@ interface GSTR3BResponse {
 const GSTR3BSummary: React.FC = () => {
   const [data, setData] = useState<GSTR3BResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const handleRowClick = (boxType: string) => {
+    if (!data) return;
+    const startDate = data.from_date || "";
+    const endDate = data.to_date || "";
+
+    navigate(
+      `/accounting/reports/gstr-3b-summary/details?box_type=${encodeURIComponent(
+        boxType
+      )}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(
+        endDate
+      )}`
+    );
+  };
 
   useEffect(() => {
     const fetchGSTR3B = async () => {
@@ -108,7 +124,10 @@ const GSTR3BSummary: React.FC = () => {
           <tbody>
             {/* a */}
 
-            <tr>
+            <tr
+              className="cursor-pointer hover:bg-gray-50"
+              onClick={() => handleRowClick("taxable_outward_supplies")}
+            >
               <td className="border px-4 py-2">
                 (a) Outward taxable supplies
               </td>
@@ -136,7 +155,10 @@ const GSTR3BSummary: React.FC = () => {
 
             {/* b */}
 
-            <tr>
+            <tr
+              className="cursor-pointer hover:bg-gray-50"
+              onClick={() => handleRowClick("zero_rated_outward_supplies")}
+            >
               <td className="border px-4 py-2">
                 (b) Outward taxable supplies (zero rated)
               </td>
@@ -164,7 +186,10 @@ const GSTR3BSummary: React.FC = () => {
 
             {/* c */}
 
-            <tr>
+            <tr
+              className="cursor-pointer hover:bg-gray-50"
+              onClick={() => handleRowClick("other_outward_supplies")}
+            >
               <td className="border px-4 py-2">
                 (c) Other outward supplies (Nil rated, exempted)
               </td>
@@ -192,7 +217,10 @@ const GSTR3BSummary: React.FC = () => {
 
             {/* d */}
 
-            <tr>
+            <tr
+              className="cursor-pointer hover:bg-gray-50"
+              onClick={() => handleRowClick("inward_supplies")}
+            >
               <td className="border px-4 py-2">
                 (d) Inward supplies (liable to reverse charge)
               </td>
@@ -220,7 +248,10 @@ const GSTR3BSummary: React.FC = () => {
 
             {/* e */}
 
-            <tr>
+            <tr
+              className="cursor-pointer hover:bg-gray-50"
+              onClick={() => handleRowClick("non_gst_outward_supplies")}
+            >
               <td className="border px-4 py-2">(e) Non-GST outward supplies</td>
 
               <td className="border px-4 py-2 text-right">
