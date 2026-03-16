@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import TextField from "@mui/material/TextField";
-import { CalendarRange, Columns3, ChevronDown, NotepadText } from "lucide-react";
+import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -152,25 +152,7 @@ const TDSReceivablesSummaryReport: React.FC = () => {
       </div>
 
       <div className="rounded-lg border bg-white p-6">
-        <div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="flex-1 text-center">
-            <p className="text-sm font-medium text-[#667085]">Lockated</p>
-            <h1 className="mt-2 text-3xl font-semibold text-[#101828]">
-              TDS Receivables Summary
-            </h1>
-            <p className="mt-2 text-base text-[#344054]">
-              From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
-            </p>
-            <p className="mt-3 text-sm font-medium text-[#667085]">
-              Basis : <span className="text-[#344054]">Accrual</span>
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-end gap-3" />
-        </div>
-
         <div className="overflow-x-auto">
-          <h1 className="mb-4 text-center font-semibold">TDS Receivables Summary</h1>
           <table className="w-full min-w-[900px] border-collapse border border-gray-300">
             <thead>
               <tr className="bg-[#E5E0D3]">

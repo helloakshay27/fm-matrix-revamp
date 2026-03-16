@@ -1,58 +1,9 @@
-import {
-  ThemeProvider,
-  createTheme,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { TextField } from "@mui/material";
 import { Button } from "@/components/ui/button";
-import { NotepadText, ArrowLeft } from "lucide-react";
+import { NotepadText } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"
-
-// Custom theme for MUI components - matching ManualJournalDetails
-const muiTheme = createTheme({
-  components: {
-    MuiInputLabel: {
-      styleOverrides: {
-        root: {
-          fontSize: "16px",
-        },
-      },
-      defaultProps: {
-        shrink: true,
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          width: "100%",
-          "& .MuiOutlinedInput-root": {
-            borderRadius: "6px",
-            height: "36px",
-            "@media (min-width: 768px)": {
-              height: "45px",
-            },
-          },
-          "& .MuiOutlinedInput-input": {
-            padding: "8px 14px",
-            "@media (min-width: 768px)": {
-              padding: "12px 14px",
-            },
-          },
-        },
-      },
-      defaultProps: {
-        InputLabelProps: {
-          shrink: true,
-        },
-      },
-    },
-  },
-});
 
 interface Ledger {
   ledger_id: number;
@@ -107,218 +58,9 @@ interface CashFlowResponse {
 const CashFlowStatementReport: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-  // const [pnlData, setPnlData] = useState<PnlResponse | null>(null);
   const [pnlData, setPnlData] = useState<CashFlowResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  // Recursive component to render groups and their children/ledgers
-  // const GroupTable = ({
-  //   group,
-  //   title,
-  // }: {
-  //   group: Group | undefined;
-  //   title: string;
-  // }) => {
-
-  // const GroupTable = ({ pnlData }: { pnlData: any }) => {
-
-  //   const renderGroup = (group: any, depth = 0): React.ReactNode[] => {
-  //     let rows: React.ReactNode[] = [];
-
-  //     // Group title
-  //     rows.push(
-  //       <tr key={`group-${group.group_id}`} className="bg-gray-100 font-semibold">
-  //         <td
-  //           className="border px-4 py-2"
-  //           style={{ paddingLeft: `${depth * 10}px` }}
-  //         >
-  //           {group.group_name}
-  //         </td>
-  //         <td className="border px-4 py-2 text-right">
-  //           {(group.total).toLocaleString(undefined, {
-  //             minimumFractionDigits: 2,
-  //           })}
-  //         </td>
-  //       </tr>
-  //     );
-
-  //     // Ledgers
-  //     if (group.ledgers) {
-  //       group.ledgers.forEach((ledger: any) => {
-  //         rows.push(
-  //           <tr key={`ledger-${ledger.ledger_id}`} className="hover:bg-gray-50">
-  //             <td
-  //               className="border px-4 py-2"
-  //               style={{ paddingLeft: `${(depth + 1) * 10}px` }}
-  //             >
-  //               <span
-  //                 className="text-blue-600 cursor-pointer hover:underline"
-  //                 onClick={() =>
-  //                   navigate(
-  //                     `/accounting/reports/profit-and-loss/details/${ledger.ledger_id}`
-  //                   )
-  //                 }
-  //               >
-  //                 {ledger.ledger_name}
-  //               </span>
-  //             </td>
-
-  //             <td className="border px-4 py-2 text-right">
-  //               {(ledger.total).toLocaleString(undefined, {
-  //                 minimumFractionDigits: 2,
-  //               })}
-  //             </td>
-  //           </tr>
-  //         );
-  //       });
-  //     }
-
-  //     // Sub groups
-  //     // if (group.sub_groups) {
-  //     //   group.sub_groups.forEach((sub: any) => {
-  //     //     rows = [...rows, ...renderGroup(sub, depth + 1)];
-  //     //   });
-  //     // }
-
-  //     if (group.sub_groups) {
-  //       group.sub_groups.forEach((sub: any) => {
-  //         rows = [...rows, ...renderGroup(sub, depth + 1)];
-  //       });
-  //     }
-
-  //     return rows;
-  //   };
-
-  //   return (
-
-  //     <div className="overflow-x-auto">
-
-  //       {/* <h3 className="text-center font-semibold mb-4">
-  //         PROFIT & LOSS
-  //       </h3> */}
-  //       <div className="overflow-x-auto">
-
-  //         <h3 className="text-center font-semibold mb-4">
-  //           PROFIT & LOSS
-  //         </h3>
-
-  //         <table className="w-full border border-gray-300">
-
-  //           <thead>
-  //             <tr className="bg-[#E5E0D3]">
-  //               <th className="border px-4 py-3 text-left">Account</th>
-  //               <th className="border px-4 py-3 text-right">Amount</th>
-  //             </tr>
-  //           </thead>
-
-  //           {/* <tbody>
-
-  //             {/* Operating Income */}
-  //           {/* {pnlData?.operating_income &&
-  //               renderGroup(pnlData.operating_income)} */}
-
-  //           {/* Cost Of Goods Sold */}
-  //           {/* {pnlData?.cost_of_goods_sold &&
-  //               renderGroup(pnlData.cost_of_goods_sold)} */}
-
-  //           {/* Operating Expenses */}
-  //           {/* {pnlData?.operating_expenses &&
-  //               renderGroup(pnlData.operating_expenses)}
-
-  //           </tbody> */}
-
-
-
-
-  //           <tbody>
-
-  //             {/* OPERATING INCOME */}
-  //             {pnlData?.operating_income && (
-  //               <>
-  //                 {/* <tr className="bg-gray-200 font-bold">
-  //                   <td className="border px-4 py-3">
-  //                     {pnlData.operating_income.group_name}
-  //                   </td>
-  //                   <td className="border"></td>
-  //                 </tr> */}
-
-  //                 {renderGroup(pnlData.operating_income)}
-
-  //                 <tr className="bg-gray-200 font-semibold">
-  //                   <td className="border px-4 py-3">
-  //                     Total {pnlData.operating_income.group_name}
-  //                   </td>
-  //                   <td className="border px-4 py-3 text-right">
-  //                     {(pnlData.operating_income.total).toLocaleString(undefined, {
-  //                       minimumFractionDigits: 2
-  //                     })}
-  //                   </td>
-  //                 </tr>
-  //               </>
-  //             )}
-
-  //             {/* COST OF GOODS SOLD */}
-  //             {pnlData?.cost_of_goods_sold && (
-  //               <>
-  //                 {/* <tr className="bg-gray-200 font-bold">
-  //                   <td className="border px-4 py-3">
-  //                     {pnlData.cost_of_goods_sold.group_name}
-  //                   </td>
-  //                   <td className="border"></td>
-  //                 </tr> */}
-
-  //                 {renderGroup(pnlData.cost_of_goods_sold)}
-
-  //                 <tr className="bg-gray-200 font-semibold">
-  //                   <td className="border px-4 py-3">
-  //                     Total {pnlData.cost_of_goods_sold.group_name}
-  //                   </td>
-  //                   <td className="border px-4 py-3 text-right">
-  //                     {(pnlData.cost_of_goods_sold.total).toLocaleString(undefined, {
-  //                       minimumFractionDigits: 2
-  //                     })}
-  //                   </td>
-  //                 </tr>
-  //               </>
-  //             )}
-
-  //             {/* OPERATING EXPENSES */}
-  //             {pnlData?.operating_expenses && (
-  //               <>
-  //                 {/* <tr className="bg-gray-200 font-bold">
-  //                   <td className="border px-4 py-3">
-  //                     {pnlData.operating_expenses.group_name}
-  //                   </td>
-  //                   <td className="border"></td>
-  //                 </tr> */}
-
-  //                 {renderGroup(pnlData.operating_expenses)}
-
-  //                 <tr className="bg-gray-200 font-semibold">
-  //                   <td className="border px-4 py-3">
-  //                     Total {pnlData.operating_expenses.group_name}
-  //                   </td>
-  //                   <td className="border px-4 py-3 text-right">
-  //                     {(pnlData.operating_expenses.total).toLocaleString(undefined, {
-  //                       minimumFractionDigits: 2
-  //                     })}
-  //                   </td>
-  //                 </tr>
-  //               </>
-  //             )}
-
-  //           </tbody>
-
-  //         </table>
-  //       </div>
-
-  //     </div>
-
-  //   );
-  // };
-
-
 
   const GroupTable = ({ pnlData }: { pnlData: any }) => {
 
@@ -459,66 +201,67 @@ const CashFlowStatementReport: React.FC = () => {
   }, [filters.fromDate, filters.toDate]);
 
   return (
-    <ThemeProvider theme={muiTheme}>
-      <div
-        className="w-full bg-[#f9f7f2] p-6"
-        style={{ minHeight: "100vh", boxSizing: "border-box" }}
-      >
-        <div className="bg-white rounded-lg border-2 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <NotepadText className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Cash Flow Statement Report
-            </h3>
+    <div
+      className="w-full bg-[#f9f7f2] p-6"
+      style={{ minHeight: "100vh", boxSizing: "border-box" }}
+    >
+      <div className="bg-white rounded-lg border-2 p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="w-6 h-6" />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-            <TextField
-              label="From Date"
-              type="date"
-              name="fromDate"
-              value={filters.fromDate}
-              onChange={handleDateChange}
-              fullWidth
-            />
-
-            <TextField
-              label="To Date"
-              type="date"
-              name="toDate"
-              value={filters.toDate}
-              onChange={handleDateChange}
-              fullWidth
-            />
-
-            <Button
-              type="button"
-              className="bg-[#C72030] hover:bg-[#A01020] text-white h-[45px]"
-              onClick={fetchPnlData}
-              disabled={loading}
-            >
-              {loading ? "Loading..." : "View"}
-            </Button>
-          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            Cash Flow Statement Report
+          </h3>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={filters.fromDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
 
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
-          </div>
-        ) : (
-          pnlData && (
-            <div className="bg-white rounded-lg border p-6 mb-6">
-              {/* <GroupTable group={pnlData?.expenditure} title="Expenditure" /> */}
-              <GroupTable pnlData={pnlData} />
-            </div>
-          )
-        )}
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={filters.toDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+
+          <Button
+            type="button"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
+            onClick={fetchPnlData}
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "View"}
+          </Button>
+        </div>
       </div>
-    </ThemeProvider>
+
+
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+        </div>
+      ) : (
+        pnlData && (
+          <div className="bg-white rounded-lg border p-6 mb-6">
+            <GroupTable pnlData={pnlData} />
+          </div>
+        )
+      )}
+    </div>
   );
 };
 

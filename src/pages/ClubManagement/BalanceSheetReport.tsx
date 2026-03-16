@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { User, FileCog, NotepadText } from "lucide-react";
+import { NotepadText } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -66,10 +61,6 @@ const BalanceSheetReport: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("Fetching balance sheet with baseUrl:", baseUrl);
-      console.log("Token present:", !!token);
-
-      // Note: The balance sheet endpoint is on club-uat-api, not the regular baseUrl
       const response = await axios.get(
         `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/balance_sheet.json`,
         {
@@ -80,17 +71,9 @@ const BalanceSheetReport: React.FC = () => {
         },
       );
 
-      console.log("Balance sheet data received:", response.data);
       setBalanceSheetData(response.data);
     } catch (err: unknown) {
       console.error("Error fetching balance sheet:", err);
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as {
-          response?: { data?: unknown; status?: number };
-        };
-        console.error("Error response:", axiosError.response?.data);
-        console.error("Error status:", axiosError.response?.status);
-      }
       setError("Failed to load balance sheet data");
     } finally {
       setLoading(false);
@@ -111,9 +94,6 @@ const BalanceSheetReport: React.FC = () => {
       alert("Please select From Date and To Date");
       return;
     }
-    console.log("From Date:", filters.fromDate);
-    console.log("To Date:", filters.toDate);
-    // You can add date filtering to API call here if needed
     fetchBalanceSheet();
   };
 
@@ -146,17 +126,6 @@ const BalanceSheetReport: React.FC = () => {
         >
           {group.group_name}
         </td>
-        {/* <td
-          className={`border border-gray-300 px-4 py-3 ${fontClass}`}
-          style={{ paddingLeft: `${indent}px` }}
-        >
-          <span
-            className="text-blue-600 cursor-pointer hover:underline"
-            onClick={() => navigate(`/accounting/reports/balance-sheet/details/${group.group_id}`)}
-          >
-            {group.group_name}
-          </span>
-        </td> */}
 
         <td className="border border-gray-300 px-4 py-3 text-right">
           {group.total.toFixed(2)}
@@ -183,12 +152,6 @@ const BalanceSheetReport: React.FC = () => {
             {ledger.total.toFixed(2)}
           </td>
 
-          {/* <td
-          className="border border-gray-300 px-4 py-3 font-normal"
-          style={{ paddingLeft: `${(level + 1) * 20}px` }}
-        >
-          {ledger.ledger_name}
-        </td> */}
           <td
             className="border border-gray-300 px-4 py-3 font-normal"
             style={{ paddingLeft: `${(level + 1) * 20}px` }}
@@ -215,57 +178,6 @@ const BalanceSheetReport: React.FC = () => {
 
     return rows;
   };
-
-
-  //   const renderAccounts = (nodes: any[]): JSX.Element[] => {
-  //   const rows: JSX.Element[] = [];
-
-  //   nodes.forEach((node) => {
-
-  //     const amount = node.values?.[0]?.total_formatted || "0.00";
-  //     const indent = node.depth_indent || 0;
-
-  //     rows.push(
-  //       <tr key={node.group_id || node.ledger_id}>
-
-  //         <td
-  //           className="border border-gray-300 px-4 py-2"
-  //           style={{ paddingLeft: `${indent}px` }}
-  //         >
-  //           {node.name}
-  //         </td>
-
-  //         <td className="border border-gray-300 px-4 py-2 text-right">
-  //           {amount}
-  //         </td>
-
-  //       </tr>
-  //     );
-
-  //     if (node.accounts && node.accounts.length > 0) {
-  //       rows.push(...renderAccounts(node.accounts));
-  //     }
-
-  //     if (node.total_label) {
-  //       rows.push(
-  //         <tr key={`total-${node.group_id}`} className="font-semibold">
-
-  //           <td className="border border-gray-300 px-4 py-2">
-  //             {node.total_label}
-  //           </td>
-
-  //           <td className="border border-gray-300 px-4 py-2 text-right">
-  //             {amount}
-  //           </td>
-
-  //         </tr>
-  //       );
-  //     }
-
-  //   });
-
-  //   return rows;
-  // };
 
 
   const renderAccounts = (nodes: any[], level: number = 0): JSX.Element[] => {
@@ -325,79 +237,6 @@ const BalanceSheetReport: React.FC = () => {
 
     return rows;
   };
-
-  //   const BalanceSheetTable = () => {
-
-  //   const assets =
-  //     balanceSheetData?.balance_sheet?.accounts?.find(
-  //       (a: any) => a.node_name === "assets"
-  //     );
-
-  //   const liabilities =
-  //     balanceSheetData?.balance_sheet?.accounts?.find(
-  //       (a: any) => a.node_name === "liabilities"
-  //     );
-
-  //   const assetRows = assets ? renderAccounts(assets.accounts) : [];
-  //   const liabilityRows = liabilities ? renderAccounts(liabilities.accounts) : [];
-
-  //   const maxRows = Math.max(assetRows.length, liabilityRows.length);
-
-  //   const rows = [];
-
-  //   for (let i = 0; i < maxRows; i++) {
-  //     rows.push(
-  //       <tr key={i}>
-
-  //         {liabilityRows[i] || (
-  //           <>
-  //             <td className="border border-gray-300"></td>
-  //             <td className="border border-gray-300"></td>
-  //           </>
-  //         )}
-
-  //         {assetRows[i] || (
-  //           <>
-  //             <td className="border border-gray-300"></td>
-  //             <td className="border border-gray-300"></td>
-  //           </>
-  //         )}
-
-  //       </tr>
-  //     );
-  //   }
-
-  //   return (
-  //     <table className="w-full border">
-
-  //       <thead className="bg-[#E5E0D3]">
-  //         <tr>
-
-  //           <th className="border px-4 py-2 text-left">
-  //             Liabilities
-  //           </th>
-
-  //           <th className="border px-4 py-2 text-right">
-  //             Amount
-  //           </th>
-
-  //           <th className="border px-4 py-2 text-left">
-  //             Assets
-  //           </th>
-
-  //           <th className="border px-4 py-2 text-right">
-  //             Amount
-  //           </th>
-
-  //         </tr>
-  //       </thead>
-
-  //       <tbody>{rows}</tbody>
-
-  //     </table>
-  //   );
-  // };
-
 
   const BalanceSheetTable = () => {
     const assets =
@@ -467,7 +306,7 @@ const BalanceSheetReport: React.FC = () => {
   }
 
   return (
-    <form
+    <div
       className="w-full bg-[#f9f7f2] p-6"
       style={{ minHeight: "100vh", boxSizing: "border-box" }}
     >
@@ -517,27 +356,13 @@ const BalanceSheetReport: React.FC = () => {
       </div>
       <div className="bg-white rounded-lg border p-6 mb-6">
         <div className="text-center mb-6">
-
-          {/* <h2 className="text-lg font-semibold">
-            Lockated
-          </h2> */}
-
           <h1 className="text-xl font-bold">
             Balance Sheet
           </h1>
-
-          {/* <p className="text-gray-600">
-            Basis : Accrual
-          </p>
-
-          <p className="text-gray-600">
-            As of 16/03/2026
-          </p> */}
-
         </div>
         <BalanceSheetTable />
       </div>
-    </form>
+    </div>
   );
 };
 

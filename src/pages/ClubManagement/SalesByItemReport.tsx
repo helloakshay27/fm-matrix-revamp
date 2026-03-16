@@ -49,7 +49,7 @@ const SalesByItemReport: React.FC = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
-    });
+      });
       const data = Array.isArray(response.data) ? response.data : [];
       setSalesByItemData(data);
       console.log('Fetched sales by item:', data);
@@ -192,16 +192,15 @@ const SalesByItemReport: React.FC = () => {
   };
 
   return (
-    <form
+    <div
       className="w-full bg-[#f9f7f2] p-6"
       style={{ minHeight: "100vh", boxSizing: "border-box" }}
     >
-      {loading && (
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
         </div>
-      )}
-      {!loading && (
+      ) : (
         <>
           {/* HEADER FILTER SECTION */}
 
@@ -255,7 +254,7 @@ const SalesByItemReport: React.FC = () => {
           </div>
         </>
       )}
-    </form>
+    </div>
   );
 };
 
