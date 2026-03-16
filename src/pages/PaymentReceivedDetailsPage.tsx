@@ -74,7 +74,7 @@ const mapLockPayment = (lp: LockPaymentAPI): PaymentReceived => {
 export const PaymentReceivedDetailsPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-
+const lock_account_id = localStorage.getItem("lock_account_id");
     const [payment, setPayment] = React.useState<PaymentReceived | null>(null);
     const [sidebarList, setSidebarList] = React.useState<PaymentReceived[]>([]);
 
@@ -100,7 +100,7 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
         const token = localStorage.getItem('token');
         axios
             .get(`https://${baseUrl}/lock_payments.json`, {
-                params: { lock_account_id: 1, 'q[payment_made_eq]': 0, per_page: 20 },
+                params: { lock_account_id , 'q[payment_made_eq]': 0, per_page: 20 },
                 headers: { Authorization: `Bearer ${token}` },
             })
             .then((res) => {

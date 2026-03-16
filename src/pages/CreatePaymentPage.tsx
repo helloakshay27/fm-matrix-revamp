@@ -93,7 +93,7 @@ import {
 
 export const CreatePaymentPage: React.FC = () => {
   const navigate = useNavigate();
-
+            const lock_account_id = localStorage.getItem("lock_account_id");
   // PMS axios instance — uses the dynamic session base URL (fm-uat-api.lockated.com)
   const pmsClient = React.useMemo(
     () =>
@@ -189,7 +189,7 @@ export const CreatePaymentPage: React.FC = () => {
       setAppliedAmounts({});
       try {
         const res = await accountingClient.get("/lock_account_bills.json", {
-          params: { lock_account_id: 1 },
+          params: { lock_account_id: lock_account_id },
         });
         const raw = res.data;
         const allBills: LockAccountBill[] = Array.isArray(raw)
@@ -268,7 +268,7 @@ export const CreatePaymentPage: React.FC = () => {
 
       const payload = {
         lock_payment: {
-          lock_account_id: 1,
+          lock_account_id: lock_account_id,
           payment_of: "Pms::Supplier",
           payment_of_id: parseInt(selectedVendor, 10),
           paid_amount: paidAmount,

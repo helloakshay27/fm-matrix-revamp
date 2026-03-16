@@ -50,6 +50,7 @@ export const ItemsDashboard = () => {
   const loginState = useSelector((state: RootState) => state.login);
 const baseUrl = localStorage.getItem("baseUrl");
 const token = localStorage.getItem("token");
+const lock_account_id = localStorage.getItem("lock_account_id");
   // State management
   // const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
   // const [journals, setJournals] = useState([]);
@@ -83,7 +84,7 @@ const token = localStorage.getItem("token");
       try {
         // const baseUrl = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
         // const token = API_CONFIG.TOKEN;
-        const url = `https://${baseUrl}/lock_account_items.json?lock_account_id=1`;
+        const url = `https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`;
         const response = await axios.get(url, {
           headers: {
             'Content-Type': 'application/json',
