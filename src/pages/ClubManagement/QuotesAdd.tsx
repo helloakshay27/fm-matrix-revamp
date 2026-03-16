@@ -225,6 +225,7 @@ export const QuotesAdd: React.FC = () => {
     const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
     const [salesperson, setSalesperson] = useState('');
+     const lock_account_id = localStorage.getItem("lock_account_id");
 
     // Items
     const [items, setItems] = useState<Item[]>([
@@ -261,7 +262,7 @@ export const QuotesAdd: React.FC = () => {
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"

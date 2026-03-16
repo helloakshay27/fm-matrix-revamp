@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
     TextField,
     Button,
@@ -11,6 +12,7 @@ import {
     Select,
     FormControl,
     InputLabel,
+    ListSubheader,
     Drawer,
     Typography,
     Box,
@@ -89,6 +91,9 @@ interface Item {
     tax: string;
     taxRate: number;
     amount: number;
+    item_tax_type?: string;
+    tax_group_id?: number | string | null;
+    tax_exemption_id?: number | string | null;
 }
 
 interface ExternalUser {
@@ -135,7 +140,10 @@ export const BillCreatePage: React.FC = () => {
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
-            amount: 0
+            amount: 0,
+            item_tax_type: '',
+            tax_group_id: null,
+            tax_exemption_id: null
         }
     ]);
 
@@ -174,9 +182,16 @@ export const BillCreatePage: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; tax_preference?: string; tax_exemption_id?: number | null; tax_group_id?: number | null }[]>([]);
     const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
-    const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [taxGroups, setTaxGroups] = useState<any[]>([]);
+    const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
+
+    const taxTypeOptions = [
+        { value: "non_taxable", label: "Non-Taxable" },
+        { value: "out_of_scope", label: "Out of Scope" },
+        { value: "non_gst_supply", label: "Non-GST Supply" },
+    ];
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -260,30 +275,64 @@ export const BillCreatePage: React.FC = () => {
         fetchVendors();
     }, []);
 
-    // Fetch items, salespersons, taxes
+    // Fetch items from API
     useEffect(() => {
-        // Mock data - replace with actual API calls
-        setItemOptions([
-            { id: '1', name: 'Cement', rate: 500 },
-            { id: '2', name: 'Steel', rate: 800 },
-            { id: '3', name: 'Bricks', rate: 10 },
-            { id: '4', name: 'Paint', rate: 350 }
-        ]);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
-        setSalespersons([
-            { id: '1', name: 'Rajesh Kumar' },
-            { id: '2', name: 'Priya Sharma' },
-            { id: '3', name: 'Amit Patel' }
-        ]);
+        axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(res => {
+            if (res && res.data && Array.isArray(res.data)) {
+                setItemOptions(res.data.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    rate: item.purchase_rate,
+                    description: item.purchase_description,
+                    tax_preference: item.tax_preference,
+                    tax_exemption_id: item.tax_exemption_id,
+                    tax_group_id: item.intra_state_tax_rate_id
+                })));
+            }
+        }).catch(() => setItemOptions([]));
+    }, []);
 
-        setTaxOptions([
-            { id: '1', name: 'GST 18%', rate: 18 },
-            { id: '2', name: 'GST 12%', rate: 12 },
-            { id: '3', name: 'GST 5%', rate: 5 },
-            { id: '4', name: 'No Tax', rate: 0 }
-        ]);
+    // Fetch salespersons from API
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
-        // Set default terms and conditions
+        axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(res => {
+            if (res && res.data && Array.isArray(res.data)) {
+                setSalespersons(res.data.map(p => ({ id: p.id, name: p.name })));
+            }
+        }).catch(() => setSalespersons([]));
+    }, []);
+
+    // Fetch tax groups from API
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingTaxGroups(true);
+        axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(res => {
+            setTaxGroups(res.data || []);
+        }).catch(err => {
+            console.error('Error fetching tax groups:', err);
+        }).finally(() => {
+            setLoadingTaxGroups(false);
+        });
+    }, []);
+
+    // Set default terms and conditions
+    useEffect(() => {
         setTermsAndConditions('1. Use this to issue for all sales orders of all vendors.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
     }, []);
 
@@ -339,7 +388,10 @@ export const BillCreatePage: React.FC = () => {
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
-            amount: 0
+            amount: 0,
+            item_tax_type: '',
+            tax_group_id: null,
+            tax_exemption_id: null
         }]);
     };
 
@@ -487,11 +539,11 @@ export const BillCreatePage: React.FC = () => {
             // Example: await salesOrderAPI.create(payload);
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            alert(`Bill ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/accounting/bills');
         } catch (error) {
             console.error('Error submitting sales order:', error);
-            alert('Failed to create sales order');
+            alert('Failed to create Bill');
         } finally {
             setIsSubmitting(false);
         }
@@ -771,6 +823,24 @@ export const BillCreatePage: React.FC = () => {
                                                             if (selectedItem) {
                                                                 updateItem(index, 'name', selectedItem.name);
                                                                 updateItem(index, 'rate', selectedItem.rate);
+                                                                // Auto-set tax type based on item tax preference
+                                                                if (selectedItem.tax_preference === 'non_taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'non_taxable');
+                                                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                                                    updateItem(index, 'tax_group_id', null);
+                                                                } else if (selectedItem.tax_preference === 'taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'tax_group');
+                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                                                    updateItem(index, 'tax_exemption_id', null);
+                                                                } else if (selectedItem.tax_preference === 'out_of_scope') {
+                                                                    updateItem(index, 'item_tax_type', 'out_of_scope');
+                                                                    updateItem(index, 'tax_group_id', null);
+                                                                    updateItem(index, 'tax_exemption_id', null);
+                                                                } else if (selectedItem.tax_preference === 'non_gst_supply') {
+                                                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                                                    updateItem(index, 'tax_group_id', null);
+                                                                    updateItem(index, 'tax_exemption_id', null);
+                                                                }
                                                             }
                                                         }}
                                                         displayEmpty
@@ -835,19 +905,32 @@ export const BillCreatePage: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 120 }}>
+                                                <FormControl size="small" sx={{ width: 200 }}>
                                                     <Select
-                                                        value={item.tax}
-                                                        onChange={(e) => {
-                                                            const selectedTaxOption = taxOptions.find(t => t.name === e.target.value);
-                                                            updateItem(index, 'tax', e.target.value);
-                                                            updateItem(index, 'taxRate', selectedTaxOption?.rate || 0);
-                                                        }}
+                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value as string)) {
+                                                                updateItem(index, "item_tax_type", value);
+                                                                updateItem(index, "tax_group_id", null);
+                                                            } else {
+                                                                updateItem(index, "item_tax_type", "tax_group");
+                                                                updateItem(index, "tax_group_id", value);
+                                                            }
+                                                        }}
                                                     >
-                                                        <MenuItem value="">Select a Tax</MenuItem>
-                                                        {taxOptions.map(tax => (
-                                                            <MenuItem key={tax.id} value={tax.name}>{tax.name}</MenuItem>
+                                                        <MenuItem value="">Select Tax</MenuItem>
+                                                        {taxTypeOptions.map((opt) => (
+                                                            <MenuItem key={opt.value} value={opt.value}>
+                                                                {opt.label}
+                                                            </MenuItem>
+                                                        ))}
+                                                        <MenuItem disabled>── Tax Groups ──</MenuItem>
+                                                        {taxGroups.map((group) => (
+                                                            <MenuItem key={group.id} value={group.id}>
+                                                                {group.name}
+                                                            </MenuItem>
                                                         ))}
                                                     </Select>
                                                 </FormControl>

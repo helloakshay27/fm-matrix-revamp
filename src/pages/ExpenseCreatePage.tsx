@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
     TextField,
     Button,
@@ -70,7 +71,9 @@ export const ExpenseCreatePage: React.FC = () => {
     const [sourceOfSupply, setSourceOfSupply] = useState('');
     const [destinationOfSupply, setDestinationOfSupply] = useState('');
     const [reverseCharge, setReverseCharge] = useState(false);
-    const [taxId, setTaxId] = useState('');
+    const [taxType, setTaxType] = useState('');
+    const [taxGroupId, setTaxGroupId] = useState<number | string | null>(null);
+    const [taxExemptionId, setTaxExemptionId] = useState<number | string | null>(null);
     const [amountIs, setAmountIs] = useState<'inclusive' | 'exclusive'>('exclusive');
     const [invoiceNumber, setInvoiceNumber] = useState('');
     const [notes, setNotes] = useState('');
@@ -79,6 +82,10 @@ export const ExpenseCreatePage: React.FC = () => {
     const [description, setDescription] = useState('');
     const [receipts, setReceipts] = useState<File[]>([]);
 
+    // Exemption
+    const [exemptions, setExemptions] = useState<any[]>([]);
+    const [loadingExemptions, setLoadingExemptions] = useState(false);
+
     // reporting tags modal
     const [showTagModal, setShowTagModal] = useState(false);
     const [reportingTagAccount, setReportingTagAccount] = useState('');
@@ -86,6 +93,14 @@ export const ExpenseCreatePage: React.FC = () => {
     // Dropdowns data
     const [accountLedgers, setAccountLedgers] = useState<AccountLedger[]>([]);
     const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [taxGroups, setTaxGroups] = useState<any[]>([]);
+    const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
+
+    const taxTypeOptions = [
+        { value: "non_taxable", label: "Non-Taxable" },
+        // { value: "out_of_scope", label: "Out of Scope" },
+        // { value: "non_gst_supply", label: "Non-GST Supply" },
+    ];
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
@@ -177,6 +192,42 @@ export const ExpenseCreatePage: React.FC = () => {
         fetchVendors();
     }, []);
 
+    // Fetch tax groups
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingTaxGroups(true);
+        axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(res => {
+            setTaxGroups(res.data || []);
+        }).catch(err => {
+            console.error('Error fetching tax groups:', err);
+        }).finally(() => {
+            setLoadingTaxGroups(false);
+        });
+    }, []);
+
+    // Fetch tax exemptions
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingExemptions(true);
+        axios.get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(res => {
+            setExemptions(res.data || []);
+        }).catch(err => {
+            console.error('Error fetching exemptions:', err);
+        }).finally(() => {
+            setLoadingExemptions(false);
+        });
+    }, []);
+
     // Handle file upload
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
@@ -205,7 +256,7 @@ export const ExpenseCreatePage: React.FC = () => {
         if (!gstTreatment) newErrors.gstTreatment = 'GST treatment is required';
         if (!sourceOfSupply) newErrors.sourceOfSupply = 'Source of supply is required';
         if (!destinationOfSupply) newErrors.destinationOfSupply = 'Destination of supply is required';
-        if (!taxId) newErrors.taxId = 'Tax selection is required';
+        if (!taxType) newErrors.taxType = 'Tax selection is required';
         if (!invoiceNumber) newErrors.invoiceNumber = 'Invoice number is required';
 
         setErrors(newErrors);
@@ -243,41 +294,38 @@ export const ExpenseCreatePage: React.FC = () => {
 
             const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 
-            const expenseData = {
-                expense: {
-                    account_id: parseInt(expenseAccount),
-                    paid_through_account_id: parseInt(paidThrough),
-                    date: date,
-                    amount: parseFloat(amount),
-                    reference_number: referenceNumber,
-                    description: description,
-                    organization_id: parseInt(organizationId),
-                    customer_id: customer ? parseInt(customer) : null,
-                    vendor_id: vendor ? parseInt(vendor) : null
-                    ,
-                    expense_type: expenseType,
-                    hsn_code: expenseType === 'goods' ? hsnCode : null,
-                    sac_code: expenseType === 'services' ? sacCode : null,
-                    gst_treatment: gstTreatment || null,
-                    source_of_supply: sourceOfSupply || null,
-                    destination_of_supply: destinationOfSupply || null,
-                    reverse_charge: reverseCharge,
-                    tax_id: taxId || null,
-                    amount_is: amountIs,
-                    invoice_number: invoiceNumber,
-                    notes: notes,
-                }
-            };
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const formData = new FormData();
 
-            console.log('Submitting expense:', expenseData);
+            formData.append('expense[account_id]', expenseAccount);
+            formData.append('expense[paid_through_account_id]', paidThrough);
+            formData.append('expense[date]', date);
+            formData.append('expense[amount]', amount);
+            formData.append('expense[reference_number]', referenceNumber || '');
+            formData.append('expense[description]', description || '');
+            formData.append('expense[organization_id]', organizationId);
+            if (customer) formData.append('expense[customer_id]', customer);
+            if (vendor) formData.append('expense[vendor_id]', vendor);
+            formData.append('expense[expense_type]', expenseType);
+            if (expenseType === 'goods') formData.append('expense[hsn_code]', hsnCode);
+            if (expenseType === 'services') formData.append('expense[sac_code]', sacCode);
+            formData.append('expense[gst_treatment]', gstTreatment || '');
+            formData.append('expense[source_of_supply]', sourceOfSupply || '');
+            formData.append('expense[destination_of_supply]', destinationOfSupply || '');
+            formData.append('expense[reverse_charge]', String(reverseCharge));
+            formData.append('expense[tax_type]', taxType || '');
+            formData.append('expense[tax_group_id]', taxType === 'tax_group' ? String(taxGroupId) : '');
+            formData.append('expense[tax_exemption_id]', taxType === 'non_taxable' ? String(taxExemptionId) : '');
+            formData.append('expense[amount_is]', amountIs);
+            formData.append('expense[invoice_number]', invoiceNumber || '');
+            formData.append('expense[notes]', notes || '');
 
-            const response = await fetch(`${apiUrl}/expenses`, {
+            const response = await fetch(`${apiUrl}/expenses.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(expenseData)
+                body: formData
             });
 
             if (response.ok) {
@@ -576,20 +624,66 @@ export const ExpenseCreatePage: React.FC = () => {
                             <label className="block text-sm font-medium mb-2">
                                 Tax
                             </label>
-                            <FormControl fullWidth error={!!errors.taxId}>
+                            <FormControl fullWidth error={!!errors.taxType}>
                                 <Select
-                                    value={taxId}
-                                    onChange={(e) => setTaxId(e.target.value)}
+                                    value={taxType === "tax_group" ? taxGroupId : taxType || ""}
                                     displayEmpty
                                     sx={fieldStyles}
+                                    disabled={loadingTaxGroups}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value as string)) {
+                                            setTaxType(value as string);
+                                            setTaxGroupId(null);
+                                            setTaxExemptionId(null);
+                                        } else {
+                                            setTaxType("tax_group");
+                                            setTaxGroupId(value);
+                                            setTaxExemptionId(null);
+                                        }
+                                    }}
                                 >
                                     <MenuItem value="" disabled>
-                                        Select a Tax
+                                        {loadingTaxGroups ? 'Loading...' : 'Select a Tax'}
                                     </MenuItem>
-                                    {/* TODO: populate dynamic tax options */}
-                                    <MenuItem value="1">GST 5%</MenuItem>
+                                    {taxTypeOptions.map((opt) => (
+                                        <MenuItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </MenuItem>
+                                    ))}
+                                    <MenuItem disabled>── Tax Groups ──</MenuItem>
+                                    {taxGroups.map((group) => (
+                                        <MenuItem key={group.id} value={group.id}>
+                                            {group.name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
+                            {taxType === 'non_taxable' && (
+                                <div className="mt-3">
+                                    <label className="block text-sm font-medium mb-2">
+                                        Exemption Reason
+                                    </label>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={taxExemptionId || ''}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                            disabled={loadingExemptions}
+                                            onChange={(e) => setTaxExemptionId(e.target.value || null)}
+                                        >
+                                            <MenuItem value="" disabled>
+                                                {loadingExemptions ? 'Loading...' : 'Select Reason'}
+                                            </MenuItem>
+                                            {exemptions.map(ex => (
+                                                <MenuItem key={ex.id} value={ex.id}>
+                                                    {ex.reason}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </div>
+                            )}
                         </div>
 
                         <div className="md:col-span-2">
