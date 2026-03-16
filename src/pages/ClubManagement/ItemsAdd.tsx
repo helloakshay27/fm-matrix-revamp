@@ -465,7 +465,7 @@ const ItemsAdd = () => {
             {
                 headers: {
                     "Authorization": token ? `Bearer ${token}` : undefined,
-                    
+
                 }
             }
         )
@@ -586,7 +586,16 @@ const ItemsAdd = () => {
                                 name="hsn_code"
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
-                                onChange={handleChange}
+                                // onChange={handleChange}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    // Allow only numbers and max 8 digits
+                                    if (/^\d{0,8}$/.test(value)) {
+                                        handleChange(e);
+                                    }
+                                }}
+                                inputProps={{ maxLength: 8, inputMode: "numeric", pattern: "[0-9]*" }}
                                 InputLabelProps={{ shrink: true }}
                             />
                         ) : (
@@ -601,7 +610,7 @@ const ItemsAdd = () => {
                         )}
 
                         <FormControl fullWidth>
-                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
+                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span> </InputLabel>
                             <Select
                                 name="tax_preference"
                                 value={form.tax_preference}
