@@ -595,10 +595,10 @@ export const QuotesAdd: React.FC = () => {
             return false;
         }
         if (!placeOfSupply) {
-        setErrors(newErrors);
-        toast.error('Place of Supply is required');
-        return false;
-    }
+            setErrors(newErrors);
+            toast.error('Place of Supply is required');
+            return false;
+        }
 
         if (!salesOrderDate) {
             // newErrors.salesOrderDate = 'Sales order date is required';
@@ -723,7 +723,11 @@ export const QuotesAdd: React.FC = () => {
             formData.append('lock_account_quote[customer_notes]', customerNotes);
             formData.append('lock_account_quote[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_quote[subject]', subject);
-            formData.append('lock_account_quote[status]', 'draft');
+            // formData.append('lock_account_quote[status]', 'draft');
+            formData.append(
+                'lock_account_quote[status]',
+                saveAsDraft ? 'draft' : 'sent'
+            );
             formData.append('lock_account_quote[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('lock_account_quote[discount_per]', String(discountOnTotal));
@@ -1588,7 +1592,7 @@ export const QuotesAdd: React.FC = () => {
                 </Section>
 
                 {/* Attachments */}
-                <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
+                <Section title="Attach Files" icon={<AttachFile className="w-5 h-5" />}>
                     <div className="space-y-4">
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                             <input

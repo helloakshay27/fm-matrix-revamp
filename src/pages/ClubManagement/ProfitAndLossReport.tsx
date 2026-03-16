@@ -245,7 +245,7 @@ const ProfitAndLossReport: React.FC = () => {
 
                   <tr className="bg-gray-200 font-semibold">
                     <td className="border px-4 py-3">
-                      Total {pnlData.operating_income.group_name}
+                      Total Operating {pnlData.operating_income.group_name}
                     </td>
                      <td className="border px-4 py-2"></td>
                     <td className="border px-4 py-3 text-right">
@@ -282,6 +282,32 @@ const ProfitAndLossReport: React.FC = () => {
                   </tr>
                 </>
               )}
+              {pnlData?.totals && (
+                <>
+                  {/* <tr className="bg-gray-200 font-bold">
+                    <td className="border px-4 py-3">
+                      {pnlData.cost_of_goods_sold.group_name}
+                    </td>
+                    <td className="border"></td>
+                  </tr> */}
+
+                  {/* {renderGroup(pnlData?.totals)} */}
+
+                  <tr className="bg-gray-100 font-semibold">
+                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
+                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
+                      Gross Profit
+                    </td>
+                     <td className="border px-4 py-2"></td>
+                    <td className="border px-4 py-3 text-right">
+                      {(pnlData.totals.gross_profit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2
+                      })}
+                      
+                    </td>
+                  </tr>
+                </>
+              )}
 
               {/* OPERATING EXPENSES */}
               {pnlData?.operating_expenses && (
@@ -304,6 +330,116 @@ const ProfitAndLossReport: React.FC = () => {
                       {(pnlData.operating_expenses.total).toLocaleString(undefined, {
                         minimumFractionDigits: 2
                       })}
+                    </td>
+                  </tr>
+                </>
+              )}
+
+               {pnlData?.totals && (
+                <>
+                  {/* <tr className="bg-gray-200 font-bold">
+                    <td className="border px-4 py-3">
+                      {pnlData.cost_of_goods_sold.group_name}
+                    </td>
+                    <td className="border"></td>
+                  </tr> */}
+
+                  {/* {renderGroup(pnlData?.totals)} */}
+
+                  <tr className="bg-gray-100 font-semibold">
+                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
+                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
+                      Operating Profit
+                    </td>
+                     <td className="border px-4 py-2"></td>
+                    <td className="border px-4 py-3 text-right">
+                      {(pnlData.totals.operating_profit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2
+                      })}
+                      
+                    </td>
+                  </tr>
+                </>
+              )}
+
+                             {pnlData?.totals && (
+                <>
+                  {/* <tr className="bg-gray-200 font-bold">
+                    <td className="border px-4 py-3">
+                      {pnlData.cost_of_goods_sold.group_name}
+                    </td>
+                    <td className="border"></td>
+                  </tr> */}
+
+                  {/* {renderGroup(pnlData?.totals)} */}
+
+                  <tr className="bg-gray-100 font-semibold">
+                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
+                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
+                      Non Operating Income
+                    </td>
+                     <td className="border px-4 py-2"></td>
+                    <td className="border px-4 py-3 text-right">
+                      {/* {(pnlData.totals.operating_profit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2
+                      })} */}
+                      0.00
+                    </td>
+                  </tr>
+                </>
+              )}
+
+                     {pnlData?.totals && (
+                <>
+                  {/* <tr className="bg-gray-200 font-bold">
+                    <td className="border px-4 py-3">
+                      {pnlData.cost_of_goods_sold.group_name}
+                    </td>
+                    <td className="border"></td>
+                  </tr> */}
+
+                  {/* {renderGroup(pnlData?.totals)} */}
+
+                  <tr className="bg-gray-100 font-semibold">
+                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
+                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
+                      Non Operating Expense
+                    </td>
+                     <td className="border px-4 py-2"></td>
+                    <td className="border px-4 py-3 text-right">
+                      {/* {(pnlData.totals.operating_profit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2
+                      })} */}
+                      0.00
+                    </td>
+                  </tr>
+                </>
+              )}
+
+
+
+                             {pnlData?.totals && (
+                <>
+                  {/* <tr className="bg-gray-200 font-bold">
+                    <td className="border px-4 py-3">
+                      {pnlData.cost_of_goods_sold.group_name}
+                    </td>
+                    <td className="border"></td>
+                  </tr> */}
+
+                  {/* {renderGroup(pnlData?.totals)} */}
+
+                  <tr className="bg-gray-100 font-semibold">
+                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
+                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
+                      Net Profit/Loss
+                    </td>
+                     <td className="border px-4 py-2"></td>
+                    <td className="border px-4 py-3 text-right">
+                      {(pnlData.totals.net_profit_loss).toLocaleString(undefined, {
+                        minimumFractionDigits: 2
+                      })}
+                      
                     </td>
                   </tr>
                 </>
