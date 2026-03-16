@@ -78,6 +78,7 @@ interface PurchaseOrder {
     reference_number: number;
     po_date: string;
     amount: number;
+    all_level_approved: boolean;
     supplier: Supplier;
     site: Site;
     created_by: string;
@@ -179,6 +180,8 @@ export const PurchaseOrderDetailPage = () => {
     const getStatusColor = (status: string) => {
         const colors: { [key: string]: string } = {
             draft: "bg-gray-100 text-gray-800 border-gray-200",
+            pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+            approved: "bg-green-100 text-green-800 border-green-200",
             confirmed: "bg-blue-100 text-blue-800 border-blue-200",
             processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
             shipped: "bg-purple-100 text-purple-800 border-purple-200",
@@ -300,8 +303,8 @@ export const PurchaseOrderDetailPage = () => {
         );
     }
 
-    const poNumber = `PO-${String(purchaseOrder.external_id).padStart(5, '0')}`;
-    const status = 'confirmed'; // Default status - can be derived from API if available
+    const poNumber = `PO-${String(purchaseOrder.id).padStart(5, '0')}`;
+    const status = purchaseOrder.all_level_approved ? 'approved' : 'pending'; // Dynamic status based on all_level_approved
 
     return (
         <div className="min-h-screen bg-background p-6">
