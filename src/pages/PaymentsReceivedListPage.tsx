@@ -107,6 +107,7 @@ export const PaymentsReceivedListPage: React.FC = () => {
         has_prev_page: false
     });
 
+    const lock_account_id = localStorage.getItem("lock_account_id");
     // Payment data state will come from API
 
     // helper to fetch list
@@ -119,7 +120,7 @@ export const PaymentsReceivedListPage: React.FC = () => {
                 `https://${baseUrl}/lock_payments.json`,
                 {
                     params: {
-                        lock_account_id: 1,
+                        lock_account_id: lock_account_id,
                         'q[payment_made_eq]': 0,
                         page: currentPage,
                         per_page: perPage,

@@ -104,11 +104,11 @@ export const RecordPaymentPage: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
 
     const authHeaders = { Authorization: `Bearer ${token}` };
-
+const lock_account_id = localStorage.getItem("lock_account_id");
     // Fetch customers on mount
     useEffect(() => {
         axios
-            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
                 headers: authHeaders,
             })
             .then((res) => {
@@ -151,7 +151,7 @@ export const RecordPaymentPage: React.FC = () => {
         axios
             .get(`https://${baseUrl}/lock_account_invoices.json`, {
                 params: {
-                    lock_account_id: 1,
+                    lock_account_id: lock_account_id,
                     "q[lock_account_customer_id_eq]": selectedCustomerId,
                     // "q[sent_eq]": 1,
                     "q[status_not_eq]": "paid",
@@ -253,7 +253,7 @@ export const RecordPaymentPage: React.FC = () => {
             }
 
             await axios.post(
-                `https://${baseUrl}/lock_payments.json?lock_account_id=1`,
+                `https://${baseUrl}/lock_payments.json?lock_account_id=${lock_account_id}`,
                 payload,
                 { headers: { ...authHeaders, "Content-Type": "application/json" } }
             );
