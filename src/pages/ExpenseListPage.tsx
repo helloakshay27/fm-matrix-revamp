@@ -141,7 +141,7 @@ export const ExpenseListPage: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
-                const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+                const lockAccountId = localStorage.getItem('lock_account_id');
                 const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 
                 const response = await fetch(
