@@ -176,395 +176,14 @@ const generateCalendarDays = (
   return days;
 };
 
-// Mock data for different views
-const mockTodayRides: RideRecord[] = [
-  {
-    id: "1",
-    driver: "Hamza",
-    registrationNumber: "MH 01 AB 2345",
-    passengers: "Raj, Tiwari, Pooja",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carGrayImage,
-    status: "scheduled",
-  },
-  {
-    id: "2",
-    driver: "Shahab",
-    registrationNumber: "MH 12 CD 6789",
-    passengers: "Raj, Tiwari, Pooja, Rohan",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carBlackImage,
-    status: "scheduled",
-  },
-  {
-    id: "3",
-    driver: "Yukta",
-    registrationNumber: "MH 04 GH 4455",
-    passengers: "Raj, Tiwari, Pooja, Rohan",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carRedImage,
-    status: "scheduled",
-  },
-  {
-    id: "4",
-    driver: "Rahul",
-    registrationNumber: "MH 12 ST 1010",
-    passengers: "Raj, Tiwari, Pooja, Rohan",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carBeigeImage,
-    status: "scheduled",
-  },
-];
-
-const mockUpcomingRides: RideRecord[] = [
-  {
-    id: "1",
-    driver: "",
-    registrationNumber: "",
-    passengers: "",
-    leavingFrom: "",
-    destination: "Pune Rly Station",
-    carImage: "",
-    status: "Active",
-    departureTime: "10:00 AM",
-    expectedArrivalTime: "10:30 AM",
-    rideDate: "13 October 2025",
-    bookingDate: "12 October 2025",
-    seat: "3/4",
-    pricePerPerson: "₹250",
-  },
-  {
-    id: "2",
-    driver: "",
-    registrationNumber: "",
-    passengers: "",
-    leavingFrom: "",
-    destination: "Pune Rly Station",
-    carImage: "",
-    status: "Inactive",
-    departureTime: "2:00 PM",
-    expectedArrivalTime: "2:45 PM",
-    rideDate: "13 October 2025",
-    bookingDate: "13 October 2025",
-    seat: "4/4",
-    pricePerPerson: "₹260",
-  },
-  {
-    id: "3",
-    driver: "",
-    registrationNumber: "",
-    passengers: "",
-    leavingFrom: "",
-    destination: "Pune Rly Station",
-    carImage: "",
-    status: "Active",
-    departureTime: "5:00 PM",
-    expectedArrivalTime: "5:40 PM",
-    rideDate: "13 October 2025",
-    bookingDate: "11 October 2025",
-    seat: "7/7",
-    pricePerPerson: "₹250",
-  },
-  {
-    id: "4",
-    driver: "",
-    registrationNumber: "",
-    passengers: "",
-    leavingFrom: "",
-    destination: "Pune Rly Station",
-    carImage: "",
-    status: "Active",
-    departureTime: "6:00 PM",
-    expectedArrivalTime: "6:30 PM",
-    rideDate: "13 October 2025",
-    bookingDate: "13 October 2025",
-    seat: "4/4",
-    pricePerPerson: "₹270",
-  },
-];
-
-const mockActiveNowRides: RideRecord[] = [
-  {
-    id: "1",
-    driver: "Hamza",
-    registrationNumber: "MH 01 AB 2345",
-    passengers: "Raj, Tiwari, Pooja",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carGrayImage,
-    status: "active",
-  },
-  {
-    id: "2",
-    driver: "Shahab",
-    registrationNumber: "MH 12 CD 6789",
-    passengers: "Raj, Tiwari, Pooja, Rohan",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carBlackImage,
-    status: "active",
-  },
-  {
-    id: "3",
-    driver: "Yukta",
-    registrationNumber: "MH 04 GH 4455",
-    passengers: "Raj, Tiwari, Pooja, Rohan",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carRedImage,
-    status: "active",
-  },
-  {
-    id: "4",
-    driver: "Rahul",
-    registrationNumber: "MH 12 ST 1010",
-    passengers: "Raj, Tiwari, Pooja, Rohan",
-    leavingFrom: "Panchshil Tech Park One",
-    destination: "Pune Rly Station",
-    carImage: carBeigeImage,
-    status: "active",
-  },
-];
-
-const mockActiveReports: RideRecord[] = [
-  {
-    id: "1",
-    driver: "",
-    registrationNumber: "MH 01 AB 2345",
-    passengers: "",
-    leavingFrom: "",
-    destination: "",
-    carImage: "",
-    status: "Under Review",
-    reportedBy: "Hamza (Passenger)",
-    reportedAgainst: "Raj (Driver)",
-    issueDescription: "Driver was using mobile phone while driving",
-    reportTime: "10:00 AM",
-    reportDate: "12 October 2025",
-  },
-  {
-    id: "2",
-    driver: "",
-    registrationNumber: "MH 12 CD 6789",
-    passengers: "",
-    leavingFrom: "",
-    destination: "",
-    carImage: "",
-    status: "Under Review",
-    reportedBy: "Shahab (Driver)",
-    reportedAgainst: "Priya (Passenger)",
-    issueDescription: "Passenger was rude and disrespectful",
-    reportTime: "2:00 PM",
-    reportDate: "13 October 2025",
-  },
-  {
-    id: "3",
-    driver: "",
-    registrationNumber: "MH 04 GH 4455",
-    passengers: "",
-    leavingFrom: "",
-    destination: "",
-    carImage: "",
-    status: "Under Review",
-    reportedBy: "Yukta (Passenger)",
-    reportedAgainst: "Pooja (Passenger)",
-    issueDescription: "Passenger arrived late at pickup point",
-    reportTime: "5:00 PM",
-    reportDate: "11 October 2025",
-  },
-  {
-    id: "4",
-    driver: "",
-    registrationNumber: "MH 12 ST 1010",
-    passengers: "",
-    leavingFrom: "",
-    destination: "",
-    carImage: "",
-    status: "Under Review",
-    reportedBy: "Rahul (Passenger)",
-    reportedAgainst: "Deepak (Driver)",
-    issueDescription: "Driver took a different route without informing",
-    reportTime: "6:00 PM",
-    reportDate: "13 October 2025",
-  },
-];
-
-const mockSOSAlerts: RideRecord[] = [
-  {
-    id: "1",
-    driver: "",
-    registrationNumber: "MH 01 AB 2345",
-    passengers: "",
-    leavingFrom: "",
-    destination: "",
-    carImage: "",
-    status: "ACTIVE",
-    reportedBy: "Priya Sharma (Rider)",
-    location: "KR Puram Main Road",
-    reporterContact: "+91 98765 43210",
-    alertTime: "5 minutes ago",
-    issueDescription: "User reported unsafe driving behavior",
-  },
-  {
-    id: "2",
-    driver: "",
-    registrationNumber: "MH 01 AB 2345",
-    passengers: "",
-    leavingFrom: "",
-    destination: "",
-    carImage: "",
-    status: "ACTIVE",
-    reportedBy: "Deepak Kumar (Driver)",
-    location: "Outer Ring Road, near Bellandur",
-    reporterContact: "+91 98123 45678",
-    alertTime: "12 minutes ago",
-    issueDescription: "Vehicle breakdown reported",
-  },
-];
-
-const mockUsers: UserRecord[] = [
-  {
-    id: "1",
-    accessCardNumber: "54647",
-    name: "Hamza",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Male",
-  },
-  {
-    id: "2",
-    accessCardNumber: "54647",
-    name: "Shahab",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Male",
-  },
-  {
-    id: "3",
-    accessCardNumber: "54647",
-    name: "Yukta",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Female",
-  },
-  {
-    id: "4",
-    accessCardNumber: "54647",
-    name: "Rahul",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Male",
-  },
-];
-
-const mockPendingKYC: UserRecord[] = [
-  {
-    id: "1",
-    accessCardNumber: "54647",
-    name: "Hamza",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Male",
-  },
-  {
-    id: "2",
-    accessCardNumber: "54647",
-    name: "Shahab",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Male",
-  },
-  {
-    id: "3",
-    accessCardNumber: "54647",
-    name: "Yukta",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Female",
-  },
-  {
-    id: "4",
-    accessCardNumber: "54647",
-    name: "Rahul",
-    mobileNumber: "+91 1234567890",
-    emailAddress: "hamza.quazi@lookated.com",
-    employeeNumber: "346347",
-    gender: "Male",
-  },
-];
-
-// Mock data for live tracking
-const mockTrackingRides = [
-  {
-    id: "1",
-    registrationNumber: "MH 01 AB 2345",
-    gender: "Male",
-    driver: "Hamza",
-    route: "Panchshil Tech Park → Pune Rly Station",
-    currentLocation: "Domlur Junction",
-    eta: "5 mins",
-    progress: 45,
-    passengers: ["Raj", "Tiwari", "Pooja"],
-    status: "Active",
-  },
-  {
-    id: "2",
-    registrationNumber: "MH 12 CD 6789",
-    gender: "Male",
-    driver: "Shahab",
-    route: "Panchshil Tech Park → Pune Rly Station",
-    currentLocation: "Spice Garden Signal",
-    eta: "5 mins",
-    progress: 75,
-    passengers: ["Raj", "Tiwari", "Pooja", "Rohan"],
-    status: "Active",
-  },
-  {
-    id: "3",
-    registrationNumber: "MH 04 GH 4455",
-    gender: "Female",
-    driver: "Yukta",
-    route: "Panchshil Tech Park → Pune Rly Station",
-    currentLocation: "KS Puram",
-    eta: "18 mins",
-    progress: 25,
-    passengers: ["Raj", "Tiwari", "Pooja", "Rohan"],
-    status: "Active",
-  },
-  {
-    id: "4",
-    registrationNumber: "MH 12 ST 1010",
-    gender: "Male",
-    driver: "Rahul",
-    route: "Panchshil Tech Park → Pune Rly Station",
-    currentLocation: "Spice Garden Signal",
-    eta: "5 mins",
-    progress: 75,
-    passengers: ["Raj", "Tiwari", "Pooja", "Rohan"],
-    status: "Active",
-  },
-];
-
 export const CarpoolDashboard = () => {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [ridesData, setRidesData] = useState<RideRecord[]>(mockTodayRides);
-  const [usersData, setUsersData] = useState<UserRecord[]>(mockUsers);
-  const [pendingKYCData, setPendingKYCData] =
-    useState<UserRecord[]>(mockPendingKYC);
+  const [ridesData, setRidesData] = useState<RideRecord[]>([]);
+  const [usersData, setUsersData] = useState<UserRecord[]>([]);
+  const [pendingKYCData, setPendingKYCData] = useState<UserRecord[]>([]);
   const [selectedReportStatus, setSelectedReportStatus] = useState<{
     [key: string]: string;
   }>({});
@@ -1164,42 +783,31 @@ export const CarpoolDashboard = () => {
     // Update rides data based on active view
     switch (activeView) {
       case "today":
-        // Use today's rides API data if available, otherwise fallback to mock
-        setRidesData(
-          mapTodaysRides.length > 0 ? mapTodaysRides : mockTodayRides
-        );
+        setRidesData(mapTodaysRides);
         break;
       case "total":
-        // Use API rides data if available, otherwise fallback to mock
-        setRidesData(mapApiRides.length > 0 ? mapApiRides : mockTodayRides);
+        setRidesData(mapApiRides);
         break;
       case "upcoming":
-        // Use upcoming rides API data if available, otherwise fallback to mock
-        setRidesData(
-          mapUpcomingRides.length > 0 ? mapUpcomingRides : mockUpcomingRides
-        );
+        setRidesData(mapUpcomingRides);
         break;
       case "active":
-        // Use active now rides API data if available, otherwise fallback to mock
-        setRidesData(
-          mapActiveNowRides.length > 0 ? mapActiveNowRides : mockActiveNowRides
-        );
+        setRidesData(mapActiveNowRides);
         break;
       case "reports":
-        setRidesData(mockActiveReports);
+        setRidesData([]);
         break;
       case "sos":
-        setRidesData(mockSOSAlerts);
+        setRidesData([]);
         break;
       case "completed":
-        setRidesData(mockUpcomingRides); // Using upcoming as placeholder
+        setRidesData([]);
         break;
       case "cancelled":
-        setRidesData(mockTodayRides); // Using today as placeholder
+        setRidesData([]);
         break;
       default:
-        // Use API rides for default view
-        setRidesData(mapApiRides.length > 0 ? mapApiRides : mockTodayRides);
+        setRidesData(mapApiRides);
     }
     setCurrentPage(1);
   }, [
@@ -1240,6 +848,16 @@ export const CarpoolDashboard = () => {
   }, [selectedCalendarDateForApi, calendarDates]);
 
   const handleStatusCardClick = (status: string) => {
+    // Active Reports opens in its own page
+    if (status === "reports") {
+      navigate("/pulse/carpool/active-reports");
+      return;
+    }
+    // Active SOS opens in its own page
+    if (status === "sos") {
+      navigate("/pulse/carpool/active-sos");
+      return;
+    }
     // If clicking the same card, toggle it off
     if (activeView === status) {
       setActiveView("");
@@ -2759,99 +2377,10 @@ export const CarpoolDashboard = () => {
       {/* Live Tracking View */}
       {activeView === "tracking" && (
         <div className="space-y-6">
-          {/* Tracking Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {mockTrackingRides.map((ride) => (
-              <Card key={ride.id} className="border shadow-sm">
-                <CardContent className="p-4 space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900">
-                        {ride.registrationNumber}{" "}
-                        <span className="text-gray-500">({ride.gender})</span>
-                      </div>
-                      <div className="text-sm font-semibold text-gray-900 mt-1">
-                        {ride.driver}
-                      </div>
-                    </div>
-                    <Badge className="bg-[#DC143C] text-white hover:bg-[#B22222] text-xs">
-                      {ride.status}
-                    </Badge>
-                  </div>
-
-                  {/* Route */}
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="text-xs text-gray-600">
-                      <span className="font-medium">Route</span>
-                      <div className="mt-0.5">{ride.route}</div>
-                    </div>
-                  </div>
-
-                  {/* Current Location */}
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="text-xs text-gray-600">
-                      <span className="font-medium">Current Location</span>
-                      <div className="mt-0.5">{ride.currentLocation}</div>
-                    </div>
-                  </div>
-
-                  {/* ETA */}
-                  <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="text-xs text-gray-600">
-                      <span className="font-medium">ETA</span>
-                      <div className="mt-0.5">{ride.eta}</div>
-                    </div>
-                  </div>
-
-                  {/* Progress */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600 font-medium">
-                        Progress
-                      </span>
-                      <span className="text-gray-900 font-semibold">
-                        {ride.progress}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-[#DC143C] h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${ride.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Passengers */}
-                  <div className="space-y-1">
-                    <div className="text-xs text-gray-600 font-medium">
-                      Passengers
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {ride.passengers.map((passenger, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="bg-gray-100 text-gray-700 text-xs font-normal"
-                        >
-                          {passenger}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
           {/* Map Section */}
           <Card className="border shadow-sm">
             <CardContent className="p-0">
               <div className="relative w-full h-[500px] bg-gray-100 rounded-lg overflow-hidden">
-                {/* Map Placeholder - You can integrate Google Maps or any other map service here */}
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
                   <div className="text-center space-y-2">
                     <MapPin className="w-12 h-12 text-gray-400 mx-auto" />
@@ -2859,39 +2388,8 @@ export const CarpoolDashboard = () => {
                       Map View
                     </p>
                     <p className="text-xs text-gray-400">
-                      Integrate Google Maps or similar service for live tracking
+                      Live tracking map will appear here
                     </p>
-                  </div>
-                </div>
-
-                {/* Sample Map Markers for demonstration */}
-                <div className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="relative">
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white rounded px-2 py-1 shadow-md text-xs whitespace-nowrap">
-                      MH 01 AB 2345
-                      <div className="text-[10px] text-gray-500">Hamza</div>
-                    </div>
-                    <Car className="w-8 h-8 text-red-600" />
-                  </div>
-                </div>
-
-                <div className="absolute top-1/3 right-1/4 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="relative">
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white rounded px-2 py-1 shadow-md text-xs whitespace-nowrap">
-                      MH 04 GH 4455
-                      <div className="text-[10px] text-gray-500">Yukta</div>
-                    </div>
-                    <Car className="w-8 h-8 text-red-600" />
-                  </div>
-                </div>
-
-                <div className="absolute bottom-1/3 right-1/3 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="relative">
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white rounded px-2 py-1 shadow-md text-xs whitespace-nowrap">
-                      MH 12 ST 1010
-                      <div className="text-[10px] text-gray-500">Rahul</div>
-                    </div>
-                    <Car className="w-8 h-8 text-red-600" />
                   </div>
                 </div>
               </div>

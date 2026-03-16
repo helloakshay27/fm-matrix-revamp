@@ -603,7 +603,16 @@ const ItemsEdit = () => {
                                 name="hsn_code"
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
-                                onChange={handleChange}
+                                // onChange={handleChange}
+                                 onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    // Allow only numbers and max 8 digits
+                                    if (/^\d{0,8}$/.test(value)) {
+                                        handleChange(e);
+                                    }
+                                }}
+                                inputProps={{ maxLength: 8, inputMode: "numeric", pattern: "[0-9]*" }}
                                 InputLabelProps={{ shrink: true }}
                             />
                         ) : (
@@ -619,7 +628,7 @@ const ItemsEdit = () => {
 
 
                         <FormControl fullWidth>
-                            <InputLabel>Tax Preference *</InputLabel>
+                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
                             <Select
                                 name="tax_preference"
                                 value={form.tax_preference}
@@ -637,7 +646,7 @@ const ItemsEdit = () => {
 
                         {form.tax_preference === "non_taxable" && (
                             <FormControl fullWidth>
-                                <InputLabel>Exemption Reason</InputLabel>
+                                <InputLabel>Exemption Reason <span style={{ color: "red" }}>*</span></InputLabel>
                                 <Select
                                     name="exemption_reason"
                                     value={form.exemption_reason}
