@@ -390,18 +390,18 @@ const modulesByPackage = {
           name: "TDS Receivables Summary",
           href: "/accounting/reports/tds-receivables-summary",
         },
-        {
-          name: "Account Type Summary",
-          href: "/accounting/reports/account-type-summary",
-        },
-        {
-          name: "Account Type Transactions",
-          href: "/accounting/reports/account-type-transactions",
-        },
-        {
-          name: "Account Transactions",
-          href: "/accounting/reports/account-transactions",
-        },
+        // {
+        //   name: "Account Type Summary",
+        //   href: "/accounting/reports/account-type-summary",
+        // },
+        // {
+        //   name: "Account Type Transactions",
+        //   href: "/accounting/reports/account-type-transactions",
+        // },
+        // {
+        //   name: "Account Transactions",
+        //   href: "/accounting/reports/account-transactions",
+        // },
       ],
     },
   ],
