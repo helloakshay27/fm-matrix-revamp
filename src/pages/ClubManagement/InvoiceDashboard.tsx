@@ -151,8 +151,9 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+             const lock_account_id = localStorage.getItem("lock_account_id");
             const params = new URLSearchParams({
-                lock_account_id: '1',
+                lock_account_id: lock_account_id,
                 // page: String(page),
                 // per_page: String(per_page),
             });
