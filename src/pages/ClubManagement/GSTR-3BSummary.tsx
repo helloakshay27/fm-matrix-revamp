@@ -492,7 +492,6 @@ const GSTR3BSummary: React.FC = () => {
                 (4) Inward supplies from ISD
               </td>
               <td colSpan={4} className="border px-4 py-2 text-center text-gray-500">
-                - - - We do not support in Zoho Books - - -
               </td>
             </tr>
 
