@@ -19,6 +19,32 @@ import {
   Shield,
   FileSpreadsheet,
   MapPin,
+  ShoppingCart,
+  CreditCard,
+  Wallet,
+  Receipt,
+  BarChart3,
+  BookOpen,
+  Landmark,
+  ClipboardList,
+  Repeat,
+  Truck,
+  UserCheck,
+  Tags,
+  BadgePercent,
+  LayoutGrid,
+  Layers,
+  Gem,
+  TicketCheck,
+  Wrench,
+  CircleDollarSign,
+  ScrollText,
+  PieChart,
+  ArrowRightLeft,
+  Scale,
+  IndianRupee,
+  UserCog,
+  Boxes,
 } from "lucide-react";
 
 const modulesByPackage = {
@@ -59,12 +85,12 @@ const modulesByPackage = {
     },
     {
       name: "Ticket",
-      icon: FileText,
+      icon: TicketCheck,
       href: "/club-management/helpdesk",
     },
     {
       name: "Amenities Booking",
-      icon: Calendar,
+      icon: Gem,
       href: "/club-management/amenities-booking-club",
     },
     {
@@ -79,7 +105,7 @@ const modulesByPackage = {
     },
     {
       name: "Payments",
-      icon: Package,
+      icon: Wallet,
       href: "/club-management/accounting",
     },
     // {
@@ -105,22 +131,22 @@ const modulesByPackage = {
   Settings: [
     {
       name: "Amenities Setup",
-      icon: Calculator,
+      icon: Gem,
       href: "/settings/vas/booking-club/setup",
     },
     {
       name: "Membership Plan Setup",
-      icon: Calculator,
+      icon: ClipboardList,
       href: "/settings/vas/membership-plan/setup",
     },
     {
       name: "Accessories Setup",
-      icon: Calculator,
+      icon: Boxes,
       href: "/settings/accessories",
     },
     {
       name: "Payment Plan Setup",
-      icon: Calculator,
+      icon: CreditCard,
       href: "/settings/payment-plan/setup",
     },
     {
@@ -163,7 +189,7 @@ const modulesByPackage = {
 
     {
       name: "Ticket Management",
-      icon: FileText,
+      icon: TicketCheck,
       subItems: [
         { name: "Setup", href: "/settings/ticket-management/setup" },
         {
@@ -196,7 +222,7 @@ const modulesByPackage = {
   Accounting: [
     {
       name: "Items",
-      icon: FileText,
+      icon: Boxes,
       subItems: [
         { name: "Items", href: "/accounting/items" },
         // { name: "Transactions ", href: "/settings/transactions" },
@@ -210,7 +236,7 @@ const modulesByPackage = {
 
     {
       name: "Sales",
-      icon: FileText,
+      icon: ShoppingCart,
       subItems: [
         { name: "Customers", href: "/accounting/customers" },
         { name: "Quotes", href: "/accounting/quotes" },
@@ -229,7 +255,7 @@ const modulesByPackage = {
 
     {
       name: "Purchases",
-      icon: FileText,
+      icon: Truck,
       subItems: [
         { name: "Vendor", href: "/maintenance/vendor" },
         { name: "Expense", href: "/accounting/expense" },
@@ -250,7 +276,7 @@ const modulesByPackage = {
 
     {
       name: "Accountants",
-      icon: Users,
+      icon: BookOpen,
       subItems: [
         { name: "Manual Journals", href: "/accounting/manual-journal" },
         { name: "Transactions", href: "/accounting/transactions" },
@@ -297,7 +323,7 @@ const modulesByPackage = {
 
     {
       name: "Reports",
-      icon: FileText,
+      icon: BarChart3,
       subItems: [
         {
           name: "Sales Reports",
