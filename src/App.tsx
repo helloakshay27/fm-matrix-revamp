@@ -1104,6 +1104,10 @@ import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashb
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
 import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails";
+import { RideReviews } from "./pages/pulse/RideReviews";
+import { UserDetail } from "./pages/pulse/UserDetail";
+import { ActiveReports } from "./pages/pulse/ActiveReports";
+import { ActiveSOS } from "./pages/pulse/ActiveSOS";
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -5180,9 +5184,29 @@ function App() {
                             element={<CarpoolDashboard />}
                           />
 
+
                           <Route
                             path="/pulse/carpool/ride-detail"
                             element={<RideDetail />}
+                          />
+                           <Route
+                            path="/pulse/carpool/ride-reviews"
+                            element={<RideReviews />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/user-detail"
+                            element={<UserDetail />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/active-reports"
+                            element={<ActiveReports />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/active-sos"
+                            element={<ActiveSOS />}
                           />
 
                           <Route
