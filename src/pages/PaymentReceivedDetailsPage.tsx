@@ -26,6 +26,32 @@ interface PaymentReceived {
   notes?: string;
 }
 
+interface TransactionRecord {
+  id: number;
+  ledger_id: number;
+  ledger_name: string;
+  tr_type: "dr" | "cr";
+  amount: number;
+}
+
+interface LockAccountTransaction {
+  id: number;
+  transaction_date: string;
+  transaction_type: string;
+  description: string;
+  transaction_records: TransactionRecord[];
+}
+
+interface BillPayment {
+  id: number;
+  payment_date: string;
+  amount: number;
+  resource_id: number;
+  resource_type: string;
+  formatted_number?: string;
+  with_holding_tax?: number | null;
+}
+
 interface LockPaymentAPI {
   id: number;
   payment_number?: string;
@@ -53,6 +79,9 @@ interface LockPaymentAPI {
   tds_lock_account_ledger_id?: number;
   deposit_to_ledger_id?: number;
   excess_amount?: string;
+  resident_name?: string;
+  bill_payments?: BillPayment[];
+  lock_account_transactions?: LockAccountTransaction[];
   lock_bill_payments?: Array<{
     id: number;
     resource_id: number;
@@ -119,6 +148,10 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
   const [sidebarList, setSidebarList] = React.useState<PaymentReceived[]>([]);
   const [customerName, setCustomerName] = React.useState<string>("");
   const [depositLedgerName, setDepositLedgerName] = React.useState<string>("");
+  const [transactionRecords, setTransactionRecords] = React.useState<
+    TransactionRecord[]
+  >([]);
+  const [billPayments, setBillPayments] = React.useState<BillPayment[]>([]);
 
   // fetch payment details
   React.useEffect(() => {
@@ -131,6 +164,22 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
         const data: LockPaymentAPI = res.data.lock_payment || res.data || {};
         const mapped = mapLockPayment(data);
         setPayment(mapped);
+
+        // Store bill_payments from API
+        if (data.bill_payments && data.bill_payments.length > 0) {
+          setBillPayments(data.bill_payments);
+        }
+
+        // Store transaction_records from lock_account_transactions
+        if (
+          data.lock_account_transactions &&
+          data.lock_account_transactions.length > 0
+        ) {
+          const allRecords = data.lock_account_transactions.flatMap(
+            (txn) => txn.transaction_records || []
+          );
+          setTransactionRecords(allRecords);
+        }
 
         // Fetch customer name if payment_of_id exists
         if (mapped.payment_of_id) {
@@ -352,14 +401,39 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-t">
-                          <td className="p-3 text-blue-600">
-                            {selected?.invoice_number || "—"}
-                          </td>
-                          <td className="p-3">{selected?.date || "—"}</td>
-                          <td className="p-3 text-right">{amountFormatted}</td>
-                          <td className="p-3 text-right">{amountFormatted}</td>
-                        </tr>
+                        {billPayments.map((bp) => (
+                          <tr key={bp.id} className="border-t">
+                            <td className="p-3 text-blue-600">
+                              {bp.formatted_number || `INV-${bp.resource_id}`}
+                            </td>
+                            <td className="p-3">
+                              {bp.payment_date
+                                ? new Date(bp.payment_date).toLocaleDateString(
+                                    "en-GB",
+                                    {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                    }
+                                  )
+                                : "—"}
+                            </td>
+                            <td className="p-3 text-right">
+                              ₹
+                              {Math.abs(bp.amount).toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </td>
+                            <td className="p-3 text-right">
+                              ₹
+                              {Math.abs(bp.amount).toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -411,20 +485,43 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-t">
-                          <td className="p-3">Petty Cash</td>
-                          <td className="p-3 text-right">{amountFormatted}</td>
-                          <td className="p-3 text-right">0.00</td>
-                        </tr>
-                        <tr className="border-t">
-                          <td className="p-3">Accounts Receivable</td>
-                          <td className="p-3 text-right">0.00</td>
-                          <td className="p-3 text-right">{amountFormatted}</td>
-                        </tr>
+                        {transactionRecords.map((rec) => {
+                          const absAmount = Math.abs(rec.amount);
+                          const formatted = `₹${absAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                          return (
+                            <tr key={rec.id} className="border-t">
+                              <td className="p-3">{rec.ledger_name}</td>
+                              <td className="p-3 text-right">
+                                {rec.tr_type === "dr" ? formatted : "0.00"}
+                              </td>
+                              <td className="p-3 text-right">
+                                {rec.tr_type === "cr" ? formatted : "0.00"}
+                              </td>
+                            </tr>
+                          );
+                        })}
                         <tr className="border-t font-semibold">
                           <td className="p-3">Total</td>
-                          <td className="p-3 text-right">{amountFormatted}</td>
-                          <td className="p-3 text-right">{amountFormatted}</td>
+                          <td className="p-3 text-right">
+                            ₹
+                            {transactionRecords
+                              .filter((r) => r.tr_type === "dr")
+                              .reduce((sum, r) => sum + Math.abs(r.amount), 0)
+                              .toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                          </td>
+                          <td className="p-3 text-right">
+                            ₹
+                            {transactionRecords
+                              .filter((r) => r.tr_type === "cr")
+                              .reduce((sum, r) => sum + Math.abs(r.amount), 0)
+                              .toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                          </td>
                         </tr>
                       </tbody>
                     </table>
