@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  GoogleMap,
-  useJsApiLoader,
-  Marker,
-  InfoWindow,
-  DirectionsRenderer,
-} from "@react-google-maps/api";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,6 +18,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import axios from "axios";
+
+import carGrayImage from "@/assets/car_gray.png";
+import carRedImage from "@/assets/car_red.png";
+import carBlackImage from "@/assets/car_black.png";
+import carBeigeImage from "@/assets/car_beige.png";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -81,18 +82,7 @@ interface Ride {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-console.log("Google Maps API Key:", GOOGLE_MAPS_API_KEY); // Debug log to verify the key is loaded
-
-const LIBRARIES: ("geometry" | "places")[] = ["geometry"];
-
-const MAP_CONTAINER_STYLE: React.CSSProperties = {
-  width: "100%",
-  height: "500px",
-  borderRadius: "12px",
-};
-
-const DEFAULT_CENTER: RideCoordinates = { lat: 19.076, lng: 72.8777 }; // Mumbai
+const DEFAULT_CENTER: [number, number] = [19.076, 72.8777]; // Mumbai
 
 const STATUS_COLORS: Record<string, string> = {
   started: "bg-green-100 text-green-700 border-green-200",
@@ -126,55 +116,87 @@ const formatETA = (startTime: string) => {
   return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
 };
 
-const getCarColourClass = (colour: string) => {
-  const c = colour.toLowerCase();
-  if (c.includes("white") || c.includes("beige") || c.includes("silver"))
-    return "text-gray-400";
-  if (c.includes("black")) return "text-gray-900";
-  if (c.includes("red")) return "text-red-600";
-  if (c.includes("blue")) return "text-blue-600";
-  if (c.includes("green")) return "text-green-600";
-  return "text-gray-500";
+// ─── Leaflet Icons ─────────────────────────────────────────────────────────────
+
+// Fix default Leaflet marker icon issue (broken image paths in bundlers)
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+// Pickup marker (green)
+const pickupIcon = new L.Icon({
+  iconUrl:
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="42" viewBox="0 0 28 42">
+        <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 28 14 28s14-17.5 14-28C28 6.268 21.732 0 14 0z" fill="#16A34A" stroke="#fff" stroke-width="1.5"/>
+        <circle cx="14" cy="14" r="6" fill="#fff"/>
+        <text x="14" y="17.5" text-anchor="middle" fill="#16A34A" font-size="10" font-weight="bold">P</text>
+      </svg>`
+    ),
+  iconSize: [28, 42],
+  iconAnchor: [14, 42],
+  popupAnchor: [0, -42],
+});
+
+// Drop marker (red)
+const dropIcon = new L.Icon({
+  iconUrl:
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="42" viewBox="0 0 28 42">
+        <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 28 14 28s14-17.5 14-28C28 6.268 21.732 0 14 0z" fill="#DC2626" stroke="#fff" stroke-width="1.5"/>
+        <circle cx="14" cy="14" r="6" fill="#fff"/>
+        <text x="14" y="17.5" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">D</text>
+      </svg>`
+    ),
+  iconSize: [28, 42],
+  iconAnchor: [14, 42],
+  popupAnchor: [0, -42],
+});
+
+// Car icon for active (started) rides — pick by vehicle colour
+const getCarIcon = (colour: string): L.Icon => {
+  const c = (colour || "").toLowerCase();
+  let carImg = carGrayImage;
+  if (c.includes("red")) carImg = carRedImage;
+  else if (c.includes("black")) carImg = carBlackImage;
+  else if (c.includes("white") || c.includes("beige") || c.includes("silver"))
+    carImg = carBeigeImage;
+
+  return new L.Icon({
+    iconUrl: carImg,
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+    popupAnchor: [0, -24],
+  });
 };
 
-// Build Google Maps static marker icon for a car
-const buildCarMarkerIcon = (colour: string): google.maps.Icon => {
-  const c = colour.toLowerCase();
-  let fillColor = "#6B7280"; // gray default
-  if (c.includes("white") || c.includes("beige") || c.includes("silver")) fillColor = "#D1D5DB";
-  else if (c.includes("black")) fillColor = "#111827";
-  else if (c.includes("red")) fillColor = "#DC2626";
-  else if (c.includes("blue")) fillColor = "#2563EB";
-  else if (c.includes("green")) fillColor = "#16A34A";
+// ─── Coordinate Validation ─────────────────────────────────────────────────────
 
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-      <rect x="8" y="16" width="32" height="18" rx="4" fill="${fillColor}" stroke="#fff" stroke-width="1.5"/>
-      <rect x="12" y="12" width="24" height="10" rx="3" fill="${fillColor}" opacity="0.8"/>
-      <circle cx="15" cy="35" r="4" fill="#1F2937" stroke="#fff" stroke-width="1.5"/>
-      <circle cx="33" cy="35" r="4" fill="#1F2937" stroke="#fff" stroke-width="1.5"/>
-      <rect x="10" y="20" width="8" height="5" rx="1" fill="#93C5FD" opacity="0.9"/>
-      <rect x="30" y="20" width="8" height="5" rx="1" fill="#93C5FD" opacity="0.9"/>
-    </svg>`;
-
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(48, 48),
-    anchor: new window.google.maps.Point(24, 24),
-  };
+/** Ensure coordinates are within India bounding box (rough) */
+const isValidIndiaCoord = (coord: RideCoordinates | null | undefined): boolean => {
+  if (!coord || !coord.lat || !coord.lng) return false;
+  // India roughly: lat 6–36, lng 68–98
+  return coord.lat >= 6 && coord.lat <= 37 && coord.lng >= 67 && coord.lng <= 98;
 };
 
-const buildStartMarkerIcon = (): google.maps.Icon => {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-      <circle cx="16" cy="16" r="12" fill="#F59E0B" stroke="#fff" stroke-width="2"/>
-      <text x="16" y="21" text-anchor="middle" fill="white" font-size="14" font-weight="bold">★</text>
-    </svg>`;
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(32, 32),
-    anchor: new window.google.maps.Point(16, 16),
-  };
+// ─── Map Fly-To Helper Component ───────────────────────────────────────────────
+
+interface FlyToProps {
+  center: [number, number];
+  zoom: number;
+}
+
+const FlyToLocation: React.FC<FlyToProps> = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, zoom, { duration: 1.2 });
+  }, [map, center, zoom]);
+  return null;
 };
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
@@ -184,21 +206,16 @@ export const RideTracking: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [rides, setRides] = useState<Ride[]>([]);
+  const [allRides, setAllRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRide, setSelectedRide] = useState<Ride | null>(null);
-  const [activeInfoWindow, setActiveInfoWindow] = useState<number | null>(null);
-  const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(
+    null
+  );
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: LIBRARIES,
-    version: "3.58",
-  });
 
   // ── Fetch rides ──────────────────────────────────────────────────────────────
   const fetchRides = useCallback(async () => {
@@ -214,12 +231,20 @@ export const RideTracking: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = response.data;
-      const allRides: Ride[] = Array.isArray(data?.rides)
+      const rawRides: Ride[] = Array.isArray(data?.rides)
         ? data.rides
         : Array.isArray(data)
         ? data
         : [];
-      const startedRides = allRides.filter((r) => r.status === "started");
+
+      // Keep all rides with valid India coordinates for map
+      const validRides = rawRides.filter(
+        (r) => isValidIndiaCoord(r.start_coordinates) && isValidIndiaCoord(r.end_coordinates)
+      );
+      setAllRides(validRides);
+
+      // Only "started" rides appear in cards
+      const startedRides = validRides.filter((r) => r.status === "started");
       setRides(startedRides);
       if (startedRides.length > 0) {
         setSelectedRide(startedRides[0]);
@@ -236,46 +261,14 @@ export const RideTracking: React.FC = () => {
     fetchRides();
   }, [fetchRides]);
 
-  // ── Fetch directions when a ride is selected ────────────────────────────────
+  // ── When a ride is selected, fly to it ───────────────────────────────────────
   useEffect(() => {
-    if (!isLoaded || !selectedRide) return;
-    const { start_coordinates, end_coordinates } = selectedRide;
-    if (!start_coordinates || !end_coordinates) return;
-
-    try {
-      const directionsService = new window.google.maps.DirectionsService();
-      directionsService.route(
-        {
-          origin: { lat: start_coordinates.lat, lng: start_coordinates.lng },
-          destination: { lat: end_coordinates.lat, lng: end_coordinates.lng },
-          travelMode: window.google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === "OK" && result) {
-            setDirections(result);
-          } else {
-            setDirections(null);
-          }
-        }
-      );
-    } catch {
-      setDirections(null);
-    }
-  }, [isLoaded, selectedRide]);
-
-  // ── Pan map to selected ride ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!mapRef || !selectedRide?.start_coordinates) return;
-    mapRef.panTo({
-      lat: selectedRide.start_coordinates.lat,
-      lng: selectedRide.start_coordinates.lng,
+    if (!selectedRide?.start_coordinates) return;
+    setFlyTarget({
+      center: [selectedRide.start_coordinates.lat, selectedRide.start_coordinates.lng],
+      zoom: 13,
     });
-    mapRef.setZoom(12);
-  }, [mapRef, selectedRide]);
-
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    setMapRef(map);
-  }, []);
+  }, [selectedRide]);
 
   // ── Scroll carousel ─────────────────────────────────────────────────────────
   const scrollCards = (dir: "left" | "right") => {
@@ -283,11 +276,16 @@ export const RideTracking: React.FC = () => {
     scrollRef.current.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
   };
 
-  // ── Map center ──────────────────────────────────────────────────────────────
-  const mapCenter =
-    selectedRide?.start_coordinates
-      ? { lat: selectedRide.start_coordinates.lat, lng: selectedRide.start_coordinates.lng }
-      : DEFAULT_CENTER;
+  // ── Map center — average of all rides, or default Mumbai ────────────────────
+  const mapCenter: [number, number] = (() => {
+    const validStarted = rides.filter((r) => isValidIndiaCoord(r.start_coordinates));
+    if (validStarted.length === 0) return DEFAULT_CENTER;
+    const avgLat =
+      validStarted.reduce((sum, r) => sum + r.start_coordinates.lat, 0) / validStarted.length;
+    const avgLng =
+      validStarted.reduce((sum, r) => sum + r.start_coordinates.lng, 0) / validStarted.length;
+    return [avgLat, avgLng];
+  })();
 
   return (
     <div className="p-4 sm:p-6 max-w-full">
@@ -315,7 +313,7 @@ export const RideTracking: React.FC = () => {
           </button>
           <h1 className="text-xl font-bold text-gray-900">Live Ride Tracking</h1>
         </div>
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={fetchRides}
@@ -324,7 +322,7 @@ export const RideTracking: React.FC = () => {
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
-        </Button>
+        </Button> */}
       </div>
 
       {/* Error */}
@@ -340,7 +338,10 @@ export const RideTracking: React.FC = () => {
         <div className="space-y-4">
           <div className="flex gap-4 overflow-hidden">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex-shrink-0 w-72 h-52 bg-gray-100 rounded-xl animate-pulse" />
+              <div
+                key={i}
+                className="flex-shrink-0 w-72 h-52 bg-gray-100 rounded-xl animate-pulse"
+              />
             ))}
           </div>
           <div className="w-full h-[500px] bg-gray-100 rounded-xl animate-pulse" />
@@ -378,10 +379,7 @@ export const RideTracking: React.FC = () => {
                   key={ride.id}
                   ride={ride}
                   isSelected={selectedRide?.id === ride.id}
-                  onClick={() => {
-                    setSelectedRide(ride);
-                    setDirections(null);
-                  }}
+                  onClick={() => setSelectedRide(ride)}
                 />
               ))}
             </div>
@@ -398,145 +396,133 @@ export const RideTracking: React.FC = () => {
           {/* ── Map ─────────────────────────────────────────────────────────── */}
           <Card className="border border-gray-200 shadow-sm overflow-hidden rounded-xl">
             <CardContent className="p-0">
-              {(loadError) && (
-                <div className="flex items-center justify-center h-[500px] bg-gray-50">
-                  <div className="text-center text-gray-500 max-w-sm px-4">
-                    <MapPin className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                    <p className="font-semibold text-gray-700 mb-2">Map could not load</p>
-                    <p className="text-sm text-gray-500 mb-3">
-                      The Google Maps API key is restricted to specific domains.
-                    </p>
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left text-xs text-amber-800">
-                      <p className="font-semibold mb-1">To fix: Add <code>localhost</code> to your API key's allowed referrers:</p>
-                      <ol className="list-decimal list-inside space-y-0.5">
-                        <li>Go to Google Cloud Console → Credentials</li>
-                        <li>Click your API key</li>
-                        <li>Under HTTP referrers add: <code>http://localhost:5173/*</code></li>
-                        <li>Save and refresh this page</li>
-                      </ol>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {!loadError && !isLoaded && (
-                <div className="flex items-center justify-center h-[500px] bg-gray-50">
-                  <div className="flex flex-col items-center gap-3">
-                    <RefreshCw className="w-8 h-8 animate-spin text-[#C72030]" />
-                    <p className="text-sm text-gray-500">Loading map…</p>
-                  </div>
-                </div>
-              )}
-
-              {!loadError && isLoaded && (
-                <GoogleMap
-                  mapContainerStyle={MAP_CONTAINER_STYLE}
+              <div style={{ width: "100%", height: "500px", borderRadius: "12px" }}>
+                <MapContainer
                   center={mapCenter}
-                  zoom={12}
-                  onLoad={onMapLoad}
-                  options={{
-                    zoomControl: true,
-                    streetViewControl: false,
-                    mapTypeControl: false,
-                    fullscreenControl: true,
-                    styles: [
-                      {
-                        featureType: "poi",
-                        elementType: "labels",
-                        stylers: [{ visibility: "off" }],
-                      },
-                    ],
-                  }}
+                  zoom={11}
+                  scrollWheelZoom={true}
+                  style={{ width: "100%", height: "100%", borderRadius: "12px" }}
                 >
-                  {/* Route directions for selected ride */}
-                  {directions && (
-                    <DirectionsRenderer
-                      directions={directions}
-                      options={{
-                        suppressMarkers: true,
-                        polylineOptions: {
-                          strokeColor: "#C72030",
-                          strokeWeight: 4,
-                          strokeOpacity: 0.8,
-                        },
-                      }}
-                    />
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+
+                  {/* Fly to selected ride */}
+                  {flyTarget && (
+                    <FlyToLocation center={flyTarget.center} zoom={flyTarget.zoom} />
                   )}
 
-                  {/* Markers for each ride */}
-                  {rides.map((ride) => {
-                    const hasCoords =
-                      ride.start_coordinates?.lat && ride.start_coordinates?.lng;
-                    if (!hasCoords) return null;
+                
+                  {allRides.map((ride) => {
+                    const startValid = isValidIndiaCoord(ride.start_coordinates);
+                    const endValid = isValidIndiaCoord(ride.end_coordinates);
+                    if (!startValid) return null;
+
+                    const isActive = ride.status === "started";
+                    const isSelectedRide = selectedRide?.id === ride.id;
+                    const lineColor = isSelectedRide ? "#C72030" : isActive ? "#16A34A" : "#9CA3AF";
+                    const lineWeight = isSelectedRide ? 4 : 2;
 
                     return (
                       <React.Fragment key={ride.id}>
-                        {/* Start / Current position marker (car icon) */}
+                        
                         <Marker
-                          position={{
-                            lat: ride.start_coordinates.lat,
-                            lng: ride.start_coordinates.lng,
+                          position={[ride.start_coordinates.lat, ride.start_coordinates.lng]}
+                          icon={pickupIcon}
+                          eventHandlers={{
+                            click: () => setSelectedRide(ride),
                           }}
-                          icon={buildCarMarkerIcon(ride.vehicle?.colour || "gray")}
-                          title={ride.vehicle?.registration_number || `Ride ${ride.id}`}
-                          onClick={() => {
-                            setSelectedRide(ride);
-                            setActiveInfoWindow(ride.id);
-                            setDirections(null);
-                          }}
-                        />
-
-                        {/* Destination marker (star) — only for selected ride */}
-                        {selectedRide?.id === ride.id &&
-                          ride.end_coordinates?.lat && (
-                            <Marker
-                              position={{
-                                lat: ride.end_coordinates.lat,
-                                lng: ride.end_coordinates.lng,
-                              }}
-                              icon={buildStartMarkerIcon()}
-                            />
-                          )}
-
-                        {/* Info window for selected / clicked ride */}
-                        {activeInfoWindow === ride.id && (
-                          <InfoWindow
-                            position={{
-                              lat: ride.start_coordinates.lat,
-                              lng: ride.start_coordinates.lng,
-                            }}
-                            onCloseClick={() => setActiveInfoWindow(null)}
-                          >
-                            <div className="min-w-[180px] text-xs">
-                              <p className="font-semibold text-gray-900 text-sm mb-1">
-                                {ride.vehicle?.registration_number}
+                        >
+                          <Popup>
+                            <div className="text-xs min-w-[160px]">
+                              <p className="font-semibold text-green-700 mb-1">📍 Pickup</p>
+                              <p className="text-gray-700">{ride.start_location || "—"}</p>
+                              <p className="text-gray-500 mt-1">
+                                Driver: {ride.driver?.name}
                               </p>
-                              <p className="text-gray-700 mb-0.5">
-                                <strong>Driver:</strong> {ride.driver?.name}
+                              <p className="text-gray-500">
+                                Vehicle: {ride.vehicle?.registration_number}
                               </p>
-                              <p className="text-gray-700 mb-0.5">
-                                <strong>From:</strong> {ride.start_location || "—"}
-                              </p>
-                              <p className="text-gray-700 mb-0.5">
-                                <strong>To:</strong> {ride.end_location || "—"}
-                              </p>
-                              <p className="text-gray-700 mb-0.5">
-                                <strong>Passengers:</strong>{" "}
-                                {ride.passengers?.map((p) => p.user.name).join(", ") || "None"}
-                              </p>
-                              <span
-                                className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(ride.status)}`}
-                              >
-                                {ride.status === "started" ? "ACTIVE" : ride.status.toUpperCase()}
-                              </span>
                             </div>
-                          </InfoWindow>
+                          </Popup>
+                        </Marker>
+
+                      
+                        {endValid && (
+                          <Marker
+                            position={[ride.end_coordinates.lat, ride.end_coordinates.lng]}
+                            icon={dropIcon}
+                            eventHandlers={{
+                              click: () => setSelectedRide(ride),
+                            }}
+                          >
+                            <Popup>
+                              <div className="text-xs min-w-[160px]">
+                                <p className="font-semibold text-red-700 mb-1">📍 Drop</p>
+                                <p className="text-gray-700">{ride.end_location || "—"}</p>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        )}
+
+                      
+                        {isActive && (
+                          <Marker
+                            position={[
+                              ride.start_coordinates.lat,
+                              ride.start_coordinates.lng,
+                            ]}
+                            icon={getCarIcon(ride.vehicle?.colour || "gray")}
+                            zIndexOffset={1000}
+                            eventHandlers={{
+                              click: () => setSelectedRide(ride),
+                            }}
+                          >
+                            <Popup>
+                              <div className="text-xs min-w-[180px]">
+                                <p className="font-semibold text-gray-900 text-sm mb-1">
+                                  🚗 {ride.driver?.name}
+                                </p>
+                                <p className="text-gray-700">
+                                  {ride.vehicle?.registration_number} •{" "}
+                                  {ride.vehicle?.colour}
+                                </p>
+                                <p className="text-gray-500 mt-1">
+                                  {ride.start_location} → {ride.end_location}
+                                </p>
+                                <p className="text-gray-500 mt-0.5">
+                                  Passengers:{" "}
+                                  {ride.passengers?.map((p) => p.user.name).join(", ") ||
+                                    "None"}
+                                </p>
+                                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                                  ACTIVE
+                                </span>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        )}
+
+                        {endValid && (
+                          <Polyline
+                            positions={[
+                              [ride.start_coordinates.lat, ride.start_coordinates.lng],
+                              [ride.end_coordinates.lat, ride.end_coordinates.lng],
+                            ]}
+                            pathOptions={{
+                              color: lineColor,
+                              weight: lineWeight,
+                              opacity: isSelectedRide ? 0.9 : 0.5,
+                              dashArray: isActive ? undefined : "8 6",
+                            }}
+                          />
                         )}
                       </React.Fragment>
                     );
                   })}
-                </GoogleMap>
-              )}
+                </MapContainer>
+              </div>
             </CardContent>
           </Card>
 
@@ -545,7 +531,7 @@ export const RideTracking: React.FC = () => {
             <Card className="mt-4 border border-gray-200 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex flex-wrap gap-6 items-center">
-                
+              
                   <div className="flex items-center gap-3">
                     {selectedRide.driver?.profile_image_url ? (
                       <img
@@ -566,7 +552,7 @@ export const RideTracking: React.FC = () => {
                     </div>
                   </div>
 
-               
+                 
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="w-4 h-4 text-green-600 flex-shrink-0" />
                     <span className="text-gray-700 max-w-[120px] truncate">
@@ -579,7 +565,7 @@ export const RideTracking: React.FC = () => {
                     </span>
                   </div>
 
-               
+            
                   <div className="flex items-center gap-2 text-sm">
                     <Clock className="w-4 h-4 text-blue-500 flex-shrink-0" />
                     <span className="text-gray-700">
@@ -588,7 +574,7 @@ export const RideTracking: React.FC = () => {
                     </span>
                   </div>
 
-              
+             
                   <div>
                     <p className="text-xs text-gray-500">ETA</p>
                     <p className="text-sm font-semibold text-gray-900">
@@ -596,16 +582,16 @@ export const RideTracking: React.FC = () => {
                     </p>
                   </div>
 
-              
+                
                   <div className="flex items-center gap-2 text-sm">
-                    <Car className={`w-4 h-4 flex-shrink-0 ${getCarColourClass(selectedRide.vehicle?.colour || "")}`} />
+                    <Car className="w-4 h-4 flex-shrink-0 text-gray-600" />
                     <span className="text-gray-700">
                       {selectedRide.vehicle?.car_model_name} •{" "}
                       {selectedRide.vehicle?.registration_number}
                     </span>
                   </div>
 
-           
+                
                   <div>
                     <p className="text-xs text-gray-500">Passengers</p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
@@ -624,12 +610,14 @@ export const RideTracking: React.FC = () => {
                     </div>
                   </div>
 
-                
+                 
                   <div className="ml-auto">
                     <Badge
                       className={`border text-xs font-semibold px-3 py-1 ${getStatusColor(selectedRide.status)}`}
                     >
-                      {selectedRide.status === "started" ? "ACTIVE" : selectedRide.status.toUpperCase()}
+                      {selectedRide.status === "started"
+                        ? "ACTIVE"
+                        : selectedRide.status.toUpperCase()}
                     </Badge>
                   </div>
                 </div>
@@ -663,12 +651,10 @@ const RideCard: React.FC<RideCardProps> = ({ ride, isSelected, onClick }) => {
     <div
       onClick={onClick}
       className={`flex-shrink-0 w-72 bg-white rounded-xl border-2 p-4 cursor-pointer transition-all hover:shadow-md ${
-        isSelected
-          ? "border-[#C72030] shadow-md"
-          : "border-gray-200 hover:border-gray-300"
+        isSelected ? "border-[#C72030] shadow-md" : "border-gray-200 hover:border-gray-300"
       }`}
     >
-   
+      {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs text-gray-500 font-medium">
@@ -677,11 +663,13 @@ const RideCard: React.FC<RideCardProps> = ({ ride, isSelected, onClick }) => {
           <p className="text-base font-bold text-gray-900 mt-0.5">{ride.driver?.name}</p>
         </div>
         <Badge className={`text-xs border font-semibold ${getStatusColor(ride.status)}`}>
-          {ride.status === "started" ? "Active" : ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
+          {ride.status === "started"
+            ? "Active"
+            : ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
         </Badge>
       </div>
 
-
+      {/* Details */}
       <div className="space-y-1.5 mb-3">
         <div className="flex items-start gap-2">
           <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
@@ -714,7 +702,7 @@ const RideCard: React.FC<RideCardProps> = ({ ride, isSelected, onClick }) => {
         </div>
       </div>
 
-     
+      {/* Progress bar */}
       <div className="mb-3">
         <div className="flex justify-between text-xs text-gray-500 mb-1">
           <span>Progress</span>
@@ -728,7 +716,7 @@ const RideCard: React.FC<RideCardProps> = ({ ride, isSelected, onClick }) => {
         </div>
       </div>
 
-      
+      {/* Passengers */}
       <div>
         <p className="text-xs text-gray-400 mb-1">Passengers</p>
         <div className="flex flex-wrap gap-1">
