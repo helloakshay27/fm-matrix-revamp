@@ -57,7 +57,7 @@ const columns: ColumnConfig[] = [
         draggable: false
     },
 
-     {
+    {
         key: 'date',
         label: 'Date',
         sortable: true,
@@ -85,7 +85,7 @@ const columns: ColumnConfig[] = [
         hideable: true,
         draggable: true
     },
-   
+
     {
         key: 'due_date',
         label: 'Due Date',
@@ -143,7 +143,7 @@ export const DeliveryChallansDashboard: React.FC = () => {
     });
 
 
-    
+
 
     // Fetch sales order data from API
     const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
@@ -151,8 +151,9 @@ export const DeliveryChallansDashboard: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             const params = new URLSearchParams({
-                lock_account_id: '1',
+                lock_account_id: lock_account_id || '',
                 // page: String(page),
                 // per_page: String(per_page),
             });
@@ -171,7 +172,7 @@ export const DeliveryChallansDashboard: React.FC = () => {
             const data = await response.json();
             console.log('API Response:', data);
             // Assume API returns { data: SalesOrder[], pagination: {...} }
-            setSalesOrderData(Array.isArray(data) ? data: []);
+            setSalesOrderData(Array.isArray(data) ? data : []);
             setPagination(data.pagination || {
                 current_page: page,
                 per_page: per_page,
@@ -237,7 +238,7 @@ export const DeliveryChallansDashboard: React.FC = () => {
     const totalRecords = pagination.total_count;
     const totalPages = pagination.total_pages;
     const displayedData = salesOrderData;
-console.log('Sales Order Data:', salesOrderData);
+    console.log('Sales Order Data:', salesOrderData);
     // Render row function for enhanced table
     const renderRow = (order: SalesOrder) => ({
         actions: (
@@ -280,7 +281,7 @@ console.log('Sales Order Data:', salesOrderData);
         invoice_number: (
             <div className="font-medium text-blue-600">{order.invoice_number}</div>
         ),
-                order_number: (
+        order_number: (
             <div className="font-medium text-blue-600">{order.order_number}</div>
         ),
         customer_name: (
@@ -296,37 +297,37 @@ console.log('Sales Order Data:', salesOrderData);
             </span>
         ),
 
-         due_date: (
-    <span className="text-sm text-gray-600">
-      {order.due_date
-        ? new Date(order.due_date).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })
-        : "-"}
-    </span>
-  ),
+        due_date: (
+            <span className="text-sm text-gray-600">
+                {order.due_date
+                    ? new Date(order.due_date).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                    })
+                    : "-"}
+            </span>
+        ),
 
-  total_amount: (
-    <span className="text-sm font-medium text-gray-900">
-      ₹
-      {order.total_amount?.toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}
-    </span>
-  ),
+        total_amount: (
+            <span className="text-sm font-medium text-gray-900">
+                ₹
+                {order.total_amount?.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })}
+            </span>
+        ),
 
-  balance_due: (
-    <span className="text-sm font-medium text-red-600">
-      ₹
-      {order.balance_due?.toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}
-    </span>
-  ),
+        balance_due: (
+            <span className="text-sm font-medium text-red-600">
+                ₹
+                {order.balance_due?.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })}
+            </span>
+        ),
         // shipment_date: (
         //     <span className="text-sm text-gray-600">
         //         {order.shipment_date ? new Date(order.shipment_date).toLocaleDateString('en-GB', {

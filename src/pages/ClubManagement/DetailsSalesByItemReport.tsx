@@ -33,6 +33,7 @@ const DetailsSalesByItemReport = () => {
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem('lock_account_id');
 
   useEffect(() => {
     const fetchItemSales = async () => {
@@ -44,7 +45,7 @@ const DetailsSalesByItemReport = () => {
           setLoading(false);
           return;
         }
-        const url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=1`;
+        const url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=${lock_account_id}`;
         const response = await axios.get(url, {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { User, FileCog, NotepadText } from "lucide-react";
+import { NotepadText } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -49,12 +44,8 @@ interface BalanceSheetResponse {
 const BalanceSheetReport: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem("lock_account_id");
   const navigate = useNavigate();
-
-  // const balanceTabs = ["Liabilities", "Assets"];
-  // const [activeBalanceTab, setActiveBalanceTab] = useState<
-  //   "Assets" | "Liabilities"
-  // >("Liabilities");
   const [balanceSheetData, setBalanceSheetData] =
     useState<BalanceSheetResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -70,12 +61,8 @@ const BalanceSheetReport: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("Fetching balance sheet with baseUrl:", baseUrl);
-      console.log("Token present:", !!token);
-
-      // Note: The balance sheet endpoint is on club-uat-api, not the regular baseUrl
       const response = await axios.get(
-        `https://${baseUrl}/lock_accounts/1/lock_account_transactions/balance_sheet.json`,
+        `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/balance_sheet.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -84,17 +71,10 @@ const BalanceSheetReport: React.FC = () => {
         },
       );
 
-      console.log("Balance sheet data received:", response.data);
       setBalanceSheetData(response.data);
+      
     } catch (err: unknown) {
       console.error("Error fetching balance sheet:", err);
-      if (err && typeof err === "object" && "response" in err) {
-        const axiosError = err as {
-          response?: { data?: unknown; status?: number };
-        };
-        console.error("Error response:", axiosError.response?.data);
-        console.error("Error status:", axiosError.response?.status);
-      }
       setError("Failed to load balance sheet data");
     } finally {
       setLoading(false);
@@ -115,71 +95,9 @@ const BalanceSheetReport: React.FC = () => {
       alert("Please select From Date and To Date");
       return;
     }
-    console.log("From Date:", filters.fromDate);
-    console.log("To Date:", filters.toDate);
-    // You can add date filtering to API call here if needed
     fetchBalanceSheet();
   };
 
-  // Recursive function to render groups and ledgers
-  const renderGroupRows1 = (
-    group: ChildGroup,
-    level: number = 0,
-  ): JSX.Element[] => {
-    const rows: JSX.Element[] = [];
-    const indentClass = level > 0 ? `pl-${Math.min(level * 4, 16)}` : "";
-
-    // Group header row
-    rows.push(
-      <tr key={`group-${group.group_id}`} className="bg-gray-50 font-semibold">
-        <td className="border border-gray-300 px-4 py-3 text-center">
-          {group.total.toFixed(2)}
-        </td>
-        <td className={`border border-gray-300 px-4 py-3 ${indentClass}`}>
-          {group.group_name}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-center">
-          {group.total.toFixed(2)}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-center">
-          {group.total.toFixed(2)}
-        </td>
-      </tr>,
-    );
-
-    // Render child groups recursively
-    if (group.children && group.children.length > 0) {
-      group.children.forEach((childGroup) => {
-        rows.push(...renderGroupRows(childGroup, level + 1));
-      });
-    }
-
-    // Render ledgers
-    if (group.ledgers && group.ledgers.length > 0) {
-      group.ledgers.forEach((ledger) => {
-        rows.push(
-          <tr key={`ledger-${ledger.ledger_id}`} className="hover:bg-gray-50">
-            <td className="border border-gray-300 px-4 py-3 text-center">
-              {ledger.total.toFixed(2)}
-            </td>
-            <td
-              className={`border border-gray-300 px-4 py-3 pl-${Math.min((level + 1) * 4, 16)}`}
-            >
-              {ledger.ledger_name}
-            </td>
-            <td className="border border-gray-300 px-4 py-3 text-center">
-              {ledger.total.toFixed(2)}
-            </td>
-            <td className="border border-gray-300 px-4 py-3 text-center">
-              {ledger.total.toFixed(2)}
-            </td>
-          </tr>,
-        );
-      });
-    }
-
-    return rows;
-  };
 
   const renderGroupRows = (
     group: ChildGroup,
@@ -204,22 +122,11 @@ const BalanceSheetReport: React.FC = () => {
         </td>
 
         <td
-        className={`border border-gray-300 px-4 py-3 ${fontClass}`}
-        style={{ paddingLeft: `${indent}px` }}
-      >
-        {group.group_name}
-      </td>
-        {/* <td
           className={`border border-gray-300 px-4 py-3 ${fontClass}`}
           style={{ paddingLeft: `${indent}px` }}
         >
-          <span
-            className="text-blue-600 cursor-pointer hover:underline"
-            onClick={() => navigate(`/accounting/reports/balance-sheet/details/${group.group_id}`)}
-          >
-            {group.group_name}
-          </span>
-        </td> */}
+          {group.group_name}
+        </td>
 
         <td className="border border-gray-300 px-4 py-3 text-right">
           {group.total.toFixed(2)}
@@ -246,12 +153,6 @@ const BalanceSheetReport: React.FC = () => {
             {ledger.total.toFixed(2)}
           </td>
 
-          {/* <td
-          className="border border-gray-300 px-4 py-3 font-normal"
-          style={{ paddingLeft: `${(level + 1) * 20}px` }}
-        >
-          {ledger.ledger_name}
-        </td> */}
           <td
             className="border border-gray-300 px-4 py-3 font-normal"
             style={{ paddingLeft: `${(level + 1) * 20}px` }}
@@ -279,426 +180,110 @@ const BalanceSheetReport: React.FC = () => {
     return rows;
   };
 
-  const BalanceSheetTable = () => {
-    if (!balanceSheetData) return null;
 
-    const liabilitiesRows: JSX.Element[] = [];
-    const assetsRows: JSX.Element[] = [];
+  const renderAccounts = (nodes: any[], level: number = 0): JSX.Element[] => {
+    const rows: JSX.Element[] = [];
 
-    balanceSheetData.liabilities.children.forEach((group) => {
-      liabilitiesRows.push(...renderGroupRows(group, 1));
-    });
+    nodes.forEach((node) => {
+      const indent = node.depth_indent || level * 20;
+      const amount = node.values?.[0]?.total_formatted || "0.00";
 
-    balanceSheetData.assets.children.forEach((group) => {
-      assetsRows.push(...renderGroupRows(group, 1));
-    });
-
-    const maxRows = Math.max(liabilitiesRows.length, assetsRows.length);
-
-    const rows = [];
-
-    // for (let i = 0; i < maxRows; i++) {
-    //   const left = liabilitiesRows[i];
-    //   const right = assetsRows[i];
-
-    //   rows.push(
-    //     <tr key={i}>
-
-    //       {/* LIABILITIES SIDE */}
-    //       {left ? (
-    //         <>
-    //           {left.props.children[0]}
-    //           {left.props.children[1]}
-    //         </>
-    //       ) : (
-    //         <>
-    //           <td className="border border-gray-300 px-4 py-3"></td>
-    //           <td className="border border-gray-300 px-4 py-3"></td>
-    //         </>
-    //       )}
-
-    //       {/* ASSETS SIDE */}
-    //       {right ? (
-    //         <>
-    //           {right.props.children[0]}
-    //           {right.props.children[1]}
-    //         </>
-    //       ) : (
-    //         <>
-    //           <td className="border border-gray-300 px-4 py-3"></td>
-    //           <td className="border border-gray-300 px-4 py-3"></td>
-    //         </>
-    //       )}
-
-    //     </tr>
-    //   );
-    // }
-
-    for (let i = 0; i < maxRows; i++) {
-      const left = liabilitiesRows[i];
-      const right = assetsRows[i];
+      const isLedger = node.ledger_id;
 
       rows.push(
-        <tr key={i}>
+        <tr key={node.group_id || node.ledger_id}>
+          {/* ACCOUNT */}
+          <td
+            className={`border px-4 py-2 ${!isLedger ? "font-semibold" : ""}`}
+            style={{ paddingLeft: `${indent}px` }}
+          >
+            {isLedger ? (
+              <span
+                className="text-blue-600 cursor-pointer hover:underline"
+                onClick={() =>
+                  navigate(`/accounting/reports/balance-sheet/details/${node.ledger_id}`)
+                }
+              >
+                {node.name}
+              </span>
+            ) : (
+              node.name
+            )}
+          </td>
 
-          {/* LIABILITIES SIDE */}
+          {/* ACCOUNT CODE */}
+          <td className="border px-4 py-2 text-center">
+            {node.account_code || "-"}
+          </td>
 
-          {left ? (
-            <>
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-
-              {left.props.children[1]}
-
-              {left.props.children[0]}
-
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-            </>
-          ) : (
-            <>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-            </>
-          )}
-
-          {/* ASSETS SIDE */}
-
-          {right ? (
-            <>
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-
-              {right.props.children[1]}
-
-              {right.props.children[0]}
-
-              <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-            </>
-          ) : (
-            <>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-              <td className="border border-gray-300 px-4 py-3"></td>
-            </>
-          )}
-
+          {/* TOTAL */}
+          <td className="border px-4 py-2 text-right">{amount}</td>
         </tr>
       );
-    }
 
+      if (node.accounts && node.accounts.length > 0) {
+        rows.push(...renderAccounts(node.accounts, level + 1));
+      }
 
-    const BalanceSheetTable = () => {
-      if (!balanceSheetData) return null;
-
-      const liabilitiesRows: JSX.Element[] = [];
-      const assetsRows: JSX.Element[] = [];
-
-      balanceSheetData.liabilities.children.forEach((group) => {
-        liabilitiesRows.push(...renderGroupRows(group, 1));
-      });
-
-      balanceSheetData.assets.children.forEach((group) => {
-        assetsRows.push(...renderGroupRows(group, 1));
-      });
-
-      const maxRows = Math.max(liabilitiesRows.length, assetsRows.length);
-
-      const rows = [];
-
-      // for (let i = 0; i < maxRows; i++) {
-      //   const left = liabilitiesRows[i];
-      //   const right = assetsRows[i];
-
-      //   rows.push(
-      //     <tr key={i}>
-
-      //       {/* LIABILITIES SIDE */}
-      //       {left ? (
-      //         <>
-      //           {left.props.children[0]}
-      //           {left.props.children[1]}
-      //         </>
-      //       ) : (
-      //         <>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //         </>
-      //       )}
-
-      //       {/* ASSETS SIDE */}
-      //       {right ? (
-      //         <>
-      //           {right.props.children[0]}
-      //           {right.props.children[1]}
-      //         </>
-      //       ) : (
-      //         <>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //           <td className="border border-gray-300 px-4 py-3"></td>
-      //         </>
-      //       )}
-
-      //     </tr>
-      //   );
-      // }
-
-
-      for (let i = 0; i < maxRows; i++) {
-        const left = liabilitiesRows[i];
-        const right = assetsRows[i];
-
+      if (node.total_label) {
         rows.push(
-          <tr key={i}>
-
-            {/* LIABILITIES SIDE */}
-
-            {left ? (
-              <>
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-
-                {left.props.children[1]}
-
-                {left.props.children[0]}
-
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-              </>
-            ) : (
-              <>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-              </>
-            )}
-
-            {/* ASSETS SIDE */}
-
-            {right ? (
-              <>
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-
-                {right.props.children[1]}
-
-                {right.props.children[0]}
-
-                <td className="border border-gray-300 px-4 py-3 text-center">0.00</td>
-              </>
-            ) : (
-              <>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-                <td className="border border-gray-300 px-4 py-3"></td>
-              </>
-            )}
-
+          <tr key={`total-${node.group_id}`} className="font-semibold bg-gray-200">
+            <td className="border px-4 py-2">{node.total_label}</td>
+            <td className="border px-4 py-2"></td>
+            <td className="border px-4 py-2 text-right">{amount}</td>
           </tr>
         );
       }
+    });
 
-      return (
-        <div className="overflow-x-auto">
+    return rows;
+  };
 
-          <h3 className="text-center font-semibold mb-4">
-            BALANCE SHEET
-          </h3>
-
-          <table className="w-full border-collapse border border-gray-300">
-
-            {/* <thead>
-          <tr className="bg-[#E5E0D3]">
-            <th className="border border-gray-300 px-4 py-3 text-left">
-              Liabilities
-            </th>
-            <th className="border border-gray-300 px-4 py-3 text-center">
-              Amount
-            </th>
-
-            <th className="border border-gray-300 px-4 py-3 text-left">
-              Assets
-            </th>
-            <th className="border border-gray-300 px-4 py-3 text-center">
-              Amount
-            </th>
-          </tr>
-        </thead> */}
-
-
-            <thead>
-              <tr className="bg-[#E5E0D3]">
-
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Previous Year
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-left">
-                  Liabilities
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Amount
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Current Year
-                </th>
-
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Previous Year
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-left">
-                  Assets
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Amount
-                </th>
-                <th className="border border-gray-300 px-4 py-3 text-center">
-                  Current Year
-                </th>
-
-              </tr>
-            </thead>
-
-            <tbody>{rows}</tbody>
-
-            <tfoot>
-              <tr className="bg-gray-200 font-bold">
-                <td className="border border-gray-300 px-4 py-3">
-                  Total Liabilities
-                </td>
-                <td className="border border-gray-300 px-4 py-3 text-center">
-                  {balanceSheetData.totals.total_liabilities.toFixed(2)}
-                </td>
-
-                <td className="border border-gray-300 px-4 py-3">
-                  Total Assets
-                </td>
-                <td className="border border-gray-300 px-4 py-3 text-center">
-                  {balanceSheetData.totals.total_assets.toFixed(2)}
-                </td>
-              </tr>
-            </tfoot>
-
-          </table>
-        </div>
+  const BalanceSheetTable = () => {
+    const assets =
+      balanceSheetData?.balance_sheet?.accounts?.find(
+        (a: any) => a.node_name === "assets"
       );
-    };
 
+    const liabilities =
+      balanceSheetData?.balance_sheet?.accounts?.find(
+        (a: any) => a.node_name === "liability_and_equity"
+      );
+      console.log("liability:",liabilities,balanceSheetData )
 
     return (
-      <div className="overflow-x-auto">
+      <table className="w-full border border-gray-300">
 
-        <h3 className="text-center font-semibold mb-4">
-          BALANCE SHEET
-        </h3>
+        <thead className="bg-[#E5E0D3]">
+          <tr>
+            <th className="border px-4 py-2 text-left">Account</th>
+            <th className="border px-4 py-2 text-center">Account Code</th>
+            <th className="border px-4 py-2 text-right">Total</th>
+          </tr>
+        </thead>
 
-        <table className="w-full border-collapse border border-gray-300">
-          {/* 
-        <thead>
-          <tr className="bg-[#E5E0D3]">
-            <th className="border border-gray-300 px-4 py-3 text-left">
-              Liabilities
-            </th>
-            <th className="border border-gray-300 px-4 py-3 text-center">
-              Amount
-            </th>
+        <tbody>
 
-            <th className="border border-gray-300 px-4 py-3 text-left">
+          {/* ASSETS HEADER */}
+          <tr className="bg-gray-100 font-bold">
+            <td colSpan={3} className="border px-4 py-2">
               Assets
-            </th>
-            <th className="border border-gray-300 px-4 py-3 text-center">
-              Amount
-            </th>
-          </tr>
-        </thead> */}
-
-
-          <thead>
-            <tr className="bg-[#E5E0D3]">
-
-              <th className="border border-gray-300 px-4 py-3 text-center">
-                Previous Year
-              </th>
-              <th className="border border-gray-300 px-4 py-3 text-left">
-                Liabilities
-              </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
-                Amount
-              </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
-                Current Year
-              </th>
-
-              <th className="border border-gray-300 px-4 py-3 text-center">
-                Previous Year
-              </th>
-              <th className="border border-gray-300 px-4 py-3 text-left">
-                Assets
-              </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
-                Amount
-              </th>
-              <th className="border border-gray-300 px-4 py-3 text-center">
-                Current Year
-              </th>
-
-            </tr>
-          </thead>
-
-          <tbody>{rows}</tbody>
-
-          {/* <tfoot>
-          <tr className="bg-gray-200 font-bold">
-            <td className="border border-gray-300 px-4 py-3">
-              Total Liabilities
-            </td>
-            <td className="border border-gray-300 px-4 py-3 text-center">
-              {balanceSheetData.totals.total_liabilities.toFixed(2)}
-            </td>
-
-            <td className="border border-gray-300 px-4 py-3">
-              Total Assets
-            </td>
-            <td className="border border-gray-300 px-4 py-3 text-center">
-              {balanceSheetData.totals.total_assets.toFixed(2)}
             </td>
           </tr>
-        </tfoot> */}
 
+          {assets && renderAccounts(assets.accounts)}
 
-          <tfoot>
-            <tr className="bg-gray-200 font-bold">
+          {/* LIABILITIES HEADER */}
+          <tr className="bg-gray-100 font-bold">
+            <td colSpan={3} className="border px-4 py-2">
+              Liabilities
+            </td>
+          </tr>
 
-              {/* Liabilities Side */}
-              <td className="border border-gray-300 px-4 py-3"></td>
+          {liabilities && renderAccounts(liabilities.accounts)}
 
-              <td className="border border-gray-300 px-4 py-3">
-                Total Liabilities
-              </td>
-
-              <td className="border border-gray-300 px-4 py-3 text-right">
-                {balanceSheetData.totals.total_liabilities.toFixed(2)}
-              </td>
-
-              <td className="border border-gray-300 px-4 py-3"></td>
-
-
-              {/* Assets Side */}
-              <td className="border border-gray-300 px-4 py-3"></td>
-
-              <td className="border border-gray-300 px-4 py-3">
-                Total Assets
-              </td>
-
-              <td className="border border-gray-300 px-4 py-3 text-right">
-                {balanceSheetData.totals.total_assets.toFixed(2)}
-              </td>
-
-              <td className="border border-gray-300 px-4 py-3"></td>
-
-            </tr>
-          </tfoot>
-
-        </table>
-      </div>
+        </tbody>
+      </table>
     );
   };
 
@@ -722,8 +307,11 @@ const BalanceSheetReport: React.FC = () => {
     );
   }
 
+
+  
+
   return (
-    <form
+    <div
       className="w-full bg-[#f9f7f2] p-6"
       style={{ minHeight: "100vh", boxSizing: "border-box" }}
     >
@@ -771,68 +359,15 @@ const BalanceSheetReport: React.FC = () => {
           </Button>
         </div>
       </div>
-
-      {/* Tabs for account types */}
-      {/* <div className="bg-white rounded-lg border p-6 mb-6">
-        <div className="grid grid-cols-2 border mb-4">
-          {balanceTabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveBalanceTab(tab as any)}
-              className={`px-4 py-2 text-sm font-medium
-        ${
-          activeBalanceTab === tab
-            ? "bg-[#f9f7f2] text-[#C72030] border-b-2 border-[#C72030]"
-            : "bg-white text-gray-600 hover:bg-[#f9f7f2]/40"
-        }
-      `}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-white p-4 border rounded-lg">
-          {activeBalanceTab === "Assets" && <AssetsTable />}
-          {activeBalanceTab === "Liabilities" && <LiabilitiesTable />}
-        </div>
-      </div> */}
-
-
       <div className="bg-white rounded-lg border p-6 mb-6">
+        <div className="text-center mb-6">
+          <h1 className="text-xl font-bold">
+            Balance Sheet
+          </h1>
+        </div>
         <BalanceSheetTable />
       </div>
-
-      {/* Totals Summary - Hidden as per user request */}
-      {/* {balanceSheetData && (
-        <div className="bg-white rounded-lg border p-6">
-          <h4 className="text-lg font-semibold mb-4">Summary</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600 mb-1">Total Assets</div>
-              <div className="text-xl font-bold">
-                ₹ {balanceSheetData.totals.total_assets.toFixed(2)}
-              </div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600 mb-1">
-                Total Liabilities
-              </div>
-              <div className="text-xl font-bold">
-                ₹ {balanceSheetData.totals.total_liabilities.toFixed(2)}
-              </div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600 mb-1">Total Equity</div>
-              <div className="text-xl font-bold">
-                ₹ {balanceSheetData.totals.total_equity.toFixed(2)}
-              </div>
-            </div>
-          </div>
-        </div>
-      )} */}
-    </form>
+    </div>
   );
 };
 

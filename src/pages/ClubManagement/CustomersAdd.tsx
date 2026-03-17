@@ -275,6 +275,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         setShowConfig(false);
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
 
         // Build payment_terms array for API
         const paymentTermsPayload = validEdit.map(term => ({
@@ -285,11 +286,11 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         console.log("Saving Payment Terms Payload:", paymentTermsPayload);
         const payload = {
             payment_terms: paymentTermsPayload,
-            lock_account_id: 1
+            lock_account_id:lock_account_id
         };
 
         await axios.post(
-            `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+            `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
             payload,
             {
                 headers: {
@@ -313,6 +314,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
     const handleRemovePaymentTerm = async (id, idx) => {
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
         try {
             await axios.patch(
                 `https://${baseUrl}/payment_terms/${id}.json`,
@@ -336,9 +338,10 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             try {
                 const baseUrl = localStorage.getItem("baseUrl");
                 const token = localStorage.getItem("token");
+                const lock_account_id = localStorage.getItem("lock_account_id");
 
                 const res = await axios.get(
-                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=customer`,
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=customer`,
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
@@ -866,9 +869,10 @@ const CustomersAdd = () => {
     const fetchPaymentTerms = async () => {
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
         try {
             const res = await axios?.get?.(
-                `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+                `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -891,6 +895,7 @@ const CustomersAdd = () => {
     const navigate = useNavigate();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
     const [activeTab, setActiveTab] = useState("other");
     const [form, setForm] = useState({
         customer_type: "business",
@@ -996,6 +1001,7 @@ const CustomersAdd = () => {
         // Build customer payload for API from all tabs
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
 
         // Get payment term id
         const paymentTerm = paymentTerms.find(pt => pt.name === selectedTerm);
@@ -1101,7 +1107,7 @@ const CustomersAdd = () => {
         };
         console.log("Submitting Customer Payload:", payload);
         axios.post(
-            `https://${baseUrl}/lock_account_customers.json?lock_account_id=1`,
+            `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`,
             payload,
             {
                 headers: {

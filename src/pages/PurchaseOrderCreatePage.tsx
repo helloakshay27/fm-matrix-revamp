@@ -105,7 +105,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl")
+    const baseUrl = localStorage.getItem("baseUrl");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     useEffect(() => {
         document.title = 'New Purchase Order';
@@ -323,8 +324,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         // Payment terms dropdown data
         const fetchPaymentTerms = async () => {
             try {
+                const lockAccountId = localStorage.getItem("lock_account_id") || "1";
                 const res = await axios.get(
-                    `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+                    `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
+
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
@@ -356,8 +359,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
+                const lockAccountId = localStorage.getItem("lock_account_id") || "1";
                 const type = taxType.toLowerCase();
-                const url = `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                const url = `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lockAccountId}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
@@ -379,11 +383,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lockAccountId}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json",
@@ -404,11 +409,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
         setLoadingExemptions(true);
 
         axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lockAccountId}&q[exemption_type_eq]=item`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json",
@@ -546,10 +553,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     // When delivery address is selected, update shipping address
     useEffect(() => {
         if (selectedDeliveryAddress) {
-            const addressString = `${selectedDeliveryAddress.address || ''}, ${selectedDeliveryAddress.address_line_two || ''}, ${selectedDeliveryAddress.city || ''}, ${selectedDeliveryAddress.state || ''}, ${selectedDeliveryAddress.zip_code || selectedDeliveryAddress.pincode || ''}`;
-            // Clean up double commas or leading/trailing separators
-            const cleanAddress = addressString.replace(/, ,/g, ',').replace(/^, /, '').replace(/, $/, '');
-            setShippingAddress(cleanAddress);
+            // Keep shippingAddress as an ID (for API) rather than a free-form string.
+            // If you want to display the formatted address, use selectedDeliveryAddress directly.
+            setShippingAddress(String(selectedDeliveryAddress.id ?? ''));
         }
     }, [selectedDeliveryAddress]);
 
@@ -1337,7 +1343,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
+                                        onChange={(e) => {
+                                            const value = parseFloat(e.target.value);
+                                            setDiscountOnTotal(Number.isFinite(value) ? value : 0);
+                                        }}
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
@@ -1426,7 +1435,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
+                                        onChange={(e) => {
+                                            const value = parseFloat(e.target.value);
+                                            setAdjustment(Number.isFinite(value) ? value : 0);
+                                        }}
                                         inputProps={{ step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />
@@ -1437,7 +1449,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
+                                <span className="font-bold text-primary text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

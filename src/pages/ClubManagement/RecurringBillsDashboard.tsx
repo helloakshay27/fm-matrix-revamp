@@ -132,6 +132,7 @@ export const RecurringBillsDashboard: React.FC = () => {
   });
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const lock_account_id = localStorage.getItem('lock_account_id');
 
   // Fetch bill data from API
   // const fetchBillData = async (
@@ -211,7 +212,7 @@ export const RecurringBillsDashboard: React.FC = () => {
         `https://${baseUrl}/lock_account_bills.json?q[recurring_eq]=true`,
         {
           params: {
-            lock_account_id: 1,
+            lock_account_id: lock_account_id,
             //   page,
             //   per_page,
             //   search,

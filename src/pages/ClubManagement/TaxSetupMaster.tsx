@@ -110,12 +110,13 @@ export const TaxSetupMaster: React.FC = () => {
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const lock_account_id = localStorage.getItem("lock_account_id");
 
   // Fetch all taxes
   const fetchTaxes = useCallback(async () => {
     setLoading(true);
     try {
-      const url = getFullUrl('/lock_account_taxes.json?lock_account_id=1');
+      const url = getFullUrl(`/lock_account_taxes.json?lock_account_id=${lock_account_id}`);
       const options = getAuthenticatedFetchOptions('GET');
       const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -250,7 +251,7 @@ export const TaxSetupMaster: React.FC = () => {
     setAddErrors({});
     setAddSubmitting(true);
     try {
-      const url = getFullUrl('/lock_account_taxes.json?lock_account_id=1');
+      const url = getFullUrl(`/lock_account_taxes.json?lock_account_id=${lock_account_id}`);
       const options = getAuthenticatedFetchOptions('POST', {
         lock_account_tax: {
           name: addForm.name,

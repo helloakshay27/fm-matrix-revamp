@@ -11,6 +11,7 @@ import {
   saveUser,
   saveToken,
   saveBaseUrl,
+  fetchLockAccount,
   Organization,
 } from "@/utils/auth";
 import { toast } from "sonner";
@@ -375,6 +376,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
+
+      // Fetch and store lock_account_id
+      await fetchLockAccount();
       // Session storage
       sessionStorage.setItem("userId", response.id?.toString() || "");
       sessionStorage.setItem("userType", response.user_type?.toString() || "");

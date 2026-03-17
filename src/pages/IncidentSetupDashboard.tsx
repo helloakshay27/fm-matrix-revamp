@@ -2354,7 +2354,12 @@ export const IncidentSetupDashboard = () => {
                     <TextField
                       type="number"
                       value={editFormData.escalateInDays}
-                      onChange={e => setEditFormData({ ...editFormData, escalateInDays: e.target.value })}
+                      onChange={e => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          setEditFormData({ ...editFormData, escalateInDays: value });
+                        }
+                      }}
                       placeholder="Please enter number of days"
                       variant="outlined"
                       size="small"
@@ -2810,7 +2815,12 @@ export const IncidentSetupDashboard = () => {
                           label={<>Escalate In Days <span style={{ color: '#C72030' }}>*</span></>}
                           type="number"
                           value={escalateInDays}
-                          onChange={e => setEscalateInDays(e.target.value)}
+                          onChange={e => {
+                            const value = e.target.value;
+                            if (/^\d*$/.test(value)) {
+                              setEscalateInDays(value);
+                            }
+                          }}
                           placeholder="Please enter number of days"
                           variant="outlined"
                           size="small"

@@ -4,15 +4,13 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputAdornment,
   MenuItem,
   Select,
   TextField,
   Button,
 } from "@mui/material";
-import { Close, Search } from "@mui/icons-material";
-import { Package } from "lucide-react";
+import { Receipt, Calendar, FileText, CreditCard } from "lucide-react";
 
 const repeatOptions = ["Week", "Month", "Year"];
 const expenseAccounts = [
@@ -22,9 +20,14 @@ const expenseAccounts = [
   "Maintenance",
   "Travel",
 ];
-const paidThroughOptions = ["Cash", "Bank", "Petty Cash", "Card"]; 
+const paidThroughOptions = ["Cash", "Bank", "Petty Cash", "Card"];
 const vendorOptions = ["Select a vendor", "Lockated", "Gurughar", "Acme Inc."];
-const customerOptions = ["Select a customer", "Customer A", "Customer B", "Customer C"];
+const customerOptions = [
+  "Select a customer",
+  "Customer A",
+  "Customer B",
+  "Customer C",
+];
 
 const formatDate = (date: Date) =>
   date.toLocaleDateString("en-GB", {
@@ -45,12 +48,36 @@ const addInterval = (date: Date, repeatEvery: string) => {
   return next;
 };
 
+// Section component - matching PurchaseOrderCreatePage pattern
+const Section: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ title, icon, children }) => (
+  <section className="bg-card rounded-lg border border-border shadow-sm">
+    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+        {icon}
+      </div>
+      <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+    </div>
+    <div className="p-6">{children}</div>
+  </section>
+);
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
+  },
+} as const;
+
 const NewRecurringExpensePage: React.FC = () => {
   const navigate = useNavigate();
   const [profileName, setProfileName] = useState("");
   const [repeatEvery, setRepeatEvery] = useState("Week");
-  const [startDate, setStartDate] = useState(() =>
-    new Date().toISOString().split("T")[0]
+  const [startDate, setStartDate] = useState(
+    () => new Date().toISOString().split("T")[0]
   );
   const [endsOn, setEndsOn] = useState("");
   const [neverExpires, setNeverExpires] = useState(true);
@@ -69,33 +96,37 @@ const NewRecurringExpensePage: React.FC = () => {
     return formatDate(addInterval(base, repeatEvery));
   }, [startDate, repeatEvery]);
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 42 },
-    "& .MuiInputBase-input, & .MuiSelect-select": {
-      padding: { xs: "8px", sm: "10px", md: "12px" },
-    },
-  } as const;
-
   const handleCancel = () => {
     navigate(-1);
   };
 
+  const handleSave = () => {
+    // Save logic here
+  };
+
   return (
-    <div className="p-6">
-      <div className="bg-white rounded-lg border border-border shadow-sm">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md border border-red-500 text-red-500 flex items-center justify-center">
-              <Package className="w-5 h-5" />
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-3">
+                <Receipt className="h-6 w-6 text-primary" />
+                New Recurring Expense
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Create a new recurring expense profile
+              </p>
             </div>
-            <h1 className="text-lg font-semibold">New Recurring Expense</h1>
           </div>
-          <IconButton onClick={handleCancel} size="small">
-            <Close />
-          </IconButton>
         </div>
 
-        <div className="px-6 py-6 space-y-6">
+        {/* Profile & Schedule Section */}
+        <Section
+          title="Profile & Schedule"
+          icon={<Calendar className="h-3.5 w-3.5" />}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2 text-red-500">
@@ -105,7 +136,7 @@ const NewRecurringExpensePage: React.FC = () => {
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
                 fullWidth
-                placeholder=""
+                placeholder="Enter profile name"
                 sx={fieldStyles}
               />
             </div>
@@ -130,7 +161,7 @@ const NewRecurringExpensePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
               <label className="block text-sm font-medium mb-2">
                 Start Date
@@ -171,7 +202,13 @@ const NewRecurringExpensePage: React.FC = () => {
               />
             </div>
           </div>
+        </Section>
 
+        {/* Expense Account Section */}
+        <Section
+          title="Expense Account"
+          icon={<FileText className="h-3.5 w-3.5" />}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2 text-red-500">
@@ -196,9 +233,13 @@ const NewRecurringExpensePage: React.FC = () => {
               </FormControl>
             </div>
           </div>
+        </Section>
 
-          <div className="border-t border-border pt-6" />
-
+        {/* Payment Details Section */}
+        <Section
+          title="Payment Details"
+          icon={<CreditCard className="h-3.5 w-3.5" />}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2 text-red-500">
@@ -221,9 +262,11 @@ const NewRecurringExpensePage: React.FC = () => {
                   onChange={(e) => setAmount(e.target.value)}
                   fullWidth
                   sx={fieldStyles}
-                  placeholder=""
+                  placeholder="0.00"
                   InputProps={{
-                    startAdornment: <InputAdornment position="start"></InputAdornment>,
+                    startAdornment: (
+                      <InputAdornment position="start">₹</InputAdornment>
+                    ),
                   }}
                 />
               </div>
@@ -252,7 +295,13 @@ const NewRecurringExpensePage: React.FC = () => {
               </FormControl>
             </div>
           </div>
+        </Section>
 
+        {/* Vendor & Additional Details Section */}
+        <Section
+          title="Vendor & Additional Details"
+          icon={<Receipt className="h-3.5 w-3.5" />}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">Vendor</label>
@@ -262,13 +311,6 @@ const NewRecurringExpensePage: React.FC = () => {
                   onChange={(e) => setVendor(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  endAdornment={
-                    <InputAdornment position="end">
-                      <IconButton size="small">
-                        <Search fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  }
                 >
                   {vendorOptions.map((option, index) => (
                     <MenuItem key={option} value={index === 0 ? "" : option}>
@@ -280,6 +322,28 @@ const NewRecurringExpensePage: React.FC = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-2">
+                Customer Name
+              </label>
+              <FormControl fullWidth>
+                <Select
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  {customerOptions.map((option, index) => (
+                    <MenuItem key={option} value={index === 0 ? "" : option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div>
               <label className="block text-sm font-medium mb-2">Notes</label>
               <TextField
                 value={notes}
@@ -290,35 +354,6 @@ const NewRecurringExpensePage: React.FC = () => {
                 placeholder="Max. 500 characters"
                 inputProps={{ maxLength: 500 }}
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Customer Name
-              </label>
-              <FormControl fullWidth>
-                <Select
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                  endAdornment={
-                    <InputAdornment position="end">
-                      <IconButton size="small">
-                        <Search fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  }
-                >
-                  {customerOptions.map((option, index) => (
-                    <MenuItem key={option} value={index === 0 ? "" : option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
             </div>
 
             <div className="flex items-center">
@@ -335,46 +370,47 @@ const NewRecurringExpensePage: React.FC = () => {
               </div>
             </div>
           </div>
+        </Section>
 
-          <div className="flex gap-4 pt-6">
-            <Button
-              variant="contained"
-              onClick={() => {}}
-              sx={{
-                textTransform: "none",
-                backgroundColor: "#f8e9e9",
-                color: "#c62828",
-                borderRadius: "6px",
+        {/* Action Buttons */}
+        <div className="flex gap-4 pt-2 pb-6">
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            sx={{
+              textTransform: "none",
+              backgroundColor: "#f8e9e9",
+              color: "#c62828",
+              borderRadius: "6px",
+              boxShadow: "none",
+              padding: "8px 24px",
+              fontWeight: 600,
+              "&:hover": {
+                backgroundColor: "#f4dede",
                 boxShadow: "none",
-                padding: "6px 22px",
-                fontWeight: 600,
-                "&:hover": {
-                  backgroundColor: "#f4dede",
-                  boxShadow: "none",
-                },
-              }}
-            >
-              Save
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleCancel}
-              sx={{
-                textTransform: "none",
-                color: "#c62828",
-                borderColor: "#c62828",
-                borderRadius: "6px",
-                padding: "6px 22px",
-                fontWeight: 600,
-                "&:hover": {
-                  borderColor: "#b71c1c",
-                  backgroundColor: "transparent",
-                },
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
+              },
+            }}
+          >
+            Save
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleCancel}
+            sx={{
+              textTransform: "none",
+              color: "#c62828",
+              borderColor: "#c62828",
+              borderRadius: "6px",
+              padding: "8px 24px",
+              fontWeight: 600,
+              "&:hover": {
+                borderColor: "#b71c1c",
+                backgroundColor: "transparent",
+              },
+            }}
+          >
+            Cancel
+          </Button>
         </div>
       </div>
     </div>

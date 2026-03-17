@@ -169,6 +169,7 @@ const ItemsAdd = () => {
     const [accountGroups, setAccountGroups] = React.useState([]);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
     const [exemptions, setExemptions] = useState([]);
@@ -178,7 +179,7 @@ const ItemsAdd = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -199,7 +200,7 @@ const ItemsAdd = () => {
                 const token = localStorage.getItem("token");
 
                 const res = await axios.get(
-                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`,
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`,
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
@@ -225,7 +226,7 @@ const ItemsAdd = () => {
                 const token = localStorage.getItem("token");
 
                 const res = await axios.get(
-                    `https://${baseUrl}/lock_accounts/1/tax_settings.json`,
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_settings.json`,
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
@@ -457,7 +458,7 @@ const ItemsAdd = () => {
             "lock_account_item[icon_attributes][active]",
             "true"
         );
-        formData.append("lock_account_id", "1");
+        formData.append("lock_account_id", lock_account_id);
         axios.post(
             `https://${baseUrl}/lock_account_items.json`,
             // payload,
@@ -465,7 +466,7 @@ const ItemsAdd = () => {
             {
                 headers: {
                     "Authorization": token ? `Bearer ${token}` : undefined,
-                    
+
                 }
             }
         )
@@ -586,7 +587,16 @@ const ItemsAdd = () => {
                                 name="hsn_code"
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
-                                onChange={handleChange}
+                                // onChange={handleChange}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    // Allow only numbers and max 8 digits
+                                    if (/^\d{0,8}$/.test(value)) {
+                                        handleChange(e);
+                                    }
+                                }}
+                                inputProps={{ maxLength: 8, inputMode: "numeric", pattern: "[0-9]*" }}
                                 InputLabelProps={{ shrink: true }}
                             />
                         ) : (
@@ -601,7 +611,7 @@ const ItemsAdd = () => {
                         )}
 
                         <FormControl fullWidth>
-                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
+                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span> </InputLabel>
                             <Select
                                 name="tax_preference"
                                 value={form.tax_preference}
