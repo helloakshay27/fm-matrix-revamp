@@ -194,8 +194,8 @@ const TDSSummaryReport: React.FC = () => {
           </table>
         </div>
       </div>
-
-      );
+    </div>
+  );
 };
 
-      export default TDSSummaryReport;
+export default TDSSummaryReport;
