@@ -133,6 +133,8 @@ export const SalesOrderListPage: React.FC = () => {
         has_prev_page: false
     });
 
+    const lock_account_id = localStorage.getItem("lock_account_id");
+
 
     
 
@@ -143,7 +145,7 @@ export const SalesOrderListPage: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             const params = new URLSearchParams({
-                lock_account_id: '1',
+                lock_account_id: lock_account_id,
                 // page: String(page),
                 // per_page: String(per_page),
             });

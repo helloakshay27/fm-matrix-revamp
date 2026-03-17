@@ -96,19 +96,19 @@ const SalesSummaryReport = () => {
 
       {/* FILTER SECTION */}
 
-      <div className="bg-white border rounded-lg p-6 mb-6">
+      <div className="bg-white rounded-lg border-2 p-6 mb-6">
 
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
             <BarChart3 size={22} />
           </div>
 
-          <h3 className="text-lg font-semibold uppercase">
-            Sales Summary
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            Sales Summary Report
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
 
           <TextField
             label="From Date"
@@ -145,7 +145,7 @@ const SalesSummaryReport = () => {
 
       {/* TABLE */}
 
-      <div className="bg-white rounded-lg border overflow-x-auto">
+      <div className="bg-white rounded-lg border p-6 overflow-x-auto">
 
         <table className="w-full text-sm">
 

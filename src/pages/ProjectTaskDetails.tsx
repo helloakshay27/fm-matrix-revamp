@@ -1529,7 +1529,7 @@ export const ProjectTaskDetails = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{taskDetails.title.split(' ').slice(0, 5).join(' ')}...</BreadcrumbPage>
+              <BreadcrumbPage>{taskDetails?.title?.split(' ').slice(0, 5).join(' ')}...</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

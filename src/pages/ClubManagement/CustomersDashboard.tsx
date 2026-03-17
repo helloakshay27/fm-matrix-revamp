@@ -94,8 +94,9 @@ export const CustomersDashboard = () => {
 useEffect(() => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const lock_account_id = localStorage.getItem("lock_account_id");
     // Fetch customer list
-    axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+    axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
       headers: {
         Authorization: token ? `Bearer ${token}` : undefined,
         'Content-Type': 'application/json'

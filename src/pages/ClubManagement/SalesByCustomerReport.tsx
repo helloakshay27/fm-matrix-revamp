@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { User, FileCog, NotepadText } from "lucide-react";
+import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import axios from "axios";
@@ -37,9 +32,9 @@ const SalesByCustomerReport: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const lock_account_id = localStorage.getItem('lock_account_id');
 
-    const balanceTabs = ["Sales by Customer"];
-    const [activeBalanceTab, setActiveBalanceTab] = useState<"Sales by Customer">("Sales by Customer");
+
 
     // Fetch sales data from API
     // API fetch with date filter
@@ -51,7 +46,8 @@ const SalesByCustomerReport: React.FC = () => {
                 setLoading(false);
                 return;
             }
-            let url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=1`;
+            const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+            let url = `https://${baseUrl}/lock_account_customers/sales_report.json?lock_account_id=${lockAccountId}`;
             if (fromDate && toDate) {
                 // Format dates as DD/MM/YYYY
                 url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;
@@ -187,13 +183,12 @@ const SalesByCustomerReport: React.FC = () => {
     };
 
     return (
-        <form className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: '100vh', boxSizing: 'border-box' }} >
-            {loading && (
-                <div className="flex justify-center items-center min-h-screen">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+        <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
+            {loading ? (
+                <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
                 </div>
-            )}
-            {!loading && (
+            ) : (
                 <>
                     <div className="bg-white rounded-lg border-2 p-6 mb-6">
                         <div className="flex items-center gap-3 mb-4">
@@ -206,7 +201,6 @@ const SalesByCustomerReport: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                            {/* FROM DATE */}
                             <TextField
                                 label="From Date"
                                 type="date"
@@ -218,7 +212,6 @@ const SalesByCustomerReport: React.FC = () => {
                                 size="small"
                             />
 
-                            {/* TO DATE */}
                             <TextField
                                 label="To Date"
                                 type="date"
@@ -230,7 +223,6 @@ const SalesByCustomerReport: React.FC = () => {
                                 size="small"
                             />
 
-                            {/* VIEW BUTTON */}
                             <Button
                                 onClick={handleView}
                                 className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
@@ -239,36 +231,13 @@ const SalesByCustomerReport: React.FC = () => {
                             </Button>
                         </div>
                     </div>
-                    {/* Tabs for account types */}
-                    <div className="bg-white rounded-lg border p-6 mb-6">
-                        <div className="grid grid-cols-1 border mb-4">
-                            {balanceTabs.map(tab => (
-                                <button
-                                    key={tab}
-                                    type="button"
-                                    onClick={() => setActiveBalanceTab(tab as any)}
-                                    className={`px-4 py-2 text-sm font-medium
-                            ${activeBalanceTab === tab
-                                            ? "bg-[#f9f7f2] text-[#C72030] border-b-2 border-[#C72030]"
-                                            : "bg-white text-gray-600 hover:bg-[#f9f7f2]/40"
-                                        }
-          `}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
 
-
-                        <div className="bg-white p-4 border rounded-lg">
-                            <SalesTable />
-                        </div>
-
-
+                    <div className="bg-white rounded-lg border p-6">
+                        <SalesTable />
                     </div>
                 </>
             )}
-        </form>
+        </div>
     );
 };
 

@@ -55,6 +55,7 @@ export const InvoiceDashboardDetailsPage = () => {
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     useEffect(() => {
         if (id && baseUrl && token) {
@@ -66,7 +67,7 @@ export const InvoiceDashboardDetailsPage = () => {
         try {
             setLoading(true);
             const response = await axios.get(
-                `https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=1`,
+                `https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -124,7 +125,7 @@ export const InvoiceDashboardDetailsPage = () => {
     const handleDelete = async () => {
         try {
             await axios.delete(
-                `https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=1`,
+                `https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -192,6 +193,20 @@ export const InvoiceDashboardDetailsPage = () => {
             </div>
         );
     }
+
+    const taxBreakdown = {};
+    invoiceData?.item_details?.forEach((item) => {
+        if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+            item.tax_group.tax_rates.forEach((tax) => {
+                const taxAmount = (item.total_amount * tax.rate) / 100;
+                if (!taxBreakdown[tax.name]) {
+                    taxBreakdown[tax.name] = { rate: tax.rate, amount: 0 };
+                }
+                taxBreakdown[tax.name].amount += taxAmount;
+            });
+        }
+    });
+    const taxRows = Object.entries(taxBreakdown);
 
     return (
         <div className="min-h-screen bg-background p-6">
@@ -357,8 +372,18 @@ export const InvoiceDashboardDetailsPage = () => {
                                                             </TableCell>
                                                             <TableCell className="text-right">{item.quantity || 0}</TableCell>
                                                             <TableCell className="text-right">{formatCurrency(item.rate || 0)}</TableCell>
-                                                            <TableCell className="text-right">{item.tax || "N/A"}</TableCell>
-                                                            <TableCell className="text-right font-semibold">{formatCurrency(item.amount || 0)}</TableCell>
+                                                            <TableCell className="text-right">
+                                                                {item.tax_type === "tax_group"
+                                                                    ? item.tax_group?.name
+                                                                    : item.tax_type === "non_taxable"
+                                                                        ? "Non Taxable"
+                                                                        : item.tax_type === "out_of_scope"
+                                                                            ? "Out of Scope"
+                                                                            : item.tax_type === "non_gst_supply"
+                                                                                ? "Non GST Supply"
+                                                                                : "-"}
+                                                            </TableCell>
+                                                            <TableCell className="text-right font-semibold">{formatCurrency(item.total_amount || item.amount || 0)}</TableCell>
                                                         </TableRow>
                                                     ))}
                                                 </TableBody>
@@ -368,32 +393,31 @@ export const InvoiceDashboardDetailsPage = () => {
                                         {/* Pricing Summary */}
                                         <div className="mt-6 flex justify-end">
                                             <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                                                {invoiceData.discount_amount > 0 && (
-                                                    <div className="flex justify-between text-sm">
-                                                        <span className="text-muted-foreground">
-                                                            Discount ({invoiceData.discount_per}%)
-                                                        </span>
-                                                        <span className="font-semibold text-red-600">
-                                                            -{formatCurrency(invoiceData.discount_amount)}
-                                                        </span>
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                                                    <span className="font-semibold text-base">₹{invoiceData?.sub_total_amount?.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">Discount ({invoiceData?.discount_per}%)</span>
+                                                    <span className="font-semibold text-base text-red-600">-₹{invoiceData?.discount_amount?.toFixed(2)}</span>
+                                                </div>
+                                                {taxRows.map(([name, tax], index) => (
+                                                    <div key={index} className="flex justify-between items-center py-2">
+                                                        <span className="text-sm font-medium text-muted-foreground">{name} ({tax.rate}%)</span>
+                                                        <span className="font-semibold text-base">₹{tax.amount.toFixed(2)}</span>
                                                     </div>
-                                                )}
-                                                {invoiceData.charge_amount && (
-                                                    <div className="flex justify-between text-sm">
-                                                        <span className="text-muted-foreground">
-                                                            {invoiceData.charge_name || "Additional Charge"}
-                                                        </span>
-                                                        <span className="font-semibold">
-                                                            {invoiceData.charge_type === "plus" ? "+" : "-"}
-                                                            {formatCurrency(invoiceData.charge_amount)}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                <div className="border-t pt-3 flex justify-between text-lg">
-                                                    <span className="font-bold">Total Amount</span>
-                                                    <span className="font-bold text-primary">
-                                                        {formatCurrency(invoiceData.total_amount)}
-                                                    </span>
+                                                ))}
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">{invoiceData?.tax_type?.toUpperCase()}</span>
+                                                    <span className="font-semibold text-base text-red-600">-₹{invoiceData?.lock_account_tax_amount?.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">{invoiceData?.charge_name || "Adjustment"}</span>
+                                                    <span className="font-semibold text-base">₹{invoiceData?.charge_amount?.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                                                    <span className="font-bold text-base">Total ( ₹ )</span>
+                                                    <span className="font-bold text-primary text-2xl">₹{invoiceData?.total_amount?.toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>

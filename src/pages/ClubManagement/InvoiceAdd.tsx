@@ -105,19 +105,26 @@ export const InvoiceAdd: React.FC = () => {
     // Subject field
     const [subject, setSubject] = useState('');
     // Fetch item list from API
+    const lock_account_id = localStorage.getItem("lock_account_id");
+    // console.log("lock id:",lock_account_id)
     useEffect(() => {
         const fetchItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+                    setItemOptions(res.data.map(item => ({
+                        id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
+                        tax_preference: item.tax_preference,
+                        tax_exemption_id: item.tax_exemption_id,
+                        tax_group_id: item.intra_state_tax_rate_id
+                    })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -133,7 +140,7 @@ export const InvoiceAdd: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1&q[active_eq]=1`, {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -154,7 +161,7 @@ export const InvoiceAdd: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -247,11 +254,12 @@ export const InvoiceAdd: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -283,7 +291,7 @@ export const InvoiceAdd: React.FC = () => {
         setLoadingExemptions(true);
 
         axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -371,7 +379,7 @@ export const InvoiceAdd: React.FC = () => {
         const token = localStorage.getItem('token');
         // Fetch customer list
         axios
-            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     'Content-Type': 'application/json'
@@ -576,88 +584,88 @@ export const InvoiceAdd: React.FC = () => {
     // };
 
 
-//     const validate = (): boolean => {
-//     const newErrors: Record<string, string> = {};
+    //     const validate = (): boolean => {
+    //     const newErrors: Record<string, string> = {};
 
-//     if (!selectedCustomer) {
-//         newErrors.customer = 'Customer is required';
-//         toast.error('Customer is required');
-//     }
+    //     if (!selectedCustomer) {
+    //         newErrors.customer = 'Customer is required';
+    //         toast.error('Customer is required');
+    //     }
 
-//     if (!salesOrderDate) {
-//         newErrors.salesOrderDate = 'Sales order date is required';
-//         toast.error('Sales order date is required');
-//     }
+    //     if (!salesOrderDate) {
+    //         newErrors.salesOrderDate = 'Sales order date is required';
+    //         toast.error('Sales order date is required');
+    //     }
 
-//     if (!expectedShipmentDate) {
-//         newErrors.expectedShipmentDate = 'Expected shipment date is required';
-//         toast.error('Expected shipment date is required');
-//     }
+    //     if (!expectedShipmentDate) {
+    //         newErrors.expectedShipmentDate = 'Expected shipment date is required';
+    //         toast.error('Expected shipment date is required');
+    //     }
 
-//     if (!paymentTerms) {
-//         newErrors.paymentTerms = 'Payment terms is required';
-//         toast.error('Payment terms is required');
-//     }
+    //     if (!paymentTerms) {
+    //         newErrors.paymentTerms = 'Payment terms is required';
+    //         toast.error('Payment terms is required');
+    //     }
 
-//     const hasValidItems = items.some(
-//         item => item.name && item.quantity > 0 && item.rate > 0
-//     );
+    //     const hasValidItems = items.some(
+    //         item => item.name && item.quantity > 0 && item.rate > 0
+    //     );
 
-//     if (!hasValidItems) {
-//         newErrors.items = 'At least one valid item is required';
-//         toast.error('Please add at least one valid item');
-//     }
+    //     if (!hasValidItems) {
+    //         newErrors.items = 'At least one valid item is required';
+    //         toast.error('Please add at least one valid item');
+    //     }
 
-//     setErrors(newErrors);
-//     return Object.keys(newErrors).length === 0;
-// };
+    //     setErrors(newErrors);
+    //     return Object.keys(newErrors).length === 0;
+    // };
 
 
-const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const validate = (): boolean => {
+        const newErrors: Record<string, string> = {};
 
-    if (!selectedCustomer) {
-        // newErrors.customer = 'Customer is required';
-        setErrors(newErrors);
-        toast.error('Customer is required');
-        return false;
-    }
+        if (!selectedCustomer) {
+            // newErrors.customer = 'Customer is required';
+            setErrors(newErrors);
+            toast.error('Customer is required');
+            return false;
+        }
 
-    if (!salesOrderDate) {
-        // newErrors.salesOrderDate = 'Sales order date is required';
-        setErrors(newErrors);
-        toast.error('Invoice date is required');
-        return false;
-    }
+        if (!salesOrderDate) {
+            // newErrors.salesOrderDate = 'Sales order date is required';
+            setErrors(newErrors);
+            toast.error('Invoice date is required');
+            return false;
+        }
 
-    if (!expectedShipmentDate) {
-        // newErrors.expectedShipmentDate = 'Expected shipment date is required';
-        setErrors(newErrors);
-        toast.error('Due date is required');
-        return false;
-    }
+        if (!expectedShipmentDate) {
+            // newErrors.expectedShipmentDate = 'Expected shipment date is required';
+            setErrors(newErrors);
+            toast.error('Due date is required');
+            return false;
+        }
 
-    if (!selectedTerm) {
-        // newErrors.paymentTerms = 'Payment terms is required';
-        setErrors(newErrors);
-        toast.error('Payment terms is required');
-        return false;
-    }
+        if (!selectedTerm) {
+            // newErrors.paymentTerms = 'Payment terms is required';
+            setErrors(newErrors);
+            toast.error('Payment terms is required');
+            return false;
+        }
 
-    const hasValidItems = items.some(
-        item => item.name && item.quantity > 0 && item.rate > 0
-    );
+        const hasValidItems = items.some(
+            item => item.name && item.quantity > 0 && item.rate > 0
+        );
 
-    if (!hasValidItems) {
-        // newErrors.items = 'At least one valid item is required';
-        setErrors(newErrors);
-        toast.error('Please add at least one valid item');
-        return false;
-    }
+        if (!hasValidItems) {
+            // newErrors.items = 'At least one valid item is required';
+            setErrors(newErrors);
+            toast.error('Please add at least one valid item');
+            return false;
+        }
 
-    setErrors({});
-    return true;
-};
+        setErrors({});
+        return true;
+    };
 
 
     // --- INVOICE PAYLOADS ---
@@ -716,7 +724,7 @@ const validate = (): boolean => {
 
             // Build FormData for invoice
             const formData = new FormData();
-            
+
             const totalGSTAmount = taxBreakdown.reduce(
                 (sum, tax) => sum + Number(tax.amount || 0),
                 0
@@ -789,7 +797,7 @@ const validate = (): boolean => {
                 formData.append(`lock_account_invoice[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/lock_account_invoices.json?lock_account_id=1`, {
+            await fetch(`https://${baseUrl}/lock_account_invoices.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -822,7 +830,7 @@ const validate = (): boolean => {
                 const url =
 
 
-                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
@@ -897,6 +905,16 @@ const validate = (): boolean => {
 
     }, [afterDiscount, totalTax, taxAmount2, adjustment]);
     console.log('Tax Options:', taxOptions);
+    const states = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+        "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+        "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
+    ];
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
@@ -963,13 +981,21 @@ const validate = (): boolean => {
                                         value={placeOfSupply}
                                         onChange={(e) => setPlaceOfSupply(e.target.value)}
                                         sx={fieldStyles}
+                                        SelectProps={{
+                                            displayEmpty: true
+                                        }}
                                     >
-                                        <MenuItem value="">Select Country</MenuItem>
-                                        <MenuItem value="India">India</MenuItem>
+                                        <MenuItem value="">Select Place of Supply</MenuItem>
+                                        {/* <MenuItem value="India">India</MenuItem>
                                         <MenuItem value="United States">United States</MenuItem>
                                         <MenuItem value="United Kingdom">United Kingdom</MenuItem>
                                         <MenuItem value="Australia">Australia</MenuItem>
-                                        <MenuItem value="Canada">Canada</MenuItem>
+                                        <MenuItem value="Canada">Canada</MenuItem> */}
+                                        {states.map((state) => (
+                                            <MenuItem key={state} value={state}>
+                                                {state}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
                                 </div>
                             </div>
@@ -1038,7 +1064,7 @@ const validate = (): boolean => {
                 </Section>
 
                 {/* Sales Order Details */}
-                <Section title="Sales Order Details" icon={<Calendar className="w-5 h-5" />}>
+                <Section title="Invoice Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <div>
@@ -1258,6 +1284,25 @@ const validate = (): boolean => {
                                                                 updateItem(index, 'name', selectedItem.name);
                                                                 updateItem(index, 'rate', selectedItem.rate);
                                                                 updateItem(index, 'description', selectedItem.description);
+
+                                                                // TAX HANDLING
+                                                                if (selectedItem.tax_preference === "non_taxable") {
+                                                                    updateItem(index, "item_tax_type", "non_taxable");
+                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "taxable") {
+                                                                    updateItem(index, "item_tax_type", "tax_group");
+                                                                    updateItem(index, "tax_group_id", selectedItem.tax_group_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "out_of_scope") {
+                                                                    updateItem(index, "item_tax_type", "out_of_scope");
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "non_gst_supply") {
+                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
+                                                                }
                                                             }
                                                         }}
                                                         displayEmpty
@@ -1553,7 +1598,7 @@ const validate = (): boolean => {
                 </Section>
 
                 {/* Attachments */}
-                <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
+                <Section title="Attach Files to Invoice" icon={<AttachFile className="w-5 h-5" />}>
                     <div className="space-y-4">
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                             <input

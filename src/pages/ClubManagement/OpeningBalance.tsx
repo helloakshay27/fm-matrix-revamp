@@ -123,10 +123,11 @@ const OpeningBalance = () => {
   const [accountOptions, setAccountOptions] = useState<AccountOption[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountValues, setAccountValues] = useState<Record<string, { debit: string; credit: string }>>({});
+  const lock_account_id = localStorage.getItem("lock_account_id");
 
   useEffect(() => {
     setLoadingAccounts(true);
-    fetch("/lock_accounts/1/lock_account_ledgers.json")
+    fetch("/lock_accounts/${lock_account_id}/lock_account_ledgers.json")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch account names");
         return res.json();
@@ -154,7 +155,7 @@ const OpeningBalance = () => {
     const baseUrl = API_CONFIG.BASE_URL;
     const token = API_CONFIG.TOKEN;
     try {
-      const url = `${baseUrl}/lock_accounts/1/lock_account_ledgers.json`;
+      const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_ledgers.json`;
       const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json',

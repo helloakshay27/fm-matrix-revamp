@@ -436,6 +436,9 @@ import { OccupantUserMasterDashboard } from "./pages/master/OccupantUserMasterDa
 import { AddFMUserPage } from "./pages/master/AddFMUserPage";
 import { EditFMUserPage } from "./pages/master/EditFMUserPage";
 import { ViewFMUserPage } from "./pages/master/ViewFMUserPage";
+import { ViUsersMasterDashboard } from "./pages/master/ViUsersMasterDashboard";
+import { ViewViUserPage } from "./pages/master/ViewViUserPage";
+import { EditViUserPage } from "./pages/master/EditViUserPage";
 
 // Import Material Master page
 import { MaterialMasterPage } from "./pages/MaterialMasterPage";
@@ -1039,6 +1042,12 @@ import { ViewGuestUserPage } from "./pages/ClubManagement/ViewGuestUserPage";
 import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
 import AddGroupMembershipPage from "./pages/ClubManagement/AddGroupMembershipPage";
 import AmenityBookingListClub from "./pages/ClubManagement/AmenityBookingList";
+import AccountTypeSummaryReport from "./pages/ClubManagement/AccountTypeSummaryReport";
+import AccountTypeSummaryDetailReport from "./pages/ClubManagement/AccountTypeSummaryDetailReport";
+import AccountTypeTransactionsReport from "./pages/ClubManagement/AccountTypeTransactionsReport";
+import AccountTypeTransactionsDetailPage from "./pages/ClubManagement/AccountTypeTransactionsDetailPage";
+import AccountTransactionsDetailPage from "./pages/ClubManagement/AccountTransactionsDetailPage";
+import AccountTransactionsReport from "./pages/ClubManagement/AccountTransactionsReport";
 import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
@@ -1073,6 +1082,9 @@ import ManualJournalEdit from "./pages/ClubManagement/ManualJournalEdit";
 import OpeningBalance from "./pages/ClubManagement/OpeningBalance";
 import ProfitAndLossReport from "./pages/ClubManagement/ProfitAndLossReport";
 import RecurringJournalAdd from "./pages/ClubManagement/RecurringJournalAdd";
+import TDSReceivablesSummaryDetails from "./pages/ClubManagement/TDSReceivablesSummaryDetails";
+import TDSReceivablesSummaryReport from "./pages/ClubManagement/TDSReceivablesSummaryReport";
+import TDSSummaryReport from "./pages/ClubManagement/TDSSummaryReport";
 import TaxSetup from "./pages/ClubManagement/TaxSetup";
 import TaxSummaryReport from "./pages/ClubManagement/TaxSummaryReport";
 import TransactionsAdd from "./pages/ClubManagement/TransationsAdd";
@@ -1092,6 +1104,10 @@ import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashb
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
 import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails";
+import { RideReviews } from "./pages/pulse/RideReviews";
+import { UserDetail } from "./pages/pulse/UserDetail";
+import { ActiveReports } from "./pages/pulse/ActiveReports";
+import { ActiveSOS } from "./pages/pulse/ActiveSOS";
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -1129,6 +1145,11 @@ import TrialBalanceReport from "./pages/ClubManagement/TrialBalanceReport";
 import { TrialBalanceDetails } from "./pages/ClubManagement/TrialBalanceDetails";
 import { RoleDashboardVi } from "./pages/settings/RoleDashboardVi";
 import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
+import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
+import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
+import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
+import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
+import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 
 const queryClient = new QueryClient();
 
@@ -2457,6 +2478,34 @@ function App() {
                             element={<BalanceSheetReport />}
                           />
                           <Route
+                            path="/accounting/reports/account-type-summary"
+                            element={<AccountTypeSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-type-summary/details/:accountName"
+                            element={<AccountTypeSummaryDetailReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-type-transactions"
+                            element={<AccountTypeTransactionsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-type-transactions/details"
+                            element={<AccountTypeTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-transactions"
+                            element={<AccountTransactionsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/account-transactions/details"
+                            element={<AccountTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/cash-flow-statement"
+                            element={<CashFlowStatementReport />}
+                          />
+                          <Route
                             path="/accounting/reports/sales-by-customer"
                             element={<SalesByCustomerReport />}
                           />
@@ -2483,6 +2532,20 @@ function App() {
                             path="/accounting/reports/sales-summary"
                             element={<SalesSummaryReport />}
                           />
+                          <Route
+                            path="/accounting/reports/gstr-7"
+                            element={<GSTR7Report />}
+                          />
+                          <Route
+                            path="/accounting/reports/gstr-3b-summary"
+                            element={<GSTR3BSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/gstr-3b-summary/details"
+                            element={<GSTR3BSummaryDetails />}
+                          />
+                          <Route path="/accounting/reports/gstr-9" element={<GSTR9Summary />} />
+
 
                           <Route
                             path="/accounting/reports/balance-sheet/details/:id"
@@ -2519,6 +2582,18 @@ function App() {
                           <Route
                             path="/accounting/reports/gst-payable"
                             element={<GstPayableReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/tds-summary"
+                            element={<TDSSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/tds-receivables-summary"
+                            element={<TDSReceivablesSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/tds-receivables-summary/details/:sectionCode"
+                            element={<TDSReceivablesSummaryDetails />}
                           />
                           <Route
                             path="/accounting/reports/gst-payable/details/:id"
@@ -4684,6 +4759,18 @@ function App() {
                             element={<OccupantUserMasterDashboard />}
                           />
                           <Route
+                            path="/master/user/vi-users"
+                            element={<ViUsersMasterDashboard />}
+                          />
+                          <Route
+                            path="/master/user/vi-users/view/:id"
+                            element={<ViewViUserPage />}
+                          />
+                          <Route
+                            path="/master/user/vi-users/edit/:id"
+                            element={<EditViUserPage />}
+                          />
+                          <Route
                             path="/master/user/lockated-users"
                             element={<LockedUsersDashboard />}
                           />
@@ -5097,9 +5184,29 @@ function App() {
                             element={<CarpoolDashboard />}
                           />
 
+
                           <Route
                             path="/pulse/carpool/ride-detail"
                             element={<RideDetail />}
+                          />
+                           <Route
+                            path="/pulse/carpool/ride-reviews"
+                            element={<RideReviews />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/user-detail"
+                            element={<UserDetail />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/active-reports"
+                            element={<ActiveReports />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/active-sos"
+                            element={<ActiveSOS />}
                           />
 
                           <Route

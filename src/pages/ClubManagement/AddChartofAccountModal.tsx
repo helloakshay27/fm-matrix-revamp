@@ -11,6 +11,7 @@ import { toast } from "sonner";
 const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+     const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState({
@@ -95,7 +96,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
     };
 
     const ledgerData = {
-        lock_account_id: 2, // or get from context if dynamic
+        lock_account_id: lock_account_id, // or get from context if dynamic
         name: formData.accountName || '',
         lock_account_group_id: formData.accountTypeId || '',
         ledger_of: null,
@@ -111,7 +112,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
     const handleSubmit = async () => {
         setIsSubmitting(true);
         const ledgerData = {
-            lock_account_id: 2, // or get from context if dynamic
+            lock_account_id: lock_account_id, // or get from context if dynamic
             name: formData.accountName || '',
             lock_account_group_id: formData.accountTypeId || '',
             ledger_of: null,

@@ -38,6 +38,7 @@ export interface UserRoleResponse {
   lock_modules?: LockModule[];
   activeFunctions?: ActiveFunction[]; // Add support for the actual API response
 }
+  const org_id = localStorage.getItem("org_id");
 
 export const permissionService = {
   /**
@@ -54,7 +55,7 @@ export const permissionService = {
       }
 
       const response = await apiClient.get<UserRoleResponse>(
-        `${window.location.hostname === "localhost" ? "/pms/users/get_role.json": "/pms/users/get_user_role.json"}`
+        `${window.location.hostname === "web.gophygital.work" && org_id === "34" ? "/pms/users/get_role.json" : "/pms/users/get_user_role.json"}`
       );
 
       if (response.data.success) {

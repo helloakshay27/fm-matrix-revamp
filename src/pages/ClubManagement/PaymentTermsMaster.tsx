@@ -35,6 +35,7 @@ const PaymentTermsMaster = () => {
 	// Modal logic (unchanged)
 	const [editTerms, setEditTerms] = useState<PaymentTerm[]>([]);
 	const [showConfig, setShowConfig] = useState(false);
+	 const lock_account_id = localStorage.getItem("lock_account_id");
 
 	useEffect(() => {
 		fetchPaymentTerms();
@@ -45,7 +46,7 @@ const PaymentTermsMaster = () => {
 		const baseUrl = localStorage.getItem("baseUrl");
 		const token = localStorage.getItem("token");
 		try {
-			const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+			const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
 				headers: {
 					Authorization: token ? `Bearer ${token}` : undefined,
 					"Content-Type": "application/json",
@@ -80,7 +81,7 @@ const PaymentTermsMaster = () => {
 		const token = localStorage.getItem("token");
 		try {
 			await axios.patch(
-				`https://${baseUrl}/payment_terms/${id}.json?lock_account_id=1`,
+				`https://${baseUrl}/payment_terms/${id}.json?lock_account_id=${lock_account_id}`,
 				{ active: false },
 				{
 					headers: {
@@ -126,11 +127,11 @@ const PaymentTermsMaster = () => {
 		}));
 		const payload = {
 			payment_terms: paymentTermsPayload,
-			lock_account_id: 1,
+			lock_account_id: lock_account_id,
 		};
 		try {
 			await axios.post(
-				`https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+				`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
 				payload,
 				{
 					headers: {
@@ -168,7 +169,7 @@ const PaymentTermsMaster = () => {
 		try {
 			const baseUrl = localStorage.getItem('baseUrl');
 			const token = localStorage.getItem('token');
-			const res = await axios.get(`https://${baseUrl}/payment_terms/${id}.json?lock_account_id=1`, {
+			const res = await axios.get(`https://${baseUrl}/payment_terms/${id}.json?lock_account_id=${lock_account_id}`, {
 				headers: {
 					Authorization: token ? `Bearer ${token}` : undefined,
 					'Content-Type': 'application/json',
@@ -200,7 +201,7 @@ const PaymentTermsMaster = () => {
 			const baseUrl = localStorage.getItem('baseUrl');
 			const token = localStorage.getItem('token');
 			await axios.put(
-				`https://${baseUrl}/payment_terms/${editForm.id}.json?lock_account_id=1`,
+				`https://${baseUrl}/payment_terms/${editForm.id}.json?lock_account_id=${lock_account_id}`,
 				{
 					payment_term: {
 						name: editForm.name,

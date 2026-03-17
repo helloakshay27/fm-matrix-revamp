@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import axios from 'axios';
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -57,7 +58,7 @@ const columns: ColumnConfig[] = [
         draggable: false
     },
 
-     {
+    {
         key: 'date',
         label: 'Date',
         sortable: true,
@@ -85,7 +86,7 @@ const columns: ColumnConfig[] = [
         hideable: true,
         draggable: true
     },
-   
+
     // {
     //     key: 'due_date',
     //     label: 'Due Date',
@@ -143,7 +144,7 @@ export const QuotesDashboard: React.FC = () => {
     });
 
 
-    
+
 
     // Fetch sales order data from API
     const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
@@ -151,8 +152,9 @@ export const QuotesDashboard: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+                        const lock_account_id = localStorage.getItem('lock_account_id');
             const params = new URLSearchParams({
-                lock_account_id: '1',
+                lock_account_id: lock_account_id,
                 // page: String(page),
                 // per_page: String(per_page),
             });
@@ -171,7 +173,7 @@ export const QuotesDashboard: React.FC = () => {
             const data = await response.json();
             console.log('API Response:', data);
             // Assume API returns { data: SalesOrder[], pagination: {...} }
-            setSalesOrderData(Array.isArray(data) ? data: []);
+            setSalesOrderData(Array.isArray(data) ? data : []);
             setPagination(data.pagination || {
                 current_page: page,
                 per_page: per_page,
@@ -237,7 +239,7 @@ export const QuotesDashboard: React.FC = () => {
     const totalRecords = pagination.total_count;
     const totalPages = pagination.total_pages;
     const displayedData = salesOrderData;
-console.log('Sales Order Data:', salesOrderData);
+    console.log('Sales Order Data:', salesOrderData);
     // Render row function for enhanced table
     const renderRow = (order: SalesOrder) => ({
         actions: (
@@ -254,6 +256,21 @@ console.log('Sales Order Data:', salesOrderData);
                     }}
                     title="Select for status update"
                 /> */}
+
+                {/* {order.status !== "sent" && (
+                    <input
+                        type="checkbox"
+                        checked={selectedRows.includes(order.id)}
+                        onChange={(e) => {
+                            setSelectedRows((prev) =>
+                                e.target.checked
+                                    ? [...prev, order.id]
+                                    : prev.filter((id) => id !== order.id)
+                            );
+                        }}
+                        className="cursor-pointer"
+                    />
+                )} */}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -280,7 +297,7 @@ console.log('Sales Order Data:', salesOrderData);
         quote_number: (
             <div className="font-medium text-blue-600">{order.quote_number}</div>
         ),
-                reference_number: (
+        reference_number: (
             <div className="font-medium text-blue-600">{order.reference_number}</div>
         ),
         customer_name: (
@@ -296,37 +313,37 @@ console.log('Sales Order Data:', salesOrderData);
             </span>
         ),
 
-//          due_date: (
-//     <span className="text-sm text-gray-600">
-//       {order.due_date
-//         ? new Date(order.due_date).toLocaleDateString("en-GB", {
-//             day: "2-digit",
-//             month: "2-digit",
-//             year: "numeric",
-//           })
-//         : "-"}
-//     </span>
-//   ),
+        //          due_date: (
+        //     <span className="text-sm text-gray-600">
+        //       {order.due_date
+        //         ? new Date(order.due_date).toLocaleDateString("en-GB", {
+        //             day: "2-digit",
+        //             month: "2-digit",
+        //             year: "numeric",
+        //           })
+        //         : "-"}
+        //     </span>
+        //   ),
 
-  total_amount: (
-    <span className="text-sm font-medium text-gray-900">
-      ₹
-      {order.total_amount?.toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}
-    </span>
-  ),
+        total_amount: (
+            <span className="text-sm font-medium text-gray-900">
+                ₹
+                {order.total_amount?.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })}
+            </span>
+        ),
 
-//   balance_due: (
-//     <span className="text-sm font-medium text-red-600">
-//       ₹
-//       {order.balance_due?.toLocaleString("en-IN", {
-//         minimumFractionDigits: 2,
-//         maximumFractionDigits: 2,
-//       })}
-//     </span>
-//   ),
+        //   balance_due: (
+        //     <span className="text-sm font-medium text-red-600">
+        //       ₹
+        //       {order.balance_due?.toLocaleString("en-IN", {
+        //         minimumFractionDigits: 2,
+        //         maximumFractionDigits: 2,
+        //       })}
+        //     </span>
+        //   ),
         // shipment_date: (
         //     <span className="text-sm text-gray-600">
         //         {order.shipment_date ? new Date(order.shipment_date).toLocaleDateString('en-GB', {
@@ -398,32 +415,65 @@ console.log('Sales Order Data:', salesOrderData);
         }
     };
 
-    const handleMarkAsConfirmed = async () => {
+    // const handleMarkAsConfirmed = async () => {
+    //     if (selectedRows.length === 0) {
+    //         toast.error('Select at least one sales order');
+    //         return;
+    //     }
+    //     try {
+    //         const baseUrl = localStorage.getItem('baseUrl');
+    //         const token = localStorage.getItem('token');
+    //         const payload = {
+    //             sale_order_ids: selectedRows,
+    //             status: 'confirmed',
+    //             fulfilled: true
+    //         };
+    //         await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 Authorization: token ? `Bearer ${token}` : undefined,
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify(payload)
+    //         });
+    //         toast.success('Status updated successfully');
+    //         setSelectedRows([]);
+    //         fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    //     } catch (err) {
+    //         toast.error('Failed to update status');
+    //     }
+    // };
+
+    const handleMarkAsSent = async () => {
         if (selectedRows.length === 0) {
-            toast.error('Select at least one sales order');
+            toast.error("Select at least one Quote");
             return;
         }
+
         try {
-            const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            const payload = {
-                sale_order_ids: selectedRows,
-                status: 'confirmed',
-                fulfilled: true
-            };
-            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                method: 'POST',
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json',
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+
+            await axios.post(
+                `https://${baseUrl}/lock_account_quotes/update_status.json`,
+                {
+                    quotes_ids: selectedRows,
                 },
-                body: JSON.stringify(payload)
-            });
-            toast.success('Status updated successfully');
+                {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                    },
+                }
+            );
+
+            toast.success("Quotes marked as sent");
+
             setSelectedRows([]);
+
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-        } catch (err) {
-            toast.error('Failed to update status');
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to mark Quotes as sent");
         }
     };
 
@@ -453,12 +503,21 @@ console.log('Sales Order Data:', salesOrderData);
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
-                        {selectedRows.length > 0 && (
+                        {/* {selectedRows.length > 0 && (
                             <Button
                                 className='bg-green-600 text-white hover:bg-green-700'
                                 onClick={handleMarkAsConfirmed}
                             >
                                 Mark as Confirmed
+                            </Button>
+                        )} */}
+
+                        {selectedRows.length > 0 && (
+                            <Button
+                                className="bg-blue-600 text-white hover:bg-blue-700"
+                                onClick={handleMarkAsSent}
+                            >
+                                Mark as Sent
                             </Button>
                         )}
                     </div>

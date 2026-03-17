@@ -136,6 +136,7 @@ const ItemsEdit = () => {
     const { id } = useParams();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
     const [exemptions, setExemptions] = useState([]);
     const [taxSettings, setTaxSettings] = useState<any | null>(null);
     const [form, setForm] = useState({
@@ -173,7 +174,7 @@ const ItemsEdit = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -193,7 +194,7 @@ const ItemsEdit = () => {
                 const token = localStorage.getItem("token");
 
                 const res = await axios.get(
-                    `https://${baseUrl}/lock_accounts/1/tax_settings.json`,
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_settings.json`,
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
@@ -267,7 +268,7 @@ const ItemsEdit = () => {
                 const token = localStorage.getItem("token");
 
                 const res = await axios.get(
-                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`,
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`,
                     {
                         headers: {
                             Authorization: token ? `Bearer ${token}` : undefined,
@@ -477,7 +478,7 @@ const ItemsEdit = () => {
             "lock_account_item[icon_attributes][active]",
             "true"
         );
-        formData.append("lock_account_id", "1");
+        formData.append("lock_account_id", lock_account_id);
 
         try {
             let apiBase = baseUrl;
@@ -603,7 +604,16 @@ const ItemsEdit = () => {
                                 name="hsn_code"
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
-                                onChange={handleChange}
+                                // onChange={handleChange}
+                                 onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    // Allow only numbers and max 8 digits
+                                    if (/^\d{0,8}$/.test(value)) {
+                                        handleChange(e);
+                                    }
+                                }}
+                                inputProps={{ maxLength: 8, inputMode: "numeric", pattern: "[0-9]*" }}
                                 InputLabelProps={{ shrink: true }}
                             />
                         ) : (
@@ -619,7 +629,7 @@ const ItemsEdit = () => {
 
 
                         <FormControl fullWidth>
-                            <InputLabel>Tax Preference *</InputLabel>
+                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
                             <Select
                                 name="tax_preference"
                                 value={form.tax_preference}
@@ -637,7 +647,7 @@ const ItemsEdit = () => {
 
                         {form.tax_preference === "non_taxable" && (
                             <FormControl fullWidth>
-                                <InputLabel>Exemption Reason</InputLabel>
+                                <InputLabel>Exemption Reason <span style={{ color: "red" }}>*</span></InputLabel>
                                 <Select
                                     name="exemption_reason"
                                     value={form.exemption_reason}

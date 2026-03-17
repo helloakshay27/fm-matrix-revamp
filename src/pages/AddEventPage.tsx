@@ -61,10 +61,9 @@ export const AddEventPage = () => {
     approvalRequired: "no",
     shareWith: "all",
     shareWithCommunities: "no",
-    attachment: null as File | null,
   });
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<Array<{ file: File, preview: string | null }>>([]);
   const [isActive, setIsActive] = useState(true);
 
   // Tech Park Modal State
@@ -243,20 +242,25 @@ export const AddEventPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        attachment: file,
-      }));
-      // Create preview for image files
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setImagePreview(null);
+      // Validate that file is an image
+      if (!file.type.startsWith('image/')) {
+        toast.error("Only image files are allowed. Please select an image.");
+        if (attachmentInputRef.current) {
+          attachmentInputRef.current.value = "";
+        }
+        return;
       }
+
+      // Create preview for image files
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAttachments(prev => [...prev, { file, preview: reader.result as string }]);
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset the input
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
     }
   };
 
@@ -264,16 +268,11 @@ export const AddEventPage = () => {
     attachmentInputRef.current?.click();
   };
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFormData((prev) => ({
-      ...prev,
-      attachment: null,
-    }));
-    setImagePreview(null);
-    if (attachmentInputRef.current) {
-      attachmentInputRef.current.value = "";
+  const handleRemoveAttachment = (index: number, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
     }
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = () => {
@@ -349,8 +348,11 @@ export const AddEventPage = () => {
         });
       }
 
-      if (formData.attachment) {
-        formDataToSend.append("event[documents][]", formData.attachment);
+      // Add all attachments
+      if (attachments.length > 0) {
+        attachments.forEach(({ file }) => {
+          formDataToSend.append("event[documents][]", file);
+        });
       }
 
       await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
@@ -933,28 +935,36 @@ export const AddEventPage = () => {
                   Upload Document
                 </Label>
 
-                {formData.attachment ? (
-                  <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
-                    <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
-                      {formData.attachment.name}
-                    </span>
-                    <button
-                      onClick={handleRemoveImage}
-                      className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                <div className="flex flex-wrap gap-6">
+                  {/* Display existing attachments */}
+                  {attachments.map((attachment, index) => (
+                    <div
+                      key={index}
+                      className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white"
                     >
-                      <XCircle size={20} />
-                    </button>
-                    {imagePreview ? (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-20 h-20 object-contain mt-6"
-                      />
-                    ) : (
-                      <File size={40} className="text-gray-400 mt-6" />
-                    )}
-                  </div>
-                ) : (
+                      <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
+                        {attachment.file.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleRemoveAttachment(index, e)}
+                        className="absolute top-2 right-2 text-gray-600 hover:text-red-500 transition-colors"
+                      >
+                        <XCircle size={20} />
+                      </button>
+                      {attachment.preview ? (
+                        <img
+                          src={attachment.preview}
+                          alt={`Preview ${index}`}
+                          className="w-20 h-20 object-contain mt-6"
+                        />
+                      ) : (
+                        <File size={40} className="text-gray-400 mt-6" />
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Add new attachment box */}
                   <div
                     onClick={triggerFileInput}
                     className="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full max-w-[200px] h-40 relative flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -990,7 +1000,7 @@ export const AddEventPage = () => {
                       Browse
                     </Button>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
