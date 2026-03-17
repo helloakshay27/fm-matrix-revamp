@@ -391,7 +391,7 @@ const modulesByPackage = {
           href: "/accounting/reports/tds-receivables-summary",
         },
         {
-          name: "Debtors & Creditors Report",
+          name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
         // {
