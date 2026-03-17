@@ -914,8 +914,8 @@ export const CarpoolDashboard = () => {
     }
   };
 
-  const handleTrackNow = (rideId: string) => {
-    setActiveView("tracking");
+  const handleTrackNow = (rideId?: string) => {
+    navigate("/pulse/carpool/tracking", { state: { rideId } });
   };
 
   const handleStatusChange = (reportId: string, newStatus: string) => {
@@ -2374,29 +2374,7 @@ export const CarpoolDashboard = () => {
         </>
       )}
 
-      {/* Live Tracking View */}
-      {activeView === "tracking" && (
-        <div className="space-y-6">
-          {/* Map Section */}
-          <Card className="border shadow-sm">
-            <CardContent className="p-0">
-              <div className="relative w-full h-[500px] bg-gray-100 rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
-                  <div className="text-center space-y-2">
-                    <MapPin className="w-12 h-12 text-gray-400 mx-auto" />
-                    <p className="text-sm text-gray-500 font-medium">
-                      Map View
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Live tracking map will appear here
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+
     </div>
   );
 };

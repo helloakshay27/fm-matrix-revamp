@@ -161,7 +161,7 @@ export const PatrollingDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
-    per_page: 10,
+    per_page: 20,
     total_pages: 1,
     total_count: 0,
     has_next_page: false,
@@ -357,9 +357,9 @@ export const PatrollingDashboard = () => {
       <button onClick={() => handleEdit(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Edit">
         <Edit className="w-4 h-4" />
       </button>
-      <button onClick={() => handleDelete(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Delete">
+      {/* <button onClick={() => handleDelete(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Delete">
         <Trash2 className="w-4 h-4" />
-      </button>
+      </button> */}
     </div>,
     name: <div className="font-medium">{patrol.name}</div>,
     checkpoints: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-black">
