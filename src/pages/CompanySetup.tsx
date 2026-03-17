@@ -680,7 +680,9 @@ const CompanySetup: React.FC = () => {
       // Store updated config for future use
       currentConfigRef.current = otherConfig;
 
-      // Cache changes locally for immediate reflection in Hub
+      // Cache changes locally with a timestamp for immediate reflection in Hub
+      const updateTime = Date.now().toString();
+      localStorage.setItem("company_hub_update_time", updateTime);
       localStorage.setItem("company_hub_welcome_data", JSON.stringify(otherConfig.welcome));
       localStorage.setItem("company_hub_vision_data", JSON.stringify(otherConfig.vision));
       localStorage.setItem("company_hub_mission_data", JSON.stringify(otherConfig.mission));
@@ -756,6 +758,8 @@ const CompanySetup: React.FC = () => {
       currentConfigRef.current = otherConfig;
 
       // Cache in localStorage immediately so CompanyHub reads the latest data
+      const updateTime = Date.now().toString();
+      localStorage.setItem("company_hub_update_time", updateTime);
       localStorage.setItem(
         "company_hub_eom",
         JSON.stringify({
