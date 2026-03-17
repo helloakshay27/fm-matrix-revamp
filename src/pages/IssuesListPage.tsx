@@ -183,6 +183,7 @@ const IssuesListPage = ({
     // URL search params
     const searchParams = new URLSearchParams(location.search);
     const projectIdParam = searchParams.get("project_id");
+    const milestoneIdParam = searchParams.get("milestone_id");
     const taskIdParam = searchParams.get("task_id");
 
     const view = localStorage.getItem("selectedView");
@@ -261,6 +262,7 @@ const IssuesListPage = ({
         projectId: null,
         projectIdParam: null,
         taskIdParam: null,
+        milestoneIdParam: null,
     });
 
     // Map API response to table format
@@ -311,7 +313,7 @@ const IssuesListPage = ({
                 filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
         }
         // If projectId from prop or URL param is provided, use filtered issues
-        else if (projectId || projectIdParam || taskIdParam) {
+        else if (projectId || projectIdParam || taskIdParam || milestoneIdParam) {
             issuesToDisplay =
                 filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
         }
@@ -336,6 +338,7 @@ const IssuesListPage = ({
         projectId,
         projectIdParam,
         taskIdParam,
+        milestoneIdParam,
         showMyIssuesOnly,
         appliedFilters,
     ]);
@@ -409,7 +412,7 @@ const IssuesListPage = ({
                 setFilteredLoading(false);
             }
         },
-        [baseUrl, token, projectId, projectIdParam, taskIdParam, showMyIssuesOnly]
+        [baseUrl, token, projectId, projectIdParam, taskIdParam, milestoneIdParam, showMyIssuesOnly]
     );
 
     const getUsers = useCallback(async () => {
@@ -448,12 +451,12 @@ const IssuesListPage = ({
 
     // Handle showMyIssuesOnly toggle
     useEffect(() => {
-        if (!projectId && !projectIdParam && !taskIdParam && !searchQuery.trim()) {
+        if (!projectId && !projectIdParam && !taskIdParam && !milestoneIdParam && !searchQuery.trim()) {
             allIssuesFetchInitiatedRef.current = false;
             setFilterSuccess(false);
             setFilteredIssues([]);
         }
-    }, [showMyIssuesOnly, projectId, projectIdParam, taskIdParam, searchQuery]);
+    }, [showMyIssuesOnly, projectId, projectIdParam, taskIdParam, milestoneIdParam, searchQuery]);
 
     // Listen for global issue-created events to force refetch (ensures GET /issues.json runs)
     useEffect(() => {
@@ -471,25 +474,27 @@ const IssuesListPage = ({
         const paramsChanged =
             prevParamsRef.current.projectId !== projectId ||
             prevParamsRef.current.projectIdParam !== projectIdParam ||
-            prevParamsRef.current.taskIdParam !== taskIdParam;
+            prevParamsRef.current.taskIdParam !== taskIdParam ||
+            prevParamsRef.current.milestoneIdParam !== milestoneIdParam;
 
         if (paramsChanged) {
             allIssuesFetchInitiatedRef.current = false;
             setFilterSuccess(false);
             setFilteredIssues([]);
-            prevParamsRef.current = { projectId, projectIdParam, taskIdParam };
+            prevParamsRef.current = { projectId, projectIdParam, taskIdParam, milestoneIdParam };
         }
 
         // Trigger fetch immediately when parameters are present
-        if ((projectId || projectIdParam || taskIdParam) && baseUrl && token) {
+        if ((projectId || projectIdParam || taskIdParam || milestoneIdParam) && baseUrl && token) {
             const filter = {
                 "q[project_management_id_eq]": projectId || projectIdParam || "",
                 "q[task_management_id_eq]": taskIdParam || "",
+                "q[milestone_id_eq]": milestoneIdParam || "",
             };
             performFilteredFetch(filter, 1);
             setPagination((prev) => ({ ...prev, current_page: 1 }));
         }
-    }, [projectId, projectIdParam, taskIdParam, baseUrl, token, performFilteredFetch]);
+    }, [projectId, projectIdParam, taskIdParam, milestoneIdParam, baseUrl, token, performFilteredFetch]);
 
     // Advanced filtering with search
     useEffect(() => {
@@ -501,6 +506,7 @@ const IssuesListPage = ({
                     "q[project_management_id_eq]": projectIdParam,
                 }),
                 ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
+                ...(milestoneIdParam && { "q[milestone_id_eq]": milestoneIdParam }),
             };
 
             performFilteredFetch(filter, 1);
@@ -509,7 +515,7 @@ const IssuesListPage = ({
             // If search is cleared, reset to initial fetch
             allIssuesFetchInitiatedRef.current = false;
         }
-    }, [searchQuery, projectId, projectIdParam, taskIdParam, performFilteredFetch]);
+    }, [searchQuery, projectId, projectIdParam, taskIdParam, milestoneIdParam, performFilteredFetch]);
 
     // Fetch all issues only when no parameters and haven't fetched yet
     useEffect(() => {
@@ -518,6 +524,7 @@ const IssuesListPage = ({
             !projectId &&
             !projectIdParam &&
             !taskIdParam &&
+            !milestoneIdParam &&
             !searchQuery.trim() &&
             !allIssuesFetchInitiatedRef.current &&
             baseUrl &&
@@ -537,7 +544,7 @@ const IssuesListPage = ({
             }
             allIssuesFetchInitiatedRef.current = true;
         }
-    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery, showMyIssuesOnly, performFilteredFetch]);
+    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, milestoneIdParam, searchQuery, showMyIssuesOnly, performFilteredFetch]);
 
 
 
@@ -1067,14 +1074,16 @@ const IssuesListPage = ({
                         "q[project_management_id_eq]": projectIdParam,
                     }),
                     ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
+                    ...(milestoneIdParam && { "q[milestone_id_eq]": milestoneIdParam }),
                 };
                 await performFilteredFetch(filter, page);
             } else if (appliedFilters) {
                 await performFilteredFetch(appliedFilters, page);
-            } else if (projectId || projectIdParam || taskIdParam) {
+            } else if (projectId || projectIdParam || taskIdParam || milestoneIdParam) {
                 const filter = {
                     "q[project_management_id_eq]": projectId || projectIdParam || "",
                     "q[task_management_id_eq]": taskIdParam || "",
+                    "q[milestone_id_eq]": milestoneIdParam || "",
                 };
                 await performFilteredFetch(filter, page);
             } else if (showMyIssuesOnly) {
