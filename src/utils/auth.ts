@@ -178,7 +178,7 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") ;
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
 
 const isFmSite =
   hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com";
@@ -192,7 +192,7 @@ const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
 
 const isClubSite =
-  hostname.includes("club.lockated.com") || hostname === "localhost";
+  hostname.includes("club.lockated.com");
 
 const isPanchshilClubSite =
   // hostname.includes("club.lockated.com");

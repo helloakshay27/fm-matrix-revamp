@@ -5,7 +5,7 @@ import axios from "axios";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "lucide-react";
+import { Calendar, NotepadText } from "lucide-react";
 
 interface Supply {
   taxable_amount_formatted: string;
@@ -184,13 +184,17 @@ const GSTR3BSummary: React.FC = () => {
   return (
     <div className="w-full bg-[#f9f7f2] p-6 min-h-screen">
       {/* HEADER */}
+      <div className="bg-white rounded-lg border-2 p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            GSTR-3B Summary
+          </h3>
+        </div>
 
-      <div className="text-center mb-8">
-        <div className="text-sm text-gray-500">Lockated</div>
-
-        <h2 className="text-xl font-semibold mt-2">GSTR-3B Summary</h2>
-
-        <div className="flex items-center justify-center gap-4 mt-1">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="text-sm text-gray-600">
             {startDate} to {endDate}
           </div>
@@ -229,7 +233,7 @@ const GSTR3BSummary: React.FC = () => {
       </div>
 
       {showCustom && (
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4">
           <Input
             type="date"
             value={startDate}

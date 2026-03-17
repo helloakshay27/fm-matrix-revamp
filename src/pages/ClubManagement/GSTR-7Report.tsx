@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
+import { NotepadText } from "lucide-react";
 
 interface GSTR7Row {
   gstin: string;
@@ -48,26 +49,17 @@ const GSTR7Report: React.FC = () => {
   return (
     <div className="w-full bg-[#f9f7f2] p-6 min-h-screen">
 
-      {/* HEADER */}
-      <div className="text-center mb-6">
-
-        <div className="text-sm text-gray-500">
-          Lockated
-        </div>
-
-        <h2 className="text-xl font-semibold mt-2">
-          GSTR-7 (Return for Tax Deducted at Source)
-        </h2>
-
-        <div className="text-sm text-gray-600 mt-1">
-          From {filters.fromDate || "DD/MM/YYYY"} To {filters.toDate || "DD/MM/YYYY"}
-        </div>
-
-      </div>
-
       {/* FILTER SECTION */}
+      <div className="bg-white rounded-lg border-2 p-6 mb-6">
 
-      <div className="bg-white border rounded-lg p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            GSTR-7 Report
+          </h3>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
 
@@ -106,7 +98,7 @@ const GSTR7Report: React.FC = () => {
 
       {/* TABLE */}
 
-      <div className="bg-white border rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-lg border p-6 overflow-x-auto">
 
         <table className="w-full border-collapse">
 

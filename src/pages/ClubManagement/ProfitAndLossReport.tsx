@@ -1,64 +1,15 @@
-import {
-  ThemeProvider,
-  createTheme,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { TextField } from "@mui/material";
 import { Button } from "@/components/ui/button";
-import { NotepadText, ArrowLeft } from "lucide-react";
+import { NotepadText } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"
-
-// Custom theme for MUI components - matching ManualJournalDetails
-const muiTheme = createTheme({
-  components: {
-    MuiInputLabel: {
-      styleOverrides: {
-        root: {
-          fontSize: "16px",
-        },
-      },
-      defaultProps: {
-        shrink: true,
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          width: "100%",
-          "& .MuiOutlinedInput-root": {
-            borderRadius: "6px",
-            height: "36px",
-            "@media (min-width: 768px)": {
-              height: "45px",
-            },
-          },
-          "& .MuiOutlinedInput-input": {
-            padding: "8px 14px",
-            "@media (min-width: 768px)": {
-              padding: "12px 14px",
-            },
-          },
-        },
-      },
-      defaultProps: {
-        InputLabelProps: {
-          shrink: true,
-        },
-      },
-    },
-  },
-});
 
 interface Ledger {
   ledger_id: number;
   ledger_name: string;
   total: number;
-   account_code?: string;
+  account_code?: string;
   fixed_type: string | null;
 }
 
@@ -74,7 +25,7 @@ interface Group {
   group_id: number;
   group_name: string;
   total: number;
-   account_code?: string;
+  account_code?: string;
   sub_groups: Group[];
   ledgers: Ledger[];
 }
@@ -106,17 +57,8 @@ const ProfitAndLossReport: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Recursive component to render groups and their children/ledgers
-  // const GroupTable = ({
-  //   group,
-  //   title,
-  // }: {
-  //   group: Group | undefined;
-  //   title: string;
-  // }) => {
-
   const GroupTable = ({ pnlData }: { pnlData: any }) => {
-   
+
     const renderGroup = (group: any, depth = 0): React.ReactNode[] => {
       let rows: React.ReactNode[] = [];
 
@@ -129,7 +71,7 @@ const ProfitAndLossReport: React.FC = () => {
           >
             {group.group_name}
           </td>
-           <td className="border px-4 py-2"></td>
+          <td className="border px-4 py-2"></td>
           <td className="border px-4 py-2 text-right">
             {(group.total).toLocaleString(undefined, {
               minimumFractionDigits: 2,
@@ -158,9 +100,9 @@ const ProfitAndLossReport: React.FC = () => {
                   {ledger.ledger_name}
                 </span>
               </td>
- <td className="border px-4 py-2">
-    {ledger.account_code || "-"}
-  </td>
+              <td className="border px-4 py-2">
+                {ledger.account_code || "-"}
+              </td>
               <td className="border px-4 py-2 text-right">
                 {(ledger.total).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
@@ -170,13 +112,6 @@ const ProfitAndLossReport: React.FC = () => {
           );
         });
       }
-
-      // Sub groups
-      // if (group.sub_groups) {
-      //   group.sub_groups.forEach((sub: any) => {
-      //     rows = [...rows, ...renderGroup(sub, depth + 1)];
-      //   });
-      // }
 
       if (group.sub_groups) {
         group.sub_groups.forEach((sub: any) => {
@@ -188,270 +123,116 @@ const ProfitAndLossReport: React.FC = () => {
     };
 
     return (
-
       <div className="overflow-x-auto">
-
-        {/* <h3 className="text-center font-semibold mb-4">
+        <h3 className="text-center font-semibold mb-4">
           PROFIT & LOSS
-        </h3> */}
-        <div className="overflow-x-auto">
+        </h3>
 
-          <h3 className="text-center font-semibold mb-4">
-            PROFIT & LOSS
-          </h3>
+        <table className="w-full border border-gray-300">
+          <thead>
+            <tr className="bg-[#E5E0D3]">
+              <th className="border px-4 py-3 text-left">Account</th>
+              <th className="border px-4 py-3 text-left">Account Code</th>
+              <th className="border px-4 py-3 text-right">Amount</th>
+            </tr>
+          </thead>
 
-          <table className="w-full border border-gray-300">
+          <tbody>
+            {/* OPERATING INCOME */}
+            {pnlData?.operating_income && (
+              <>
+                {renderGroup(pnlData.operating_income)}
+                <tr className="bg-gray-200 font-semibold">
+                  <td className="border px-4 py-3">Total Operating {pnlData.operating_income.group_name}</td>
+                  <td className="border px-4 py-2"></td>
+                  <td className="border px-4 py-3 text-right">
+                    {(pnlData.operating_income.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              </>
+            )}
 
-            <thead>
-              <tr className="bg-[#E5E0D3]">
-                <th className="border px-4 py-3 text-left">Account</th>
-                <th className="border px-4 py-3 text-left">Account Code</th>
-                <th className="border px-4 py-3 text-right">Amount</th>
+            {/* COST OF GOODS SOLD */}
+            {pnlData?.cost_of_goods_sold && (
+              <>
+                {renderGroup(pnlData.cost_of_goods_sold)}
+                <tr className="bg-gray-200 font-semibold">
+                  <td className="border px-4 py-3">Total {pnlData.cost_of_goods_sold.group_name}</td>
+                  <td className="border px-4 py-2"></td>
+                  <td className="border px-4 py-3 text-right">
+                    {(pnlData.cost_of_goods_sold.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              </>
+            )}
+
+            {/* GROSS PROFIT */}
+            {pnlData?.totals && (
+              <tr className="bg-gray-100 font-semibold">
+                <td className="border px-4 py-3">Gross Profit</td>
+                <td className="border px-4 py-2"></td>
+                <td className="border px-4 py-3 text-right">
+                  {(pnlData.totals.gross_profit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </td>
               </tr>
-            </thead>
+            )}
 
-            {/* <tbody>
+            {/* OPERATING EXPENSES */}
+            {pnlData?.operating_expenses && (
+              <>
+                {renderGroup(pnlData.operating_expenses)}
+                <tr className="bg-gray-200 font-semibold">
+                  <td className="border px-4 py-3">Total {pnlData.operating_expenses.group_name}</td>
+                  <td className="border px-4 py-2"></td>
+                  <td className="border px-4 py-3 text-right">
+                    {(pnlData.operating_expenses.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              </>
+            )}
 
-              {/* Operating Income */}
-            {/* {pnlData?.operating_income &&
-                renderGroup(pnlData.operating_income)} */}
+            {/* OPERATING PROFIT */}
+            {pnlData?.totals && (
+              <tr className="bg-gray-100 font-semibold">
+                <td className="border px-4 py-3">Operating Profit</td>
+                <td className="border px-4 py-2"></td>
+                <td className="border px-4 py-3 text-right">
+                  {(pnlData.totals.operating_profit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            )}
 
-            {/* Cost Of Goods Sold */}
-            {/* {pnlData?.cost_of_goods_sold &&
-                renderGroup(pnlData.cost_of_goods_sold)} */}
+            {/* NON OPERATING INCOME */}
+            {pnlData?.totals && (
+              <tr className="bg-gray-100 font-semibold">
+                <td className="border px-4 py-3">Non Operating Income</td>
+                <td className="border px-4 py-2"></td>
+                <td className="border px-4 py-3 text-right">0.00</td>
+              </tr>
+            )}
 
-            {/* Operating Expenses */}
-            {/* {pnlData?.operating_expenses &&
-                renderGroup(pnlData.operating_expenses)}
+            {/* NON OPERATING EXPENSE */}
+            {pnlData?.totals && (
+              <tr className="bg-gray-100 font-semibold">
+                <td className="border px-4 py-3">Non Operating Expense</td>
+                <td className="border px-4 py-2"></td>
+                <td className="border px-4 py-3 text-right">0.00</td>
+              </tr>
+            )}
 
-            </tbody> */}
-
-
-
-
-            <tbody>
-
-              {/* OPERATING INCOME */}
-              {pnlData?.operating_income && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.operating_income.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {renderGroup(pnlData.operating_income)}
-
-                  <tr className="bg-gray-200 font-semibold">
-                    <td className="border px-4 py-3">
-                      Total Operating {pnlData.operating_income.group_name}
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {(pnlData.operating_income.total).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })}
-                    </td>
-                  </tr>
-                </>
-              )}
-
-              {/* COST OF GOODS SOLD */}
-              {pnlData?.cost_of_goods_sold && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.cost_of_goods_sold.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {renderGroup(pnlData.cost_of_goods_sold)}
-
-                  <tr className="bg-gray-200 font-semibold">
-                    <td className="border px-4 py-3">
-                      Total {pnlData.cost_of_goods_sold.group_name}
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {(pnlData.cost_of_goods_sold.total).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })}
-                    </td>
-                  </tr>
-                </>
-              )}
-              {pnlData?.totals && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.cost_of_goods_sold.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {/* {renderGroup(pnlData?.totals)} */}
-
-                  <tr className="bg-gray-100 font-semibold">
-                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
-                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
-                      Gross Profit
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {(pnlData.totals.gross_profit).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })}
-                      
-                    </td>
-                  </tr>
-                </>
-              )}
-
-              {/* OPERATING EXPENSES */}
-              {pnlData?.operating_expenses && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.operating_expenses.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {renderGroup(pnlData.operating_expenses)}
-
-                  <tr className="bg-gray-200 font-semibold">
-                    <td className="border px-4 py-3">
-                      Total {pnlData.operating_expenses.group_name}
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {(pnlData.operating_expenses.total).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })}
-                    </td>
-                  </tr>
-                </>
-              )}
-
-               {pnlData?.totals && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.cost_of_goods_sold.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {/* {renderGroup(pnlData?.totals)} */}
-
-                  <tr className="bg-gray-100 font-semibold">
-                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
-                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
-                      Operating Profit
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {(pnlData.totals.operating_profit).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })}
-                      
-                    </td>
-                  </tr>
-                </>
-              )}
-
-                             {pnlData?.totals && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.cost_of_goods_sold.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {/* {renderGroup(pnlData?.totals)} */}
-
-                  <tr className="bg-gray-100 font-semibold">
-                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
-                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
-                      Non Operating Income
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {/* {(pnlData.totals.operating_profit).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })} */}
-                      0.00
-                    </td>
-                  </tr>
-                </>
-              )}
-
-                     {pnlData?.totals && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.cost_of_goods_sold.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {/* {renderGroup(pnlData?.totals)} */}
-
-                  <tr className="bg-gray-100 font-semibold">
-                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
-                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
-                      Non Operating Expense
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {/* {(pnlData.totals.operating_profit).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })} */}
-                      0.00
-                    </td>
-                  </tr>
-                </>
-              )}
-
-
-
-                             {pnlData?.totals && (
-                <>
-                  {/* <tr className="bg-gray-200 font-bold">
-                    <td className="border px-4 py-3">
-                      {pnlData.cost_of_goods_sold.group_name}
-                    </td>
-                    <td className="border"></td>
-                  </tr> */}
-
-                  {/* {renderGroup(pnlData?.totals)} */}
-
-                  <tr className="bg-gray-100 font-semibold">
-                    <td className="border px-4 py-3 ms-0"  style={{ paddingLeft: `${0}px` }}>
-                      {/* Total {pnlData.cost_of_goods_sold.group_name} */}
-                      Net Profit/Loss
-                    </td>
-                     <td className="border px-4 py-2"></td>
-                    <td className="border px-4 py-3 text-right">
-                      {(pnlData.totals.net_profit_loss).toLocaleString(undefined, {
-                        minimumFractionDigits: 2
-                      })}
-                      
-                    </td>
-                  </tr>
-                </>
-              )}
-
-            </tbody>
-
-          </table>
-        </div>
-
+            {/* NET PROFIT/LOSS */}
+            {pnlData?.totals && (
+              <tr className="bg-gray-100 font-semibold">
+                <td className="border px-4 py-3">Net Profit/Loss</td>
+                <td className="border px-4 py-2"></td>
+                <td className="border px-4 py-3 text-right">
+                  {(pnlData.totals.net_profit_loss).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-
     );
   };
 
@@ -503,66 +284,67 @@ const ProfitAndLossReport: React.FC = () => {
   }, [filters.fromDate, filters.toDate]);
 
   return (
-    <ThemeProvider theme={muiTheme}>
-      <div
-        className="w-full bg-[#f9f7f2] p-6"
-        style={{ minHeight: "100vh", boxSizing: "border-box" }}
-      >
-        <div className="bg-white rounded-lg border-2 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              <NotepadText className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Profit and Loss Report
-            </h3>
+    <div
+      className="w-full bg-[#f9f7f2] p-6"
+      style={{ minHeight: "100vh", boxSizing: "border-box" }}
+    >
+      <div className="bg-white rounded-lg border-2 p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="w-6 h-6" />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-            <TextField
-              label="From Date"
-              type="date"
-              name="fromDate"
-              value={filters.fromDate}
-              onChange={handleDateChange}
-              fullWidth
-            />
-
-            <TextField
-              label="To Date"
-              type="date"
-              name="toDate"
-              value={filters.toDate}
-              onChange={handleDateChange}
-              fullWidth
-            />
-
-            <Button
-              type="button"
-              className="bg-[#C72030] hover:bg-[#A01020] text-white h-[45px]"
-              onClick={fetchPnlData}
-              disabled={loading}
-            >
-              {loading ? "Loading..." : "View"}
-            </Button>
-          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            Profit and Loss Report
+          </h3>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={filters.fromDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
 
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
-          </div>
-        ) : (
-          pnlData && (
-            <div className="bg-white rounded-lg border p-6 mb-6">
-              {/* <GroupTable group={pnlData?.expenditure} title="Expenditure" /> */}
-              <GroupTable pnlData={pnlData} />
-            </div>
-          )
-        )}
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={filters.toDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+
+          <Button
+            type="button"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
+            onClick={fetchPnlData}
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "View"}
+          </Button>
+        </div>
       </div>
-    </ThemeProvider>
+
+
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+        </div>
+      ) : (
+        pnlData && (
+          <div className="bg-white rounded-lg border p-6 mb-6">
+            <GroupTable pnlData={pnlData} />
+          </div>
+        )
+      )}
+    </div>
   );
 };
 
