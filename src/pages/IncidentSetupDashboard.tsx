@@ -1600,6 +1600,11 @@ export const IncidentSetupDashboard = () => {
         }
       })
 
+      // Clear the add-new form states
+      setSelectedEscalationLevel('');
+      setEscalateInDays('');
+      setEscalateToUsers([]);
+
       handleEditBack();
       fetchEscalationMatrix();
       toast.success("Escalation updated successfully!");
@@ -2378,10 +2383,14 @@ export const IncidentSetupDashboard = () => {
                         multiple
                         value={escalateToUsers}
                         onChange={(e) => {
-                          const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                          // Handle value - ensure it's always an array of strings (user IDs)
+                          const value = typeof e.target.value === 'string' 
+                            ? e.target.value.split(',') 
+                            : e.target.value;
+                          
+                          // Update both states with the array of IDs
                           setEscalateToUsers(value);
-                          // Update editFormData.users for consistency (convert array to any for type compatibility)
-                          setEditFormData({ ...editFormData, users: value as any });
+                          setEditFormData({ ...editFormData, users: value });
                         }}
                         input={<OutlinedInput label="Escalate To Users" />}
                         renderValue={(selected) => {
@@ -2432,13 +2441,11 @@ export const IncidentSetupDashboard = () => {
                                 color="primary"
                                 variant="outlined"
                                 onDelete={() => {
+                                  // Filter out the deleted user ID
                                   const newUsers = escalateToUsers.filter(id => id !== userId);
+                                  // Update both states consistently with the array of IDs
                                   setEscalateToUsers(newUsers);
-                                  const userNames = newUsers.map(id => {
-                                    const u = escalateToUsersList.find(user => String(user.id) === String(id));
-                                    return u ? u.full_name : id;
-                                  }).join(', ');
-                                  setEditFormData({ ...editFormData, users: userNames });
+                                  setEditFormData({ ...editFormData, users: newUsers });
                                 }}
                                 style={{
                                   fontSize: '11px',

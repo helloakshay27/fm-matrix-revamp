@@ -1108,6 +1108,7 @@ import { RideReviews } from "./pages/pulse/RideReviews";
 import { UserDetail } from "./pages/pulse/UserDetail";
 import { ActiveReports } from "./pages/pulse/ActiveReports";
 import { ActiveSOS } from "./pages/pulse/ActiveSOS";
+import { RideTracking } from "./pages/pulse/RideTracking";
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -5207,6 +5208,11 @@ function App() {
                           <Route
                             path="/pulse/carpool/active-sos"
                             element={<ActiveSOS />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/tracking"
+                            element={<RideTracking />}
                           />
 
                           <Route
