@@ -53,16 +53,17 @@ const TaxSummaryReport: React.FC = () => {
                 <table className="w-full border-collapse border border-gray-300">
                     <thead>
                         <tr className="bg-[#E5E0D3]">
-                            {/* <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                                Ledger ID
-                            </th> */}
-                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
+
+                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-center">
                                 Ledger & Tax Name
                             </th>
                             <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
                                 Tax Percentage
                             </th>
-                            <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
+                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-center">
+                                Total Taxable  Amount
+                            </th>
+                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
                                 Amount
                             </th>
                         </tr>
@@ -78,18 +79,21 @@ const TaxSummaryReport: React.FC = () => {
                                     {row?.name}
                                 </td> */}
 
-                                <td className="border px-4 py-3">
-  <span
-    className="text-black-600 cursor-pointer "
-    // onClick={() => navigate(`/accounting/reports/tax-summary/details/${row.id}`)}
-  >
-    {row.name}
-  </span>
-</td>
+                                <td className="border px-4 py-3 text-center">
+                                    <span
+                                        className="text-black-600 cursor-pointer text-center "
+                                    // onClick={() => navigate(`/accounting/reports/tax-summary/details/${row.id}`)}
+                                    >
+                                        {row.name}
+                                    </span>
+                                </td>
                                 <td className="border border-gray-300 px-4 py-3 text-center">
                                     {row?.tax_rate_per?.toFixed(2)} %
                                 </td>
-                                <td className="border border-gray-300 px-4 py-3 text-right">
+                                 <td className="border border-gray-300 px-4 py-3 text-center">
+                                    {row?.total_taxable_value}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-3 text-center">
                                     {row?.current_total?.toFixed(2)}
                                 </td>
                             </tr>
