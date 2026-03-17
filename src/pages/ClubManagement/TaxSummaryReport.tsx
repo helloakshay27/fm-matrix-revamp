@@ -53,9 +53,9 @@ const TaxSummaryReport: React.FC = () => {
                 <table className="w-full border-collapse border border-gray-300">
                     <thead>
                         <tr className="bg-[#E5E0D3]">
-                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
+                            {/* <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
                                 Ledger ID
-                            </th>
+                            </th> */}
                             <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
                                 Ledger & Tax Name
                             </th>
@@ -71,18 +71,21 @@ const TaxSummaryReport: React.FC = () => {
                     <tbody>
                         {gstData?.map((row, index) => (
                             <tr key={index} className="hover:bg-gray-50">
-                                <td className="border border-gray-300 px-4 py-3">
+                                {/* <td className="border border-gray-300 px-4 py-3">
                                     {row?.id}
-                                </td>
+                                </td> */}
+                                {/* <td className="border border-gray-300 px-4 py-3">
+                                    {row?.name}
+                                </td> */}
 
                                 <td className="border px-4 py-3">
-                                    <span
-                                        className="text-blue-600 cursor-pointer hover:underline hover:text-blue-800"
-                                        onClick={() => navigate(`/accounting/reports/tax-summary/details/${row.id}`)}
-                                    >
-                                        {row.name}
-                                    </span>
-                                </td>
+  <span
+    className="text-black-600 cursor-pointer "
+    // onClick={() => navigate(`/accounting/reports/tax-summary/details/${row.id}`)}
+  >
+    {row.name}
+  </span>
+</td>
                                 <td className="border border-gray-300 px-4 py-3 text-center">
                                     {row?.tax_rate_per?.toFixed(2)} %
                                 </td>
