@@ -591,47 +591,68 @@ export const PatrollingResponsePage = () => {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      const url = getFullUrl('/patrolling/visits/all');
-      const urlWithParams = new URL(url);
+      const urlWithParams = new URL(getFullUrl('/patrolling/export_checkpoint_visits'));
 
-      urlWithParams.searchParams.append('export', 'true');
+      urlWithParams.searchParams.append('format', 'xlsx');
 
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
       }
 
-      if (selectedStatus) {
-        urlWithParams.searchParams.append('status', selectedStatus);
-      }
+      // Mirror the same filters used for the data fetch
+      const effectiveStatus = appliedFilters.status || selectedStatus || '';
+      if (effectiveStatus)
+        urlWithParams.searchParams.append('q[patrolling_session_status_eq]', effectiveStatus);
 
-      if (debouncedSearchTerm) {
-        urlWithParams.searchParams.append('search', debouncedSearchTerm);
-      }
+      if (debouncedSearchTerm.trim())
+        urlWithParams.searchParams.append('search', debouncedSearchTerm.trim());
 
-      const options = getAuthenticatedFetchOptions();
-      const response = await fetch(urlWithParams.toString(), options);
+      if (appliedFilters.patrolName)
+        urlWithParams.searchParams.append('q[patrolling_checkpoint_patrolling_route_name_eq]', appliedFilters.patrolName);
+      if (appliedFilters.scheduleDateFrom)
+        urlWithParams.searchParams.append('q[patrolling_session_scheduled_start_time_gteq]', appliedFilters.scheduleDateFrom);
+      if (appliedFilters.scheduleDateTo)
+        urlWithParams.searchParams.append('q[patrolling_session_scheduled_start_time_lteq]', appliedFilters.scheduleDateTo);
+      if (appliedFilters.patrolDateFrom)
+        urlWithParams.searchParams.append('q[visited_at_gteq]', appliedFilters.patrolDateFrom);
+      if (appliedFilters.patrolDateTo)
+        urlWithParams.searchParams.append('q[visited_at_lteq]', appliedFilters.patrolDateTo);
+      if (appliedFilters.guardId)
+        urlWithParams.searchParams.append('q[patrolling_session_assigned_guard_id_eq]', appliedFilters.guardId.toString());
+      if (appliedFilters.buildingId)
+        urlWithParams.searchParams.append('q[patrolling_checkpoint_building_id_eq]', appliedFilters.buildingId.toString());
+      if (appliedFilters.wingId)
+        urlWithParams.searchParams.append('q[patrolling_checkpoint_wing_id_eq]', appliedFilters.wingId.toString());
+      if (appliedFilters.areaId)
+        urlWithParams.searchParams.append('q[patrolling_checkpoint_area_id_eq]', appliedFilters.areaId.toString());
+      if (appliedFilters.floorId)
+        urlWithParams.searchParams.append('q[patrolling_checkpoint_floor_id_eq]', appliedFilters.floorId.toString());
+      if (appliedFilters.roomId)
+        urlWithParams.searchParams.append('q[patrolling_checkpoint_room_id_eq]', appliedFilters.roomId.toString());
+
+      const response = await fetch(urlWithParams.toString(), getAuthenticatedFetchOptions());
 
       if (!response.ok) {
-        throw new Error('Failed to export patrolling visits');
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
       }
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-      link.download = `patrolling-visits-${timestamp}.xlsx`;
-      
+
+      const timestamp = new Date().toISOString().slice(0, 10);
+      link.download = `patrolling-checkpoint-visits-${timestamp}.xlsx`;
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success('Patrolling visits exported successfully!');
+      toast.success('Export downloaded successfully!');
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export patrolling visits. Please try again.');
+      toast.error('Failed to export. Please try again.');
     } finally {
       setIsExporting(false);
     }

@@ -51,6 +51,12 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
       return;
     }
 
+    // If a custom onPrintQR prop is provided, delegate to it
+    if (onPrintQR) {
+      onPrintQR();
+      return;
+    }
+
     setIsPrintLoading(true);
     try {
       const surveyMappingIds = selectedLocations.join(',');

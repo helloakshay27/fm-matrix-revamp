@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 
 // TypeScript Interfaces for API Response
 interface Ledger {
@@ -72,7 +73,7 @@ const BalanceSheetReport: React.FC = () => {
       );
 
       setBalanceSheetData(response.data);
-      
+
     } catch (err: unknown) {
       console.error("Error fetching balance sheet:", err);
       setError("Failed to load balance sheet data");
@@ -181,6 +182,9 @@ const BalanceSheetReport: React.FC = () => {
   };
 
 
+
+
+
   const renderAccounts = (nodes: any[], level: number = 0): JSX.Element[] => {
     const rows: JSX.Element[] = [];
 
@@ -191,7 +195,13 @@ const BalanceSheetReport: React.FC = () => {
       const isLedger = node.ledger_id;
 
       rows.push(
-        <tr key={node.group_id || node.ledger_id}>
+        <tr
+          // key={node.group_id || node.ledger_id}
+          key={
+            node.ledger_id
+              ? `ledger-${node.ledger_id}`
+              : `group-${node.group_id}`
+          }>
           {/* ACCOUNT */}
           <td
             className={`border px-4 py-2 ${!isLedger ? "font-semibold" : ""}`}
@@ -227,7 +237,7 @@ const BalanceSheetReport: React.FC = () => {
 
       if (node.total_label) {
         rows.push(
-          <tr key={`total-${node.group_id}`} className="font-semibold bg-gray-200">
+          <tr key={`total-${node.group_id || node.name || Math.random()} `} className="font-semibold bg-gray-200">
             <td className="border px-4 py-2">{node.total_label}</td>
             <td className="border px-4 py-2"></td>
             <td className="border px-4 py-2 text-right">{amount}</td>
@@ -239,6 +249,283 @@ const BalanceSheetReport: React.FC = () => {
     return rows;
   };
 
+
+  const flattenAccounts = (nodes: any[], level: number = 0): any[] => {
+    let rows: any[] = [];
+
+    nodes.forEach((node) => {
+      const indent = node.depth_indent || level * 20;
+      const amount = node.values?.[0]?.total_formatted || "0.00";
+      const isLedger = node.ledger_id;
+
+      rows.push({
+        name: node.name,
+        account_code: node.account_code || "-",
+        total: amount,
+        indent,
+        isLedger,
+        ledger_id: node.ledger_id,
+        isGroup: !isLedger,
+      });
+
+      if (node.accounts?.length > 0) {
+        rows = rows.concat(flattenAccounts(node.accounts, level + 1));
+      }
+
+      if (node.total_label) {
+        rows.push({
+          name: node.total_label,
+          account_code: "",
+          total: amount,
+          indent,
+          isTotal: true,
+        });
+      }
+    });
+
+    return rows;
+  };
+
+  const assets =
+    balanceSheetData?.balance_sheet?.accounts?.find(
+      (a: any) => a.node_name === "assets"
+    );
+
+  const liabilities =
+    balanceSheetData?.balance_sheet?.accounts?.find(
+      (a: any) => a.node_name === "liability_and_equity"
+    );
+
+  const tableData = [
+    { name: "Assets", isHeader: true },
+    ...(assets ? flattenAccounts(assets.accounts) : []),
+
+    { name: "Liabilities", isHeader: true },
+    ...(liabilities ? flattenAccounts(liabilities.accounts) : []),
+  ];
+
+  const columns: ColumnConfig[] = [
+    {
+      key: "name",
+      label: "Account",
+      draggable: false,
+      hideable: false,
+    },
+    {
+      key: "account_code",
+      label: "Account Code",
+      draggable: false,
+      hideable: false,
+    },
+    {
+      key: "total",
+      label: "Total",
+      draggable: false,
+      hideable: false,
+    },
+  ];
+
+  // const renderRow = (row: any) => ({
+  //   name: row.isHeader ? (
+  //     <span className="font-bold">{row.name}</span>
+  //   ) : (
+  //     <span
+  //       style={{ paddingLeft: `${row.indent}px` }}
+  //       className={row.isGroup ? "font-semibold" : ""}
+  //     >
+  //       {row.isLedger ? (
+  //         <span
+  //           className="text-blue-600 cursor-pointer hover:underline"
+  //           onClick={() =>
+  //             navigate(
+  //               `/accounting/reports/balance-sheet/details/${row.ledger_id}`
+  //             )
+  //           }
+  //         >
+  //           {row.name}
+  //         </span>
+  //       ) : (
+  //         row.name
+  //       )}
+  //     </span>
+  //   ),
+
+  //   account_code: (
+  //     <div className="text-center">{row.account_code}</div>
+  //   ),
+
+  //   total: (
+  //     <div className="text-right">
+  //       {row.total}
+  //     </div>
+  //   ),
+  // });
+
+
+  // const renderRow = (row: any) => ({
+  //   name: row.isHeader ? (
+  //     // 🔥 Assets / Liabilities Header
+  //     <div className="bg-gray-100 font-bold px-2 py-1 w-full">
+  //       {row.name}
+  //     </div>
+  //   ) : row.isTotal ? (
+  //     // 🔥 Total Row
+  //     <div
+  //       style={{ paddingLeft: `${row.indent}px` }}
+  //       className="font-semibold bg-gray-200 px-2 py-1 w-full"
+  //     >
+  //       {row.name}
+  //     </div>
+  //   ) : (
+  //     // 🔥 Normal + Group + Ledger
+  //     <div
+  //       style={{ paddingLeft: `${row.indent}px` }}
+  //       className={`px-2 py-1 ${
+  //         row.isGroup ? "font-semibold" : "font-normal"
+  //       }`}
+  //     >
+  //       {row.isLedger ? (
+  //         <span
+  //           className="text-blue-600 cursor-pointer hover:underline"
+  //           onClick={() =>
+  //             navigate(
+  //               `/accounting/reports/balance-sheet/details/${row.ledger_id}`
+  //             )
+  //           }
+  //         >
+  //           {row.name}
+  //         </span>
+  //       ) : (
+  //         row.name
+  //       )}
+  //     </div>
+  //   ),
+
+  //   account_code: row.isHeader ? (
+  //     ""
+  //   ) : row.isTotal ? (
+  //     <div className="bg-gray-200"></div>
+  //   ) : (
+  //     <div className="text-center px-2 py-1">{row.account_code}</div>
+  //   ),
+
+  //   total: row.isHeader ? (
+  //     ""
+  //   ) : (
+  //     <div
+  //       className={`text-right px-2 py-1 ${
+  //         row.isTotal ? "font-semibold bg-gray-200" : ""
+  //       }`}
+  //     >
+  //       {row.total}
+  //     </div>
+  //   ),
+  // });
+
+
+
+  // const renderRow = (row: any) => ({
+  //   name: (
+  //     <div
+  //       style={{ paddingLeft: `${row.indent || 0}px` }}
+  //       className={`w-full py-2 ${
+  //         row.isHeader
+  //           ? "font-bold"
+  //           : row.isTotal
+  //           ? "font-semibold"
+  //           : row.isGroup
+  //           ? "font-semibold"
+  //           : "font-normal"
+  //       }`}
+  //     >
+  //       {row.isLedger ? (
+  //         <span
+  //           className="text-blue-600 cursor-pointer hover:underline"
+  //           onClick={() =>
+  //             navigate(
+  //               `/accounting/reports/balance-sheet/details/${row.ledger_id}`
+  //             )
+  //           }
+  //         >
+  //           {row.name}
+  //         </span>
+  //       ) : (
+  //         row.name
+  //       )}
+  //     </div>
+  //   ),
+
+  //   account_code: (
+  //     <div className="text-center w-full py-2">
+  //       {row.isHeader ? "" : row.account_code}
+  //     </div>
+  //   ),
+
+  //   total: (
+  //     <div className="text-right w-full py-2">
+  //       {row.isHeader ? "" : row.total}
+  //     </div>
+  //   ),
+  // });
+
+
+  const renderRow = (row: any) => ({
+    name: (
+      <div
+        style={{ paddingLeft: `${row.indent || 0}px` }}
+        className={`w-full px-4 py-2 ${row.isHeader
+            ? "font-bold bg-gray-100"
+            : row.isTotal
+              ? "font-semibold bg-gray-200"
+              : row.isGroup
+                ? "font-semibold"
+                : ""
+          }`}
+      >
+        {row.isLedger ? (
+          <span
+            className="text-blue-600 cursor-pointer hover:underline"
+            onClick={() =>
+              navigate(
+                `/accounting/reports/balance-sheet/details/${row.ledger_id}`
+              )
+            }
+          >
+            {row.name}
+          </span>
+        ) : (
+          row.name
+        )}
+      </div>
+    ),
+
+    account_code: (
+      <div
+        className={`text-center w-full px-4 py-2 ${row.isHeader
+            ? "bg-gray-100"
+            : row.isTotal
+              ? "bg-gray-200"
+              : ""
+          }`}
+      >
+        {row.isHeader ? "" : row.account_code}
+      </div>
+    ),
+
+    total: (
+      <div
+        className={`text-right w-full px-4 py-2 ${row.isHeader
+            ? "bg-gray-100"
+            : row.isTotal
+              ? "bg-gray-200 font-semibold"
+              : ""
+          }`}
+      >
+        {row.isHeader ? "" : row.total}
+      </div>
+    ),
+  });
+
   const BalanceSheetTable = () => {
     const assets =
       balanceSheetData?.balance_sheet?.accounts?.find(
@@ -249,7 +536,7 @@ const BalanceSheetReport: React.FC = () => {
       balanceSheetData?.balance_sheet?.accounts?.find(
         (a: any) => a.node_name === "liability_and_equity"
       );
-      console.log("liability:",liabilities,balanceSheetData )
+    console.log("liability:", liabilities, balanceSheetData)
 
     return (
       <table className="w-full border border-gray-300">
@@ -308,7 +595,7 @@ const BalanceSheetReport: React.FC = () => {
   }
 
 
-  
+
 
   return (
     <div
@@ -366,6 +653,30 @@ const BalanceSheetReport: React.FC = () => {
           </h1>
         </div>
         <BalanceSheetTable />
+
+
+        {/* <EnhancedTable
+          data={tableData}
+          columns={columns}
+          renderRow={renderRow}
+          storageKey="balance-sheet"
+
+          hideTableExport={true}
+          hideTableSearch={true}
+          enableSearch={false}
+
+          hideColumnReset={true}   // 👈 your main requirement
+
+          isLoading={loading}
+
+          rowClassName={(row: any) =>
+            row.isHeader
+              ? "bg-gray-100 font-bold"
+              : row.isTotal
+                ? "bg-gray-200 font-semibold"
+                : ""
+          }
+        /> */}
       </div>
     </div>
   );

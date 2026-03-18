@@ -401,10 +401,20 @@ export const RecordPaymentPage: React.FC = () => {
                 </label>
                 <TextField
                   fullWidth
+                  type="number"
                   value={amountReceived}
-                  onChange={(e) => setAmountReceived(e.target.value)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (val < 0) {
+                      toast.error('Amount Received cannot be negative');
+                      setAmountReceived('0');
+                    } else {
+                      setAmountReceived(e.target.value);
+                    }
+                  }}
                   placeholder="0.00"
                   sx={fieldStyles}
+                  inputProps={{ min: 0, step: 0.01 }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">INR</InputAdornment>
@@ -445,10 +455,20 @@ export const RecordPaymentPage: React.FC = () => {
                 </label>
                 <TextField
                   fullWidth
+                  type="number"
                   value={bankCharges}
-                  onChange={(e) => setBankCharges(e.target.value)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (val < 0) {
+                      toast.error('Bank Charges cannot be negative');
+                      setBankCharges('0');
+                    } else {
+                      setBankCharges(e.target.value);
+                    }
+                  }}
                   placeholder="0.00"
                   sx={fieldStyles}
+                  inputProps={{ min: 0, step: 0.01 }}
                 />
               </div>
             </div>
@@ -462,9 +482,31 @@ export const RecordPaymentPage: React.FC = () => {
                   fullWidth
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  sx={fieldStyles}
+                  onChange={(e) => {
+                    const selectedDate = new Date(e.target.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (selectedDate > today) {
+                      toast.error('Payment Date cannot be in the future');
+                      setDate(format(today, "yyyy-MM-dd"));
+                    } else {
+                      setDate(e.target.value);
+                    }
+                  }}
+                  sx={{
+                    ...fieldStyles,
+                    '& .MuiInputBase-input': {
+                      color: date ? 'transparent' : 'inherit',
+                    }
+                  }}
                   InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: date ? (
+                      <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                        {format(parseISO(date), 'dd/MM/yyyy')}
+                      </InputAdornment>
+                    ) : null
+                  }}
                 />
               </div>
               <div>
@@ -697,13 +739,17 @@ export const RecordPaymentPage: React.FC = () => {
                           <TextField
                             type="date"
                             value={row.paymentReceivedOn}
-                            onChange={(e) =>
-                              handleInvoiceRowChange(
-                                row.id,
-                                "paymentReceivedOn",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => {
+                              const selectedDate = new Date(e.target.value);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              if (selectedDate > today) {
+                                toast.error('Payment Date cannot be in the future');
+                                handleInvoiceRowChange(row.id, "paymentReceivedOn", format(today, "yyyy-MM-dd"));
+                              } else {
+                                handleInvoiceRowChange(row.id, "paymentReceivedOn", e.target.value);
+                              }
+                            }}
                             size="small"
                             sx={{
                               width: 150,
@@ -811,14 +857,19 @@ export const RecordPaymentPage: React.FC = () => {
                   (Internal use. Not visible to customer)
                 </span>
               </label>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
+              <textarea
+                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                rows={4}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add notes for internal reference..."
+                onChange={(e) => {
+                  if (e.target.value.length <= 500) setNotes(e.target.value);
+                }}
+                placeholder="Add notes for internal reference... (max 500 characters)"
+                maxLength={500}
               />
+              <div className="text-xs text-gray-400 text-right mt-1">
+                {notes?.length || 0}/500
+              </div>
             </div>
 
             <div>
@@ -944,12 +995,13 @@ export const RecordPaymentPage: React.FC = () => {
           sx={{
             textTransform: "none",
             px: 4,
-            borderColor: "divider",
-            color: "text.secondary",
+            borderColor: "#C72030",
+            color: "#C72030",
+            fontWeight: 600,
             "&:hover": {
-              borderColor: "primary.main",
-              bgcolor: "primary.main",
-              color: "white",
+              borderColor: "#A01020",
+              bgcolor: "#f8f1f1",
+              color: "#A01020",
             },
           }}
         >
@@ -970,14 +1022,15 @@ export const RecordPaymentPage: React.FC = () => {
                     Save as Draft
                 </MuiButton> */}
         <MuiButton
-          variant="contained"
+          variant="text"
           onClick={() => handleSubmit("paid")}
           disabled={submitting}
           sx={{
-            bgcolor: "primary.red",
-            color: "white",
+            bgcolor: "#f8f1f1",
+            color: "#C72030",
+            fontWeight: 600,
             px: 4,
-            "&:hover": { bgcolor: "primary.red" },
+            "&:hover": { bgcolor: "#f1e8e8", color: "#A01020" },
             textTransform: "none",
           }}
         >
