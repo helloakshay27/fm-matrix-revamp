@@ -401,10 +401,20 @@ export const RecordPaymentPage: React.FC = () => {
                 </label>
                 <TextField
                   fullWidth
+                  type="number"
                   value={amountReceived}
-                  onChange={(e) => setAmountReceived(e.target.value)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (val < 0) {
+                      toast.error('Amount Received cannot be negative');
+                      setAmountReceived('0');
+                    } else {
+                      setAmountReceived(e.target.value);
+                    }
+                  }}
                   placeholder="0.00"
                   sx={fieldStyles}
+                  inputProps={{ min: 0, step: 0.01 }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">INR</InputAdornment>
@@ -445,10 +455,20 @@ export const RecordPaymentPage: React.FC = () => {
                 </label>
                 <TextField
                   fullWidth
+                  type="number"
                   value={bankCharges}
-                  onChange={(e) => setBankCharges(e.target.value)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (val < 0) {
+                      toast.error('Bank Charges cannot be negative');
+                      setBankCharges('0');
+                    } else {
+                      setBankCharges(e.target.value);
+                    }
+                  }}
                   placeholder="0.00"
                   sx={fieldStyles}
+                  inputProps={{ min: 0, step: 0.01 }}
                 />
               </div>
             </div>
@@ -462,7 +482,17 @@ export const RecordPaymentPage: React.FC = () => {
                   fullWidth
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    const selectedDate = new Date(e.target.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (selectedDate > today) {
+                      toast.error('Payment Date cannot be in the future');
+                      setDate(format(today, "yyyy-MM-dd"));
+                    } else {
+                      setDate(e.target.value);
+                    }
+                  }}
                   sx={fieldStyles}
                   InputLabelProps={{ shrink: true }}
                 />
@@ -697,13 +727,17 @@ export const RecordPaymentPage: React.FC = () => {
                           <TextField
                             type="date"
                             value={row.paymentReceivedOn}
-                            onChange={(e) =>
-                              handleInvoiceRowChange(
-                                row.id,
-                                "paymentReceivedOn",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => {
+                              const selectedDate = new Date(e.target.value);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              if (selectedDate > today) {
+                                toast.error('Payment Date cannot be in the future');
+                                handleInvoiceRowChange(row.id, "paymentReceivedOn", format(today, "yyyy-MM-dd"));
+                              } else {
+                                handleInvoiceRowChange(row.id, "paymentReceivedOn", e.target.value);
+                              }
+                            }}
                             size="small"
                             sx={{
                               width: 150,
@@ -811,14 +845,19 @@ export const RecordPaymentPage: React.FC = () => {
                   (Internal use. Not visible to customer)
                 </span>
               </label>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
+              <textarea
+                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                rows={4}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add notes for internal reference..."
+                onChange={(e) => {
+                  if (e.target.value.length <= 500) setNotes(e.target.value);
+                }}
+                placeholder="Add notes for internal reference... (max 500 characters)"
+                maxLength={500}
               />
+              <div className="text-xs text-gray-400 text-right mt-1">
+                {notes?.length || 0}/500
+              </div>
             </div>
 
             <div>

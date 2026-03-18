@@ -67,6 +67,21 @@ interface Customer {
     outstandingReceivables: number;
     unusedCredits: number;
     contactPersons: ContactPerson[];
+    billing_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    shipping_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    contact_persons?: ContactPerson[];
 }
 
 interface ContactPerson {
@@ -74,6 +89,8 @@ interface ContactPerson {
     salutation: string;
     firstName: string;
     lastName: string;
+    first_name?: string;
+    last_name?: string;
     email: string;
     workPhone: string;
     mobile: string;
@@ -124,7 +141,7 @@ export const QuotesAdd: React.FC = () => {
                         id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
                         tax_preference: item.tax_preference,
                         tax_exemption_id: item.tax_exemption_id,
-                        tax_group_id: item.intra_state_tax_rate_id
+                        tax_group_id: Number(item.intra_state_tax_rate_id) || null
                     })));
                     console.log('Fetched items:', res.data);
                 }
@@ -210,7 +227,7 @@ export const QuotesAdd: React.FC = () => {
     const [loadingCustomers, setLoadingCustomers] = useState(false);
     const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
     // Contact persons selected for email
-    const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
+    const [selectedContactPersons, setSelectedContactPersons] = useState<string[]>([]);
 
     // Address
     const [billingAddress, setBillingAddress] = useState('');
@@ -233,9 +250,9 @@ export const QuotesAdd: React.FC = () => {
             id: Date.now().toString(),
             name: '',
             description: '',
-            quantity: 1,
-            rate: 0,
-            discount: 0,
+            quantity: 1 as number | '',
+            rate: 0 as number | '',
+            discount: 0 as number | '',
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
@@ -314,7 +331,7 @@ export const QuotesAdd: React.FC = () => {
 
 
     // Summary
-    const [discountOnTotal, setDiscountOnTotal] = useState(0);
+    const [discountOnTotal, setDiscountOnTotal] = useState<number | ''>(0);
     const [discountTypeOnTotal, setDiscountTypeOnTotal] = useState<'percentage' | 'amount'>('percentage');
     const [adjustment, setAdjustment] = useState(0);
     const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
@@ -348,7 +365,7 @@ export const QuotesAdd: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description: string; tax_preference: string; tax_exemption_id: number | null; tax_group_id: number | null }[]>([]);
     const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
     const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
     const [taxOptions, setTaxOptions] = useState<any[]>([]);
@@ -444,12 +461,12 @@ export const QuotesAdd: React.FC = () => {
 
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
-        const baseAmount = item.quantity * item.rate;
+        const baseAmount = Number(item.quantity || 0) * Number(item.rate || 0);
         const discountAmount = item.discountType === 'percentage'
-            ? (baseAmount * item.discount) / 100
-            : item.discount;
+            ? (baseAmount * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
         const afterDiscount = baseAmount - discountAmount;
-        const taxAmount = (afterDiscount * item.taxRate) / 100;
+        const taxAmount = (afterDiscount * Number(item.taxRate || 0)) / 100;
         return afterDiscount + taxAmount;
     };
 
@@ -492,17 +509,17 @@ export const QuotesAdd: React.FC = () => {
     const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
-    const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    const subTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.rate || 0)), 0);
     const totalDiscount = discountTypeOnTotal === 'percentage'
-        ? (subTotal * discountOnTotal) / 100
-        : discountOnTotal;
+        ? (subTotal * (Number(discountOnTotal) || 0)) / 100
+        : (Number(discountOnTotal) || 0);
     const afterDiscount = subTotal - totalDiscount;
     const taxAmount = items.reduce((sum, item) => {
-        const itemSubtotal = item.quantity * item.rate;
+        const itemSubtotal = Number(item.quantity || 0) * Number(item.rate || 0);
         const itemDiscount = item.discountType === 'percentage'
-            ? (itemSubtotal * item.discount) / 100
-            : item.discount;
-        return sum + ((itemSubtotal - itemDiscount) * item.taxRate / 100);
+            ? (itemSubtotal * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
+        return sum + ((itemSubtotal - itemDiscount) * Number(item.taxRate || 0) / 100);
     }, 0);
     // Update totalAmount to subtract TDS/TCS (taxAmount2)
     const totalAmount = afterDiscount + adjustment - taxAmount2;
@@ -619,6 +636,11 @@ export const QuotesAdd: React.FC = () => {
         //     toast.error('Expiry is required');
         //     return false;
         // }
+
+        if (expectedShipmentDate && salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+            toast.error('Expiry Date cannot be earlier than Quote Date');
+            return false;
+        }
 
         // if (!selectedTerm) {
         //     // newErrors.paymentTerms = 'Payment terms is required';
@@ -995,12 +1017,11 @@ export const QuotesAdd: React.FC = () => {
 
                         {/* {selectedCustomer && (
                             <Button
-                                variant="outlined"
+                                variant="outline"
                                 onClick={() => setCustomerDrawerOpen(true)}
-                                endIcon={<ChevronRight />}
                                 sx={{ textTransform: 'none' }}
                             >
-                                View Customer Details
+                                <span className="flex items-center gap-2">View Customer Details <ChevronRight /></span>
                             </Button>
                         )} */}
                     </div>
@@ -1013,76 +1034,44 @@ export const QuotesAdd: React.FC = () => {
                             <label className="block text-sm font-medium mb-2">
                                 Billing Address
                             </label>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 value={selectedCustomer?.billing_address?.address
                                     ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
-                                    : billingAddress}
-                                onChange={(e) => setBillingAddress(e.target.value)}
-                                placeholder="Enter billing address"
-                                disabled={!!selectedCustomer?.billing_address?.address}
-
-                                InputLabelProps={{ shrink: true }}
-                                inputProps={{ maxLength: 500 }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-
-                                    "& .MuiInputBase-inputMultiline": {
-                                        resize: "none !important", // ✅ removes resize handle
-                                    },
+                                    : (billingAddress || '')}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setBillingAddress(e.target.value);
                                 }}
-
-                            //   helperText={
-                            //     <span style={{ textAlign: "right", display: "block" }}>
-                            //       {(billingAddress?.length || 0) + "/500 characters"}
-                            //     </span>
-                            //   }
+                                placeholder="Enter billing address (max 500 characters)"
+                                disabled={!!selectedCustomer?.billing_address?.address}
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(billingAddress?.length || 0)}/500
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Shipping Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 value={selectedCustomer?.shipping_address?.address
                                     ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
-                                    : shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
-                                placeholder="Enter shipping address"
-                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
-                                InputLabelProps={{ shrink: true }}
-                                inputProps={{ maxLength: 500 }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-
-                                    "& .MuiInputBase-inputMultiline": {
-                                        resize: "none !important", // ✅ removes resize handle
-                                    },
+                                    : (shippingAddress || '')}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setShippingAddress(e.target.value);
                                 }}
-
-                            //   helperText={
-                            //     <span style={{ textAlign: "right", display: "block" }}>
-                            //       {(billingAddress?.length || 0) + "/500 characters"}
-                            //     </span>
-                            //   }
+                                placeholder="Enter shipping address (max 500 characters)"
+                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(shippingAddress?.length || 0)}/500
+                            </div>
                             {/* <FormControlLabel
                                 control={
                                     <Checkbox
@@ -1144,6 +1133,7 @@ export const QuotesAdd: React.FC = () => {
                                 helperText={errors.expectedShipmentDate}
                                 sx={fieldStyles}
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{ min: salesOrderDate }}
                             />
                         </div>
 
@@ -1170,36 +1160,19 @@ export const QuotesAdd: React.FC = () => {
                             <label className="block text-sm font-medium ">
                                 Subject
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                minRows={0}
-                                maxRows={8}
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                rows={4}
                                 value={subject}
-                                onChange={e => setSubject(e.target.value)}
-                                placeholder="Enter subject"
-                                // sx={fieldStyles}
-                                InputLabelProps={{ shrink: true }}
-                                inputProps={{ maxLength: 500 }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-
-                                    "& .MuiInputBase-inputMultiline": {
-                                        resize: "none !important", // ✅ removes resize handle
-                                    },
-
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setSubject(e.target.value);
                                 }}
-                                helperText={
-                                    <span style={{ textAlign: "right", display: "block" }}>
-                                        {(subject?.length || 0) + "/500 characters"}
-                                    </span>
-                                }
+                                placeholder="Enter subject (max 500 characters)"
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(subject?.length || 0)}/500
+                            </div>
                         </div>
                     </div>
                 </Section>
@@ -1285,8 +1258,16 @@ export const QuotesAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || "")}
-                                                    inputProps={{ min: 1, step: 1 }}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Quantity cannot be negative');
+                                                            updateItem(index, 'quantity', 0);
+                                                        } else {
+                                                            updateItem(index, 'quantity', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
+                                                    inputProps={{ min: 0, step: 1 }}
                                                     sx={{ width: 80 }}
                                                 />
                                             </td>
@@ -1295,7 +1276,15 @@ export const QuotesAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || "")}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Rate cannot be negative');
+                                                            updateItem(index, 'rate', 0);
+                                                        } else {
+                                                            updateItem(index, 'rate', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
@@ -1313,7 +1302,7 @@ export const QuotesAdd: React.FC = () => {
                                                     <FormControl size="small" sx={{ width: 80 }}>
                                                         <Select
                                                             value={item.discountType}
-                                                            onChange={(e) => updateItem(index, 'discountType', e.target.value)}
+                                                            onChange={(e) => updateItem(index, 'discountType', e.target.value as 'percentage' | 'amount')}
                                                         >
                                                             <MenuItem value="percentage">%</MenuItem>
                                                             <MenuItem value="amount">₹</MenuItem>
@@ -1329,7 +1318,7 @@ export const QuotesAdd: React.FC = () => {
                                                         value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
                                                         onChange={(e) => {
-                                                            const value = e.target.value;
+                                                            const value = String(e.target.value);
 
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1344,7 +1333,7 @@ export const QuotesAdd: React.FC = () => {
                                                             // Tax group selected
                                                             else {
                                                                 updateItem(index, "item_tax_type", "tax_group");
-                                                                updateItem(index, "tax_group_id", value);
+                                                                updateItem(index, "tax_group_id", Number(value));
                                                             }
                                                         }}
                                                     >
@@ -1392,12 +1381,10 @@ export const QuotesAdd: React.FC = () => {
 
                         <div className="flex gap-3 pt-4">
                             <Button
-                                startIcon={<Add />}
-                                onClick={addItem}
                                 variant="outline"
-                                sx={{ textTransform: 'none' }}
+                                onClick={addItem}
                             >
-                                Add New Row
+                                <span className="flex items-center gap-2"><Add /> Add New Row</span>
                             </Button>
                             {/* <Button
                                 variant="outlined"
@@ -1434,7 +1421,18 @@ export const QuotesAdd: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value))}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Discount cannot be negative');
+                                                setDiscountOnTotal(0);
+                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                                toast.error('Discount percentage cannot exceed 100%');
+                                                setDiscountOnTotal(100);
+                                            } else {
+                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                            }
+                                        }}
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
@@ -1537,66 +1535,36 @@ export const QuotesAdd: React.FC = () => {
 
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={3}
                         value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        placeholder="Enter any notes for the customer"
-                        InputLabelProps={{ shrink: true }}
-                        inputProps={{ maxLength: 500 }}
-                        sx={{
-                            mt: 1,
-                            "& .MuiOutlinedInput-root": {
-                                height: "auto !important",
-                                padding: "2px !important",
-                                display: "flex",
-                            },
-
-                            "& .MuiInputBase-inputMultiline": {
-                                resize: "none !important", // ✅ removes resize handle
-                            },
-
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
                         }}
-                        helperText={
-                            <span style={{ textAlign: "right", display: "block" }}>
-                                {(customerNotes?.length || 0) + "/500 characters"}
-                            </span>
-                        }
+                        placeholder="Enter any notes for the customer (max 500 characters)"
+                        maxLength={500}
                     />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(customerNotes?.length || 0)}/500
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={4}
                         value={termsAndConditions}
-                        onChange={(e) => setTermsAndConditions(e.target.value)}
-                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-                        InputLabelProps={{ shrink: true }}
-                        inputProps={{ maxLength: 500 }}
-                        sx={{
-                            mt: 1,
-                            "& .MuiOutlinedInput-root": {
-                                height: "auto !important",
-                                padding: "2px !important",
-                                display: "flex",
-                            },
-
-                            "& .MuiInputBase-inputMultiline": {
-                                resize: "none !important", // ✅ removes resize handle
-                            },
-
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
                         }}
-                        helperText={
-                            <span style={{ textAlign: "right", display: "block" }}>
-                                {(termsAndConditions?.length || 0) + "/500 characters"}
-                            </span>
-                        }
+                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction (max 500 characters)"
+                        maxLength={500}
                     />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(termsAndConditions?.length || 0)}/500
+                    </div>
                 </Section>
 
                 {/* Attachments */}
@@ -1633,7 +1601,11 @@ export const QuotesAdd: React.FC = () => {
                                                 ({(file.size / 1024).toFixed(2)} KB)
                                             </span>
                                         </div>
-                                        <IconButton size="small" onClick={() => removeAttachment(index)}>
+                                        <IconButton size="small" onClick={() => {
+                                            if (window.confirm("Are you sure about deleting this item?")) {
+                                                removeAttachment(index);
+                                            }
+                                        }}>
                                             <Close fontSize="small" />
                                         </IconButton>
                                     </div>
@@ -1667,13 +1639,13 @@ export const QuotesAdd: React.FC = () => {
                         />
 
                         {/* Contact Persons Section */}
-                        {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+                        {selectedCustomer && (selectedCustomer.contact_persons || selectedCustomer.contactPersons) && (
                             <div>
                                 <Typography variant="body2" className="font-semibold mb-2">
                                     Select contact persons to email
                                 </Typography>
                                 <div className="flex flex-col gap-2">
-                                    {selectedCustomer.contact_persons.map((person) => (
+                                    {((selectedCustomer.contact_persons || selectedCustomer.contactPersons) as any[]).map((person) => (
                                         <div key={person.id} className="flex items-center gap-2">
                                             <Checkbox
                                                 checked={selectedContactPersons.includes(person.id)}
@@ -1687,7 +1659,7 @@ export const QuotesAdd: React.FC = () => {
                                                 size="small"
                                             />
                                             <Chip
-                                                label={`${person.first_name} ${person.last_name} (${person.email})`}
+                                                label={`${person.first_name || person.firstName} ${person.last_name || person.lastName} (${person.email})`}
                                                 variant={selectedContactPersons.includes(person.id) ? "filled" : "outlined"}
                                             />
                                         </div>
@@ -1807,7 +1779,7 @@ export const QuotesAdd: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                                     <span className="text-xl font-bold text-blue-600">
-                                        {selectedCustomer.name.charAt(0)}
+                                        {(selectedCustomer.name || '').charAt(0)}
                                     </span>
                                 </div>
                                 <div>
@@ -1881,13 +1853,11 @@ export const QuotesAdd: React.FC = () => {
                                     Contact Persons
                                 </Typography>
                                 <Button
-                                    size="small"
-                                    startIcon={<Add />}
+                                    size="sm"
                                     onClick={() => setContactPersonDialogOpen(true)}
-                                    variant="outlined"
-                                    sx={{ textTransform: 'none' }}
+                                    variant="outline"
                                 >
-                                    Add
+                                    <span className="flex items-center gap-1"><Add /> Add</span>
                                 </Button>
                             </div>
 
@@ -1952,8 +1922,8 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
+                    <Button onClick={() => setAddUserDialogOpen(false)} variant="ghost">Cancel</Button>
+                    <Button onClick={handleAddExternalUser} variant="primary">Add</Button>
                 </DialogActions>
             </Dialog>
 
@@ -2042,8 +2012,8 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
+                    <Button onClick={() => setContactPersonDialogOpen(false)} variant="ghost">Cancel</Button>
+                    <Button onClick={handleAddContactPerson} variant="primary">Save</Button>
                 </DialogActions>
             </Dialog>
 
