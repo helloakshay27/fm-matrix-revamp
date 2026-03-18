@@ -1108,6 +1108,7 @@ import { RideReviews } from "./pages/pulse/RideReviews";
 import { UserDetail } from "./pages/pulse/UserDetail";
 import { ActiveReports } from "./pages/pulse/ActiveReports";
 import { ActiveSOS } from "./pages/pulse/ActiveSOS";
+import { RideTracking } from "./pages/pulse/RideTracking";
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -1150,6 +1151,7 @@ import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
+import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
 
 const queryClient = new QueryClient();
 
@@ -2500,6 +2502,10 @@ function App() {
                           <Route
                             path="/accounting/reports/account-transactions/details"
                             element={<AccountTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/debtors-creditors"
+                            element={<DebtorsCreditorsReport />}
                           />
                           <Route
                             path="/accounting/reports/cash-flow-statement"
@@ -5207,6 +5213,11 @@ function App() {
                           <Route
                             path="/pulse/carpool/active-sos"
                             element={<ActiveSOS />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/tracking"
+                            element={<RideTracking />}
                           />
 
                           <Route

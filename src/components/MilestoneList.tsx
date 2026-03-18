@@ -435,17 +435,13 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
             return (
                 <div
                     className="flex items-center gap-2 cursor-pointer"
-                // onClick={() =>
-                //     type === "issues"
-                //         ? navigate(`/vas/issues?project_id=${item.id}`)
-                //         : type === "tasks"
-                //             ? navigate(`/vas/tasks?project_id=${item.id}`)
-                //             : type === "subtasks"
-                //                 ? navigate(`/vas/tasks?subtasks=true&project_id=${item.id}`)
-                //                 : type === "milestones"
-                //                     ? navigate(`/vas/projects/${item.id}/milestones`)
-                //                     : null
-                // }
+                    onClick={() =>
+                        type === "issues"
+                            ? navigate(`/vas/issues?milestone_id=${item.id}`)
+                            : type === "tasks"
+                                ? navigate(`${item.id}/tasks`)
+                                : null
+                    }
                 >
                     <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
                         {completed}
@@ -516,12 +512,12 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
             case "tasks": {
                 const completed = item.completed_tasks || 0;
                 const total = item.total_tasks || 0;
-                return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+                return renderProgressBar(completed, total, "bg-[#b4e7ff]", "tasks");
             }
             case "issues": {
                 const completed = item.completed_issues || 0;
                 const total = item.total_issues || 0;
-                return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+                return renderProgressBar(completed, total, "bg-[#b4e7ff]", "issues");
             }
             case "owner":
                 return item.owner_name ? item.owner_name : "-";

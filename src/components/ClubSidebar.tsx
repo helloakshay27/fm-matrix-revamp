@@ -390,6 +390,10 @@ const modulesByPackage = {
           name: "TDS Receivables Summary",
           href: "/accounting/reports/tds-receivables-summary",
         },
+        {
+          name: "Debtors & Creditors ",
+          href: "/accounting/reports/debtors-creditors",
+        },
         // {
         //   name: "Account Type Summary",
         //   href: "/accounting/reports/account-type-summary",

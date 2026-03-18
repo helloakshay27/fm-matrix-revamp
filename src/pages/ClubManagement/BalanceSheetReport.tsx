@@ -72,6 +72,7 @@ const BalanceSheetReport: React.FC = () => {
       );
 
       setBalanceSheetData(response.data);
+      
     } catch (err: unknown) {
       console.error("Error fetching balance sheet:", err);
       setError("Failed to load balance sheet data");
@@ -246,8 +247,9 @@ const BalanceSheetReport: React.FC = () => {
 
     const liabilities =
       balanceSheetData?.balance_sheet?.accounts?.find(
-        (a: any) => a.node_name === "liabilities"
+        (a: any) => a.node_name === "liability_and_equity"
       );
+      console.log("liability:",liabilities,balanceSheetData )
 
     return (
       <table className="w-full border border-gray-300">
@@ -304,6 +306,9 @@ const BalanceSheetReport: React.FC = () => {
       </div>
     );
   }
+
+
+  
 
   return (
     <div
