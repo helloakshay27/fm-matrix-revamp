@@ -1694,6 +1694,46 @@ const modulesByPackage = {
           name: "Account Transactions",
           href: "/accounting/reports/account-transactions",
         },
+        {
+          name: "AR Aging System",
+          href: "/accounting/reports/ar-aging-summary",
+        },
+        {
+          name: "AR Aging Details",
+          href: "/accounting/reports/ar-aging-details",
+        },
+        {
+          name: "Invoice Details",
+          href: "/accounting/reports/invoice-details",
+        },
+        {
+          name: "Retainer Invoice Details",
+          href: "/accounting/reports/retainer-invoice-details",
+        },
+        {
+          name: "Sales Order Details",
+          href: "/accounting/reports/sales-order-details",
+        },
+        {
+          name: "Delivery Challan Details",
+          href: "/accounting/reports/delivery-challan-details",
+        },
+        {
+          name: "Quote Details",
+          href: "/accounting/reports/quote-details",
+        },
+        {
+          name: "Customer Balance Summary",
+          href: "/accounting/reports/customer-balance-summary",
+        },
+        {
+          name: "Receivable Summary",
+          href: "/accounting/reports/receivable-summary",
+        },
+        {
+          name: "Receivable Details",
+          href: "/accounting/reports/receivable-details",
+        },
       ],
     },
   ],

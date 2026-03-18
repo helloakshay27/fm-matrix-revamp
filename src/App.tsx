@@ -1052,6 +1052,16 @@ import AccountTypeTransactionsReport from "./pages/ClubManagement/AccountTypeTra
 import AccountTypeTransactionsDetailPage from "./pages/ClubManagement/AccountTypeTransactionsDetailPage";
 import AccountTransactionsDetailPage from "./pages/ClubManagement/AccountTransactionsDetailPage";
 import AccountTransactionsReport from "./pages/ClubManagement/AccountTransactionsReport";
+import ARAgingSummaryReport from "./pages/ClubManagement/ARAgingSummaryReport";
+import ARAgingDetailsReport from "./pages/ClubManagement/ARAgingDetailsReport";
+import InvoiceDetailsReport from "./pages/ClubManagement/InvoiceDetailsReport";
+import RetainerInvoiceDetailsReport from "./pages/ClubManagement/RetainerInvoiceDetailsReport";
+import SalesOrderDetailsReport from "./pages/ClubManagement/SalesOrderDetailsReport";
+import DeliveryChallanDetailsReport from "./pages/ClubManagement/DeliveryChallanDetailsReport";
+import QuoteDetailsReport from "./pages/ClubManagement/QuoteDetailsReport";
+import CustomerBalanceSummaryReport from "./pages/ClubManagement/CustomerBalanceSummaryReport";
+import ReceivableSummaryReport from "./pages/ClubManagement/ReceivableSummaryReport";
+import ReceivableDetailsReport from "./pages/ClubManagement/ReceivableDetailsReport";
 import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
@@ -2522,6 +2532,46 @@ function App() {
                           <Route
                             path="/accounting/reports/account-transactions"
                             element={<AccountTransactionsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ar-aging-summary"
+                            element={<ARAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ar-aging-details"
+                            element={<ARAgingDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/invoice-details"
+                            element={<InvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/retainer-invoice-details"
+                            element={<RetainerInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-order-details"
+                            element={<SalesOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/delivery-challan-details"
+                            element={<DeliveryChallanDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/quote-details"
+                            element={<QuoteDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/customer-balance-summary"
+                            element={<CustomerBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-summary"
+                            element={<ReceivableSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-details"
+                            element={<ReceivableDetailsReport />}
                           />
                           <Route
                             path="/accounting/reports/account-transactions/details"
