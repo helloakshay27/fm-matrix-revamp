@@ -282,7 +282,7 @@ const modulesByPackage = {
         { name: "Transactions", href: "/accounting/transactions" },
         { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
         { name: "Opening Balance", href: "/accounting/opening-balance" },
-        { name: "Budget", href: "/accounting/budget" },
+        // { name: "Budget", href: "/accounting/budget" },
         { name: "Tax Setup", href: "/accounting/tax-setup" },
       ],
     },
