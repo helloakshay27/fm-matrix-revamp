@@ -1166,6 +1166,7 @@ import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
+import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
 
 const queryClient = new QueryClient();
 
@@ -1180,20 +1181,20 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
-  useEffect(() => {
-    console.warn("🔌 WebSocket connection effect running");
+  // useEffect(() => {
+  //   console.warn("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+  //   if (token) {
+  //     console.warn("✅ Token available, connecting...");
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error("❌ No token available for WebSocket connection");
+  //   }
 
-    return () => {
-      console.warn("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect, socketUrl]);
+  //   return () => {
+  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
+  //   };
+  // }, [token, connect, socketUrl]);
 
   // Subscribe to notifications
   useEffect(() => {
@@ -2512,6 +2513,10 @@ function App() {
                           <Route
                             path="/accounting/reports/balance-sheet"
                             element={<BalanceSheetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/business-performance"
+                            element={<BusinessPerformanceRatioReport />}
                           />
                           <Route
                             path="/accounting/reports/account-type-summary"

@@ -394,6 +394,14 @@ const modulesByPackage = {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
+         {
+          name: "Business Performance Ratio",
+          href: "/accounting/reports/business-performance",
+        },
+
+
+
+
         // {
         //   name: "Account Type Summary",
         //   href: "/accounting/reports/account-type-summary",
