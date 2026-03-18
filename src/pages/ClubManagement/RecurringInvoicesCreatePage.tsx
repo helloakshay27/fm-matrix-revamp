@@ -37,6 +37,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -1161,8 +1162,20 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                 onChange={(e) => setSalesOrderDate(e.target.value)}
                                 error={!!errors.salesOrderDate}
                                 helperText={errors.salesOrderDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: salesOrderDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: salesOrderDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(salesOrderDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1184,9 +1197,21 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                     disabled={neverExpires}
                                     error={!neverExpires && !!errors.expectedShipmentDate}
                                     helperText={!neverExpires ? errors.expectedShipmentDate : ""}
-                                    sx={fieldStyles}
+                                    sx={{
+                                        ...fieldStyles,
+                                        '& .MuiInputBase-input': {
+                                            color: (!neverExpires && expectedShipmentDate) ? 'transparent' : 'inherit',
+                                        }
+                                    }}
                                     InputLabelProps={{ shrink: true }}
                                     inputProps={{ min: salesOrderDate }}
+                                    InputProps={{
+                                        startAdornment: (!neverExpires && expectedShipmentDate) ? (
+                                            <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                                {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
+                                            </InputAdornment>
+                                        ) : null
+                                    }}
                                 />
                             </div>
 
@@ -1878,56 +1903,59 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
 
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
-                    variant="outlined"
-                    onClick={() => navigate('/accounting/recurring-invoices')}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="outlined"
+                    variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',
                         px: 4,
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
                         '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.main',
-                            color: 'white'
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
                         }
                     }}
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    variant="contained"
+                    variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
                         px: 4,
                         '&:hover': {
-                            bgcolor: 'primary.dark'
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
                         },
                         textTransform: 'none'
                     }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Submit'}
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => navigate('/accounting/recurring-invoices')}
+                    disabled={isSubmitting}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        borderColor: '#C72030',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            borderColor: '#A01020',
+                            bgcolor: '#f8f1f1',
+                            color: '#A01020'
+                        }
+                    }}
+                >
+                    Cancel
                 </Button>
             </div>
 

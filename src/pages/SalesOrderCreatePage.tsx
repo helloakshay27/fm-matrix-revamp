@@ -37,6 +37,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -629,17 +630,31 @@ export const SalesOrderCreatePage: React.FC = () => {
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!selectedCustomer) newErrors.customer = 'Customer is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
+        if (!selectedCustomer) {
+            newErrors.customer = 'Customer is required';
+            toast.error('Customer is required');
+        }
+        if (!salesOrderDate) {
+            newErrors.salesOrderDate = 'Sales order date is required';
+            toast.error('Sales order date is required');
+        }
         if (!expectedShipmentDate) {
             newErrors.expectedShipmentDate = 'Expected shipment date is required';
+            toast.error('Expected shipment date is required');
         } else if (salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
             newErrors.expectedShipmentDate = 'Cannot be earlier than Sales Order Date';
+            toast.error('Expected shipment date cannot be earlier than Sales Order Date');
         }
-        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+        if (!selectedTerm) {
+            newErrors.paymentTerms = 'Payment terms is required';
+            toast.error('Payment terms is required');
+        }
 
         const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+        if (!hasValidItems) {
+            newErrors.items = 'At least one valid item with quantity and rate is required';
+            toast.error('At least one valid item is required');
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -781,11 +796,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                 body: formData
             });
 
-            alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            toast.success(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/accounting/sales-order');
         } catch (error) {
             console.error('Error submitting sales order:', error);
-            alert('Failed to create sales order');
+            toast.error('Failed to create sales order');
         } finally {
             setIsSubmitting(false);
         }
@@ -1078,8 +1093,20 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 onChange={(e) => setSalesOrderDate(e.target.value)}
                                 error={!!errors.salesOrderDate}
                                 helperText={errors.salesOrderDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: salesOrderDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: salesOrderDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(salesOrderDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1094,9 +1121,21 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 onChange={(e) => setExpectedShipmentDate(e.target.value)}
                                 error={!!errors.expectedShipmentDate}
                                 helperText={errors.expectedShipmentDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: expectedShipmentDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
                                 inputProps={{ min: salesOrderDate }}
+                                InputProps={{
+                                    startAdornment: expectedShipmentDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1800,56 +1839,59 @@ export const SalesOrderCreatePage: React.FC = () => {
 
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
-                    variant="outlined"
-                    onClick={() => navigate('/accounting/sales-order')}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="outlined"
+                    variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',
                         px: 4,
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
                         '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.main',
-                            color: 'white'
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
                         }
                     }}
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    variant="contained"
+                    variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
                         px: 4,
                         '&:hover': {
-                            bgcolor: 'primary.dark'
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
                         },
                         textTransform: 'none'
                     }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => navigate('/accounting/sales-order')}
+                    disabled={isSubmitting}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        borderColor: '#C72030',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            borderColor: '#A01020',
+                            bgcolor: '#f8f1f1',
+                            color: '#A01020'
+                        }
+                    }}
+                >
+                    Cancel
                 </Button>
             </div>
 

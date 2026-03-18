@@ -493,8 +493,20 @@ export const RecordPaymentPage: React.FC = () => {
                       setDate(e.target.value);
                     }
                   }}
-                  sx={fieldStyles}
+                  sx={{
+                    ...fieldStyles,
+                    '& .MuiInputBase-input': {
+                      color: date ? 'transparent' : 'inherit',
+                    }
+                  }}
                   InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: date ? (
+                      <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                        {format(parseISO(date), 'dd/MM/yyyy')}
+                      </InputAdornment>
+                    ) : null
+                  }}
                 />
               </div>
               <div>
@@ -983,12 +995,13 @@ export const RecordPaymentPage: React.FC = () => {
           sx={{
             textTransform: "none",
             px: 4,
-            borderColor: "divider",
-            color: "text.secondary",
+            borderColor: "#C72030",
+            color: "#C72030",
+            fontWeight: 600,
             "&:hover": {
-              borderColor: "primary.main",
-              bgcolor: "primary.main",
-              color: "white",
+              borderColor: "#A01020",
+              bgcolor: "#f8f1f1",
+              color: "#A01020",
             },
           }}
         >
@@ -1009,14 +1022,15 @@ export const RecordPaymentPage: React.FC = () => {
                     Save as Draft
                 </MuiButton> */}
         <MuiButton
-          variant="contained"
+          variant="text"
           onClick={() => handleSubmit("paid")}
           disabled={submitting}
           sx={{
-            bgcolor: "primary.red",
-            color: "white",
+            bgcolor: "#f8f1f1",
+            color: "#C72030",
+            fontWeight: 600,
             px: 4,
-            "&:hover": { bgcolor: "primary.red" },
+            "&:hover": { bgcolor: "#f1e8e8", color: "#A01020" },
             textTransform: "none",
           }}
         >

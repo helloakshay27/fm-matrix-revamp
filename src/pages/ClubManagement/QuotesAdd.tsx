@@ -39,6 +39,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
+import { format, parseISO } from 'date-fns';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -1115,8 +1116,20 @@ export const QuotesAdd: React.FC = () => {
                                 onChange={(e) => setSalesOrderDate(e.target.value)}
                                 error={!!errors.salesOrderDate}
                                 helperText={errors.salesOrderDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: salesOrderDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: salesOrderDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(salesOrderDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1131,9 +1144,21 @@ export const QuotesAdd: React.FC = () => {
                                 onChange={(e) => setExpectedShipmentDate(e.target.value)}
                                 error={!!errors.expectedShipmentDate}
                                 helperText={errors.expectedShipmentDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: expectedShipmentDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
                                 inputProps={{ min: salesOrderDate }}
+                                InputProps={{
+                                    startAdornment: expectedShipmentDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1710,57 +1735,59 @@ export const QuotesAdd: React.FC = () => {
             </div>
 
             <div className="flex gap-3 mt-10 mb-10 justify-center pb-5">
-
                 <Button
-                    // variant="outlined"
+                    variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                // sx={{
-                //     textTransform: 'none',
-                //     px: 4,
-                //     borderColor: 'primary.main',
-                //     color: 'primary.main',
-                //     '&:hover': {
-                //         borderColor: 'primary.dark',
-                //         bgcolor: 'primary.main',
-                //         color: 'white'
-                //     }
-                // }}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
+                        }
+                    }}
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    // variant="contained"
+                    variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                // sx={{
-                //     bgcolor: 'primary.main',
-                //     color: 'white',
-                //     px: 4,
-                //     '&:hover': {
-                //         bgcolor: 'primary.dark'
-                //     },
-                //     textTransform: 'none'
-                // }}
+                    sx={{
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        px: 4,
+                        '&:hover': {
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
+                        },
+                        textTransform: 'none'
+                    }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Save and Send'}
                 </Button>
 
                 <Button
-                    variant="outline"
+                    variant="outlined"
                     onClick={() => navigate('/accounting/invoices/list')}
                     disabled={isSubmitting}
-                // sx={{
-                //     textTransform: 'none',
-                //     px: 4,
-                //     borderColor: 'divider',
-                //     color: 'text.secondary',
-                //     '&:hover': {
-                //         borderColor: 'primary.main',
-                //         bgcolor: 'primary.main',
-                //         color: 'white'
-                //     }
-                // }}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        borderColor: '#C72030',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            borderColor: '#A01020',
+                            bgcolor: '#f8f1f1',
+                            color: '#A01020'
+                        }
+                    }}
                 >
                     Cancel
                 </Button>
