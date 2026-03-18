@@ -1,268 +1,238 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
-import TextField from "@mui/material/TextField";
-import { NotepadText } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import TextField from "@mui/material/TextField";
+import { NotepadText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-interface RawSalesOrderItem {
-  status?: string;
-  date?: string;
-  expected_shipment_date?: string;
-  sales_order_number?: string;
-  customer_name?: string;
-  amount?: number;
-}
-
-type SalesOrderRow = {
+interface SalesOrderRow {
   id: string;
   status: string;
   date: string;
-  expectedShipmentDate: string;
+  shipmentDate: string;
   salesOrderNo: string;
   customerName: string;
   amount: number;
-};
-
-const getCurrentMonthRange = () => {
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return {
-    fromDate: firstDay.toISOString().split("T")[0],
-    toDate: lastDay.toISOString().split("T")[0],
-  };
-};
-
-const formatDisplayDate = (value: string) => {
-  if (!value) return "--/--/----";
-  const parsedDate = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsedDate.getTime())) return value;
-  return new Intl.DateTimeFormat("en-GB").format(parsedDate);
-};
-
-const formatAmount = (value: number) =>
-  new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+}
 
 const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Sent: "bg-blue-100 text-blue-700",
-  Open: "bg-gray-100 text-gray-800",
-  Paid: "bg-green-100 text-green-700",
   Draft: "bg-yellow-100 text-yellow-700",
   Confirmed: "bg-green-100 text-green-700",
 };
 
 const columns: ColumnConfig[] = [
-  { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
-  { key: "date", label: "Date", sortable: true, hideable: true, draggable: true },
-  { key: "expectedShipmentDate", label: "Expected Shipment Date", sortable: true, hideable: true, draggable: true },
-  { key: "salesOrderNo", label: "Sales Order#", sortable: true, hideable: true, draggable: true },
-  { key: "customerName", label: "Customer Name", sortable: true, hideable: true, draggable: true },
-  { key: "amount", label: "Amount", sortable: true, hideable: true, draggable: true },
+  { key: "status", label: "Status", sortable: true },
+  { key: "date", label: "Date", sortable: true },
+  { key: "shipmentDate", label: "Shipment Date", sortable: true },
+  { key: "salesOrderNo", label: "Sales Order#", sortable: true },
+  { key: "customerName", label: "Customer Name", sortable: true },
+  { key: "amount", label: "Amount", sortable: true },
 ];
 
+const formatCurrency = (value: number) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+  })}`;
+
 const SalesOrderDetailsReport: React.FC = () => {
-  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
-  const [filters, setFilters] = useState(defaultRange);
-  const [reportRows, setReportRows] = useState<SalesOrderRow[]>([]);
+  const [rows, setRows] = useState<SalesOrderRow[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [filters, setFilters] = useState({
+    fromDate: "01/03/2026",
+    toDate: "12/03/2026",
+  });
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
 
-  const fetchSalesOrderDetails = useCallback(async () => {
-    setLoading(true);
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    const formatted = value
+      ? value.split("-").reverse().join("/") // YYYY-MM-DD → DD/MM/YYYY
+      : "";
+
+    setFilters((prev) => ({
+      ...prev,
+      [name]: formatted,
+    }));
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "--";
+    const [year, month, day] = dateStr.split("-");
+    return `${day}-${month}-${year}`;
+  };
+
+  // ✅ API CALL (UPDATED)
+  const fetchSalesOrders = async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_sales_orders/sales_order_details.json`,
+      setLoading(true);
+
+      const res = await axios.get(
+        `https://${baseUrl}/sale_orders.json`,
         {
+          params: {
+            lock_account_id: lock_account_id,
+            "q[date_gteq]": filters.fromDate,
+            "q[date_lteq]": filters.toDate,
+          },
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          params: {
-            from_date: filters.fromDate,
-            to_date: filters.toDate,
           },
         }
       );
 
-      const data = response.data || [];
-      const mapped: SalesOrderRow[] = (
-        Array.isArray(data) ? data : (data.sales_orders ?? [])
-      ).map((item: RawSalesOrderItem, idx: number) => ({
-        id: String(idx),
-        status: item.status || "",
-        date: item.date || "",
-        expectedShipmentDate: item.expected_shipment_date || "",
-        salesOrderNo: item.sales_order_number || "",
-        customerName: item.customer_name || "",
-        amount: item.amount || 0,
-      }));
+      const apiData = res?.data || [];
 
-      setReportRows(mapped);
-    } catch (error) {
-      console.error("Error fetching sales order details", error);
-      setReportRows([]);
+      const mapped: SalesOrderRow[] = apiData.map(
+        (item: any, index: number) => ({
+          id: item.id ? String(item.id) : `row-${index}`, // ✅ FIX duplicate key
+          status: item.status || "--",
+          date: formatDate(item.date),
+          shipmentDate: formatDate(item.expected_shipment_date),
+          salesOrderNo: item.sales_order_number || "--",
+          customerName: item.customer_name || "--",
+          amount: Number(item.amount || 0),
+        })
+      );
+
+      setRows(mapped);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [baseUrl, lock_account_id, token, filters.fromDate, filters.toDate]);
+  };
 
   useEffect(() => {
-    fetchSalesOrderDetails();
-  }, [fetchSalesOrderDetails]);
+    fetchSalesOrders();
+  }, []);
 
-  const reportTotals = useMemo(
-    () =>
-      reportRows.reduce(
-        (acc, row) => ({ amount: acc.amount + row.amount }),
-        { amount: 0 }
-      ),
-    [reportRows]
+  // ✅ TOTAL
+  const totals = rows.reduce(
+    (acc, row) => ({
+      amount: acc.amount + row.amount,
+    }),
+    { amount: 0 }
   );
 
-  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setFilters((curr) => ({ ...curr, [name]: value }));
+  // ✅ RENDER ROW
+  const renderRow = (row: SalesOrderRow) => {
+    const isTotalRow = row.id === "total-row";
+
+    return {
+      status: isTotalRow ? (
+        <span className="font-semibold text-black">Total</span>
+      ) : (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            statusColorMap[row.status] || "bg-gray-100"
+          }`}
+        >
+          {row.status}
+        </span>
+      ),
+
+      date: <span>{isTotalRow ? "" : row.date}</span>,
+      shipmentDate: <span>{isTotalRow ? "" : row.shipmentDate}</span>,
+      salesOrderNo: <span>{isTotalRow ? "" : row.salesOrderNo}</span>,
+      customerName: <span>{isTotalRow ? "" : row.customerName}</span>,
+
+      amount: (
+        <span className="font-semibold text-blue-700">
+          {formatCurrency(row.amount)}
+        </span>
+      ),
+    };
   };
 
-  const handleViewReport = () => {
-    if (!filters.fromDate || !filters.toDate) {
-      alert("Please select From Date and To Date");
-      return;
-    }
-    fetchSalesOrderDetails();
+  const totalsRow: SalesOrderRow = {
+    id: "total-row",
+    status: "",
+    date: "",
+    shipmentDate: "",
+    salesOrderNo: "",
+    customerName: "",
+    amount: totals.amount,
   };
-
-  const renderRow = (row: SalesOrderRow) => ({
-    status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          statusColorMap[row.status] || "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {row.status}
-      </span>
-    ),
-    date: (
-      <span className="text-sm text-gray-600">
-        {formatDisplayDate(row.date)}
-      </span>
-    ),
-    expectedShipmentDate: (
-      <span className="text-sm text-gray-600">
-        {formatDisplayDate(row.expectedShipmentDate)}
-      </span>
-    ),
-    salesOrderNo: (
-      <span className="text-sm font-medium text-blue-600">
-        {row.salesOrderNo}
-      </span>
-    ),
-    customerName: (
-      <span className="text-sm font-medium text-blue-600">
-        {row.customerName}
-      </span>
-    ),
-    amount: (
-      <span className="text-sm font-medium text-gray-900">
-        {formatAmount(row.amount)}
-      </span>
-    ),
-  });
 
   return (
-    <div
-      className="w-full bg-[#f9f7f2] p-6"
-      style={{ minHeight: "100vh", boxSizing: "border-box" }}
-    >
-      {/* Filter Card */}
-      <div className="mb-6 rounded-lg border-2 bg-white p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
-            <NotepadText className="h-6 w-6" />
+    <div className="w-full bg-[#f9f7f2] p-6 min-h-screen">
+      
+      {/* FILTER */}
+      <div className="bg-white rounded-lg border p-6 mb-6">
+        <div className="flex items-center gap-4 mb-5">
+          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[#E5E0D3]">
+            <NotepadText  color="#d32f2f" size={24} />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-            Sales Order Details
-          </h3>
+          <div>
+            <h3 className="text-lg font-semibold">
+              Sales Order Details
+            </h3>
+            {/* <p className="text-sm text-gray-500">
+              Track and manage sales orders
+            </p> */}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
+        <div className="grid md:grid-cols-3 gap-4">
           <TextField
             label="From Date"
             type="date"
             name="fromDate"
-            value={filters.fromDate}
+            value={filters.fromDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
-            fullWidth
             size="small"
+            fullWidth
           />
+
           <TextField
             label="To Date"
             type="date"
             name="toDate"
-            value={filters.toDate}
+            value={filters.toDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
-            fullWidth
             size="small"
+            fullWidth
           />
+
           <Button
-            type="button"
-            onClick={handleViewReport}
-            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={fetchSalesOrders}
+            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
           >
             View
           </Button>
         </div>
       </div>
 
-      {/* Report Header + Table */}
-      <div className="rounded-lg border bg-white overflow-hidden">
-        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
+      {/* TABLE */}
+      <div className="bg-white rounded-lg border overflow-hidden">
+       
+
+        <div className="p-4">
+           <div className="px-6 py-5 text-center border-b bg-[#F8F9FC]">
+          <h1 className="text-2xl font-semibold">
             Sales Order Details
           </h1>
-          <p className="mt-1 text-sm text-[#475467]">
-            From {formatDisplayDate(filters.fromDate)} To{" "}
-            {formatDisplayDate(filters.toDate)}
+          <p className="text-sm text-gray-500">
+            From {filters.fromDate} To {filters.toDate}
           </p>
         </div>
-
-        {/* EnhancedTaskTable */}
-        <div className="p-4">
           <EnhancedTaskTable
-            data={reportRows}
+            data={[...rows, totalsRow]} // ✅ total row inside table
             columns={columns}
             renderRow={renderRow}
-            storageKey="sales-order-details-report-v1"
-            hideTableExport={true}
-            hideTableSearch={false}
-            enableSearch={true}
+            storageKey="sales-order-details"
             loading={loading}
-            emptyMessage="No data to display"
+            hideTableExport
+            hideColumnsButton={true}
           />
-
-          {/* Totals row */}
-          {reportRows.length > 0 && (
-            <div className="mt-2 flex justify-end rounded-md bg-[#f9f7f2] px-4 py-3 text-sm font-semibold text-[#1A1A1A] border border-gray-200">
-              <span>
-                Total Amount:{" "}
-                <span className="text-gray-900">
-                  {formatAmount(reportTotals.amount)}
-                </span>
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface RawQuoteItem {
+  id?: number;
   status?: string;
   quote_date?: string;
   expiry_date?: string;
@@ -31,6 +32,7 @@ type QuoteRow = {
   quoteAmount: number;
 };
 
+// ✅ Default date range
 const getCurrentMonthRange = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -41,18 +43,23 @@ const getCurrentMonthRange = () => {
   };
 };
 
+// ✅ Format DD-MM-YYYY
 const formatDisplayDate = (value: string) => {
-  if (!value) return "--/--/----";
-  const parsedDate = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsedDate.getTime())) return value;
-  return new Intl.DateTimeFormat("en-GB").format(parsedDate);
+  if (!value) return "--";
+  const d = new Date(`${value}T00:00:00`);
+  if (isNaN(d.getTime())) return value;
+
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+
+  return `${day}-${month}-${year}`;
 };
 
 const formatAmount = (value: number) =>
-  new Intl.NumberFormat("en-IN", {
+  `₹${Number(value || 0).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+  })}`;
 
 const statusColorMap: Record<string, string> = {
   Overdue: "bg-orange-100 text-orange-700",
@@ -63,164 +70,160 @@ const statusColorMap: Record<string, string> = {
   Accepted: "bg-green-100 text-green-700",
 };
 
+// ✅ Columns
 const columns: ColumnConfig[] = [
-  { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
-  { key: "quoteDate", label: "Quote Date", sortable: true, hideable: true, draggable: true },
-  { key: "expiryDate", label: "Expiry Date", sortable: true, hideable: true, draggable: true },
-  { key: "quoteNo", label: "Quote#", sortable: true, hideable: true, draggable: true },
-  { key: "referenceNo", label: "Reference#", sortable: true, hideable: true, draggable: true },
-  { key: "customerName", label: "Customer Name", sortable: true, hideable: true, draggable: true },
-  { key: "invoiceNo", label: "Invoice#", sortable: true, hideable: true, draggable: true },
-  { key: "projectName", label: "Project Name", sortable: true, hideable: true, draggable: true },
-  { key: "quoteAmount", label: "Quote Amount", sortable: true, hideable: true, draggable: true },
+  { key: "status", label: "Status", sortable: true },
+  { key: "quoteDate", label: "Quote Date", sortable: true },
+  { key: "expiryDate", label: "Expiry Date", sortable: true },
+  { key: "quoteNo", label: "Quote#", sortable: true },
+  { key: "referenceNo", label: "Reference#", sortable: true },
+  { key: "customerName", label: "Customer Name", sortable: true },
+  { key: "invoiceNo", label: "Invoice#", sortable: true },
+  { key: "projectName", label: "Project Name", sortable: true },
+  { key: "quoteAmount", label: "Quote Amount", sortable: true },
 ];
 
 const QuoteDetailsReport: React.FC = () => {
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
-  const [reportRows, setReportRows] = useState<QuoteRow[]>([]);
+  const [rows, setRows] = useState<QuoteRow[]>([]);
   const [loading, setLoading] = useState(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
 
+  // ✅ API CALL
   const fetchQuoteDetails = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_quotes/quote_details.json`,
+      const res = await axios.get(
+        `https://${baseUrl}/lock_account_quotes.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
           params: {
+            lock_account_id: lock_account_id,
             from_date: filters.fromDate,
             to_date: filters.toDate,
           },
         }
       );
 
-      const data = response.data || [];
+      const data = res?.data || [];
+
       const mapped: QuoteRow[] = (
-        Array.isArray(data) ? data : (data.quotes ?? data.quote_details ?? [])
-      ).map((item: RawQuoteItem, idx: number) => ({
-        id: String(idx),
+        Array.isArray(data) ? data : data.quote_details || []
+      ).map((item: RawQuoteItem, index: number) => ({
+        // ✅ UNIQUE KEY FIX
+        id:
+          item.id?.toString() ||
+          item.quote_number ||
+          item.reference_number ||
+          `row-${index}`,
+
         status: item.status || "",
-        quoteDate: item.quote_date || "",
+        quoteDate: item.date || "",
         expiryDate: item.expiry_date || "",
         quoteNo: item.quote_number || "",
         referenceNo: item.reference_number || "",
         customerName: item.customer_name || "",
         invoiceNo: item.invoice_number || "",
         projectName: item.project_name || "",
-        quoteAmount: item.quote_amount || 0,
+        quoteAmount: item.total_amount || 0,
       }));
 
-      setReportRows(mapped);
-    } catch (error) {
-      console.error("Error fetching quote details", error);
-      setReportRows([]);
+      setRows(mapped);
+    } catch (err) {
+      console.error("API Error:", err);
+      setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [baseUrl, lock_account_id, token, filters.fromDate, filters.toDate]);
+  }, [baseUrl, lock_account_id, token, filters]);
 
   useEffect(() => {
     fetchQuoteDetails();
   }, [fetchQuoteDetails]);
 
-  const reportTotals = useMemo(
+  // ✅ TOTAL CALCULATION
+  const totals = useMemo(
     () =>
-      reportRows.reduce(
-        (acc, row) => ({ quoteAmount: acc.quoteAmount + row.quoteAmount }),
+      rows.reduce(
+        (acc, row) => ({
+          quoteAmount: acc.quoteAmount + row.quoteAmount,
+        }),
         { quoteAmount: 0 }
       ),
-    [reportRows]
+    [rows]
   );
 
-  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setFilters((curr) => ({ ...curr, [name]: value }));
+  // ✅ TOTAL ROW
+  const totalRow: QuoteRow = {
+    id: "total-row",
+    status: "",
+    quoteDate: "",
+    expiryDate: "",
+    quoteNo: "",
+    referenceNo: "",
+    customerName: "",
+    invoiceNo: "",
+    projectName: "",
+    quoteAmount: totals.quoteAmount,
   };
 
-  const handleViewReport = () => {
-    if (!filters.fromDate || !filters.toDate) {
-      alert("Please select From Date and To Date");
-      return;
-    }
-    fetchQuoteDetails();
+  // ✅ RENDER ROW
+  const renderRow = (row: QuoteRow) => {
+    const isTotal = row.id === "total-row";
+
+    return {
+      status: isTotal ? (
+        <span className="font-semibold text-black">Total</span>
+      ) : (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            statusColorMap[row.status] || "bg-gray-100"
+          }`}
+        >
+          {row.status}
+        </span>
+      ),
+
+      quoteDate: <span>{isTotal ? "" : formatDisplayDate(row.quoteDate)}</span>,
+      expiryDate: <span>{isTotal ? "" : formatDisplayDate(row.expiryDate)}</span>,
+      quoteNo: <span>{isTotal ? "" : row.quoteNo}</span>,
+      referenceNo: <span>{isTotal ? "" : row.referenceNo}</span>,
+      customerName: <span>{isTotal ? "" : row.customerName}</span>,
+      invoiceNo: <span>{isTotal ? "" : row.invoiceNo}</span>,
+      projectName: <span>{isTotal ? "" : row.projectName}</span>,
+
+      quoteAmount: (
+        <span className="font-semibold text-blue-700">
+          {formatAmount(row.quoteAmount)}
+        </span>
+      ),
+    };
   };
 
-  const renderRow = (row: QuoteRow) => ({
-    status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          statusColorMap[row.status] || "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {row.status}
-      </span>
-    ),
-    quoteDate: (
-      <span className="text-sm text-gray-600">
-        {formatDisplayDate(row.quoteDate)}
-      </span>
-    ),
-    expiryDate: (
-      <span className="text-sm text-gray-600">
-        {formatDisplayDate(row.expiryDate)}
-      </span>
-    ),
-    quoteNo: (
-      <span className="text-sm font-medium text-blue-600">
-        {row.quoteNo}
-      </span>
-    ),
-    referenceNo: (
-      <span className="text-sm text-gray-600">
-        {row.referenceNo}
-      </span>
-    ),
-    customerName: (
-      <span className="text-sm font-medium text-blue-600">
-        {row.customerName}
-      </span>
-    ),
-    invoiceNo: (
-      <span className="text-sm text-gray-600">
-        {row.invoiceNo}
-      </span>
-    ),
-    projectName: (
-      <span className="text-sm text-gray-600">
-        {row.projectName}
-      </span>
-    ),
-    quoteAmount: (
-      <span className="text-sm font-medium text-gray-900">
-        {formatAmount(row.quoteAmount)}
-      </span>
-    ),
-  });
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
 
   return (
-    <div
-      className="w-full bg-[#f9f7f2] p-6"
-      style={{ minHeight: "100vh", boxSizing: "border-box" }}
-    >
-      <div className="mb-6 rounded-lg border-2 bg-white p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
-            <NotepadText className="h-6 w-6" />
+    <div className="w-full bg-[#f9f7f2] p-6 min-h-screen">
+      
+      {/* FILTER */}
+      <div className="bg-white rounded-lg border p-6 mb-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 flex items-center justify-center bg-[#E5E0D3] rounded-full">
+            <NotepadText className="text-[#C72030]" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-            Quote Details
-          </h3>
+          <h3 className="text-lg font-semibold">Quote Details</h3>
         </div>
 
-        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
+        <div className="grid md:grid-cols-3 gap-4">
           <TextField
             label="From Date"
             type="date"
@@ -228,9 +231,10 @@ const QuoteDetailsReport: React.FC = () => {
             value={filters.fromDate}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
-            fullWidth
             size="small"
+            fullWidth
           />
+
           <TextField
             label="To Date"
             type="date"
@@ -238,56 +242,39 @@ const QuoteDetailsReport: React.FC = () => {
             value={filters.toDate}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
-            fullWidth
             size="small"
+            fullWidth
           />
+
           <Button
-            type="button"
-            onClick={handleViewReport}
-            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={fetchQuoteDetails}
+            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
           >
             View
           </Button>
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white overflow-hidden">
-        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
-            Quote Details
-          </h1>
-          <p className="mt-1 text-sm text-[#475467]">
+      {/* TABLE */}
+      <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="px-6 py-5 text-center border-b bg-[#F8F9FC]">
+          <h1 className="text-2xl font-semibold">Quote Details</h1>
+          <p className="text-sm text-gray-500">
             From {formatDisplayDate(filters.fromDate)} To{" "}
             {formatDisplayDate(filters.toDate)}
           </p>
         </div>
 
-        {/* EnhancedTaskTable */}
         <div className="p-4">
           <EnhancedTaskTable
-            data={reportRows}
+            data={[...rows, totalRow]} // ✅ include total row
             columns={columns}
             renderRow={renderRow}
-            storageKey="quote-details-report-v1"
-            hideTableExport={true}
-            hideTableSearch={false}
-            enableSearch={true}
+            storageKey="quote-details"
             loading={loading}
-            emptyMessage="There are no transactions during the selected date range."
+            hideTableExport
+            hideColumnsButton={true}
           />
-
-          {/* Totals row */}
-          {reportRows.length > 0 && (
-            <div className="mt-2 flex justify-end rounded-md bg-[#f9f7f2] px-4 py-3 text-sm font-semibold text-[#1A1A1A] border border-gray-200">
-              <span>
-                Total Quote Amount:{" "}
-                <span className="text-gray-900">
-                  {formatAmount(reportTotals.quoteAmount)}
-                </span>
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </div>
