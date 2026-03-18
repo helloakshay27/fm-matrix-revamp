@@ -33,6 +33,8 @@ import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
 import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
 import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
 import { ImportRetainerInvoicesPage } from "./pages/ImportRetainerInvoicesPage";
+import { BackendLayout } from "./components/BackendLayout";
+import { SmsManagementPage } from "./pages/SmsManagementPage";
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
@@ -197,6 +199,8 @@ import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
 import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
+import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
+import AnnouncementsSetup from "./pages/AnnouncementsSetup";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 
@@ -1048,6 +1052,16 @@ import AccountTypeTransactionsReport from "./pages/ClubManagement/AccountTypeTra
 import AccountTypeTransactionsDetailPage from "./pages/ClubManagement/AccountTypeTransactionsDetailPage";
 import AccountTransactionsDetailPage from "./pages/ClubManagement/AccountTransactionsDetailPage";
 import AccountTransactionsReport from "./pages/ClubManagement/AccountTransactionsReport";
+import ARAgingSummaryReport from "./pages/ClubManagement/ARAgingSummaryReport";
+import ARAgingDetailsReport from "./pages/ClubManagement/ARAgingDetailsReport";
+import InvoiceDetailsReport from "./pages/ClubManagement/InvoiceDetailsReport";
+import RetainerInvoiceDetailsReport from "./pages/ClubManagement/RetainerInvoiceDetailsReport";
+import SalesOrderDetailsReport from "./pages/ClubManagement/SalesOrderDetailsReport";
+import DeliveryChallanDetailsReport from "./pages/ClubManagement/DeliveryChallanDetailsReport";
+import QuoteDetailsReport from "./pages/ClubManagement/QuoteDetailsReport";
+import CustomerBalanceSummaryReport from "./pages/ClubManagement/CustomerBalanceSummaryReport";
+import ReceivableSummaryReport from "./pages/ClubManagement/ReceivableSummaryReport";
+import ReceivableDetailsReport from "./pages/ClubManagement/ReceivableDetailsReport";
 import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
@@ -1151,6 +1165,8 @@ import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
+import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
+import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
 
 const queryClient = new QueryClient();
 
@@ -1165,20 +1181,20 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
-  useEffect(() => {
-    console.warn("🔌 WebSocket connection effect running");
+  // useEffect(() => {
+  //   console.warn("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+  //   if (token) {
+  //     console.warn("✅ Token available, connecting...");
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error("❌ No token available for WebSocket connection");
+  //   }
 
-    return () => {
-      console.warn("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect, socketUrl]);
+  //   return () => {
+  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
+  //   };
+  // }, [token, connect, socketUrl]);
 
   // Subscribe to notifications
   useEffect(() => {
@@ -1406,6 +1422,26 @@ function App() {
                           path="/documents/editor/:documentId"
                           element={<OnlyOfficePublicEditorPage />}
                         />
+
+                        {/* Backend Routes */}
+                        <Route
+                          path="/backend-console"
+                          element={
+                            <ProtectedRoute>
+                              <BackendLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route
+                            index
+                            element={<div className="p-8" />}
+                          />
+                          <Route
+                            path="sms-management"
+                            element={<SmsManagementPage />}
+                          />
+                        </Route>
+
 
                         {/* Admin Routes */}
                         <Route
@@ -2479,6 +2515,10 @@ function App() {
                             element={<BalanceSheetReport />}
                           />
                           <Route
+                            path="/accounting/reports/business-performance"
+                            element={<BusinessPerformanceRatioReport />}
+                          />
+                          <Route
                             path="/accounting/reports/account-type-summary"
                             element={<AccountTypeSummaryReport />}
                           />
@@ -2499,8 +2539,52 @@ function App() {
                             element={<AccountTransactionsReport />}
                           />
                           <Route
+                            path="/accounting/reports/ar-aging-summary"
+                            element={<ARAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ar-aging-details"
+                            element={<ARAgingDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/invoice-details"
+                            element={<InvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/retainer-invoice-details"
+                            element={<RetainerInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-order-details"
+                            element={<SalesOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/delivery-challan-details"
+                            element={<DeliveryChallanDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/quote-details"
+                            element={<QuoteDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/customer-balance-summary"
+                            element={<CustomerBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-summary"
+                            element={<ReceivableSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-details"
+                            element={<ReceivableDetailsReport />}
+                          />
+                          <Route
                             path="/accounting/reports/account-transactions/details"
                             element={<AccountTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/debtors-creditors"
+                            element={<DebtorsCreditorsReport />}
                           />
                           <Route
                             path="/accounting/reports/cash-flow-statement"
@@ -4909,6 +4993,14 @@ function App() {
                              path="/settings/company-hub/Company-setup"
                              element={<CompanySetup />}
                            />
+                            <Route
+                              path="/settings/company-hub/employee-of-the-month"
+                              element={<EmployeeOfTheMonthSetup />}
+                            />
+                            <Route
+                              path="/settings/company-hub/announcements"
+                              element={<AnnouncementsSetup />}
+                            />
                           <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}

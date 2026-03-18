@@ -77,6 +77,18 @@ interface Expense {
   amount: number;
   reference_number: string;
   description: string;
+  expense_accounts: Array<{
+    id: number;
+    lock_account_ledger_id: number;
+    lock_account_name: string;
+    account_type: string;
+    amount: string;
+    notes: string;
+    hsn_sac_code: string;
+    tax_type: string;
+    tax_group_id: number | null;
+    tax_exemption_id: number | null;
+  }>;
   transaction: Transaction;
   created_at: string;
   updated_at: string;
@@ -370,6 +382,7 @@ export const ExpenseDetailPage = () => {
               {[
                 { label: "Expense Details", value: "expense-details" },
                 { label: "Vendor Info", value: "vendor-info" },
+                { label: "Journal", value: "journal" },
                 { label: "History", value: "history" },
               ].map((tab) => (
                 <TabsTrigger
@@ -422,14 +435,7 @@ export const ExpenseDetailPage = () => {
                         {new Date(expense.date).toLocaleDateString("en-GB")}
                       </p>
                     </div>
-                    <div>
-                      <span className="text-sm text-gray-600">
-                        Expense Account
-                      </span>
-                      <p className="font-medium mt-1">
-                        {getAccountName(expense.account_id)}
-                      </p>
-                    </div>
+                   
                     <div>
                       <span className="text-sm text-gray-600">
                         Reference Number
@@ -487,6 +493,46 @@ export const ExpenseDetailPage = () => {
                 </CardContent>
               </Card>
 
+              {/* Expenses Table */}
+              {expense.expense_accounts && expense.expense_accounts.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Expenses
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Expense Account
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Amount
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {expense.expense_accounts.map((account, index) => (
+                            <tr key={account.id || index}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {account.lock_account_name}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ₹{parseFloat(account.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Notes */}
               {expense.description && (
                 <Card>
@@ -523,6 +569,56 @@ export const ExpenseDetailPage = () => {
                         {getVendorName(expense.vendor_id)}
                       </p>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Journal Tab */}
+            <TabsContent
+              value="journal"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Expense
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Account
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Debit
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Credit
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {expense.transaction.records.map((record, index) => (
+                          <tr key={record.record.id || index}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {getAccountName(record.record.ledger_id.toString())}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {record.record.tr_type === 'dr' ? `₹${Math.abs(record.record.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {record.record.tr_type === 'cr' ? `₹${Math.abs(record.record.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>

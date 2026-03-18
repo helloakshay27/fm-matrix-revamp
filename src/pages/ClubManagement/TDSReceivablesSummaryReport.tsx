@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 type TdsReceivablesSummaryRow = {
   sectionCode: string;
@@ -47,15 +48,65 @@ const TDSReceivablesSummaryReport: React.FC = () => {
   const navigate = useNavigate();
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
-  const [reportRows] = useState<TdsReceivablesSummaryRow[]>([
-    {
-      sectionCode: "Section 194",
-      section: "Dividend",
-      total: 490,
-      totalAfterDeduction: 441,
-      taxDeductedAtSource: 49,
-    },
-  ]);
+  // const [reportRows] = useState<TdsReceivablesSummaryRow[]>([
+  //   {
+  //     sectionCode: "Section 194",
+  //     section: "Dividend",
+  //     total: 490,
+  //     totalAfterDeduction: 441,
+  //     taxDeductedAtSource: 49,
+  //   },
+  // ]);
+
+  const [reportRows, setReportRows] = useState<TdsReceivablesSummaryRow[]>([]);
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem("lock_account_id");
+  const fetchTDSReceivableSummary = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/receivable_summary.json`,
+        {
+          // headers: {
+          //   Authorization:
+          //     "Bearer z0Vz7MWHrLM59gu-ureFRdkqq1x8L0nSiKOcaM1pumE",
+          // },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            from_date: filters.fromDate,
+            to_date: filters.toDate,
+          },
+        }
+      );
+
+      const apiData = response.data || [];
+
+      const mappedData: TdsReceivablesSummaryRow[] = apiData?.tdsreceivablesummary.map((item: any) => ({
+        // sectionCode: `Section ${item.section_code}`,
+        // section: item.tds_section,
+        // total: item.total || 0,
+        // totalAfterDeduction: item.total_after_deduction || 0,
+        // taxDeductedAtSource: item.tax_deducted_at_source || 0,
+
+        section: item.tds_section,
+        total: item.bcyamount_without_tds_deduction || 0,
+        totalAfterDeduction: item.bcyamount || 0,
+        taxDeductedAtSource: item.tds_bcyamount || 0,
+      }));
+
+      setReportRows(mappedData);
+    } catch (error) {
+      console.error("Error fetching TDS Receivable Summary:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTDSReceivableSummary();
+  }, []);
+
 
   const reportTotals = useMemo(
     () =>
@@ -84,10 +135,19 @@ const TDSReceivablesSummaryReport: React.FC = () => {
     }));
   };
 
+  // const handleViewReport = () => {
+  //   if (!filters.fromDate || !filters.toDate) {
+  //     alert("Please select From Date and To Date");
+  //   }
+  // };
+
   const handleViewReport = () => {
     if (!filters.fromDate || !filters.toDate) {
       alert("Please select From Date and To Date");
+      return;
     }
+
+    fetchTDSReceivableSummary();
   };
 
   const handleSectionClick = (row: TdsReceivablesSummaryRow) => {
@@ -177,23 +237,25 @@ const TDSReceivablesSummaryReport: React.FC = () => {
                   {reportRows.map((row) => (
                     <tr key={`${row.sectionCode}-${row.section}`} className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-4 py-3">
-                        <button
+                        {/* <button
                           type="button"
                           onClick={() => handleSectionClick(row)}
                           className="font-semibold text-blue-600 hover:underline"
                         >
                           {row.sectionCode}
-                        </button>
-                        <div className="mt-1 text-sm text-gray-600">{row.section}</div>
+                        </button> */}
+                        {/* <div className="mt-1 text-sm text-gray-600"> */}
+                        {row.section}
+                        {/* </div> */}
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-right">
-                        ₹{formatAmount(row.total)}
+                        {formatAmount(row.total)}
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-right">
-                        ₹{formatAmount(row.totalAfterDeduction)}
+                        {formatAmount(row.totalAfterDeduction)}
                       </td>
                       <td className="border border-gray-300 px-4 py-3 text-right">
-                        ₹{formatAmount(row.taxDeductedAtSource)}
+                        {formatAmount(row.taxDeductedAtSource)}
                       </td>
                     </tr>
                   ))}
@@ -203,13 +265,13 @@ const TDSReceivablesSummaryReport: React.FC = () => {
                       Total
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-right">
-                      ₹{formatAmount(reportTotals.total)}
+                      {formatAmount(reportTotals.total)}
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-right">
-                      ₹{formatAmount(reportTotals.totalAfterDeduction)}
+                      {formatAmount(reportTotals.totalAfterDeduction)}
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-right">
-                      ₹{formatAmount(reportTotals.taxDeductedAtSource)}
+                      {formatAmount(reportTotals.taxDeductedAtSource)}
                     </td>
                   </tr>
                 </>

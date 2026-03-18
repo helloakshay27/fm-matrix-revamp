@@ -282,7 +282,7 @@ const modulesByPackage = {
         { name: "Transactions", href: "/accounting/transactions" },
         { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
         { name: "Opening Balance", href: "/accounting/opening-balance" },
-        { name: "Budget", href: "/accounting/budget" },
+        // { name: "Budget", href: "/accounting/budget" },
         { name: "Tax Setup", href: "/accounting/tax-setup" },
       ],
     },
@@ -390,6 +390,18 @@ const modulesByPackage = {
           name: "TDS Receivables Summary",
           href: "/accounting/reports/tds-receivables-summary",
         },
+        {
+          name: "Debtors & Creditors ",
+          href: "/accounting/reports/debtors-creditors",
+        },
+         {
+          name: "Business Performance Ratio",
+          href: "/accounting/reports/business-performance",
+        },
+
+
+
+
         // {
         //   name: "Account Type Summary",
         //   href: "/accounting/reports/account-type-summary",
@@ -402,6 +414,46 @@ const modulesByPackage = {
         //   name: "Account Transactions",
         //   href: "/accounting/reports/account-transactions",
         // },
+        {
+          name: "AR Aging System",
+          href: "/accounting/reports/ar-aging-summary",
+        },
+        {
+          name: "AR Aging Details",
+          href: "/accounting/reports/ar-aging-details",
+        },
+        {
+          name: "Invoice Details",
+          href: "/accounting/reports/invoice-details",
+        },
+        {
+          name: "Retainer Invoice Details",
+          href: "/accounting/reports/retainer-invoice-details",
+        },
+        {
+          name: "Sales Order Details",
+          href: "/accounting/reports/sales-order-details",
+        },
+        {
+          name: "Delivery Challan Details",
+          href: "/accounting/reports/delivery-challan-details",
+        },
+        {
+          name: "Quote Details",
+          href: "/accounting/reports/quote-details",
+        },
+        {
+          name: "Customer Balance Summary",
+          href: "/accounting/reports/customer-balance-summary",
+        },
+        {
+          name: "Receivable Summary",
+          href: "/accounting/reports/receivable-summary",
+        },
+        {
+          name: "Receivable Details",
+          href: "/accounting/reports/receivable-details",
+        },
       ],
     },
   ],

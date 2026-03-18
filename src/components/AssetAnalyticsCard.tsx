@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Info } from 'lucide-react';
+import { Download, Info, RefreshCw } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   PieChart,
@@ -22,6 +22,8 @@ interface AssetAnalyticsCardProps {
   type: 'groupWise' | 'categoryWise' | 'statusDistribution' | 'assetDistributions';
   dateRange: { startDate: Date; endDate: Date };
   onDownload?: () => void;
+  onRefresh?: () => void;
+  isLoading?: boolean;
   info?: string;
 }
 
@@ -55,6 +57,8 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   type,
   dateRange,
   onDownload,
+  onRefresh,
+  isLoading = false,
   info,
 }) => {
   const renderChart = () => {
@@ -246,6 +250,22 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 </UITooltip>
               </TooltipProvider>
             )}
+            {onRefresh && (
+              <RefreshCw
+                data-no-drag="true"
+                className={`w-5 h-5 flex-shrink-0 cursor-pointer text-black hover:text-gray-700 transition-colors z-50${
+                  isLoading ? ' animate-spin' : ''
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onRefresh();
+                }}
+                onPointerDown={(e) => { e.stopPropagation(); }}
+                onMouseDown={(e) => { e.stopPropagation(); }}
+                style={{ pointerEvents: 'auto' }}
+              />
+            )}
             {onDownload && title !== "Asset Status" && (
               <Download
                 data-no-drag="true"
@@ -269,7 +289,14 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
 
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        {data && Array.isArray(data) && data.length > 0 ? (
+        <div className="relative">
+          {isLoading && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/70 rounded-lg">
+              <RefreshCw className="w-8 h-8 animate-spin text-[#C72030] mb-2" />
+              <span className="text-sm text-gray-500 font-medium">Refreshing...</span>
+            </div>
+          )}
+          {data && Array.isArray(data) && data.length > 0 ? (
           <div className="bg-gray-50 rounded-lg p-4">
             {renderChart()}
           </div>
@@ -282,6 +309,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
             <p className="text-gray-500">No data available for the selected period</p>
           </div>
         )}
+        </div>
       </CardContent>
     </Card>
   );
