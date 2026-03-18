@@ -94,6 +94,14 @@ const navigationStructure = {
             href: "/settings/company-hub/Company-setup",
           },
           {
+            name: "Employee of the Month",
+            href: "/settings/company-hub/employee-of-the-month",
+          },
+          {
+            name: "Announcements Setup",
+            href: "/settings/company-hub/announcements",
+          },
+          {
             name: "Holiday Calendar",
 
             href: "/settings/account/holiday-calendar",
@@ -1493,6 +1501,14 @@ const modulesByPackage = {
         {
           name: "Setup",
           href: "/settings/company-hub/Company-setup",
+        },
+        {
+          name: "Employee of the Month",
+          href: "/settings/company-hub/employee-of-the-month",
+        },
+        {
+          name: "Announcements Setup",
+          href: "/settings/company-hub/announcements",
         },
       ],
     },

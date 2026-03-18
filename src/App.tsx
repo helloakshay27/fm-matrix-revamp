@@ -33,6 +33,8 @@ import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
 import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
 import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
 import { ImportRetainerInvoicesPage } from "./pages/ImportRetainerInvoicesPage";
+import { BackendLayout } from "./components/BackendLayout";
+import { SmsManagementPage } from "./pages/SmsManagementPage";
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
@@ -197,6 +199,8 @@ import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
 import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
+import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
+import AnnouncementsSetup from "./pages/AnnouncementsSetup";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 
@@ -1407,6 +1411,26 @@ function App() {
                           path="/documents/editor/:documentId"
                           element={<OnlyOfficePublicEditorPage />}
                         />
+
+                        {/* Backend Routes */}
+                        <Route
+                          path="/backend-console"
+                          element={
+                            <ProtectedRoute>
+                              <BackendLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route
+                            index
+                            element={<div className="p-8" />}
+                          />
+                          <Route
+                            path="sms-management"
+                            element={<SmsManagementPage />}
+                          />
+                        </Route>
+
 
                         {/* Admin Routes */}
                         <Route
@@ -4914,6 +4938,14 @@ function App() {
                              path="/settings/company-hub/Company-setup"
                              element={<CompanySetup />}
                            />
+                            <Route
+                              path="/settings/company-hub/employee-of-the-month"
+                              element={<EmployeeOfTheMonthSetup />}
+                            />
+                            <Route
+                              path="/settings/company-hub/announcements"
+                              element={<AnnouncementsSetup />}
+                            />
                           <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}

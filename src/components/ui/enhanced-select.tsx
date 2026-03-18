@@ -37,7 +37,7 @@ export interface SelectOption {
 }
 
 interface BaseEnhancedSelectProps {
-  label: string;
+  label: React.ReactNode;
   value: string | number | "";
   onChange: (value: string | number) => void;
   options: SelectOption[];
