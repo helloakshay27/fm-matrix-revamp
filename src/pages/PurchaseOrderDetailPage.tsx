@@ -458,14 +458,14 @@ export const PurchaseOrderDetailPage = () => {
                         {new Date(purchaseOrder.po_date).toLocaleDateString()}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Site
                       </p>
                       <p className="text-base font-semibold mt-1">
                         {purchaseOrder.site?.name || "N/A"}
                       </p>
-                    </div>
+                    </div> */}
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Created By
@@ -481,6 +481,24 @@ export const PurchaseOrderDetailPage = () => {
                       <p className="text-base font-semibold mt-1">
                         {purchaseOrder.reference_number || "N/A"}
                       </p>
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-muted-foreground">
+                         Payment Terms
+
+                        </p>
+                        <p className="text-base font-semibold mt-1">
+                          {purchaseOrder.payment_tern || "N/A"}
+                        </p>
+                      
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-muted-foreground">   
+                            Delivery Address
+                        </p>
+                        <p className="text-base font-semibold mt-1">
+                          {<purchaseOrder className="delivery"></purchaseOrder>_address || "N/A"}
+                        </p>
                     </div>
                   </div>
                 </CardContent>
@@ -505,7 +523,7 @@ export const PurchaseOrderDetailPage = () => {
                               <TableHead className="text-right">
                                 Quantity
                               </TableHead>
-                              <TableHead className="text-right">Unit</TableHead>
+                              <TableHead className="text-right">Status	</TableHead>
                               <TableHead className="text-right">Rate</TableHead>
                               <TableHead className="text-right">
                                 Total Value
@@ -532,7 +550,7 @@ export const PurchaseOrderDetailPage = () => {
                                     {item.quantity}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {item.unit}
+                                    {"NA"}
                                   </TableCell>
                                   <TableCell className="text-right">
                                     ₹{item.rate.toFixed(2)}
