@@ -9,6 +9,7 @@ import { SelectionPanel } from "./water-asset-details/PannelTab";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { getUser } from "@/utils/auth";
+import { AssetExportModal } from "./AssetExportModal";
 
 // Asset interface now imported from useAssets hook
 
@@ -48,8 +49,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   // Initialize permission hook
   const { shouldShow } = useDynamicPermissions();
   const user = getUser();
-  const isRestrictedUser =
-    user?.email?.toLowerCase().trim() === "karan.balsara@zycus.com";
+  const isRestrictedUser = user?.email?.toLowerCase().trim() === 'karan.balsara@zycus.com';
 
   console.log("AssetDataTable rendered with assets:", assets);
   console.log("Available custom fields:", availableCustomFields);
@@ -57,6 +57,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   // Status color logic moved to StatusBadge component
 
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   // const handleExcelExport = async (columnVisibility?: Record<string, boolean>) => {
   //   try {
   //     // Use the current column visibility from EnhancedTable if provided, otherwise fallback to visibleColumns prop
@@ -111,124 +112,22 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   //   }
   // };
 
-  // Helper function to wait for export file to be ready
-  const waitForExportReady = async (
-    fileName: string,
-    baseUrl: string
-  ): Promise<Response> => {
-    while (true) {
-      const res = await fetch(
-        `https://${baseUrl}/pms/assets/export_status?key=${encodeURIComponent(fileName)}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-
-      // Check if the response is the actual file (Excel)
-      const contentType = res.headers.get("content-type");
-
-      if (
-        contentType?.includes(
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-      ) {
-        return res; // ✅ Excel file is ready
-      }
-
-      // Otherwise backend returns JSON status
-      const data = await res.json();
-
-      if (data.status === "failed" || data.status === "error") {
-        throw new Error("Export generation failed");
-      }
-
-      // ⏳ still processing → wait 1.5 seconds
-      await new Promise((r) => setTimeout(r, 1500));
-    }
-  };
-
   const handleExcelExport = async (
     columnVisibility?: Record<string, boolean>
   ) => {
-    try {
-      const baseUrl = localStorage.getItem("baseUrl");
-      if (!baseUrl) {
-        toast.error("Configuration Error", {
-          description: "Base URL not set. Please log in again.",
-        });
-        return;
-      }
-
-      toast.info("Preparing export...", {
-        description: "Please wait while the file is being generated...",
-      });
-
-      // STEP 1: Start export generation (without fields parameter)
-      const exportUrl = `https://${baseUrl}/pms/assets/assets_data_report_export`;
-      console.log("Initiating export with URL:", exportUrl);
-
-      const response = await fetch(exportUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to start export generation");
-      }
-
-      const { export_key } = await response.json();
-      if (!export_key) {
-        throw new Error("Export key not returned from server");
-      }
-
-      console.log("Export initiated, export key:", export_key);
-
-      toast("Generating export file", {
-        description: "Please wait while the file is being prepared…",
-      });
-
-      // STEP 2: ⏳ Wait until file is READY
-      const fileResponse = await waitForExportReady(export_key, baseUrl);
-
-      // STEP 3: Download file (only once, guaranteed ready)
-      const blob = await fileResponse.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      // Use export_key as filename with .xlsx extension
-      a.download = `${export_key}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast.success("Export complete", {
-        description: "Assets data downloaded successfully.",
-      });
-    } catch (error) {
-      console.error("Error exporting assets to Excel:", error);
-      toast.error("Failed to export assets", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "Something went wrong. Please try again.",
-      });
-    }
+    // Just open the modal - the export logic is handled by the modal component
+    setShowExportModal(true);
   };
 
   const selectionActions = shouldShow("assets", "schedule")
     ? [
-        {
-          label: "Add Schedule",
-          icon: Plus,
-          onClick: handleAddSchedule,
-          variant: "primary" as const,
-        },
-      ]
+      {
+        label: "Add Schedule",
+        icon: Plus,
+        onClick: handleAddSchedule,
+        variant: "primary" as const,
+      },
+    ]
     : [];
 
   const columns: ColumnConfig[] = [
@@ -494,7 +393,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     },
     // Dynamic custom field columns
     ...availableCustomFields.map((field) => ({
-      key: `custom_${field.key.replace(/\s+/g, "_")}`,
+      key: `custom_${field.key.replace(/\s+/g, '_')}`,
       label: field.title,
       sortable: true,
       hideable: true,
@@ -624,9 +523,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         );
       case "category":
         return (
-          <span className="text-sm text-gray-600">
-            {asset.category.name || "-"}
-          </span>
+          <span className="text-sm text-gray-600">{asset.category.name || "-"}</span>
         );
       case "allocationType":
         return (
@@ -767,13 +664,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           }
 
           let displayValue = customFieldValue;
-          if (customFieldValue && typeof customFieldValue === "object") {
-            displayValue =
-              customFieldValue.name || customFieldValue.field_value || "";
+          if (customFieldValue && typeof customFieldValue === 'object') {
+            displayValue = customFieldValue.name || customFieldValue.field_value || '';
           }
 
           return (
-            <span className="text-sm text-gray-600">{displayValue || "-"}</span>
+            <span className="text-sm text-gray-600">
+              {displayValue || "-"}
+            </span>
           );
         }
         return null;
@@ -785,9 +683,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   };
 
   const getRowClassName = (asset: Asset) =>
-    asset.disabled
-      ? "bg-gray-100 text-gray-500 opacity-60 cursor-not-allowed"
-      : "";
+    asset.disabled ? "bg-gray-100 text-gray-500 opacity-60 cursor-not-allowed" : "";
 
   const isRowDisabled = (asset: Asset) => !!asset.disabled;
 
@@ -799,9 +695,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           onAdd={shouldShow("assets", "add") ? handleAddAsset : undefined}
           onClearSelection={() => setShowActionPanel(false)}
           onImport={shouldShow("assets", "import") ? handleImport : undefined}
-          // onChecklist={onChecklist}
+        // onChecklist={onChecklist}
         />
       )}
+      
+      <AssetExportModal 
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+      />
       <EnhancedTable
         data={assets}
         columns={columns}
@@ -823,13 +724,9 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         loading={loading}
         rowClassName={getRowClassName}
         isRowDisabled={isRowDisabled}
-        key={`asset-table-${availableCustomFields.map((f) => f.key).join("-")}`} // Force re-render when custom fields change
+        key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
-          shouldShow("assets", "add") &&
-          !(
-            isRestrictedUser &&
-            window.location.pathname.includes("/maintenance/asset")
-          ) ? (
+          shouldShow("assets", "add") && !(isRestrictedUser && window.location.pathname.includes('/maintenance/asset')) ? (
             <Button size="sm" className="mr-2" onClick={handleActionClick}>
               <Plus className="w-4 h-4 mr-2" />
               Action
