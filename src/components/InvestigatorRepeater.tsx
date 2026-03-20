@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { InvestigatorBlock, InvestigatorData } from './InvestigatorBlock';
 
 interface InvestigatorRepeaterProps {
@@ -6,45 +6,54 @@ interface InvestigatorRepeaterProps {
     onInvestigatorsChange: (investigators: InvestigatorData[]) => void;
 }
 
+// Each block has a stable unique string ID so positional re-indexing never causes mismatches
+interface BlockEntry {
+    id: string;
+    data: InvestigatorData | null;
+}
+
+let _uid = 0;
+const nextId = () => `inv-block-${++_uid}-${Date.now()}`;
+
 export const InvestigatorRepeater: React.FC<InvestigatorRepeaterProps> = ({
     internalUsers,
     onInvestigatorsChange
 }) => {
-    const [blocks, setBlocks] = useState<number[]>([0]);
-    const [investigators, setInvestigators] = useState<InvestigatorData[]>([]);
+    const [blocks, setBlocks] = useState<BlockEntry[]>([{ id: nextId(), data: null }]);
 
     const handleAddBlock = () => {
-        setBlocks([...blocks, blocks.length]);
+        setBlocks(prev => [...prev, { id: nextId(), data: null }]);
     };
 
-    const handleRemoveBlock = (index: number) => {
-        if (blocks.length > 1) {
-            const newBlocks = blocks.filter((_, i) => i !== index);
-            setBlocks(newBlocks);
-            // Also remove the corresponding investigator data if it exists
-            const newInvestigators = investigators.filter((_, i) => i !== index);
-            setInvestigators(newInvestigators);
-            onInvestigatorsChange(newInvestigators);
-        }
+    const handleRemoveBlock = (blockId: string) => {
+        setBlocks(prev => {
+            if (prev.length <= 1) return prev;
+            const next = prev.filter(b => b.id !== blockId);
+            // Notify parent with the remaining submitted data
+            onInvestigatorsChange(next.map(b => b.data).filter(Boolean) as InvestigatorData[]);
+            return next;
+        });
     };
 
-    const handleSubmit = (data: InvestigatorData) => {
-        const updatedInvestigators = [...investigators, data];
-        setInvestigators(updatedInvestigators);
-        onInvestigatorsChange(updatedInvestigators);
+    const handleSubmit = (blockId: string, data: InvestigatorData) => {
+        setBlocks(prev => {
+            const next = prev.map(b => b.id === blockId ? { ...b, data } : b);
+            onInvestigatorsChange(next.map(b => b.data).filter(Boolean) as InvestigatorData[]);
+            return next;
+        });
     };
 
     return (
         <div className="space-y-3">
-            {blocks.map((blockId, index) => (
+            {blocks.map((block, index) => (
                 <InvestigatorBlock
-                    key={blockId}
+                    key={block.id}
                     index={index}
                     isLast={index === blocks.length - 1}
                     canRemove={blocks.length > 1}
                     onAddBlock={handleAddBlock}
-                    onSubmit={handleSubmit}
-                    onRemove={() => handleRemoveBlock(index)}
+                    onSubmit={(data) => handleSubmit(block.id, data)}
+                    onRemove={() => handleRemoveBlock(block.id)}
                     internalUsers={internalUsers}
                 />
             ))}
