@@ -321,7 +321,7 @@ export const InvoiceDashboardDetailsPage = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                                        <p className="text-base font-semibold mt-1">{invoiceData.subject || "N/A"}</p>
+                                        <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "N/A"}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Tax Type</p>
@@ -436,7 +436,7 @@ export const InvoiceDashboardDetailsPage = () => {
                                         <CardTitle className="text-base">Customer Notes</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{invoiceData.customer_notes}</p>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap break-all">{invoiceData.customer_notes}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -447,7 +447,7 @@ export const InvoiceDashboardDetailsPage = () => {
                                         <CardTitle className="text-base">Terms & Conditions</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{invoiceData.terms_and_conditions}</p>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap break-all">{invoiceData.terms_and_conditions}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -466,8 +466,24 @@ export const InvoiceDashboardDetailsPage = () => {
                             <CardContent className="space-y-4">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-                                    <p className="text-base font-semibold mt-1">{invoiceData.customer_name || "N/A"}</p>
+                                    <p className="text-base font-semibold mt-1 break-all">{invoiceData.customer_name || "N/A"}</p>
                                 </div>
+                                {invoiceData.customer_notes && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Customer Notes</p>
+                                        <p className="text-base mt-1 break-all whitespace-pre-wrap">
+                                            {invoiceData.customer_notes}
+                                        </p>
+                                    </div>
+                                )}
+                                {invoiceData.terms_and_conditions && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Terms & Conditions</p>
+                                        <p className="text-base mt-1 break-all whitespace-pre-wrap">
+                                            {invoiceData.terms_and_conditions}
+                                        </p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
