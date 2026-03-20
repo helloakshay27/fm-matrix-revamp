@@ -24,9 +24,13 @@ const muiTheme = createTheme({
             styleOverrides: {
                 root: {
                     width: "100%",
-                    "& .MuiOutlinedInput-root": {
+                    "& .MuiOutlinedInput-root:not(.MuiInputBase-multiline)": {
                         borderRadius: "6px",
                         height: "44px",
+                    },
+                    "& .MuiOutlinedInput-root.MuiInputBase-multiline": {
+                        borderRadius: "6px",
+                        height: "auto",
                     },
                 },
             },
@@ -36,9 +40,13 @@ const muiTheme = createTheme({
             styleOverrides: {
                 root: {
                     width: "100%",
-                    "& .MuiOutlinedInput-root": {
+                    "& .MuiOutlinedInput-root:not(.MuiInputBase-multiline)": {
                         borderRadius: "6px",
                         height: "44px",
+                    },
+                    "& .MuiOutlinedInput-root.MuiInputBase-multiline": {
+                        borderRadius: "6px",
+                        height: "auto",
                     },
                 },
             },
@@ -112,13 +120,45 @@ const TABS = [
 //
 const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
 
+    const sanitizeAddressField = (name: string, value: string): string | null => {
+        // Attention, City: alphabets and spaces only
+        if (name === 'attention' || name === 'city') {
+            if (value !== '' && !/^[a-zA-Z\s]*$/.test(value)) return null;
+            return value;
+        }
+        // Pin Code: only digits, max 6
+        if (name === 'pincode') {
+            const cleaned = value.replace(/[^0-9]/g, '');
+            if (cleaned.length > 6) return null;
+            return cleaned;
+        }
+        // Phone: digits and + only, max 10 digits
+        if (name === 'phone') {
+            const cleaned = value.replace(/[^0-9+]/g, '');
+            const digitsOnly = cleaned.replace(/[^0-9]/g, '');
+            if (digitsOnly.length > 10) return null;
+            return cleaned;
+        }
+        // Fax: digits only, max 10
+        if (name === 'fax') {
+            const cleaned = value.replace(/[^0-9]/g, '');
+            if (cleaned.length > 10) return null;
+            return cleaned;
+        }
+        return value;
+    };
+
     const handleBillingChange = (e) => {
         const { name, value } = e.target;
-        setBilling((prev) => ({ ...prev, [name]: value }));
+        const sanitized = sanitizeAddressField(name, value);
+        if (sanitized === null) return;
+        setBilling((prev) => ({ ...prev, [name]: sanitized }));
     };
     const handleShippingChange = (e) => {
         const { name, value } = e.target;
-        setShipping((prev) => ({ ...prev, [name]: value }));
+        const sanitized = sanitizeAddressField(name, value);
+        if (sanitized === null) return;
+        setShipping((prev) => ({ ...prev, [name]: sanitized }));
     };
     const copyBillingToShipping = () => {
         setShipping({ ...billing });
@@ -144,7 +184,7 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
             <div>
                 <h3 className="font-semibold mb-3">Billing Address</h3>
                 <div className="space-y-3">
-                    <TextField label="Attention" name="attention" value={billing.attention} onChange={handleBillingChange} fullWidth />
+                    <TextField label="Attention" name="attention" value={billing.attention} onChange={handleBillingChange} fullWidth placeholder="Enter attention name" />
                     <FormControl fullWidth>
                         <InputLabel>Country/Region</InputLabel>
                         <Select
@@ -159,9 +199,9 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
                             ))}
                         </Select>
                     </FormControl>
-                    <TextField label="Street 1" name="street1" value={billing.street1} onChange={handleBillingChange} fullWidth />
-                    <TextField label="Street 2" name="street2" value={billing.street2} onChange={handleBillingChange} fullWidth />
-                    <TextField label="City" name="city" value={billing.city} onChange={handleBillingChange} fullWidth />
+                    <TextField label="Street 1" name="street1" value={billing.street1} onChange={handleBillingChange} fullWidth placeholder="Enter street address line 1" />
+                    <TextField label="Street 2" name="street2" value={billing.street2} onChange={handleBillingChange} fullWidth placeholder="Enter street address line 2" />
+                    <TextField label="City" name="city" value={billing.city} onChange={handleBillingChange} fullWidth placeholder="Enter city name" />
                     <FormControl fullWidth>
                         <InputLabel>State</InputLabel>
                         <Select
@@ -177,9 +217,9 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
                             ))}
                         </Select>
                     </FormControl>
-                    <TextField label="Pin Code" name="pincode" value={billing.pincode} onChange={handleBillingChange} fullWidth />
-                    <TextField label="Phone" name="phone" value={billing.phone} onChange={handleBillingChange} fullWidth />
-                    <TextField label="Fax Number" name="fax" value={billing.fax} onChange={handleBillingChange} fullWidth />
+                    <TextField label="Pin Code" name="pincode" value={billing.pincode} onChange={handleBillingChange} fullWidth placeholder="Enter pin code" inputProps={{ maxLength: 6 }} />
+                    <TextField label="Phone" name="phone" value={billing.phone} onChange={handleBillingChange} fullWidth placeholder="Enter phone number" inputProps={{ maxLength: 11 }} />
+                    <TextField label="Fax Number" name="fax" value={billing.fax} onChange={handleBillingChange} fullWidth placeholder="Enter fax number" inputProps={{ maxLength: 10 }} />
                 </div>
             </div>
 
@@ -193,7 +233,7 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
                 </h3>
 
                 <div className="space-y-3">
-                    <TextField label="Attention" name="attention" value={shipping.attention} onChange={handleShippingChange} fullWidth />
+                    <TextField label="Attention" name="attention" value={shipping.attention} onChange={handleShippingChange} fullWidth placeholder="Enter attention name" />
                     <FormControl fullWidth>
                         <InputLabel>Country/Region</InputLabel>
                         <Select
@@ -208,9 +248,9 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
                             ))}
                         </Select>
                     </FormControl>
-                    <TextField label="Street 1" name="street1" value={shipping.street1} onChange={handleShippingChange} fullWidth />
-                    <TextField label="Street 2" name="street2" value={shipping.street2} onChange={handleShippingChange} fullWidth />
-                    <TextField label="City" name="city" value={shipping.city} onChange={handleShippingChange} fullWidth />
+                    <TextField label="Street 1" name="street1" value={shipping.street1} onChange={handleShippingChange} fullWidth placeholder="Enter street address line 1" />
+                    <TextField label="Street 2" name="street2" value={shipping.street2} onChange={handleShippingChange} fullWidth placeholder="Enter street address line 2" />
+                    <TextField label="City" name="city" value={shipping.city} onChange={handleShippingChange} fullWidth placeholder="Enter city name" />
                     <FormControl fullWidth>
                         <InputLabel>State</InputLabel>
                         <Select
@@ -226,9 +266,9 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
                             ))}
                         </Select>
                     </FormControl>
-                    <TextField label="Pin Code" name="pincode" value={shipping.pincode} onChange={handleShippingChange} fullWidth />
-                    <TextField label="Phone" name="phone" value={shipping.phone} onChange={handleShippingChange} fullWidth />
-                    <TextField label="Fax Number" name="fax" value={shipping.fax} onChange={handleShippingChange} fullWidth />
+                    <TextField label="Pin Code" name="pincode" value={shipping.pincode} onChange={handleShippingChange} fullWidth placeholder="Enter pin code" inputProps={{ maxLength: 6 }} />
+                    <TextField label="Phone" name="phone" value={shipping.phone} onChange={handleShippingChange} fullWidth placeholder="Enter phone number" inputProps={{ maxLength: 11 }} />
+                    <TextField label="Fax Number" name="fax" value={shipping.fax} onChange={handleShippingChange} fullWidth placeholder="Enter fax number" inputProps={{ maxLength: 10 }} />
                 </div>
             </div>
         </div>
@@ -364,7 +404,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             <TextField
                 select
-                label="GST Treatment"
+                label={<span>GST Treatment <span className="text-red-600">*</span></span>}
                 name="gst_treatment"
                 value={form.gst_treatment}
                 onChange={handleChange}
@@ -475,6 +515,14 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                 value={form.pan}
                 onChange={handleChange}
                 fullWidth
+                error={!!form.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pan)}
+                helperText={
+                    form.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pan)
+                        ? 'Invalid PAN format'
+                        : ''
+                }
+                inputProps={{ maxLength: 10, style: { textTransform: 'uppercase' } }}
+                placeholder="Enter PAN number"
             />
 
             {/* <TextField select label="Currency" fullWidth>
@@ -550,7 +598,14 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             </TextField>
 
 
-            <TextField label="Opening Balance" fullWidth />
+            <TextField
+                label="Opening Balance"
+                name="opening_balance"
+                value={form.opening_balance}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Enter opening balance"
+            />
 
             {/* Payment Terms dropdown with search and configure */}
             <FormControl fullWidth>
@@ -727,12 +782,56 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 // TAB 3 → CONTACT PERSONS
 //
 const ContactPersonsTab = ({ rows, setRows }) => {
-    // const [rows, setRows] = React.useState([
-    //     { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }
-    // ]);
+    const [rowErrors, setRowErrors] = React.useState<Record<number, Record<string, string>>>({});
+
+    const validateContactField = (field: string, value: string): string => {
+        switch (field) {
+            case 'firstName':
+            case 'lastName': {
+                if (value && !/^[a-zA-Z\s]*$/.test(value)) {
+                    return `${field === 'firstName' ? 'First' : 'Last'} Name must contain only alphabets`;
+                }
+                return '';
+            }
+            case 'email': {
+                if (value && !/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value)) {
+                    return 'Please enter a valid email (e.g. example@gmail.com)';
+                }
+                return '';
+            }
+            case 'workPhone':
+            case 'mobile': {
+                const digitsOnly = value.replace(/[^0-9]/g, '');
+                if (digitsOnly.length > 10) {
+                    return 'Phone number cannot exceed 10 digits';
+                }
+                return '';
+            }
+            default:
+                return '';
+        }
+    };
 
     const handleRowChange = (idx, field, value) => {
+        // Block non-alpha characters for name fields
+        if ((field === 'firstName' || field === 'lastName') && value !== '' && !/^[a-zA-Z\s]*$/.test(value)) {
+            return;
+        }
+        // Strip non-numeric/non-plus characters for phone fields, enforce 10-digit limit
+        if (field === 'workPhone' || field === 'mobile') {
+            value = value.replace(/[^0-9+]/g, '');
+            const digitsOnly = value.replace(/[^0-9]/g, '');
+            if (digitsOnly.length > 10) return;
+        }
+
         setRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+
+        // Update error state
+        const error = validateContactField(field, value);
+        setRowErrors(prev => ({
+            ...prev,
+            [idx]: { ...(prev[idx] || {}), [field]: error }
+        }));
     };
 
     const handleAddRow = () => {
@@ -741,6 +840,12 @@ const ContactPersonsTab = ({ rows, setRows }) => {
 
     const handleDeleteRow = (idx) => {
         setRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+        // Clean up errors for deleted row
+        setRowErrors(prev => {
+            const updated = { ...prev };
+            delete updated[idx];
+            return updated;
+        });
     };
 
     return (
@@ -774,46 +879,61 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className="border rounded px-2 py-1 w-full"
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.firstName ? 'border-red-500' : ''}`}
                                     value={row.firstName}
                                     onChange={e => handleRowChange(idx, 'firstName', e.target.value)}
                                     placeholder="First Name"
                                 />
+                                {rowErrors[idx]?.firstName && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].firstName}</span>
+                                )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className="border rounded px-2 py-1 w-full"
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.lastName ? 'border-red-500' : ''}`}
                                     value={row.lastName}
                                     onChange={e => handleRowChange(idx, 'lastName', e.target.value)}
                                     placeholder="Last Name"
                                 />
+                                {rowErrors[idx]?.lastName && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].lastName}</span>
+                                )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className="border rounded px-2 py-1 w-full"
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.email ? 'border-red-500' : ''}`}
                                     value={row.email}
                                     onChange={e => handleRowChange(idx, 'email', e.target.value)}
-                                    placeholder="Email"
+                                    placeholder="example@gmail.com"
                                     type="email"
                                 />
+                                {rowErrors[idx]?.email && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].email}</span>
+                                )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className="border rounded px-2 py-1 w-full"
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.workPhone ? 'border-red-500' : ''}`}
                                     value={row.workPhone}
                                     onChange={e => handleRowChange(idx, 'workPhone', e.target.value)}
                                     placeholder="Work Phone"
                                     type="tel"
                                 />
+                                {rowErrors[idx]?.workPhone && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].workPhone}</span>
+                                )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className="border rounded px-2 py-1 w-full"
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.mobile ? 'border-red-500' : ''}`}
                                     value={row.mobile}
                                     onChange={e => handleRowChange(idx, 'mobile', e.target.value)}
                                     placeholder="Mobile"
                                     type="tel"
                                 />
+                                {rowErrors[idx]?.mobile && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].mobile}</span>
+                                )}
                             </td>
                             <td className="border p-2 text-center">
                                 <button
@@ -853,13 +973,24 @@ const ReportingTagsTab = () => (
 );
 
 const RemarksTab = ({ remarks, setRemarks }) => (
-    <TextField
-        label="Remarks"
-        multiline
-        rows={4}
-        fullWidth
-        placeholder="Enter remarks"
-    />
+    <div className="flex flex-col">
+        <label className="text-sm text-gray-600 mb-1">Remarks</label>
+        <textarea
+            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            rows={5}
+            placeholder="Enter remarks (max 500 characters)"
+            value={remarks}
+            maxLength={500}
+            onChange={(e) => {
+                if (e.target.value.length <= 500) {
+                    setRemarks(e.target.value);
+                }
+            }}
+        />
+        <div className="text-xs text-gray-400 text-right mt-1">
+            {remarks.length}/500
+        </div>
+    </div>
 );
 
 const CustomersAdd = () => {
@@ -910,7 +1041,7 @@ const CustomersAdd = () => {
         language: "English",
         currency: "INR",
         pan: "",
-        opening_balance: 0,
+        opening_balance: "",
         enable_portal: false,
         remarks: "",
 
@@ -978,14 +1109,129 @@ const CustomersAdd = () => {
     // Lift paymentTerms state to CustomersAdd
     const [paymentTerms, setPaymentTerms] = React.useState([]);
 
+    // ── Validation state ──
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+    // ── Validation helpers ──
+    const alphabetsOnly = (v: string) => /^[a-zA-Z\s]*$/.test(v);
+    const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const phoneClean = (v: string) => v.replace(/[^0-9+]/g, '');
+
     const handleChange = (e: any) => {
-        const { name, value } = e.target;
+        let { name, value } = e.target;
+
+        // ── First Name / Last Name: block non-alphabets ──
+        if (name === 'first_name' || name === 'last_name') {
+            if (value !== '' && !alphabetsOnly(value)) return; // silently reject
+        }
+
+        // ── Work Phone / Mobile: strip invalid chars, enforce 10-digit limit ──
+        if (name === 'work_phone' || name === 'mobile') {
+            value = phoneClean(value);
+            const digitsOnly = value.replace(/[^0-9]/g, '');
+            if (digitsOnly.length > 10) return;
+        }
+
+        // ── PAN: auto-uppercase ──
+        if (name === 'pan') {
+            value = value.toUpperCase();
+            // Allow max 10 chars
+            if (value.length > 10) return;
+        }
+
+        // ── Opening Balance: numeric only, allow up to 2 decimal places ──
+        if (name === 'opening_balance') {
+            // Allow empty string
+            if (value === '') {
+                setForm((p) => ({ ...p, [name]: value }));
+                return;
+            }
+            // Allow only digits and one decimal point, max 2 decimal places
+            if (!/^\d*\.?\d{0,2}$/.test(value)) return;
+        }
+
         setForm((p) => ({ ...p, [name]: value }));
+
+        // ── Live validation (set / clear error) ──
+        const newErrors = { ...fieldErrors };
+
+        if (name === 'email') {
+            if (value && !emailRegex.test(value)) {
+                newErrors.email = 'Please enter a valid email (e.g. example@gmail.com)';
+            } else {
+                delete newErrors.email;
+            }
+        }
+
+        if (name === 'pan') {
+            if (value && !panRegex.test(value)) {
+                newErrors.pan = 'PAN must follow format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
+            } else {
+                delete newErrors.pan;
+            }
+        }
+
+        if (name === 'work_phone' || name === 'mobile') {
+            const digits = value.replace(/[^0-9]/g, '');
+            if (digits.length > 0 && digits.length < 10) {
+                newErrors[name] = 'Phone number must be 10 digits';
+            } else {
+                delete newErrors[name];
+            }
+        }
+
+        setFieldErrors(newErrors);
     };
 
 
 
     const handleSubmit = () => {
+
+        // ── Inline field validations before submit ──
+        const submitErrors: Record<string, string> = {};
+
+        if (!form.display_name?.trim()) {
+            toast.error("Display Name is a mandatory field");
+            return;
+        }
+
+        if (!form.gst_treatment) {
+            toast.error("GST Treatment is a mandatory field");
+            return;
+        }
+
+        if (form.first_name && !alphabetsOnly(form.first_name)) {
+            submitErrors.first_name = 'First Name must contain only alphabets';
+        }
+        if (form.last_name && !alphabetsOnly(form.last_name)) {
+            submitErrors.last_name = 'Last Name must contain only alphabets';
+        }
+        if (form.email && !emailRegex.test(form.email)) {
+            submitErrors.email = 'Please enter a valid email (e.g. example@gmail.com)';
+        }
+        if (form.work_phone) {
+            const wpDigits = form.work_phone.replace(/[^0-9]/g, '');
+            if (wpDigits.length !== 10) {
+                submitErrors.work_phone = 'Work Phone must be exactly 10 digits';
+            }
+        }
+        if (form.mobile) {
+            const mobDigits = form.mobile.replace(/[^0-9]/g, '');
+            if (mobDigits.length !== 10) {
+                submitErrors.mobile = 'Mobile must be exactly 10 digits';
+            }
+        }
+        if (form.pan && !panRegex.test(form.pan)) {
+            submitErrors.pan = 'PAN must follow format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
+        }
+
+        if (Object.keys(submitErrors).length > 0) {
+            setFieldErrors(submitErrors);
+            const firstError = Object.values(submitErrors)[0];
+            toast.error(firstError);
+            return;
+        }
 
         if (form.gst_preference === "regular" || form.gst_preference === "composition") {
             if (!form.gstin) {
@@ -1171,6 +1417,9 @@ const CustomersAdd = () => {
                             label="First Name"
                             value={form.first_name}
                             onChange={handleChange}
+                            error={!!fieldErrors.first_name}
+                            helperText={fieldErrors.first_name || ''}
+                            placeholder="Enter first name"
                         />
 
                         <TextField
@@ -1178,6 +1427,9 @@ const CustomersAdd = () => {
                             label="Last Name"
                             value={form.last_name}
                             onChange={handleChange}
+                            error={!!fieldErrors.last_name}
+                            helperText={fieldErrors.last_name || ''}
+                            placeholder="Enter last name"
                         />
                     </div>
                 </div>
@@ -1189,6 +1441,7 @@ const CustomersAdd = () => {
                         name="company_name"
                         value={form.company_name}
                         onChange={handleChange}
+                        placeholder="Enter company name"
                     />
                 </div>
 
@@ -1197,7 +1450,7 @@ const CustomersAdd = () => {
                     <div className="text-red-600">Display Name *</div>
                     <TextField
                         name="display_name"
-                        placeholder="Select or type to add"
+                        placeholder="Enter display name"
                         value={form.display_name}
                         onChange={handleChange}
                     />
@@ -1210,6 +1463,9 @@ const CustomersAdd = () => {
                         name="email"
                         value={form.email}
                         onChange={handleChange}
+                        error={!!fieldErrors.email}
+                        helperText={fieldErrors.email || ''}
+                        placeholder="example@gmail.com"
                     />
                 </div>
 
@@ -1223,6 +1479,10 @@ const CustomersAdd = () => {
                             label="Work Phone"
                             value={form.work_phone}
                             onChange={handleChange}
+                            error={!!fieldErrors.work_phone}
+                            helperText={fieldErrors.work_phone || ''}
+                            placeholder="e.g. 9876543210"
+                            inputProps={{ maxLength: 11 }}
                         />
 
                         <TextField
@@ -1230,6 +1490,10 @@ const CustomersAdd = () => {
                             label="Mobile"
                             value={form.mobile}
                             onChange={handleChange}
+                            error={!!fieldErrors.mobile}
+                            helperText={fieldErrors.mobile || ''}
+                            placeholder="e.g. 9876543210"
+                            inputProps={{ maxLength: 11 }}
                         />
                     </div>
                 </div>

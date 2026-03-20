@@ -10,6 +10,7 @@ export const ChartOfAccountDetails = () => {
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+     const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [loading, setLoading] = useState(false);
     const [ledgerLoading, setLedgerLoading] = useState(false);
@@ -34,7 +35,7 @@ export const ChartOfAccountDetails = () => {
         setLedgerLoading(true);
         try {
             const res = await axios.get(
-                `https://club-uat-api.lockated.com/lock_accounts/1/lock_account_ledgers/${id}.json`,
+                `https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/lock_account_ledgers/${id}.json`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -77,7 +78,7 @@ export const ChartOfAccountDetails = () => {
     //     setLoading(true);
     //     try {
     //         const res = await axios.get(
-    //             `https://${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`,
+    //             `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/${id}.json`,
     //             {
     //                 headers: { Authorization: `Bearer ${token}` },
     //             }

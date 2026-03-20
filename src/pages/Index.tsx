@@ -50,7 +50,7 @@ const Index = () => {
     if (loading || !isViewCheckComplete) return;
 
     const hostname = window.location.hostname;
-    const isViSite = hostname.includes("vi-web.gophygital.work");
+    const isViSite = hostname === "vi-web.gophygital.work";
     const userType = localStorage.getItem("userType");
     const isLocalhost =
       hostname.includes("localhost") ||

@@ -176,6 +176,9 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
 
                 <TabsContent value="external" className="space-y-3 mt-4">
                     <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 inline-block">
+                            Name <span style={{ color: '#C72030' }}>*</span>
+                        </label>
                         <TextField
                             fullWidth
                             size="small"
@@ -191,6 +194,9 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
                         />
                     </div>
                     <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 inline-block">
+                            Mail ID <span style={{ color: '#C72030' }}>*</span>
+                        </label>
                         <TextField
                             fullWidth
                             size="small"
@@ -203,23 +209,36 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
                             sx={{ backgroundColor: 'white' }}
                         />
                     </div>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        placeholder="Role"
-                        value={externalForm.role}
-                        onChange={(e) => setExternalForm({ ...externalForm, role: e.target.value })}
-                        sx={{ backgroundColor: 'white' }}
-                    />
-                    <TextField
-                        fullWidth
-                        size="small"
-                        placeholder="Company"
-                        value={externalForm.company}
-                        onChange={(e) => setExternalForm({ ...externalForm, company: e.target.value })}
-                        sx={{ backgroundColor: 'white' }}
-                    />
                     <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 inline-block">
+                            Role
+                        </label>
+                        <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="Role"
+                            value={externalForm.role}
+                            onChange={(e) => setExternalForm({ ...externalForm, role: e.target.value })}
+                            sx={{ backgroundColor: 'white' }}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 inline-block">
+                            Company
+                        </label>
+                        <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="Company"
+                            value={externalForm.company}
+                            onChange={(e) => setExternalForm({ ...externalForm, company: e.target.value })}
+                            sx={{ backgroundColor: 'white' }}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 inline-block">
+                            Contact No. <span style={{ color: '#C72030' }}>*</span>
+                        </label>
                         <TextField
                             fullWidth
                             size="small"

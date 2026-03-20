@@ -94,6 +94,14 @@ const navigationStructure = {
             href: "/settings/company-hub/Company-setup",
           },
           {
+            name: "Employee of the Month",
+            href: "/settings/company-hub/employee-of-the-month",
+          },
+          {
+            name: "Announcements Setup",
+            href: "/settings/company-hub/announcements",
+          },
+          {
             name: "Holiday Calendar",
 
             href: "/settings/account/holiday-calendar",
@@ -1494,6 +1502,14 @@ const modulesByPackage = {
           name: "Setup",
           href: "/settings/company-hub/Company-setup",
         },
+        {
+          name: "Employee of the Month",
+          href: "/settings/company-hub/employee-of-the-month",
+        },
+        {
+          name: "Announcements Setup",
+          href: "/settings/company-hub/announcements",
+        },
       ],
     },
   ],
@@ -1677,6 +1693,68 @@ const modulesByPackage = {
         {
           name: "Account Transactions",
           href: "/accounting/reports/account-transactions",
+        },
+        {
+          name: "AR Aging System",
+          href: "/accounting/reports/ar-aging-summary",
+        },
+        {
+          name: "AR Aging Details",
+          href: "/accounting/reports/ar-aging-details",
+        },
+        {
+          name: "Invoice Details",
+          href: "/accounting/reports/invoice-details",
+        },
+        {
+          name: "Retainer Invoice Details",
+          href: "/accounting/reports/retainer-invoice-details",
+        },
+        {
+          name: "Sales Order Details",
+          href: "/accounting/reports/sales-order-details",
+        },
+        {
+          name: "Delivery Challan Details",
+          href: "/accounting/reports/delivery-challan-details",
+        },
+        {
+          name: "Quote Details",
+          href: "/accounting/reports/quote-details",
+        },
+        {
+          name: "Customer Balance Summary",
+          href: "/accounting/reports/customer-balance-summary",
+        },
+        {
+          name: "Receivable Summary",
+          href: "/accounting/reports/receivable-summary",
+        },
+        {
+          name: "Receivable Details",
+          href: "/accounting/reports/receivable-details",
+        },
+        {
+          name: "Payment Received",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "Payments Recieved",
+              href: "/accounting/reports/payments-recieved",
+            },
+            {
+              name: "Time to Get Paid",
+              href: "/accounting/reports/time-to-get-paid",
+            },
+            {
+              name: "Credit Note Details",
+              href: "/accounting/reports/credit-note-details",
+            },
+            {
+              name: "Refund History",
+              href: "/accounting/reports/refund-history",
+            },
+          ],
         },
       ],
     },

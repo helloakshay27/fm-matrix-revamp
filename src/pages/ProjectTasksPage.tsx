@@ -509,18 +509,26 @@ const ProjectTasksPage = () => {
     const [openStatusOptions, setOpenStatusOptions] = useState(false)
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
     const [statuses, setStatuses] = useState([])
-    const [taskType, setTaskType] = useState<"all" | "my">("all");
+    const [taskType, setTaskType] = useState<"all" | "my">(() => {
+        const saved = sessionStorage.getItem("taskType");
+        if (saved) {
+            return saved as "all" | "my";
+        }
+        // Fallback to path-based logic on initial load
+        const path = location.pathname;
+        if (path.includes("/projects/") && path.includes("/milestones/")) {
+            return "all";
+        } else if (path === "/vas/tasks") {
+            return "my";
+        }
+        return "all";
+    });
     const [currentPage, setCurrentPage] = useState(1);
 
+    // Save taskType to session storage whenever it changes
     useEffect(() => {
-        const path = location.pathname;
-
-        if (path.includes("/projects/") && path.includes("/milestones/")) {
-            setTaskType("all");
-        } else if (path === "/vas/tasks") {
-            setTaskType("my");
-        }
-    }, [location.pathname]);
+        sessionStorage.setItem("taskType", taskType);
+    }, [taskType]);
 
     // Sorting state
     const [sortColumn, setSortColumn] = useState<string | null>(null);
