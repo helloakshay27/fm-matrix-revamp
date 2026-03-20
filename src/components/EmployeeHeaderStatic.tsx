@@ -536,8 +536,8 @@ export const EmployeeHeaderStatic: React.FC = () => {
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module.name)}
                         className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
-                            ? "bg-white text-[#C72030] shadow-sm"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                          ? "bg-white text-[#C72030] shadow-sm"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
                           }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
@@ -600,8 +600,8 @@ export const EmployeeHeaderStatic: React.FC = () => {
                               }
                               onClick={() => handleModuleClick(module.name)}
                               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
-                                  ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                                  : "hover:bg-[#f6f4ee] text-gray-700"
+                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                : "hover:bg-[#f6f4ee] text-gray-700"
                                 }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -706,7 +706,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
 
               {/* Notifications List */}
               <div className="overflow-y-auto max-h-[400px]">
-                {notifications.length === 0 ? (
+                {notifications?.length === 0 ? (
                   <div className="px-4 py-12 text-center">
                     <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-sm font-medium text-gray-500">
@@ -718,7 +718,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {notifications.map((notification) => (
+                    {notifications?.map((notification) => (
                       <button
                         key={notification.id}
                         onClick={() => {
@@ -732,8 +732,8 @@ export const EmployeeHeaderStatic: React.FC = () => {
                         <div className="flex items-start gap-3">
                           <div
                             className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
                               }`}
                           />
                           <div className="flex-1 min-w-0">
@@ -754,10 +754,10 @@ export const EmployeeHeaderStatic: React.FC = () => {
                               <Badge
                                 variant="outline"
                                 className={`text-xs ${notification.type === "task"
-                                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                                    : notification.type === "meeting"
-                                      ? "bg-green-50 text-green-700 border-green-200"
-                                      : "bg-gray-50 text-gray-700 border-gray-200"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : notification.type === "meeting"
+                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    : "bg-gray-50 text-gray-700 border-gray-200"
                                   }`}
                               >
                                 {notification.type}
@@ -772,7 +772,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
               </div>
 
               {/* Footer */}
-              {notifications.length > 0 && (
+              {notifications?.length > 0 && (
                 <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
                   <button
                     onClick={() => {
