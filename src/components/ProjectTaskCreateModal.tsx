@@ -757,6 +757,7 @@ const TaskForm = ({
           totalWorkingHours={totalWorkingHours}
           setTotalWorkingHours={setTotalWorkingHours}
           shift={shift}
+          isDateDisabled={isDateDisabledByRoster}
         />
       </div>
 

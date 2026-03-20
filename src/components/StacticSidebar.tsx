@@ -1768,6 +1768,30 @@ const modulesByPackage = {
               name: "Vendor Balance Summary",
               href: "/accounting/reports/vendor-balance-summary",
             },
+                {
+                  name: "Payments Made",
+                  href: "/accounting/reports/payments-made",
+                },
+                {
+                  name: "Payable Details",
+                  href: "/accounting/reports/payable-details",
+                },
+                {
+                  name: "AP Aging Details",
+                  href: "/accounting/reports/ap-aging-details",
+                },
+                {
+                  name: "Refund History",
+                  href: "/accounting/reports/payable-refund-history",
+                },
+                {
+                  name: "Purchase Orders by Vendor",
+                  href: "/accounting/reports/purchase-orders-by-vendor",
+                },
+                {
+                  name: "Payable Summary",
+                  href: "/accounting/reports/payable-summary",
+                },
             {
               name: "AP Aging Summary",
               href: "/accounting/reports/ap-aging-summary",
@@ -1775,6 +1799,10 @@ const modulesByPackage = {
             {
               name: "Bill Details",
               href: "/accounting/reports/bill-details",
+            },
+            {
+              name: "Vendor Credits Details",
+              href: "/accounting/reports/vendor-credits-details",
             },
           ],
         },
