@@ -24,7 +24,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 // Section component - matching InvoiceAdd design
 const Section: React.FC<{

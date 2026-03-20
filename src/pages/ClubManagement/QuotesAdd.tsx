@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
-    // Button,
+    Button,
     Autocomplete,
     FormControlLabel,
     Checkbox,
@@ -26,7 +26,7 @@ import {
     Chip
 } from '@mui/material';
 
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import {
     Close,
     Add,
@@ -1406,8 +1406,9 @@ export const QuotesAdd: React.FC = () => {
 
                         <div className="flex gap-3 pt-4">
                             <Button
-                                variant="outline"
+                                variant="outlined"
                                 onClick={addItem}
+                                sx={{ textTransform: 'none' }}
                             >
                                 <span className="flex items-center gap-2"><Add /> Add New Row</span>
                             </Button>
@@ -1774,7 +1775,7 @@ export const QuotesAdd: React.FC = () => {
 
                 <Button
                     variant="outlined"
-                    onClick={() => navigate('/accounting/invoices/list')}
+                    onClick={() => navigate('/accounting/quotes/list')}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',
@@ -1880,9 +1881,10 @@ export const QuotesAdd: React.FC = () => {
                                     Contact Persons
                                 </Typography>
                                 <Button
-                                    size="sm"
+                                    size="small"
                                     onClick={() => setContactPersonDialogOpen(true)}
-                                    variant="outline"
+                                    variant="outlined"
+                                    sx={{ textTransform: 'none' }}
                                 >
                                     <span className="flex items-center gap-1"><Add /> Add</span>
                                 </Button>
@@ -1949,8 +1951,8 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setAddUserDialogOpen(false)} variant="ghost">Cancel</Button>
-                    <Button onClick={handleAddExternalUser} variant="primary">Add</Button>
+                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
                 </DialogActions>
             </Dialog>
 
@@ -2039,8 +2041,8 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setContactPersonDialogOpen(false)} variant="ghost">Cancel</Button>
-                    <Button onClick={handleAddContactPerson} variant="primary">Save</Button>
+                    <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
                 </DialogActions>
             </Dialog>
 

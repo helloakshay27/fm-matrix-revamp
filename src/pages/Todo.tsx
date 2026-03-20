@@ -403,7 +403,8 @@ export default function Todo() {
       title: todo.title,
       target_date: todo.target_date,
       responsible_person: {
-        id: JSON.parse(localStorage.getItem('user'))?.id
+        id: todo.user_id,
+        name: todo.user,
       }
     });
     setConvertTodoId(todo.id);
