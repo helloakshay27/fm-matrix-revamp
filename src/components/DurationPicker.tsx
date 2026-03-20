@@ -25,6 +25,7 @@ export const DurationPicker = ({
     setTotalWorkingHours,
     shift = {} as any,
     isEdit = false,
+    isDateDisabled = null,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [taskType, setTaskType] = useState("standard");
@@ -92,11 +93,20 @@ export const DurationPicker = ({
         return Math.floor((day - 1) / 7) + 1;
     };
 
-    const isDateWorking = (date, shift) => {
+    const isDateWorking = (date, shift, isDateDisabledFn) => {
+        // First check if date is disabled by roster
+        if (isDateDisabledFn) {
+            const isDisabled = isDateDisabledFn(date.getFullYear(), date.getMonth(), date.getDate());
+            if (isDisabled) {
+                return false;
+            }
+        }
+
         const parsed = parseShiftNoOfDays(shift);
         if (!parsed) {
             const jsDay = date.getDay();
-            return jsDay !== 0 && jsDay !== 6;
+            // Default: Monday-Saturday are working (exclude Sunday only)
+            return jsDay !== 0;
         }
 
         const jsDay = date.getDay();
@@ -125,7 +135,7 @@ export const DurationPicker = ({
 
         while (current <= end) {
             const formatted = current.toLocaleDateString("en-GB").replace(/\//g, "-");
-            const working = isDateWorking(current, shiftInfo);
+            const working = isDateWorking(current, shiftInfo, isDateDisabled);
             days.push({
                 date: new Date(current),
                 formatted,
@@ -378,7 +388,7 @@ export const DurationPicker = ({
                 if (onDateWiseHoursChange) onDateWiseHoursChange([]);
             }
         }
-    }, [startDate, endDate, taskType, shift]);
+    }, [startDate, endDate, taskType, shift, isDateDisabled]);
 
     console.log(dateWiseHours);
 

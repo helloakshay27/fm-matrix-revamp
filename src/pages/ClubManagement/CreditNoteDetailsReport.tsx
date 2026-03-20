@@ -42,7 +42,7 @@ const columns: ColumnConfig[] = [
   { key: "status", label: "STATUS", sortable: true, hideable: false, draggable: true },
   { key: "credit_date", label: "CREDIT DATE", sortable: true, hideable: false, draggable: true },
   { key: "credit_note_number", label: "CREDIT NOTE#", sortable: true, hideable: false, draggable: true },
-  { key: "credit_reference_number", label: "CREDIT NOTE#", sortable: true, hideable: false, draggable: true },
+  { key: "credit_reference_number", label: "REFERENCE#", sortable: true, hideable: false, draggable: true },
   { key: "customer_name", label: "CUSTOMER NAME", sortable: true, hideable: false, draggable: true },
   { key: "credit_note_amount", label: "CREDIT NOTE AMOUNT", sortable: true, hideable: false, draggable: true },
   { key: "balance_amount", label: "BALANCE AMOUNT", sortable: true, hideable: false, draggable: true },
@@ -168,113 +168,133 @@ const CreditNoteDetailsReport: React.FC = () => {
     [rows]
   );
 
-  const renderRow = (row: CreditNoteRow) => ({
-    status: <span className="text-[13px] text-[#2563eb]">{row.status}</span>,
-    credit_date: <span className="text-[13px] text-[#111827]">{formatDate(row.credit_date)}</span>,
-    credit_note_number: (
-      <button
-        onClick={() => navigate(`/accounting/credit-note/${row.id}`)}
-        className="text-[13px] font-semibold text-[#2563eb]"
-      >
-        {row.credit_note_number}
-      </button>
-    ),
-    credit_reference_number: <span className="text-[13px] text-[#111827]">{row.credit_reference_number}</span>,
-    customer_name: (
-      <button
-        onClick={() => navigate(`/accounting/credit-note/${row.id}`)}
-        className="text-[13px] font-semibold text-[#2563eb]"
-      >
-        {row.customer_name}
-      </button>
-    ),
-    credit_note_amount: (
-      <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.credit_note_amount)}</span>
-    ),
-    balance_amount: (
-      <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.balance_amount)}</span>
-    ),
-  });
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: -1,
+        status: "__total__",
+        credit_date: "",
+        credit_note_number: "Total",
+        credit_reference_number: "",
+        customer_name: "",
+        credit_note_amount: totals.credit_note_amount,
+        balance_amount: totals.balance_amount,
+      },
+    ];
+  }, [rows, totals]);
+
+  const statusColorMap: Record<string, string> = {
+    Draft: "bg-gray-100 text-gray-700",
+    Open: "bg-blue-100 text-blue-700",
+    Sent: "bg-blue-100 text-blue-700",
+    Paid: "bg-green-100 text-green-700",
+    Void: "bg-red-100 text-red-700",
+    Closed: "bg-green-100 text-green-700",
+  };
+
+  const renderRow = (row: CreditNoteRow) => {
+    const isTotal = row.status === "__total__";
+    return {
+      status: isTotal ? <span /> : (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status] || "bg-gray-100 text-gray-700"}`}>
+          {row.status}
+        </span>
+      ),
+      credit_date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDate(row.credit_date)}</span>,
+      credit_note_number: (
+        <span
+          onClick={() => !isTotal && navigate(`/accounting/credit-note/${row.id}`)}
+          className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600 cursor-pointer hover:underline"}`}
+        >
+          {row.credit_note_number}
+        </span>
+      ),
+      credit_reference_number: <span className="text-sm text-gray-600">{isTotal ? "" : row.credit_reference_number}</span>,
+      customer_name: (
+        <span
+          onClick={() => !isTotal && navigate(`/accounting/credit-note/${row.id}`)}
+          className={`text-sm font-medium ${isTotal ? "" : "text-blue-600 cursor-pointer hover:underline"}`}
+        >
+          {isTotal ? "" : row.customer_name}
+        </span>
+      ),
+      credit_note_amount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+          {formatCurrency(row.credit_note_amount)}
+        </span>
+      ),
+      balance_amount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
+          {formatCurrency(row.balance_amount)}
+        </span>
+      ),
+    };
+  };
 
   return (
-    <div className="min-h-screen w-full bg-white">
-      <div className="overflow-hidden border border-[#EAECF0] bg-white">
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-4">
-          <div className="flex items-center gap-4 mb-5">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[#E5E0D3]">
-              <NotepadText color="#d32f2f" size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Credit Note Details</h3>
-            </div>
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
           </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Credit Note Details</h3>
+        </div>
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={filters.fromDate.split("/").reverse().join("-")}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={filters.toDate.split("/").reverse().join("-")}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+          <Button
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={() => fetchCreditNotes(filters.fromDate, filters.toDate)}
+          >
+            View
+          </Button>
+        </div>
+      </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            <TextField
-              label="From Date"
-              type="date"
-              name="fromDate"
-              value={filters.fromDate.split("/").reverse().join("-")}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-
-            <TextField
-              label="To Date"
-              type="date"
-              name="toDate"
-              value={filters.toDate.split("/").reverse().join("-")}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-
-            <Button
-              onClick={() => fetchCreditNotes(filters.fromDate, filters.toDate)}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
-            >
-              View
-            </Button>
-          </div>
+      {/* Table */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
+          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Credit Note Details</h1>
+          <p className="mt-1 text-sm text-[#475467]">From {filters.fromDate} To {filters.toDate}</p>
         </div>
 
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-12 text-center">
-          <p className="text-[14px] font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-3 text-[20px] font-semibold text-[#111827]">Credit Note Details</h1>
-          <p className="mt-2 text-[14px] text-[#344054]">From {filters.fromDate} To {filters.toDate}</p>
-        </div>
-
-        <div className="p-0">
+        <div className="p-4">
           <EnhancedTaskTable
-            data={rows}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="credit-note-details-report-v1"
             hideTableExport={true}
-            hideTableSearch={true}
-            enableSearch={false}
-            hideColumnsButton={true}
+            hideTableSearch={false}
+            enableSearch={true}
             loading={loading}
             emptyMessage="No credit note details found"
-            toolbarClassName="hidden"
-            tableWrapperClassName="border-0 rounded-none"
-            headerCellClassName="bg-[#F7F7FB] text-[#5F6293] text-[12px] font-semibold uppercase tracking-[0.02em] hover:bg-[#F7F7FB]"
-            rowClassName="hover:bg-transparent shadow-none"
-            cellClassName="px-8 py-3 border-b border-[#EAECF0] hover:bg-transparent align-top"
           />
-
-          <div className="grid grid-cols-[1fr_1.1fr_1.1fr_1.1fr_1.5fr_1.1fr_1.1fr] border-b border-[#EAECF0] bg-white px-8 py-3 text-[14px] text-[#111827]">
-            <div>Total</div>
-            <div />
-            <div />
-            <div />
-            <div />
-            <div className="text-right font-medium">{formatCurrency(totals.credit_note_amount)}</div>
-            <div className="text-right font-medium">{formatCurrency(totals.balance_amount)}</div>
-          </div>
         </div>
       </div>
     </div>

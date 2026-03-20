@@ -1164,9 +1164,21 @@ import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
 import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
 import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedReport";
+import PaymentsMadeReport from "./pages/Accounting/PaymentsMadeReport";
+import PayableDetailsReport from "./pages/Accounting/PayableDetailsReport";
+import APAgingDetailsReport from "./pages/Accounting/APAgingDetailsReport";
+import PayableRefundHistoryReport from "./pages/Accounting/PayableRefundHistoryReport";
+import PurchaseOrderDetailsReport from "./pages/Accounting/PurchaseOrderDetailsReport";
+import PurchaseOrdersByVendorReport from "./pages/Accounting/PurchaseOrdersByVendorReport";
+import PayableSummaryReport from "./pages/Accounting/PayableSummaryReport";
 import TimeToGetPaidReport from "./pages/ClubManagement/TimeToGetPaidReport";
 import CreditNoteDetailsReport from "./pages/ClubManagement/CreditNoteDetailsReport";
 import RefundHistoryReport from "./pages/ClubManagement/RefundHistoryReport";
+import RecurringInvoiceDetailsReport from "./pages/ClubManagement/RecurringInvoiceDetailsReport";
+import VendorBalanceSummaryReport from "./pages/ClubManagement/VendorBalanceSummaryReport";
+import APAgingSummaryReport from "./pages/ClubManagement/APAgingSummaryReport";
+import BillDetailsReport from "./pages/ClubManagement/BillDetailsReport";
+import VendorCreditsDetailsReport from "./pages/ClubManagement/VendorCreditsDetailsReport";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
@@ -2587,6 +2599,34 @@ function App() {
                             element={<PaymentsRecievedReport />}
                           />
                           <Route
+                            path="/accounting/reports/payments-made"
+                            element={<PaymentsMadeReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-details"
+                            element={<PayableDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ap-aging-details"
+                            element={<APAgingDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-refund-history"
+                            element={<PayableRefundHistoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/purchase-order-details"
+                            element={<PurchaseOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/purchase-orders-by-vendor"
+                            element={<PurchaseOrdersByVendorReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-summary"
+                            element={<PayableSummaryReport />}
+                          />
+                          <Route
                             path="/accounting/reports/time-to-get-paid"
                             element={<TimeToGetPaidReport />}
                           />
@@ -2597,6 +2637,26 @@ function App() {
                           <Route
                             path="/accounting/reports/refund-history"
                             element={<RefundHistoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/recurring-invoice-details"
+                            element={<RecurringInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/vendor-balance-summary"
+                            element={<VendorBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ap-aging-summary"
+                            element={<APAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/bill-details"
+                            element={<BillDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/vendor-credits-details"
+                            element={<VendorCreditsDetailsReport />}
                           />
                           <Route
                             path="/accounting/reports/account-transactions/details"

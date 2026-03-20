@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import TextField from "@mui/material/TextField";
+import { NotepadText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -162,6 +165,22 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+const getCurrentMonthRange = () => {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  return {
+    fromDate: firstDay.toISOString().split("T")[0],
+    toDate: lastDay.toISOString().split("T")[0],
+  };
+};
+
+const toApiDate = (iso: string) => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
 const PaymentsRecievedReport: React.FC = () => {
   const navigate = useNavigate();
   const lockAccountId = localStorage.getItem("lock_account_id");
@@ -170,6 +189,7 @@ const PaymentsRecievedReport: React.FC = () => {
   const [paymentData, setPaymentData] = useState<PaymentReceived[]>([]);
   const [loading, setLoading] = useState(false);
   const [ledgerNameMap, setLedgerNameMap] = useState<Record<string, string>>({});
+  const [filters, setFilters] = useState(getCurrentMonthRange());
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -215,24 +235,24 @@ const PaymentsRecievedReport: React.FC = () => {
     }
   }, [lockAccountId]);
 
-  useEffect(() => {
-    const fetchPayments = async () => {
-      setLoading(true);
-
-      try {
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-        const response = await axios.get(`https://${baseUrl}/lock_payments.json`, {
-          params: {
-            lock_account_id: lockAccountId,
-            "q[payment_made_eq]": 0,
-            page: currentPage,
-            per_page: perPage,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  const fetchPayments = async () => {
+    setLoading(true);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`https://${baseUrl}/lock_payments.json`, {
+        params: {
+          lock_account_id: lockAccountId,
+          "q[payment_made_eq]": 0,
+          "q[payment_date_gteq]": toApiDate(filters.fromDate),
+          "q[payment_date_lteq]": toApiDate(filters.toDate),
+          page: currentPage,
+          per_page: perPage,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
         const data = response.data;
         const list: LockPaymentAPI[] = data.lock_payments || data || [];
@@ -268,23 +288,21 @@ const PaymentsRecievedReport: React.FC = () => {
             has_prev_page: currentPage > 1,
           }));
         }
-      } catch (error) {
-        console.error("Failed to load payments received report", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (error) {
+      console.error("Failed to load payments received report", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPayments();
   }, [currentPage, perPage, lockAccountId, ledgerNameMap]);
 
-  const reportDateRange = useMemo(() => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    return `${formatDate(firstDay.toISOString())} To ${formatDate(lastDay.toISOString())}`;
-  }, []);
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
 
   const totals = useMemo(
     () =>
@@ -292,62 +310,140 @@ const PaymentsRecievedReport: React.FC = () => {
         (accumulator, payment) => ({
           amount_bcy: accumulator.amount_bcy + payment.amount_bcy,
           unused_amount_bcy: accumulator.unused_amount_bcy + payment.unused_amount_bcy,
+          amount_fcy: accumulator.amount_fcy + payment.amount_fcy,
+          unused_amount_fcy: accumulator.unused_amount_fcy + payment.unused_amount_fcy,
         }),
-        { amount_bcy: 0, unused_amount_bcy: 0 }
+        { amount_bcy: 0, unused_amount_bcy: 0, amount_fcy: 0, unused_amount_fcy: 0 }
       ),
     [paymentData]
   );
 
-  const renderRow = (payment: PaymentReceived) => ({
-    payment_number_display: <span className="text-[13px] font-medium text-[#111827]">{payment.payment_number_display}</span>,
-    date: <span className="text-[13px] text-[#111827]">{formatDate(payment.date)}</span>,
-    status: <span className="text-[13px] text-[#111827]">{payment.status}</span>,
-    reference_number: <span className="text-[13px] text-[#111827]">{payment.reference_number || ""}</span>,
-    customer_name: (
-      <button
-        onClick={() => navigate(`/accounting/payments-received/${payment.id}`)}
-        className="text-[13px] font-semibold text-[#2563eb]"
-      >
-        {payment.customer_name || "-"}
-      </button>
-    ),
-    payment_mode: <span className="text-[13px] text-[#111827]">{payment.payment_mode || "-"}</span>,
-    notes: <span className="text-[13px] text-[#111827]">{payment.notes || ""}</span>,
-    invoice_number: (
-      <div className="text-[13px] text-[#111827] whitespace-pre-line break-words">{payment.invoice_number || ""}</div>
-    ),
-    deposit_to: <span className="text-[13px] text-[#111827]">{payment.deposit_to || "Petty Cash"}</span>,
-    amount_fcy: (
-      <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(payment.amount_fcy)}</span>
-    ),
-    unused_amount_fcy: (
-      <span className="text-[13px] font-semibold text-[#2563eb]">
-        {formatCurrency(payment.unused_amount_fcy)}
-      </span>
-    ),
-    amount_bcy: (
-      <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(payment.amount_bcy)}</span>
-    ),
-    unused_amount_bcy: (
-      <span className="text-[13px] font-semibold text-[#2563eb]">
-        {formatCurrency(payment.unused_amount_bcy)}
-      </span>
-    ),
-    place_of_supply: <span className="text-[13px] text-[#111827]">{payment.place_of_supply || ""}</span>,
-  });
+  const tableData = useMemo(() => {
+    if (paymentData.length === 0) return paymentData;
+    return [
+      ...paymentData,
+      {
+        id: -1,
+        payment_number: "",
+        payment_number_display: "Total",
+        date: "__total__",
+        reference_number: "",
+        customer_name: "",
+        payment_mode: "",
+        notes: "",
+        invoice_number: "",
+        deposit_to: "",
+        amount_fcy: totals.amount_fcy,
+        unused_amount_fcy: totals.unused_amount_fcy,
+        amount_bcy: totals.amount_bcy,
+        unused_amount_bcy: totals.unused_amount_bcy,
+        place_of_supply: "",
+        status: "__total__" as PaymentReceived["status"],
+      },
+    ];
+  }, [paymentData, totals]);
+
+  const renderRow = (payment: PaymentReceived) => {
+    const isTotal = payment.date === "__total__";
+    return {
+      payment_number_display: (
+        <span className={`text-[13px] font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-[#111827]"}`}>
+          {payment.payment_number_display}
+        </span>
+      ),
+      date: <span className="text-[13px] text-[#111827]">{isTotal ? "" : formatDate(payment.date)}</span>,
+      status: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.status}</span>,
+      reference_number: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.reference_number}</span>,
+      customer_name: isTotal ? <span /> : (
+        <button
+          onClick={() => navigate(`/accounting/payments-received/${payment.id}`)}
+          className="text-[13px] font-semibold text-[#2563eb]"
+        >
+          {payment.customer_name || "-"}
+        </button>
+      ),
+      payment_mode: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.payment_mode || "-"}</span>,
+      notes: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.notes}</span>,
+      invoice_number: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.invoice_number}</span>,
+      deposit_to: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.deposit_to || "Petty Cash"}</span>,
+      amount_fcy: (
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+          {formatCurrency(payment.amount_fcy)}
+        </span>
+      ),
+      unused_amount_fcy: (
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+          {formatCurrency(payment.unused_amount_fcy)}
+        </span>
+      ),
+      amount_bcy: (
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+          {formatCurrency(payment.amount_bcy)}
+        </span>
+      ),
+      unused_amount_bcy: (
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+          {formatCurrency(payment.unused_amount_bcy)}
+        </span>
+      ),
+      place_of_supply: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.place_of_supply}</span>,
+    };
+  };
 
   return (
-    <div className="min-h-screen w-full bg-white">
-      <div className="overflow-hidden border border-[#EAECF0] bg-white">
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-12 text-center">
-          <p className="text-[14px] font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-3 text-[20px] font-semibold text-[#111827]">Payments Received</h1>
-          <p className="mt-2 text-[14px] text-[#344054]">From {reportDateRange}</p>
+    <div className="min-h-screen w-full bg-[#f9f7f2] p-6">
+
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Payments Received</h3>
+        </div>
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={filters.fromDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={filters.toDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+          <Button
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={() => { setCurrentPage(1); fetchPayments(); }}
+          >
+            View
+          </Button>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-[#EAECF0] bg-white">
+        <div className="border-b border-[#EAECF0] bg-[#F8F9FC] px-6 py-5 text-center">
+          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Payments Received</h1>
+          <p className="mt-1 text-sm text-[#475467]">
+            From {new Date(`${filters.fromDate}T00:00:00`).toLocaleDateString("en-GB")} To {new Date(`${filters.toDate}T00:00:00`).toLocaleDateString("en-GB")}
+          </p>
         </div>
 
         <div className="p-4">
           <EnhancedTaskTable
-            data={paymentData}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="payments-recieved-report-v1"
@@ -361,28 +457,6 @@ const PaymentsRecievedReport: React.FC = () => {
             rowClassName="hover:bg-transparent shadow-none"
             cellClassName="px-8 py-3 border-b border-[#EAECF0] hover:bg-transparent align-top"
           />
-
-          <div
-            className="grid border-b border-[#EAECF0] bg-white px-8 py-3 text-[14px] text-[#111827]"
-            style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
-          >
-            <div>Total</div>
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div className="text-right font-semibold text-[#111827]">{formatCurrency(totals.amount_bcy)}</div>
-            <div className="text-right font-semibold text-[#111827]">
-              {formatCurrency(totals.unused_amount_bcy)}
-            </div>
-            <div />
-          </div>
 
           {pagination.total_count > 0 && (
             <div className="px-6 py-4">

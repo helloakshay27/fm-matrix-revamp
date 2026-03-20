@@ -71,6 +71,7 @@ import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
+import { TaskExportModal } from "@/components/TaskExportModal";
 
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
@@ -263,6 +264,7 @@ const statusCards = [
 export const ScheduledTaskDashboard = () => {
   const getDefaultDateRange = () => {
     const today = new Date();
+    
     // Create a new date object for one week ago to avoid mutation
     const oneWeekAgo = new Date(today);
     oneWeekAgo.setDate(today.getDate() - 7);
@@ -312,6 +314,7 @@ export const ScheduledTaskDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [showTaskFilter, setShowTaskFilter] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<TaskFilters>({});
+  const [showTaskExportModal, setShowTaskExportModal] = useState(false);
 
   // Analytics states
   const [showAnalyticsFilter, setShowAnalyticsFilter] = useState(false);
@@ -597,14 +600,8 @@ export const ScheduledTaskDashboard = () => {
   };
 
   // Handle download tasks
-  const handleDownloadTasks = async (statusFilter?: string) => {
-    try {
-      const status = statusFilter !== undefined ? statusFilter : selectedStatus;
-      await taskService.downloadTaskExport({ status: status || undefined });
-    } catch (error) {
-      console.error("Error downloading tasks:", error);
-      // You could add a toast notification here if you have one set up
-    }
+  const handleDownloadTasks = () => {
+    setShowTaskExportModal(true);
   };
 
   // Load calendar events
@@ -1356,7 +1353,7 @@ export const ScheduledTaskDashboard = () => {
                     hideTableSearch={false}
                     storageKey="scheduled-tasks-table"
                     onFilterClick={() => setShowTaskFilter(true)}
-                    handleExport={() => handleDownloadTasks(selectedStatus)}
+                    handleExport={() => handleDownloadTasks()}
                     searchTerm={searchQuery}
                     onSearchChange={handleSearch}
                     emptyMessage="No scheduled tasks found"
@@ -1635,6 +1632,29 @@ export const ScheduledTaskDashboard = () => {
         {/* Sonner Toaster for notifications */}
         <Toaster position="top-right" richColors closeButton />
       </div>
+
+      {/* Task Export Modal */}
+      {showTaskExportModal && (
+        <TaskExportModal 
+          isOpen={showTaskExportModal} 
+          onClose={() => setShowTaskExportModal(false)}
+          filters={{
+            dateFrom: currentFilters.dateFrom,
+            dateTo: currentFilters.dateTo,
+            checklist: currentFilters.checklist,
+            type: selectedStatus ? String(selectedStatus) : undefined,
+            assignedTo: currentFilters.assignedTo,
+            supplierId: currentFilters.supplierId,
+            taskId: currentFilters.taskId,
+            assetGroupId: currentFilters.assetGroupId,
+            assetSubGroupId: currentFilters.assetSubGroupId,
+            scheduleType: currentFilters.scheduleType,
+            searchChecklist: currentFilters.searchChecklist,
+            searchTaskId: currentFilters.searchTaskId,
+            taskCategory: currentFilters.taskCategory,
+          } as any}
+        />
+      )}
 
       {/* AI Assistant Widget - Checklist/Tasks Module */}
     </>

@@ -1,7 +1,12 @@
-import React, { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
+import TextField from "@mui/material/TextField";
+import { NotepadText } from "lucide-react";
+import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { Button } from "@/components/ui/button";
+
+// ─── TYPES ─────────────────────────────────────────
 
 interface ARAgingDetailRow {
   id: string;
@@ -9,12 +14,12 @@ interface ARAgingDetailRow {
   dueDate: string;
   transactionNo: string;
   type: string;
-  status: "Overdue" | "Open" | "Sent" | "Paid";
+  status: string;
   customerName: string;
   age: string;
   amount: number;
   balanceDue: number;
-  section: string;
+  bucket: string;
 }
 
 interface BucketSection {
@@ -23,126 +28,7 @@ interface BucketSection {
   rows: ARAgingDetailRow[];
 }
 
-const formatCurrency = (value: number): string => {
-  const formatted = Number(value || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `₹${formatted}`;
-};
-
-const allSections: BucketSection[] = [
-  {
-    key: "1-15",
-    label: "1 - 15 Days",
-    rows: [
-      {
-        id: "1",
-        date: "09/03/2026",
-        dueDate: "09/03/2026",
-        transactionNo: "INV-0393",
-        type: "Invoice",
-        status: "Overdue",
-        customerName: "Lockated",
-        age: "9 Days",
-        amount: 525.0,
-        balanceDue: 244.75,
-        section: "1 - 15 Days",
-      },
-      {
-        id: "2",
-        date: "10/03/2026",
-        dueDate: "10/03/2026",
-        transactionNo: "INV-0395",
-        type: "Invoice",
-        status: "Overdue",
-        customerName: "Lockated",
-        age: "8 Days",
-        amount: 475.5,
-        balanceDue: 475.5,
-        section: "1 - 15 Days",
-      },
-      {
-        id: "3",
-        date: "10/03/2026",
-        dueDate: "10/03/2026",
-        transactionNo: "INV-0396",
-        type: "Invoice",
-        status: "Overdue",
-        customerName: "Lockated",
-        age: "8 Days",
-        amount: 315.0,
-        balanceDue: 315.0,
-        section: "1 - 15 Days",
-      },
-      {
-        id: "4",
-        date: "16/03/2026",
-        dueDate: "16/03/2026",
-        transactionNo: "INV-0397",
-        type: "Invoice",
-        status: "Overdue",
-        customerName: "Lockated",
-        age: "2 Days",
-        amount: 315.0,
-        balanceDue: 315.0,
-        section: "1 - 15 Days",
-      },
-      {
-        id: "5",
-        date: "16/03/2026",
-        dueDate: "16/03/2026",
-        transactionNo: "INV-0398",
-        type: "Invoice",
-        status: "Overdue",
-        customerName: "Lockated",
-        age: "2 Days",
-        amount: 1030.0,
-        balanceDue: 1030.0,
-        section: "1 - 15 Days",
-      },
-      {
-        id: "6",
-        date: "16/03/2026",
-        dueDate: "16/03/2026",
-        transactionNo: "INV-0399",
-        type: "Invoice",
-        status: "Overdue",
-        customerName: "Lockated",
-        age: "2 Days",
-        amount: 1337.25,
-        balanceDue: 1337.25,
-        section: "1 - 15 Days",
-      },
-    ],
-  },
-  {
-    key: "current",
-    label: "Current",
-    rows: [
-      {
-        id: "7",
-        date: "18/03/2026",
-        dueDate: "18/03/2026",
-        transactionNo: "INV-0394",
-        type: "Invoice",
-        status: "Sent",
-        customerName: "Lockated",
-        age: "",
-        amount: 86.19,
-        balanceDue: 86.19,
-        section: "Current",
-      },
-    ],
-  },
-];
-
-const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Sent: "bg-blue-100 text-blue-700",
-  Open: "bg-gray-100 text-gray-800",
-  Paid: "bg-green-100 text-green-700",
-};
+// ─── COLUMNS ───────────────────────────────────────
 
 const columns: ColumnConfig[] = [
   { key: "date", label: "Date", sortable: true, hideable: true, draggable: true },
@@ -156,61 +42,174 @@ const columns: ColumnConfig[] = [
   { key: "balanceDue", label: "Balance Due", sortable: true, hideable: true, draggable: true },
 ];
 
+// ─── HELPERS ───────────────────────────────────────
+
+const formatCurrency = (value: number): string =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "--";
+  const [y, m, d] = dateStr.split("-");
+  return `${d}-${m}-${y}`;
+};
+
+const statusColorMap: Record<string, string> = {
+  Overdue: "bg-orange-100 text-orange-700",
+  Sent: "bg-blue-100 text-blue-700",
+  Open: "bg-gray-100 text-gray-800",
+  Paid: "bg-green-100 text-green-700",
+};
+
+const BUCKET_LABELS: Record<string, string> = {
+  current: "Current",
+  "1_15": "1 - 15 Days",
+  "16_30": "16 - 30 Days",
+  "31_45": "31 - 45 Days",
+  gt_45: "> 45 Days",
+};
+
+const BUCKET_ORDER = ["current", "1_15", "16_30", "31_45", "gt_45"];
+
+// ─── COMPONENT ─────────────────────────────────────
+
 const ARAgingDetailsReport: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const bucketParam = searchParams.get("bucket") || "";
+  const [allRows, setAllRows] = useState<ARAgingDetailRow[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const sections = useMemo(() => {
-    if (!bucketParam) return allSections;
-    const filtered = allSections.filter((s) => s.key === bucketParam);
-    return filtered.length > 0 ? filtered : allSections;
-  }, [bucketParam]);
+  const [filters, setFilters] = useState({
+    fromDate: "01/03/2026",
+    toDate: "12/03/2026",
+  });
 
-  // Flatten all rows for the enhanced table
-  const allRows = useMemo(() => {
-    return sections.flatMap(section => 
-      section.rows.map(row => ({ ...row, section: section.label }))
-    );
-  }, [sections]);
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem("lock_account_id");
+
+  // ─── DATE CHANGE ────────────────────────────────
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const formatted = value ? value.split("-").reverse().join("/") : "";
+    setFilters((prev) => ({ ...prev, [name]: formatted }));
+  };
+
+  // ─── API CALL ──────────────────────────────────
+  const fetchAgingDetails = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.get(
+        `https://${baseUrl}/lock_account_customers/aging_details.json`,
+        {
+          params: {
+            lock_account_id,
+            "q[date_gteq]": filters.fromDate,
+            "q[date_lteq]": filters.toDate,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const apiData = res?.data || [];
+
+      // API may return flat array or object with buckets
+      // Handle flat array where each item has aging_bucket / days_overdue
+      let mapped: ARAgingDetailRow[] = [];
+
+      if (Array.isArray(apiData)) {
+        mapped = apiData.map((d: any, i: number) => {
+          const bucket = d.aging_bucket || "current";
+          const daysOverdue = d.days_overdue ?? 0;
+          return {
+            id: String(d.id || i),
+            date: formatDate(d.date),
+            dueDate: formatDate(d.due_date),
+            transactionNo: d.number || d.transaction_no || "--",
+            type: d.type || "--",
+            status: daysOverdue > 0 ? "Overdue" : "Sent",
+            customerName: d.customer_name || d.name || "--",
+            age: daysOverdue > 0 ? `${daysOverdue} Days` : "--",
+            amount: d.total_amount ?? d.amount ?? 0,
+            balanceDue: d.balance_due ?? 0,
+            bucket,
+          };
+        });
+      } else if (typeof apiData === "object") {
+        // Handle object keyed by bucket: { current: [...], "1_15": [...], ... }
+        Object.entries(apiData).forEach(([bucketKey, items]: [string, any]) => {
+          const rows = Array.isArray(items) ? items : items?.data || [];
+          rows.forEach((d: any, i: number) => {
+            const daysOverdue = d.days_overdue ?? 0;
+            mapped.push({
+              id: `${bucketKey}-${d.id || i}`,
+              date: formatDate(d.date),
+              dueDate: formatDate(d.due_date),
+              transactionNo: d.number || d.transaction_no || "--",
+              type: d.type || "--",
+              status: daysOverdue > 0 ? "Overdue" : "Sent",
+              customerName: d.customer_name || d.name || "--",
+              age: daysOverdue > 0 ? `${daysOverdue} Days` : "--",
+              amount: d.total_amount ?? d.amount ?? 0,
+              balanceDue: d.balance_due ?? 0,
+              bucket: bucketKey,
+            });
+          });
+        });
+      }
+
+      setAllRows(mapped);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgingDetails();
+  }, []);
+
+  // ─── SECTIONS ───────────────────────────────────
+  const sections = useMemo<BucketSection[]>(() => {
+    const grouped: Record<string, ARAgingDetailRow[]> = {};
+    allRows.forEach((row) => {
+      if (!grouped[row.bucket]) grouped[row.bucket] = [];
+      grouped[row.bucket].push(row);
+    });
+
+    return BUCKET_ORDER.filter((k) => grouped[k]?.length > 0).map((k) => ({
+      key: k,
+      label: BUCKET_LABELS[k] || k,
+      rows: grouped[k],
+    }));
+  }, [allRows]);
 
   const grandTotals = useMemo(
     () =>
-      sections.reduce(
-        (acc, section) => {
-          section.rows.forEach((row) => {
-            acc.amount += row.amount;
-            acc.balanceDue += row.balanceDue;
-          });
-          return acc;
-        },
+      allRows.reduce(
+        (acc, row) => ({
+          amount: acc.amount + row.amount,
+          balanceDue: acc.balanceDue + row.balanceDue,
+        }),
         { amount: 0, balanceDue: 0 }
       ),
-    [sections]
+    [allRows]
   );
 
-  const loading = false;
-
+  // ─── RENDER ROW ─────────────────────────────────
   const renderRow = (row: ARAgingDetailRow) => ({
-    date: (
-      <span className="text-sm text-gray-600">
-        {row.date}
-      </span>
-    ),
-    dueDate: (
-      <span className="text-sm text-gray-600">
-        {row.dueDate}
-      </span>
-    ),
+    date: <span className="text-sm text-gray-600">{row.date}</span>,
+    dueDate: <span className="text-sm text-gray-600">{row.dueDate}</span>,
     transactionNo: (
       <span className="text-sm font-medium text-blue-600 cursor-pointer hover:underline">
         {row.transactionNo}
       </span>
     ),
-    type: (
-      <span className="text-sm text-gray-600">
-        {row.type}
-      </span>
-    ),
+    type: <span className="text-sm text-gray-600">{row.type}</span>,
     status: (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -225,11 +224,7 @@ const ARAgingDetailsReport: React.FC = () => {
         {row.customerName}
       </span>
     ),
-    age: (
-      <span className="text-sm text-gray-600">
-        {row.age || "--"}
-      </span>
-    ),
+    age: <span className="text-sm text-gray-600">{row.age || "--"}</span>,
     amount: (
       <span className="text-sm font-medium text-blue-600">
         {formatCurrency(row.amount)}
@@ -245,10 +240,36 @@ const ARAgingDetailsReport: React.FC = () => {
   const today = new Date().toLocaleDateString("en-GB");
 
   return (
-    <div
-      className="w-full bg-[#f9f7f2] p-6"
-      style={{ minHeight: "100vh", boxSizing: "border-box" }}
-    >
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+
+      {/* FILTER */}
+      <div className="bg-white p-6 rounded-lg border mb-6">
+        <div className="flex gap-4 mb-4">
+          <NotepadText color="#C72030" />
+          <h3 className="font-semibold">AR Aging Details</h3>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={filters.fromDate.split("/").reverse().join("-")}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={filters.toDate.split("/").reverse().join("-")}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+          />
+          <Button onClick={fetchAgingDetails}>View</Button>
+        </div>
+      </div>
+
+      {/* TABLE */}
       <div className="rounded-lg border bg-white overflow-hidden">
         {/* Page Header */}
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
@@ -259,7 +280,6 @@ const ARAgingDetailsReport: React.FC = () => {
           <p className="mt-1 text-sm text-[#475467]">As of {today}</p>
         </div>
 
-        {/* EnhancedTaskTable */}
         <div className="p-4">
           <EnhancedTaskTable
             data={allRows}
@@ -282,9 +302,11 @@ const ARAgingDetailsReport: React.FC = () => {
               }),
               { amount: 0, balanceDue: 0 }
             );
-
             return (
-              <div key={section.key} className="mt-2 rounded-md bg-[#f9f7f2] px-4 py-3 text-sm font-semibold text-[#1A1A1A] border border-gray-200">
+              <div
+                key={section.key}
+                className="mt-2 rounded-md bg-[#f9f7f2] px-4 py-3 text-sm font-semibold text-[#1A1A1A] border border-gray-200"
+              >
                 <div className="flex justify-between items-center">
                   <span>{section.label}</span>
                   <div className="flex gap-6">

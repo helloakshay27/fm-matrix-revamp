@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
+import { Loader2 } from "lucide-react";
 
 
 const muiTheme = createTheme({
@@ -1106,8 +1107,10 @@ const CustomersAdd = () => {
     // PAYMENT TERM
     const [selectedTerm, setSelectedTerm] = useState("");
 
-    // Lift paymentTerms state to CustomersAdd
+    // PAYMENT TERM
     const [paymentTerms, setPaymentTerms] = React.useState([]);
+
+    const [loading, setLoading] = useState(false);
 
     // ── Validation state ──
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -1352,6 +1355,7 @@ const CustomersAdd = () => {
             }
         };
         console.log("Submitting Customer Payload:", payload);
+        setLoading(true);
         axios.post(
             `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`,
             payload,
@@ -1369,6 +1373,9 @@ const CustomersAdd = () => {
             .catch(err => {
                 toast.error("Failed to save customer");
                 console.error("Customer save error:", err);
+            })
+            .finally(() => {
+                setLoading(false);
             });
     };
 
@@ -1588,9 +1595,17 @@ const CustomersAdd = () => {
                 <div className="flex gap-3 justify-center">
                     <Button
                         onClick={handleSubmit}
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        disabled={loading}
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[100px]"
                     >
-                        Save
+                        {loading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Please wait
+                            </>
+                        ) : (
+                            "Save"
+                        )}
                     </Button>
 
                     <Button variant="outline" onClick={() => navigate("/accounting/customers")}>
