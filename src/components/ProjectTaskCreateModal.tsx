@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 import { RecurringTaskModal } from "./RecurringTaskModal";
+import { AddTagModal } from "./AddTagModal";
 import { SpeechInput } from "./SpeechInput";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import Quill from "quill";
@@ -81,8 +82,9 @@ const TaskForm = ({
   endDate,
   setEndDate,
   setIsModalOpen,
+  setIsTagModalOpen,
+  isConversion
 }) => {
-  console.log(users);
   const { data: userAvailabilityData } = useAppSelector(
     (state) => state.fetchUserAvailability
   );
@@ -102,6 +104,8 @@ const TaskForm = ({
   const [shift, setShift] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showDatePickerInterface, setShowDatePickerInterface] = useState(false);
+  const [showStartDatePickerInterface, setShowStartDatePickerInterface] = useState(false);
   const [startDateTasks, setStartDateTasks] = useState([]);
   const [targetDateTasks, setTargetDateTasks] = useState([]);
   const [showCalender, setShowCalender] = useState(false);
@@ -157,6 +161,12 @@ const TaskForm = ({
       console.log(error);
     }
   };
+  useEffect(() => {
+    if (formData.responsiblePerson) {
+      fetchShifts(formData.responsiblePerson);
+      fetchUserAvailability({ baseUrl, token, id: formData.responsiblePerson });
+    }
+  }, [formData.responsiblePerson]);
 
   const fetchRosterData = async (userId) => {
     setLoadingRoster(true);
@@ -169,7 +179,6 @@ const TaskForm = ({
           },
         }
       );
-      console.log('Roster data:', response.data);
       setRosterData(response.data);
     } catch (error) {
       console.log('Error fetching roster:', error);
@@ -262,6 +271,18 @@ const TaskForm = ({
 
   useEffect(() => {
     getProjects();
+  }, []);
+
+  // Set start date to today by default
+  useEffect(() => {
+    if (!startDate && !isEdit) {
+      const today = new Date();
+      setStartDate({
+        year: today.getFullYear(),
+        month: today.getMonth(),
+        date: today.getDate(),
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -474,7 +495,7 @@ const TaskForm = ({
               <Select
                 label="Project*"
                 name="project"
-                value={formData.project}
+                value={formData.project || ""}
                 onChange={handleChange}
                 displayEmpty
                 sx={fieldStyles}
@@ -500,7 +521,7 @@ const TaskForm = ({
               <Select
                 label="Milestone"
                 name="milestone"
-                value={formData.milestone}
+                value={formData.milestone || ""}
                 onChange={handleChange}
                 displayEmpty
                 sx={fieldStyles}
@@ -680,7 +701,8 @@ const TaskForm = ({
               if (showStartDatePicker) {
                 setShowStartDatePicker(false);
               }
-              setShowDatePicker(!showDatePicker);
+              setShowDatePicker(true);
+              setShowDatePickerInterface(true);
             }}
             ref={endDateRef}
           >
@@ -696,6 +718,7 @@ const TaskForm = ({
                   onClick={(e) => {
                     e.preventDefault();
                     setEndDate(null);
+                    setShowDatePickerInterface(false);
                   }}
                 />
               </div>
@@ -715,7 +738,8 @@ const TaskForm = ({
               if (showDatePicker) {
                 setShowDatePicker(false);
               }
-              setShowStartDatePicker(!showStartDatePicker);
+              setShowStartDatePicker(true);
+              setShowStartDatePickerInterface(true);
             }}
             ref={startDateRef}
           >
@@ -731,6 +755,7 @@ const TaskForm = ({
                   onClick={(e) => {
                     e.preventDefault();
                     setStartDate(null);
+                    setShowStartDatePickerInterface(false);
                   }}
                 />
               </div>
@@ -757,6 +782,7 @@ const TaskForm = ({
           totalWorkingHours={totalWorkingHours}
           setTotalWorkingHours={setTotalWorkingHours}
           shift={shift}
+          isConversion={isConversion}
           isDateDisabled={isDateDisabledByRoster}
         />
       </div>
@@ -766,11 +792,14 @@ const TaskForm = ({
         className="overflow-hidden opacity-0 h-0 transition-all duration-300 ease-in-out"
         style={{ willChange: "height, opacity" }}
       >
-        {!startDate ? (
+        {showStartDatePickerInterface ? (
           showStartCalender ? (
             <CustomCalender
               setShowCalender={setShowStartCalender}
-              onDateSelect={setStartDate}
+              onDateSelect={(date) => {
+                setStartDate(date);
+                setShowStartDatePickerInterface(false);
+              }}
               selectedDate={startDate}
               taskHoursData={calendarTaskHours}
               ref={startDateRef}
@@ -781,7 +810,10 @@ const TaskForm = ({
           ) : (
             <TaskDatePicker
               selectedDate={startDate}
-              onDateSelect={setStartDate}
+              onDateSelect={(date) => {
+                setStartDate(date);
+                setShowStartDatePickerInterface(false);
+              }}
               startDate={null}
               userAvailability={userAvailability}
               setShowCalender={setShowStartCalender}
@@ -791,14 +823,16 @@ const TaskForm = ({
             />
           )
         ) : (
-          <TasksOfDate
-            selectedDate={startDate}
-            onClose={() => { }}
-            tasks={startDateTasks}
-            selectedUser={formData.responsiblePerson}
-            userAvailability={userAvailability}
-            shift={shift}
-          />
+          startDate && (
+            <TasksOfDate
+              selectedDate={startDate}
+              onClose={() => { }}
+              tasks={startDateTasks}
+              selectedUser={formData.responsiblePerson}
+              userAvailability={userAvailability}
+              shift={shift}
+            />
+          )
         )}
       </div>
 
@@ -807,11 +841,14 @@ const TaskForm = ({
         className="overflow-hidden opacity-0 h-0 transition-all duration-300 ease-in-out"
         style={{ willChange: "height, opacity" }}
       >
-        {!endDate ? (
+        {showDatePickerInterface ? (
           showCalender ? (
             <CustomCalender
               setShowCalender={setShowCalender}
-              onDateSelect={setEndDate}
+              onDateSelect={(date) => {
+                setEndDate(date);
+                setShowDatePickerInterface(false);
+              }}
               selectedDate={endDate}
               taskHoursData={calendarTaskHours}
               ref={endDateRef}
@@ -822,7 +859,10 @@ const TaskForm = ({
           ) : (
             <TaskDatePicker
               selectedDate={endDate}
-              onDateSelect={setEndDate}
+              onDateSelect={(date) => {
+                setEndDate(date);
+                setShowDatePickerInterface(false);
+              }}
               startDate={startDate}
               userAvailability={userAvailability}
               setShowCalender={setShowCalender}
@@ -832,14 +872,16 @@ const TaskForm = ({
             />
           )
         ) : (
-          <TasksOfDate
-            selectedDate={endDate}
-            onClose={() => { }}
-            tasks={targetDateTasks}
-            selectedUser={formData.responsiblePerson}
-            userAvailability={userAvailability}
-            shift={shift}
-          />
+          endDate && (
+            <TasksOfDate
+              selectedDate={endDate}
+              onClose={() => { }}
+              tasks={targetDateTasks}
+              selectedUser={formData.responsiblePerson}
+              userAvailability={userAvailability}
+              shift={shift}
+            />
+          )
         )}
       </div>
 
@@ -890,6 +932,12 @@ const TaskForm = ({
       </div>
 
       <div className="mb-6">
+        <div
+          className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+          onClick={() => setIsTagModalOpen(true)}
+        >
+          <i>Create new tag</i>
+        </div>
         <MuiMultiSelect
           label={
             <>
@@ -918,6 +966,7 @@ const ProjectTaskCreateModal = ({
   prefillData,
   opportunityId,
   onSuccess,
+  isConversion = false,
 }: any) => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -932,7 +981,6 @@ const ProjectTaskCreateModal = ({
   const { loading: editLoading } = useAppSelector(
     (state) => state.editProjectTask
   );
-
   const [tags, setTags] = useState([]);
   const [users, setUsers] = useState([]);
   const [taskDuration, setTaskDuration] = useState();
@@ -946,6 +994,7 @@ const ProjectTaskCreateModal = ({
   const [recurringData, setRecurringData] = useState(null);
   const [isRecurring, setIsRecurring] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [endDate, setEndDate] = useState(() => {
     const targetDate = prefillData?.target_date;
     if (!targetDate) return null;
@@ -988,15 +1037,13 @@ const ProjectTaskCreateModal = ({
         ?.replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
         .replace(/#\[(.*?)\]\(\d+\)/g, "#$1") || "",
     responsiblePerson: prefillData?.responsible_person?.id || "",
-    responsiblePersonName: "",
+    responsiblePersonName: prefillData?.responsible_person?.name || "",
     department: "",
     priority: "",
     observer: [],
     tags: selectedTags || [],
     isRecurring: false
   });
-
-  console.log(members);
 
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
@@ -1278,7 +1325,6 @@ const ProjectTaskCreateModal = ({
   };
 
   const handleSave = (data) => {
-    console.log('Recurring task settings:', data);
     setRecurringData(data);
     // Store cron expression in formData and keep recurring task checked
     setFormData(prev => ({
@@ -1327,6 +1373,8 @@ const ProjectTaskCreateModal = ({
             endDate={endDate}
             setEndDate={setEndDate}
             setIsModalOpen={setIsModalOpen}
+            setIsTagModalOpen={setIsTagModalOpen}
+            isConversion={isConversion}
           />
         ))}
 
@@ -1360,6 +1408,8 @@ const ProjectTaskCreateModal = ({
             endDate={endDate}
             setEndDate={setEndDate}
             setIsModalOpen={setIsModalOpen}
+            setIsTagModalOpen={setIsTagModalOpen}
+            isConversion={isConversion}
           />
         )}
 
@@ -1448,6 +1498,11 @@ const ProjectTaskCreateModal = ({
           color: #01569E;
         }
       `}</style>
+      <AddTagModal
+        isOpen={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        onTagCreated={() => getTags()}
+      />
     </form>
   );
 };

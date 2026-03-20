@@ -741,6 +741,7 @@ const TodoConvertModal = ({
               className="mx-0 w-full"
               prefillData={prefillData}
               onSuccess={handleTaskSuccess}
+              isConversion={true}
             />
           )}
 
