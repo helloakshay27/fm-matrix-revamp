@@ -932,7 +932,7 @@ import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagemen
 import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
 import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAddEmployee";
 import EmployeeWallet from "./pages/EmployeeWallet";
-import { useWebSocket } from "./hooks/useWebSocket";
+// import { useWebSocket } from "./hooks/useWebSocket";
 import SprintKanban from "./pages/SprintKanban";
 import Communtiy from "./pages/Communtiy";
 import CommunityAdd from "./pages/CommunityAdd";
@@ -1178,15 +1178,15 @@ import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessP
 
 const queryClient = new QueryClient();
 
-// WebSocket Notification Handler Component
-const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { manager: webSocketManager, connect } = useWebSocket();
-  const { addNotification } = useNotification();
-  const navigate = useNavigate();
-  const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
-  const [isSubscribed, setIsSubscribed] = useState(false);
+// WebSocket Notification Handler Component (disabled)
+// const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+//   const { manager: webSocketManager, connect } = useWebSocket();
+//   const { addNotification } = useNotification();
+//   const navigate = useNavigate();
+//   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
+//   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+//   const token = localStorage.getItem("token");
+//   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
   // useEffect(() => {
@@ -1271,8 +1271,8 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
   //   };
   // }, [isSubscribed, webSocketManager, currentUser?.id, navigate, addNotification]);
 
-  return <>{children}</>;
-};
+//   return <>{children}</>;
+// };
 
 function App() {
   const dispatch = useAppDispatch();
@@ -1284,10 +1284,10 @@ function App() {
 
   const navigate = useNavigate();
 
-  const { manager: webSocketManager, connect } = useWebSocket();
-  const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
-  const currentUser = JSON.parse(localStorage.getItem("user"));
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  // const { manager: webSocketManager, connect } = useWebSocket();
+  // const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
+  // const currentUser = JSON.parse(localStorage.getItem("user"));
+  // const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
@@ -1419,7 +1419,7 @@ function App() {
               <PermissionsProvider>
                 <SpeechProvider>
                   <ActionLayoutProvider>
-                    <WebSocketNotificationInitializer>
+                    {/* <WebSocketNotificationInitializer> */}
                       <Routes>
                         {/* Public Routes - No Authentication Required */}
                         <Route
@@ -5879,7 +5879,7 @@ function App() {
                           },
                         }}
                       />{" "}
-                    </WebSocketNotificationInitializer>
+                    {/* </WebSocketNotificationInitializer> */}
                   </ActionLayoutProvider>
                 </SpeechProvider>
               </PermissionsProvider>
