@@ -13,19 +13,13 @@ import {
   ChevronRight,
   ChevronLeft,
   Settings,
-  Lock,
-  Mail,
-  DollarSign,
-  Shield,
   FileSpreadsheet,
   MapPin,
   ShoppingCart,
   CreditCard,
   Wallet,
-  Receipt,
   BarChart3,
   BookOpen,
-  Landmark,
   ClipboardList,
   Repeat,
   Truck,
@@ -46,6 +40,15 @@ import {
   UserCog,
   Boxes,
 } from "lucide-react";
+
+type SidebarItem = {
+  name: string;
+  href?: string;
+  icon?: React.ElementType<{ className?: string }>;
+  subItems?: SidebarItem[];
+  color?: string;
+  blank?: boolean;
+};
 
 const modulesByPackage = {
   "Club Management": [
@@ -394,7 +397,7 @@ const modulesByPackage = {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
-         {
+        {
           name: "Business Performance Ratio",
           href: "/accounting/reports/business-performance",
         },
@@ -414,46 +417,149 @@ const modulesByPackage = {
         //   name: "Account Transactions",
         //   href: "/accounting/reports/account-transactions",
         // },
+        // {
+        //   name: "AR Aging System",
+        //   href: "/accounting/reports/ar-aging-summary",
+        // },
+        // {
+        //   name: "AR Aging Details",
+        //   href: "/accounting/reports/ar-aging-details",
+        // },
+        // {
+        //   name: "Invoice Details",
+        //   href: "/accounting/reports/invoice-details",
+        // },
+        // {
+        //   name: "Retainer Invoice Details",
+        //   href: "/accounting/reports/retainer-invoice-details",
+        // },
+        // {
+        //   name: "Sales Order Details",
+        //   href: "/accounting/reports/sales-order-details",
+        // },
+        // {
+        //   name: "Delivery Challan Details",
+        //   href: "/accounting/reports/delivery-challan-details",
+        // },
+        // {
+        //   name: "Quote Details",
+        //   href: "/accounting/reports/quote-details",
+        // },
+        // {
+        //   name: "Customer Balance Summary",
+        //   href: "/accounting/reports/customer-balance-summary",
+        // },
+        // {
+        //   name: "Receivable Summary",
+        //   href: "/accounting/reports/receivable-summary",
+        // },
+        // {
+        //   name: "Receivable Details",
+        //   href: "/accounting/reports/receivable-details",
+        // },
+
+
         {
-          name: "AR Aging System",
-          href: "/accounting/reports/ar-aging-summary",
+          name: "Receivables",
+          subItems: [
+            {
+              name: "AR Aging Summary",
+              href: "/accounting/reports/ar-aging-summary",
+            },
+            {
+              name: "AR Aging Details",
+              href: "/accounting/reports/ar-aging-details",
+            },
+            {
+              name: "Invoice Details",
+              href: "/accounting/reports/invoice-details",
+            },
+            {
+              name: "Retainer Invoice Details",
+              href: "/accounting/reports/retainer-invoice-details",
+            },
+            {
+              name: "Sales Order Details",
+              href: "/accounting/reports/sales-order-details",
+            },
+            {
+              name: "Delivery Challan Details",
+              href: "/accounting/reports/delivery-challan-details",
+            },
+            {
+              name: "Quote Details",
+              href: "/accounting/reports/quote-details",
+            },
+            {
+              name: "Customer Balance Summary",
+              href: "/accounting/reports/customer-balance-summary",
+            },
+            {
+              name: "Receivable Summary",
+              href: "/accounting/reports/receivable-summary",
+            },
+            {
+              name: "Receivable Details",
+              href: "/accounting/reports/receivable-details",
+            },
+          ],
         },
         {
-          name: "AR Aging Details",
-          href: "/accounting/reports/ar-aging-details",
+          name: "Payment Received",
+          // icon: IndianRupee,
+          subItems: [
+            {
+              name: "Payments Recieved",
+              href: "/accounting/reports/payments-recieved",
+            },
+            {
+              name: "Time to Get Paid",
+              href: "/accounting/reports/time-to-get-paid",
+            },
+            {
+              name: "Credit Note Details",
+              href: "/accounting/reports/credit-note-details",
+            },
+            {
+              name: "Refund History",
+              href: "/accounting/reports/refund-history",
+            },
+
+          ],
+        },
+
+        {
+          name: "Recurring Invoices",
+          // icon: IndianRupee,
+          subItems: [
+            {
+              name: "Recurring Invoice Details",
+              href: "/accounting/reports/recurring-invoice-details",
+            },
+          ],
         },
         {
-          name: "Invoice Details",
-          href: "/accounting/reports/invoice-details",
+          name: "Payable",
+          // icon: IndianRupee,
+          subItems: [
+            {
+              name: "Vendor Balance Summary",
+              href: "/accounting/reports/vendor-balance-summary",
+            },
+            {
+              name: "AP Aging Summary",
+              href: "/accounting/reports/ap-aging-summary",
+            },
+            {
+              name: "Bill Details",
+              href: "/accounting/reports/bill-details",
+            },
+          ],
         },
-        {
-          name: "Retainer Invoice Details",
-          href: "/accounting/reports/retainer-invoice-details",
-        },
-        {
-          name: "Sales Order Details",
-          href: "/accounting/reports/sales-order-details",
-        },
-        {
-          name: "Delivery Challan Details",
-          href: "/accounting/reports/delivery-challan-details",
-        },
-        {
-          name: "Quote Details",
-          href: "/accounting/reports/quote-details",
-        },
-        {
-          name: "Customer Balance Summary",
-          href: "/accounting/reports/customer-balance-summary",
-        },
-        {
-          name: "Receivable Summary",
-          href: "/accounting/reports/receivable-summary",
-        },
-        {
-          name: "Receivable Details",
-          href: "/accounting/reports/receivable-details",
-        },
+
+
+
+
       ],
     },
   ],
@@ -693,7 +799,7 @@ export const ClubSidebar: React.FC = () => {
   //     );
   // };
 
-  const renderMenuItem = (item: any) => {
+  const renderMenuItem = (item: SidebarItem) => {
     const key = item.href || item.name;
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(key);
@@ -720,7 +826,7 @@ export const ClubSidebar: React.FC = () => {
 
           {isExpanded && (
             <div className="ml-4 space-y-1">
-              {item.subItems.map((subItem: any) => renderMenuItem(subItem))}
+              {item.subItems?.map((subItem) => renderMenuItem(subItem))}
             </div>
           )}
         </div>
@@ -731,9 +837,8 @@ export const ClubSidebar: React.FC = () => {
       <button
         key={key}
         onClick={() => handleNavigation(item.href)}
-        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${
-          item.color || "text-[#1a1a1a]"
-        }`}
+        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
+          }`}
       >
         {isActive && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
@@ -745,7 +850,7 @@ export const ClubSidebar: React.FC = () => {
     );
   };
 
-  const CollapsedMenuItem = ({ item, level = 0 }) => {
+  const CollapsedMenuItem = ({ item, level = 0 }: { item: SidebarItem; level?: number }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
     const active = item.href ? isActiveRoute(item.href, "prefix") : false;
@@ -761,17 +866,16 @@ export const ClubSidebar: React.FC = () => {
               handleNavigation(item.href, item.blank);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-            active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-          }`}
+            }`}
           title={item.name}
         >
           {(active || isExpanded) && (
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
           )}
-          {level === 0 ? (
+          {level === 0 && item.icon ? (
             <item.icon
               className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"}`}
             />
@@ -781,7 +885,7 @@ export const ClubSidebar: React.FC = () => {
         </button>
         {isExpanded &&
           hasSubItems &&
-          item.subItems.map((subItem: any) => (
+          item.subItems?.map((subItem) => (
             <CollapsedMenuItem
               key={`${item.name}-${subItem.name}`}
               item={subItem}
@@ -794,9 +898,8 @@ export const ClubSidebar: React.FC = () => {
 
   return (
     <div
-      className={`${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${isSidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -850,8 +953,8 @@ export const ClubSidebar: React.FC = () => {
         <nav className="space-y-2">
           {isSidebarCollapsed
             ? currentModules.map((item) => (
-                <CollapsedMenuItem key={item.name} item={item} level={0} />
-              ))
+              <CollapsedMenuItem key={item.name} item={item} level={0} />
+            ))
             : currentModules.map((item) => renderMenuItem(item))}
         </nav>
       </div>

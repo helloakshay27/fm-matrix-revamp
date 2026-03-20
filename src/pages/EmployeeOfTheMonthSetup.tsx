@@ -97,7 +97,7 @@ const AchievementPoint = ({
 
 const EmployeeOfTheMonthSetup: React.FC = () => {
   const navigate = useNavigate();
-  const user = getUser() as any;
+  const user = getUser() as unknown as { lock_role?: { company_id?: number | string } };
   const companyId = localStorage.getItem("org_id") || user?.lock_role?.company_id || "116";
   const currentConfigRef = useRef<any>(null);
 
@@ -138,6 +138,78 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
       .filter((u) => u.full_name.toLowerCase().includes(searchTerm.toLowerCase()))
       .slice(0, 50);
   }, [users, searchTerm]);
+
+  const fetchEOMHistory = React.useCallback(async () => {
+    if (!companyId) return;
+    setHistoryLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      // 1. Try the specialized endpoint with resource filters
+      const response = await axios.get(
+        `${protocol}${baseUrl}/extra_fields/employee_of_the_month?resource_id=${companyId}&resource_type=CompanySetup`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      let fetchedAnns = [];
+      if (response.data?.employee_of_the_month) {
+        const data = response.data.employee_of_the_month;
+        fetchedAnns = Array.isArray(data) ? data : (data ? [data] : []);
+      }
+
+      // 2. Fallback to generic group_name fetch if specialized fails or is empty
+      if (fetchedAnns.length === 0) {
+        const fallbackEndpoint = `${protocol}${baseUrl}/extra_fields?resource_id=${companyId}&resource_type=CompanySetup&group_name=employee_of_the_month`;
+        const fallbackRes = await axios.get(fallbackEndpoint, { headers: { Authorization: `Bearer ${token}` } });
+        
+        if (Array.isArray(fallbackRes.data)) {
+           fetchedAnns = fallbackRes.data;
+        } else if (Array.isArray(fallbackRes.data?.data)) {
+           fetchedAnns = fallbackRes.data.data;
+        } else if (Array.isArray(fallbackRes.data?.employee_of_the_month)) {
+           fetchedAnns = fallbackRes.data.employee_of_the_month;
+        }
+      }
+
+      if (fetchedAnns.length > 0) {
+        const processedHistory = fetchedAnns.map((h: any) => {
+          let historyItem = {
+            extra_field_id: h.id || h.extra_field_id,
+            id: h.id || h.extra_field_id,
+            month: h.field_name || "",
+            full_name: h.field_description || "N/A",
+            role: "Employee",
+            profile_image: ""
+          };
+
+          if (h.field_value && h.field_value.trim().startsWith("{")) {
+            try {
+              const parsed = JSON.parse(h.field_value);
+              historyItem = {
+                ...historyItem,
+                ...parsed,
+                // Ensure we don't overwrite IDs from the parse if they are missing
+                id: h.id || h.extra_field_id,
+                extra_field_id: h.id || h.extra_field_id
+              };
+            } catch (e) {
+              console.error("Failed to parse history field_value:", e);
+            }
+          }
+          return historyItem;
+        });
+        setEomHistory(processedHistory);
+      } else {
+        setEomHistory([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [companyId]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -188,40 +260,7 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
     };
 
     fetchInitialData();
-  }, [companyId]);
-
-  const fetchEOMHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
-
-      const response = await axios.get(
-        `${protocol}${baseUrl}/extra_fields/employee_of_the_month`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data?.employee_of_the_month) {
-        const rawData = response.data.employee_of_the_month;
-        const rawHistory = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
-        const processedHistory = rawHistory.map((h: EOMHistoryItem) => {
-          if (h.field_value) {
-            try {
-              const parsed = JSON.parse(h.field_value);
-              return { ...h, ...parsed };
-            } catch (e) {}
-          }
-          return h;
-        });
-        setEomHistory(processedHistory);
-      }
-    } catch (error) {
-      console.error("Failed to fetch history:", error);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
+  }, [companyId, fetchEOMHistory]);
 
   const handleEOMUpdate = async () => {
     if (!employeeOfTheMonth.userId || !employeeOfTheMonth.month) {
@@ -300,7 +339,7 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
         },
       };
 
-      const historyRes = await axios.get(`${protocol}${baseUrl}/extra_fields/employee_of_the_month`, {
+      const historyRes = await axios.get(`${protocol}${baseUrl}/extra_fields/employee_of_the_month?resource_id=${companyId}&resource_type=CompanySetup`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const histDataArr = historyRes.data?.employee_of_the_month;

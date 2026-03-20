@@ -142,6 +142,11 @@ interface EnhancedTableProps<T> {
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
   handleExport?: (columnVisibility?: Record<string, boolean>) => void;
+  toolbarClassName?: string;
+  tableWrapperClassName?: string;
+  headerCellClassName?: string;
+  rowClassName?: string;
+  cellClassName?: string;
 }
 
 export function EnhancedTaskTable<T extends Record<string, any>>({
@@ -180,6 +185,11 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
+  toolbarClassName,
+  tableWrapperClassName,
+  headerCellClassName,
+  rowClassName,
+  cellClassName,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -482,7 +492,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className={cn("flex items-center justify-between gap-4", toolbarClassName)}>
         <div className="flex items-center gap-4 flex-1">
           {leftActions}
 
@@ -565,7 +575,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className=" rounded-lg border border-[#D5DbDB] overflow-hidden">
+      <div className={cn("rounded-lg border border-[#D5DbDB] overflow-hidden", tableWrapperClassName)}>
         <div className="overflow-x-auto enhancedTable">
           <DndContext
             sensors={sensors}
@@ -581,7 +591,10 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                   >
                     {renderActions && (
                       <TableHead
-                        className="bg-[#f6f4ee] text-center hover:bg-[#f0ede2] transition-colors duration-200"
+                        className={cn(
+                          "bg-[#f6f4ee] text-center hover:bg-[#f0ede2] transition-colors duration-200",
+                          headerCellClassName
+                        )}
                         data-actions
                       >
                         <div className="flex justify-center items-center">
@@ -591,7 +604,10 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                     )}
                     {selectable && (
                       <TableHead
-                        className="bg-[#f6f4ee] w-12 text-center hover:bg-[#f0ede2] transition-colors duration-200"
+                        className={cn(
+                          "bg-[#f6f4ee] w-12 text-center hover:bg-[#f0ede2] transition-colors duration-200",
+                          headerCellClassName
+                        )}
                         data-checkbox
                       >
                         <div className="flex justify-center">
@@ -620,7 +636,10 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         onSort={() =>
                           column.sortable !== false && handleSort(column.key)
                         }
-                        className="bg-[#f6f4ee] text-left text-black hover:bg-[#f0ede2] transition-colors duration-200"
+                        className={cn(
+                          "bg-[#f6f4ee] text-left text-black hover:bg-[#f0ede2] transition-colors duration-200",
+                          headerCellClassName
+                        )}
                       >
                         {column.label}
                       </SortableColumnHeader>
@@ -671,13 +690,17 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         className={cn(
                           onRowClick && "cursor-pointer",
                           "hover:bg-blue-50 hover:shadow-sm transition-colors duration-200",
-                          isSelected && "bg-blue-100 hover:bg-blue-150"
+                          isSelected && "bg-blue-100 hover:bg-blue-150",
+                          rowClassName
                         )}
                         onClick={(e) => handleRowClick(item, e)}
                       >
                         {renderActions && (
                           <TableCell
-                            className="p-4 text-center hover:bg-blue-25 transition-colors duration-150"
+                            className={cn(
+                              "p-4 text-center hover:bg-blue-25 transition-colors duration-150",
+                              cellClassName
+                            )}
                             data-actions
                           >
                             <div className="flex justify-center items-center gap-2">
@@ -687,7 +710,10 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         )}
                         {selectable && (
                           <TableCell
-                            className="p-4 w-12 text-center hover:bg-blue-25 transition-colors duration-150"
+                            className={cn(
+                              "p-4 w-12 text-center hover:bg-blue-25 transition-colors duration-150",
+                              cellClassName
+                            )}
                             data-checkbox
                           >
                             <div className="flex justify-center">
@@ -712,7 +738,10 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                           return (
                             <TableCell
                               key={column.key}
-                              className="p-4 text-left hover:bg-blue-25 transition-colors duration-150"
+                              className={cn(
+                                "p-4 text-left hover:bg-blue-25 transition-colors duration-150",
+                                cellClassName
+                              )}
                             >
                               {cellContent}
                             </TableCell>

@@ -111,6 +111,8 @@ interface SalesOrder {
     status: string;
     customer_notes: string;
     terms_and_conditions: string;
+    subject?: string;
+    payment_term?: string;
     created_at: string;
     updated_at: string;
     sub_total_amount: number;
@@ -420,10 +422,10 @@ export const SalesOrderDetailPage = () => {
                                         <p className="text-sm font-medium text-muted-foreground">Order Number</p>
                                         <p className="text-base font-semibold mt-1">{salesOrder?.sale_order_number}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder?.reference_number}</p>
-                                    </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.reference_number || "N/A"}</p>
+                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Order Date</p>
                                         <p className="text-base font-semibold mt-1">
@@ -436,10 +438,14 @@ export const SalesOrderDetailPage = () => {
                                             {new Date(salesOrder?.shipment_date).toLocaleDateString()}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder?.payment_term}</p>
-                                    </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.payment_term || "N/A"}</p>
+                                     </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.subject || "N/A"}</p>
+                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Delivery Method</p>
                                         <p className="text-base font-semibold mt-1">{salesOrder?.delivery_method}</p>
@@ -548,24 +554,23 @@ export const SalesOrderDetailPage = () => {
 
                         {/* Notes and Terms */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {salesOrder.customerNotes && (
+                            {salesOrder.customer_notes && (
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-base">Customer Notes</CardTitle>
+                                        <CardTitle className="text-base font-semibold">Customer Notes</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground">{salesOrder.customerNotes}</p>
+                                        <p className="text-sm text-muted-foreground break-all whitespace-pre-wrap">{salesOrder.customer_notes}</p>
                                     </CardContent>
                                 </Card>
                             )}
-
-                            {salesOrder.termsAndConditions && (
+                            {salesOrder.terms_and_conditions && (
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-base">Terms & Conditions</CardTitle>
+                                        <CardTitle className="text-base font-semibold">Terms & Conditions</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground">{salesOrder.termsAndConditions}</p>
+                                        <p className="text-sm text-muted-foreground break-all whitespace-pre-wrap">{salesOrder.terms_and_conditions}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -612,10 +617,10 @@ export const SalesOrderDetailPage = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-                                    <p className="text-base font-semibold mt-1">{salesOrder?.customer_name}</p>
-                                </div>
+                                 <div>
+                                     <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+                                     <p className="text-base font-semibold mt-1 break-all">{salesOrder?.customer_name}</p>
+                                 </div>
                                 <div>
                                     {/* <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         <Mail className="h-4 w-4" />
@@ -635,14 +640,14 @@ export const SalesOrderDetailPage = () => {
                                         {/* <Phone className="h-4 w-4" /> */}
                                         Customer Notes
                                     </p>
-                                    <p className="text-base mt-1">{salesOrder?.customer_notes}</p>
+                                    <p className="text-base mt-1 break-all whitespace-pre-wrap">{salesOrder?.customer_notes}</p>
                                 </div>
                                  <div>
                                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         {/* <Phone className="h-4 w-4" /> */}
                                         Terms and Conditions
                                     </p>
-                                    <p className="text-base mt-1">{salesOrder?.terms_and_conditions}</p>
+                                    <p className="text-base mt-1 break-all whitespace-pre-wrap">{salesOrder?.terms_and_conditions}</p>
                                 </div>
                             </CardContent>
                         </Card>
