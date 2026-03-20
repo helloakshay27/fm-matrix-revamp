@@ -47,7 +47,7 @@ const ReportStep: React.FC<ReportStepProps> = ({
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DateTimePicker
                             label="Date & Time"
-                            minutesStep={1}
+                            timeSteps={{ minutes: 1 }}
                             value={incidentOverTime ? dayjs(incidentOverTime, "YYYY-MM-DD HH:mm") : null}
                             onChange={(newValue) => {
                                 if (newValue && dayjs.isDayjs(newValue)) {
