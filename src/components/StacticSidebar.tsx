@@ -1734,6 +1734,28 @@ const modulesByPackage = {
           name: "Receivable Details",
           href: "/accounting/reports/receivable-details",
         },
+        {
+          name: "Payment Received",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "Payments Recieved",
+              href: "/accounting/reports/payments-recieved",
+            },
+            {
+              name: "Time to Get Paid",
+              href: "/accounting/reports/time-to-get-paid",
+            },
+            {
+              name: "Credit Note Details",
+              href: "/accounting/reports/credit-note-details",
+            },
+            {
+              name: "Refund History",
+              href: "/accounting/reports/refund-history",
+            },
+          ],
+        },
       ],
     },
   ],

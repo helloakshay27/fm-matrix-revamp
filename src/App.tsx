@@ -1163,6 +1163,10 @@ import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
 import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
 import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
+import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedReport";
+import TimeToGetPaidReport from "./pages/ClubManagement/TimeToGetPaidReport";
+import CreditNoteDetailsReport from "./pages/ClubManagement/CreditNoteDetailsReport";
+import RefundHistoryReport from "./pages/ClubManagement/RefundHistoryReport";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
@@ -2577,6 +2581,22 @@ function App() {
                           <Route
                             path="/accounting/reports/receivable-details"
                             element={<ReceivableDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payments-recieved"
+                            element={<PaymentsRecievedReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/time-to-get-paid"
+                            element={<TimeToGetPaidReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/credit-note-details"
+                            element={<CreditNoteDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/refund-history"
+                            element={<RefundHistoryReport />}
                           />
                           <Route
                             path="/accounting/reports/account-transactions/details"
