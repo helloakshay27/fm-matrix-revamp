@@ -106,31 +106,25 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
       const token = localStorage.getItem("token");
       const lockAccountId = localStorage.getItem("lock_account_id");
 
-      const response = await axios.get(`https://${baseUrl}/recurring_invoices.json`, {
+      const response = await axios.get(`https://${baseUrl}/lock_account_invoices.json`, {
         params: {
           lock_account_id: lockAccountId,
-          "q[created_at_gteq]": fromDate,
-          "q[created_at_lteq]": toDate,
-          per_page: 500,
+          "q[recurring_eq]": 1,
+          "q[date_gteq]": fromDate,
+          "q[date_lteq]": toDate,
         },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const list: RecurringInvoiceAPI[] =
-        response.data.recurring_invoices || response.data || [];
+        response.data?.lock_account_invoices || response.data || [];
 
       const mappedRows = list.map((item) => ({
         id: item.id,
         status: item.status || "-",
         profile_name: item.profile_name || item.name || "-",
         customer_name: item.customer_name || item.resident_name || "-",
-        frequency:
-          item.billing_frequency ||
-          item.frequency ||
-          item.recurrence_frequency ||
-          "-",
+        frequency: item.billing_frequency || item.frequency || item.recurrence_frequency || "-",
         last_invoice_date: item.last_invoice_date || item.last_sent_date || "",
         next_invoice_date: item.next_invoice_date || item.next_invoice_at || "",
         expiry_date: item.expiry_date || item.end_date || "",
@@ -146,115 +140,81 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchRecurringInvoices("01/03/2026", "31/03/2026");
+    fetchRecurringInvoices(filters.fromDate, filters.toDate);
   }, [fetchRecurringInvoices]);
 
   const renderRow = (row: RecurringInvoiceRow) => ({
     status: statusBadge(row.status),
-    profile_name: (
-      <span className="text-[13px] text-[#111827] font-medium">{row.profile_name}</span>
-    ),
-    customer_name: (
-      <span className="text-[13px] text-[#111827] font-medium">{row.customer_name}</span>
-    ),
-    frequency: (
-      <span className="text-[13px] text-[#111827] font-medium">{row.frequency}</span>
-    ),
-    last_invoice_date: (
-      <span className="text-[13px] text-[#111827] font-medium">
-        {formatDate(row.last_invoice_date)}
-      </span>
-    ),
-    next_invoice_date: (
-      <span className="text-[13px] text-[#111827] font-medium">
-        {formatDate(row.next_invoice_date)}
-      </span>
-    ),
-    expiry_date: (
-      <span className="text-[13px] text-[#111827] font-medium">
-        {formatDate(row.expiry_date)}
-      </span>
-    ),
-    amount: (
-      <span className="text-[13px] text-[#111827] font-medium">
-        {formatCurrency(row.amount)}
-      </span>
-    ),
+    profile_name: <span className="text-sm font-medium text-blue-600">{row.profile_name}</span>,
+    customer_name: <span className="text-sm font-medium text-blue-600">{row.customer_name}</span>,
+    frequency: <span className="text-sm text-gray-600">{row.frequency}</span>,
+    last_invoice_date: <span className="text-sm text-gray-600">{formatDate(row.last_invoice_date)}</span>,
+    next_invoice_date: <span className="text-sm text-gray-600">{formatDate(row.next_invoice_date)}</span>,
+    expiry_date: <span className="text-sm text-gray-600">{formatDate(row.expiry_date)}</span>,
+    amount: <span className="text-sm font-semibold text-blue-600">{formatCurrency(row.amount)}</span>,
   });
 
   return (
-    <div className="min-h-screen w-full bg-white">
-      <div className="overflow-hidden border border-[#EAECF0] bg-white">
-        {/* Filter Bar */}
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-4">
-          <div className="flex items-center gap-4 mb-5">
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[#E5E0D3]">
-              <NotepadText color="#d32f2f" size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Recurring Invoice Details</h3>
-            </div>
-          </div>
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            <TextField
-              label="From Date"
-              type="date"
-              name="fromDate"
-              value={filters.fromDate.split("/").reverse().join("-")}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-            <TextField
-              label="To Date"
-              type="date"
-              name="toDate"
-              value={filters.toDate.split("/").reverse().join("-")}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-            <Button
-              onClick={() => fetchRecurringInvoices(filters.fromDate, filters.toDate)}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
-            >
-              View
-            </Button>
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
           </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Recurring Invoice Details</h3>
+        </div>
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={filters.fromDate.split("/").reverse().join("-")}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={filters.toDate.split("/").reverse().join("-")}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            size="small"
+          />
+          <Button
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={() => fetchRecurringInvoices(filters.fromDate, filters.toDate)}
+          >
+            View
+          </Button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
+          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Recurring Invoice Details</h1>
+          <p className="mt-1 text-sm text-[#475467]">From {filters.fromDate} To {filters.toDate}</p>
         </div>
 
-        {/* Report Header */}
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-8 text-center">
-          <p className="text-[14px] font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-3 text-[20px] font-semibold text-[#111827]">
-            Recurring Invoice Details
-          </h1>
-          <p className="mt-2 text-[14px] text-[#344054]">
-            From {filters.fromDate} To {filters.toDate}
-          </p>
-        </div>
-
-        {/* Table */}
-        <div className="p-0">
+        <div className="p-4">
           <EnhancedTaskTable
             data={rows}
             columns={columns}
             renderRow={renderRow}
             storageKey="recurring-invoice-details-report-v1"
             hideTableExport={true}
-            hideTableSearch={true}
-            enableSearch={false}
-            hideColumnsButton={true}
+            hideTableSearch={false}
+            enableSearch={true}
             loading={loading}
             emptyMessage="There are no transactions during the selected date range."
-            toolbarClassName="hidden"
-            tableWrapperClassName="border-0 rounded-none"
-            headerCellClassName="bg-[#F9FAFB] text-[#374151] text-[12px] font-semibold uppercase tracking-[0.5px] border-b border-[#E5E7EB] hover:bg-[#F9FAFB] px-6 py-4"
-            rowClassName="hover:bg-white border-b border-[#E5E7EB]"
-            cellClassName="px-6 py-4 text-[13px] text-[#374151] hover:bg-white align-middle"
           />
         </div>
       </div>

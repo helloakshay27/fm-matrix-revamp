@@ -397,7 +397,7 @@ const modulesByPackage = {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
-         {
+        {
           name: "Business Performance Ratio",
           href: "/accounting/reports/business-performance",
         },
@@ -417,49 +417,96 @@ const modulesByPackage = {
         //   name: "Account Transactions",
         //   href: "/accounting/reports/account-transactions",
         // },
+        // {
+        //   name: "AR Aging System",
+        //   href: "/accounting/reports/ar-aging-summary",
+        // },
+        // {
+        //   name: "AR Aging Details",
+        //   href: "/accounting/reports/ar-aging-details",
+        // },
+        // {
+        //   name: "Invoice Details",
+        //   href: "/accounting/reports/invoice-details",
+        // },
+        // {
+        //   name: "Retainer Invoice Details",
+        //   href: "/accounting/reports/retainer-invoice-details",
+        // },
+        // {
+        //   name: "Sales Order Details",
+        //   href: "/accounting/reports/sales-order-details",
+        // },
+        // {
+        //   name: "Delivery Challan Details",
+        //   href: "/accounting/reports/delivery-challan-details",
+        // },
+        // {
+        //   name: "Quote Details",
+        //   href: "/accounting/reports/quote-details",
+        // },
+        // {
+        //   name: "Customer Balance Summary",
+        //   href: "/accounting/reports/customer-balance-summary",
+        // },
+        // {
+        //   name: "Receivable Summary",
+        //   href: "/accounting/reports/receivable-summary",
+        // },
+        // {
+        //   name: "Receivable Details",
+        //   href: "/accounting/reports/receivable-details",
+        // },
+
+
         {
-          name: "AR Aging System",
-          href: "/accounting/reports/ar-aging-summary",
-        },
-        {
-          name: "AR Aging Details",
-          href: "/accounting/reports/ar-aging-details",
-        },
-        {
-          name: "Invoice Details",
-          href: "/accounting/reports/invoice-details",
-        },
-        {
-          name: "Retainer Invoice Details",
-          href: "/accounting/reports/retainer-invoice-details",
-        },
-        {
-          name: "Sales Order Details",
-          href: "/accounting/reports/sales-order-details",
-        },
-        {
-          name: "Delivery Challan Details",
-          href: "/accounting/reports/delivery-challan-details",
-        },
-        {
-          name: "Quote Details",
-          href: "/accounting/reports/quote-details",
-        },
-        {
-          name: "Customer Balance Summary",
-          href: "/accounting/reports/customer-balance-summary",
-        },
-        {
-          name: "Receivable Summary",
-          href: "/accounting/reports/receivable-summary",
-        },
-        {
-          name: "Receivable Details",
-          href: "/accounting/reports/receivable-details",
+          name: "Receivables",
+          subItems: [
+            {
+              name: "AR Aging Summary",
+              href: "/accounting/reports/ar-aging-summary",
+            },
+            {
+              name: "AR Aging Details",
+              href: "/accounting/reports/ar-aging-details",
+            },
+            {
+              name: "Invoice Details",
+              href: "/accounting/reports/invoice-details",
+            },
+            {
+              name: "Retainer Invoice Details",
+              href: "/accounting/reports/retainer-invoice-details",
+            },
+            {
+              name: "Sales Order Details",
+              href: "/accounting/reports/sales-order-details",
+            },
+            {
+              name: "Delivery Challan Details",
+              href: "/accounting/reports/delivery-challan-details",
+            },
+            {
+              name: "Quote Details",
+              href: "/accounting/reports/quote-details",
+            },
+            {
+              name: "Customer Balance Summary",
+              href: "/accounting/reports/customer-balance-summary",
+            },
+            {
+              name: "Receivable Summary",
+              href: "/accounting/reports/receivable-summary",
+            },
+            {
+              name: "Receivable Details",
+              href: "/accounting/reports/receivable-details",
+            },
+          ],
         },
         {
           name: "Payment Received",
-          icon: IndianRupee,
+          // icon: IndianRupee,
           subItems: [
             {
               name: "Payments Recieved",
@@ -477,6 +524,14 @@ const modulesByPackage = {
               name: "Refund History",
               href: "/accounting/reports/refund-history",
             },
+
+          ],
+        },
+
+        {
+          name: "Recurring Invoices",
+          // icon: IndianRupee,
+          subItems: [
             {
               name: "Recurring Invoice Details",
               href: "/accounting/reports/recurring-invoice-details",
@@ -485,7 +540,7 @@ const modulesByPackage = {
         },
         {
           name: "Payable",
-          icon: IndianRupee,
+          // icon: IndianRupee,
           subItems: [
             {
               name: "Vendor Balance Summary",
@@ -501,6 +556,10 @@ const modulesByPackage = {
             },
           ],
         },
+
+
+
+
       ],
     },
   ],
@@ -778,9 +837,8 @@ export const ClubSidebar: React.FC = () => {
       <button
         key={key}
         onClick={() => handleNavigation(item.href)}
-        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${
-          item.color || "text-[#1a1a1a]"
-        }`}
+        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
+          }`}
       >
         {isActive && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
@@ -808,11 +866,10 @@ export const ClubSidebar: React.FC = () => {
               handleNavigation(item.href, item.blank);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-            active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-          }`}
+            }`}
           title={item.name}
         >
           {(active || isExpanded) && (
@@ -841,9 +898,8 @@ export const ClubSidebar: React.FC = () => {
 
   return (
     <div
-      className={`${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${isSidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -897,8 +953,8 @@ export const ClubSidebar: React.FC = () => {
         <nav className="space-y-2">
           {isSidebarCollapsed
             ? currentModules.map((item) => (
-                <CollapsedMenuItem key={item.name} item={item} level={0} />
-              ))
+              <CollapsedMenuItem key={item.name} item={item} level={0} />
+            ))
             : currentModules.map((item) => renderMenuItem(item))}
         </nav>
       </div>
