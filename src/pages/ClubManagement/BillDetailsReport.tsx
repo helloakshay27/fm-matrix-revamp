@@ -200,7 +200,7 @@ const BillDetailsReport: React.FC = () => {
 
           <Button
             onClick={() => setAppliedFilters(filters)}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px] w-full md:w-auto px-8"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[36px] px-6"
           >
             View
           </Button>
