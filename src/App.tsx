@@ -1167,6 +1167,10 @@ import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedRepor
 import TimeToGetPaidReport from "./pages/ClubManagement/TimeToGetPaidReport";
 import CreditNoteDetailsReport from "./pages/ClubManagement/CreditNoteDetailsReport";
 import RefundHistoryReport from "./pages/ClubManagement/RefundHistoryReport";
+import RecurringInvoiceDetailsReport from "./pages/ClubManagement/RecurringInvoiceDetailsReport";
+import VendorBalanceSummaryReport from "./pages/ClubManagement/VendorBalanceSummaryReport";
+import APAgingSummaryReport from "./pages/ClubManagement/APAgingSummaryReport";
+import BillDetailsReport from "./pages/ClubManagement/BillDetailsReport";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
@@ -2597,6 +2601,22 @@ function App() {
                           <Route
                             path="/accounting/reports/refund-history"
                             element={<RefundHistoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/recurring-invoice-details"
+                            element={<RecurringInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/vendor-balance-summary"
+                            element={<VendorBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ap-aging-summary"
+                            element={<APAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/bill-details"
+                            element={<BillDetailsReport />}
                           />
                           <Route
                             path="/accounting/reports/account-transactions/details"

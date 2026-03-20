@@ -477,6 +477,28 @@ const modulesByPackage = {
               name: "Refund History",
               href: "/accounting/reports/refund-history",
             },
+            {
+              name: "Recurring Invoice Details",
+              href: "/accounting/reports/recurring-invoice-details",
+            },
+          ],
+        },
+        {
+          name: "Payable",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "Vendor Balance Summary",
+              href: "/accounting/reports/vendor-balance-summary",
+            },
+            {
+              name: "AP Aging Summary",
+              href: "/accounting/reports/ap-aging-summary",
+            },
+            {
+              name: "Bill Details",
+              href: "/accounting/reports/bill-details",
+            },
           ],
         },
       ],
