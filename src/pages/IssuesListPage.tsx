@@ -194,8 +194,10 @@ const IssuesListPage = ({
     // Pagination and filtering state
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
+    const [tempSearchQuery, setTempSearchQuery] = useState("");
     const [appliedFilters, setAppliedFilters] = useState("");
     const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(true);
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // UI State
     const [showActionPanel, setShowActionPanel] = useState(false);
@@ -378,6 +380,24 @@ const IssuesListPage = ({
             fetchData();
         }
     }, [token, baseUrl]);
+
+    // Debounced search effect
+    useEffect(() => {
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(() => {
+            setSearchQuery(tempSearchQuery);
+            setCurrentPage(1);
+        }, 500); // 500ms debounce delay
+
+        return () => {
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+        };
+    }, [tempSearchQuery]);
 
     const handleOpenDialog = () => setOpenIssueModal(true);
 
@@ -775,8 +795,7 @@ const IssuesListPage = ({
     };
 
     const handleSearchChange = (value: string) => {
-        setSearchQuery(value);
-        setCurrentPage(1);
+        setTempSearchQuery(value);
     };
 
     return (
@@ -785,8 +804,8 @@ const IssuesListPage = ({
                 data={issues}
                 columns={columns}
                 renderActions={renderActions}
-                searchTerm={searchQuery}
-                onSearchChange={() => handleSearchChange(searchQuery)}
+                searchValue={tempSearchQuery}
+                onSearchChange={(searchTerm) => handleSearchChange(searchTerm)}
                 renderCell={renderCell}
                 loading={isFetching}
                 leftActions={leftActions}
