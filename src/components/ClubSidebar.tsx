@@ -567,7 +567,27 @@ const modulesByPackage = {
               href: "/accounting/reports/purchase-order-details",
             },
             {
-              name: "Purchase Orders by Vendor",
+              name: "Expense Details",
+              href: "/accounting/reports/expense-details",
+            },
+            {
+              name: "Expense Summary by Category",
+              href: "/accounting/reports/expense-summary-by-category",
+            },
+            {
+              name: "Expenses by Project",
+              href: "/accounting/reports/expenses-by-project",
+            },
+            {
+              name: "Expenses by Employee",
+              href: "/accounting/reports/expenses-by-employee",
+            },
+            {
+              name: "Billable Expense Details",
+              href: "/accounting/reports/billable-expense-details",
+            },
+            {
+              name: "Purchases by Vendor",
               href: "/accounting/reports/purchase-orders-by-vendor",
             },
             {
@@ -592,6 +612,49 @@ const modulesByPackage = {
 
 
 
+      ],
+    },
+
+    {
+      name: "Purchases and Expenses",
+      icon: CircleDollarSign,
+      subItems: [
+        {
+          name: "Purchase Order Details",
+          href: "/accounting/purchases-and-expenses/purchase-order-details",
+        },
+        {
+          name: "Expense Details",
+          href: "/accounting/purchases-and-expenses/expense-details",
+        },
+        {
+          name: "Expense Summary by Category",
+          href: "/accounting/purchases-and-expenses/expense-summary-by-category",
+        },
+        {
+          name: "Expenses by Customer",
+          href: "/accounting/purchases-and-expenses/expenses-by-customer",
+        },
+        {
+          name: "Expenses by Project",
+          href: "/accounting/purchases-and-expenses/expenses-by-project",
+        },
+        {
+          name: "Expenses by Employee",
+          href: "/accounting/purchases-and-expenses/expenses-by-employee",
+        },
+        {
+          name: "Purchases by Vendor",
+          href: "/accounting/purchases-and-expenses/purchases-by-vendor",
+        },
+        {
+          name: "Purchases by Item",
+          href: "/accounting/purchases-and-expenses/purchases-by-item",
+        },
+        {
+          name: "Billable Expense Details",
+          href: "/accounting/purchases-and-expenses/billable-expense-details",
+        },
       ],
     },
   ],
@@ -834,6 +897,7 @@ export const ClubSidebar: React.FC = () => {
   const renderMenuItem = (item: SidebarItem) => {
     const key = item.href || item.name;
     const hasSubItems = item.subItems && item.subItems.length > 0;
+    const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(key);
     const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
 
@@ -865,6 +929,18 @@ export const ClubSidebar: React.FC = () => {
       );
     }
 
+    if (isStaticItem) {
+      return (
+        <div
+          key={key}
+          className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium ${item.color || "text-[#1a1a1a]"}`}
+        >
+          {item.icon && <item.icon className="w-5 h-5" />}
+          <span>{item.name}</span>
+        </div>
+      );
+    }
+
     return (
       <button
         key={key}
@@ -884,8 +960,25 @@ export const ClubSidebar: React.FC = () => {
 
   const CollapsedMenuItem = ({ item, level = 0 }: { item: SidebarItem; level?: number }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
+    const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(item.name);
     const active = item.href ? isActiveRoute(item.href, "prefix") : false;
+
+    if (isStaticItem) {
+      return (
+        <div
+          key={item.name}
+          className="flex items-center justify-center p-2 rounded-lg"
+          title={item.name}
+        >
+          {level === 0 && item.icon ? (
+            <item.icon className="w-5 h-5 text-[#1a1a1a]" />
+          ) : (
+            <div className="w-2 h-2 rounded-full bg-[#1a1a1a]"></div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <>
