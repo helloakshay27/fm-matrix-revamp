@@ -61,7 +61,6 @@ interface SmsTemplate {
   template_url: string;
   is_default: boolean;
   active: boolean;
-  created_by_id: number;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -248,7 +247,6 @@ const SmsManagementPage: React.FC = () => {
             : formData.organization_id
               ? parseInt(formData.organization_id)
               : null,
-          created_by_id: 92501, // As per example
         },
       };
 
