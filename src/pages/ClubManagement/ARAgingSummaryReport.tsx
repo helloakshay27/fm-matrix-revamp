@@ -336,7 +336,8 @@ const ARAgingSummaryReport: React.FC = () => {
           <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
             <p className="text-sm font-medium text-[#667085]">Lockated</p>
             <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
-              AR Aging Summary By Invoice Due Date
+              AR Aging Summary 
+              {/* By Invoice Due Date */}
             </h1>
             <p className="mt-1 text-sm text-[#475467]">
               As of {new Date().toLocaleDateString("en-GB")}
@@ -361,6 +362,7 @@ const ARAgingSummaryReport: React.FC = () => {
             renderRow={renderDetailRow}
             loading={loading}
             emptyMessage="No transactions in this date range."
+            hideColumnsButton={true}
           />
         </div>
       </div>

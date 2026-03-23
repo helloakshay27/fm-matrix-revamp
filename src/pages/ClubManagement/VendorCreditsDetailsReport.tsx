@@ -71,18 +71,20 @@ const formatAmount = (value: number) =>
 
 const toNumber = (value?: string | number) => Number(value ?? 0) || 0;
 
-const statusClassMap: Record<string, string> = {
-  draft: "text-[#6B7280]",
-  open: "text-[#2563EB]",
-  paid: "text-[#059669]",
-  overdue: "text-[#DC2626]",
-  cancelled: "text-[#B91C1C]",
+
+const statusBadgeMap: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-700",
+  open: "bg-blue-100 text-blue-700",
+  paid: "bg-green-100 text-green-700",
+  closed: "bg-green-100 text-green-700",
+  overdue: "bg-orange-100 text-orange-700",
+  cancelled: "bg-red-100 text-red-700",
+  void: "bg-red-100 text-red-700",
 };
 
 const VendorCreditsDetailsReport: React.FC = () => {
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
-  const [appliedFilters, setAppliedFilters] = useState(defaultRange);
   const [rows, setRows] = useState<VendorCreditRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -99,8 +101,8 @@ const VendorCreditsDetailsReport: React.FC = () => {
         {
           params: {
             lock_account_id: lockAccountId,
-            "q[date_gteq]": fromDate,
-            "q[date_lteq]": toDate,
+            "q[date_gteq]": fromDate.includes("-") ? fromDate.split("-").reverse().join("/") : fromDate,
+            "q[date_lteq]": toDate.includes("-") ? toDate.split("-").reverse().join("/") : toDate,
           },
           headers: {
             Authorization: `Bearer ${token}`,
@@ -150,35 +152,64 @@ const VendorCreditsDetailsReport: React.FC = () => {
     [rows]
   );
 
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: "__total__",
+        status: "__total__",
+        vendorCreditDate: "",
+        creditNoteNumber: "",
+        vendorName: "",
+        amount: totals.amount,
+        balanceAmount: totals.balanceAmount,
+      },
+    ];
+  }, [rows, totals]);
+
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFilters((current) => ({ ...current, [name]: value }));
   };
 
-  const renderRow = (row: VendorCreditRow) => ({
-    status: (
-      <span className={`text-[13px] font-medium ${statusClassMap[row.status.toLowerCase()] || "text-[#374151]"}`}>
-        {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-      </span>
-    ),
-    vendorCreditDate: <span className="text-[13px] font-medium text-[#111827]">{formatDisplayDate(row.vendorCreditDate)}</span>,
-    creditNoteNumber: <span className="text-[13px] font-medium text-[#2563EB]">{row.creditNoteNumber}</span>,
-    vendorName: <span className="text-[13px] font-medium text-[#2563EB]">{row.vendorName}</span>,
-    amount: <span className="text-[13px] font-medium text-[#2563EB]">{formatAmount(row.amount)}</span>,
-    balanceAmount: <span className="text-[13px] font-medium text-[#2563EB]">{formatAmount(row.balanceAmount)}</span>,
-  });
+  const renderRow = (row: VendorCreditRow) => {
+    const isTotal = row.id === "__total__";
+    return {
+      status: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+      ) : (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
+          {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+        </span>
+      ),
+      vendorCreditDate: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.vendorCreditDate)}</span>,
+      creditNoteNumber: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.creditNoteNumber}</span>,
+      vendorName: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.vendorName}</span>,
+      amount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+          {formatAmount(row.amount)}
+        </span>
+      ),
+      balanceAmount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
+          {formatAmount(row.balanceAmount)}
+        </span>
+      ),
+    };
+  };
 
   return (
-    <div className="w-full bg-[#f9f7f2] p-6 min-h-screen">
-      <div className="bg-white rounded-lg border-2 p-6 mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 flex items-center justify-center bg-[#E5E0D3] rounded-full text-[#C72030]">
-            <NotepadText className="w-6 h-6" />
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-semibold text-[#1A1A1A]">Vendor Credits Details</h3>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Vendor Credits Details</h3>
         </div>
-
-        <div className="grid md:grid-cols-3 items-end gap-6">
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
           <TextField
             label="From Date"
             type="date"
@@ -189,7 +220,6 @@ const VendorCreditsDetailsReport: React.FC = () => {
             size="small"
             fullWidth
           />
-
           <TextField
             label="To Date"
             type="date"
@@ -200,62 +230,38 @@ const VendorCreditsDetailsReport: React.FC = () => {
             size="small"
             fullWidth
           />
-
           <Button
-            onClick={() => {
-              setAppliedFilters(filters);
-              fetchVendorCreditDetails(filters.fromDate, filters.toDate);
-            }}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={() => fetchVendorCreditDetails(filters.fromDate, filters.toDate)}
           >
             View
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="px-6 py-5 text-center border-b bg-[#F8F9FC]">
+      {/* Table */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
           <p className="text-sm font-medium text-[#667085]">Lockated</p>
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Vendor Credits Details</h1>
           <p className="mt-1 text-sm text-[#475467]">
-            From {formatDisplayDate(appliedFilters.fromDate)} To {formatDisplayDate(appliedFilters.toDate)}
+            From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
           </p>
         </div>
 
         <div className="p-4">
           <EnhancedTaskTable
-            data={rows}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="vendor-credits-details-report-v1"
             loading={loading}
             hideTableExport={true}
-            hideTableSearch={true}
-            enableSearch={false}
-            hideColumnsButton={false}
+            hideTableSearch={false}
+            enableSearch={true}
             emptyMessage="There are no transactions during the selected date range."
-            rightActions={
-              <div className="text-sm font-medium text-[#475467]">
-                Group By : None
-              </div>
-            }
-            headerCellClassName="bg-[#F9FAFB] text-[#374151] text-[12px] font-semibold uppercase tracking-[0.5px] border-b border-[#E5E7EB] hover:bg-[#F9FAFB] px-6 py-4"
-            rowClassName="hover:bg-white border-b border-[#E5E7EB]"
-            cellClassName="px-6 py-4 text-[13px] text-[#374151] hover:bg-white align-middle"
           />
-
-          {rows.length > 0 && (
-            <div className="rounded-b-md border border-t-0 border-[#E5E7EB] bg-white px-6 py-4 text-sm font-semibold text-[#1A1A1A]">
-              <div className="grid grid-cols-6 gap-4">
-                <div>Total</div>
-                <div />
-                <div />
-                <div />
-                <div className="text-right text-gray-900">{formatAmount(totals.amount)}</div>
-                <div className="text-right text-gray-900">{formatAmount(totals.balanceAmount)}</div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

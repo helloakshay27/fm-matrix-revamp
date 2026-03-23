@@ -190,114 +190,139 @@ const PurchaseOrderDetailsReport: React.FC = () => {
 
   const totalAmount = useMemo(() => rows.reduce((acc, row) => acc + row.amount, 0), [rows]);
 
-  const renderRow = (row: PurchaseOrderRow) => ({
-    status: (
-      <span className={`text-[13px] ${row.status.toLowerCase() === "closed" ? "text-[#059669]" : "text-[#6B7280]"}`}>
-        {row.status}
-      </span>
-    ),
-    date: <span className="text-[13px] text-[#111827]">{formatDate(row.date)}</span>,
-    delivery_date: <span className="text-[13px] text-[#111827]">{formatDate(row.delivery_date)}</span>,
-    po_number: (
-      <button
-        onClick={() => navigate(`/accounting/purchase-order/${row.id}`)}
-        className="text-[13px] font-semibold text-[#2563eb]"
-      >
-        {row.po_number}
-      </button>
-    ),
-    vendor_name: (
-      <button
-        onClick={() => navigate(`/accounting/purchase-order/${row.id}`)}
-        className="text-[13px] font-semibold text-[#2563eb]"
-      >
-        {row.vendor_name}
-      </button>
-    ),
-    amount: <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.amount)}</span>,
-  });
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: -1,
+        status: "__total__",
+        date: "",
+        delivery_date: "",
+        po_number: "",
+        vendor_name: "",
+        amount: totalAmount,
+      },
+    ];
+  }, [rows, totalAmount]);
+
+  const statusBadgeMap: Record<string, string> = {
+    draft: "bg-gray-100 text-gray-700",
+    open: "bg-blue-100 text-blue-700",
+    closed: "bg-green-100 text-green-700",
+    approved: "bg-green-100 text-green-700",
+    pending: "bg-yellow-100 text-yellow-700",
+    cancelled: "bg-red-100 text-red-700",
+    void: "bg-red-100 text-red-700",
+  };
+
+  const renderRow = (row: PurchaseOrderRow) => {
+    const isTotal = row.status === "__total__";
+    return {
+      status: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+      ) : (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
+          {row.status}
+        </span>
+      ),
+      date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDate(row.date)}</span>,
+      delivery_date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDate(row.delivery_date)}</span>,
+      po_number: isTotal ? <span /> : (
+        <button
+          onClick={() => navigate(`/accounting/purchase-order/${row.id}`)}
+          className="text-sm font-medium text-blue-600"
+        >
+          {row.po_number}
+        </button>
+      ),
+      vendor_name: isTotal ? <span /> : (
+        <button
+          onClick={() => navigate(`/accounting/purchase-order/${row.id}`)}
+          className="text-sm font-medium text-blue-600"
+        >
+          {row.vendor_name}
+        </button>
+      ),
+      amount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+          {formatCurrency(row.amount)}
+        </span>
+      ),
+    };
+  };
+
+  const formatDisplayDate = (value: string) => {
+    if (!value) return "--";
+    // value is in dd/mm/yyyy
+    const parts = value.split("/");
+    if (parts.length === 3) return `${parts[0]}/${parts[1]}/${parts[2]}`;
+    return value;
+  };
 
   return (
-    <div className="min-h-screen w-full bg-white">
-      <div className="overflow-hidden border border-[#EAECF0] bg-white">
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-4">
-          <div className="mb-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
-              <NotepadText color="#d32f2f" size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-[#111827]">Purchase Order Details</h3>
-            </div>
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
           </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Purchase Order Details</h3>
+        </div>
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={toInputDate(filters.fromDate)}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            fullWidth
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={toInputDate(filters.toDate)}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            fullWidth
+          />
+          <Button
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={() => fetchPurchaseOrderDetails(filters.fromDate, filters.toDate)}
+          >
+            View
+          </Button>
+        </div>
+      </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <TextField
-              label="From Date"
-              type="date"
-              name="fromDate"
-              value={toInputDate(filters.fromDate)}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-
-            <TextField
-              label="To Date"
-              type="date"
-              name="toDate"
-              value={toInputDate(filters.toDate)}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-
-            <Button
-              onClick={() => fetchPurchaseOrderDetails(filters.fromDate, filters.toDate)}
-              className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            >
-              View
-            </Button>
-          </div>
+      {/* Table */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
+          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Purchase Order Details</h1>
+          <p className="mt-1 text-sm text-[#475467]">
+            From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
+          </p>
         </div>
 
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-12 text-center">
-          <p className="text-[14px] font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-3 text-[20px] font-semibold text-[#111827]">Purchase Order Details</h1>
-          <p className="mt-2 text-[14px] text-[#344054]">From {filters.fromDate} To {filters.toDate}</p>
-        </div>
-
-        <div className="p-0">
+        <div className="p-4">
           <EnhancedTaskTable
-            data={rows}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="purchase-order-details-report-v1"
             hideTableExport={true}
-            hideTableSearch={true}
-            enableSearch={false}
-            hideColumnsButton={true}
+            hideTableSearch={false}
+            enableSearch={true}
             loading={loading}
             emptyMessage="There are no purchase orders during the selected date range."
-            toolbarClassName="hidden"
-            tableWrapperClassName="border-0 rounded-none"
-            headerCellClassName="bg-[#F7F7FB] text-[#5F6293] text-[12px] font-semibold uppercase tracking-[0.02em] hover:bg-[#F7F7FB]"
-            rowClassName="hover:bg-transparent shadow-none"
-            cellClassName="px-8 py-3 border-b border-[#EAECF0] hover:bg-transparent align-middle"
           />
-
-          <div
-            className="grid border-b border-[#EAECF0] bg-white px-8 py-3 text-[14px] text-[#111827]"
-            style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
-          >
-            <div>Total</div>
-            <div />
-            <div />
-            <div />
-            <div />
-            <div className="text-right font-semibold text-[#111827]">{formatCurrency(totalAmount)}</div>
-          </div>
         </div>
       </div>
     </div>
