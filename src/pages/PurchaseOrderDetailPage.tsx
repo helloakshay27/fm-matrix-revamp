@@ -363,10 +363,10 @@ export const PurchaseOrderDetailPage = () => {
     typeof purchaseOrder.delivery_address === "string"
       ? purchaseOrder.delivery_address
       : purchaseOrder.delivery_address?.formatted_address ||
-        purchaseOrder.delivery_address?.full_address ||
-        purchaseOrder.delivery_address?.address ||
-        purchaseOrder.delivery_address?.name ||
-        "N/A";
+      purchaseOrder.delivery_address?.full_address ||
+      purchaseOrder.delivery_address?.address ||
+      purchaseOrder.delivery_address?.name ||
+      "N/A";
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -499,7 +499,7 @@ export const PurchaseOrderDetailPage = () => {
                         PO Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(purchaseOrder.po_date).toLocaleDateString()}
+                        {new Date(purchaseOrder.po_date).toLocaleDateString("en-GB")}
                       </p>
                     </div>
                     {/* <div>
@@ -527,22 +527,22 @@ export const PurchaseOrderDetailPage = () => {
                       </p>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                         Payment Terms
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Payment Terms
 
-                        </p>
-                        <p className="text-base font-semibold mt-1">
-                          {paymentTermsDisplay}
-                        </p>
-                      
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {paymentTermsDisplay}
+                      </p>
+
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">   
-                            Delivery Address
-                        </p>
-                        <p className="text-base font-semibold mt-1">
-                          {deliveryAddressDisplay}
-                        </p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Delivery Address
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {deliveryAddressDisplay}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -580,14 +580,15 @@ export const PurchaseOrderDetailPage = () => {
                                 <TableRow key={item.id}>
                                   <TableCell>
                                     <div>
-                                      <p className="font-semibold">
-                                        {item.prod_desc || "N/A"}
-                                      </p>
                                       {item.inventory?.name && (
                                         <p className="text-sm text-muted-foreground">
                                           {item.inventory.name}
                                         </p>
                                       )}
+                                      <p className="font-semibold">
+                                        {item.prod_desc || "N/A"}
+                                      </p>
+
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right">

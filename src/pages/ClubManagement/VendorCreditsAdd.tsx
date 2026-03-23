@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -626,19 +627,21 @@ export const VendorCreditsAdd: React.FC = () => {
     };
 
     // Validation
-    const validate = (): boolean => {
-        const newErrors: Record<string, string> = {};
+    const validate = (): string | null => {
+        if (!selectedCustomer) return "Please select a vendor";
+        if (!referenceNumber.trim()) return "Credit note number is required";
+        if (!salesOrderDate) return "Date is required";
+        if (items.length === 0) return "At least one item is required";
 
-        if (!selectedCustomer) newErrors.customer = 'Customer is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
-        if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
-        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (!item.name.trim()) return `Item ${i + 1}: Name is required`;
+            if (!item.account) return `Item ${i + 1}: Account is required`;
+            if (item.quantity <= 0) return `Item ${i + 1}: Quantity must be greater than 0`;
+            if (item.rate < 0) return `Item ${i + 1}: Rate cannot be negative`;
+        }
 
-        const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return null;
     };
 
     const saleOrderPayload = {
@@ -734,9 +737,15 @@ export const VendorCreditsAdd: React.FC = () => {
     console.log("items:", items)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
+        if (isSubmitting) return;
+
+        const error = validate();
+        if (error) {
+            toast.error(error);
             return;
         }
+
+        const loadingToast = toast.loading("Creating...");
 
         setIsSubmitting(true);
 
@@ -747,7 +756,7 @@ export const VendorCreditsAdd: React.FC = () => {
 
             // Build FormData for sale order
             const formData = new FormData();
-               const totalGSTAmount = taxBreakdown.reduce(
+            const totalGSTAmount = taxBreakdown.reduce(
                 (sum, tax) => sum + Number(tax.amount || 0),
                 0
             );
@@ -828,11 +837,17 @@ export const VendorCreditsAdd: React.FC = () => {
                 body: formData
             });
 
-            alert(`Vendor Credit ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            toast.dismiss(loadingToast);
+            if (saveAsDraft) {
+                toast.success("Saved as draft");
+            } else {
+                toast.success("Vendor credit created!");
+            }
             navigate('/accounting/vendor-credits');
         } catch (error) {
             console.error('Error submitting sales order:', error);
-            alert('Failed to create sales order');
+            toast.dismiss(loadingToast);
+            toast.error("Failed to save vendor credit");
         } finally {
             setIsSubmitting(false);
         }
@@ -982,7 +997,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                 />
                             </div>
 
-                           
+
 
                         </div>
 
@@ -997,59 +1012,59 @@ export const VendorCreditsAdd: React.FC = () => {
                             </Button>
                         )} */}
 
-                         {selectedCustomer && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {selectedCustomer && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                                    {/* Source of Supply */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">
-                                            Source of Supply
-                                        </label>
+                                {/* Source of Supply */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Source of Supply
+                                    </label>
 
-                                        <FormControl fullWidth>
-                                            <Select
-                                                value={sourceOfSupply}
-                                                onChange={(e) => setSourceOfSupply(e.target.value)}
-                                                displayEmpty
-                                                sx={fieldStyles}
-                                            >
-                                                <MenuItem value="">Select State</MenuItem>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={sourceOfSupply}
+                                            onChange={(e) => setSourceOfSupply(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="">Select State</MenuItem>
 
-                                                {indianStates.map((state) => (
-                                                    <MenuItem key={state} value={state}>
-                                                        {state}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </div>
-
-                                    {/* Destination of Supply */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">
-                                            Destination of Supply
-                                        </label>
-
-                                        <FormControl fullWidth>
-                                            <Select
-                                                value={destinationOfSupply}
-                                                onChange={(e) => setDestinationOfSupply(e.target.value)}
-                                                displayEmpty
-                                                sx={fieldStyles}
-                                            >
-                                                <MenuItem value="">Select State</MenuItem>
-
-                                                {indianStates.map((state) => (
-                                                    <MenuItem key={state} value={state}>
-                                                        {state}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </div>
-
+                                            {indianStates.map((state) => (
+                                                <MenuItem key={state} value={state}>
+                                                    {state}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 </div>
-                            )}
+
+                                {/* Destination of Supply */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Destination of Supply
+                                    </label>
+
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={destinationOfSupply}
+                                            onChange={(e) => setDestinationOfSupply(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="">Select State</MenuItem>
+
+                                            {indianStates.map((state) => (
+                                                <MenuItem key={state} value={state}>
+                                                    {state}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </div>
+
+                            </div>
+                        )}
                     </div>
                 </Section>
 
@@ -1070,6 +1085,24 @@ export const VendorCreditsAdd: React.FC = () => {
                                 onChange={(e) => setBillingAddress(e.target.value)}
                                 placeholder="Enter billing address"
                                 disabled={!!selectedCustomer?.billing_address?.address}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
+                                    },
+                                }}
                             />
                         </div>
 
@@ -1087,6 +1120,24 @@ export const VendorCreditsAdd: React.FC = () => {
                                 onChange={(e) => setShippingAddress(e.target.value)}
                                 placeholder="Enter shipping address"
                                 disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
+                                    },
+                                }}
                             />
                             {/* <FormControlLabel
                                 control={
@@ -1303,7 +1354,25 @@ export const VendorCreditsAdd: React.FC = () => {
                                 value={subject}
                                 onChange={e => setSubject(e.target.value)}
                                 placeholder="Enter subject"
-                                sx={fieldStyles}
+                                // sx={fieldStyles}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
+                                    },
+                                }}
                             />
                         </div>
 
@@ -1463,7 +1532,11 @@ export const VendorCreditsAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                                                    onChange={(e) => {
+                                                        const parsed = parseFloat(e.target.value);
+                                                        const safeRate = isNaN(parsed) ? '' : Math.max(0, parsed);
+                                                        updateItem(index, 'rate', safeRate);
+                                                    }}
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
@@ -1645,7 +1718,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-    {taxBreakdown.map((tax, index) => (
+                            {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">
                                         {tax.name} ({tax.rate}%)
@@ -1742,6 +1815,24 @@ export const VendorCreditsAdd: React.FC = () => {
                         value={customerNotes}
                         onChange={(e) => setCustomerNotes(e.target.value)}
                         placeholder="Enter any notes for the customer"
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                                display: "flex",
+                            },
+                            "& .MuiInputBase-input[aria-hidden='true']": {
+                                flex: 0,
+                                width: 0,
+                                height: 0,
+                                padding: "0 !important",
+                                margin: 0,
+                                display: "none",
+                            },
+                            "& .MuiInputBase-input": {
+                                resize: "none !important",
+                            },
+                        }}
                     />
                 </Section>
 
@@ -1930,14 +2021,14 @@ export const VendorCreditsAdd: React.FC = () => {
                         }
                     }}
                 >
-                    Save as Draft
+                    {isSubmitting ? 'Saving...' : 'Save as Draft'}
                 </Button>
                 <Button
                     variant="contained"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{
-                        bgcolor: 'primary.main',
+                        bgcolor: 'primary.main',    
                         color: 'white',
                         px: 4,
                         '&:hover': {
@@ -1946,7 +2037,7 @@ export const VendorCreditsAdd: React.FC = () => {
                         textTransform: 'none'
                     }}
                 >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    {isSubmitting ? 'Creating...' : 'Save and Send'}
                 </Button>
             </div>
 
@@ -2203,58 +2294,58 @@ export const VendorCreditsAdd: React.FC = () => {
                 </DialogActions>
             </Dialog>
 
-              <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
-                            maxWidth="sm" fullWidth>
-                            <DialogTitle>Exemption Reason</DialogTitle>
-            
-                            <DialogContent>
-            
-                                <FormControl fullWidth>
-            
-                                    <Select
-                                        value={selectedExemption}
-                                        onChange={(e) => setSelectedExemption(e.target.value)}
-                                    >
-            
-                                        <MenuItem value="">Select Reason</MenuItem>
-            
-                                        {customerExemptions.map(ex => (
-                                            <MenuItem key={ex.id} value={ex.id}>
-                                                {ex.reason}
-                                            </MenuItem>
-                                        ))}
-            
-                                    </Select>
-            
-                                </FormControl>
-            
-                            </DialogContent>
-            
-                            <DialogActions>
-                                <button
-                                    className="bg-gray-200 px-4 py-2 rounded"
-                                    onClick={() => setExemptionModalOpen(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
-                                    onClick={() => {
-                                        if (currentItemIndex !== null) {
-                                            updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
-                                        }
-            
-                                        setSelectedExemption("");
-                                        setCurrentItemIndex(null);
-                                        setExemptionModalOpen(false);
-                                    }}
-                                >
-                                    Update
-                                </button>
-            
-                            </DialogActions>
-            
-                        </Dialog>
+            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
+                maxWidth="sm" fullWidth>
+                <DialogTitle>Exemption Reason</DialogTitle>
+
+                <DialogContent>
+
+                    <FormControl fullWidth>
+
+                        <Select
+                            value={selectedExemption}
+                            onChange={(e) => setSelectedExemption(e.target.value)}
+                        >
+
+                            <MenuItem value="">Select Reason</MenuItem>
+
+                            {customerExemptions.map(ex => (
+                                <MenuItem key={ex.id} value={ex.id}>
+                                    {ex.reason}
+                                </MenuItem>
+                            ))}
+
+                        </Select>
+
+                    </FormControl>
+
+                </DialogContent>
+
+                <DialogActions>
+                    <button
+                        className="bg-gray-200 px-4 py-2 rounded"
+                        onClick={() => setExemptionModalOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        onClick={() => {
+                            if (currentItemIndex !== null) {
+                                updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
+                            }
+
+                            setSelectedExemption("");
+                            setCurrentItemIndex(null);
+                            setExemptionModalOpen(false);
+                        }}
+                    >
+                        Update
+                    </button>
+
+                </DialogActions>
+
+            </Dialog>
         </div>
     );
 };

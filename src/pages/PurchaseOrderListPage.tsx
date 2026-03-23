@@ -487,8 +487,7 @@ export const PurchaseOrderListPage: React.FC = () => {
       const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
       const url = new URL(
-        `${
-          baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`
         }/pms/purchase_orders.json`
       );
 
@@ -497,10 +496,14 @@ export const PurchaseOrderListPage: React.FC = () => {
       url.searchParams.append("access_token", token);
       url.searchParams.append("lock_account_id", lockAccountId);
 
-      if (search.trim()) {
-        url.searchParams.append("search", search.trim());
-      }
+      // if (search.trim()) {
+      //   url.searchParams.append("search", search.trim());
+      // }
 
+      url.searchParams.append(
+        "q[reference_number_or_external_id_cont]",
+        search
+      );
       const response = await fetch(url.toString());
 
       if (!response.ok) {

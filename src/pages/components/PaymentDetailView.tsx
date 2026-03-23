@@ -63,7 +63,31 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!selectedPayment) return null;
+  if (!selectedPayment) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-20 bg-gray-50 h-screen">
+        <div className="text-center space-y-4">
+          <div className="bg-red-50 p-4 rounded-full w-fit mx-auto">
+            <X className="h-8 w-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Payment Not Found
+          </h3>
+          <p className="text-sm text-gray-500 max-w-xs mx-auto">
+            The payment record you are looking for might have been moved or
+            doesn't exist in the current view.
+          </p>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-gray-300 h-9"
+          >
+            Back to List
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-140px)] border-t border-gray-200">

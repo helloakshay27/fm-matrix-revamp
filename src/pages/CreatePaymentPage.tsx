@@ -77,6 +77,20 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import axios from "axios";
 import {
   FormControl,
@@ -133,6 +147,28 @@ export const CreatePaymentPage: React.FC = () => {
 
   // Form State
   const [paymentNumber, setPaymentNumber] = useState("");
+  
+  // Payment Number Configuration State
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState({
+    autoGenerate: true,
+    prefix: "",
+    nextNumber: 1,
+  });
+
+  // Modal temporary states
+  const [modalAutoGenerate, setModalAutoGenerate] = useState(true);
+  const [modalPrefix, setModalPrefix] = useState("");
+  const [modalNextNumber, setModalNextNumber] = useState("1");
+
+  // Sync modal state when opening
+  useEffect(() => {
+    if (isConfigModalOpen) {
+      setModalAutoGenerate(paymentConfig.autoGenerate);
+      setModalPrefix(paymentConfig.prefix);
+      setModalNextNumber(String(paymentConfig.nextNumber));
+    }
+  }, [isConfigModalOpen, paymentConfig]);
   const [amount, setAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("Cash");
   const [paidThrough, setPaidThrough] = useState("Petty Cash");
@@ -312,10 +348,29 @@ export const CreatePaymentPage: React.FC = () => {
   const selectedSupplier =
     suppliers.find((s) => String(s.id) === selectedVendor) ?? null;
 
-  const handleVendorSelect = (vendorId: string) => {
+  const handleVendorSelect = async (vendorId: string) => {
     setSelectedVendor(vendorId);
     setIsVendorOpen(false);
     fetchBills(vendorId);
+    
+    // Fetch count of payments for this vendor to determine the sequential count
+    try {
+      const res = await accountingClient.get("/lock_account_payments.json", {
+        params: { lock_account_id: lock_account_id }
+      });
+      const allPayments = res.data.lock_payments || [];
+      const vendorPayments = allPayments.filter((p: { payment_of_id: number | string }) => String(p.payment_of_id) === String(vendorId));
+      const nextCount = vendorPayments.length + 1;
+      
+      if (paymentConfig.autoGenerate) {
+        setPaymentNumber(`${paymentConfig.prefix}${nextCount}`);
+      }
+    } catch (err) {
+      console.error("Failed to fetch payment count:", err);
+      if (paymentConfig.autoGenerate) {
+        setPaymentNumber(`${paymentConfig.prefix}${paymentConfig.nextNumber}`);
+      }
+    }
   };
 
   useEffect(() => {
@@ -333,9 +388,10 @@ export const CreatePaymentPage: React.FC = () => {
   const amountInExcess = Math.max(0, (parseFloat(amount) || 0) - totalApplied);
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="w-full">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <TooltipProvider>
+      <div className="min-h-screen bg-white">
+        <div className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* ══ HEADER SECTION (Gray Background) ══ */}
           <div className="bg-[#f9f9fa] border-b border-gray-200 px-6 pb-6 pt-6 relative">
             <Button
@@ -457,13 +513,28 @@ export const CreatePaymentPage: React.FC = () => {
                       <label className="block text-sm font-medium mb-2 text-gray-700">
                         Payment #<span className="text-red-500">*</span>
                       </label>
-                      <div className="relative">
+                      <div className="relative font-sans">
                         <Input
                           value={paymentNumber}
                           onChange={(e) => setPaymentNumber(e.target.value)}
-                          className="pr-8 h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm"
+                          readOnly={paymentConfig.autoGenerate}
+                          className={cn(
+                            "pr-10 h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm",
+                            paymentConfig.autoGenerate ? "bg-gray-50 cursor-not-allowed focus-visible:ring-0" : "bg-white cursor-text"
+                          )}
+                          placeholder="Payment number"
                         />
-                        <Settings className="absolute right-3 top-2.5 h-4 w-4 text-blue-400 cursor-pointer opacity-70" />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Settings
+                              className="absolute right-3 top-2.5 h-4 w-4 text-blue-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                              onClick={() => setIsConfigModalOpen(true)}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="bg-[#1e293b] text-white border-none text-[12px] py-1.5 px-3">
+                            <p>Click here to configure auto-generation of payment numbers.</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
 
@@ -1198,7 +1269,122 @@ export const CreatePaymentPage: React.FC = () => {
             </div>
           </SheetContent>
         </Sheet>
+        
+        {/* Configure Payment Number Preferences Modal */}
+        <Dialog open={isConfigModalOpen} onOpenChange={setIsConfigModalOpen}>
+          <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-xl">
+            <DialogHeader className="px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-lg font-semibold text-gray-900">
+                  Configure Payment Number Preferences
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="p-6 space-y-6">
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Choose how your payment numbers should be generated. You can automate the sequence or enter them manually for each payment.
+              </p>
+              
+              <RadioGroup
+                value={modalAutoGenerate ? "auto" : "manual"}
+                onValueChange={(val) => setModalAutoGenerate(val === "auto")}
+                className="gap-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="auto" id="auto" className="text-blue-600 border-gray-300" />
+                    <Label htmlFor="auto" className="text-sm font-medium text-gray-700 cursor-pointer">
+                      Auto-generate payment number
+                    </Label>
+                  </div>
+                  
+                  {modalAutoGenerate && (
+                    <div className="grid grid-cols-2 gap-4 pl-7">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Prefix</Label>
+                        <Input
+                          value={modalPrefix}
+                          onChange={(e) => setModalPrefix(e.target.value)}
+                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Next Number</Label>
+                        <Input
+                          type="number"
+                          value={modalNextNumber}
+                          onChange={(e) => setModalNextNumber(e.target.value)}
+                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="manual" id="manual" className="text-blue-600 border-gray-300" />
+                    <Label htmlFor="manual" className="text-sm font-medium text-gray-700 cursor-pointer">
+                      Add payment number manually for this payment
+                    </Label>
+                  </div>
+
+                  {!modalAutoGenerate && (
+                    <div className="grid grid-cols-2 gap-4 pl-7">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-gray-400">Prefix</Label>
+                        <Input
+                          value={modalPrefix}
+                          onChange={(e) => setModalPrefix(e.target.value)}
+                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                          placeholder="e.g. PAY"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-gray-400">Payment Number</Label>
+                        <Input
+                          value={modalNextNumber}
+                          onChange={(e) => setModalNextNumber(e.target.value)}
+                          className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                          placeholder="e.g. 1001"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <DialogFooter className="px-6 py-4 bg-gray-50 flex items-center gap-3">
+              <Button
+                onClick={() => {
+                  setPaymentConfig({
+                    autoGenerate: modalAutoGenerate,
+                    prefix: modalPrefix,
+                    nextNumber: parseInt(modalNextNumber, 10) || 1,
+                  });
+                  setIsConfigModalOpen(false);
+                  
+                  if (selectedVendor) {
+                    setPaymentNumber(`${modalPrefix}${modalNextNumber}`);
+                  }
+                }}
+                className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-6 text-sm font-medium rounded-[4px]"
+              >
+                Save
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsConfigModalOpen(false)}
+                className="h-9 px-6 text-sm border-gray-300 text-gray-600 hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
+    </TooltipProvider>
   );
 };

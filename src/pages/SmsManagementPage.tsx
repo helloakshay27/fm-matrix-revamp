@@ -61,7 +61,6 @@ interface SmsTemplate {
   template_url: string;
   is_default: boolean;
   active: boolean;
-  created_by_id: number;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -79,11 +78,11 @@ const SmsManagementPage: React.FC = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     organization_id: "",
-    module_name: "Gatekeeper",
-    function_name: "Create",
-    priority: "primary",
-    service_provider: "Immence",
-    template_name: "Global Visitor OTP",
+    module_name: "",
+    function_name: "",
+    priority: "",
+    service_provider: "",
+    template_name: "",
     dlt_template_id: "",
     template_url: "",
     is_default: false,
@@ -248,7 +247,6 @@ const SmsManagementPage: React.FC = () => {
             : formData.organization_id
               ? parseInt(formData.organization_id)
               : null,
-          created_by_id: 92501, // As per example
         },
       };
 
@@ -276,11 +274,11 @@ const SmsManagementPage: React.FC = () => {
       // Reset form
       setFormData({
         organization_id: "",
-        module_name: "Gatekeeper",
-        function_name: "Create",
-        priority: "primary",
-        service_provider: "Immence",
-        template_name: "Global Visitor OTP",
+        module_name: "",
+        function_name: "",
+        priority: "",
+        service_provider: "",
+        template_name: "",
         dlt_template_id: "",
         template_url: "",
         is_default: false,
@@ -479,11 +477,11 @@ const SmsManagementPage: React.FC = () => {
                 setEditingId(null);
                 setFormData({
                   organization_id: "",
-                  module_name: "Gatekeeper",
-                  function_name: "Create",
-                  priority: "primary",
-                  service_provider: "Immence",
-                  template_name: "Global Visitor OTP",
+                  module_name: "",
+                  function_name: "",
+                  priority: "",
+                  service_provider: "",
+                  template_name: "",
                   dlt_template_id: "",
                   template_url: "",
                   is_default: false,
@@ -1010,7 +1008,7 @@ const SmsManagementPage: React.FC = () => {
                   <Input
                     id="dlt_template_id"
                     name="dlt_template_id"
-                    placeholder="Enter DLT Template ID"
+                    placeholder="e.g. 1407161234567890123"
                     value={formData.dlt_template_id}
                     onChange={handleInputChange}
                     className="h-11 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
@@ -1027,7 +1025,7 @@ const SmsManagementPage: React.FC = () => {
                   <Textarea
                     id="template_url"
                     name="template_url"
-                    placeholder="Enter full template URL with variables"
+                    placeholder="e.g. http://api.provider.com/send?user={#u#}&pass={#p#}&msg={#m#}"
                     value={formData.template_url}
                     onChange={handleInputChange}
                     className="min-h-[100px] border-slate-200 focus:ring-[#C72030] rounded-md transition-all resize-none"

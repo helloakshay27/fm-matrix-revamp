@@ -1161,6 +1161,12 @@ import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
 import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
 import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
+import SummaryOfInwardSupplies from "./pages/ClubManagement/SummaryOfInwardSupplies";
+import PMT06SelfAssessmentBasis from "./pages/ClubManagement/PMT06SelfAssessmentBasis";
+import SummaryOfOutwardSuppliesGSTR1 from "./pages/ClubManagement/SummaryOfOutwardSuppliesGSTR1";
+import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishingFacilityIFF";
+import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
+import TCSSummaryForm27EQ from "./pages/ClubManagement/TCSSummaryForm27EQ";
 import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedReport";
 import PaymentsMadeReport from "./pages/Accounting/PaymentsMadeReport";
 import PayableDetailsReport from "./pages/Accounting/PayableDetailsReport";
@@ -2769,6 +2775,30 @@ function App() {
                           <Route
                             path="/accounting/reports/gstr-3b-summary/details"
                             element={<GSTR3BSummaryDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/summary-of-inward-supplies"
+                            element={<SummaryOfInwardSupplies />}
+                          />
+                          <Route
+                            path="/accounting/reports/pmt-06-self-assessment-basis"
+                            element={<PMT06SelfAssessmentBasis />}
+                          />
+                          <Route
+                            path="/accounting/reports/summary-of-outward-supplies-gstr-1"
+                            element={<SummaryOfOutwardSuppliesGSTR1 />}
+                          />
+                          <Route
+                            path="/accounting/reports/invoice-furnishing-facility-iff"
+                            element={<InvoiceFurnishingFacilityIFF />}
+                          />
+                          <Route
+                            path="/accounting/reports/self-invoice-summary"
+                            element={<SelfInvoiceSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/tcs-summary-form-27eq"
+                            element={<TCSSummaryForm27EQ />}
                           />
                           <Route path="/accounting/reports/gstr-9" element={<GSTR9Summary />} />
 

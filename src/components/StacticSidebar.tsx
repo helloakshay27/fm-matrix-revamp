@@ -1671,18 +1671,6 @@ const modulesByPackage = {
           href: "/accounting/reports/profit-and-loss",
         },
         {
-          name: "GST Payable",
-          href: "/accounting/reports/gst-payable",
-        },
-        {
-          name: "GST Receivable",
-          href: "/accounting/reports/gst-receivable",
-        },
-        {
-          name: "Tax Summary",
-          href: "/accounting/reports/tax-summary",
-        },
-        {
           name: "Account Type Summary",
           href: "/accounting/reports/account-type-summary",
         },
@@ -1823,6 +1811,24 @@ const modulesByPackage = {
             {
               name: "Vendor Credits Details",
               href: "/accounting/reports/vendor-credits-details",
+            },
+          ],
+        },
+        {
+          name: "Taxes",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "GST Payable",
+              href: "/accounting/reports/gst-payable",
+            },
+            {
+              name: "GST Receivable",
+              href: "/accounting/reports/gst-receivable",
+            },
+            {
+              name: "Tax Summary",
+              href: "/accounting/reports/tax-summary",
             },
           ],
         },
