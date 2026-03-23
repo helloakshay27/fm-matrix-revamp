@@ -1785,6 +1785,26 @@ const modulesByPackage = {
                   href: "/accounting/reports/payable-refund-history",
                 },
                 {
+                  name: "Purchase Order Details",
+                  href: "/accounting/reports/purchase-order-details",
+                },
+                {
+                  name: "Expense Details",
+                  href: "/accounting/reports/expense-details",
+                },
+                {
+                  name: "Expenses by Project",
+                  href: "/accounting/reports/expenses-by-project",
+                },
+                {
+                  name: "Expenses by Employee",
+                  href: "/accounting/reports/expenses-by-employee",
+                },
+                {
+                  name: "Billable Expense Details",
+                  href: "/accounting/reports/billable-expense-details",
+                },
+                {
                   name: "Purchase Orders by Vendor",
                   href: "/accounting/reports/purchase-orders-by-vendor",
                 },

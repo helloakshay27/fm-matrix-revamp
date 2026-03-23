@@ -1169,7 +1169,14 @@ import PayableDetailsReport from "./pages/Accounting/PayableDetailsReport";
 import APAgingDetailsReport from "./pages/Accounting/APAgingDetailsReport";
 import PayableRefundHistoryReport from "./pages/Accounting/PayableRefundHistoryReport";
 import PurchaseOrderDetailsReport from "./pages/Accounting/PurchaseOrderDetailsReport";
+import ExpenseDetailsReport from "./pages/Accounting/ExpenseDetailsReport";
+import ExpenseSummaryByCategoryReport from "./pages/Accounting/ExpenseSummaryByCategoryReport";
+import ExpensesByCustomerReport from "./pages/Accounting/ExpensesByCustomerReport";
+import ExpensesByEmployeeReport from "./pages/Accounting/ExpensesByEmployeeReport";
+import ExpensesByProjectReport from "./pages/Accounting/ExpensesByProjectReport";
 import PurchaseOrdersByVendorReport from "./pages/Accounting/PurchaseOrdersByVendorReport";
+import PurchasesByItemReport from "./pages/Accounting/PurchasesByItemReport";
+import BillableExpenseDetails from "./pages/Accounting/BillableExpenseDetails";
 import PayableSummaryReport from "./pages/Accounting/PayableSummaryReport";
 import TimeToGetPaidReport from "./pages/ClubManagement/TimeToGetPaidReport";
 import CreditNoteDetailsReport from "./pages/ClubManagement/CreditNoteDetailsReport";
@@ -2619,8 +2626,64 @@ function App() {
                             element={<PurchaseOrderDetailsReport />}
                           />
                           <Route
+                            path="/accounting/reports/expense-details"
+                            element={<ExpenseDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expense-summary-by-category"
+                            element={<ExpenseSummaryByCategoryReport />}
+                          />
+                          <Route
                             path="/accounting/reports/purchase-orders-by-vendor"
                             element={<PurchaseOrdersByVendorReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expenses-by-employee"
+                            element={<ExpensesByEmployeeReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expenses-by-project"
+                            element={<ExpensesByProjectReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/billable-expense-details"
+                            element={<BillableExpenseDetails />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchase-order-details"
+                            element={<PurchaseOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expense-details"
+                            element={<ExpenseDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expense-summary-by-category"
+                            element={<ExpenseSummaryByCategoryReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-customer"
+                            element={<ExpensesByCustomerReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-project"
+                            element={<ExpensesByProjectReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-employee"
+                            element={<ExpensesByEmployeeReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchases-by-vendor"
+                            element={<PurchaseOrdersByVendorReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchases-by-item"
+                            element={<PurchasesByItemReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/billable-expense-details"
+                            element={<BillableExpenseDetails />}
                           />
                           <Route
                             path="/accounting/reports/payable-summary"

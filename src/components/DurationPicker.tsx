@@ -387,7 +387,7 @@ export const DurationPicker = ({
                 if (onDateWiseHoursChange) onDateWiseHoursChange([]);
             }
         }
-    }, [startDate, endDate, taskType, shift, isDateDisabled]);
+    }, [startDate, endDate, taskType, shift]);
 
     /** ✅ Update total & date-wise data when flexible hours change */
     useEffect(() => {
