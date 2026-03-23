@@ -252,15 +252,25 @@ const SmsManagementPage: React.FC = () => {
         },
       };
 
-      // Assuming API endpoint, adjust if needed
-      // await axios.post("https://fm-uat-api.lockated.com/sms_templates", payload);
+      const url = editingId 
+        ? `${BASE_URL}/sms_templates/${editingId}.json?token=${TOKEN}`
+        : `${BASE_URL}/sms_templates.json?token=${TOKEN}`;
 
-      console.log("Submitting payload:", payload);
+      if (editingId) {
+        await axios.put(url, payload);
+      } else {
+        await axios.post(url, payload);
+      }
+
       toast.success(
         editingId
           ? "SMS Template updated successfully"
           : "SMS Template created successfully"
       );
+      
+      // Refresh the list to show the new/updated template
+      fetchSmsTemplates();
+      
       setIsModalOpen(false);
       setEditingId(null);
       // Reset form
@@ -277,8 +287,8 @@ const SmsManagementPage: React.FC = () => {
         active: true,
       });
     } catch (error) {
-      console.error("Error creating template:", error);
-      toast.error("Failed to create SMS Template");
+      console.error("Error saving template:", error);
+      toast.error(editingId ? "Failed to update SMS Template" : "Failed to create SMS Template");
     } finally {
       setIsSubmitting(false);
     }
