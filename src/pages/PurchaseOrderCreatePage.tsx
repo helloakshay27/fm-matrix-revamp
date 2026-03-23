@@ -738,6 +738,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
 
+        if (expectedDeliveryDate && purchaseOrderDate && new Date(expectedDeliveryDate) <= new Date(purchaseOrderDate)) {
+            newErrors.expectedDeliveryDate = 'Expected delivery date must be after purchase order date';
+        }
+
         const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
         if (!hasValidItems) newErrors.items = 'At least one valid item is required';
 
@@ -1077,6 +1081,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 helperText={errors.expectedDeliveryDate}
                                 sx={fieldStyles}
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{
+                                    min: purchaseOrderDate ? new Date(new Date(purchaseOrderDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined
+                                }}
                             />
                         </div>
 
