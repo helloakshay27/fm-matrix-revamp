@@ -609,52 +609,48 @@ const modulesByPackage = {
           ],
         },
 
+        {
+          name: "Purchases and Expenses",
+          subItems: [
+            {
+              name: "Purchase Order Details",
+              href: "/accounting/purchases-and-expenses/purchase-order-details",
+            },
+            {
+              name: "Expense Details",
+              href: "/accounting/purchases-and-expenses/expense-details",
+            },
+            {
+              name: "Expense Summary by Category",
+              href: "/accounting/purchases-and-expenses/expense-summary-by-category",
+            },
+            {
+              name: "Expenses by Customer",
+              href: "/accounting/purchases-and-expenses/expenses-by-customer",
+            },
+            {
+              name: "Expenses by Project",
+              href: "/accounting/purchases-and-expenses/expenses-by-project",
+            },
+            {
+              name: "Expenses by Employee",
+              href: "/accounting/purchases-and-expenses/expenses-by-employee",
+            },
+            {
+              name: "Purchases by Vendor",
+              href: "/accounting/purchases-and-expenses/purchases-by-vendor",
+            },
+            {
+              name: "Purchases by Item",
+              href: "/accounting/purchases-and-expenses/purchases-by-item",
+            },
+            {
+              name: "Billable Expense Details",
+              href: "/accounting/purchases-and-expenses/billable-expense-details",
+            },
+          ],
+        },
 
-
-
-      ],
-    },
-
-    {
-      name: "Purchases and Expenses",
-      icon: CircleDollarSign,
-      subItems: [
-        {
-          name: "Purchase Order Details",
-          href: "/accounting/purchases-and-expenses/purchase-order-details",
-        },
-        {
-          name: "Expense Details",
-          href: "/accounting/purchases-and-expenses/expense-details",
-        },
-        {
-          name: "Expense Summary by Category",
-          href: "/accounting/purchases-and-expenses/expense-summary-by-category",
-        },
-        {
-          name: "Expenses by Customer",
-          href: "/accounting/purchases-and-expenses/expenses-by-customer",
-        },
-        {
-          name: "Expenses by Project",
-          href: "/accounting/purchases-and-expenses/expenses-by-project",
-        },
-        {
-          name: "Expenses by Employee",
-          href: "/accounting/purchases-and-expenses/expenses-by-employee",
-        },
-        {
-          name: "Purchases by Vendor",
-          href: "/accounting/purchases-and-expenses/purchases-by-vendor",
-        },
-        {
-          name: "Purchases by Item",
-          href: "/accounting/purchases-and-expenses/purchases-by-item",
-        },
-        {
-          name: "Billable Expense Details",
-          href: "/accounting/purchases-and-expenses/billable-expense-details",
-        },
       ],
     },
   ],
