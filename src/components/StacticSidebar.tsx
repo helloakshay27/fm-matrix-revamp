@@ -1671,18 +1671,6 @@ const modulesByPackage = {
           href: "/accounting/reports/profit-and-loss",
         },
         {
-          name: "GST Payable",
-          href: "/accounting/reports/gst-payable",
-        },
-        {
-          name: "GST Receivable",
-          href: "/accounting/reports/gst-receivable",
-        },
-        {
-          name: "Tax Summary",
-          href: "/accounting/reports/tax-summary",
-        },
-        {
           name: "Account Type Summary",
           href: "/accounting/reports/account-type-summary",
         },
@@ -1785,6 +1773,26 @@ const modulesByPackage = {
                   href: "/accounting/reports/payable-refund-history",
                 },
                 {
+                  name: "Purchase Order Details",
+                  href: "/accounting/reports/purchase-order-details",
+                },
+                {
+                  name: "Expense Details",
+                  href: "/accounting/reports/expense-details",
+                },
+                {
+                  name: "Expenses by Project",
+                  href: "/accounting/reports/expenses-by-project",
+                },
+                {
+                  name: "Expenses by Employee",
+                  href: "/accounting/reports/expenses-by-employee",
+                },
+                {
+                  name: "Billable Expense Details",
+                  href: "/accounting/reports/billable-expense-details",
+                },
+                {
                   name: "Purchase Orders by Vendor",
                   href: "/accounting/reports/purchase-orders-by-vendor",
                 },
@@ -1803,6 +1811,24 @@ const modulesByPackage = {
             {
               name: "Vendor Credits Details",
               href: "/accounting/reports/vendor-credits-details",
+            },
+          ],
+        },
+        {
+          name: "Taxes",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "GST Payable",
+              href: "/accounting/reports/gst-payable",
+            },
+            {
+              name: "GST Receivable",
+              href: "/accounting/reports/gst-receivable",
+            },
+            {
+              name: "Tax Summary",
+              href: "/accounting/reports/tax-summary",
             },
           ],
         },

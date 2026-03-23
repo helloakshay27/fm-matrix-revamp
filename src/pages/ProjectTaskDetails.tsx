@@ -914,7 +914,26 @@ const Attachments = ({
 };
 
 // Activity Log Component
-const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
+const ActivityLog = ({ taskId }: { taskId: string }) => {
+  const baseUrl = localStorage.getItem("baseUrl") || ""
+  const token = localStorage.getItem("token") || ""
+
+  const [taskStatusLogs, setTaskStatusLogs] = useState([])
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      const response = await axios.get(`https://${baseUrl}/task_managements/${taskId}/task_system_logs.json`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      setTaskStatusLogs(response.data || [])
+    }
+
+    fetchLogs()
+  }, [taskId])
+
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -943,6 +962,52 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
     }
   };
 
+  const getActionFromLog = (log: any) => {
+    if (!log.changed_attr || Object.keys(log.changed_attr).length === 0) {
+      return log.log_type?.replace("TaskManagement", "").trim() || "updated task";
+    }
+
+    const changedFields = Object.keys(log.changed_attr);
+    const changes: string[] = [];
+
+    // Check for status change
+    if (log.changed_attr.status) {
+      const [oldStatus, newStatus] = log.changed_attr.status;
+      changes.push(`changed status from ${oldStatus} to ${newStatus}`);
+    }
+
+    // Check for description change
+    if (log.changed_attr.description) {
+      changes.push("updated the task description");
+    }
+
+    // Check for started_at change
+    if (log.changed_attr.started_at) {
+      const [oldStart, newStart] = log.changed_attr.started_at;
+      if (oldStart === "nil" || oldStart === null) {
+        changes.push("started the task");
+      } else {
+        changes.push("changed start time");
+      }
+    }
+
+    // Check for other field changes
+    const otherFields = changedFields.filter(
+      (field) => !["status", "description", "started_at", "updated_at"].includes(field)
+    );
+    if (otherFields.length > 0) {
+      otherFields.forEach((field) => {
+        const label = field
+          .replace(/_/g, " ")
+          .replace(/([A-Z])/g, " $1")
+          .trim();
+        changes.push(`updated ${label}`);
+      });
+    }
+
+    return changes.join(" and ");
+  };
+
   const calculateDuration = (start: string, end: string) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -963,8 +1028,8 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
 
   const activities = taskStatusLogs.map((log: any) => ({
     id: log.id,
-    person: log.created_by_name,
-    action: getActionFromStatus(log.status),
+    person: log.changed_by,
+    action: getActionFromLog(log),
     item: "task",
     timestamp: formatTimestamp(log.created_at),
     rawTimestamp: log.created_at,
@@ -985,7 +1050,6 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
                 <i>
                   {activity.person}{" "}
                   <span className="text-[#C72030]">{activity.action}</span>{" "}
-                  {activity.item}
                 </i>
               </span>
               <span>
@@ -2039,7 +2103,7 @@ export const ProjectTaskDetails = () => {
           {/* Activity Log Tab */}
           {activeTab === "activity_log" && (
             <ActivityLog
-              taskStatusLogs={(taskDetails as any)?.task_status_logs}
+              taskId={taskId}
             />
           )}
 

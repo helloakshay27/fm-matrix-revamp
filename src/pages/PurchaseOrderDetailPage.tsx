@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,6 +72,21 @@ interface Site {
   name: string;
 }
 
+interface Attachment {
+  id?: number | string;
+  name?: string;
+  url?: string;
+  file_url?: string;
+  attachment_url?: string;
+}
+
+interface DeliveryAddress {
+  name?: string;
+  address?: string;
+  formatted_address?: string;
+  full_address?: string;
+}
+
 interface PurchaseOrder {
   id: number;
   external_id: string;
@@ -96,8 +111,24 @@ interface PurchaseOrder {
   created_at: string;
   updated_at: string;
   terms_conditions?: string;
-  attachments: any[];
+  payment_term?: string;
+  payment_terms?: string;
+  payment_tern?: string;
+  delivery_address?: string | DeliveryAddress;
+  attachments: Attachment[];
 }
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
+
+  return fallback;
+};
 
 export const PurchaseOrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -113,7 +144,7 @@ export const PurchaseOrderDetailPage = () => {
   const [deleting, setDeleting] = useState(false);
 
   // Fetch purchase order data from API
-  const fetchPurchaseOrderDetail = async () => {
+  const fetchPurchaseOrderDetail = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -165,18 +196,18 @@ export const PurchaseOrderDetailPage = () => {
       } else {
         setError("Invalid purchase order data received.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching purchase order detail:", error);
-      setError(error.message || "Failed to fetch purchase order details");
+      setError(getErrorMessage(error, "Failed to fetch purchase order details"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   // Load data on component mount
   useEffect(() => {
     fetchPurchaseOrderDetail();
-  }, [id]);
+  }, [fetchPurchaseOrderDetail]);
 
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
@@ -226,8 +257,8 @@ export const PurchaseOrderDetailPage = () => {
 
       sonnerToast.success("Purchase order deleted successfully");
       navigate("/accounting/purchase-order");
-    } catch (error: any) {
-      sonnerToast.error(error.message || "Failed to delete purchase order");
+    } catch (error: unknown) {
+      sonnerToast.error(getErrorMessage(error, "Failed to delete purchase order"));
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
@@ -323,6 +354,19 @@ export const PurchaseOrderDetailPage = () => {
 
   const poNumber = `PO-${String(purchaseOrder.id).padStart(5, "0")}`;
   const status = purchaseOrder.all_level_approved ? "approved" : "pending"; // Dynamic status based on all_level_approved
+  const paymentTermsDisplay =
+    purchaseOrder.payment_term ||
+    purchaseOrder.payment_terms ||
+    purchaseOrder.payment_tern ||
+    "N/A";
+  const deliveryAddressDisplay =
+    typeof purchaseOrder.delivery_address === "string"
+      ? purchaseOrder.delivery_address
+      : purchaseOrder.delivery_address?.formatted_address ||
+      purchaseOrder.delivery_address?.full_address ||
+      purchaseOrder.delivery_address?.address ||
+      purchaseOrder.delivery_address?.name ||
+      "N/A";
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -455,17 +499,17 @@ export const PurchaseOrderDetailPage = () => {
                         PO Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(purchaseOrder.po_date).toLocaleDateString()}
+                        {new Date(purchaseOrder.po_date).toLocaleDateString("en-GB")}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Site
                       </p>
                       <p className="text-base font-semibold mt-1">
                         {purchaseOrder.site?.name || "N/A"}
                       </p>
-                    </div>
+                    </div> */}
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Created By
@@ -480,6 +524,24 @@ export const PurchaseOrderDetailPage = () => {
                       </p>
                       <p className="text-base font-semibold mt-1">
                         {purchaseOrder.reference_number || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Payment Terms
+
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {paymentTermsDisplay}
+                      </p>
+
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Delivery Address
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {deliveryAddressDisplay}
                       </p>
                     </div>
                   </div>
@@ -505,7 +567,7 @@ export const PurchaseOrderDetailPage = () => {
                               <TableHead className="text-right">
                                 Quantity
                               </TableHead>
-                              <TableHead className="text-right">Unit</TableHead>
+                              <TableHead className="text-right">Status	</TableHead>
                               <TableHead className="text-right">Rate</TableHead>
                               <TableHead className="text-right">
                                 Total Value
@@ -518,21 +580,22 @@ export const PurchaseOrderDetailPage = () => {
                                 <TableRow key={item.id}>
                                   <TableCell>
                                     <div>
-                                      <p className="font-semibold">
-                                        {item.prod_desc || "N/A"}
-                                      </p>
                                       {item.inventory?.name && (
                                         <p className="text-sm text-muted-foreground">
                                           {item.inventory.name}
                                         </p>
                                       )}
+                                      <p className="font-semibold">
+                                        {item.prod_desc || "N/A"}
+                                      </p>
+
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right">
                                     {item.quantity}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {item.unit}
+                                    {"NA"}
                                   </TableCell>
                                   <TableCell className="text-right">
                                     ₹{item.rate.toFixed(2)}
@@ -614,9 +677,9 @@ export const PurchaseOrderDetailPage = () => {
                     <CardContent>
                       <div className="space-y-2">
                         {purchaseOrder.attachments.map(
-                          (file: any, index: number) => (
+                          (file: Attachment, index: number) => (
                             <div
-                              key={index}
+                              key={file.id ?? index}
                               className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                             >
                               <div className="flex items-center gap-3">

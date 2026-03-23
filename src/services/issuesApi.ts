@@ -54,7 +54,7 @@ export const fetchIssues = async ({
 
   // Add search
   if (search) {
-    queryString += `&q[title_or_project_management_title_cont]=${encodeURIComponent(search)}`;
+    queryString += `&q[id_or_title_or_project_management_title_cont]=${encodeURIComponent(search)}`;
   }
 
   // Add sorting

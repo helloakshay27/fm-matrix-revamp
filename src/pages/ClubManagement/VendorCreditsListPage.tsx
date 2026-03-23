@@ -121,128 +121,63 @@ export const VendorCreditsListPage: React.FC = () => {
     // Fetch vendor credit data
     const fetchVendorCreditData = async (page = 1, per_page = 10, search = '', filters: VendorCreditFilters = {}) => {
         setLoading(true);
- const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem('lock_account_id');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         try {
-                    const response = await axios.get(
-                        `https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`,
-                        {
-                            params: {
-                                // lock_account_id: 1,
-                                //   page,
-                                //   per_page,
-                                //   search,
-                                //   status: filters.status || undefined,
-                            },
-                            headers: {
-                                Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
-                            },
-                        }
-                    );
-        
-                    // 🔥 Adjust this based on actual API response structure
-                    const apiData = response.data;
-        
-                    const bills: VendorCredit[] = apiData?.data || apiData || [];
-        
-                    setVendorCreditData(apiData);
-        
-                    setPagination({
-                        current_page: apiData?.current_page || page,
-                        per_page: apiData?.per_page || per_page,
-                        total_pages: apiData?.total_pages || 1,
-                        total_count: apiData?.total_count || bills.length,
-                        has_next_page:
-                            (apiData?.current_page || page) <
-                            (apiData?.total_pages || 1),
-                        has_prev_page:
-                            (apiData?.current_page || page) > 1,
-                    });
-        
-                } catch (error: unknown) {
-                    console.error("Error fetching bill data:", error);
-        
-                    const errorMessage =
-                        error instanceof Error ? error.message : "Unknown error";
-        
-                    toast.error(`Failed to load bill data: ${errorMessage}`, {
-                        duration: 5000,
-                    });
-        
-                } finally {
-                    setLoading(false);
+            const response = await axios.get(
+                `https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`,
+                {
+                    params: {
+                        // lock_account_id: 1,
+                        //   page,
+                        //   per_page,
+                        //   search,
+                        //   status: filters.status || undefined,
+                    },
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
+                    },
                 }
+            );
+
+            // 🔥 Adjust this based on actual API response structure
+            const apiData = response.data;
+
+            const bills: VendorCredit[] = apiData?.data || apiData || [];
+
+            setVendorCreditData(apiData);
+
+            setPagination({
+                current_page: apiData?.current_page || page,
+                per_page: apiData?.per_page || per_page,
+                total_pages: apiData?.total_pages || 1,
+                total_count: apiData?.total_count || bills.length,
+                has_next_page:
+                    (apiData?.current_page || page) <
+                    (apiData?.total_pages || 1),
+                has_prev_page:
+                    (apiData?.current_page || page) > 1,
+            });
+
+        } catch (error: unknown) {
+            console.error("Error fetching bill data:", error);
+
+            const errorMessage =
+                error instanceof Error ? error.message : "Unknown error";
+
+            toast.error(`Failed to load bill data: ${errorMessage}`, {
+                duration: 5000,
+            });
+
+        } finally {
+            setLoading(false);
+        }
 
 
 
 
-        // try {
-        //     const mockData: VendorCredit[] = [
-        //         {
-        //             id: 1,
-        //             credit_note_number: 'VC-10045',
-        //             vendor_name: 'Lockated',
-        //             date: '2026-02-10',
-        //             order_number: 'ORD-2024-001',
-        //             bill_number: 'BILL-1023',
-        //             amount: 6600.00,
-        //             balance_due: 0.00,
-        //             status: 'open',
-        //             active: true,
-        //             created_at: '2026-02-10',
-        //             updated_at: '2026-02-10'
-        //         },
-        //         {
-        //             id: 2,
-        //             credit_note_number: 'VC-10046',
-        //             vendor_name: 'Gurughar',
-        //             date: '2026-02-15',
-        //             order_number: 'ORD-2024-002',
-        //             bill_number: 'BILL-2045',
-        //             amount: 2750.00,
-        //             balance_due: 2750.00,
-        //             status: 'draft',
-        //             active: true,
-        //             created_at: '2026-02-15',
-        //             updated_at: '2026-02-15'
-        //         }
-        //     ];
-
-        //     let filteredData = mockData;
-        //     if (search.trim()) {
-        //         filteredData = mockData.filter(vc =>
-        //             vc.credit_note_number.toLowerCase().includes(search.toLowerCase()) ||
-        //             vc.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
-        //             vc.order_number.toLowerCase().includes(search.toLowerCase())
-        //         );
-        //     }
-        //     if (filters.status) {
-        //         filteredData = filteredData.filter(vc => vc.status === filters.status);
-        //     }
-
-        //     const totalCount = filteredData.length;
-        //     const totalPages = Math.ceil(totalCount / per_page);
-        //     const startIndex = (page - 1) * per_page;
-        //     const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
-
-        //     setVendorCreditData(paginatedData);
-        //     setPagination({
-        //         current_page: page,
-        //         per_page,
-        //         total_pages: totalPages,
-        //         total_count: totalCount,
-        //         has_next_page: page < totalPages,
-        //         has_prev_page: page > 1
-        //     });
-        // } catch (error: unknown) {
-        //     console.error('Error fetching vendor credit data:', error);
-        //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        //     toast.error(`Failed to load vendor credit data: ${errorMessage}`, { duration: 5000 });
-        // } finally {
-        //     setLoading(false);
-        // }
     };
 
     useEffect(() => {
@@ -325,7 +260,7 @@ export const VendorCreditsListPage: React.FC = () => {
             </div>
         ),
         credit_note_number: (
-            <div className="font-medium text-blue-600 cursor-pointer" onClick={() => navigate(`/accounting/vendor-credits/${vc.id}`)}>
+            <div className="font-medium text-blue-600 cursor-pointer">
                 {vc.credit_note_number}
             </div>
         ),
@@ -338,9 +273,20 @@ export const VendorCreditsListPage: React.FC = () => {
         order_number: (
             <span className="text-sm text-gray-900">{vc.order_number || '-'}</span>
         ),
+        // date: (
+        //     <span className="text-sm text-gray-600">
+        //         {new Date(vc.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+        //     </span>
+        // ),
         date: (
             <span className="text-sm text-gray-600">
-                {new Date(vc.date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                {vc.date
+                    ? new Date(vc.date).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    })
+                    : '—'}
             </span>
         ),
         status: (

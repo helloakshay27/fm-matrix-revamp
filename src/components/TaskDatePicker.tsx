@@ -24,8 +24,8 @@ export const TaskDatePicker = ({
 
     const initialDate = startDate ? getDateFromObject(startDate) : today;
 
-    const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
-    const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
+    const [currentMonth, setCurrentMonth] = useState(initialDate?.getMonth());
+    const [currentYear, setCurrentYear] = useState(initialDate?.getFullYear());
 
     const daysOfWeek = ['S', 'M', 'T', 'W', 'Th', 'F', 'S'];
     const monthNames = [

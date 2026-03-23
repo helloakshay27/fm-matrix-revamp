@@ -291,6 +291,7 @@ const ARAgingDetailsReport: React.FC = () => {
             enableSearch={true}
             loading={loading}
             emptyMessage="No data to display"
+            hideColumnsButton={true}
           />
 
           {/* Section Totals */}
