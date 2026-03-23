@@ -257,7 +257,7 @@ export const QuotesDashboard: React.FC = () => {
                     title="Select for status update"
                 /> */}
 
-                {/* {order.status !== "sent" && (
+                {order.status !== "sent" && (
                     <input
                         type="checkbox"
                         checked={selectedRows.includes(order.id)}
@@ -270,7 +270,7 @@ export const QuotesDashboard: React.FC = () => {
                         }}
                         className="cursor-pointer"
                     />
-                )} */}
+                )}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"

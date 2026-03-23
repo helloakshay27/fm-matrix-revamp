@@ -55,6 +55,7 @@ export const AddAMCPage = () => {
   const [formData, setFormData] = useState({
     details: 'Asset',
     type: 'Individual',
+    amcType: 'Comprehensive',
     assetName: '',
     asset_ids: [] as number[],
     group: '',
@@ -929,6 +930,7 @@ export const AddAMCPage = () => {
     // sendData.append('pms_asset_amc);
 
     sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
+    sendData.append('pms_asset_amc[amc_type]', formData.amcType);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
     sendData.append('pms_asset_amc[contract_name]', formData.contractName);
@@ -1012,6 +1014,7 @@ export const AddAMCPage = () => {
         setFormData({
           details: 'Asset',
           type: 'Individual',
+          amcType: 'Comprehensive',
           assetName: '',
           asset_ids: [],
           group: '',
@@ -1402,6 +1405,38 @@ export const AddAMCPage = () => {
                             style={{ accentColor: '#C72030' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Service</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">AMC Type</label>
+                      <div className="flex gap-6">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="amcType"
+                            value="Comprehensive"
+                            checked={formData.amcType === 'Comprehensive'}
+                            readOnly
+                            disabled
+                            className="mr-2 w-4 h-4"
+                            style={{ accentColor: '#C72030' }}
+                          />
+                          <span className="text-[#1a1a1a] font-medium">Comprehensive</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name="amcType"
+                            value="Non-Comprehensive"
+                            checked={formData.amcType === 'Non-Comprehensive'}
+                            readOnly
+                            disabled
+                            className="mr-2 w-4 h-4"
+                            style={{ accentColor: '#C72030' }}
+                          />
+                          <span className="text-[#1a1a1a] font-medium">Non-Comprehensive</span>
                         </label>
                       </div>
                     </div>
@@ -1871,6 +1906,38 @@ export const AddAMCPage = () => {
                           disabled
                         />
                         <span className="text-[#1a1a1a] font-medium">Service</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">AMC Type</label>
+                    <div className="flex gap-6">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="amcType"
+                          value="Comprehensive"
+                          checked={formData.amcType === 'Comprehensive'}
+                          readOnly
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#C72030' }}
+                          disabled
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Comprehensive</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="amcType"
+                          value="Non-Comprehensive"
+                          checked={formData.amcType === 'Non-Comprehensive'}
+                          readOnly
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#C72030' }}
+                          disabled
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Non-Comprehensive</span>
                       </label>
                     </div>
                   </div>
@@ -2500,6 +2567,38 @@ export const AddAMCPage = () => {
                         disabled={isSubmitting}
                       />
                       <span className="text-[#1a1a1a] font-medium">Service</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">AMC Type</label>
+                  <div className="flex gap-6">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="amcType"
+                        value="Comprehensive"
+                        checked={formData.amcType === 'Comprehensive'}
+                        onChange={e => handleInputChange('amcType', e.target.value)}
+                        className="mr-2 w-4 h-4"
+                        style={{ accentColor: '#C72030' }}
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-[#1a1a1a] font-medium">Comprehensive</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="amcType"
+                        value="Non-Comprehensive"
+                        checked={formData.amcType === 'Non-Comprehensive'}
+                        onChange={e => handleInputChange('amcType', e.target.value)}
+                        className="mr-2 w-4 h-4"
+                        style={{ accentColor: '#C72030' }}
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-[#1a1a1a] font-medium">Non-Comprehensive</span>
                     </label>
                   </div>
                 </div>
