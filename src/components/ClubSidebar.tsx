@@ -359,40 +359,6 @@ const modulesByPackage = {
           name: "Profit & Loss",
           href: "/accounting/reports/profit-and-loss",
         },
-        // {
-        //     name: "GST Payable",
-        //     href: "/accounting/reports/gst-payable",
-        // },
-        //  {
-        //     name: "GST Receivable",
-        //     href: "/accounting/reports/gst-receivable",
-        // },
-        {
-          name: "Tax Summary",
-          href: "/accounting/reports/tax-summary",
-        },
-        {
-          name: "GSTR-7",
-          href: "/accounting/reports/gstr-7",
-        },
-        {
-          name: "GSTR-3B Summary",
-          href: "/accounting/reports/gstr-3b-summary",
-        },
-
-        // {
-        //     name: "GSTR-9",
-        //     href: "/accounting/reports/gstr-9"
-        // }
-
-        {
-          name: "TDS Summary",
-          href: "/accounting/reports/tds-summary",
-        },
-        {
-          name: "TDS Receivables Summary",
-          href: "/accounting/reports/tds-receivables-summary",
-        },
         {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
@@ -647,6 +613,56 @@ const modulesByPackage = {
             {
               name: "Billable Expense Details",
               href: "/accounting/purchases-and-expenses/billable-expense-details",
+            },
+          ],
+        },
+
+        {
+          name: "Taxes",
+          subItems: [
+            {
+              name: "Tax Summary",
+              href: "/accounting/reports/tax-summary",
+            },
+            {
+              name: "GSTR-7",
+              href: "/accounting/reports/gstr-7",
+            },
+            {
+              name: "GSTR-3B Summary",
+              href: "/accounting/reports/gstr-3b-summary",
+            },
+            {
+              name: "Summary of Inward Supplies",
+              href: "/accounting/reports/summary-of-inward-supplies",
+            },
+            {
+              name: "PMT-06 (Self Assessment Basis)",
+              href: "/accounting/reports/pmt-06-self-assessment-basis",
+            },
+            {
+              name: "Summary of Outward Supplies (GSTR-1)",
+              href: "/accounting/reports/summary-of-outward-supplies-gstr-1",
+            },
+            {
+              name: "Invoice Furnishing Facility (IFF)",
+              href: "/accounting/reports/invoice-furnishing-facility-iff",
+            },
+            {
+              name: "Self-invoice Summary",
+              href: "/accounting/reports/self-invoice-summary",
+            },
+            {
+              name: "TCS Summary (Form No. 27EQ)",
+              href: "/accounting/reports/tcs-summary-form-27eq",
+            },
+            {
+              name: "TDS Summary",
+              href: "/accounting/reports/tds-summary",
+            },
+            {
+              name: "TDS Receivables Summary",
+              href: "/accounting/reports/tds-receivables-summary",
             },
           ],
         },
