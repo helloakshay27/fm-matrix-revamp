@@ -373,9 +373,9 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
             return null;
         }).filter(Boolean) as Investigator[];
 
-        setInvestigators(prev => [...prev, ...newInvestigators]);
-        setShowInvestigatorForm(false);
-    }, [setInvestigators, setShowInvestigatorForm]);
+        // Replace (not append) so that remove operations correctly reflect in the list
+        setInvestigators(newInvestigators);
+    }, [setInvestigators]);
 
     const hasFilledData = investigators.length > 0 || showInvestigateDetails;
 
@@ -653,51 +653,63 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                                             )}
                                         </div>
 
-                                        <Tabs
-                                            value={person.type}
-                                            onValueChange={(value) => updateInjuredPerson(person.id, 'type', value)}
-                                            className="w-full"
-                                        >
-                                            <TabsList className="grid w-full grid-cols-2 bg-transparent">
-                                                <TabsTrigger
-                                                    value="internal"
-                                                    className="data-[state=active]:bg-[#D4A574] data-[state=inactive]:bg-white"
-                                                >
-                                                    Internal
-                                                </TabsTrigger>
-                                                <TabsTrigger
-                                                    value="external"
-                                                    className="data-[state=active]:bg-[#D4A574] data-[state=inactive]:bg-white"
-                                                >
-                                                    External
-                                                </TabsTrigger>
-                                            </TabsList>
+                                       <Tabs
+    value={person.type}
+    onValueChange={(value) =>
+        updateInjuredPerson(person.id, 'type', value as 'internal' | 'external')
+    }
+>
+    <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="internal">Internal</TabsTrigger>
+        <TabsTrigger value="external">External</TabsTrigger>
+    </TabsList>
+
 
                                             <TabsContent value="internal" className="space-y-3 mt-4">
-                                                <TextField
-                                                    fullWidth
-                                                    size="small"
-                                                    placeholder="Enter Name"
-                                                    value={person.name}
-                                                    onChange={(e) => updateInjuredPerson(person.id, 'name', e.target.value)}
-                                                    sx={{ backgroundColor: 'white' }}
-                                                />
-                                                <TextField
-                                                    fullWidth
-                                                    size="small"
-                                                    placeholder="Enter Age"
-                                                    value={person.age}
-                                                    onChange={(e) => updateInjuredPerson(person.id, 'age', e.target.value)}
-                                                    sx={{ backgroundColor: 'white' }}
-                                                />
-                                                <TextField
-                                                    fullWidth
-                                                    size="small"
-                                                    placeholder="Enter Role"
-                                                    value={person.role}
-                                                    onChange={(e) => updateInjuredPerson(person.id, 'role', e.target.value)}
-                                                    sx={{ backgroundColor: 'white' }}
-                                                />
+                                               <TextField
+    fullWidth
+    size="small"
+    placeholder="Enter Name"
+    value={person.name}
+    onChange={(e) => {
+        const value = e.target.value;
+        // Allow only alphabets and spaces
+        if (/^[a-zA-Z\s]*$/.test(value)) {
+            updateInjuredPerson(person.id, 'name', value);
+        }
+    }}
+    sx={{ backgroundColor: 'white' }}
+/>
+
+<TextField
+    fullWidth
+    size="small"
+    placeholder="Enter Age"
+    value={person.age}
+    onChange={(e) => {
+        const value = e.target.value;
+        // Allow only numbers
+        if (/^[0-9]*$/.test(value)) {
+            updateInjuredPerson(person.id, 'age', value);
+        }
+    }}
+    sx={{ backgroundColor: 'white' }}
+/>
+
+<TextField
+    fullWidth
+    size="small"
+    placeholder="Enter Role"
+    value={person.role}
+    onChange={(e) => {
+        const value = e.target.value;
+        // Allow alphabets, numbers, and spaces (no special characters)
+        if (/^[a-zA-Z0-9\s]*$/.test(value)) {
+            updateInjuredPerson(person.id, 'role', value);
+        }
+    }}
+    sx={{ backgroundColor: 'white' }}
+/>
 
                                                 <div className="space-y-2">
                                                     <div className="text-sm font-medium">Body Parts:</div>

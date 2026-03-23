@@ -105,6 +105,7 @@ const TaxSetup: React.FC = () => {
   const [form, setForm] = useState<GstForm>(defaultForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+   const lock_account_id = localStorage.getItem("lock_account_id");
 
   // ── Fetch existing GST settings on mount ──────────────────────────────────
   useEffect(() => {
@@ -117,7 +118,7 @@ const TaxSetup: React.FC = () => {
         return;
       }
       try {
-        const url = `${baseUrl}/lock_accounts/1/gst_settings.json`;
+        const url = `${baseUrl}/lock_accounts/${lock_account_id}/gst_settings.json`;
         const response = await axios.get(url, {
           headers: {
             "Content-Type": "application/json",
@@ -163,7 +164,7 @@ const TaxSetup: React.FC = () => {
     }));
   };
 
-  // ── Submit: PATCH /lock_accounts/1/gst_settings.json ─────────────────────
+  // ── Submit: PATCH /lock_accounts/${lock_account_id}/gst_settings.json ─────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -206,7 +207,7 @@ const TaxSetup: React.FC = () => {
 
     setSaving(true);
     try {
-      const url = `${baseUrl}/lock_accounts/1/gst_settings.json`;
+      const url = `${baseUrl}/lock_accounts/${lock_account_id}/gst_settings.json`;
       await axios.post(url, payload, {
         headers: {
           "Content-Type": "application/json",

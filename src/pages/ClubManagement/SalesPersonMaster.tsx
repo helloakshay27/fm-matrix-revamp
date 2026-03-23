@@ -71,7 +71,7 @@ export const SalesPersonMaster: React.FC = () => {
     });
 
     const [submitting, setSubmitting] = useState(false);
-
+	 const lock_account_id = localStorage.getItem("lock_account_id");
     const LOCK_ACCOUNT_ID = 1; // Hardcoded as per requirement
 
     // ================= FETCH LIST =================
@@ -79,7 +79,7 @@ export const SalesPersonMaster: React.FC = () => {
         setLoading(true);
         try {
             const url = getFullUrl(
-                `/sales_persons.json?lock_account_id=1`
+                `/sales_persons.json?lock_account_id=${lock_account_id}`
             );
 
             const response = await fetch(url, getAuthOptions('GET'));
@@ -138,7 +138,7 @@ export const SalesPersonMaster: React.FC = () => {
         setSubmitting(true);
 
         try {
-            const url = getFullUrl('/sales_persons.json?lock_account_id=1');
+            const url = getFullUrl(`/sales_persons.json?lock_account_id=${lock_account_id}`);
 
             const response = await fetch(
                 url,
@@ -146,7 +146,7 @@ export const SalesPersonMaster: React.FC = () => {
                     sales_person: {
                         name: formData.name,
                         email: formData.email,
-                        lock_account_id: 1,
+                        lock_account_id: lock_account_id,
                     },
                 })
             );
@@ -182,7 +182,7 @@ export const SalesPersonMaster: React.FC = () => {
         setSubmitting(true);
 
         try {
-            const url = getFullUrl(`/sales_persons/${formData.id}.json?lock_account_id=1`);
+            const url = getFullUrl(`/sales_persons/${formData.id}.json?lock_account_id=${lock_account_id}`);
 
             const response = await fetch(
                 url,
@@ -227,7 +227,7 @@ export const SalesPersonMaster: React.FC = () => {
     // };
     const handleToggleStatus = async (sp: SalesPerson) => {
         try {
-            const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
+            const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=${lock_account_id}`);
 
             await fetch(
                 url,
@@ -310,7 +310,7 @@ export const SalesPersonMaster: React.FC = () => {
 
     const handleDelete = async (sp: SalesPerson) => {
         try {
-            const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=1`);
+            const url = getFullUrl(`/sales_persons/${sp.id}.json?lock_account_id=${lock_account_id}`);
 
             const response = await fetch(url, {
                 method: "DELETE",

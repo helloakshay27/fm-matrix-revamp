@@ -122,12 +122,13 @@ interface ExternalUser {
 export const BillsAdd: React.FC = () => {
     const [subject, setSubject] = useState('');
     // Fetch item list from API
+    const lock_account_id = localStorage.getItem("lock_account_id");
     useEffect(() => {
         const fetchItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -156,7 +157,7 @@ export const BillsAdd: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -177,7 +178,7 @@ export const BillsAdd: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -283,11 +284,12 @@ export const BillsAdd: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -319,7 +321,7 @@ export const BillsAdd: React.FC = () => {
         setLoadingExemptions(true);
 
         axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -448,7 +450,7 @@ export const BillsAdd: React.FC = () => {
         const token = localStorage.getItem('token');
         // Fetch customer list
         axios
-            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     'Content-Type': 'application/json'
@@ -485,6 +487,7 @@ export const BillsAdd: React.FC = () => {
     const [accountGroups, setAccountGroups] = React.useState([]);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    // const lock_account_id = localStorage.getItem("lock_account_id");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
 
@@ -492,7 +495,7 @@ export const BillsAdd: React.FC = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -866,7 +869,7 @@ export const BillsAdd: React.FC = () => {
                 formData.append(`lock_account_bill[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/lock_account_bills.json?lock_account_id=1`, {
+            await fetch(`https://${baseUrl}/lock_account_bills.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -899,7 +902,7 @@ export const BillsAdd: React.FC = () => {
                 const url =
 
 
-                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,

@@ -630,8 +630,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     //     });
     // }
 
-    const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
-    const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
+    const formatedEndDate = `${endDate?.year}-${String(endDate?.month + 1).padStart(2, "0")}-${String(endDate?.date).padStart(2, "0")}`;
+    const formatedStartDate = `${startDate?.year}-${String(startDate?.month + 1).padStart(2, "0")}-${String(startDate?.date).padStart(2, "0")}`;
 
     let taskAllocationTimesAttributes: any[] = [];
 

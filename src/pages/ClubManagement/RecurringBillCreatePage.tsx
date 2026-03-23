@@ -108,15 +108,16 @@ export const RecurringBillCreatePage: React.FC = () => {
     const fetchItems = async () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
       try {
-        const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=1`, {
+        const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
           headers: {
             Authorization: token ? `Bearer ${token}` : undefined,
             'Content-Type': 'application/json'
           }
         });
         if (res && res.data && Array.isArray(res.data)) {
-          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
           console.log('Fetched items:', res.data);
         }
       } catch (err) {
@@ -131,8 +132,9 @@ export const RecurringBillCreatePage: React.FC = () => {
     const fetchSalespersons = async () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
       try {
-        const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1`, {
+        const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}`, {
           headers: {
             Authorization: token ? `Bearer ${token}` : undefined,
             'Content-Type': 'application/json'
@@ -152,8 +154,9 @@ export const RecurringBillCreatePage: React.FC = () => {
     const fetchPaymentTerms = async () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
       try {
-        const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+        const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
           headers: {
             Authorization: token ? `Bearer ${token}` : undefined,
             'Content-Type': 'application/json'
@@ -260,11 +263,12 @@ export const RecurringBillCreatePage: React.FC = () => {
   useEffect(() => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const lock_account_id = localStorage.getItem('lock_account_id');
 
     setLoadingTaxGroups(true);
 
     axios
-      .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+      .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
           "Content-Type": "application/json"
@@ -292,11 +296,12 @@ export const RecurringBillCreatePage: React.FC = () => {
   useEffect(() => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
+    const lock_account_id = localStorage.getItem('lock_account_id');
 
     setLoadingExemptions(true);
 
     axios
-      .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+      .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
           "Content-Type": "application/json"
@@ -645,6 +650,7 @@ export const RecurringBillCreatePage: React.FC = () => {
     try {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
 
       // Build FormData for invoice
       const formData = new FormData();
@@ -760,7 +766,7 @@ export const RecurringBillCreatePage: React.FC = () => {
         formData.append(`lock_account_bill[attachments_attributes][${idx}][active]`, 'true');
       });
 
-      await fetch(`https://${baseUrl}/lock_account_bills.json?lock_account_id=1`, {
+      await fetch(`https://${baseUrl}/lock_account_bills.json?lock_account_id=${lock_account_id}`, {
         method: 'POST',
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined
@@ -789,11 +795,12 @@ export const RecurringBillCreatePage: React.FC = () => {
       try {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
         const type = taxType.toLowerCase();
         const url =
 
 
-          `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+          `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
         const response = await fetch(url, {
           headers: {
             Authorization: token ? `Bearer ${token}` : undefined,
@@ -1368,6 +1375,21 @@ export const RecurringBillCreatePage: React.FC = () => {
                                 updateItem(index, 'name', selectedItem.name);
                                 updateItem(index, 'rate', selectedItem.rate);
                                 updateItem(index, 'description', selectedItem.description);
+                                // TAX HANDLING
+                                if (selectedItem.tax_preference === 'non_taxable') {
+                                    updateItem(index, 'item_tax_type', 'non_taxable');
+                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                }
+                                if (selectedItem.tax_preference === 'taxable') {
+                                    updateItem(index, 'item_tax_type', 'tax_group');
+                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                }
+                                if (selectedItem.tax_preference === 'out_of_scope') {
+                                    updateItem(index, 'item_tax_type', 'out_of_scope');
+                                }
+                                if (selectedItem.tax_preference === 'non_gst_supply') {
+                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                }
                               }
                             }}
                             displayEmpty

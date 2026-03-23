@@ -1,76 +1,26 @@
-import React, { useState , useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { User, FileCog, NotepadText } from "lucide-react";
+import { NotepadText } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// const taxSummaryData = [
-//     {
-//         ledgerId: 2606,
-//         name: "Sinking Fund",
-//         taxPercentage: 0.0,
-//         transactionAmount: 0.0,
-//         taxAmount: 0.0,
-//     },
-//     {
-//         ledgerId: 2607,
-//         name: "Repair Fund",
-//         taxPercentage: 0.0,
-//         transactionAmount: 0.0,
-//         taxAmount: 0.0,
-//     },
-//     {
-//         ledgerId: 2608,
-//         name: "Common Maintenance Charges",
-//         taxPercentage: 18.0,
-//         transactionAmount: 50000,
-//         taxAmount: 9000,
-//     },
-//     {
-//         ledgerId: 2615,
-//         name: "CGST",
-//         taxPercentage: 9.0,
-//         transactionAmount: 4500,
-//         taxAmount: 0.0,
-//     },
-//     {
-//         ledgerId: 2616,
-//         name: "SGST",
-//         taxPercentage: 9.0,
-//         transactionAmount: 4500,
-//         taxAmount: 0.0,
-//     },
-// ];
-
 const TaxSummaryReport: React.FC = () => {
 
-    // const balanceTabs = ["Tax Summary"];
-    // const [activeBalanceTab, setActiveBalanceTab] = useState<"Tax Summary">("Tax Summary");
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    const navigate = useNavigate();
 
-      const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-        const navigate = useNavigate();
-    
-        const [gstData, setGstData] = useState<any[]>([]);
-        const [loading, setLoading] = useState(false);
+    const [gstData, setGstData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
 
-           const fetchTaxSummary = async () => {
-        //   if (!filters.fromDate || !filters.toDate) {
-        //     alert("Please select From Date and To Date");
-        //     return;
-        //   }
-
+    const fetchTaxSummary = async () => {
         try {
             setLoading(true);
+            const lockAccountId = localStorage.getItem("lock_account_id") || "1";
 
             const response = await axios.get(
-                `https://${baseUrl}/lock_accounts/1/lock_account_ledgers/tax_summary_report.json`,
+                `https://${baseUrl}/lock_accounts/${lockAccountId}/lock_account_ledgers/tax_summary_report.json`,
                 {
                     params: {
                         start_date: filters.fromDate,
@@ -103,51 +53,49 @@ const TaxSummaryReport: React.FC = () => {
                 <table className="w-full border-collapse border border-gray-300">
                     <thead>
                         <tr className="bg-[#E5E0D3]">
-                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                                Ledger ID
-                            </th>
-                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
+
+                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-center">
                                 Ledger & Tax Name
                             </th>
                             <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
                                 Tax Percentage
                             </th>
-                            <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
+                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-center">
+                                Total Taxable  Amount
+                            </th>
+                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">
                                 Amount
                             </th>
-                            {/* <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
-                                Tax Amount
-                            </th> */}
                         </tr>
                     </thead>
 
                     <tbody>
                         {gstData?.map((row, index) => (
                             <tr key={index} className="hover:bg-gray-50">
-                                <td className="border border-gray-300 px-4 py-3">
+                                {/* <td className="border border-gray-300 px-4 py-3">
                                     {row?.id}
-                                </td>
+                                </td> */}
                                 {/* <td className="border border-gray-300 px-4 py-3">
                                     {row?.name}
                                 </td> */}
 
-                                <td className="border px-4 py-3">
-  <span
-    className="text-blue-600 cursor-pointer hover:underline hover:text-blue-800"
-    onClick={() => navigate(`/accounting/reports/tax-summary/details/${row.id}`)}
-  >
-    {row.name}
-  </span>
-</td>
+                                <td className="border px-4 py-3 text-center">
+                                    <span
+                                        className="text-black-600 cursor-pointer text-center "
+                                    // onClick={() => navigate(`/accounting/reports/tax-summary/details/${row.id}`)}
+                                    >
+                                        {row.name}
+                                    </span>
+                                </td>
                                 <td className="border border-gray-300 px-4 py-3 text-center">
                                     {row?.tax_rate_per?.toFixed(2)} %
                                 </td>
-                                <td className="border border-gray-300 px-4 py-3 text-right">
+                                 <td className="border border-gray-300 px-4 py-3 text-center">
+                                    {row?.total_taxable_value}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-3 text-center">
                                     {row?.current_total?.toFixed(2)}
                                 </td>
-                                {/* <td className="border border-gray-300 px-4 py-3 text-right">
-                                    {row?.taxAmount?.toFixed(2)}
-                                </td> */}
                             </tr>
                         ))}
 
@@ -178,15 +126,11 @@ const TaxSummaryReport: React.FC = () => {
     };
 
     const handleView = () => {
-        // console.log('View clicked', form);
         if (!filters.fromDate || !filters.toDate) {
             alert('Please select From Date and To Date');
             return;
         }
-        console.log('From Date:', filters.fromDate);
-        console.log('To Date:', filters.toDate);
-        // later you can call API here
-        // fetchBalanceSheet(form.fromDate, form.toDate, form.financialYear)
+        fetchTaxSummary();
     };
 
     return (
@@ -235,32 +179,8 @@ const TaxSummaryReport: React.FC = () => {
                     </Button>
                 </div>
             </div>
-            {/* Tabs for account types */}
-            <div className="bg-white rounded-lg border p-6 mb-6">
-                {/* <div className="grid grid-cols-1 border mb-4">
-                    {balanceTabs.map(tab => (
-                        <button
-                            key={tab}
-                            type="button"
-                            onClick={() => setActiveBalanceTab(tab as any)}
-                            className={`px-4 py-2 text-sm font-medium
-                    ${activeBalanceTab === tab
-                                    ? "bg-[#f9f7f2] text-[#C72030] border-b-2 border-[#C72030]"
-                                    : "bg-white text-gray-600 hover:bg-[#f9f7f2]/40"
-                                }
-      `}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div> */}
-
-
-                <div className="bg-white p-4 border rounded-lg">
-                    <TaxSummaryTable />
-                </div>
-
-
+            <div className="bg-white rounded-lg border p-6">
+                <TaxSummaryTable />
             </div>
 
         </form>

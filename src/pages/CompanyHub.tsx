@@ -59,7 +59,6 @@ import "swiper/css/scrollbar";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../utils/auth";
 import ceoImage from "../assets/ceo/ceoimage.jpeg";
-import employeeImage from "../assets/employee/employee1.jpeg";
 
 import businessPlanIcon from "@/assets/business_plan.png";
 import ourGroupIcon from "@/assets/our_group.png";
@@ -192,6 +191,8 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
     full_name: string | null;
     profile_image: string | null;
     field_description: string | null;
+    role?: string;
+    points?: string[];
   } | null>(null);
 
   // Employee of Month data cached locally by CompanySetup on save
@@ -231,6 +232,93 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       return raw ? JSON.parse(raw) : null;
     } catch { return null; }
   }, []);
+
+  // Helper to check if a description object has actual content
+  const hasContent = (obj: any) => {
+    if (!obj) return false;
+    const desc = obj.description;
+    if (!desc) return false;
+    return Object.values(desc).some(
+      (p: any) => p && p.text && p.text.trim().length > 0
+    );
+  };
+
+  const ceoData = React.useMemo(() => {
+    // If local cache is very fresh (less than 1 hour), prefer it over API which might be stale
+    const lastUpdate = Number(localStorage.getItem("company_hub_update_time") || 0);
+    const isCacheFresh = Date.now() - lastUpdate < 3600000; // 1 hour
+
+    const apiCeo = companyData?.other_config?.ceo_info;
+    const hasApiContent = apiCeo?.name || apiCeo?.description;
+
+    if (isCacheFresh) {
+      if (cachedCEO?.name || cachedCEO?.description) return cachedCEO;
+      if (hasApiContent) return apiCeo;
+    } else {
+      if (hasApiContent) return apiCeo;
+      if (cachedCEO?.name || cachedCEO?.description) return cachedCEO;
+    }
+    return null;
+  }, [companyData, cachedCEO]);
+
+  const welcomeData = React.useMemo(() => {
+    const lastUpdate = Number(localStorage.getItem("company_hub_update_time") || 0);
+    const isCacheFresh = Date.now() - lastUpdate < 3600000;
+
+    if (isCacheFresh) {
+      if (hasContent(cachedWelcome)) return cachedWelcome;
+      if (hasContent(companyData?.other_config?.welcome)) return companyData.other_config.welcome;
+    } else {
+      if (hasContent(companyData?.other_config?.welcome)) return companyData.other_config.welcome;
+      if (hasContent(cachedWelcome)) return cachedWelcome;
+    }
+    return null;
+  }, [companyData, cachedWelcome]);
+
+  const visionData = React.useMemo(() => {
+    const lastUpdate = Number(localStorage.getItem("company_hub_update_time") || 0);
+    const isCacheFresh = Date.now() - lastUpdate < 3600000;
+
+    if (isCacheFresh) {
+      if (hasContent(cachedVision)) return cachedVision;
+      if (hasContent(companyData?.other_config?.vision)) return companyData.other_config.vision;
+    } else {
+      if (hasContent(companyData?.other_config?.vision)) return companyData.other_config.vision;
+      if (hasContent(cachedVision)) return cachedVision;
+    }
+    return null;
+  }, [companyData, cachedVision]);
+
+  const missionData = React.useMemo(() => {
+    const lastUpdate = Number(localStorage.getItem("company_hub_update_time") || 0);
+    const isCacheFresh = Date.now() - lastUpdate < 3600000;
+
+    if (isCacheFresh) {
+      if (hasContent(cachedMission)) return cachedMission;
+      if (hasContent(companyData?.other_config?.mission)) return companyData.other_config.mission;
+    } else {
+      if (hasContent(companyData?.other_config?.mission)) return companyData.other_config.mission;
+      if (hasContent(cachedMission)) return cachedMission;
+    }
+    return null;
+  }, [companyData, cachedMission]);
+
+  const eomData = React.useMemo(() => {
+    const lastUpdate = Number(localStorage.getItem("company_hub_update_time") || 0);
+    const isCacheFresh = Date.now() - lastUpdate < 3600000;
+
+    const apiEOM = companyData?.other_config?.employee_of_the_month;
+    const hasApiContent = apiEOM?.userName || apiEOM?.month;
+
+    if (isCacheFresh) {
+      if (cachedEOM?.name || cachedEOM?.userName || cachedEOM?.month) return cachedEOM;
+      if (hasApiContent) return apiEOM;
+    } else {
+      if (hasApiContent) return apiEOM;
+      if (cachedEOM?.name || cachedEOM?.userName || cachedEOM?.month) return cachedEOM;
+    }
+    return null;
+  }, [companyData, cachedEOM]);
   const [taskStats, setTaskStats] = useState({
     task_count: 0,
     todo_count: 0,
@@ -275,7 +363,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
         console.log("🔍 Fetching Organization Data for ID:", effectiveCompanyId);
 
         const response = await axios.get(
-          `${protocol}${baseUrl}/organizations/${effectiveCompanyId}.json`,
+          `${protocol}${baseUrl}/organizations/${effectiveCompanyId}.json?cb=${Date.now()}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -333,7 +421,24 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           }
           
           if (fetchedAnns.length > 0) {
-            setAnnouncements(fetchedAnns);
+            const processedAnns = fetchedAnns.map((a: any) => {
+              let description = a.field_value || "";
+              let isActive = true;
+
+              if (a.field_value && a.field_value.trim().startsWith("{")) {
+                try {
+                  const parsed = JSON.parse(a.field_value);
+                  description = parsed.description || parsed.content || a.field_value;
+                  isActive = parsed.isActive !== undefined ? parsed.isActive : true;
+                } catch (e) {
+                  // Fallback to raw value
+                }
+              }
+
+              return { ...a, displayDescription: description, isActive };
+            }).filter((a: any) => a.isActive);
+
+            setAnnouncements(processedAnns);
           }
         } catch (annError) {
           console.error("Failed to fetch announcements:", annError);
@@ -368,7 +473,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           if (Array.isArray(data) && data.length > 0) {
             // Sort by extra_field_id descending → newest record first
             const sorted = [...data].sort(
-              (a, b) => (b.extra_field_id ?? 0) - (a.extra_field_id ?? 0)
+              (a: any, b: any) => (b.extra_field_id ?? 0) - (a.extra_field_id ?? 0)
             );
             newest = sorted[0];
           } else if (data && typeof data === "object" && !Array.isArray(data)) {
@@ -378,21 +483,46 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           if (newest) {
             setCurrentEmployee(newest);
 
-            // Fetch the full extra_field record to get field_description (stored name)
+            // Fetch the full extra_field record to get field_value (JSON) and field_description (stored image)
             if (newest.extra_field_id) {
               try {
+                // Try specialized EOM show endpoint
                 const detailRes = await axios.get(
-                  `${protocol}${baseUrl}/extra_fields/${newest.extra_field_id}`,
+                  `${protocol}${baseUrl}/extra_fields/employee_of_the_month?id=${newest.extra_field_id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                const detailData = detailRes.data?.data;
-                if (detailData?.field_description) {
-                  setCurrentEmployee(prev =>
-                    prev ? { ...prev, field_description: detailData.field_description } : prev
+                
+                const detailData = detailRes.data?.employee_of_the_month;
+                
+                // Also fetch raw record for fallback (points, role)
+                let parsedData: any = {};
+                try {
+                  const rawRes = await axios.get(
+                    `${protocol}${baseUrl}/extra_fields/${newest.extra_field_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
                   );
+                  const rawData = rawRes.data?.data;
+                  if (rawData?.field_value && rawData.field_value.startsWith("{")) {
+                    parsedData = JSON.parse(rawData.field_value);
+                  }
+                } catch (e) {
+                  console.error("Raw fallback fetch failed:", e);
                 }
-              } catch {
-                // Detail fetch is optional — silently ignore
+
+                if (detailData) {
+                  setCurrentEmployee(prev => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      full_name: detailData.full_name || parsedData.userName || prev.full_name,
+                      role: parsedData.role || (prev as any).role,
+                      points: parsedData.points || (prev as any).points,
+                      profile_image: detailData.profile_image || parsedData.profileImage || prev.profile_image
+                    };
+                  });
+                }
+              } catch (e) {
+                console.error("Detail fetch failed:", e);
               }
             }
           }
@@ -903,7 +1033,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
           <Quote className="w-12 h-12 sm:w-16 sm:h-16 text-red-300 absolute -top-6 sm:-top-8 -left-1 transform -scale-x-100 opacity-50" />
           <RenderDescription
             isWelcome={true}
-            descObj={companyData?.other_config?.welcome || cachedWelcome}
+            descObj={welcomeData}
             className="text-[#d64545] font-sans font-medium text-base sm:text-[19px] leading-[1.65] tracking-normal"
             defaultText={
               <>
@@ -932,7 +1062,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 Vision
               </h2>
               <RenderDescription
-                descObj={companyData?.other_config?.vision || cachedVision}
+                descObj={visionData}
                 className="text-base sm:text-lg text-gray-700"
                 defaultText="To build a connected and intelligent real estate world where every journey is seamless, sparks innovation, and every idea has the power to become a breakthrough business."
               />
@@ -944,7 +1074,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                 Mission
               </h2>
               <RenderDescription
-                descObj={companyData?.other_config?.mission || cachedMission}
+                descObj={missionData}
                 className="text-base sm:text-lg text-gray-700"
                 defaultText="Our mission is to simplify and connect the entire real estate lifecycle through innovative technology, while enabling entrepreneurs and intrapreneurs to create impactful solutions that move the industry forward."
               />
@@ -1694,8 +1824,8 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
               <div className="absolute bottom-0 right-0 w-[240px] text-white text-right z-20 pb-6 pr-6 flex flex-col items-end">
                 <Quote className="text-white/20 w-12 h-12 mb-2 rotate-180" />
                 <p className="text-[16px] leading-relaxed font-light opacity-95 mb-6 text-right">
-                  {companyData?.other_config?.ceo_info?.description
-                    ? `"${companyData.other_config.ceo_info.description}"`
+                  {ceoData?.description
+                    ? `"${ceoData.description}"`
                     : `"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna."`}
                 </p>
 
@@ -1704,12 +1834,10 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                     className="text-4xl font-[Cursive] italic mb-1 font-light tracking-wide"
                     style={{ fontFamily: "Brush Script MT, cursive" }}
                   >
-                    {companyData?.other_config?.ceo_info?.name ||
-                      "Chetan Bafna"}
+                    {ceoData?.name || "Chetan Bafna"}
                   </h3>
                   <span className="text-white/80 text-xs font-medium uppercase tracking-wider block">
-                    {companyData?.other_config?.ceo_info?.designation ||
-                      "CEO - Lockated"}
+                    {ceoData?.designation || "CEO - Lockated"}
                   </span>
                 </div>
               </div>
@@ -1775,51 +1903,51 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                   Employee of the Month
                 </h3>
               </div>
-              {(currentEmployee?.month ||
-                companyData?.other_config?.employee_of_the_month?.month ||
-                cachedEOM?.month) && (
+               {(currentEmployee?.month ||
+                eomData?.month) && (
                 <span className="text-xs font-bold bg-white/30 px-2 py-1 rounded">
-                  {currentEmployee?.month ||
-                    companyData?.other_config?.employee_of_the_month?.month ||
-                    cachedEOM?.month}
+                  {eomData?.month || currentEmployee?.month}
                 </span>
               )}
             </div>
 
             <div className="flex flex-col md:flex-row gap-6 items-center flex-1">
               {/* Avatar — Prioritize profile image from setup payload */}
-              <div className="w-40 h-40 rounded-full border-4 border-white/40 overflow-hidden shadow-lg flex-shrink-0">
-                <img
-                  src={
-                    companyData?.other_config?.employee_of_the_month?.profileImage ||
-                    currentEmployee?.profile_image ||
-                    (currentEmployee?.field_description && currentEmployee.field_description.includes("/") ? currentEmployee.field_description : null) ||
-                    companyData?.employee_photo?.document_url ||
-                    employeeImage
-                  }
-                  alt="Employee"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-40 h-40 rounded-full border-4 border-white/40 overflow-hidden shadow-lg flex-shrink-0 bg-white/10 flex items-center justify-center">
+                {(() => {
+                  const imgUrl = eomData?.profileImage ||
+                                eomData?.profile_image ||
+                                currentEmployee?.profile_image ||
+                                (currentEmployee?.field_description && currentEmployee.field_description.includes("/") ? currentEmployee.field_description : null);
+                  
+                  return (imgUrl && imgUrl.trim()) ? (
+                    <img
+                      src={imgUrl}
+                      alt="Employee"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null;
+                })()}
               </div>
 
               {/* Points/Achievements */}
               <div className="flex-1 space-y-2">
                 <h4 className="text-2xl font-bold leading-tight">
-                  {currentEmployee?.full_name ||
-                    companyData?.other_config?.employee_of_the_month?.userName ||
-                    cachedEOM?.name ||
+                  {eomData?.userName ||
+                    eomData?.name ||
+                    currentEmployee?.full_name ||
                     "Winner"}
                 </h4>
                 <p className="text-sm font-medium opacity-80 mb-2">
-                  {companyData?.other_config?.employee_of_the_month?.role ||
-                    cachedEOM?.role ||
+                  {eomData?.role ||
+                    currentEmployee?.role ||
                     ""}
                 </p>
                 <div className="space-y-1">
                   {(() => {
                     const points =
-                      companyData?.other_config?.employee_of_the_month?.points?.filter(Boolean) ||
-                      cachedEOM?.points?.filter(Boolean);
+                      eomData?.points ||
+                      currentEmployee?.points;
                     if (points && points.length > 0) {
                       return points.map((point: string, idx: number) =>
                         point && (
@@ -1882,7 +2010,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
                     <div key={ann.id || ann.extra_field_id || i} className="border-b border-gray-50 last:border-0 pb-2">
                       <h4 className="font-bold text-sm text-gray-900">{ann.field_name}</h4>
                       <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        {ann.field_value}
+                        {ann.displayDescription || ann.field_value}
                       </p>
                     </div>
                   ))}
@@ -2264,52 +2392,91 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
 
 // AutoScrollTownHalls Component
 const AutoScrollTownHalls = () => {
-  const cards = [
-    {
-      title: "Office Management Meet",
-      date: "Saturday, Jan 7 at 5:30 pm",
-      description:
-        "It's all about effectively tracking your sales force and other field teams",
-      image:
-        "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2940&auto=format&fit=crop",
-    },
-    {
-      title: "Quarterly Review",
-      date: "Monday, Jan 15 at 4:00 pm",
-      description:
-        "Understanding progress, blockers, and next quarter priorities.",
-      image:
-        "https://images.unsplash.com/photo-1553877615-30c73165327b?q=80&w=2940&auto=format&fit=crop",
-    },
-    {
-      title: "HR Policy Update",
-      date: "Friday, Jan 20 at 3:00 pm",
-      description: "Latest updates on company policies and compliance.",
-      image:
-        "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2832&auto=format&fit=crop",
-    },
-    {
-      title: "Product Roadmap",
-      date: "Wednesday, Jan 25 at 6:00 pm",
-      description: "Deep dive into upcoming features and releases.",
-      image:
-        "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=2940&auto=format&fit=crop",
-    },
-    {
-      title: "Leadership AMA",
-      date: "Monday, Jan 30 at 5:00 pm",
-      description: "Ask leadership anything about company direction.",
-      image:
-        "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2940&auto=format&fit=crop",
-    },
-    {
-      title: "Sales Strategy",
-      date: "Thursday, Feb 2 at 4:30 pm",
-      description: "Optimizing sales funnels and conversion strategies.",
-      image:
-        "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=2940&auto=format&fit=crop",
-    },
-  ];
+  const [cards, setCards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTownHalls = async () => {
+      try {
+        const tokenFromStorage = localStorage.getItem("token");
+        const token = tokenFromStorage || "9c321b4fe31d68572f18cbc082557777f681f283c244fa55";
+        const baseUrl = localStorage.getItem("baseUrl") || "lockated-api.gophygital.work";
+        const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+        const response = await axios.get(
+          `${protocol}${baseUrl}/pms/admin/events.json?q[event_type_eq]=town_hall&token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data && response.data.classifieds) {
+          const mappedCards = response.data.classifieds.map((ev: any) => {
+            let displayDate = "Monthly Townhall";
+            if (ev.from_time) {
+              try {
+                displayDate = new Date(ev.from_time).toLocaleDateString("en-GB", {
+                  weekday: 'long',
+                  day: "numeric",
+                  month: "short",
+                  hour: 'numeric',
+                  minute: 'numeric',
+                  hour12: true
+                });
+              } catch (e) {
+                displayDate = ev.from_time;
+              }
+            } else if (ev.event_at) {
+              displayDate = ev.event_at;
+            }
+
+            const fallbackImage = "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2940&auto=format&fit=crop";
+            const imageUrl = (ev.documents && ev.documents[0]?.document) || 
+                           (ev.attachments && ev.attachments[0]?.url) || 
+                           fallbackImage;
+
+            return {
+              title: ev.event_name || "Town Hall Meet",
+              date: displayDate,
+              description: ev.description || "Join us for the monthly town hall session.",
+              image: imageUrl
+            };
+          });
+
+          // Duplicate for seamless loop if we have few items
+          if (mappedCards.length > 0 && mappedCards.length < 3) {
+            setCards([...mappedCards, ...mappedCards]);
+          } else {
+            setCards(mappedCards);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch townhalls:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTownHalls();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  if (cards.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 italic text-sm">
+        <p>No townhalls scheduled</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full">
@@ -2406,6 +2573,9 @@ interface UpcomingEventData {
   event_name?: string;
   event_date?: string;
   event_time?: string;
+  event_at?: string;
+  from_time?: string;
+  to_time?: string;
   description?: string;
   event_description?: string;
   location?: string;
@@ -2420,7 +2590,9 @@ const AutoScrollEvents = () => {
   useEffect(() => {
     const fetchUpcomingEvents = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const tokenFromStorage = localStorage.getItem("token");
+        // Use provided token as fallback if storage token is missing or for this specific legacy API
+        const token = tokenFromStorage || "9c321b4fe31d68572f18cbc082557777f681f283c244fa55";
         const baseUrl =
           localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
         const protocol = baseUrl.startsWith("http") ? "" : "https://";
@@ -2458,16 +2630,33 @@ const AutoScrollEvents = () => {
   const fallbackImage =
     "https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=400&fit=crop";
 
-  const formattedEvents = events.map((ev: UpcomingEventData) => ({
-    title: ev.title || ev.event_name || "Upcoming Event",
-    date: ev.event_date
-      ? `${ev.event_date} ${ev.event_time || ""}`.trim()
-      : "Just announced",
-    description: ev.description || ev.event_description || ev.location || "",
-    image: ev.image_url || ev.logo?.url || fallbackImage,
-    month: "",
-    day: "",
-  }));
+  const formattedEvents = events.map((ev: UpcomingEventData) => {
+    let displayDate = "Just announced";
+    if (ev.event_date) {
+      displayDate = `${ev.event_date} ${ev.event_time || ""}`.trim();
+    } else if (ev.event_at) {
+      displayDate = ev.event_at;
+    } else if (ev.from_time) {
+      try {
+        displayDate = new Date(ev.from_time).toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric"
+        });
+      } catch (e) {
+        displayDate = ev.from_time;
+      }
+    }
+
+    return {
+      title: ev.title || ev.event_name || "Upcoming Event",
+      date: displayDate,
+      description: ev.description || ev.event_description || ev.location || "",
+      image: ev.image_url || ev.logo?.url || fallbackImage,
+      month: "",
+      day: "",
+    };
+  });
 
   // Duplicate events for seamless loop
   const duplicatedEvents =

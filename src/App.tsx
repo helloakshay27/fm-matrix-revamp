@@ -33,6 +33,8 @@ import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
 import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
 import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
 import { ImportRetainerInvoicesPage } from "./pages/ImportRetainerInvoicesPage";
+import { BackendLayout } from "./components/BackendLayout";
+import { SmsManagementPage } from "./pages/SmsManagementPage";
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
@@ -197,6 +199,8 @@ import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
 import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
+import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
+import AnnouncementsSetup from "./pages/AnnouncementsSetup";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 
@@ -1046,6 +1050,16 @@ import AccountTypeTransactionsReport from "./pages/ClubManagement/AccountTypeTra
 import AccountTypeTransactionsDetailPage from "./pages/ClubManagement/AccountTypeTransactionsDetailPage";
 import AccountTransactionsDetailPage from "./pages/ClubManagement/AccountTransactionsDetailPage";
 import AccountTransactionsReport from "./pages/ClubManagement/AccountTransactionsReport";
+import ARAgingSummaryReport from "./pages/ClubManagement/ARAgingSummaryReport";
+import ARAgingDetailsReport from "./pages/ClubManagement/ARAgingDetailsReport";
+import InvoiceDetailsReport from "./pages/ClubManagement/InvoiceDetailsReport";
+import RetainerInvoiceDetailsReport from "./pages/ClubManagement/RetainerInvoiceDetailsReport";
+import SalesOrderDetailsReport from "./pages/ClubManagement/SalesOrderDetailsReport";
+import DeliveryChallanDetailsReport from "./pages/ClubManagement/DeliveryChallanDetailsReport";
+import QuoteDetailsReport from "./pages/ClubManagement/QuoteDetailsReport";
+import CustomerBalanceSummaryReport from "./pages/ClubManagement/CustomerBalanceSummaryReport";
+import ReceivableSummaryReport from "./pages/ClubManagement/ReceivableSummaryReport";
+import ReceivableDetailsReport from "./pages/ClubManagement/ReceivableDetailsReport";
 import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
@@ -1102,6 +1116,11 @@ import { InvoiceDashboardDetailsPage } from "./pages/ClubManagement/InvoiceDashb
 import { QuotesDashboard } from "./pages/ClubManagement/QuotesDashboard";
 import { QuotesAdd } from "./pages/ClubManagement/QuotesAdd";
 import { QuotesDetails } from "./pages/ClubManagement/QuotesDetails";
+import { RideReviews } from "./pages/pulse/RideReviews";
+import { UserDetail } from "./pages/pulse/UserDetail";
+import { ActiveReports } from "./pages/pulse/ActiveReports";
+import { ActiveSOS } from "./pages/pulse/ActiveSOS";
+import { RideTracking } from "./pages/pulse/RideTracking";
 
 import { DeliveryChallansDashboard } from "./pages/ClubManagement/DeliveryChallansDashboard";
 import { DeliveryChallansAdd } from "./pages/ClubManagement/DeliveryChallansAdd";
@@ -1142,8 +1161,33 @@ import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
 import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
 import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
+import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedReport";
+import PaymentsMadeReport from "./pages/Accounting/PaymentsMadeReport";
+import PayableDetailsReport from "./pages/Accounting/PayableDetailsReport";
+import APAgingDetailsReport from "./pages/Accounting/APAgingDetailsReport";
+import PayableRefundHistoryReport from "./pages/Accounting/PayableRefundHistoryReport";
+import PurchaseOrderDetailsReport from "./pages/Accounting/PurchaseOrderDetailsReport";
+import ExpenseDetailsReport from "./pages/Accounting/ExpenseDetailsReport";
+import ExpenseSummaryByCategoryReport from "./pages/Accounting/ExpenseSummaryByCategoryReport";
+import ExpensesByCustomerReport from "./pages/Accounting/ExpensesByCustomerReport";
+import ExpensesByEmployeeReport from "./pages/Accounting/ExpensesByEmployeeReport";
+import ExpensesByProjectReport from "./pages/Accounting/ExpensesByProjectReport";
+import PurchaseOrdersByVendorReport from "./pages/Accounting/PurchaseOrdersByVendorReport";
+import PurchasesByItemReport from "./pages/Accounting/PurchasesByItemReport";
+import BillableExpenseDetails from "./pages/Accounting/BillableExpenseDetails";
+import PayableSummaryReport from "./pages/Accounting/PayableSummaryReport";
+import TimeToGetPaidReport from "./pages/ClubManagement/TimeToGetPaidReport";
+import CreditNoteDetailsReport from "./pages/ClubManagement/CreditNoteDetailsReport";
+import RefundHistoryReport from "./pages/ClubManagement/RefundHistoryReport";
+import RecurringInvoiceDetailsReport from "./pages/ClubManagement/RecurringInvoiceDetailsReport";
+import VendorBalanceSummaryReport from "./pages/ClubManagement/VendorBalanceSummaryReport";
+import APAgingSummaryReport from "./pages/ClubManagement/APAgingSummaryReport";
+import BillDetailsReport from "./pages/ClubManagement/BillDetailsReport";
+import VendorCreditsDetailsReport from "./pages/ClubManagement/VendorCreditsDetailsReport";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
+import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
+import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
 
 const queryClient = new QueryClient();
 
@@ -1158,20 +1202,20 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
-  useEffect(() => {
-    console.warn("🔌 WebSocket connection effect running");
+  // useEffect(() => {
+  //   console.warn("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+  //   if (token) {
+  //     console.warn("✅ Token available, connecting...");
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error("❌ No token available for WebSocket connection");
+  //   }
 
-    return () => {
-      console.warn("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect, socketUrl]);
+  //   return () => {
+  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
+  //   };
+  // }, [token, connect, socketUrl]);
 
   // Subscribe to notifications
   useEffect(() => {
@@ -1399,6 +1443,26 @@ function App() {
                           path="/documents/editor/:documentId"
                           element={<OnlyOfficePublicEditorPage />}
                         />
+
+                        {/* Backend Routes */}
+                        <Route
+                          path="/backend-console"
+                          element={
+                            <ProtectedRoute>
+                              <BackendLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route
+                            index
+                            element={<div className="p-8" />}
+                          />
+                          <Route
+                            path="sms-management"
+                            element={<SmsManagementPage />}
+                          />
+                        </Route>
+
 
                         {/* Admin Routes */}
                         <Route
@@ -2472,6 +2536,10 @@ function App() {
                             element={<BalanceSheetReport />}
                           />
                           <Route
+                            path="/accounting/reports/business-performance"
+                            element={<BusinessPerformanceRatioReport />}
+                          />
+                          <Route
                             path="/accounting/reports/account-type-summary"
                             element={<AccountTypeSummaryReport />}
                           />
@@ -2492,8 +2560,172 @@ function App() {
                             element={<AccountTransactionsReport />}
                           />
                           <Route
+                            path="/accounting/reports/ar-aging-summary"
+                            element={<ARAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ar-aging-details"
+                            element={<ARAgingDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/invoice-details"
+                            element={<InvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/retainer-invoice-details"
+                            element={<RetainerInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-order-details"
+                            element={<SalesOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/delivery-challan-details"
+                            element={<DeliveryChallanDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/quote-details"
+                            element={<QuoteDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/customer-balance-summary"
+                            element={<CustomerBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-summary"
+                            element={<ReceivableSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-details"
+                            element={<ReceivableDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payments-recieved"
+                            element={<PaymentsRecievedReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payments-made"
+                            element={<PaymentsMadeReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-details"
+                            element={<PayableDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ap-aging-details"
+                            element={<APAgingDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-refund-history"
+                            element={<PayableRefundHistoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/purchase-order-details"
+                            element={<PurchaseOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expense-details"
+                            element={<ExpenseDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expense-summary-by-category"
+                            element={<ExpenseSummaryByCategoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/purchase-orders-by-vendor"
+                            element={<PurchaseOrdersByVendorReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expenses-by-employee"
+                            element={<ExpensesByEmployeeReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expenses-by-project"
+                            element={<ExpensesByProjectReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/billable-expense-details"
+                            element={<BillableExpenseDetails />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchase-order-details"
+                            element={<PurchaseOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expense-details"
+                            element={<ExpenseDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expense-summary-by-category"
+                            element={<ExpenseSummaryByCategoryReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-customer"
+                            element={<ExpensesByCustomerReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-project"
+                            element={<ExpensesByProjectReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-employee"
+                            element={<ExpensesByEmployeeReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchases-by-vendor"
+                            element={<PurchaseOrdersByVendorReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchases-by-item"
+                            element={<PurchasesByItemReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/billable-expense-details"
+                            element={<BillableExpenseDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-summary"
+                            element={<PayableSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/time-to-get-paid"
+                            element={<TimeToGetPaidReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/credit-note-details"
+                            element={<CreditNoteDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/refund-history"
+                            element={<RefundHistoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/recurring-invoice-details"
+                            element={<RecurringInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/vendor-balance-summary"
+                            element={<VendorBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ap-aging-summary"
+                            element={<APAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/bill-details"
+                            element={<BillDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/vendor-credits-details"
+                            element={<VendorCreditsDetailsReport />}
+                          />
+                          <Route
                             path="/accounting/reports/account-transactions/details"
                             element={<AccountTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/debtors-creditors"
+                            element={<DebtorsCreditorsReport />}
                           />
                           <Route
                             path="/accounting/reports/cash-flow-statement"
@@ -4902,6 +5134,14 @@ function App() {
                              path="/settings/company-hub/Company-setup"
                              element={<CompanySetup />}
                            />
+                            <Route
+                              path="/settings/company-hub/employee-of-the-month"
+                              element={<EmployeeOfTheMonthSetup />}
+                            />
+                            <Route
+                              path="/settings/company-hub/announcements"
+                              element={<AnnouncementsSetup />}
+                            />
                           <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
@@ -5178,9 +5418,34 @@ function App() {
                             element={<CarpoolDashboard />}
                           />
 
+
                           <Route
                             path="/pulse/carpool/ride-detail"
                             element={<RideDetail />}
+                          />
+                           <Route
+                            path="/pulse/carpool/ride-reviews"
+                            element={<RideReviews />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/user-detail"
+                            element={<UserDetail />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/active-reports"
+                            element={<ActiveReports />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/active-sos"
+                            element={<ActiveSOS />}
+                          />
+
+                          <Route
+                            path="/pulse/carpool/tracking"
+                            element={<RideTracking />}
                           />
 
                           <Route

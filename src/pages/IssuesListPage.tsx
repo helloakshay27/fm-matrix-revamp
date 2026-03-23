@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { cache } from "@/utils/cacheUtils";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchIssues, updateIssue } from "@/store/slices/issueSlice";
+import { useIssues, useUpdateIssue, useImportIssues, useDownloadSampleIssueFile } from "@/hooks/useIssues";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Filter } from "lucide-react";
 import { toast } from "sonner";
@@ -176,13 +174,13 @@ const IssuesListPage = ({
     const location = useLocation();
     const { shouldShow } = useDynamicPermissions();
     const { id: projectId } = useParams<{ id: string }>();
-    const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 
     // URL search params
     const searchParams = new URLSearchParams(location.search);
     const projectIdParam = searchParams.get("project_id");
+    const milestoneIdParam = searchParams.get("milestone_id");
     const taskIdParam = searchParams.get("task_id");
 
     const view = localStorage.getItem("selectedView");
@@ -193,34 +191,23 @@ const IssuesListPage = ({
         );
     }, [setCurrentSection]);
 
-    const { data, loading } = useAppSelector(
-        (state) => state.fetchIssues || { data: { issues: [] }, loading: false }
-    );
-    const rawIssues = Array.isArray((data as any)?.issues)
-        ? (data as any).issues
-        : [];
-
-    // Filter and search state - Declare early to avoid usage before declaration
-    const [filterSuccess, setFilterSuccess] = useState(false);
-    const [filteredIssues, setFilteredIssues] = useState<any[]>([]);
-    const [filteredLoading, setFilteredLoading] = useState(false);
+    // Pagination and filtering state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [tempSearchQuery, setTempSearchQuery] = useState("");
+    const [appliedFilters, setAppliedFilters] = useState("");
     const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(true);
-    const [appliedFilters, setAppliedFilters] = useState(""); // For IssueFilterModal
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+    // UI State
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
     const [importErrors, setImportErrors] = useState<Array<{ row: number; errors: string[] }>>([]);
     const [importResults, setImportResults] = useState({ created: 0, failed: 0 });
-    const [pagination, setPagination] = useState({
-        current_page: 1,
-        total_count: 0,
-        total_pages: 0,
-    });
 
-    // Search state
-    const [searchQuery, setSearchQuery] = useState("");
+    // Column display state
     const [columnOrder, setColumnOrder] = useState<string[]>(() => {
         const savedOrder = localStorage.getItem("issuesTableColumnOrder");
         return savedOrder
@@ -241,27 +228,55 @@ const IssuesListPage = ({
             ];
     });
 
-    // Extract pagination data from Redux response
-    useEffect(() => {
-        if (data && typeof data === 'object') {
-            const paginationData = {
-                current_page: (data as any).pagination?.current_page || 1,
-                total_count: (data as any).pagination?.total_count || 0,
-                total_pages: (data as any).pagination?.total_pages || 0,
-            };
-            setPagination(paginationData);
+    // Build filter string based on current state
+    let filterString = "";
+    if (appliedFilters !== "") {
+        filterString = appliedFilters;
+    } else if (showMyIssuesOnly) {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (user.id) {
+            filterString = `q[responsible_person_id_eq]=${user.id.toString()}`;
         }
-    }, [data]);
+    } else if (projectId || projectIdParam || taskIdParam || milestoneIdParam) {
+        const params = [];
+        if (projectId || projectIdParam) {
+            params.push(`q[project_management_id_eq]=${projectId || projectIdParam}`);
+        }
+        if (taskIdParam) {
+            params.push(`q[task_management_id_eq]=${taskIdParam}`);
+        }
+        if (milestoneIdParam) {
+            params.push(`q[milestone_id_eq]=${milestoneIdParam}`);
+        }
+        filterString = params.join("&");
+    }
 
-    console.log(pagination)
-
-    // Fetch control refs
-    const allIssuesFetchInitiatedRef = useRef(false);
-    const prevParamsRef = useRef({
-        projectId: null,
-        projectIdParam: null,
-        taskIdParam: null,
+    // TanStack Query hooks for server state management
+    const {
+        data: issuesData,
+        isLoading,
+        isFetching,
+    } = useIssues({
+        baseUrl,
+        token,
+        page: currentPage,
+        filters: filterString,
+        search: searchQuery,
+        enabled: !!token,
     });
+
+    // Extract issues and pagination from response
+    const rawIssues = issuesData?.issues || [];
+    const pagination = {
+        current_page: issuesData?.pagination?.current_page || 1,
+        total_count: issuesData?.pagination?.total_count || 0,
+        total_pages: issuesData?.pagination?.total_pages || 0,
+    };
+
+    // TanStack Query mutations
+    const updateMutation = useUpdateIssue();
+    const importMutation = useImportIssues();
+    const downloadMutation = useDownloadSampleIssueFile();
 
     // Map API response to table format
     const mapIssueData = (issue: any): Issue => {
@@ -296,49 +311,10 @@ const IssuesListPage = ({
         };
     };
 
-    // Determine which issues to display based on filters/search
+    // Determine which issues to display - simplified with TanStack Query
     const displayIssues = useMemo(() => {
-        let issuesToDisplay;
-
-        // If showing my issues only, use filtered issues
-        if (showMyIssuesOnly) {
-            issuesToDisplay =
-                filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
-        }
-        // If search is active, use filtered issues
-        else if (searchQuery.trim()) {
-            issuesToDisplay =
-                filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
-        }
-        // If projectId from prop or URL param is provided, use filtered issues
-        else if (projectId || projectIdParam || taskIdParam) {
-            issuesToDisplay =
-                filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
-        }
-        // Check if filters are applied (either from modal or localStorage)
-        else if (
-            appliedFilters ||
-            localStorage.getItem("IssueFilters") ||
-            localStorage.getItem("issueStatus")
-        ) {
-            issuesToDisplay =
-                filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
-        } else {
-            issuesToDisplay = rawIssues;
-        }
-
-        return Array.isArray(issuesToDisplay) ? issuesToDisplay : [];
-    }, [
-        rawIssues,
-        filteredIssues,
-        filterSuccess,
-        searchQuery,
-        projectId,
-        projectIdParam,
-        taskIdParam,
-        showMyIssuesOnly,
-        appliedFilters,
-    ]);
+        return Array.isArray(rawIssues) ? rawIssues : [];
+    }, [rawIssues]);
 
     const issues: Issue[] = displayIssues.map(mapIssueData);
 
@@ -347,70 +323,6 @@ const IssuesListPage = ({
     const [projects, setProjects] = useState([]);
     const [openIssueModal, setOpenIssueModal] = useState(false);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-    // Helper function to perform filtered fetch - defined early to be used in useEffects
-    const performFilteredFetch = useCallback(
-        async (filterOrString: any, page: number = 1) => {
-            try {
-                setFilteredLoading(true);
-                let filterString: string;
-
-                if (typeof filterOrString === "string") {
-                    filterString = filterOrString;
-                } else {
-                    let filter = filterOrString;
-                    // Add responsible_person_id_eq if showing my issues only
-                    if (showMyIssuesOnly) {
-                        const user = JSON.parse(localStorage.getItem("user") || "{}");
-                        if (user.id) {
-                            filter["q[responsible_person_id_eq]"] = user.id.toString();
-                        }
-                    }
-                    filterString = qs.stringify(filter);
-                }
-
-                // Add responsible_person_id_eq if showing my issues only and not already in string
-                if (showMyIssuesOnly && !filterString.includes("responsible_person_id_eq")) {
-                    const user = JSON.parse(localStorage.getItem("user") || "{}");
-                    if (user.id) {
-                        filterString += (filterString ? "&" : "") + `q[responsible_person_id_eq]=${user.id.toString()}`;
-                    }
-                }
-
-                // Build the complete query string with page parameter upfront
-                const queryString = `page=${page}${filterString ? `&${filterString}` : ""}`;
-
-                // Fetch filtered issues directly without caching
-                const response = await axios.get(
-                    `https://${baseUrl}/issues.json?${queryString}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                setFilteredIssues(response.data.issues || []);
-                setPagination({
-                    current_page: response.data.pagination.current_page || page,
-                    total_count: response.data.pagination.total_count || 0,
-                    total_pages: response.data.pagination.total_pages || 0,
-                });
-                setFilterSuccess(true);
-            } catch (error) {
-                console.error("Error fetching filtered issues:", error);
-                toast.error("Failed to fetch filtered issues");
-                setFilteredIssues([]);
-                setPagination({
-                    current_page: 1,
-                    total_count: 0,
-                    total_pages: 0,
-                });
-            } finally {
-                setFilteredLoading(false);
-            }
-        },
-        [baseUrl, token, projectId, projectIdParam, taskIdParam, showMyIssuesOnly]
-    );
 
     const getUsers = useCallback(async () => {
         try {
@@ -439,116 +351,6 @@ const IssuesListPage = ({
         }
     }, [baseUrl, token]);
 
-    useEffect(() => {
-        if (token && baseUrl) {
-            getUsers();
-            getProjects();
-        }
-    }, [token, baseUrl, getUsers, getProjects]);
-
-    // Handle showMyIssuesOnly toggle
-    useEffect(() => {
-        if (!projectId && !projectIdParam && !taskIdParam && !searchQuery.trim()) {
-            allIssuesFetchInitiatedRef.current = false;
-            setFilterSuccess(false);
-            setFilteredIssues([]);
-        }
-    }, [showMyIssuesOnly, projectId, projectIdParam, taskIdParam, searchQuery]);
-
-    // Listen for global issue-created events to force refetch (ensures GET /issues.json runs)
-    useEffect(() => {
-        const handler = () => {
-            allIssuesFetchInitiatedRef.current = false;
-            dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
-        };
-        window.addEventListener("issues:created", handler as EventListener);
-        return () =>
-            window.removeEventListener("issues:created", handler as EventListener);
-    }, [dispatch, baseUrl, token, projectId]);
-
-    // Immediately fetch when parameters change or on initial mount with parameters
-    useEffect(() => {
-        const paramsChanged =
-            prevParamsRef.current.projectId !== projectId ||
-            prevParamsRef.current.projectIdParam !== projectIdParam ||
-            prevParamsRef.current.taskIdParam !== taskIdParam;
-
-        if (paramsChanged) {
-            allIssuesFetchInitiatedRef.current = false;
-            setFilterSuccess(false);
-            setFilteredIssues([]);
-            prevParamsRef.current = { projectId, projectIdParam, taskIdParam };
-        }
-
-        // Trigger fetch immediately when parameters are present
-        if ((projectId || projectIdParam || taskIdParam) && baseUrl && token) {
-            const filter = {
-                "q[project_management_id_eq]": projectId || projectIdParam || "",
-                "q[task_management_id_eq]": taskIdParam || "",
-            };
-            performFilteredFetch(filter, 1);
-            setPagination((prev) => ({ ...prev, current_page: 1 }));
-        }
-    }, [projectId, projectIdParam, taskIdParam, baseUrl, token, performFilteredFetch]);
-
-    // Advanced filtering with search
-    useEffect(() => {
-        if (searchQuery.trim()) {
-            const filter = {
-                "q[title_or_project_management_title_cont]": searchQuery,
-                ...(projectId && { "q[project_management_id_eq]": projectId }),
-                ...(projectIdParam && {
-                    "q[project_management_id_eq]": projectIdParam,
-                }),
-                ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
-            };
-
-            performFilteredFetch(filter, 1);
-            setPagination((prev) => ({ ...prev, current_page: 1 }));
-        } else {
-            // If search is cleared, reset to initial fetch
-            allIssuesFetchInitiatedRef.current = false;
-        }
-    }, [searchQuery, projectId, projectIdParam, taskIdParam, performFilteredFetch]);
-
-    // Fetch all issues only when no parameters and haven't fetched yet
-    useEffect(() => {
-        // Only fetch all issues if no projectId/taskId parameters and we haven't already
-        if (
-            !projectId &&
-            !projectIdParam &&
-            !taskIdParam &&
-            !searchQuery.trim() &&
-            !allIssuesFetchInitiatedRef.current &&
-            baseUrl &&
-            token
-        ) {
-            if (showMyIssuesOnly) {
-                const user = JSON.parse(localStorage.getItem("user") || "{}");
-                if (user.id) {
-                    const filter = {
-                        "q[responsible_person_id_eq]": user.id.toString(),
-                    };
-                    performFilteredFetch(filter, 1);
-                    setPagination((prev) => ({ ...prev, current_page: 1 }));
-                }
-            } else {
-                dispatch(fetchIssues({ baseUrl, token, id: "", page: pagination.current_page }));
-            }
-            allIssuesFetchInitiatedRef.current = true;
-        }
-    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery, showMyIssuesOnly, performFilteredFetch]);
-
-
-
-    // Handle applied filters from IssueFilterModal
-    useEffect(() => {
-        if (appliedFilters !== "") {
-            performFilteredFetch(appliedFilters, 1);
-            setPagination((prev) => ({ ...prev, current_page: 1 }));
-        }
-    }, [appliedFilters, performFilteredFetch]);
-
     const fetchData = useCallback(async () => {
         try {
             const response = await axios.get(
@@ -572,10 +374,30 @@ const IssuesListPage = ({
     }, [baseUrl, token]);
 
     useEffect(() => {
-        if (baseUrl && token) {
+        if (token && baseUrl) {
+            getUsers();
+            getProjects();
             fetchData();
         }
-    }, [baseUrl, token]);
+    }, [token, baseUrl]);
+
+    // Debounced search effect
+    useEffect(() => {
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(() => {
+            setSearchQuery(tempSearchQuery);
+            setCurrentPage(1);
+        }, 500); // 500ms debounce delay
+
+        return () => {
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+        };
+    }, [tempSearchQuery]);
 
     const handleOpenDialog = () => setOpenIssueModal(true);
 
@@ -597,119 +419,31 @@ const IssuesListPage = ({
 
     const handleIssueTypeChange = async (issueId: string, newType: string) => {
         try {
-            await dispatch(
-                updateIssue({
-                    baseUrl,
-                    token,
-                    id: issueId,
-                    data: { issue_type: newType },
-                })
-            ).unwrap();
-            // Invalidate cache after issue type update
-            cache.invalidatePattern("issues_*");
+            await updateMutation.mutateAsync({
+                id: issueId,
+                data: { issue_type: newType },
+                baseUrl,
+                token,
+            });
             toast.success("Issue type updated successfully");
-
-            // Refresh with appropriate filter
-            if (localStorage.getItem("IssueFilters")) {
-                const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter: any = {};
-
-                if (item.selectedStatuses?.length > 0) {
-                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
-                }
-                if (item.selectedPriority?.length > 0) {
-                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
-                }
-                if (item.selectedTypes?.length > 0) {
-                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
-                }
-                if (item.selectedProjects?.length > 0) {
-                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
-                }
-                if (item.selectedResponsible?.length > 0) {
-                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
-                }
-                if (item.selectedCreators?.length > 0) {
-                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
-                }
-
-                const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            } else if (localStorage.getItem("issueStatus")) {
-                const status = localStorage.getItem("issueStatus");
-                const filter = {
-                    "q[status_eq]": status,
-                };
-                performFilteredFetch(filter, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            } else {
-                allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
-            }
         } catch (error) {
             console.log(error);
+            toast.error("Failed to update issue type");
         }
     };
 
     const handleIssueUpdate = async (issueId: string, assignedToId: string) => {
         try {
-            await dispatch(
-                updateIssue({
-                    baseUrl,
-                    token,
-                    id: issueId,
-                    data: { responsible_person_id: assignedToId },
-                })
-            ).unwrap();
-            // Invalidate cache after issue update
-            cache.invalidatePattern("issues_*");
-            if (projectId) {
-                performFilteredFetch(`q[project_management_id_eq]=${projectId}`, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            }
+            await updateMutation.mutateAsync({
+                id: issueId,
+                data: { responsible_person_id: assignedToId },
+                baseUrl,
+                token,
+            });
             toast.success("Issue updated successfully");
-
-            // Refresh with appropriate filter
-            if (localStorage.getItem("IssueFilters")) {
-                const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter: any = {};
-
-                if (item.selectedStatuses?.length > 0) {
-                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
-                }
-                if (item.selectedPriority?.length > 0) {
-                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
-                }
-                if (item.selectedTypes?.length > 0) {
-                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
-                }
-                if (item.selectedProjects?.length > 0) {
-                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
-                }
-                if (item.selectedResponsible?.length > 0) {
-                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
-                }
-                if (item.selectedCreators?.length > 0) {
-                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
-                }
-
-                const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            } else if (localStorage.getItem("issueStatus")) {
-                const status = localStorage.getItem("issueStatus");
-                const filter = {
-                    "q[status_eq]": status,
-                };
-                performFilteredFetch(filter, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            } else {
-                allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
-            }
         } catch (error) {
             console.log(error);
+            toast.error("Failed to update issue");
         }
     };
 
@@ -718,78 +452,31 @@ const IssuesListPage = ({
         newStatus: string
     ) => {
         try {
-            await dispatch(
-                updateIssue({
-                    baseUrl,
-                    token,
-                    id: issueId,
-                    data: { status: newStatus },
-                })
-            ).unwrap();
-            // Invalidate cache after issue status update
-            cache.invalidatePattern("issues_*");
-            if (projectId) {
-                performFilteredFetch(`q[project_management_id_eq]=${projectId}`, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            }
+            await updateMutation.mutateAsync({
+                id: issueId,
+                data: { status: newStatus },
+                baseUrl,
+                token,
+            });
             toast.success("Issue status updated successfully");
-
-            // Refresh with appropriate filter
-            if (localStorage.getItem("IssueFilters")) {
-                const item = JSON.parse(localStorage.getItem("IssueFilters")!);
-                const newFilter: any = {};
-
-                if (item.selectedStatuses?.length > 0) {
-                    newFilter["q[status_eq]"] = item.selectedStatuses[0];
-                }
-                if (item.selectedPriority?.length > 0) {
-                    newFilter["q[priority_eq]"] = item.selectedPriority[0];
-                }
-                if (item.selectedTypes?.length > 0) {
-                    newFilter["q[issue_type_id_eq]"] = item.selectedTypes[0];
-                }
-                if (item.selectedProjects?.length > 0) {
-                    newFilter["q[project_management_id_in][]"] = item.selectedProjects;
-                }
-                if (item.selectedResponsible?.length > 0) {
-                    newFilter["q[responsible_person_id_in][]"] = item.selectedResponsible;
-                }
-                if (item.selectedCreators?.length > 0) {
-                    newFilter["q[created_by_id_in][]"] = item.selectedCreators;
-                }
-
-                const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-                performFilteredFetch(queryString, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            } else if (localStorage.getItem("issueStatus")) {
-                const status = localStorage.getItem("issueStatus");
-                const filter = {
-                    "q[status_eq]": status,
-                };
-                performFilteredFetch(filter, 1);
-                setPagination((prev) => ({ ...prev, current_page: 1 }));
-            } else {
-                allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId, page: pagination.current_page }));
-            }
         } catch (error) {
             console.log(error);
+            toast.error("Failed to update issue status");
         }
     };
 
     const handleSampleDownload = async () => {
         try {
-            const response = await axios.get(
-                `https://${baseUrl}/assets/sample_issue.xlsx`,
-                {
-                    responseType: 'blob',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            await downloadMutation.mutateAsync({
+                baseUrl,
+                token,
+            });
+            const blob = await downloadMutation.mutateAsync({
+                baseUrl,
+                token,
+            });
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const url = window.URL.createObjectURL(new Blob([blob]));
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', 'sample_issues.xlsx');
@@ -805,18 +492,20 @@ const IssuesListPage = ({
     };
 
     const handleImportIssues = async () => {
-        setIsUploading(true);
+        if (!selectedFile) {
+            toast.error("Please select a file");
+            return;
+        }
+
         try {
-            const formData = new FormData();
-            formData.append("file", selectedFile);
-            const response = await axios.post(`https://${baseUrl}/issues/import_issues.json`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+            const response = await importMutation.mutateAsync({
+                file: selectedFile,
+                baseUrl,
+                token,
             });
 
             // Parse the response
-            const data = response.data;
+            const data = response;
             const importResult = data.import_result;
 
             const created = importResult?.created || 0;
@@ -829,20 +518,14 @@ const IssuesListPage = ({
                 setImportErrors(failed);
                 setIsErrorModalOpen(true);
             } else {
-                // Success case - show toast and fetch data
+                // Success case - show toast and close modal
                 toast.success(`Successfully imported ${created} issues`);
                 setIsImportModalOpen(false);
                 setSelectedFile(null);
-
-                // Invalidate cache and fetch fresh data
-                cache.invalidatePattern("issues*");
-                dispatch(fetchIssues({ baseUrl: baseUrl || "", token: token || "", id: "", page: 1 }));
             }
         } catch (error) {
             console.log(error);
             toast.error("Failed to import issues");
-        } finally {
-            setIsUploading(false);
         }
     };
 
@@ -1050,45 +733,11 @@ const IssuesListPage = ({
         </div>
     )
 
-    const handlePageChange = async (page: number) => {
-        if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading || filteredLoading) {
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > pagination.total_pages || page === pagination.current_page || isLoading) {
             return;
         }
-
-        try {
-            setPagination((prev) => ({ ...prev, current_page: page }));
-
-            // Determine which filter/search applies
-            if (searchQuery.trim()) {
-                const filter = {
-                    "q[title_or_project_management_title_cont]": searchQuery,
-                    ...(projectId && { "q[project_management_id_eq]": projectId }),
-                    ...(projectIdParam && {
-                        "q[project_management_id_eq]": projectIdParam,
-                    }),
-                    ...(taskIdParam && { "q[task_management_id_eq]": taskIdParam }),
-                };
-                await performFilteredFetch(filter, page);
-            } else if (appliedFilters) {
-                await performFilteredFetch(appliedFilters, page);
-            } else if (projectId || projectIdParam || taskIdParam) {
-                const filter = {
-                    "q[project_management_id_eq]": projectId || projectIdParam || "",
-                    "q[task_management_id_eq]": taskIdParam || "",
-                };
-                await performFilteredFetch(filter, page);
-            } else if (showMyIssuesOnly) {
-                const user = JSON.parse(localStorage.getItem("user") || "{}");
-                const filter = user.id ? { "q[responsible_person_id_eq]": user.id.toString() } : {};
-                await performFilteredFetch(filter, page);
-            } else {
-                // No filters/search, fetch all issues with page parameter
-                dispatch(fetchIssues({ baseUrl, token, id: "", page }));
-            }
-        } catch (error) {
-            console.error("Error changing page:", error);
-            toast.error("Failed to load page data. Please try again.");
-        }
+        setCurrentPage(page);
     };
 
     const renderPaginationItems = () => {
@@ -1098,124 +747,55 @@ const IssuesListPage = ({
         const items = [];
         const totalPages = pagination.total_pages;
         const currentPage = pagination.current_page;
-        const showEllipsis = totalPages > 7;
+        const pagesToShow = new Set<number>();
 
-        if (showEllipsis) {
+        // Always show first and last page
+        pagesToShow.add(1);
+        pagesToShow.add(totalPages);
+
+        // Show current page and neighbors
+        pagesToShow.add(currentPage);
+        if (currentPage > 1) pagesToShow.add(currentPage - 1);
+        if (currentPage < totalPages) pagesToShow.add(currentPage + 1);
+
+        // For large pagination, show 2-3 pages around first and last
+        if (totalPages > 7) {
+            pagesToShow.add(2);
+            pagesToShow.add(totalPages - 1);
+        }
+
+        const sortedPages = Array.from(pagesToShow).sort((a, b) => a - b);
+
+        // Render pages with ellipsis
+        sortedPages.forEach((page, index) => {
+            // Add ellipsis if gap exists
+            if (index > 0 && sortedPages[index - 1] < page - 1) {
+                items.push(
+                    <PaginationItem key={`ellipsis-${sortedPages[index - 1]}`}>
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                );
+            }
+
             items.push(
-                <PaginationItem key={1} className="cursor-pointer">
+                <PaginationItem key={page} className="cursor-pointer">
                     <PaginationLink
-                        onClick={() => handlePageChange(1)}
-                        isActive={currentPage === 1}
-                        aria-disabled={loading || filteredLoading}
-                        className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPage === page}
+                        aria-disabled={isFetching}
+                        className={isFetching ? "pointer-events-none opacity-50" : ""}
                     >
-                        1
+                        {page}
                     </PaginationLink>
                 </PaginationItem>
             );
-
-            if (currentPage > 4) {
-                items.push(
-                    <PaginationItem key="ellipsis1">
-                        <PaginationEllipsis />
-                    </PaginationItem>
-                );
-            } else {
-                for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-                    items.push(
-                        <PaginationItem key={i} className="cursor-pointer">
-                            <PaginationLink
-                                onClick={() => handlePageChange(i)}
-                                isActive={currentPage === i}
-                                aria-disabled={loading || filteredLoading}
-                                className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
-                            >
-                                {i}
-                            </PaginationLink>
-                        </PaginationItem>
-                    );
-                }
-            }
-
-            if (currentPage > 3 && currentPage < totalPages - 2) {
-                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-                    items.push(
-                        <PaginationItem key={i} className="cursor-pointer">
-                            <PaginationLink
-                                onClick={() => handlePageChange(i)}
-                                isActive={currentPage === i}
-                                aria-disabled={loading || filteredLoading}
-                                className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
-                            >
-                                {i}
-                            </PaginationLink>
-                        </PaginationItem>
-                    );
-                }
-            }
-
-            if (currentPage < totalPages - 3) {
-                items.push(
-                    <PaginationItem key="ellipsis2">
-                        <PaginationEllipsis />
-                    </PaginationItem>
-                );
-            } else {
-                for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-                    if (!items.find((item) => item.key === i.toString())) {
-                        items.push(
-                            <PaginationItem key={i} className="cursor-pointer">
-                                <PaginationLink
-                                    onClick={() => handlePageChange(i)}
-                                    isActive={currentPage === i}
-                                    aria-disabled={loading || filteredLoading}
-                                    className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
-                                >
-                                    {i}
-                                </PaginationLink>
-                            </PaginationItem>
-                        );
-                    }
-                }
-            }
-
-            if (totalPages > 1) {
-                items.push(
-                    <PaginationItem key={totalPages} className="cursor-pointer">
-                        <PaginationLink
-                            onClick={() => handlePageChange(totalPages)}
-                            isActive={currentPage === totalPages}
-                            aria-disabled={loading || filteredLoading}
-                            className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
-                        >
-                            {totalPages}
-                        </PaginationLink>
-                    </PaginationItem>
-                );
-            }
-        } else {
-            for (let i = 1; i <= totalPages; i++) {
-                items.push(
-                    <PaginationItem key={i} className="cursor-pointer">
-                        <PaginationLink
-                            onClick={() => handlePageChange(i)}
-                            isActive={currentPage === i}
-                            aria-disabled={loading || filteredLoading}
-                            className={loading || filteredLoading ? "pointer-events-none opacity-50" : ""}
-                        >
-                            {i}
-                        </PaginationLink>
-                    </PaginationItem>
-                );
-            }
-        }
+        });
 
         return items;
     };
 
     const handleSearchChange = (value: string) => {
-        setSearchQuery(value);
-        setPagination((prev) => ({ ...prev, current_page: 1 }));
+        setTempSearchQuery(value);
     };
 
     return (
@@ -1224,17 +804,17 @@ const IssuesListPage = ({
                 data={issues}
                 columns={columns}
                 renderActions={renderActions}
-                searchTerm={searchQuery}
-                onSearchChange={() => handleSearchChange(searchQuery)}
+                searchValue={tempSearchQuery}
+                onSearchChange={(searchTerm) => handleSearchChange(searchTerm)}
                 renderCell={renderCell}
-                loading={loading || filteredLoading}
+                loading={isFetching}
                 leftActions={leftActions}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 rightActions={rightActions}
                 emptyMessage={
-                    filterSuccess && issues.length === 0
-                        ? "Try adjusting the filters."
-                        : "No issues found. Create one to get started."
+                    issues.length === 0 && !isFetching
+                        ? "No issues found. Create one to get started."
+                        : ""
                 }
             />
 
@@ -1276,7 +856,7 @@ const IssuesListPage = ({
                 entityType="issues"
                 onSampleDownload={handleSampleDownload}
                 onImport={handleImportIssues}
-                isUploading={isUploading}
+                isUploading={importMutation.isPending}
             />
 
             {/* Import Error Modal */}
@@ -1335,9 +915,6 @@ const IssuesListPage = ({
                                     setIsErrorModalOpen(false);
                                     setIsImportModalOpen(false);
                                     setSelectedFile(null);
-                                    // Fetch data anyway to show what was created
-                                    cache.invalidatePattern("issues*");
-                                    dispatch(fetchIssues({ baseUrl: baseUrl || "", token: token || "", id: "", page: 1 }));
                                 }}
                             >
                                 Close & Refresh
@@ -1353,14 +930,14 @@ const IssuesListPage = ({
                         <PaginationItem>
                             <PaginationPrevious
                                 onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                                className={pagination.current_page === 1 || loading || filteredLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                className={pagination.current_page === 1 || isFetching ? "pointer-events-none opacity-50" : "cursor-pointer"}
                             />
                         </PaginationItem>
                         {renderPaginationItems()}
                         <PaginationItem>
                             <PaginationNext
                                 onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                                className={pagination.current_page === pagination.total_pages || loading || filteredLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                className={pagination.current_page === pagination.total_pages || isFetching ? "pointer-events-none opacity-50" : "cursor-pointer"}
                             />
                         </PaginationItem>
                     </PaginationContent>

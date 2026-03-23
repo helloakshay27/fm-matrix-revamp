@@ -22,6 +22,7 @@ const SalesByItemReport: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const lock_account_id = localStorage.getItem('lock_account_id');
 
   const [filters, setFilters] = useState({
     fromDate: "",
@@ -37,7 +38,9 @@ const SalesByItemReport: React.FC = () => {
         setLoading(false);
         return;
       }
-      let url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=1`;
+
+      const lockAccountId = localStorage.getItem("lock_account_id") || "1";
+      let url = `https://${baseUrl}/lock_account_items/sales_report.json?lock_account_id=${lockAccountId}`;
       if (fromDate && toDate) {
         url += `&q[date_gteq]=${fromDate}&q[date_lteq]=${toDate}`;
       }
@@ -189,16 +192,15 @@ const SalesByItemReport: React.FC = () => {
   };
 
   return (
-    <form
+    <div
       className="w-full bg-[#f9f7f2] p-6"
       style={{ minHeight: "100vh", boxSizing: "border-box" }}
     >
-      {loading && (
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
         </div>
-      )}
-      {!loading && (
+      ) : (
         <>
           {/* HEADER FILTER SECTION */}
 
@@ -252,7 +254,7 @@ const SalesByItemReport: React.FC = () => {
           </div>
         </>
       )}
-    </form>
+    </div>
   );
 };
 

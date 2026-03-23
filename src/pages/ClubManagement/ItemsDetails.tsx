@@ -99,7 +99,7 @@ export const ItemsDetails = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const [loading, setLoading] = useState(false);
-
+const lock_account_id = localStorage.getItem("lock_account_id");
     const [amenities, setAmenities] = useState([])
     // const [formData, setFormData] = useState({
     //     name: "",

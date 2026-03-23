@@ -36,6 +36,8 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -102,19 +104,25 @@ interface ExternalUser {
 
 export const SalesOrderCreatePage: React.FC = () => {
     // Fetch item list from API
+    const lock_account_id = localStorage.getItem("lock_account_id");
     useEffect(() => {
         const fetchItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+                    setItemOptions(res.data.map(item => ({
+                        id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
+                        tax_preference: item.tax_preference,
+                        tax_exemption_id: item.tax_exemption_id,
+                        tax_group_id: item.intra_state_tax_rate_id
+                    })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -130,7 +138,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1&q[active_eq]=1`, {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -227,7 +235,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -259,7 +267,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         setLoadingExemptions(true);
 
         axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -346,7 +354,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         const token = localStorage.getItem('token');
         // Fetch customer list
         axios
-            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     'Content-Type': 'application/json'
@@ -384,7 +392,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -423,11 +431,11 @@ export const SalesOrderCreatePage: React.FC = () => {
         console.log("Saving Payment Terms Payload:", paymentTermsPayload);
         const payload = {
             payment_terms: paymentTermsPayload,
-            lock_account_id: 1
+            lock_account_id: lock_account_id
         };
 
         await axios.post(
-            `https://${baseUrl}/payment_terms.json?lock_account_id=1`,
+            `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
             payload,
             {
                 headers: {
@@ -531,7 +539,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         }
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
-     const [totalAmount2, setTotalAmount2] = useState(0);
+    const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
     const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
@@ -622,13 +630,31 @@ export const SalesOrderCreatePage: React.FC = () => {
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!selectedCustomer) newErrors.customer = 'Customer is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
-        if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
-        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+        if (!selectedCustomer) {
+            newErrors.customer = 'Customer is required';
+            toast.error('Customer is required');
+        }
+        if (!salesOrderDate) {
+            newErrors.salesOrderDate = 'Sales order date is required';
+            toast.error('Sales order date is required');
+        }
+        if (!expectedShipmentDate) {
+            newErrors.expectedShipmentDate = 'Expected shipment date is required';
+            toast.error('Expected shipment date is required');
+        } else if (salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+            newErrors.expectedShipmentDate = 'Cannot be earlier than Sales Order Date';
+            toast.error('Expected shipment date cannot be earlier than Sales Order Date');
+        }
+        if (!selectedTerm) {
+            newErrors.paymentTerms = 'Payment terms is required';
+            toast.error('Payment terms is required');
+        }
 
         const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+        if (!hasValidItems) {
+            newErrors.items = 'At least one valid item with quantity and rate is required';
+            toast.error('At least one valid item is required');
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -761,7 +787,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                 formData.append(`sale_order[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/sale_orders.json?lock_account_id=1`, {
+            await fetch(`https://${baseUrl}/sale_orders.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -770,11 +796,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                 body: formData
             });
 
-            alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            toast.success(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
             navigate('/accounting/sales-order');
         } catch (error) {
             console.error('Error submitting sales order:', error);
-            alert('Failed to create sales order');
+            toast.error('Failed to create sales order');
         } finally {
             setIsSubmitting(false);
         }
@@ -791,7 +817,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                 const url =
 
 
-                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
@@ -823,55 +849,65 @@ export const SalesOrderCreatePage: React.FC = () => {
         }
     }, [selectedTax, taxOptions, afterDiscount]);
 
-    
+
 
     console.log('Tax Options:', taxOptions);
 
 
 
-     const selectedTaxGroups = items
-            .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
-            .map(item => {
-                const group = taxGroups.find(g => g.id === item.tax_group_id);
-                return {
-                    itemAmount: item.amount,
-                    taxRates: group?.tax_rates || []
-                };
-            });
-        const taxBreakdown: any[] = [];
-    
-        selectedTaxGroups.forEach(group => {
-            group.taxRates.forEach(rate => {
-                const taxAmount = (group.itemAmount * rate.rate) / 100;
-    
-                const existing = taxBreakdown.find(t => t.name === rate.name);
-    
-                if (existing) {
-                    existing.amount += taxAmount;
-                } else {
-                    taxBreakdown.push({
-                        name: rate.name,
-                        rate: rate.rate,
-                        amount: taxAmount
-                    });
-                }
-            });
+    const selectedTaxGroups = items
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .map(item => {
+            const group = taxGroups.find(g => g.id === item.tax_group_id);
+            return {
+                itemAmount: item.amount,
+                taxRates: group?.tax_rates || []
+            };
         });
-        // Calculate Final Total
-       
-        const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
-        useEffect(() => {
-            const total =
-                afterDiscount +
-                totalTax  // tax from tax groups
-                - taxAmount2 + // TDS/TCS
-                (Number(adjustment) || 0);
-    
-            setTotalAmount2(total);
-    
-    
-        }, [afterDiscount, totalTax, taxAmount2, adjustment]);
-    
+    const taxBreakdown: any[] = [];
+
+    selectedTaxGroups.forEach(group => {
+        group.taxRates.forEach(rate => {
+            const taxAmount = (group.itemAmount * rate.rate) / 100;
+
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({
+                    name: rate.name,
+                    rate: rate.rate,
+                    amount: taxAmount
+                });
+            }
+        });
+    });
+    // Calculate Final Total
+
+    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    useEffect(() => {
+        const total =
+            afterDiscount +
+            totalTax  // tax from tax groups
+            - taxAmount2 + // TDS/TCS
+            (Number(adjustment) || 0);
+
+        setTotalAmount2(total);
+
+
+    }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+
+    const states = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+        "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+        "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
+    ];
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
@@ -938,13 +974,21 @@ export const SalesOrderCreatePage: React.FC = () => {
                                         value={placeOfSupply}
                                         onChange={(e) => setPlaceOfSupply(e.target.value)}
                                         sx={fieldStyles}
+                                        SelectProps={{
+                                            displayEmpty: true
+                                        }}
                                     >
-                                        <MenuItem value="">Select Country</MenuItem>
-                                        <MenuItem value="India">India</MenuItem>
+                                        <MenuItem value="">Select  Place of Supply</MenuItem>
+                                        {/* <MenuItem value="India">India</MenuItem>
                                         <MenuItem value="United States">United States</MenuItem>
                                         <MenuItem value="United Kingdom">United Kingdom</MenuItem>
                                         <MenuItem value="Australia">Australia</MenuItem>
-                                        <MenuItem value="Canada">Canada</MenuItem>
+                                        <MenuItem value="Canada">Canada</MenuItem> */}
+                                        {states.map((state) => (
+                                            <MenuItem key={state} value={state}>
+                                                {state}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
                                 </div>
                             </div>
@@ -970,34 +1014,44 @@ export const SalesOrderCreatePage: React.FC = () => {
                             <label className="block text-sm font-medium mb-2">
                                 Billing Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 value={selectedCustomer?.billing_address?.address
                                     ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
                                     : billingAddress}
-                                onChange={(e) => setBillingAddress(e.target.value)}
-                                placeholder="Enter billing address"
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setBillingAddress(e.target.value);
+                                }}
+                                placeholder="Enter billing address (max 500 characters)"
                                 disabled={!!selectedCustomer?.billing_address?.address}
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(billingAddress?.length || 0)}/500
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Shipping Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 value={selectedCustomer?.shipping_address?.address
                                     ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
                                     : shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
-                                placeholder="Enter shipping address"
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setShippingAddress(e.target.value);
+                                }}
+                                placeholder="Enter shipping address (max 500 characters)"
                                 disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(shippingAddress?.length || 0)}/500
+                            </div>
                             {/* <FormControlLabel
                                 control={
                                     <Checkbox
@@ -1039,8 +1093,20 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 onChange={(e) => setSalesOrderDate(e.target.value)}
                                 error={!!errors.salesOrderDate}
                                 helperText={errors.salesOrderDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: salesOrderDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: salesOrderDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(salesOrderDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1055,8 +1121,21 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 onChange={(e) => setExpectedShipmentDate(e.target.value)}
                                 error={!!errors.expectedShipmentDate}
                                 helperText={errors.expectedShipmentDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: expectedShipmentDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{ min: salesOrderDate }}
+                                InputProps={{
+                                    startAdornment: expectedShipmentDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1064,9 +1143,37 @@ export const SalesOrderCreatePage: React.FC = () => {
                             <label className="block text-sm font-medium mb-2">
                                 Payment Terms<span className="text-red-500">*</span>
                             </label>
+
+                            <FormControl fullWidth error={!!errors.paymentTerms}>
+                                <Select
+                                    value={selectedTerm}
+                                    onChange={(e) => setSelectedTerm(e.target.value)}
+                                    renderValue={(val) => {
+                                        const found = filteredTerms.find(term => term.id === val);
+                                        return found ? found.name : val;
+                                    }}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>
+                                        Select payment term
+                                    </MenuItem>
+
+                                    {filteredTerms.map((term) => (
+                                        <MenuItem key={term.id || term.name} value={term.id}>
+                                            {term.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </div>
+                        {/* <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Payment Terms<span className="text-red-500">*</span>
+                            </label>
                             <FormControl fullWidth error={!!errors.paymentTerms}>
                                 {/* <InputLabel>Payment Terms</InputLabel> */}
-                                <Select
+                        {/* <Select
                                     value={selectedTerm}
                                     label="Payment Terms"
                                     onChange={e => setSelectedTerm(e.target.value)}
@@ -1082,9 +1189,10 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     ))}
                                 
                                 </Select>
-                            </FormControl>
-                            {/* Configure Payment Terms Modal */}
-                            {showConfig && (
+                            </FormControl> */}
+
+                        {/* Configure Payment Terms Modal */}
+                        {/* {showConfig && (
                                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
                                     <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
                                         <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
@@ -1157,7 +1265,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </div> */}
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
@@ -1235,6 +1343,24 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                                 updateItem(index, 'name', selectedItem.name);
                                                                 updateItem(index, 'rate', selectedItem.rate);
                                                                 updateItem(index, 'description', selectedItem.description);
+                                                                // TAX HANDLING
+                                                                if (selectedItem.tax_preference === "non_taxable") {
+                                                                    updateItem(index, "item_tax_type", "non_taxable");
+                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "taxable") {
+                                                                    updateItem(index, "item_tax_type", "tax_group");
+                                                                    updateItem(index, "tax_group_id", selectedItem.tax_group_id);
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "out_of_scope") {
+                                                                    updateItem(index, "item_tax_type", "out_of_scope");
+                                                                }
+
+                                                                if (selectedItem.tax_preference === "non_gst_supply") {
+                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
+                                                                }
                                                             }
                                                         }}
                                                         displayEmpty
@@ -1262,8 +1388,16 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 1, step: 1 }}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Quantity cannot be negative');
+                                                            updateItem(index, 'quantity', 0);
+                                                        } else {
+                                                            updateItem(index, 'quantity', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
+                                                    inputProps={{ min: 0, step: 1 }}
                                                     sx={{ width: 80 }}
                                                 />
                                             </td>
@@ -1272,7 +1406,15 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Rate cannot be negative');
+                                                            updateItem(index, 'rate', 0);
+                                                        } else {
+                                                            updateItem(index, 'rate', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
@@ -1398,14 +1540,6 @@ export const SalesOrderCreatePage: React.FC = () => {
                             <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
-                                    <TextField
-                                        type="number"
-                                        size="small"
-                                        value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
-                                        inputProps={{ min: 0, step: 0.01 }}
-                                        sx={{ width: 80 }}
-                                    />
                                     <Select
                                         size="small"
                                         value={discountTypeOnTotal}
@@ -1415,10 +1549,29 @@ export const SalesOrderCreatePage: React.FC = () => {
                                         <MenuItem value="percentage">%</MenuItem>
                                         <MenuItem value="amount">Amount</MenuItem>
                                     </Select>
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={discountOnTotal}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Discount cannot be negative');
+                                                setDiscountOnTotal(0);
+                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                                toast.error('Discount percentage cannot exceed 100%');
+                                                setDiscountOnTotal(100);
+                                            } else {
+                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 0.01 }}
+                                        sx={{ width: 80 }}
+                                    />
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-                             {taxBreakdown.map((tax, index) => (
+                            {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">
                                         {tax.name} ({tax.rate}%)
@@ -1510,26 +1663,36 @@ export const SalesOrderCreatePage: React.FC = () => {
 
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={3}
                         value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        placeholder="Enter any notes for the customer"
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
+                        }}
+                        placeholder="Enter any notes for the customer (max 500 characters)"
+                        maxLength={500}
                     />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(customerNotes?.length || 0)}/500
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={4}
                         value={termsAndConditions}
-                        onChange={(e) => setTermsAndConditions(e.target.value)}
-                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
+                        }}
+                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction (max 500 characters)"
+                        maxLength={500}
                     />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(termsAndConditions?.length || 0)}/500
+                    </div>
                 </Section>
 
                 {/* Attachments */}
@@ -1566,7 +1729,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                 ({(file.size / 1024).toFixed(2)} KB)
                                             </span>
                                         </div>
-                                        <IconButton size="small" onClick={() => removeAttachment(index)}>
+                                        <IconButton size="small" onClick={() => {
+                                            if (window.confirm("Are you sure about deleting this item?")) {
+                                                removeAttachment(index);
+                                            }
+                                        }}>
                                             <Close fontSize="small" />
                                         </IconButton>
                                     </div>
@@ -1672,56 +1839,59 @@ export const SalesOrderCreatePage: React.FC = () => {
 
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
-                    variant="outlined"
-                    onClick={() => navigate('/accounting/sales-order')}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="outlined"
+                    variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',
                         px: 4,
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
                         '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.main',
-                            color: 'white'
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
                         }
                     }}
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    variant="contained"
+                    variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
                         px: 4,
                         '&:hover': {
-                            bgcolor: 'primary.dark'
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
                         },
                         textTransform: 'none'
                     }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => navigate('/accounting/sales-order')}
+                    disabled={isSubmitting}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        borderColor: '#C72030',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            borderColor: '#A01020',
+                            bgcolor: '#f8f1f1',
+                            color: '#A01020'
+                        }
+                    }}
+                >
+                    Cancel
                 </Button>
             </div>
 

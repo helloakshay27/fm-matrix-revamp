@@ -19,6 +19,11 @@ interface Expense {
     reference_number: string;
     description: string;
     amount: number;
+    expense_accounts: Array<{
+        id: number;
+        lock_account_ledger_id: number;
+        lock_account_name: string;
+    }>;
     transaction: {
         voucher_number: string;
         transaction_type: string;
@@ -141,7 +146,7 @@ export const ExpenseListPage: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
-                const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+                const lockAccountId = localStorage.getItem('lock_account_id');
                 const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 
                 const response = await fetch(
@@ -211,10 +216,11 @@ export const ExpenseListPage: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             const apiUrl = baseUrl?.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 
             const response = await fetch(
-                `${apiUrl}/expenses.json`,
+                `${apiUrl}/expenses.json?lock_account_id=${lock_account_id}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -232,9 +238,11 @@ export const ExpenseListPage: React.FC = () => {
                     filteredData = filteredData.filter(expense => {
                         const accountName = getAccountName(expense.account_id);
                         const vendorName = getVendorName(expense.vendor_id);
+                        const expenseAccountName = expense.expense_accounts?.[0]?.lock_account_name || '';
                         return (
                             accountName.toLowerCase().includes(search.toLowerCase()) ||
                             vendorName.toLowerCase().includes(search.toLowerCase()) ||
+                            expenseAccountName.toLowerCase().includes(search.toLowerCase()) ||
                             expense.reference_number.toLowerCase().includes(search.toLowerCase()) ||
                             expense.transaction?.voucher_number.toLowerCase().includes(search.toLowerCase())
                         );
@@ -311,7 +319,7 @@ export const ExpenseListPage: React.FC = () => {
                 >
                     <Eye className="h-4 w-4" />
                 </Button>
-                <Button
+                {/* <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEdit(expense.id)}
@@ -326,7 +334,7 @@ export const ExpenseListPage: React.FC = () => {
                     className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                     <Trash2 className="h-4 w-4" />
-                </Button>
+                </Button> */}
             </div>
         ),
         date: (
@@ -339,7 +347,9 @@ export const ExpenseListPage: React.FC = () => {
             </span>
         ),
         expense_account: (
-            <div className="font-medium text-blue-600">{getAccountName(expense.account_id)}</div>
+            <div className="font-medium text-blue-600">
+                {expense.expense_accounts?.[0]?.lock_account_name || getAccountName(expense.account_id)}
+            </div>
         ),
         reference_number: (
             <div className="text-sm">
