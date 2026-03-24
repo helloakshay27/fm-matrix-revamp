@@ -1649,7 +1649,17 @@ export const ProjectTaskDetails = () => {
           </>
         ) : (
           <>
-            <h2 className="text-[15px] p-3 px-0">
+            <h2
+              className="cursor-pointer hover:underline text-[15px] p-3 px-0"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied to clipboard!");
+                } catch (err) {
+                  console.error("Failed to copy:", err);
+                }
+              }}
+            >
               <span className="mr-3 text-[#C72030]">Task-{taskDetails.id}</span>
               <span>{taskDetails.title}</span>
             </h2>

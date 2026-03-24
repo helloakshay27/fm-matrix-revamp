@@ -17,7 +17,7 @@ import {
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { createProjectTask, editProjectTask, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { createProjectTask, editProjectTask, resetUserAvailability, updateTaskStatus } from "@/store/slices/projectTasksSlice";
 import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
 import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
@@ -975,6 +975,7 @@ const ProjectTasksPage = () => {
 
     const handleCloseModal = () => {
         setOpenTaskModal(false);
+        dispatch(resetUserAvailability());
     };
 
     const handlePageChange = async (page: number) => {
