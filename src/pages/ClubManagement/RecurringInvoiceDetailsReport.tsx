@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { format } from "date-fns";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -52,11 +53,13 @@ const columns: ColumnConfig[] = [
 
 const formatDate = (value?: string) => {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  try {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return value;
+    return format(date, "dd/MM/yyyy");
+  } catch (e) {
+    return value;
+  }
 };
 
 const formatCurrency = (value: number) => {
