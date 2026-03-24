@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
 import TextField from "@mui/material/TextField";
-import { Scale, ArrowUpDown, ChevronRight } from "lucide-react";
+import { Scale, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 export type TrialBalanceRowKind =
   | "section"
@@ -28,24 +30,12 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 2,
 });
 
-const ThSort = ({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-}) => (
-  <th
-    className={`border border-gray-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#1A1A1A] ${
-      align === "right" ? "text-right" : "text-left"
-    }`}
-  >
-    <span className="inline-flex items-center gap-1.5">
-      {children}
-      <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-[#6b7280]" aria-hidden />
-    </span>
-  </th>
-);
+const columns: ColumnConfig[] = [
+  { key: "label", label: "Account", sortable: true, defaultVisible: true },
+  { key: "accountCode", label: "Account Code", sortable: true, defaultVisible: true },
+  { key: "netDebit", label: "Net Debit", sortable: true, defaultVisible: true },
+  { key: "netCredit", label: "Net Credit", sortable: true, defaultVisible: true },
+];
 
 /** Demo structure aligned with reference UI — replace with API mapping. */
 const buildRows = (): TrialBalanceRow[] => [
@@ -440,120 +430,6 @@ const TrialBalance: React.FC = () => {
     }
   };
 
-  const renderRow = (row: TrialBalanceRow) => {
-    const pad = 8 + row.indent * 16;
-    const debitStr = formatCurrency(row.netDebit);
-    const creditStr = formatCurrency(row.netCredit);
-
-    if (row.kind === "section") {
-      return (
-        <tr key={row.id} className="bg-white">
-          <td
-            colSpan={4}
-            className="border border-gray-300 px-4 py-2.5 text-left text-sm font-bold text-[#111827]"
-            style={{ paddingLeft: pad }}
-          >
-            {row.label}
-          </td>
-        </tr>
-      );
-    }
-
-    if (row.kind === "subgroup") {
-      return (
-        <tr key={row.id} className="bg-white">
-          <td
-            className="border border-gray-300 px-4 py-2.5 text-left text-sm font-semibold text-[#111827]"
-            style={{ paddingLeft: pad }}
-          >
-            <span className="inline-flex items-center gap-1 text-blue-600">
-              <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
-              {row.label}
-            </span>
-          </td>
-          <td className="border border-gray-300 px-4 py-2.5" />
-          <td className="border border-gray-300 px-4 py-2.5 text-right text-sm text-[#111827]">
-            {debitStr}
-          </td>
-          <td className="border border-gray-300 px-4 py-2.5 text-right text-sm text-[#111827]">
-            {creditStr}
-          </td>
-        </tr>
-      );
-    }
-
-    if (row.kind === "subtotal") {
-      return (
-        <tr key={row.id} className="bg-gray-100">
-          <td
-            className="border border-gray-300 px-4 py-2.5 text-left text-sm font-bold text-[#111827]"
-            style={{ paddingLeft: pad }}
-          >
-            {row.label}
-          </td>
-          <td className="border border-gray-300 px-4 py-2.5 text-center text-sm text-[#4a4a4a]">
-            {row.accountCode || ""}
-          </td>
-          <td className="border border-gray-300 px-4 py-2.5 text-right text-sm font-bold text-[#111827]">
-            {debitStr}
-          </td>
-          <td className="border border-gray-300 px-4 py-2.5 text-right text-sm font-bold text-[#111827]">
-            {creditStr}
-          </td>
-        </tr>
-      );
-    }
-
-    if (row.kind === "grand_total") {
-      return (
-        <tr key={row.id} className="bg-[#E5E0D3] font-bold">
-          <td
-            className="border border-gray-300 px-4 py-3 text-left text-sm text-[#111827]"
-            style={{ paddingLeft: pad }}
-          >
-            {row.label}
-          </td>
-          <td className="border border-gray-300 px-4 py-3" />
-          <td className="border border-gray-300 px-4 py-3 text-right text-sm text-[#111827]">
-            {debitStr}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-right text-sm text-[#111827]">
-            {creditStr}
-          </td>
-        </tr>
-      );
-    }
-
-    return (
-      <tr key={row.id} className="hover:bg-gray-50">
-        <td
-          className="border border-gray-300 px-4 py-2.5 text-left text-sm"
-          style={{ paddingLeft: pad }}
-        >
-          {row.ledgerId != null ? (
-            <button
-              type="button"
-              onClick={() => openLedger(row.ledgerId)}
-              className="text-left text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              {row.label}
-            </button>
-          ) : (
-            <span className="text-[#111827]">{row.label}</span>
-          )}
-        </td>
-        <td className="border border-gray-300 px-4 py-2.5 text-center text-sm text-[#4a4a4a]">
-          {row.accountCode || ""}
-        </td>
-        <td className="border border-gray-300 px-4 py-2.5 text-right text-sm text-[#111827]">
-          {debitStr}
-        </td>
-        <td className="border border-gray-300 px-4 py-2.5 text-right text-sm text-[#111827]">
-          {creditStr}
-        </td>
-      </tr>
-    );
-  };
 
   return (
     <div
@@ -613,19 +489,114 @@ const TrialBalance: React.FC = () => {
         </div>
 
         <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-[#E5E0D3]">
-                  <ThSort align="left">Account</ThSort>
-                  <ThSort align="left">Account Code</ThSort>
-                  <ThSort align="right">Net Debit</ThSort>
-                  <ThSort align="right">Net Credit</ThSort>
-                </tr>
-              </thead>
-              <tbody>{rows.map((row) => renderRow(row))}</tbody>
-            </table>
-          </div>
+          <EnhancedTaskTable
+            data={rows}
+            columns={columns}
+            storageKey="trial-balance"
+            enableSearch={true}
+            enableExport={true}
+            exportFileName="trial-balance"
+            searchPlaceholder="Search accounts..."
+            emptyMessage="No data available for selected date range."
+            renderCell={(item, columnKey) => {
+              const pad = 8 + (item.indent || 0) * 16;
+              
+              switch (columnKey) {
+                case "label":
+                  if (item.kind === "section") {
+                    return (
+                      <div
+                        className="text-sm font-bold text-[#111827]"
+                        style={{ paddingLeft: pad }}
+                      >
+                        {item.label}
+                      </div>
+                    );
+                  }
+                  if (item.kind === "subgroup") {
+                    return (
+                      <div
+                        className="text-sm font-semibold text-[#111827]"
+                        style={{ paddingLeft: pad }}
+                      >
+                        <span className="inline-flex items-center gap-1 text-blue-600">
+                          <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+                          {item.label}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div
+                      className="text-sm"
+                      style={{ paddingLeft: pad }}
+                    >
+                      {item.ledgerId != null ? (
+                        <button
+                          type="button"
+                          onClick={() => openLedger(item.ledgerId)}
+                          className="text-left text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          {item.label}
+                        </button>
+                      ) : (
+                        <span className="text-[#111827]">{item.label}</span>
+                      )}
+                    </div>
+                  );
+                case "accountCode":
+                  if (item.kind === "section" || item.kind === "subgroup") {
+                    return <div />;
+                  }
+                  return (
+                    <div className="text-center text-sm text-[#4a4a4a]">
+                      {item.accountCode || ""}
+                    </div>
+                  );
+                case "netDebit":
+                  return (
+                    <div
+                      className={`text-right text-sm ${
+                        item.kind === "subtotal" || item.kind === "grand_total"
+                          ? "font-bold text-[#111827]"
+                          : "text-[#111827]"
+                      }`}
+                    >
+                      {formatCurrency(item.netDebit)}
+                    </div>
+                  );
+                case "netCredit":
+                  return (
+                    <div
+                      className={`text-right text-sm ${
+                        item.kind === "subtotal" || item.kind === "grand_total"
+                          ? "font-bold text-[#111827]"
+                          : "text-[#111827]"
+                      }`}
+                    >
+                      {formatCurrency(item.netCredit)}
+                    </div>
+                  );
+                default:
+                  return item[columnKey];
+              }
+            }}
+            getRowClassName={(item) => {
+              if (item.kind === "section") {
+                return "bg-white";
+              }
+              if (item.kind === "subtotal") {
+                return "bg-gray-100";
+              }
+              if (item.kind === "grand_total") {
+                return "bg-[#E5E0D3] font-bold";
+              }
+              return "";
+            }}
+            headerCellClassName="bg-[#E5E0D3] text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]"
+            cellClassName="border border-gray-300 px-4 py-2.5"
+            tableWrapperClassName="border border-gray-300"
+          />
         </div>
       </div>
     </div>
