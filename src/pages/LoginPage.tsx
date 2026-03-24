@@ -387,10 +387,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       sessionStorage.setItem("userId", response.id?.toString() || "");
       sessionStorage.setItem("userType", response.user_type?.toString() || "");
 
-      const from =
-        (location.state as { from?: Location })?.from?.pathname +
-          (location.state as { from?: Location })?.from?.search ||
-        "/maintenance/asset";
+      // const from =
+      //   (location.state as { from?: Location })?.from?.pathname +
+      //     (location.state as { from?: Location })?.from?.search ||
+      //   "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
