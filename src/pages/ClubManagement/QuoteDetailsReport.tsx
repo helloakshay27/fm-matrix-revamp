@@ -3,44 +3,29 @@ import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
-interface RawQuoteItem {
-  id?: number;
-  status?: string;
-  quote_date?: string;
-  expiry_date?: string;
-  quote_number?: string;
-  reference_number?: string;
-  customer_name?: string;
-  invoice_number?: string;
-  project_name?: string;
-  quote_amount?: number;
-}
-
 type QuoteRow = {
   id: string;
+  quoteId: string | number;
   status: string;
   quoteDate: string;
   expiryDate: string;
   quoteNo: string;
   referenceNo: string;
   customerName: string;
-  invoiceNo: string;
-  projectName: string;
   quoteAmount: number;
 };
 
-// ✅ Default date range
 const getCurrentMonthRange = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return {
-    fromDate: firstDay.toISOString().split("T")[0],
-    toDate: lastDay.toISOString().split("T")[0],
-  };
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
 };
 
 // ✅ Format DD-MM-YYYY
@@ -72,18 +57,17 @@ const statusColorMap: Record<string, string> = {
 
 // ✅ Columns
 const columns: ColumnConfig[] = [
-  { key: "status", label: "Status", sortable: true },
-  { key: "quoteDate", label: "Quote Date", sortable: true },
-  { key: "expiryDate", label: "Expiry Date", sortable: true },
-  { key: "quoteNo", label: "Quote#", sortable: true },
-  { key: "referenceNo", label: "Reference#", sortable: true },
-  { key: "customerName", label: "Customer Name", sortable: true },
-  { key: "invoiceNo", label: "Invoice#", sortable: true },
-  { key: "projectName", label: "Project Name", sortable: true },
-  { key: "quoteAmount", label: "Quote Amount", sortable: true },
+  { key: "status", label: "Status", sortable: true, hideable: false, draggable: true },
+  { key: "quoteDate", label: "Quote Date", sortable: true, hideable: false, draggable: true },
+  { key: "expiryDate", label: "Expiry Date", sortable: true, hideable: false, draggable: true },
+  { key: "quoteNo", label: "Quote#", sortable: true, hideable: false, draggable: true },
+  { key: "referenceNo", label: "Reference#", sortable: true, hideable: false, draggable: true },
+  { key: "customerName", label: "Customer Name", sortable: true, hideable: false, draggable: true },
+  { key: "quoteAmount", label: "Quote Amount", sortable: true, hideable: false, draggable: true },
 ];
 
 const QuoteDetailsReport: React.FC = () => {
+  const navigate = useNavigate();
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [rows, setRows] = useState<QuoteRow[]>([]);
@@ -93,45 +77,36 @@ const QuoteDetailsReport: React.FC = () => {
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
 
-  // ✅ API CALL
-  const fetchQuoteDetails = useCallback(async () => {
+  const fetchQuoteDetails = useCallback(async (fromDate: string, toDate: string) => {
     setLoading(true);
     try {
       const res = await axios.get(
         `https://${baseUrl}/lock_account_quotes.json`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           params: {
-            lock_account_id: lock_account_id,
-            from_date: filters.fromDate,
-            to_date: filters.toDate,
+            lock_account_id,
+            "q[date_gteq]": fromDate,
+            "q[date_lteq]": toDate,
           },
         }
       );
 
       const data = res?.data || [];
+      const list: any[] = Array.isArray(data) ? data : data.quote_details || [];
 
-      const mapped: QuoteRow[] = (
-        Array.isArray(data) ? data : data.quote_details || []
-      ).map((item: RawQuoteItem, index: number) => ({
-        // ✅ UNIQUE KEY FIX
-        id:
-          item.id?.toString() ||
-          item.quote_number ||
-          item.reference_number ||
-          `row-${index}`,
-
-        status: item.status || "",
+      const mapped: QuoteRow[] = list.map((item: any, index: number) => ({
+        id: item.id ? String(item.id) : `row-${index}`,
+        quoteId: item.id || "",
+        status: item.status
+          ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
+          : "--",
         quoteDate: item.date || "",
         expiryDate: item.expiry_date || "",
-        quoteNo: item.quote_number || "",
-        referenceNo: item.reference_number || "",
-        customerName: item.customer_name || "",
-        invoiceNo: item.invoice_number || "",
-        projectName: item.project_name || "",
-        quoteAmount: item.total_amount || 0,
+        quoteNo: item.quote_number || "--",
+        referenceNo: item.reference_number || "--",
+        customerName: item.customer_name || "--",
+        quoteAmount: Number(item.total_amount || 0),
       }));
 
       setRows(mapped);
@@ -141,65 +116,61 @@ const QuoteDetailsReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [baseUrl, lock_account_id, token, filters]);
+  }, [baseUrl, lock_account_id, token]);
 
   useEffect(() => {
-    fetchQuoteDetails();
-  }, [fetchQuoteDetails]);
+    fetchQuoteDetails(defaultRange.fromDate, defaultRange.toDate);
+  }, [defaultRange.fromDate, defaultRange.toDate, fetchQuoteDetails]);
 
-  // ✅ TOTAL CALCULATION
-  const totals = useMemo(
-    () =>
-      rows.reduce(
-        (acc, row) => ({
-          quoteAmount: acc.quoteAmount + row.quoteAmount,
-        }),
-        { quoteAmount: 0 }
-      ),
-    [rows]
-  );
+  const totalAmount = useMemo(() => rows.reduce((acc, r) => acc + r.quoteAmount, 0), [rows]);
 
-  // ✅ TOTAL ROW
-  const totalRow: QuoteRow = {
-    id: "total-row",
-    status: "",
-    quoteDate: "",
-    expiryDate: "",
-    quoteNo: "",
-    referenceNo: "",
-    customerName: "",
-    invoiceNo: "",
-    projectName: "",
-    quoteAmount: totals.quoteAmount,
-  };
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: "__total__",
+        quoteId: "",
+        status: "__total__",
+        quoteDate: "",
+        expiryDate: "",
+        quoteNo: "",
+        referenceNo: "",
+        customerName: "",
+        quoteAmount: totalAmount,
+      },
+    ];
+  }, [rows, totalAmount]);
 
-  // ✅ RENDER ROW
   const renderRow = (row: QuoteRow) => {
-    const isTotal = row.id === "total-row";
+    const isTotal = row.id === "__total__";
 
     return {
       status: isTotal ? (
-        <span className="font-semibold text-black">Total</span>
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
         <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            statusColorMap[row.status] || "bg-gray-100"
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            statusColorMap[row.status] || "bg-gray-100 text-gray-700"
           }`}
         >
           {row.status}
         </span>
       ),
-
-      quoteDate: <span>{isTotal ? "" : formatDisplayDate(row.quoteDate)}</span>,
-      expiryDate: <span>{isTotal ? "" : formatDisplayDate(row.expiryDate)}</span>,
-      quoteNo: <span>{isTotal ? "" : row.quoteNo}</span>,
-      referenceNo: <span>{isTotal ? "" : row.referenceNo}</span>,
-      customerName: <span>{isTotal ? "" : row.customerName}</span>,
-      invoiceNo: <span>{isTotal ? "" : row.invoiceNo}</span>,
-      projectName: <span>{isTotal ? "" : row.projectName}</span>,
-
+      quoteDate: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.quoteDate)}</span>,
+      expiryDate: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.expiryDate)}</span>,
+      quoteNo: isTotal ? <span /> : (
+        <button
+          onClick={() => navigate(`/accounting/quotes/details/${row.quoteId}`)}
+          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+        >
+          {row.quoteNo}
+        </button>
+      ),
+      referenceNo: <span className="text-sm text-gray-600">{isTotal ? "" : row.referenceNo}</span>,
+      customerName: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.customerName}</span>,
       quoteAmount: (
-        <span className="font-semibold text-blue-700">
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
           {formatAmount(row.quoteAmount)}
         </span>
       ),
@@ -247,7 +218,7 @@ const QuoteDetailsReport: React.FC = () => {
           />
 
           <Button
-            onClick={fetchQuoteDetails}
+            onClick={() => fetchQuoteDetails(filters.fromDate, filters.toDate)}
             className="bg-[#C72030] hover:bg-[#A01020] text-white h-[40px]"
           >
             View
@@ -267,7 +238,7 @@ const QuoteDetailsReport: React.FC = () => {
 
         <div className="p-4">
           <EnhancedTaskTable
-            data={[...rows, totalRow]} // ✅ include total row
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="quote-details"

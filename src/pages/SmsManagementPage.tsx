@@ -47,6 +47,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { TextField } from "@mui/material";
 import { string } from "zod";
+import { API_CONFIG } from "@/config/apiConfig";
 
 interface SmsTemplate {
   id: number;
@@ -72,6 +73,8 @@ const SmsManagementPage: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewData, setViewData] = useState<SmsTemplate | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orgsList, setOrgsList] = useState<any[]>([]);
   const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
@@ -110,7 +113,7 @@ const SmsManagementPage: React.FC = () => {
   };
 
   const clearFilters = () => {
-    setFilters({
+    const emptyFilters = {
       organization_id_eq: "",
       module_name_eq: "",
       function_name_cont: "",
@@ -123,36 +126,74 @@ const SmsManagementPage: React.FC = () => {
       active_eq: "",
       created_at_gteq: "",
       updated_at_lteq: "",
-    });
+    };
+    setFilters(emptyFilters);
+    fetchSmsTemplates(search, emptyFilters);
+    setIsFilterOpen(false);
   };
 
   const applyFilters = () => {
-    console.warn("Applying filters:", filters);
     setIsFilterOpen(false);
-    // Add logic here to refetch data with applied filters if needed
+    fetchSmsTemplates(search, filters);
   };
 
-  const BASE_URL = "https://live-api.gophygital.work";
-  const TOKEN =
-    "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5MjUwMX0.LkKKfx3ZkV8Fs4LumP6atRBgPVig9oCqTrN0kIa9cQk";
+  const BASE_URL = API_CONFIG.BASE_URL;
+  const TOKEN = API_CONFIG.TOKEN || localStorage.getItem("token");
 
-  const fetchSmsTemplates = async (searchTerm?: string) => {
+  // Axios config with standard authorization headers
+  const getAxiosConfig = () => ({
+    headers: {
+      "Content-Type": "application/json",
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {})
+    }
+  });
+
+  const fetchSmsTemplates = async (
+    searchTerm?: string,
+    overrideFilters?: typeof filters
+  ) => {
     const isFetchingSearch = !!searchTerm?.trim();
     if (isFetchingSearch) {
       setIsSearching(true);
     } else {
       setIsLoading(true);
     }
+
+    const activeFilters = overrideFilters || filters;
+
     try {
-      const url = searchTerm?.trim()
-        ? `${BASE_URL}/sms_templates.json?q[combined_search_eq]=${encodeURIComponent(searchTerm)}&token=${TOKEN}`
-        : `${BASE_URL}/sms_templates.json?token=${TOKEN}`;
-      const response = await axios.get(url);
-      const data: SmsTemplate[] = response.data?.data || [];
+      const params = new URLSearchParams();
+      if (TOKEN) params.append("token", TOKEN);
+
+      if (searchTerm?.trim()) {
+        params.append("q[combined_search_eq]", searchTerm.trim());
+      }
+
+      Object.entries(activeFilters).forEach(([key, value]) => {
+        if (value) {
+          if (value === "true") {
+            params.append(`q[${key}]`, "1");
+          } else if (value === "false") {
+            params.append(`q[${key}]`, "0");
+          } else {
+            params.append(`q[${key}]`, value);
+          }
+        }
+      });
+
+      const url = `${BASE_URL}/sms_templates.json?${params.toString()}`;
+      
+      console.log("Fetching SMS Templates from:", url);
+      const response = await axios.get(url, getAxiosConfig());
+      console.log("SMS Templates Response:", response.data);
+      
+      const payload = response.data;
+      const data: SmsTemplate[] = payload?.data || payload?.sms_templates || [];
+      
       setSmsTemplates(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching SMS templates:", error);
-      toast.error("Failed to fetch SMS templates");
+      toast.error(`Failed to fetch SMS templates: ${error?.response?.status || ""} ${error?.message || ""}`);
     } finally {
       setIsSearching(false);
       setIsLoading(false);
@@ -171,7 +212,8 @@ const SmsManagementPage: React.FC = () => {
       setIsLoadingOrgs(true);
       try {
         const response = await axios.get(
-          "https://live-api.gophygital.work/organizations.json?token=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5MjUwMX0.LkKKfx3ZkV8Fs4LumP6atRBgPVig9oCqTrN0kIa9cQk"
+          `${BASE_URL}/organizations.json?token=${TOKEN}`,
+          getAxiosConfig()
         );
         setOrgsList(response.data.organizations || []);
       } catch (error) {
@@ -197,7 +239,14 @@ const SmsManagementPage: React.FC = () => {
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
+    const name = e.target.name;
+    let value = e.target.value;
+    
+    // Disallow spaces in module_name and function_name
+    if (name === "module_name" || name === "function_name") {
+      value = value.replace(/\s+/g, "");
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -250,14 +299,16 @@ const SmsManagementPage: React.FC = () => {
         },
       };
 
-      const url = editingId 
+      const url = editingId
         ? `${BASE_URL}/sms_templates/${editingId}.json?token=${TOKEN}`
         : `${BASE_URL}/sms_templates.json?token=${TOKEN}`;
 
+      const config = getAxiosConfig();
+
       if (editingId) {
-        await axios.put(url, payload);
+        await axios.put(url, payload, config);
       } else {
-        await axios.post(url, payload);
+        await axios.post(url, payload, config);
       }
 
       toast.success(
@@ -265,10 +316,10 @@ const SmsManagementPage: React.FC = () => {
           ? "SMS Template updated successfully"
           : "SMS Template created successfully"
       );
-      
+
       // Refresh the list to show the new/updated template
       fetchSmsTemplates();
-      
+
       setIsModalOpen(false);
       setEditingId(null);
       // Reset form
@@ -286,7 +337,11 @@ const SmsManagementPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Error saving template:", error);
-      toast.error(editingId ? "Failed to update SMS Template" : "Failed to create SMS Template");
+      toast.error(
+        editingId
+          ? "Failed to update SMS Template"
+          : "Failed to create SMS Template"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -333,6 +388,7 @@ const SmsManagementPage: React.FC = () => {
     { key: "is_default", label: "Is Default", sortable: true, draggable: true },
     { key: "active", label: "Active", sortable: true, draggable: true },
     { key: "created_at", label: "Created At", sortable: true, draggable: true },
+    { key: "updated_at", label: "Updated At", sortable: true, draggable: true },
   ];
 
   const renderActions = (row: SmsTemplate) => (
@@ -340,31 +396,37 @@ const SmsManagementPage: React.FC = () => {
       <button
         className="text-gray-400 hover:text-gray-900 transition-colors"
         title="View"
+        onClick={() => {
+          setViewData(row);
+          setIsViewOpen(true);
+        }}
       >
         <Eye className="w-3.5 h-3.5" />
       </button>
-      <button
-        className="text-black hover:text-gray-700 transition-colors"
-        title="Edit"
-        onClick={() => {
-          setEditingId(row.id);
-          setFormData({
-            organization_id: row.organization_id?.toString() ?? "",
-            module_name: row.module_name,
-            function_name: row.function_name,
-            priority: row.priority,
-            service_provider: row.service_provider,
-            template_name: row.template_name,
-            dlt_template_id: row.dlt_template_id,
-            template_url: row.template_url,
-            is_default: row.is_default,
-            active: row.active,
-          });
-          setIsModalOpen(true);
-        }}
-      >
-        <Edit className="w-3.5 h-3.5" />
-      </button>
+      {!!row.organization_id && (
+        <button
+          className="text-black hover:text-gray-700 transition-colors"
+          title="Edit"
+          onClick={() => {
+            setEditingId(row.id);
+            setFormData({
+              organization_id: row.organization_id?.toString() ?? "",
+              module_name: row.module_name,
+              function_name: row.function_name,
+              priority: row.priority,
+              service_provider: row.service_provider,
+              template_name: row.template_name,
+              dlt_template_id: row.dlt_template_id,
+              template_url: row.template_url,
+              is_default: row.is_default,
+              active: row.active,
+            });
+            setIsModalOpen(true);
+          }}
+        >
+          <Edit className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 
@@ -442,6 +504,7 @@ const SmsManagementPage: React.FC = () => {
       case "function_name":
       case "service_provider":
       case "created_at":
+      case "updated_at":
         return (
           <span className="text-[#4b5563] font-medium">
             {row[rowKey] as string}
@@ -693,7 +756,6 @@ const SmsManagementPage: React.FC = () => {
                 />
               </div>
 
-
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">
                   Created At
@@ -763,45 +825,48 @@ const SmsManagementPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="p-8 space-y-6">
             <div className="flex items-center gap-12 pb-4 border-b border-slate-50">
-              <div className="flex items-center space-x-3">
-                <Switch
-                  id="is_default"
-                  checked={formData.is_default}
-                  onCheckedChange={(checked) =>
-                    handleCheckboxChange("is_default", !!checked)
-                  }
-                />
-                <Label
-                  htmlFor="is_default"
-                  className="text-sm font-semibold text-slate-700 cursor-pointer"
-                >
-                  Is Default
-                </Label>
-              </div>
               {!editingId && (
                 <div className="flex items-center space-x-3">
                   <Switch
-                    id="active"
-                    checked={formData.active}
+                    id="is_default"
+                    checked={formData.is_default}
                     onCheckedChange={(checked) =>
-                      handleCheckboxChange("active", !!checked)
+                      handleCheckboxChange("is_default", !!checked)
                     }
                   />
                   <Label
-                    htmlFor="active"
+                    htmlFor="is_default"
                     className="text-sm font-semibold text-slate-700 cursor-pointer"
                   >
-                    Active Status
+                    Is Default
                   </Label>
                 </div>
               )}
+              <div className="flex items-center space-x-3">
+                <Switch
+                  id="active"
+                  checked={formData.active}
+                  onCheckedChange={(checked) =>
+                    handleCheckboxChange("active", !!checked)
+                  }
+                />
+                <Label
+                  htmlFor="active"
+                  className="text-sm font-semibold text-slate-700 cursor-pointer"
+                >
+                  Active Status
+                </Label>
+              </div>
             </div>
 
             {editingId ? (
               <div className="grid grid-cols-2 gap-x-6 gap-y-5">
-                <div className={`space-y-1 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none" : ""}`}>
+                <div
+                  className={`space-y-1 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none" : ""}`}
+                >
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Organization <span className="text-red-500 font-bold">*</span>
+                    Organization{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.organization_id
@@ -814,7 +879,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Module Name <span className="text-red-500 font-bold">*</span>
+                    Module Name{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.module_name || "—"}
@@ -823,7 +889,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Function Name <span className="text-red-500 font-bold">*</span>
+                    Function Name{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.function_name || "—"}
@@ -841,7 +908,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Service Provider <span className="text-red-500 font-bold">*</span>
+                    Service Provider{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.service_provider || "—"}
@@ -850,7 +918,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Template Name <span className="text-red-500 font-bold">*</span>
+                    Template Name{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.template_name || "—"}
@@ -859,7 +928,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1 col-span-2">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    DLT Template ID <span className="text-red-500 font-bold">*</span>
+                    DLT Template ID{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.dlt_template_id || "—"}
@@ -868,7 +938,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1 col-span-2">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Template URL <span className="text-red-500 font-bold">*</span>
+                    Template URL{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[60px] break-all whitespace-pre-wrap">
                     {formData.template_url || "—"}
@@ -877,7 +948,9 @@ const SmsManagementPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                <div className={`space-y-2 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none grayscale-[0.5]" : ""}`}>
+                <div
+                  className={`space-y-2 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none grayscale-[0.5]" : ""}`}
+                >
                   <EnhancedSelect
                     label={
                       <span>
@@ -974,7 +1047,7 @@ const SmsManagementPage: React.FC = () => {
                   <Input
                     id="service_provider"
                     name="service_provider"
-                    placeholder="e.g. Immence"
+                    placeholder="e.g. Immense"
                     value={formData.service_provider}
                     onChange={handleInputChange}
                     className="h-11 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
@@ -1062,6 +1135,127 @@ const SmsManagementPage: React.FC = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Modal */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-0 gap-0 border-none shadow-2xl rounded-xl bg-white">
+          <DialogHeader className="p-6 bg-[#f8fafc] border-b border-slate-100 rounded-t-xl sticky top-0 z-10 hidden">
+            <DialogTitle>View SMS Template</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 bg-[#f8fafc] border-b border-slate-100 rounded-t-xl sticky top-0 z-10 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#C72030] bg-opacity-10 rounded-lg">
+                <Eye className="w-5 h-5 text-[#C72030]" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">
+                View SMS Template
+              </h2>
+            </div>
+            <button
+              onClick={() => setIsViewOpen(false)}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {viewData && (
+            <div className="p-8 space-y-6">
+              <div className="flex items-center gap-12 pb-4 border-b border-slate-50">
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Is Default</span>
+                  <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.is_default ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"}`}>{viewData.is_default ? "Yes" : "No"}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Active Status</span>
+                  <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.active ? "bg-[#ecfdf5] text-[#10b981]" : "bg-[#fef2f2] text-[#ef4444]"}`}>{viewData.active ? "Active" : "Inactive"}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Organization</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.organization_name || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Module Name</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.module_name || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Function Name</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.function_name || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center capitalize">
+                    {viewData.priority || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Service Provider</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.service_provider || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Template Name</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.template_name || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">DLT Template ID</p>
+                  <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.dlt_template_id || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Template URL</p>
+                  <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[60px] break-all whitespace-pre-wrap">
+                    {viewData.template_url || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Created At</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.created_at || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Updated At</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.updated_at || "—"}
+                  </p>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Created By</p>
+                  <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
+                    {viewData.created_by || "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="p-6 border-t border-slate-100 bg-white sticky bottom-0">
+             <div className="flex w-full justify-end">
+               <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsViewOpen(false)}
+                  className="px-8 h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-all"
+                >
+                  Close
+                </Button>
+             </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -1156,7 +1156,7 @@ import { GSTPayableDetails } from "./pages/ClubManagement/GSTPayableDetails";
 import GstReceivableReport from "./pages/ClubManagement/GSTReceivableReport";
 import { GSTReceivableDetails } from "./pages/ClubManagement/GSTReceivableDetails";
 import { TaxSummaryDetails } from "./pages/ClubManagement/TaxSummaryDetails";
-import TrialBalanceReport from "./pages/ClubManagement/TrialBalanceReport";
+import TrialBalance from "./pages/ClubManagement/TrialBalance";
 import { TrialBalanceDetails } from "./pages/ClubManagement/TrialBalanceDetails";
 import { RoleDashboardVi } from "./pages/settings/RoleDashboardVi";
 import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
@@ -1167,6 +1167,10 @@ import SummaryOfInwardSupplies from "./pages/ClubManagement/SummaryOfInwardSuppl
 import PMT06SelfAssessmentBasis from "./pages/ClubManagement/PMT06SelfAssessmentBasis";
 import SummaryOfOutwardSuppliesGSTR1 from "./pages/ClubManagement/SummaryOfOutwardSuppliesGSTR1";
 import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishingFacilityIFF";
+import DayBook from "./pages/ClubManagement/DayBook";
+import JournalReport from "./pages/ClubManagement/JournalReport";
+import GeneralLedger from "./pages/ClubManagement/GeneralLedger";
+import DetailedGeneralLedger from "./pages/ClubManagement/DetailedGeneralLedger";
 import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
 import TCSSummaryForm27EQ from "./pages/ClubManagement/TCSSummaryForm27EQ";
 import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedReport";
@@ -2795,6 +2799,22 @@ function App() {
                             element={<InvoiceFurnishingFacilityIFF />}
                           />
                           <Route
+                            path="/accounting/reports/day-book"
+                            element={<DayBook />}
+                          />
+                          <Route
+                            path="/accounting/reports/journal-report"
+                            element={<JournalReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/general-ledger"
+                            element={<GeneralLedger />}
+                          />
+                          <Route
+                            path="/accounting/reports/detailed-general-ledger"
+                            element={<DetailedGeneralLedger />}
+                          />
+                          <Route
                             path="/accounting/reports/self-invoice-summary"
                             element={<SelfInvoiceSummary />}
                           />
@@ -2811,7 +2831,7 @@ function App() {
                           />
                           <Route
                             path="/accounting/reports/trial-balance"
-                            element={<TrialBalanceReport />}
+                            element={<TrialBalance />}
                           />
 
                           <Route
