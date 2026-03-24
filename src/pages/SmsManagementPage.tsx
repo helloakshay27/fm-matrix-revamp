@@ -47,6 +47,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { TextField } from "@mui/material";
 import { string } from "zod";
+import { API_CONFIG } from "@/config/apiConfig";
 
 interface SmsTemplate {
   id: number;
@@ -132,9 +133,8 @@ const SmsManagementPage: React.FC = () => {
     // Add logic here to refetch data with applied filters if needed
   };
 
-  const BASE_URL = "https://live-api.gophygital.work";
-  const TOKEN =
-    "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5MjUwMX0.LkKKfx3ZkV8Fs4LumP6atRBgPVig9oCqTrN0kIa9cQk";
+  const BASE_URL = API_CONFIG.BASE_URL || "https://live-api.gophygital.work";
+  const TOKEN = API_CONFIG.TOKEN || localStorage.getItem("token");
 
   const fetchSmsTemplates = async (searchTerm?: string) => {
     const isFetchingSearch = !!searchTerm?.trim();
@@ -171,7 +171,7 @@ const SmsManagementPage: React.FC = () => {
       setIsLoadingOrgs(true);
       try {
         const response = await axios.get(
-          "https://live-api.gophygital.work/organizations.json?token=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5MjUwMX0.LkKKfx3ZkV8Fs4LumP6atRBgPVig9oCqTrN0kIa9cQk"
+          `${BASE_URL}/organizations.json?token=${TOKEN}`
         );
         setOrgsList(response.data.organizations || []);
       } catch (error) {
