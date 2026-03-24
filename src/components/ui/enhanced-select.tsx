@@ -146,7 +146,7 @@ export const SearchableSelect: React.FC<
   );
 
   return (
-    <div className={`flex flex-col w-full`} style={sx as any}>
+    <div className={`flex flex-col w-full`} style={sx as React.CSSProperties}>
       {label && (
         <div className="mb-2 text-sm font-semibold text-slate-700">{label}</div>
       )}
