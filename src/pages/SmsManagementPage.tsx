@@ -88,7 +88,7 @@ const SmsManagementPage: React.FC = () => {
     template_name: "",
     dlt_template_id: "",
     template_url: "",
-    is_default: false,
+    is_default: true,
     active: true,
   });
 
@@ -332,7 +332,7 @@ const SmsManagementPage: React.FC = () => {
         template_name: "",
         dlt_template_id: "",
         template_url: "",
-        is_default: false,
+        is_default: true,
         active: true,
       });
     } catch (error) {
@@ -547,7 +547,7 @@ const SmsManagementPage: React.FC = () => {
                   template_name: "",
                   dlt_template_id: "",
                   template_url: "",
-                  is_default: false,
+                  is_default: true,
                   active: true,
                 });
                 setIsModalOpen(true);
