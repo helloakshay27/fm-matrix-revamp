@@ -29,10 +29,10 @@ export const fetchProjectTasks = createAsyncThunk(
 export const fetchKanbanTasksOfProject = createAsyncThunk(
     'fetchKanbanTasks',
     async (
-        { 
-            baseUrl, 
-            token, 
-            id, 
+        {
+            baseUrl,
+            token,
+            id,
             responsible_person_id,
             selectedFilterOption,
             selectedStatuses,
@@ -41,10 +41,10 @@ export const fetchKanbanTasksOfProject = createAsyncThunk(
             selectedCreators,
             selectedProjects,
             dates
-        }: { 
-            baseUrl: string; 
-            token: string; 
-            id?: string; 
+        }: {
+            baseUrl: string;
+            token: string;
+            id?: string;
             responsible_person_id?: string;
             selectedFilterOption?: string;
             selectedStatuses?: string[];
@@ -384,3 +384,6 @@ export const createTaskDependencyReducer = createTaskDependencySlice.reducer
 export const updateTaskDependencyReducer = updateTaskDependencySlice.reducer
 export const deleteTaskDependencyReducer = deleteTaskDependencySlice.reducer
 export const fetchKanbanTasksOfProjectReducer = fetchKanbanTasksOfProjectSlice.reducer
+
+// Export the reset action explicitly
+export const resetUserAvailability = fetchUserAvailabilitySlice.actions.reset;
