@@ -350,7 +350,6 @@ const modulesByPackage = {
           ],
         },
         { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
-        { name: "Trial Balance", href: "/accounting/reports/trial-balance" },
         {
           name: "Cash Flow Statement",
           href: "/accounting/reports/cash-flow-statement",
@@ -663,6 +662,32 @@ const modulesByPackage = {
             {
               name: "TDS Receivables Summary",
               href: "/accounting/reports/tds-receivables-summary",
+            },
+          ],
+        },
+
+        {
+          name: "Account",
+          subItems: [
+            {
+              name: "Account Transactions",
+              href: "/accounting/reports/account-transactions",
+            },
+            {
+              name: "Day Book",
+              href: "/accounting/reports/day-book",
+            },
+            {
+              name: "General Ledger",
+              href: "/accounting/reports/general-ledger",
+            },
+            {
+              name: "Detailed General Ledger",
+              href: "/accounting/reports/detailed-general-ledger",
+            },
+            {
+              name: "Trial Balance",
+              href: "/accounting/reports/trial-balance",
             },
           ],
         },
