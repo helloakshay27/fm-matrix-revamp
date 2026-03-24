@@ -79,23 +79,23 @@ const DeliveryChallanDetailsReport: React.FC = () => {
   const fetchDeliveryChallanDetails = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_delivery_challans/delivery_challan_details.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          params: {
-            from_date: filters.fromDate,
-            to_date: filters.toDate,
-          },
-        }
-      );
+      // const response = await axios.get(
+      //   `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_delivery_challans/delivery_challan_details.json`,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${token}`,
+      //       "Content-Type": "application/json",
+      //     },
+      //     params: {
+      //       from_date: filters.fromDate,
+      //       to_date: filters.toDate,
+      //     },
+      //   }
+      // );
 
-      const data = response.data || [];
+      const data =  [];
       const mapped: DeliveryChallanRow[] = (
-        Array.isArray(data) ? data : (data.delivery_challans ?? [])
+        Array.isArray(data) ? data : ( [])
       ).map((item: RawDeliveryChallanItem, idx: number) => ({
         id: String(idx),
         deliveryChallanNo: item.delivery_challan_number || "",
@@ -245,9 +245,10 @@ const DeliveryChallanDetailsReport: React.FC = () => {
             storageKey="delivery-challan-details-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
             loading={loading}
             emptyMessage="No data to display"
+            hideColumnsButton={true}
           />
 
           {/* Totals row */}

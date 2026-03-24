@@ -276,7 +276,7 @@ const ReceivableSummaryReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
             Receivable Summary
           </h1>
@@ -293,8 +293,9 @@ const ReceivableSummaryReport: React.FC = () => {
             storageKey="receivable-summary-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
             loading={loading}
+            hideColumnsButton={true}
             emptyMessage="No data to display"
           />
         </div>
