@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
 import TextField from "@mui/material/TextField";
-import { ScrollText, ArrowUpDown } from "lucide-react";
+import { ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 export interface GeneralLedgerRow {
   id: string;
@@ -599,24 +601,13 @@ const buildDemoRows = (): GeneralLedgerRow[] => [
   },
 ];
 
-const ThSort = ({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "center" | "right";
-}) => (
-  <th
-    className={`border border-gray-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#1A1A1A] ${
-      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"
-    }`}
-  >
-    <span className="inline-flex items-center gap-1.5">
-      {children}
-      <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-[#6b7280]" aria-hidden />
-    </span>
-  </th>
-);
+const columns: ColumnConfig[] = [
+  { key: "account", label: "Account", sortable: true, defaultVisible: true },
+  { key: "accountCode", label: "Account Code", sortable: true, defaultVisible: true },
+  { key: "debit", label: "Debit", sortable: true, defaultVisible: true },
+  { key: "credit", label: "Credit", sortable: true, defaultVisible: true },
+  { key: "balance", label: "Balance", sortable: true, defaultVisible: true },
+];
 
 const GeneralLedger: React.FC = () => {
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
@@ -701,62 +692,66 @@ const GeneralLedger: React.FC = () => {
         </div>
 
         <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-[#E5E0D3]">
-                  <ThSort align="left">Account</ThSort>
-                  <ThSort align="center">Account Code</ThSort>
-                  <ThSort align="right">Debit</ThSort>
-                  <ThSort align="right">Credit</ThSort>
-                  <ThSort align="right">Balance</ThSort>
-                </tr>
-              </thead>
-              <tbody>
-                {reportRows.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="border border-gray-300 px-4 py-6 text-center text-gray-500"
+          <EnhancedTaskTable
+            data={reportRows}
+            columns={columns}
+            storageKey="general-ledger"
+            enableSearch={true}
+            enableExport={true}
+            exportFileName="general-ledger"
+            searchPlaceholder="Search accounts..."
+            emptyMessage="No data available for the selected date range."
+            renderCell={(item, columnKey) => {
+              switch (columnKey) {
+                case "account":
+                  return (
+                    <div
+                      className={`text-sm ${
+                        item.isTotal ? "font-bold text-[#1A1A1A]" : "font-medium text-[#1A1A1A]"
+                      }`}
+                      style={{ paddingLeft: 12 + (item.indentLevel || 0) * 20 }}
                     >
-                      No data available for the selected date range.
-                    </td>
-                  </tr>
-                ) : (
-                  reportRows.map((row) => {
-                    const indent = 12 + row.indentLevel * 20;
-                    const rowBg = row.isTotal
-                      ? "bg-gray-200 font-semibold"
-                      : "hover:bg-gray-50";
-                    return (
-                      <tr key={row.id} className={rowBg}>
-                        <td
-                          className={`border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A] ${
-                            row.isTotal ? "font-bold" : "font-medium"
-                          }`}
-                          style={{ paddingLeft: indent }}
-                        >
-                          {row.account}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-center text-sm text-[#4a4a4a]">
-                          {row.accountCode || ""}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-right text-sm font-medium text-blue-600">
-                          {formatCurrency(row.debit)}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-right text-sm font-medium text-blue-600">
-                          {formatCurrency(row.credit)}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 text-right text-sm font-medium text-blue-600">
-                          {formatBalance(row.balance)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                      {item.account}
+                    </div>
+                  );
+                case "accountCode":
+                  return (
+                    <div className="text-center text-sm text-[#4a4a4a]">
+                      {item.accountCode || ""}
+                    </div>
+                  );
+                case "debit":
+                  return (
+                    <div className="text-right text-sm font-medium text-blue-600">
+                      {formatCurrency(item.debit)}
+                    </div>
+                  );
+                case "credit":
+                  return (
+                    <div className="text-right text-sm font-medium text-blue-600">
+                      {formatCurrency(item.credit)}
+                    </div>
+                  );
+                case "balance":
+                  return (
+                    <div className="text-right text-sm font-medium text-blue-600">
+                      {formatBalance(item.balance)}
+                    </div>
+                  );
+                default:
+                  return item[columnKey];
+              }
+            }}
+            getRowClassName={(item) => {
+              if (item.isTotal) {
+                return "bg-gray-200 font-semibold";
+              }
+              return "";
+            }}
+            headerCellClassName="bg-[#E5E0D3] text-xs font-semibold uppercase tracking-wide text-[#1A1A1A]"
+            cellClassName="border border-gray-300 px-4 py-3"
+            tableWrapperClassName="border border-gray-300"
+          />
         </div>
       </div>
     </div>
