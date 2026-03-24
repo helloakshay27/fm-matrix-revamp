@@ -13,6 +13,7 @@ import {
   saveBaseUrl,
   fetchLockAccount,
   Organization,
+  getUser,
 } from "@/utils/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -86,6 +87,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
     org_id === "90";
+
+  const currentUser = getUser();
+  const userEmail = currentUser?.email || "No email";
   // Check URL for email and orgId parameters on components mount
   React.useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -408,7 +412,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         const userType = localStorage.getItem("userType");
         const isLocalhost =
           hostname.includes("lockated.gophygital.work") ||
-          hostname.includes("fm-matrix.lockated.com");
+          hostname.includes("fm-matrix.lockated.com") ||
+          userEmail === "deveshjain928@gmail.com";
         const isPulseSite =
           hostname.includes("localhost") ||
           hostname.includes("pulse.lockated.com") ||
