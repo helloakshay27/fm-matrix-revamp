@@ -82,7 +82,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
-    hostname.includes("localhost") ||
     hostname === "pulse.lockated.com" ||
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
@@ -387,10 +386,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       sessionStorage.setItem("userId", response.id?.toString() || "");
       sessionStorage.setItem("userType", response.user_type?.toString() || "");
 
-      const from =
-        (location.state as { from?: Location })?.from?.pathname +
-          (location.state as { from?: Location })?.from?.search ||
-        "/maintenance/asset";
+      // const from =
+      //   (location.state as { from?: Location })?.from?.pathname +
+      //     (location.state as { from?: Location })?.from?.search ||
+      //   "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
@@ -415,7 +414,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           hostname.includes("fm-matrix.lockated.com") ||
           userEmail === "deveshjain928@gmail.com";
         const isPulseSite =
-          hostname.includes("localhost") ||
           hostname.includes("pulse.lockated.com") ||
           hostname.includes("pulse.gophygital.work") ||
           hostname.includes("pulse-uat.panchshil.com") ||
