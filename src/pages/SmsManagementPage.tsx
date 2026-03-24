@@ -47,6 +47,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { TextField } from "@mui/material";
 import { string } from "zod";
+import { API_CONFIG } from "@/config/apiConfig";
 
 interface SmsTemplate {
   id: number;
@@ -132,9 +133,8 @@ const SmsManagementPage: React.FC = () => {
     // Add logic here to refetch data with applied filters if needed
   };
 
-  const BASE_URL = "https://live-api.gophygital.work";
-  const TOKEN =
-    "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5MjUwMX0.LkKKfx3ZkV8Fs4LumP6atRBgPVig9oCqTrN0kIa9cQk";
+  const BASE_URL = API_CONFIG.BASE_URL || "https://live-api.gophygital.work";
+  const TOKEN = API_CONFIG.TOKEN || localStorage.getItem("token");
 
   const fetchSmsTemplates = async (searchTerm?: string) => {
     const isFetchingSearch = !!searchTerm?.trim();
@@ -171,7 +171,7 @@ const SmsManagementPage: React.FC = () => {
       setIsLoadingOrgs(true);
       try {
         const response = await axios.get(
-          "https://live-api.gophygital.work/organizations.json?token=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5MjUwMX0.LkKKfx3ZkV8Fs4LumP6atRBgPVig9oCqTrN0kIa9cQk"
+          `${BASE_URL}/organizations.json?token=${TOKEN}`
         );
         setOrgsList(response.data.organizations || []);
       } catch (error) {
@@ -250,7 +250,7 @@ const SmsManagementPage: React.FC = () => {
         },
       };
 
-      const url = editingId 
+      const url = editingId
         ? `${BASE_URL}/sms_templates/${editingId}.json?token=${TOKEN}`
         : `${BASE_URL}/sms_templates.json?token=${TOKEN}`;
 
@@ -265,10 +265,10 @@ const SmsManagementPage: React.FC = () => {
           ? "SMS Template updated successfully"
           : "SMS Template created successfully"
       );
-      
+
       // Refresh the list to show the new/updated template
       fetchSmsTemplates();
-      
+
       setIsModalOpen(false);
       setEditingId(null);
       // Reset form
@@ -286,7 +286,11 @@ const SmsManagementPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Error saving template:", error);
-      toast.error(editingId ? "Failed to update SMS Template" : "Failed to create SMS Template");
+      toast.error(
+        editingId
+          ? "Failed to update SMS Template"
+          : "Failed to create SMS Template"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -693,7 +697,6 @@ const SmsManagementPage: React.FC = () => {
                 />
               </div>
 
-
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">
                   Created At
@@ -799,9 +802,12 @@ const SmsManagementPage: React.FC = () => {
 
             {editingId ? (
               <div className="grid grid-cols-2 gap-x-6 gap-y-5">
-                <div className={`space-y-1 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none" : ""}`}>
+                <div
+                  className={`space-y-1 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none" : ""}`}
+                >
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Organization <span className="text-red-500 font-bold">*</span>
+                    Organization{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.organization_id
@@ -814,7 +820,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Module Name <span className="text-red-500 font-bold">*</span>
+                    Module Name{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.module_name || "—"}
@@ -823,7 +830,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Function Name <span className="text-red-500 font-bold">*</span>
+                    Function Name{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.function_name || "—"}
@@ -841,7 +849,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Service Provider <span className="text-red-500 font-bold">*</span>
+                    Service Provider{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.service_provider || "—"}
@@ -850,7 +859,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Template Name <span className="text-red-500 font-bold">*</span>
+                    Template Name{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.template_name || "—"}
@@ -859,7 +869,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1 col-span-2">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    DLT Template ID <span className="text-red-500 font-bold">*</span>
+                    DLT Template ID{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px]">
                     {formData.dlt_template_id || "—"}
@@ -868,7 +879,8 @@ const SmsManagementPage: React.FC = () => {
 
                 <div className="space-y-1 col-span-2">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Template URL <span className="text-red-500 font-bold">*</span>
+                    Template URL{" "}
+                    <span className="text-red-500 font-bold">*</span>
                   </p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[60px] break-all whitespace-pre-wrap">
                     {formData.template_url || "—"}
@@ -877,7 +889,9 @@ const SmsManagementPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                <div className={`space-y-2 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none grayscale-[0.5]" : ""}`}>
+                <div
+                  className={`space-y-2 transition-all duration-300 ${formData.is_default ? "opacity-30 pointer-events-none grayscale-[0.5]" : ""}`}
+                >
                   <EnhancedSelect
                     label={
                       <span>
