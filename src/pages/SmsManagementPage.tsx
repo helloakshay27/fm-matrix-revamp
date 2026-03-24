@@ -825,21 +825,23 @@ const SmsManagementPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="p-8 space-y-6">
             <div className="flex items-center gap-12 pb-4 border-b border-slate-50">
-              <div className="flex items-center space-x-3">
-                <Switch
-                  id="is_default"
-                  checked={formData.is_default}
-                  onCheckedChange={(checked) =>
-                    handleCheckboxChange("is_default", !!checked)
-                  }
-                />
-                <Label
-                  htmlFor="is_default"
-                  className="text-sm font-semibold text-slate-700 cursor-pointer"
-                >
-                  Is Default
-                </Label>
-              </div>
+              {!editingId && (
+                <div className="flex items-center space-x-3">
+                  <Switch
+                    id="is_default"
+                    checked={formData.is_default}
+                    onCheckedChange={(checked) =>
+                      handleCheckboxChange("is_default", !!checked)
+                    }
+                  />
+                  <Label
+                    htmlFor="is_default"
+                    className="text-sm font-semibold text-slate-700 cursor-pointer"
+                  >
+                    Is Default
+                  </Label>
+                </div>
+              )}
               <div className="flex items-center space-x-3">
                 <Switch
                   id="active"
