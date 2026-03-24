@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useCallback } from "react";
 import TextField from "@mui/material/TextField";
-import { ScrollText, Settings, ArrowUpDown } from "lucide-react";
+import { ScrollText, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 export type DetailedLedgerRowKind = "group" | "opening" | "transaction" | "closing";
 
@@ -48,24 +50,32 @@ const formatCurrency = (value: number) =>
 
 const em = "—";
 
-const ThSort = ({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "center" | "right";
-}) => (
-  <th
-    className={`border border-gray-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#1A1A1A] ${
-      align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"
-    }`}
-  >
-    <span className="inline-flex items-center gap-1.5">
-      {children}
-      <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-[#6b7280]" aria-hidden />
-    </span>
-  </th>
-);
+const columns: ColumnConfig[] = [
+  { key: "date", label: "DATE", sortable: false, defaultVisible: true },
+  { key: "account", label: "ACCOUNT", sortable: false, defaultVisible: true },
+  {
+    key: "transactionDetails",
+    label: "TRANSACTION DETAILS",
+    sortable: false,
+    defaultVisible: true,
+  },
+  {
+    key: "transactionType",
+    label: "TRANSACTION TYPE",
+    sortable: false,
+    defaultVisible: true,
+  },
+  {
+    key: "transactionNo",
+    label: "TRANSACTION #",
+    sortable: false,
+    defaultVisible: true,
+  },
+  { key: "reference", label: "REFERENCE", sortable: false, defaultVisible: true },
+  { key: "debit", label: "DEBIT", sortable: false, defaultVisible: true },
+  { key: "credit", label: "CREDIT", sortable: false, defaultVisible: true },
+  { key: "amount", label: "AMOUNT", sortable: false, defaultVisible: true },
+];
 
 const buildDemoRows = (
   fromDate: string,
@@ -1457,113 +1467,139 @@ const DetailedGeneralLedger: React.FC = () => {
   const linkBtn =
     "text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-0 p-0 font-medium";
 
-  const renderRow = (row: DetailedGeneralLedgerRow) => {
+  const renderTableRow = (row: DetailedGeneralLedgerRow) => {
     if (row.kind === "group") {
-      return (
-        <tr key={row.id} className="bg-gray-100 font-bold">
-          <td
-            colSpan={9}
-            className="border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A]"
-          >
-            {row.groupName}
-          </td>
-        </tr>
-      );
+      return {
+        date: (
+          <span className="text-[13px] font-bold text-[#1A1A1A]">{row.groupName}</span>
+        ),
+        account: <span />,
+        transactionDetails: <span />,
+        transactionType: <span />,
+        transactionNo: <span />,
+        reference: <span />,
+        debit: <span />,
+        credit: <span />,
+        amount: <span />,
+      };
     }
 
     if (row.kind === "opening" || row.kind === "closing") {
-      return (
-        <tr key={row.id} className="bg-gray-50">
-          <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A]">
-            {row.date}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A]">
-            {row.account}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#6b7280]">
-            {em}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#6b7280]">
-            {em}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#6b7280]">
-            {em}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#6b7280]">
-            {em}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-right text-sm text-blue-600">
+      return {
+        date: (
+          <span className="text-[13px] font-medium text-[#101828]">{row.date}</span>
+        ),
+        account: (
+          <span className="text-[13px] font-medium text-[#101828]">{row.account}</span>
+        ),
+        transactionDetails: (
+          <span className="text-[13px] text-[#6b7280]">{em}</span>
+        ),
+        transactionType: (
+          <span className="text-[13px] text-[#6b7280]">{em}</span>
+        ),
+        transactionNo: (
+          <span className="text-[13px] text-[#6b7280]">{em}</span>
+        ),
+        reference: <span className="text-[13px] text-[#6b7280]">{em}</span>,
+        debit: (
+          <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#2563eb]">
             {row.debit !== null ? formatCurrency(row.debit) : ""}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-right text-sm text-blue-600">
+          </span>
+        ),
+        credit: (
+          <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#2563eb]">
             {row.credit !== null ? formatCurrency(row.credit) : ""}
-          </td>
-          <td className="border border-gray-300 px-4 py-3 text-right text-sm text-[#6b7280]">
+          </span>
+        ),
+        amount: (
+          <span className="inline-flex w-full justify-end text-[13px] text-[#6b7280]">
             {em}
-          </td>
-        </tr>
-      );
+          </span>
+        ),
+      };
     }
 
-    return (
-      <tr key={row.id} className="hover:bg-gray-50">
-        <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A]">
-          {row.date}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A]">
-          {row.account}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A]">
+    return {
+      date: (
+        <span className="text-[13px] font-medium text-[#101828]">{row.date}</span>
+      ),
+      account: (
+        <span className="text-[13px] font-medium text-[#101828]">{row.account}</span>
+      ),
+      transactionDetails: (
+        <span className="text-[13px] font-medium text-[#101828]">
           {row.transactionDetails}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#1A1A1A]">
+        </span>
+      ),
+      transactionType: (
+        <span className="text-[13px] font-medium text-[#101828]">
           {row.transactionType}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-left text-sm">
-          {row.transactionNo ? (
-            <button
-              type="button"
-              className={linkBtn}
-              onClick={() => onTxnClick(row.transactionNo)}
-            >
-              {row.transactionNo}
-            </button>
-          ) : (
-            <span className="text-[#6b7280]">{em}</span>
-          )}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-left text-sm text-[#4a4a4a]">
+        </span>
+      ),
+      transactionNo: row.transactionNo ? (
+        <button
+          type="button"
+          className={linkBtn}
+          onClick={() => onTxnClick(row.transactionNo)}
+        >
+          <span className="text-[13px] font-medium">{row.transactionNo}</span>
+        </button>
+      ) : (
+        <span className="text-[13px] text-[#6b7280]">{em}</span>
+      ),
+      reference: (
+        <span className="text-[13px] text-[#4a4a4a]">
           {row.reference || em}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-right text-sm">
-          {row.debit !== null ? (
+        </span>
+      ),
+      debit:
+        row.debit !== null ? (
+          <span className="inline-flex w-full justify-end">
             <button type="button" className={linkBtn}>
-              {formatCurrency(row.debit)}
+              <span className="text-[13px] font-semibold text-[#2563eb]">
+                {formatCurrency(row.debit)}
+              </span>
             </button>
-          ) : (
-            ""
-          )}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-right text-sm">
-          {row.credit !== null ? (
+          </span>
+        ) : (
+          <span />
+        ),
+      credit:
+        row.credit !== null ? (
+          <span className="inline-flex w-full justify-end">
             <button type="button" className={linkBtn}>
-              {formatCurrency(row.credit)}
+              <span className="text-[13px] font-semibold text-[#2563eb]">
+                {formatCurrency(row.credit)}
+              </span>
             </button>
-          ) : (
-            ""
-          )}
-        </td>
-        <td className="border border-gray-300 px-4 py-3 text-right text-sm">
-          {row.amount !== null && row.amountDrCr ? (
+          </span>
+        ) : (
+          <span />
+        ),
+      amount:
+        row.amount !== null && row.amountDrCr ? (
+          <span className="inline-flex w-full justify-end">
             <button type="button" className={linkBtn}>
-              {formatCurrency(row.amount)} {row.amountDrCr}
+              <span className="text-[13px] font-semibold text-[#2563eb]">
+                {formatCurrency(row.amount)} {row.amountDrCr}
+              </span>
             </button>
-          ) : (
-            ""
-          )}
-        </td>
-      </tr>
-    );
+          </span>
+        ) : (
+          <span />
+        ),
+    };
+  };
+
+  const getRowClassName = (row: DetailedGeneralLedgerRow) => {
+    if (row.kind === "group") {
+      return "bg-gray-100 font-bold hover:!bg-gray-100 hover:!shadow-none";
+    }
+    if (row.kind === "opening" || row.kind === "closing") {
+      return "bg-gray-50 hover:!bg-gray-50 hover:!shadow-none";
+    }
+    return "hover:bg-gray-50";
   };
 
   return (
@@ -1639,38 +1675,23 @@ const DetailedGeneralLedger: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-[#E5E0D3]">
-                  <ThSort align="left">Date</ThSort>
-                  <ThSort align="left">Account</ThSort>
-                  <ThSort align="left">Transaction Details</ThSort>
-                  <ThSort align="left">Transaction Type</ThSort>
-                  <ThSort align="left">Transaction #</ThSort>
-                  <ThSort align="left">Reference</ThSort>
-                  <ThSort align="right">Debit</ThSort>
-                  <ThSort align="right">Credit</ThSort>
-                  <ThSort align="right">Amount</ThSort>
-                </tr>
-              </thead>
-              <tbody>
-                {reportRows.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="border border-gray-300 px-4 py-6 text-center text-gray-500"
-                    >
-                      No data available for the selected date range.
-                    </td>
-                  </tr>
-                ) : (
-                  reportRows.map((row) => renderRow(row))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="p-4">
+          <EnhancedTaskTable
+            data={reportRows}
+            columns={columns}
+            renderRow={renderTableRow}
+            getRowClassName={getRowClassName}
+            getItemId={(r) => String(r.id)}
+            storageKey="detailed-general-ledger-v1"
+            hideTableSearch
+            hideTableExport
+            hideColumnsButton
+            toolbarClassName="hidden"
+            emptyMessage="No data available for the selected date range."
+            tableWrapperClassName="min-h-[520px] border border-[#EAECF0]"
+            headerCellClassName="text-[11px] font-semibold uppercase text-[#667085]"
+            cellClassName="py-2.5 align-middle"
+          />
         </div>
       </div>
     </div>

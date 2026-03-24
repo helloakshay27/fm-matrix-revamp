@@ -678,6 +678,10 @@ const modulesByPackage = {
               href: "/accounting/reports/day-book",
             },
             {
+              name: "Journal Report",
+              href: "/accounting/reports/journal-report",
+            },
+            {
               name: "General Ledger",
               href: "/accounting/reports/general-ledger",
             },

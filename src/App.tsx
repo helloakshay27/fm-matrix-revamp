@@ -1168,6 +1168,7 @@ import PMT06SelfAssessmentBasis from "./pages/ClubManagement/PMT06SelfAssessment
 import SummaryOfOutwardSuppliesGSTR1 from "./pages/ClubManagement/SummaryOfOutwardSuppliesGSTR1";
 import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishingFacilityIFF";
 import DayBook from "./pages/ClubManagement/DayBook";
+import JournalReport from "./pages/ClubManagement/JournalReport";
 import GeneralLedger from "./pages/ClubManagement/GeneralLedger";
 import DetailedGeneralLedger from "./pages/ClubManagement/DetailedGeneralLedger";
 import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
@@ -2800,6 +2801,10 @@ function App() {
                           <Route
                             path="/accounting/reports/day-book"
                             element={<DayBook />}
+                          />
+                          <Route
+                            path="/accounting/reports/journal-report"
+                            element={<JournalReport />}
                           />
                           <Route
                             path="/accounting/reports/general-ledger"
