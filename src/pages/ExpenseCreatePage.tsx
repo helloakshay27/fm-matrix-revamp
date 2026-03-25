@@ -97,18 +97,18 @@ const INDIAN_STATES = [
 
 // ── GST treatments ───────────────────────────────────────────────────────────
 const GST_TREATMENTS = [
-  { value: 'registered_business_regular',     label: 'Registered Business - Regular' },
+  { value: 'registered_business_regular', label: 'Registered Business - Regular' },
   { value: 'registered_business_composition', label: 'Registered Business - Composition' },
-  { value: 'unregistered_business',           label: 'Unregistered Business' },
-  { value: 'consumer',                        label: 'Consumer' },
-  { value: 'overseas',                        label: 'Overseas' },
-  { value: 'special_economic_zone',           label: 'Special Economic Zone' },
-  { value: 'deemed_export',                   label: 'Deemed Export' },
-  { value: 'non_gst_supply',                  label: 'Non-GST Supply' },
-  { value: 'out_of_scope',                    label: 'Out of scope' },
-  { value: 'tax_deductor',                    label: 'Tax Deductor' },
-  { value: 'sez_developer',                   label: 'SEZ Developer' },
-  { value: 'input_service_distributor',       label: 'Input Service Distributor' },
+  { value: 'unregistered_business', label: 'Unregistered Business' },
+  { value: 'consumer', label: 'Consumer' },
+  { value: 'overseas', label: 'Overseas' },
+  { value: 'special_economic_zone', label: 'Special Economic Zone' },
+  { value: 'deemed_export', label: 'Deemed Export' },
+  { value: 'non_gst_supply', label: 'Non-GST Supply' },
+  { value: 'out_of_scope', label: 'Out of scope' },
+  { value: 'tax_deductor', label: 'Tax Deductor' },
+  { value: 'sez_developer', label: 'SEZ Developer' },
+  { value: 'input_service_distributor', label: 'Input Service Distributor' },
 ];
 
 // ── Shared field height styles ───────────────────────────────────────────────
@@ -404,8 +404,18 @@ export const ExpenseCreatePage: React.FC = () => {
         if (!line.amount || parseFloat(line.amount) <= 0) e[`line_${i}_amount`] = 'Amount required';
       });
     }
+
     setErrors(e);
-    return Object.keys(e).length === 0;
+
+    // Show toasts one by one with delay
+    const errorMessages = Object.values(e);
+    errorMessages.forEach((message, index) => {
+      setTimeout(() => {
+        sonnerToast.error(message);
+      }, index * 800); // 800ms gap between each toast
+    });
+
+    return errorMessages.length === 0;
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -418,9 +428,9 @@ export const ExpenseCreatePage: React.FC = () => {
       const token = localStorage.getItem('token');
       const lockAccountId = localStorage.getItem('lock_account_id');
 
-        const totalTaxAmount = isItemized
-          ? calculateTaxTotal()
-          : calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
+      const totalTaxAmount = isItemized
+        ? calculateTaxTotal()
+        : calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
 
       // ── Build expense_accounts_attributes ────────────────────────────────
       let expenseAccountsAttributes: any[];
@@ -435,7 +445,7 @@ export const ExpenseCreatePage: React.FC = () => {
             notes: notes,
             hsn_sac_code: expenseType === 'goods' ? hsnCode : sacCode,
             tax_type: taxType,
-            ...(taxType === 'tax_group'   && { tax_group_id: taxGroupId }),
+            ...(taxType === 'tax_group' && { tax_group_id: taxGroupId }),
             ...(taxType === 'non_taxable' && { tax_exemption_id: taxExemptionId }),
           },
         ];
@@ -448,7 +458,7 @@ export const ExpenseCreatePage: React.FC = () => {
           notes: line.notes,
           hsn_sac_code: line.hsnSacCode,                 // ✅ now populated from table input
           tax_type: line.taxType,                        // ✅ 'tax_group' | 'non_taxable' | ''
-          ...(line.taxType === 'tax_group'   && { tax_group_id: line.taxGroupId }),
+          ...(line.taxType === 'tax_group' && { tax_group_id: line.taxGroupId }),
           ...(line.taxType === 'non_taxable' && { tax_exemption_id: line.taxExemptionId }),
         }));
       }
@@ -457,7 +467,7 @@ export const ExpenseCreatePage: React.FC = () => {
       const payload = {
         expense: {
           paid_through_account_id: parseInt(paidThrough),
-          ...(vendor   && { vendor_id: parseInt(vendor) }),
+          ...(vendor && { vendor_id: parseInt(vendor) }),
           ...(customer && { customer_id: parseInt(customer) }),
           date,
           amount: isItemized
@@ -613,18 +623,10 @@ export const ExpenseCreatePage: React.FC = () => {
         </div>
       )}
 
-      <header className="flex items-center justify-between sticky top-0 bg-background z-10 pb-4">
+      <header className="sticky top-0 bg-background z-10 pb-4">
         <div>
           <h1 className="text-2xl font-bold">New Expense</h1>
           <p className="text-sm text-muted-foreground mt-1">Create a new expense record</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outlined" onClick={() => navigate('/accounting/expense')}>
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
-            Save
-          </Button>
         </div>
       </header>
 
@@ -694,7 +696,11 @@ export const ExpenseCreatePage: React.FC = () => {
                 </label>
                 <TextField
                   fullWidth type="number" value={amount}
-                  onChange={e => setAmount(e.target.value)}
+                  onChange={e => {
+                    const parsed = parseFloat(e.target.value);
+                    const safeAmount = isNaN(parsed) ? '' : Math.max(0, parsed).toString();
+                    setAmount(safeAmount);
+                  }}
                   error={!!errors.amount} helperText={errors.amount}
                   sx={fieldStyles}
                   InputProps={{
@@ -740,7 +746,7 @@ export const ExpenseCreatePage: React.FC = () => {
                 <label className="block text-sm font-medium mb-2">Expense Type</label>
                 <RadioGroup row value={expenseType}
                   onChange={e => setExpenseType(e.target.value as 'goods' | 'services')}>
-                  <FormControlLabel value="goods"    control={<Radio />} label="Goods" />
+                  <FormControlLabel value="goods" control={<Radio />} label="Goods" />
                   <FormControlLabel value="services" control={<Radio />} label="Services" />
                 </RadioGroup>
               </div>
@@ -839,7 +845,7 @@ export const ExpenseCreatePage: React.FC = () => {
               </div>
 
               {/* Description ✅ now has UI field */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium mb-2">Description</label>
                 <TextField
                   fullWidth value={description}
@@ -847,7 +853,7 @@ export const ExpenseCreatePage: React.FC = () => {
                   placeholder="Enter description"
                   sx={fieldStyles}
                 />
-              </div>
+              </div> */}
 
               {/* Notes */}
               <div className="md:col-span-2">
@@ -855,7 +861,26 @@ export const ExpenseCreatePage: React.FC = () => {
                 <TextField
                   fullWidth multiline rows={3} value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  placeholder="Max. 500 characters" sx={fieldStyles}
+                  placeholder="Max. 500 characters"
+                  // sx={fieldStyles}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                 />
               </div>
 
@@ -1005,8 +1030,8 @@ export const ExpenseCreatePage: React.FC = () => {
                             - Goods / Services dropdown below it
                             - HSN Code / SAC inline "Update" link (Zoho-style)
                         */}
-                        <td className="px-3 py-3 align-top">
-                          <div className="flex flex-col gap-2">
+                        <td className="px-3 py-3 align-middle">
+                          <div className="flex flex-col gap-1">
                             {/* Account selector */}
                             <FormControl fullWidth size="small" error={!!errors[`line_${idx}_account`]}>
                               <Select
@@ -1068,7 +1093,7 @@ export const ExpenseCreatePage: React.FC = () => {
                                   onClick={() => updateLine(idx, { hsnSacEditing: true })}
                                 >
                                   <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-2.5-2.5zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-2.5-2.5zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z" />
                                   </svg>
                                   Update
                                 </button>
@@ -1095,17 +1120,35 @@ export const ExpenseCreatePage: React.FC = () => {
                         </td>
 
                         {/* Notes */}
-                        <td className="px-3 py-3 align-top">
+                        <td className="px-3 py-3 align-middle">
                           <TextField
                             fullWidth size="small" multiline minRows={2}
                             value={line.notes}
                             onChange={e => updateLine(idx, { notes: e.target.value })}
                             placeholder="Max. 500 characters"
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                                display: "flex",
+                              },
+                              "& .MuiInputBase-input[aria-hidden='true']": {
+                                flex: 0,
+                                width: 0,
+                                height: 0,
+                                padding: "0 !important",
+                                margin: 0,
+                                display: "none",
+                              },
+                              "& .MuiInputBase-input": {
+                                resize: "none !important",
+                              },
+                            }}
                           />
                         </td>
 
                         {/* Tax */}
-                        <td className="px-3 py-3 align-top">
+                        <td className="px-3 py-3 align-middle">
                           <FormControl fullWidth size="small">
                             <Select
                               value={
@@ -1154,11 +1197,15 @@ export const ExpenseCreatePage: React.FC = () => {
                         </td>
 
                         {/* Amount */}
-                        <td className="px-3 py-3 align-top">
+                        <td className="px-3 py-3 align-middle">
                           <TextField
                             fullWidth size="small" type="number"
                             value={line.amount}
-                            onChange={e => updateLine(idx, { amount: e.target.value })}
+                            onChange={e => {
+                              const parsed = parseFloat(e.target.value);
+                              const safeAmount = isNaN(parsed) ? '' : Math.max(0, parsed).toString();
+                              updateLine(idx, { amount: safeAmount });
+                            }}
                             error={!!errors[`line_${idx}_amount`]}
                             helperText={errors[`line_${idx}_amount`]}
                             inputProps={{ min: 0, step: 0.01 }}
@@ -1166,7 +1213,7 @@ export const ExpenseCreatePage: React.FC = () => {
                         </td>
 
                         {/* Remove row */}
-                        <td className="px-3 py-3 align-top">
+                        <td className="px-3 py-3 align-middle">
                           {lines.length > 1 && (
                             <IconButton
                               size="small"
@@ -1224,7 +1271,7 @@ export const ExpenseCreatePage: React.FC = () => {
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium mb-2">Description</label>
                   <TextField
                     fullWidth value={description}
@@ -1232,7 +1279,7 @@ export const ExpenseCreatePage: React.FC = () => {
                     placeholder="Enter description"
                     sx={fieldStyles}
                   />
-                </div>
+                </div> */}
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Customer Name</label>
@@ -1256,7 +1303,7 @@ export const ExpenseCreatePage: React.FC = () => {
                   </FormControl>
                 </div>
 
-                <div className="flex flex-col">
+                {/* <div className="flex flex-col">
                   <label className="block text-sm font-medium mb-2">Reporting Tags</label>
                   <button
                     type="button"
@@ -1265,7 +1312,7 @@ export const ExpenseCreatePage: React.FC = () => {
                   >
                     Associate Tags
                   </button>
-                </div>
+                </div> */}
               </div>
 
               {/* Attachments (itemized) */}
@@ -1357,9 +1404,19 @@ export const ExpenseCreatePage: React.FC = () => {
         )}
       </div>
 
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3 pt-6 border-t">
+        <Button variant="outlined" onClick={() => navigate('/accounting/expense')}>
+          Cancel
+        </Button>
+        <Button variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
+          Save
+        </Button>
+      </div>
+
       {/* Reporting Tags Modal */}
-      <Dialog open={showTagModal} onClose={() => setShowTagModal(false)} maxWidth="xs" fullWidth>
-        <DialogTitle className="flex justify-between items-center">
+      {/* <Dialog open={showTagModal} onClose={() => setShowTagModal(false)} maxWidth="xs" fullWidth>
+        <DialogTitle className="flex justify-between items-center" padding={2}>
           Associate Tags
           <IconButton onClick={() => setShowTagModal(false)}><Close /></IconButton>
         </DialogTitle>
@@ -1378,6 +1435,59 @@ export const ExpenseCreatePage: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setShowTagModal(false)}>Cancel</Button>
           <Button variant="contained" onClick={() => setShowTagModal(false)}>Save</Button>
+        </DialogActions>
+      </Dialog> */}
+
+      <Dialog
+        open={showTagModal}
+        onClose={() => setShowTagModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="flex justify-between items-center border-b">
+          Associate Tags
+          <IconButton onClick={() => setShowTagModal(false)}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ py: 3 }}>
+
+          {/* ✅ Row Layout */}
+          <div className="flex items-center justify-between gap-4">
+
+            {/* Left Label */}
+            <span className="text-sm text-gray-700 min-w-[100px]">
+              Accounts
+            </span>
+
+            {/* Right Dropdown */}
+            <FormControl size="small" className="w-full">
+              <Select
+                value={reportingTagAccount}
+                displayEmpty
+                onChange={(e) => setReportingTagAccount(e.target.value)}
+                className="bg-white"
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                <MenuItem value="account1">Account 1</MenuItem>
+                <MenuItem value="account2">Account 2</MenuItem>
+              </Select>
+            </FormControl>
+
+          </div>
+
+        </DialogContent>
+
+        <DialogActions className="px-6 pb-4">
+          <Button variant="contained" onClick={() => setShowTagModal(false)}>
+            Save
+          </Button>
+          <Button onClick={() => setShowTagModal(false)}>
+            Cancel
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

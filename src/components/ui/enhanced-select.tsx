@@ -146,7 +146,7 @@ export const SearchableSelect: React.FC<
   );
 
   return (
-    <div className={`flex flex-col w-full`} style={sx as any}>
+    <div className={`flex flex-col w-full`} style={sx as React.CSSProperties}>
       {label && (
         <div className="mb-2 text-sm font-semibold text-slate-700">{label}</div>
       )}
@@ -155,31 +155,39 @@ export const SearchableSelect: React.FC<
           <button
             type="button"
             disabled={disabled}
-            className={`flex h-[45px] w-full items-center justify-between rounded-md border bg-white px-3 py-2 text-[15px] shadow-sm ring-offset-background transition-colors focus:outline-none focus:ring-1 focus:ring-[#3b82f6] disabled:cursor-not-allowed disabled:opacity-50
+            className={`flex min-h-[45px] w-full items-center justify-between rounded-md border bg-white px-3 py-2 text-[15px] shadow-sm ring-offset-background transition-colors focus:outline-none focus:ring-1 focus:ring-[#3b82f6] disabled:cursor-not-allowed disabled:opacity-50
               ${error ? "border-red-500" : "border-slate-200 hover:border-[#3b82f6]"}
             `}
           >
             <span
-              className={
+              className={`block text-left ${
                 selectedOption ? "text-slate-900" : "text-slate-500 text-[14px]"
-              }
+              }`}
             >
               {selectedOption ? selectedOption.label : placeholder}
             </span>
-            <ChevronDown className="h-4 w-4 opacity-50" />
+            <ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0 shadow-lg border-slate-200 rounded-lg bg-white overflow-hidden pointer-events-auto z-[99999]"
+          className="w-[var(--radix-popover-trigger-width)] p-0 shadow-lg border-slate-200 rounded-lg bg-white pointer-events-auto z-[99999]"
           align="start"
           sideOffset={8}
+          onWheel={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <Command className="w-full bg-white">
+          <Command 
+            className="w-full bg-white overflow-hidden" 
+            onWheel={(e) => e.stopPropagation()}
+          >
             <CommandInput
               placeholder="Type to search..."
               className="h-10 text-[14px]"
             />
-            <CommandList className="max-h-[220px] overflow-y-auto w-full">
+            <CommandList 
+              className="max-h-[300px] overflow-y-auto w-full scrollbar-thin scrollbar-thumb-gray-300 touch-pan-y"
+              style={{ overflowY: 'auto' }}
+            >
               <CommandEmpty className="py-3 text-center text-sm text-slate-500">
                 No results found.
               </CommandEmpty>
@@ -193,7 +201,7 @@ export const SearchableSelect: React.FC<
                       setOpen(false);
                     }}
                     disabled={option.disabled}
-                    className="cursor-pointer rounded-md px-2.5 py-2 text-[14px] aria-selected:bg-blue-50 aria-selected:text-blue-700 w-full"
+                    className="cursor-pointer rounded-md px-2.5 py-2 text-[14px] whitespace-normal break-words leading-tight aria-selected:bg-blue-50 aria-selected:text-blue-700 w-full"
                   >
                     {option.label}
                   </CommandItem>

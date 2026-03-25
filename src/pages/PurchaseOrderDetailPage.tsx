@@ -356,17 +356,16 @@ export const PurchaseOrderDetailPage = () => {
   const status = purchaseOrder.all_level_approved ? "approved" : "pending"; // Dynamic status based on all_level_approved
   const paymentTermsDisplay =
     purchaseOrder.payment_term ||
-    purchaseOrder.payment_terms ||
     purchaseOrder.payment_tern ||
     "N/A";
   const deliveryAddressDisplay =
     typeof purchaseOrder.delivery_address === "string"
       ? purchaseOrder.delivery_address
       : purchaseOrder.delivery_address?.formatted_address ||
-        purchaseOrder.delivery_address?.full_address ||
-        purchaseOrder.delivery_address?.address ||
-        purchaseOrder.delivery_address?.name ||
-        "N/A";
+      purchaseOrder.delivery_address?.full_address ||
+      purchaseOrder.delivery_address?.address ||
+      purchaseOrder.delivery_address?.name ||
+      "N/A";
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -499,7 +498,7 @@ export const PurchaseOrderDetailPage = () => {
                         PO Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(purchaseOrder.po_date).toLocaleDateString()}
+                        {new Date(purchaseOrder.po_date).toLocaleDateString("en-GB")}
                       </p>
                     </div>
                     {/* <div>
@@ -527,22 +526,22 @@ export const PurchaseOrderDetailPage = () => {
                       </p>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                         Payment Terms
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Payment Terms
 
-                        </p>
-                        <p className="text-base font-semibold mt-1">
-                          {paymentTermsDisplay}
-                        </p>
-                      
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {paymentTermsDisplay}
+                      </p>
+
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">   
-                            Delivery Address
-                        </p>
-                        <p className="text-base font-semibold mt-1">
-                          {deliveryAddressDisplay}
-                        </p>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Delivery Address
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {deliveryAddressDisplay}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -555,7 +554,8 @@ export const PurchaseOrderDetailPage = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-primary" />
-                        Line Items
+                        Item Table
+
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -580,14 +580,15 @@ export const PurchaseOrderDetailPage = () => {
                                 <TableRow key={item.id}>
                                   <TableCell>
                                     <div>
-                                      <p className="font-semibold">
-                                        {item.prod_desc || "N/A"}
-                                      </p>
                                       {item.inventory?.name && (
                                         <p className="text-sm text-muted-foreground">
                                           {item.inventory.name}
                                         </p>
                                       )}
+                                      <p className="font-semibold">
+                                        {item.prod_desc || "N/A"}
+                                      </p>
+
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right">
@@ -612,26 +613,26 @@ export const PurchaseOrderDetailPage = () => {
                       {/* Pricing Summary */}
                       <div className="mt-6 flex justify-end">
                         <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              Net Amount
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Sub Total
                             </span>
-                            <span className="font-semibold">
-                              ₹{purchaseOrder.net_amount_formatted || "0.00"}
+                            <span className="font-semibold text-base">
+                              ₹{purchaseOrder.net_amount_formatted || purchaseOrder.pms_po_inventories?.reduce((sum, item) => sum + item.total_value, 0).toFixed(2) || "0.00"}
                             </span>
                           </div>
-                          {purchaseOrder.total_tax_amount && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Tax</span>
-                              <span className="font-semibold">
-                                ₹{purchaseOrder.total_tax_amount.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-                          <div className="border-t pt-3 flex justify-between text-lg">
-                            <span className="font-bold">Total Amount</span>
-                            <span className="font-bold text-primary">
-                              ₹{purchaseOrder.total_amount_formatted || "0.00"}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Tax
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{(purchaseOrder.total_tax_amount || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-primary text-2xl">
+                              ₹{purchaseOrder.total_amount_formatted || purchaseOrder.amount?.toFixed(2) || "0.00"}
                             </span>
                           </div>
                           {purchaseOrder.amount_in_words && (

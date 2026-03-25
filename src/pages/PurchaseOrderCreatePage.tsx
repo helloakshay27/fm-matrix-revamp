@@ -32,7 +32,9 @@ import {
     Delete,
     CloudUpload,
     AttachFile,
-    ChevronRight
+    ChevronRight,
+    Search,
+    CheckCircle
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
@@ -99,6 +101,24 @@ interface Item {
     item_tax_type?: string;
     tax_group_id?: number | null;
     tax_exemption_id?: number | null;
+}
+
+interface BulkItem {
+    id: string;
+    inventory_name: string;
+    rate: number;
+    sku?: string;
+}
+
+interface BulkSelectedItem extends BulkItem {
+    quantity: number;
+}
+
+interface BulkItemModalProps {
+    open: boolean;
+    onClose: () => void;
+    itemOptions: BulkItem[];
+    onAddItems: (items: BulkSelectedItem[]) => void;
 }
 
 export const PurchaseOrderCreatePage: React.FC = () => {
@@ -195,7 +215,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; inventory_name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<any[]>([]);
+    const [loadingItems, setLoadingItems] = useState(false);
     const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
 
     // additional tax dropdown data (copied from QuotesAdd)
@@ -212,6 +233,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
     const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
     const [loadingExemptions, setLoadingExemptions] = useState(false);
+    const [bulkModalOpen, setBulkModalOpen] = useState(false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -294,16 +316,36 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
     // Fetch items, addresses & payment terms
     useEffect(() => {
-        const fetchInventories = async () => {
-            // Mock data or dispatch - restoring original logic
+        const fetchItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+
+            if (!baseUrl || !token) {
+                console.error('Missing baseUrl or token');
+                return;
+            }
+
+            setLoadingItems(true);
             try {
-                const response = await dispatch(
-                    getInventories({ baseUrl, token })
-                ).unwrap();
-                setItemOptions(response.inventories);
+                const response = await axios.get(
+                    `https://${baseUrl}/lock_account_items.json?lock_account_id=${lockAccountId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                const items = response.data?.data || response.data || [];
+                setItemOptions(items);
             } catch (error) {
-                console.log(error);
-                toast.error(error as any);
+                console.error('Error fetching lock_account_items:', error);
+                toast.error('Failed to load items');
+                setItemOptions([]);
+            } finally {
+                setLoadingItems(false);
             }
         };
 
@@ -349,7 +391,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         };
 
         fetchAddresses();
-        fetchInventories();
+        fetchItems();
         fetchPaymentTerms();
     }, []);
 
@@ -729,6 +771,224 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         }
     };
 
+    // Handle bulk items added
+    const handleBulkItemsAdded = (bulkItems: BulkSelectedItem[]) => {
+        const currentItems = items.filter(it => it.name || it.rate > 0);
+        const newRows: Item[] = bulkItems.map(bi => ({
+            id: bi.id,
+            name: bi.inventory_name,
+            description: '',
+            quantity: bi.quantity,
+            rate: bi.rate,
+            discount: 0,
+            discountType: 'percentage' as const,
+            tax: '',
+            taxRate: 0,
+            amount: bi.quantity * bi.rate,
+            account_id: 0,
+            item_tax_type: '',
+            tax_group_id: null,
+            tax_exemption_id: null,
+        }));
+        setItems(currentItems.length > 0 ? [...currentItems, ...newRows] : newRows);
+    };
+
+    // ── BulkItemModal Component ─────────────────────────────────────────────
+    const BulkItemModal: React.FC<BulkItemModalProps> = ({ open, onClose, itemOptions, onAddItems }) => {
+        const [search, setSearch] = useState('');
+        const [selectedItems, setSelectedItems] = useState<BulkSelectedItem[]>([]);
+
+        // Reset on open
+        useEffect(() => {
+            if (open) {
+                setSearch('');
+                setSelectedItems([]);
+            }
+        }, [open]);
+
+        const filteredItems = itemOptions.filter(item => {
+            const name = (item.inventory_name || item.name || '').toString().toLowerCase();
+            const sku = (item.sku || '').toString().toLowerCase();
+            const query = search.toLowerCase();
+
+            return name.includes(query) || (sku && sku.includes(query));
+        });
+
+        const isSelected = (id: string) => selectedItems.some(i => i.id === id);
+
+        const toggleItem = (item: BulkItem) => {
+            if (isSelected(item.id)) {
+                setSelectedItems(prev => prev.filter(i => i.id !== item.id));
+            } else {
+                setSelectedItems(prev => [...prev, { ...item, quantity: 1 }]);
+            }
+        };
+
+        const updateQty = (id: string, delta: number) => {
+            setSelectedItems(prev =>
+                prev.map(i => i.id === id
+                    ? { ...i, quantity: Math.max(1, i.quantity + delta) }
+                    : i
+                )
+            );
+        };
+
+        const totalQty = selectedItems.reduce((sum, i) => sum + i.quantity, 0);
+
+        const handleAdd = () => {
+            if (selectedItems.length === 0) return;
+            onAddItems(selectedItems);
+            onClose();
+        };
+
+        return (
+            <Dialog
+                open={open}
+                onClose={onClose}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{ sx: { height: '90vh', maxHeight: 680, borderRadius: 2 } }}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-800">Add Items in Bulk</h2>
+                    <IconButton size="small" onClick={onClose} sx={{ color: 'error.main' }}>
+                        <Close fontSize="small" />
+                    </IconButton>
+                </div>
+
+                {/* Body */}
+                <div className="flex overflow-hidden" style={{ height: 'calc(100% - 120px)' }}>
+
+                    {/* LEFT – Item list */}
+                    <div className="w-[45%] border-r border-gray-200 flex flex-col overflow-hidden">
+                        {/* Search */}
+                        <div className="px-4 py-3">
+                            <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Type to search or scan the barcode of the item"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search fontSize="small" sx={{ color: 'text.secondary' }} />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#f8fafc' } }}
+                            />
+                        </div>
+
+                        {/* List */}
+                        <div className="flex-1 overflow-y-auto">
+                            {filteredItems.length === 0 ? (
+                                <div className="px-4 py-8 text-center text-gray-400 text-sm">No items found</div>
+                            ) : (
+                                filteredItems.map(item => {
+                                    const selected = isSelected(item.id);
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => toggleItem(item)}
+                                            className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <div>
+                                                <p className={`text-sm font-medium ${selected ? 'text-blue-600' : 'text-gray-800'}`}>
+                                                    {item.inventory_name}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-0.5">
+                                                    {item.sku ? `SKU: ${item.sku}  ` : ''}
+                                                    Purchase Rate: ₹{Number(item.rate).toFixed(2)}
+                                                </p>
+                                            </div>
+                                            {selected && (
+                                                <CheckCircle sx={{ color: '#22c55e', fontSize: 22 }} />
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+
+                    {/* RIGHT – Selected items */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        {/* Header row */}
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+                            <div className="flex items-center gap-2">
+                                <span className="text-base font-semibold text-gray-800">Selected Items</span>
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-sm font-bold text-gray-700">
+                                    {selectedItems.length}
+                                </span>
+                            </div>
+                            <span className="text-sm text-gray-600 font-medium">
+                                Total Quantity: {totalQty}
+                            </span>
+                        </div>
+
+                        {/* Selected list */}
+                        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
+                            {selectedItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                    <p className="text-sm mt-2">Click items on the left to add them</p>
+                                </div>
+                            ) : (
+                                selectedItems.map(item => (
+                                    <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100">
+                                        <span className="text-sm text-gray-800 font-medium flex-1 pr-4">
+                                            {item.sku ? `[${item.sku}] ` : ''}{item.inventory_name}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => updateQty(item.id, -1)}
+                                                sx={{ border: '1px solid #e2e8f0', borderRadius: 1, width: 28, height: 28 }}
+                                            >
+                                                <span style={{ fontSize: 18, lineHeight: 1 }}>−</span>
+                                            </IconButton>
+                                            <span className="w-8 text-center text-sm font-semibold text-gray-800">
+                                                {item.quantity}
+                                            </span>
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => updateQty(item.id, 1)}
+                                                sx={{ border: '1px solid #e2e8f0', borderRadius: 1, width: 28, height: 28 }}
+                                            >
+                                                <span style={{ fontSize: 18, lineHeight: 1 }}>+</span>
+                                            </IconButton>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-3 px-6 py-3 border-t border-gray-200 bg-white">
+                    <Button
+                        variant="contained"
+                        onClick={handleAdd}
+                        disabled={selectedItems.length === 0}
+                        sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, textTransform: 'none', borderRadius: 1.5, px: 3 }}
+                    >
+                        Add Items
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={onClose}
+                        sx={{ textTransform: 'none', borderRadius: 1.5, px: 3, borderColor: '#e2e8f0', color: 'text.secondary' }}
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </Dialog>
+        );
+    };
+
     // Validation
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
@@ -737,6 +997,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         if (!purchaseOrderDate) newErrors.purchaseOrderDate = 'Purchase order date is required';
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+
+        if (expectedDeliveryDate && purchaseOrderDate && new Date(expectedDeliveryDate) <= new Date(purchaseOrderDate)) {
+            newErrors.expectedDeliveryDate = 'Expected delivery date must be after purchase order date';
+        }
 
         const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
         if (!hasValidItems) newErrors.items = 'At least one valid item is required';
@@ -1077,6 +1341,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 helperText={errors.expectedDeliveryDate}
                                 sx={fieldStyles}
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{
+                                    min: purchaseOrderDate ? new Date(new Date(purchaseOrderDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined
+                                }}
                             />
                         </div>
 
@@ -1151,38 +1418,53 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
                                                     <Select
-                                                        value={item.id}
+                                                        value={item.id || ''}
                                                         onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.id === e.target.value);
+                                                            const selectedItem = itemOptions.find(
+                                                                (opt: any) => opt.id === e.target.value
+                                                            );
                                                             if (selectedItem) {
-                                                                updateItem(index, 'id', selectedItem.id);
-                                                                updateItem(index, 'name', selectedItem.inventory_name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
+                                                                setItems((prev) =>
+                                                                    prev.map((it, i) =>
+                                                                        i === index
+                                                                            ? {
+                                                                                ...it,
+                                                                                id: selectedItem.id,
+                                                                                name: selectedItem.inventory_name || selectedItem.name || '',
+                                                                                rate: Number(selectedItem.rate) || 0,
+                                                                            }
+                                                                            : it
+                                                                    )
+                                                                );
                                                             }
                                                         }}
                                                         displayEmpty
                                                         size="small"
+                                                        disabled={loadingItems}
                                                     >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
+                                                        <MenuItem value="" disabled>
+                                                            {loadingItems ? 'Loading items...' : 'Select an item'}
+                                                        </MenuItem>
+
+                                                        {itemOptions.map((option: any) => (
                                                             <MenuItem key={option.id} value={option.id}>
-                                                                {option.inventory_name}
+                                                                {option.inventory_name || option.name}
+                                                                {option.sku && ` (${option.sku})`}
                                                             </MenuItem>
                                                         ))}
                                                     </Select>
                                                 </FormControl>
-                                                {
-                                                    item.id && (
-                                                        <TextField
-                                                            fullWidth
-                                                            size="small"
-                                                            placeholder="Description"
-                                                            value={item.description}
-                                                            onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                            sx={{ mt: 1 }}
-                                                        />
-                                                    )
-                                                }
+
+                                                {item.id && (
+                                                    <TextField
+                                                        fullWidth
+                                                        size="small"
+                                                        placeholder="Description"
+                                                        value={item.description}
+                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                        sx={{ mt: 1 }}
+                                                    />
+                                                )}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
@@ -1317,9 +1599,16 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             >
                                 Add New Row
                             </Button>
+                            {/* <Button
+                                variant="outlined"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Add Items in Bulk
+                            </Button> */}
                             <Button
                                 variant="outlined"
                                 sx={{ textTransform: 'none' }}
+                                onClick={() => setBulkModalOpen(true)}   // 👈 only this line added
                             >
                                 Add Items in Bulk
                             </Button>
@@ -1907,6 +2196,14 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 </DialogActions>
 
             </Dialog>
+
+            {/* Bulk Items Modal */}
+            <BulkItemModal
+                open={bulkModalOpen}
+                onClose={() => setBulkModalOpen(false)}
+                itemOptions={itemOptions}
+                onAddItems={handleBulkItemsAdded}
+            />
         </div>
     );
 };

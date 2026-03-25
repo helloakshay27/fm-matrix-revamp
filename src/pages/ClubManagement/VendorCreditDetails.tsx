@@ -65,39 +65,7 @@ interface SalesOrderAttachment {
   size: number;
 }
 
-// interface SalesOrder {
-//     id: string;
-//     customer: {
-//         name: string;
-//         email: string;
-//         phone: string;
-//         billingAddress: string;
-//         shippingAddress: string;
-//     };
-//     orderDetails: {
-//         orderNumber: string;
-//         referenceNumber: string;
-//         orderDate: string;
-//         expectedShipmentDate: string;
-//         paymentTerms: string;
-//         deliveryMethod: string;
-//         salesperson: string;
-//         status: string;
-//     };
-//     items: SalesOrderItem[];
-//     pricing: {
-//         subTotal: number;
-//         discount: number;
-//         taxAmount: number;
-//         adjustment: number;
-//         total: number;
-//     };
-//     customerNotes: string;
-//     termsAndConditions: string;
-//     attachments: SalesOrderAttachment[];
-//     createdAt: string;
-//     updatedAt: string;
-// }
+
 
 interface SalesOrder {
   id: number;
@@ -229,7 +197,7 @@ export const VendorCreditDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading Vendor Details...</p>
         </div>
       </div>
     );
@@ -309,6 +277,27 @@ export const VendorCreditDetails = () => {
   const handleClone = () => {
     sonnerToast.success("Sales order cloned successfully");
     navigate("/accounting/sales-order/create");
+  };
+
+  const handleDownloadFile = async (file: { document_file_name: string; attachment_url: string }) => {
+    try {
+      if (!file?.attachment_url) {
+        throw new Error("Attachment URL is missing");
+      }
+
+      const link = document.createElement("a");
+      link.href = file.attachment_url;
+      link.download = file.document_file_name || "download";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      sonnerToast.success(`Downloading ${file.document_file_name}`);
+    } catch (error) {
+      console.error("Failed to download attachment:", error);
+      sonnerToast.error("Failed to download attachment. Please try again.");
+    }
   };
 
   if (loading) {
@@ -518,8 +507,8 @@ export const VendorCreditDetails = () => {
                         {/* {new Date(salesOrder?.date).toLocaleDateString("en-IN")} */}
                         {salesOrder?.date
                           ? new Date(salesOrder.date).toLocaleDateString(
-                              "en-IN"
-                            )
+                            "en-IN"
+                          )
                           : "-"}
                       </p>
                     </div>
@@ -541,8 +530,11 @@ export const VendorCreditDetails = () => {
                       <p className="text-sm font-medium text-muted-foreground">
                         Subject
                       </p>
-                      <p className="text-base font-semibold mt-1">
+                      {/* <p className="text-base font-semibold mt-1">
                         {salesOrder?.subject}
+                      </p> */}
+                      <p className="text-base font-semibold mt-1 break-words whitespace-normal max-w-full">
+                        {salesOrder?.subject || "-"}
                       </p>
                     </div>
                   </div>
@@ -680,7 +672,7 @@ export const VendorCreditDetails = () => {
                       <CardTitle className="text-base"> Notes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">
                         {salesOrder.customerNotes}
                       </p>
                     </CardContent>
@@ -695,7 +687,7 @@ export const VendorCreditDetails = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">
                         {salesOrder.termsAndConditions}
                       </p>
                     </CardContent>
@@ -729,7 +721,15 @@ export const VendorCreditDetails = () => {
                                 </p>
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleDownloadFile(
+                                  file as { document_file_name: string; attachment_url: string }
+                                )
+                              }
+                            >
                               <Download className="h-4 w-4" />
                             </Button>
                           </div>
@@ -782,7 +782,11 @@ export const VendorCreditDetails = () => {
                       {/* <Phone className="h-4 w-4" /> */}
                       Notes
                     </p>
-                    <p className="text-base mt-1">{salesOrder?.notes || "-"}</p>
+                    {/* <p className="text-base mt-1">{salesOrder?.notes || "-"}</p>
+                     */}
+                    <p className="text-base mt-1 break-words whitespace-normal max-w-full">
+                      {salesOrder?.notes || "-"}
+                    </p>
                   </div>
                   {/* <div>
                                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { taskAnalyticsDownloadAPI } from '@/services/taskAnalyticsDownloadAPI';
 
 interface TaskAnalyticsCardProps {
@@ -21,15 +21,15 @@ const CHART_COLORS = {
   primary: '#C4B99D',
   secondary: '#DAD6CA',
   tertiary: '#D5DBDB',
-  primaryLight: '#DDD4C4',    // Lighter shade of primary
-  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
-  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+  primaryLight: '#DDD4C4',
+  secondaryLight: '#E8E5DD',
+  tertiaryLight: '#E5E9E9',
 };
 
-export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({ 
-  title, 
-  data, 
-  type, 
+export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
+  title,
+  data,
+  type,
   className = '',
   dateRange
 }) => {
@@ -37,7 +37,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
   const handleDownload = async () => {
     if (!dateRange) return;
-    
+
     setIsDownloading(true);
     try {
       switch (type) {
@@ -62,10 +62,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
       setIsDownloading(false);
     }
   };
+
   const renderContent = () => {
     if (!data) {
       return (
-        <div className="flex items-center justify-center h-64">
+        <div className="flex items-center justify-center h-48">
           <p className="text-muted-foreground">No data available</p>
         </div>
       );
@@ -74,17 +75,15 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
     switch (type) {
       case 'technical':
       case 'nonTechnical': {
-        // Handle the response structure - check if data has a 'response' property
         const responseData = data?.response || data;
         if (!responseData || typeof responseData !== 'object') {
           return (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex items-center justify-center h-48">
               <p className="text-muted-foreground">No data available</p>
             </div>
           );
         }
 
-        // Transform the data for chart display
         const chartData = Object.entries(responseData).map(([key, value]: [string, any]) => ({
           name: key,
           open: value?.open || 0,
@@ -95,13 +94,13 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
         }));
 
         return (
-          <div className="space-y-4">
-            {/* Bar Chart */}
-            <div className="h-64">
+          <div className="flex flex-col h-full">
+            {/* Bar Chart — fixed height, never shrinks */}
+            <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
+                  <XAxis dataKey="name" fontSize={10} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
@@ -112,22 +111,22 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
               </ResponsiveContainer>
             </div>
 
-            {/* Summary Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Category</th>
-                    <th className="text-right p-2">Open</th>
-                    <th className="text-right p-2">Closed</th>
-                    <th className="text-right p-2">WIP</th>
-                    <th className="text-right p-2">Overdue</th>
-                    <th className="text-right p-2">Total</th>
+            {/* Scrollable table */}
+            <div className="flex-1 overflow-auto mt-3 border rounded-md">
+              <table className="w-full text-sm min-w-[340px]">
+                <thead className="sticky top-0 bg-white z-10">
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-2 font-semibold">Category</th>
+                    <th className="text-right p-2 font-semibold">Open</th>
+                    <th className="text-right p-2 font-semibold">Closed</th>
+                    <th className="text-right p-2 font-semibold">WIP</th>
+                    <th className="text-right p-2 font-semibold">Overdue</th>
+                    <th className="text-right p-2 font-semibold">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {chartData.map((item, index) => (
-                    <tr key={index} className="border-b">
+                    <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="p-2 font-medium">{item.name}</td>
                       <td className="text-right p-2">{item.open}</td>
                       <td className="text-right p-2">{item.closed}</td>
@@ -144,20 +143,18 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
       }
 
       case 'topTen': {
-        // Handle the response structure for top ten data
         const responseData = data?.response || data;
         if (!Array.isArray(responseData)) {
           return (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex items-center justify-center h-48">
               <p className="text-muted-foreground">No data available or invalid data format</p>
             </div>
           );
         }
 
-        // For top ten, show both chart and table
         const topTenColors = [
-          CHART_COLORS.primary, 
-          CHART_COLORS.secondary, 
+          CHART_COLORS.primary,
+          CHART_COLORS.secondary,
           CHART_COLORS.tertiary,
           CHART_COLORS.primaryLight,
           CHART_COLORS.secondaryLight,
@@ -169,13 +166,13 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
         }));
 
         return (
-          <div className="space-y-4 h-[500px]">
-            {/* Bar Chart */}
-            <div className="h-64">
+          <div className="flex flex-col h-full">
+            {/* Bar Chart — fixed height */}
+            <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="type" angle={-35} textAnchor="end" height={100} fontSize={9} />
+                  <XAxis dataKey="type" angle={-35} textAnchor="end" height={80} fontSize={9} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="count">
@@ -187,19 +184,19 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
               </ResponsiveContainer>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Rank</th>
-                    <th className="text-left p-2">Checklist Type</th>
-                    <th className="text-right p-2">Count</th>
+            {/* Scrollable table */}
+            <div className="flex-1 overflow-auto mt-3 border rounded-md">
+              <table className="w-full text-sm min-w-[280px]">
+                <thead className="sticky top-0 bg-white z-10">
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-2 font-semibold">Rank</th>
+                    <th className="text-left p-2 font-semibold">Checklist Type</th>
+                    <th className="text-right p-2 font-semibold">Count</th>
                   </tr>
                 </thead>
                 <tbody>
                   {responseData.slice(0, 10).map((item: any, index: number) => (
-                    <tr key={index} className="border-b">
+                    <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="p-2 font-medium">#{index + 1}</td>
                       <td className="p-2">{item.type || 'N/A'}</td>
                       <td className="text-right p-2 font-semibold">{item.count || 0}</td>
@@ -213,11 +210,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
       }
 
       case 'siteWise': {
-        // Handle the response structure for site-wise data
         const responseData = data?.response || data;
         if (!responseData || typeof responseData !== 'object') {
           return (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex items-center justify-center h-48">
               <p className="text-muted-foreground">No data available</p>
             </div>
           );
@@ -233,13 +229,13 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
         }));
 
         return (
-          <div className="space-y-4">
-            {/* Stacked Bar Chart */}
-            <div className="h-64">
+          <div className="flex flex-col h-full">
+            {/* Stacked Bar Chart — fixed height */}
+            <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="site" />
+                  <XAxis dataKey="site" fontSize={10} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
@@ -250,22 +246,22 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
               </ResponsiveContainer>
             </div>
 
-            {/* Summary Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Site</th>
-                    <th className="text-right p-2">Open</th>
-                    <th className="text-right p-2">Closed</th>
-                    <th className="text-right p-2">WIP</th>
-                    <th className="text-right p-2">Overdue</th>
-                    <th className="text-right p-2">Total</th>
+            {/* Scrollable table */}
+            <div className="flex-1 overflow-auto mt-3 border rounded-md">
+              <table className="w-full text-sm min-w-[360px]">
+                <thead className="sticky top-0 bg-white z-10">
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-2 font-semibold">Site</th>
+                    <th className="text-right p-2 font-semibold">Open</th>
+                    <th className="text-right p-2 font-semibold">Closed</th>
+                    <th className="text-right p-2 font-semibold">WIP</th>
+                    <th className="text-right p-2 font-semibold">Overdue</th>
+                    <th className="text-right p-2 font-semibold">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {chartData.map((item, index) => (
-                    <tr key={index} className="border-b">
+                    <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="p-2 font-medium">{item.site}</td>
                       <td className="text-right p-2">{item.open}</td>
                       <td className="text-right p-2">{item.closed}</td>
@@ -287,8 +283,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
   };
 
   return (
-    <Card className={`h-full transition-all duration-200 hover:shadow-lg border-gray-200 group ${className}`}>
-      <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-6 flex flex-row items-center justify-between gap-2">
+    <Card
+      className={`flex flex-col transition-all duration-200 hover:shadow-lg border-gray-200 group ${className}`}
+      style={{ height: '520px' }}
+    >
+      <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-5 flex flex-row items-center justify-between gap-2 flex-shrink-0">
         <CardTitle className="text-sm sm:text-base lg:text-lg font-semibold truncate flex-1">{title}</CardTitle>
         {dateRange && (
           <Button
@@ -297,12 +296,13 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             onClick={handleDownload}
             disabled={isDownloading}
             className="flex items-center gap-1 flex-shrink-0"
+            data-download-button
           >
             <Download className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
         )}
       </CardHeader>
-      <CardContent className="pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
+      <CardContent className="pt-0 px-4 sm:px-6 pb-4 flex-1 min-h-0 overflow-hidden">
         {renderContent()}
       </CardContent>
     </Card>

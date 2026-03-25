@@ -6,94 +6,76 @@ import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
-interface VendorOption {
+interface PurchaseOrderByVendorAPI {
+  // id?: number | string;
+  // vendor_name?: string;
+  // supplier_name?: string;
+  // name?: string;
+  // purchase_order_count?: string | number;
+  // order_count?: string | number;
+  // count?: string | number;
+  // amount?: string | number;
+  // total_amount?: string | number;
+  // purchase_order_amount?: string | number;
+
   id?: number | string;
+  vendor_name?: string;
+  supplier_name?: string;
   name?: string;
-  company_name?: string;
-  vendor_name?: string;
-}
 
-interface ExpenseApi {
-  id: number | string;
-  date?: string;
-  created_at?: string;
-  vendor_id?: number | string | null;
-  vendor_name?: string;
+  expense_count?: string | number;
+  bill_count?: string | number;
+  vendor_credit_count?: string | number;
+  journal_count?: string | number;
+
   amount?: string | number;
-  total_amount?: string | number;
-  total_tax_amount?: string | number;
+  amount_with_tax?: string | number;
+
 }
 
-interface BillApi {
-  id: number | string;
-  bill_date?: string;
-  date?: string;
-  created_at?: string;
-  vendor_id?: number | string | null;
-  vendor_name?: string;
-  resident_name?: string;
-  amount?: string | number;
-  total_amount?: string | number;
-  sub_total_amount?: string | number;
-  lock_account_tax_amount?: string | number;
-}
+type VendorPORow = {
+  // id: string;
+  // vendor_name: string;
+  // purchase_order_count: number;
+  // amount: number;
 
-interface VendorCreditApi {
-  id: number | string;
-  date?: string;
-  credit_note_date?: string;
-  vendor_id?: number | string | null;
-  vendor_name?: string;
-  supplier_name?: string;
-  amount?: string | number;
-  total_amount?: string | number;
-  total_tax_amount?: string | number;
-}
-
-interface ManualJournalApi {
-  id: number | string;
-  transaction_date?: string;
-  created_at?: string;
-  vendor_id?: number | string | null;
-  vendor_name?: string;
-  supplier_name?: string;
-  party_name?: string;
-  amount?: string | number;
-  total_amount?: string | number;
-  records?: Array<{
-    amount?: string | number;
-  }>;
-}
-
-interface VendorSummaryRow {
-  id: string;
+   id: string;
   vendor_name: string;
+
   expense_count: number;
   bill_count: number;
   vendor_credit_count: number;
   journal_count: number;
+
   amount: number;
   amount_with_tax: number;
-}
-
-const columns: ColumnConfig[] = [
-  { key: "vendor_name", label: "VENDOR NAME", sortable: true, hideable: false, draggable: true },
-  { key: "expense_count", label: "EXPENSE COUNT", sortable: true, hideable: false, draggable: true },
-  { key: "bill_count", label: "BILL COUNT", sortable: true, hideable: false, draggable: true },
-  { key: "vendor_credit_count", label: "VENDOR CREDIT COUNT", sortable: true, hideable: false, draggable: true },
-  { key: "journal_count", label: "JOURNAL COUNT", sortable: true, hideable: false, draggable: true },
-  { key: "amount", label: "AMOUNT", sortable: true, hideable: false, draggable: true },
-  { key: "amount_with_tax", label: "AMOUNT WITH TAX", sortable: true, hideable: false, draggable: true },
-];
-
-const toInputDate = (ddmmyyyy: string) => {
-  const [day, month, year] = ddmmyyyy.split("/");
-  return `${year}-${month}-${day}`;
 };
 
-const toApiDate = (ddmmyyyy: string) => {
-  const [day, month, year] = ddmmyyyy.split("/");
-  return `${year}-${month}-${day}`;
+const columns: ColumnConfig[] = [
+  // { key: "vendor_name", label: "VENDOR NAME", sortable: true, hideable: false, draggable: true },
+  // { key: "purchase_order_count", label: "PURCHASE ORDER COUNT", sortable: true, hideable: false, draggable: true },
+  // { key: "amount", label: "AMOUNT", sortable: true, hideable: false, draggable: true },
+
+  { key: "vendor_name", label: "VENDOR NAME", sortable: true },
+  { key: "expense_count", label: "EXPENSE COUNT", sortable: true },
+  { key: "bill_count", label: "BILL COUNT", sortable: true },
+  { key: "vendor_credit_count", label: "VENDOR CREDIT COUNT", sortable: true },
+  { key: "journal_count", label: "JOURNAL COUNT", sortable: true },
+  { key: "amount", label: "AMOUNT", sortable: true },
+  { key: "amount_with_tax", label: "AMOUNT WITH TAX", sortable: true },
+];
+
+const toApiDate = (iso: string) => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+const formatDisplayDate = (iso: string) => {
+  if (!iso) return "--";
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 };
 
 const formatCurrency = (value: number) =>
@@ -102,249 +84,85 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 2,
   })}`;
 
-const parseAmount = (value?: string | number) => {
-  if (typeof value === "number") return value;
-  if (value === null || value === undefined || value === "") return 0;
-  return parseFloat(String(value).replace(/,/g, "")) || 0;
-};
+const toNumber = (v?: string | number) => parseFloat(String(v ?? 0)) || 0;
 
-const getApiBaseUrl = (baseUrl?: string | null) => {
-  if (!baseUrl) return "";
-  return baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
-};
-
-const extractArray = <T,>(payload: any, keys: string[] = []): T[] => {
-  if (Array.isArray(payload)) return payload as T[];
-
-  for (const key of keys) {
-    if (Array.isArray(payload?.[key])) {
-      return payload[key] as T[];
-    }
-  }
-
-  return [];
-};
-
-const isWithinRange = (dateValue: string, fromDate: string, toDate: string) => {
-  if (!dateValue) return false;
-
-  const rowDate = new Date(dateValue);
-  const from = new Date(toApiDate(fromDate));
-  const to = new Date(toApiDate(toDate));
-
-  if (Number.isNaN(rowDate.getTime()) || Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
-    return true;
-  }
-
-  rowDate.setHours(0, 0, 0, 0);
-  from.setHours(0, 0, 0, 0);
-  to.setHours(23, 59, 59, 999);
-
-  return rowDate >= from && rowDate <= to;
-};
-
-const normalizeVendorName = (name?: string | null) => {
-  const normalized = String(name || "").trim();
-  return normalized || "Others";
+const getCurrentMonthRange = () => {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
 };
 
 const PurchaseOrdersByVendorReport: React.FC = () => {
-  const [rows, setRows] = useState<VendorSummaryRow[]>([]);
+  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
+  const [filters, setFilters] = useState(defaultRange);
+  const [rows, setRows] = useState<VendorPORow[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const defaultDateRange = useMemo(() => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    return {
-      fromDate: firstDay.toLocaleDateString("en-GB"),
-      toDate: lastDay.toLocaleDateString("en-GB"),
-    };
-  }, []);
-
-  const [filters, setFilters] = useState(defaultDateRange);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const formatted = value ? value.split("-").reverse().join("/") : "";
-
-    setFilters((prev) => ({
-      ...prev,
-      [name]: formatted,
-    }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const fetchVendorSummary = useCallback(async (fromDate: string, toDate: string) => {
+  const fetchData = useCallback(async (fromDate: string, toDate: string) => {
     setLoading(true);
-
     try {
       const baseUrl = localStorage.getItem("baseUrl");
       const token = localStorage.getItem("token");
       const lockAccountId = localStorage.getItem("lock_account_id");
-      const apiBaseUrl = getApiBaseUrl(baseUrl);
 
-      if (!apiBaseUrl || !token || !lockAccountId) {
-        setRows([]);
-        return;
+      const response = await axios.get(
+        `https://${baseUrl}/pms/suppliers/purchase_orders_by_vendor_and_others.json`,
+        {
+          params: {
+            lock_account_id: lockAccountId,
+            "q[date_gteq]": toApiDate(fromDate),
+            "q[date_lteq]": toApiDate(toDate),
+          },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const payload = response.data;
+      let list: PurchaseOrderByVendorAPI[] = [];
+      if (Array.isArray(payload)) {
+        list = payload;
+      } else if (payload && typeof payload === "object") {
+        const arrayKey = Object.keys(payload).find((k) => Array.isArray(payload[k]));
+        if (arrayKey) list = payload[arrayKey];
       }
 
-      const authHeaders = {
-        Authorization: `Bearer ${token}`,
-      };
+      // const mapped: VendorPORow[] = list.map((item, i) => ({
+      //   id: String(item.id ?? i),
+      //   vendor_name: item.vendor_name || item.supplier_name || item.name || "-",
+      //   purchase_order_count: toNumber(item.purchase_order_count ?? item.order_count ?? item.count),
+      //   amount: toNumber(item.amount ?? item.total_amount ?? item.purchase_order_amount),
+      // }));
 
-      const [vendorsResponse, expensesResponse, billsResponse, vendorCreditsResponse, journalsResponse] = await Promise.all([
-        axios.get(`${apiBaseUrl}/pms/purchase_orders/get_suppliers.json`, {
-          params: { access_token: token },
-        }),
-        axios.get(`${apiBaseUrl}/expenses.json`, {
-          params: {
-            lock_account_id: lockAccountId,
-            "q[date_gteq]": toApiDate(fromDate),
-            "q[date_lteq]": toApiDate(toDate),
-            page: 1,
-            per_page: 500,
-          },
-          headers: authHeaders,
-        }),
-        axios.get(`${apiBaseUrl}/lock_account_bills.json`, {
-          params: {
-            lock_account_id: lockAccountId,
-            "q[date_gteq]": toApiDate(fromDate),
-            "q[date_lteq]": toApiDate(toDate),
-            page: 1,
-            per_page: 500,
-          },
-          headers: authHeaders,
-        }),
-        axios.get(`${apiBaseUrl}/lock_account_supplier_credits.json`, {
-          params: {
-            lock_account_id: lockAccountId,
-            "q[date_gteq]": toApiDate(fromDate),
-            "q[date_lteq]": toApiDate(toDate),
-            page: 1,
-            per_page: 500,
-          },
-          headers: authHeaders,
-        }),
-        axios.get(`${apiBaseUrl}/lock_accounts/${lockAccountId}/lock_account_transactions.json`, {
-          params: {
-            "q[transaction_type_eq]": "Journal Entry",
-            "q[transaction_date_gteq]": toApiDate(fromDate),
-            "q[transaction_date_lteq]": toApiDate(toDate),
-            page: 1,
-            per_page: 500,
-          },
-          headers: authHeaders,
-        }),
-      ]);
 
-      const vendors = extractArray<VendorOption>(vendorsResponse.data, ["suppliers", "data"]);
-      const expenses = extractArray<ExpenseApi>(expensesResponse.data, ["expenses", "data"]);
-      const bills = extractArray<BillApi>(billsResponse.data, ["lock_account_bills", "data"]);
-      const vendorCredits = extractArray<VendorCreditApi>(vendorCreditsResponse.data, ["lock_account_supplier_credits", "data"]);
-      const journals = extractArray<ManualJournalApi>(journalsResponse.data, ["lock_account_transactions", "data"]);
+      const mapped: VendorPORow[] = list.map((item, i) => ({
+  id: String(item.id ?? i),
 
-      const vendorMap = vendors.reduce<Record<string, string>>((acc, vendor) => {
-        const key = vendor.id !== undefined && vendor.id !== null ? String(vendor.id) : "";
-        const name = vendor.name || vendor.company_name || vendor.vendor_name || "";
+  vendor_name:
+    item.vendor_name ||
+    item.supplier_name ||
+    item.name ||
+    "-",
 
-        if (key && name) {
-          acc[key] = name;
-        }
+  expense_count: toNumber(item.expense_count),
+  bill_count: toNumber(item.bill_count),
+  vendor_credit_count: toNumber(item.vendor_credit_count),
+  journal_count: toNumber(item.journal_count),
 
-        return acc;
-      }, {});
+  amount: toNumber(item.amount),
+  amount_with_tax: toNumber(item.amount_with_tax),
+}));
 
-      const grouped = new Map<string, VendorSummaryRow>();
-
-      const ensureRow = (vendorName?: string | null) => {
-        const normalizedName = normalizeVendorName(vendorName);
-
-        if (!grouped.has(normalizedName)) {
-          grouped.set(normalizedName, {
-            id: normalizedName,
-            vendor_name: normalizedName,
-            expense_count: 0,
-            bill_count: 0,
-            vendor_credit_count: 0,
-            journal_count: 0,
-            amount: 0,
-            amount_with_tax: 0,
-          });
-        }
-
-        return grouped.get(normalizedName)!;
-      };
-
-      expenses
-        .filter((item) => isWithinRange(item.date || item.created_at || "", fromDate, toDate))
-        .forEach((item) => {
-          const vendorName = item.vendor_name || vendorMap[String(item.vendor_id ?? "")] || "Others";
-          const row = ensureRow(vendorName);
-          const baseAmount = parseAmount(item.amount);
-          const totalAmount = parseAmount(item.total_amount) || baseAmount + parseAmount(item.total_tax_amount);
-
-          row.expense_count += 1;
-          row.amount += baseAmount;
-          row.amount_with_tax += totalAmount || baseAmount;
-        });
-
-      bills
-        .filter((item) => isWithinRange(item.bill_date || item.date || item.created_at || "", fromDate, toDate))
-        .forEach((item) => {
-          const vendorName = item.vendor_name || item.resident_name || vendorMap[String(item.vendor_id ?? "")] || "Others";
-          const row = ensureRow(vendorName);
-          const baseAmount = parseAmount(item.sub_total_amount) || parseAmount(item.amount);
-          const totalAmount = parseAmount(item.total_amount) || baseAmount + parseAmount(item.lock_account_tax_amount);
-
-          row.bill_count += 1;
-          row.amount += baseAmount;
-          row.amount_with_tax += totalAmount || baseAmount;
-        });
-
-      vendorCredits
-        .filter((item) => isWithinRange(item.date || item.credit_note_date || "", fromDate, toDate))
-        .forEach((item) => {
-          const vendorName = item.vendor_name || item.supplier_name || vendorMap[String(item.vendor_id ?? "")] || "Others";
-          const row = ensureRow(vendorName);
-          const baseAmount = parseAmount(item.amount);
-          const totalAmount = parseAmount(item.total_amount) || baseAmount + parseAmount(item.total_tax_amount);
-
-          row.vendor_credit_count += 1;
-          row.amount += baseAmount;
-          row.amount_with_tax += totalAmount || baseAmount;
-        });
-
-      journals
-        .filter((item) => isWithinRange(item.transaction_date || item.created_at || "", fromDate, toDate))
-        .forEach((item) => {
-          const vendorName = item.vendor_name || item.supplier_name || item.party_name || vendorMap[String(item.vendor_id ?? "")];
-
-          if (!vendorName) {
-            return;
-          }
-
-          const row = ensureRow(vendorName);
-          const recordsAmount = Array.isArray(item.records)
-            ? item.records.reduce((sum, record) => sum + parseAmount(record.amount), 0)
-            : 0;
-          const baseAmount = parseAmount(item.amount) || parseAmount(item.total_amount) || recordsAmount;
-
-          row.journal_count += 1;
-          row.amount += baseAmount;
-          row.amount_with_tax += parseAmount(item.total_amount) || baseAmount;
-        });
-
-      const sortedRows = Array.from(grouped.values()).sort((left, right) => {
-        if (left.vendor_name === "Others") return -1;
-        if (right.vendor_name === "Others") return 1;
-        return left.vendor_name.localeCompare(right.vendor_name);
-      });
-
-      setRows(sortedRows);
-    } catch (error) {
-      console.error("Failed to fetch purchases by vendor report", error);
+      setRows(mapped);
+    } catch (err) {
+      console.error("Failed to fetch purchase orders by vendor", err);
       setRows([]);
     } finally {
       setLoading(false);
@@ -352,128 +170,189 @@ const PurchaseOrdersByVendorReport: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchVendorSummary(defaultDateRange.fromDate, defaultDateRange.toDate);
-  }, [defaultDateRange.fromDate, defaultDateRange.toDate, fetchVendorSummary]);
+    fetchData(defaultRange.fromDate, defaultRange.toDate);
+  }, [defaultRange.fromDate, defaultRange.toDate, fetchData]);
+
+  // const totals = useMemo(
+  //   () =>
+  //     rows.reduce(
+  //       (acc, row) => ({
+  //         purchase_order_count: acc.purchase_order_count + row.purchase_order_count,
+  //         amount: acc.amount + row.amount,
+  //       }),
+  //       { purchase_order_count: 0, amount: 0 }
+  //     ),
+  //   [rows]
+  // );
+
 
   const totals = useMemo(
-    () =>
-      rows.reduce(
-        (acc, row) => ({
-          expense_count: acc.expense_count + row.expense_count,
-          bill_count: acc.bill_count + row.bill_count,
-          vendor_credit_count: acc.vendor_credit_count + row.vendor_credit_count,
-          journal_count: acc.journal_count + row.journal_count,
-          amount: acc.amount + row.amount,
-          amount_with_tax: acc.amount_with_tax + row.amount_with_tax,
-        }),
-        {
-          expense_count: 0,
-          bill_count: 0,
-          vendor_credit_count: 0,
-          journal_count: 0,
-          amount: 0,
-          amount_with_tax: 0,
-        }
-      ),
-    [rows]
-  );
+  () =>
+    rows.reduce(
+      (acc, r) => ({
+        expense_count: acc.expense_count + r.expense_count,
+        bill_count: acc.bill_count + r.bill_count,
+        vendor_credit_count:
+          acc.vendor_credit_count + r.vendor_credit_count,
+        journal_count: acc.journal_count + r.journal_count,
 
-  const renderCenteredValue = (value: number) => (
-    <span className="inline-flex w-full justify-center text-[13px] font-semibold text-[#111827]">{value}</span>
-  );
+        amount: acc.amount + r.amount,
+        amount_with_tax:
+          acc.amount_with_tax + r.amount_with_tax,
+      }),
+      {
+        expense_count: 0,
+        bill_count: 0,
+        vendor_credit_count: 0,
+        journal_count: 0,
 
-  const renderRow = (row: VendorSummaryRow) => ({
-    vendor_name: <span className="text-[13px] font-semibold text-[#2563eb]">{row.vendor_name}</span>,
-    expense_count: renderCenteredValue(row.expense_count),
-    bill_count: renderCenteredValue(row.bill_count),
-    vendor_credit_count: renderCenteredValue(row.vendor_credit_count),
-    journal_count: renderCenteredValue(row.journal_count),
-    amount: <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.amount)}</span>,
-    amount_with_tax: <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.amount_with_tax)}</span>,
-  });
+        amount: 0,
+        amount_with_tax: 0,
+      }
+    ),
+  [rows]
+);
+
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: "__total__",
+        vendor_name: "__total__",
+        // purchase_order_count: totals.purchase_order_count,
+        // amount: totals.amount,
+
+         expense_count: totals.expense_count,
+  bill_count: totals.bill_count,
+  vendor_credit_count: totals.vendor_credit_count,
+  journal_count: totals.journal_count,
+
+  amount: totals.amount,
+  amount_with_tax: totals.amount_with_tax,
+      },
+    ];
+  }, [rows, totals]);
+
+  // const renderRow = (row: VendorPORow) => {
+  //   const isTotal = row.id === "__total__";
+  //   return {
+  //     vendor_name: isTotal ? (
+  //       <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+  //     ) : (
+  //       <span className="text-sm font-medium text-blue-600">{row.vendor_name}</span>
+  //     ),
+  //     purchase_order_count: (
+  //       <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
+  //         {row.purchase_order_count}
+  //       </span>
+  //     ),
+  //     amount: (
+  //       <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+  //         {formatCurrency(row.amount)}
+  //       </span>
+  //     ),
+  //   };
+  // };
+
+
+  const renderRow = (row: VendorPORow) => {
+  const isTotal = row.id === "__total__";
+
+  return {
+    vendor_name: isTotal ? (
+      <span className="font-bold">Total</span>
+    ) : (
+      <span className="text-blue-600 font-medium">
+        {row.vendor_name}
+      </span>
+    ),
+
+    expense_count: <span>{row.expense_count}</span>,
+    bill_count: <span>{row.bill_count}</span>,
+    vendor_credit_count: <span>{row.vendor_credit_count}</span>,
+    journal_count: <span>{row.journal_count}</span>,
+
+    amount: (
+      <span className="font-medium">
+        {formatCurrency(row.amount)}
+      </span>
+    ),
+
+    amount_with_tax: (
+      <span className="font-medium">
+        {formatCurrency(row.amount_with_tax)}
+      </span>
+    ),
+  };
+};
 
   return (
-    <div className="min-h-screen w-full bg-white">
-      <div className="overflow-hidden border border-[#EAECF0] bg-white">
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-4">
-          <div className="mb-5 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3]">
-              <NotepadText color="#d32f2f" size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-[#111827]">Purchases by Vendor</h3>
-            </div>
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
           </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Purchase Orders by Vendor</h3>
+        </div>
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
+          <TextField
+            label="From Date"
+            type="date"
+            name="fromDate"
+            value={filters.fromDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            fullWidth
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            name="toDate"
+            value={filters.toDate}
+            onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            fullWidth
+          />
+          <Button
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={() => fetchData(filters.fromDate, filters.toDate)}
+          >
+            View
+          </Button>
+        </div>
+      </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <TextField
-              label="From Date"
-              type="date"
-              name="fromDate"
-              value={toInputDate(filters.fromDate)}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-
-            <TextField
-              label="To Date"
-              type="date"
-              name="toDate"
-              value={toInputDate(filters.toDate)}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-              fullWidth
-            />
-
-            <Button
-              onClick={() => fetchVendorSummary(filters.fromDate, filters.toDate)}
-              className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            >
-              View
-            </Button>
-          </div>
+      {/* Table */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
+          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Purchase Orders by Vendor</h1>
+          <p className="mt-1 text-sm text-[#475467]">
+            {filters.fromDate && filters.toDate
+              ? `From ${formatDisplayDate(filters.fromDate)} To ${formatDisplayDate(filters.toDate)}`
+              : "All dates"}
+          </p>
         </div>
 
-        <div className="border-b border-[#EAECF0] bg-white px-6 py-12 text-center">
-          <p className="text-[14px] font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-3 text-[20px] font-semibold text-[#111827]">Purchases by Vendor</h1>
-          <p className="mt-2 text-[14px] text-[#344054]">From {filters.fromDate} To {filters.toDate}</p>
-        </div>
-
-        <div className="p-0">
+        <div className="p-4">
           <EnhancedTaskTable
-            data={rows}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="purchases-by-vendor-report-v2"
             hideTableExport={true}
-            hideTableSearch={true}
-            enableSearch={false}
+            hideTableSearch={false}
+            // enableSearch={true}
             hideColumnsButton={true}
             loading={loading}
-            emptyMessage="There are no purchase and expense entries during the selected date range."
-            toolbarClassName="hidden"
-            tableWrapperClassName="border-0 rounded-none"
-            headerCellClassName="bg-[#F7F7FB] text-[#5F6293] text-[12px] font-semibold uppercase tracking-[0.02em] hover:bg-[#F7F7FB]"
-            rowClassName="hover:bg-transparent shadow-none"
-            cellClassName="px-6 py-3 border-b border-[#EAECF0] hover:bg-transparent align-middle"
+            emptyMessage="There are no purchase orders during the selected date range."
           />
-
-          <div
-            className="grid border-b border-[#EAECF0] bg-white px-6 py-4 text-[14px] text-[#111827]"
-            style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
-          >
-            <div className="font-medium">Total</div>
-            <div className="text-center font-semibold">{totals.expense_count}</div>
-            <div className="text-center font-semibold">{totals.bill_count}</div>
-            <div className="text-center font-semibold">{totals.vendor_credit_count}</div>
-            <div className="text-center font-semibold">{totals.journal_count}</div>
-            <div className="text-right font-semibold">{formatCurrency(totals.amount)}</div>
-            <div className="text-right font-semibold">{formatCurrency(totals.amount_with_tax)}</div>
-          </div>
         </div>
       </div>
     </div>

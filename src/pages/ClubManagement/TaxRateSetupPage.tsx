@@ -568,9 +568,9 @@ const GroupTaxTab: React.FC = () => {
     const selectedIds = allRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
     try {
       if (editingGroup) {
-        await axios.post(
-          `${getBaseUrl()}/lock_accounts/${lock_account_id}/edit_tax_group.json`,
-          { tax_group: { id: editingGroup.id, name: groupName, tax_rates: selectedIds } },
+        await axios.patch(
+          `${getBaseUrl()}/lock_accounts/${lock_account_id}/tax_groups/${editingGroup.id}.json`,
+          { tax_group: { name: groupName, tax_rates: selectedIds } },
           { headers: authHeaders() }
         );
         toast.success('Tax group updated successfully!');

@@ -18,7 +18,9 @@ const createApiSlice = <T>(name: string, fetchThunk: any) => {
     return createSlice({
         name,
         initialState,
-        reducers: {},
+        reducers: {
+            reset: () => initialState,
+        },
         extraReducers: (builder) => {
             builder
                 .addCase(fetchThunk.pending, (state) => {

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,20 +14,17 @@ interface ReceivableSummaryRow {
   referenceNo: string;
   status: string;
   transactionType: string;
-  totalBcy: number;
-  totalFcy: number;
-  balanceBcy: number;
-  balanceFcy: number;
+  total: number;
+  balance: number;
 }
 
 const getCurrentMonthRange = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return {
-    fromDate: firstDay.toISOString().split("T")[0],
-    toDate: lastDay.toISOString().split("T")[0],
-  };
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
 };
 
 const toApiDate = (iso: string) => {
@@ -63,19 +60,18 @@ const statusColorMap: Record<string, string> = {
   Open: "bg-blue-100 text-blue-700",
   Sent: "bg-blue-100 text-blue-700",
   Paid: "bg-green-100 text-green-700",
+  Draft: "bg-yellow-100 text-yellow-700",
 };
 
 const columns: ColumnConfig[] = [
-  { key: "customerName", label: "Customer Name", sortable: true, hideable: true, draggable: true },
-  { key: "date", label: "Date", sortable: true, hideable: true, draggable: true },
-  { key: "transactionNo", label: "Transaction#", sortable: true, hideable: true, draggable: true },
-  { key: "referenceNo", label: "Reference#", sortable: true, hideable: true, draggable: true },
-  { key: "status", label: "Status", sortable: true, hideable: true, draggable: true },
-  { key: "transactionType", label: "Transaction Type", sortable: true, hideable: true, draggable: true },
-  { key: "totalBcy", label: "Total (BCY)", sortable: true, hideable: true, draggable: true },
-  { key: "totalFcy", label: "Total (FCY)", sortable: true, hideable: true, draggable: true },
-  { key: "balanceBcy", label: "Balance (BCY)", sortable: true, hideable: true, draggable: true },
-  { key: "balanceFcy", label: "Balance (FCY)", sortable: true, hideable: true, draggable: true },
+  { key: "customerName", label: "Customer Name", sortable: true, hideable: false, draggable: true },
+  { key: "date", label: "Date", sortable: true, hideable: false, draggable: true },
+  { key: "transactionNo", label: "Transaction#", sortable: true, hideable: false, draggable: true },
+  { key: "referenceNo", label: "Reference#", sortable: true, hideable: false, draggable: true },
+  { key: "status", label: "Status", sortable: true, hideable: false, draggable: true },
+  { key: "transactionType", label: "Transaction Type", sortable: true, hideable: false, draggable: true },
+  { key: "total", label: "Total", sortable: true, hideable: false, draggable: true },
+  { key: "balance", label: "Balance", sortable: true, hideable: false, draggable: true },
 ];
 
 const ReceivableSummaryReport: React.FC = () => {
@@ -88,7 +84,7 @@ const ReceivableSummaryReport: React.FC = () => {
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (fromDate: string, toDate: string) => {
     try {
       setLoading(true);
       const res = await axios.get(
@@ -96,8 +92,8 @@ const ReceivableSummaryReport: React.FC = () => {
         {
           params: {
             lock_account_id,
-            "q[date_gteq]": toApiDate(filters.fromDate),
-            "q[date_lteq]": toApiDate(filters.toDate),
+            "q[date_gteq]": toApiDate(fromDate),
+            "q[date_lteq]": toApiDate(toDate),
           },
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -105,20 +101,18 @@ const ReceivableSummaryReport: React.FC = () => {
 
       const apiData = res?.data || [];
       const mapped: ReceivableSummaryRow[] = apiData.map((item: any, i: number) => {
-        const daysOverdue = item.days_overdue ?? 0;
-        const status = item.status || (daysOverdue > 0 ? "Overdue" : "Sent");
+        const rawStatus = item.status || "";
+        const status = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
         return {
-          id: String(item.id || i),
-          customerName: item.customer_name || item.name || "--",
+          id: item.id ? String(item.id) : `row-${i}`,
+          customerName: item.customer_name || "--",
           date: formatDate(item.date),
-          transactionNo: item.number || item.transaction_no || "--",
-          referenceNo: item.reference_number || item.reference_no || "",
+          transactionNo: item.transaction_number || "--",
+          referenceNo: item.reference_number || "--",
           status,
-          transactionType: item.transaction_type || item.type || "--",
-          totalBcy: item.total_amount ?? item.total_bcy ?? 0,
-          totalFcy: item.total_amount ?? item.total_fcy ?? 0,
-          balanceBcy: item.balance_due ?? item.balance_bcy ?? 0,
-          balanceFcy: item.balance_due ?? item.balance_fcy ?? 0,
+          transactionType: item.transaction_type || "--",
+          total: Number(item.total ?? 0),
+          balance: Number(item.balance ?? 0),
         };
       });
 
@@ -128,22 +122,20 @@ const ReceivableSummaryReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [baseUrl, token, lock_account_id]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(defaultRange.fromDate, defaultRange.toDate);
+  }, [defaultRange.fromDate, defaultRange.toDate, fetchData]);
 
   const totals = useMemo(
     () =>
       reportRows.reduce(
         (acc, row) => ({
-          totalBcy: acc.totalBcy + row.totalBcy,
-          totalFcy: acc.totalFcy + row.totalFcy,
-          balanceBcy: acc.balanceBcy + row.balanceBcy,
-          balanceFcy: acc.balanceFcy + row.balanceFcy,
+          total: acc.total + row.total,
+          balance: acc.balance + row.balance,
         }),
-        { totalBcy: 0, totalFcy: 0, balanceBcy: 0, balanceFcy: 0 }
+        { total: 0, balance: 0 }
       ),
     [reportRows]
   );
@@ -153,45 +145,41 @@ const ReceivableSummaryReport: React.FC = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Append totals as last row inside the table
   const tableData = useMemo(() => {
     if (reportRows.length === 0) return reportRows;
     return [
       ...reportRows,
       {
         id: "__total__",
-        customerName: "Total",
+        customerName: "__total__",
         date: "",
         transactionNo: "",
         referenceNo: "",
         status: "",
         transactionType: "",
-        totalBcy: totals.totalBcy,
-        totalFcy: totals.totalFcy,
-        balanceBcy: totals.balanceBcy,
-        balanceFcy: totals.balanceFcy,
+        total: totals.total,
+        balance: totals.balance,
       },
     ];
   }, [reportRows, totals]);
 
   const renderRow = (row: ReceivableSummaryRow) => {
     const isTotal = row.id === "__total__";
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
     return {
-      customerName: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
-          {row.customerName}
-        </span>
+      customerName: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+      ) : (
+        <span className="text-sm font-medium text-blue-600">{row.customerName}</span>
       ),
-      date: (
-        <span className="text-sm text-gray-600">{row.date}</span>
-      ),
+      date: <span className="text-sm text-gray-600">{isTotal ? "" : row.date}</span>,
       transactionNo: (
-        <span className="text-sm font-medium text-blue-600">{row.transactionNo}</span>
+        <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.transactionNo}</span>
       ),
       referenceNo: (
-        <span className="text-sm text-gray-600">{row.referenceNo || "--"}</span>
+        <span className="text-sm text-gray-600">{isTotal ? "" : (row.referenceNo || "--")}</span>
       ),
-      status: row.status ? (
+      status: isTotal ? <span /> : row.status ? (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
             statusColorMap[row.status] || "bg-gray-100 text-gray-800"
@@ -201,36 +189,15 @@ const ReceivableSummaryReport: React.FC = () => {
         </span>
       ) : <span />,
       transactionType: (
-        <span className="text-sm text-gray-600">{row.transactionType}</span>
+        <span className="text-sm text-gray-600">{isTotal ? "" : row.transactionType}</span>
       ),
-      totalBcy: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
-          {formatCurrency(row.totalBcy)}
-        </span>
-      ),
-      totalFcy: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
-          {formatCurrency(row.totalFcy)}
-        </span>
-      ),
-      balanceBcy: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
-          {formatCurrency(row.balanceBcy)}
-        </span>
-      ),
-      balanceFcy: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
-          {formatCurrency(row.balanceFcy)}
-        </span>
-      ),
+      total: <span className={amtClass}>{formatCurrency(row.total)}</span>,
+      balance: <span className={amtClass}>{formatCurrency(row.balance)}</span>,
     };
   };
 
   return (
-    <div
-      className="w-full bg-[#f9f7f2] p-6"
-      style={{ minHeight: "100vh", boxSizing: "border-box" }}
-    >
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
       {/* Filter */}
       <div className="mb-6 rounded-lg border-2 bg-white p-6">
         <div className="mb-4 flex items-center gap-3">
@@ -266,7 +233,7 @@ const ReceivableSummaryReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={fetchData}
+            onClick={() => fetchData(filters.fromDate, filters.toDate)}
           >
             View
           </Button>
@@ -276,7 +243,6 @@ const ReceivableSummaryReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
             Receivable Summary
           </h1>
@@ -293,8 +259,8 @@ const ReceivableSummaryReport: React.FC = () => {
             storageKey="receivable-summary-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
             loading={loading}
+            hideColumnsButton={true}
             emptyMessage="No data to display"
           />
         </div>

@@ -1156,13 +1156,24 @@ import { GSTPayableDetails } from "./pages/ClubManagement/GSTPayableDetails";
 import GstReceivableReport from "./pages/ClubManagement/GSTReceivableReport";
 import { GSTReceivableDetails } from "./pages/ClubManagement/GSTReceivableDetails";
 import { TaxSummaryDetails } from "./pages/ClubManagement/TaxSummaryDetails";
-import TrialBalanceReport from "./pages/ClubManagement/TrialBalanceReport";
+import TrialBalance from "./pages/ClubManagement/TrialBalance";
 import { TrialBalanceDetails } from "./pages/ClubManagement/TrialBalanceDetails";
 import { RoleDashboardVi } from "./pages/settings/RoleDashboardVi";
 import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
 import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
 import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
+import SummaryOfInwardSupplies from "./pages/ClubManagement/SummaryOfInwardSupplies";
+import PMT06SelfAssessmentBasis from "./pages/ClubManagement/PMT06SelfAssessmentBasis";
+import SummaryOfOutwardSuppliesGSTR1 from "./pages/ClubManagement/SummaryOfOutwardSuppliesGSTR1";
+import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishingFacilityIFF";
+import DayBook from "./pages/ClubManagement/DayBook";
+import JournalReport from "./pages/ClubManagement/JournalReport";
+import FixedAssetReport from "./pages/ClubManagement/FixedAssetReport";
+import GeneralLedger from "./pages/ClubManagement/GeneralLedger";
+import DetailedGeneralLedger from "./pages/ClubManagement/DetailedGeneralLedger";
+import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
+import TCSSummaryForm27EQ from "./pages/ClubManagement/TCSSummaryForm27EQ";
 import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedReport";
 import PaymentsMadeReport from "./pages/Accounting/PaymentsMadeReport";
 import PayableDetailsReport from "./pages/Accounting/PayableDetailsReport";
@@ -2772,6 +2783,54 @@ function App() {
                             path="/accounting/reports/gstr-3b-summary/details"
                             element={<GSTR3BSummaryDetails />}
                           />
+                          <Route
+                            path="/accounting/reports/summary-of-inward-supplies"
+                            element={<SummaryOfInwardSupplies />}
+                          />
+                          <Route
+                            path="/accounting/reports/pmt-06-self-assessment-basis"
+                            element={<PMT06SelfAssessmentBasis />}
+                          />
+                          <Route
+                            path="/accounting/reports/summary-of-outward-supplies-gstr-1"
+                            element={<SummaryOfOutwardSuppliesGSTR1 />}
+                          />
+                          <Route
+                            path="/accounting/reports/invoice-furnishing-facility-iff"
+                            element={<InvoiceFurnishingFacilityIFF />}
+                          />
+                          <Route
+                            path="/accounting/reports/day-book"
+                            element={<DayBook />}
+                          />
+                          <Route
+                            path="/accounting/reports/journal-report"
+                            element={<JournalReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/fixed-asset"
+                            element={<FixedAssetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/fixed-asset-register"
+                            element={<FixedAssetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/general-ledger"
+                            element={<GeneralLedger />}
+                          />
+                          <Route
+                            path="/accounting/reports/detailed-general-ledger"
+                            element={<DetailedGeneralLedger />}
+                          />
+                          <Route
+                            path="/accounting/reports/self-invoice-summary"
+                            element={<SelfInvoiceSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/tcs-summary-form-27eq"
+                            element={<TCSSummaryForm27EQ />}
+                          />
                           <Route path="/accounting/reports/gstr-9" element={<GSTR9Summary />} />
 
 
@@ -2781,7 +2840,7 @@ function App() {
                           />
                           <Route
                             path="/accounting/reports/trial-balance"
-                            element={<TrialBalanceReport />}
+                            element={<TrialBalance />}
                           />
 
                           <Route

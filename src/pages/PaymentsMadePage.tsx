@@ -6,9 +6,6 @@ import {
   Plus,
   ChevronDown,
   X,
-  MoreHorizontal,
-  Download,
-  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast as sonnerToast } from "sonner";
@@ -125,7 +122,7 @@ export const PaymentsMadePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
-    "1"
+    null
   );
 
   useEffect(() => {
@@ -163,29 +160,7 @@ export const PaymentsMadePage: React.FC = () => {
   };
   const [payments, setPayments] = useState<Payment[]>([]);
 
-  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<PaymentFilters>({});
-
-  const moreMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close menus when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        moreMenuRef.current &&
-        !moreMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsMoreMenuOpen(false);
-        setIsImportMenuOpen(false);
-        setIsExportMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const selectedPayment = payments.find((p) => p.id === selectedPaymentId);
 
@@ -210,12 +185,13 @@ export const PaymentsMadePage: React.FC = () => {
       try {
         const baseUrl = API_CONFIG.BASE_URL;
         const token = API_CONFIG.TOKEN;
-        if (!baseUrl || !token) {
+        if (!token) {
           sonnerToast.error("API not configured. Please log in.");
           return;
         }
+        // Accounting API always hits club-uat-api.lockated.com
         const url = new URL(
-          `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_payments.json`
+          "https://club-uat-api.lockated.com/lock_payments.json"
         );
         url.searchParams.append("page", String(page));
         url.searchParams.append("per_page", String(perPage));
@@ -429,15 +405,21 @@ export const PaymentsMadePage: React.FC = () => {
   if (viewMode === "detail") {
     return (
       <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        <PaymentDetailView
-          payments={filteredPayments}
-          selectedPaymentId={selectedPaymentId}
-          onSelectPayment={(id) => setSelectedPaymentId(id)}
-          onClose={() => {
-            setSearchParams({});
-            setViewMode("list");
-          }}
-        />
+        {loading ? (
+          <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
+          </div>
+        ) : (
+          <PaymentDetailView
+            payments={filteredPayments}
+            selectedPaymentId={selectedPaymentId}
+            onSelectPayment={(id) => setSelectedPaymentId(id)}
+            onClose={() => {
+              setSearchParams({});
+              setViewMode("list");
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -461,104 +443,7 @@ export const PaymentsMadePage: React.FC = () => {
             New
           </Button>
         }
-        rightActions={
-          <div className="flex items-center gap-2" ref={moreMenuRef}>
-            {/* Import Button */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white border-gray-300 h-9 w-9 rounded-[4px]"
-                onClick={() => {
-                  setIsImportMenuOpen(!isImportMenuOpen);
-                  setIsExportMenuOpen(false);
-                  setIsMoreMenuOpen(false);
-                }}
-              >
-                <Upload className="h-4 w-4 text-gray-600" />
-              </Button>
-              {isImportMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setIsImportMenuOpen(false);
-                      sonnerToast.info("Import Payments clicked");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Import Payments
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Export Button */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white border-gray-300 h-9 w-9 rounded-[4px]"
-                onClick={() => {
-                  setIsExportMenuOpen(!isExportMenuOpen);
-                  setIsImportMenuOpen(false);
-                  setIsMoreMenuOpen(false);
-                }}
-              >
-                <Download className="h-4 w-4 text-gray-600" />
-              </Button>
-              {isExportMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setIsExportMenuOpen(false);
-                      sonnerToast.info("Export Payments clicked");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Export Payments
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 border-gray-300 rounded-[4px]"
-                onClick={() => {
-                  setIsMoreMenuOpen(!isMoreMenuOpen);
-                  setIsImportMenuOpen(false);
-                  setIsExportMenuOpen(false);
-                }}
-              >
-                <MoreHorizontal className="h-4 w-4 text-gray-600" />
-              </Button>
-              {isMoreMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setIsMoreMenuOpen(false);
-                      sonnerToast.info("Preferences clicked");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Preferences
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsMoreMenuOpen(false);
-                      fetchPayments(currentPage);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Refresh List
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        }
+        rightActions={null}
         renderRow={renderRow}
         storageKey="payments-made-dashboard-v1"
         hideTableExport={true}

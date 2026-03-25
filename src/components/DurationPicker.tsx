@@ -217,7 +217,7 @@ export const DurationPicker = ({
                 const workingDays = allDays.filter((d) => d.isWorking);
                 const hrs = workingDays.length * hoursPerDay;
 
-                setTotalWorkingHours(totalWorkingHours ? totalWorkingHours : hrs);
+                setTotalWorkingHours(hrs);
                 if (onChange) onChange(hrs);
 
                 if (onDateWiseHoursChange) {
@@ -414,15 +414,15 @@ export const DurationPicker = ({
     }, [dailyHours, taskType]);
 
     /** ✅ Close picker on outside click */
-    // useEffect(() => {
-    //     const handleClickOutside = (event) => {
-    //         if (pickerRef.current && !pickerRef.current.contains(event.target)) {
-    //             setIsOpen(false);
-    //         }
-    //     };
-    //     if (isOpen) document.addEventListener("mousedown", handleClickOutside);
-    //     return () => document.removeEventListener("mousedown", handleClickOutside);
-    // }, [isOpen]);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isOpen]);
 
     return (
         <div className={`relative ${className}`} ref={pickerRef}>
@@ -615,52 +615,7 @@ export const DurationPicker = ({
                             Clear
                         </button>
                         <button
-                            onClick={() => {
-                                if (taskType === "standard") {
-                                    if (startDate && endDate) {
-                                        // Both dates selected - use hoursPerDay for each working day
-                                        const allDays = getAllDays(startDate, endDate, shift);
-                                        const workingDays = allDays.filter((d) => d.isWorking);
-                                        const total = hoursPerDay * workingDays.length;
-                                        setTotalWorkingHours(total);
-                                        if (onChange) onChange(total);
-
-                                        if (onDateWiseHoursChange) {
-                                            const dateWise = workingDays.map((d) => {
-                                                const formattedDate = formatLocalDate(d.date);
-                                                return {
-                                                    id: getIdFromExistingHours(formattedDate),
-                                                    hours: hoursPerDay,
-                                                    minutes: 0,
-                                                    date: formattedDate,
-                                                };
-                                            });
-                                            onDateWiseHoursChange(dateWise);
-                                        }
-                                    } else if (!startDate && endDate) {
-                                        // Only end date - use hoursPerDay
-                                        const allDays = getAllDays(endDate, endDate, shift);
-                                        const workingDays = allDays.filter((d) => d.isWorking);
-                                        const total = hoursPerDay * workingDays.length;
-                                        setTotalWorkingHours(total);
-                                        if (onChange) onChange(total);
-
-                                        if (onDateWiseHoursChange && daysList.length > 0) {
-                                            const dateWise = daysList.map((d) => {
-                                                const formattedDate = formatLocalDate(d.date);
-                                                return {
-                                                    id: getIdFromExistingHours(formattedDate),
-                                                    hours: d.isWorking ? hoursPerDay : 0,
-                                                    minutes: 0,
-                                                    date: formattedDate,
-                                                };
-                                            });
-                                            onDateWiseHoursChange(dateWise);
-                                        }
-                                    }
-                                }
-                                setIsOpen(false);
-                            }}
+                            onClick={() => setIsOpen(false)}
                             className="flex-1 px-4 py-2 bg-[#c72030] text-white rounded-lg transition-colors font-medium"
                             type="button"
                         >

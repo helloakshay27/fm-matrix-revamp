@@ -1,63 +1,34 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
+interface SupplierBalanceAPI {
+  id?: number | string;
+  vendor_name?: string;
+  supplier_name?: string;
+  name?: string;
+  billed_amount?: string | number;
+  total_billed?: string | number;
+  amount_paid?: string | number;
+  total_paid?: string | number;
+  closing_balance?: string | number;
+  balance?: string | number;
+  balance_type?: string;
+  closing_balance_type?: string;
+}
+
 type VendorBalanceRow = {
   id: string;
   vendorName: string;
   billedAmount: number;
   amountPaid: number;
-  closingBalanceAmount: number;
-  closingBalanceType: "Dr" | "Cr";
+  closingBalance: number;
+  closingBalanceType: string;
 };
-
-const getCurrentMonthRange = () => {
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-  return {
-    fromDate: firstDay.toISOString().split("T")[0],
-    toDate: lastDay.toISOString().split("T")[0],
-  };
-};
-
-const formatDisplayDate = (value: string) => {
-  if (!value) {
-    return "--/--/----";
-  }
-
-  const parsedDate = new Date(`${value}T00:00:00`);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("en-GB").format(parsedDate);
-};
-
-const formatAmount = (value: number) =>
-  new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-
-const formatClosingBalance = (amount: number, type: "Dr" | "Cr") =>
-  `₹${formatAmount(amount)} ${type}`;
-
-const seedRows: VendorBalanceRow[] = [
-  {
-    id: "1",
-    vendorName: "Gophygital",
-    billedAmount: 32445,
-    amountPaid: 32732.5,
-    closingBalanceAmount: 987.5,
-    closingBalanceType: "Dr",
-  },
-];
 
 const columns: ColumnConfig[] = [
   { key: "vendorName", label: "VENDOR NAME", sortable: true, hideable: false, draggable: true },
@@ -66,169 +37,231 @@ const columns: ColumnConfig[] = [
   { key: "closingBalance", label: "CLOSING BALANCE", sortable: true, hideable: false, draggable: true },
 ];
 
+const toApiDate = (iso: string) => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+const formatDisplayDate = (iso: string) => {
+  if (!iso) return "--";
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+};
+
+const formatAmount = (value: number) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const toNumber = (v?: string | number) => parseFloat(String(v ?? 0)) || 0;
+
 const VendorBalanceSummaryReport: React.FC = () => {
-  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
-  const [filters, setFilters] = useState(defaultRange);
-  const [appliedFilters, setAppliedFilters] = useState(defaultRange);
-  const [reportRows] = useState<VendorBalanceRow[]>(seedRows);
-  const [loading] = useState(false);
+   const defaultRange = useMemo(() => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const fmt = (d: Date) =>
+        `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+      return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
+    }, []);
+    const [filters, setFilters] = useState(defaultRange);
+  // const [filters, setFilters] = useState({ fromDate: "", toDate: "" });
+  const [rows, setRows] = useState<VendorBalanceRow[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const totals = useMemo(() => {
-    const summary = reportRows.reduce(
-      (acc, row) => ({
-        billedAmount: acc.billedAmount + row.billedAmount,
-        amountPaid: acc.amountPaid + row.amountPaid,
-        signedClosingBalance:
-          acc.signedClosingBalance +
-          (row.closingBalanceType === "Dr"
-            ? row.closingBalanceAmount
-            : -row.closingBalanceAmount),
-      }),
-      {
-        billedAmount: 0,
-        amountPaid: 0,
-        signedClosingBalance: 0,
-      }
-    );
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // const { name, value } = e.target;
+    // setFilters((prev) => ({ ...prev, [name]: value }));
+     const { name, value } = e.target;
 
-    return {
-      billedAmount: summary.billedAmount,
-      amountPaid: summary.amountPaid,
-      closingBalanceAmount: Math.abs(summary.signedClosingBalance),
-      closingBalanceType: (summary.signedClosingBalance >= 0 ? "Dr" : "Cr") as
-        | "Dr"
-        | "Cr",
-    };
-  }, [reportRows]);
+  const formatted = value
+    ? value.split("-").reverse().join("/") // YYYY-MM-DD → DD/MM/YYYY
+    : "";
 
-  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      [name]: value,
-    }));
+  setFilters((prev) => ({
+    ...prev,
+    [name]: formatted,
+  }));
   };
 
-  const renderRow = (row: VendorBalanceRow) => ({
-    vendorName: (
-      <span className="text-sm font-medium text-blue-600">
-        {row.vendorName}
-      </span>
-    ),
-    billedAmount: (
-      <span className="text-sm font-medium text-gray-900">
-        ₹{formatAmount(row.billedAmount)}
-      </span>
-    ),
-    amountPaid: (
-      <span className="text-sm font-medium text-gray-900">
-        ₹{formatAmount(row.amountPaid)}
-      </span>
-    ),
-    closingBalance: (
-      <span className="text-sm font-medium text-gray-900">
-        {formatClosingBalance(row.closingBalanceAmount, row.closingBalanceType)}
-      </span>
-    ),
-  });
+  const fetchData = useCallback(async (fromDate: string, toDate: string) => {
+    setLoading(true);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const lockAccountId = localStorage.getItem("lock_account_id");
+
+      const response = await axios.get(
+        `https://${baseUrl}/pms/suppliers/supplier_balance_summary.json`,
+        {
+          params: {
+            lock_account_id: lockAccountId,
+            ...(fromDate && { "q[date_gteq]": toApiDate(fromDate) }),
+            ...(toDate && { "q[date_lteq]": toApiDate(toDate) }),
+          },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const payload = response.data;
+      let list: SupplierBalanceAPI[] = [];
+      if (Array.isArray(payload)) {
+        list = payload;
+      } else if (payload && typeof payload === "object") {
+        // Try all array-valued keys
+        const arrayKey = Object.keys(payload).find((k) => Array.isArray(payload[k]));
+        if (arrayKey) list = payload[arrayKey];
+      }
+
+      const mapped: VendorBalanceRow[] = list.map((item, i) => ({
+        id: String(item.id ?? i),
+        vendorName: item.vendor_name || item.supplier_name || item.name || "-",
+        billedAmount: toNumber(item.billed_amount ?? item.total_billed),
+        amountPaid: toNumber(item.amount_paid ?? item.total_paid),
+        closingBalance: toNumber(item.closing_balance ?? item.balance),
+        closingBalanceType: item.balance_type || item.closing_balance_type || "Dr",
+      }));
+
+      setRows(mapped);
+    } catch (err) {
+      console.error("Failed to fetch vendor balance summary", err);
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData("", "");
+  }, [fetchData]);
+
+  const totals = useMemo(
+    () =>
+      rows.reduce(
+        (acc, row) => ({
+          billedAmount: acc.billedAmount + row.billedAmount,
+          amountPaid: acc.amountPaid + row.amountPaid,
+          closingBalance:
+            acc.closingBalance +
+            (row.closingBalanceType === "Cr" ? -row.closingBalance : row.closingBalance),
+        }),
+        { billedAmount: 0, amountPaid: 0, closingBalance: 0 }
+      ),
+    [rows]
+  );
+
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: "__total__",
+        vendorName: "__total__",
+        billedAmount: totals.billedAmount,
+        amountPaid: totals.amountPaid,
+        closingBalance: Math.abs(totals.closingBalance),
+        closingBalanceType: totals.closingBalance >= 0 ? "Dr" : "Cr",
+      },
+    ];
+  }, [rows, totals]);
+
+  const renderRow = (row: VendorBalanceRow) => {
+    const isTotal = row.id === "__total__";
+    return {
+      vendorName: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+      ) : (
+        <span className="text-sm font-medium text-blue-600">{row.vendorName}</span>
+      ),
+      billedAmount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
+          {formatAmount(row.billedAmount)}
+        </span>
+      ),
+      amountPaid: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
+          {formatAmount(row.amountPaid)}
+        </span>
+      ),
+      closingBalance: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
+          {formatAmount(row.closingBalance)} {row.closingBalanceType}
+        </span>
+      ),
+    };
+  };
 
   return (
-    <div
-      className="w-full bg-[#f9f7f2] p-6"
-      style={{ minHeight: "100vh", boxSizing: "border-box" }}
-    >
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+      {/* Filter */}
       <div className="mb-6 rounded-lg border-2 bg-white p-6">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
             <NotepadText className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-semibold text-[#1A1A1A]">
-            Vendor Balance Summary
-          </h3>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Vendor Balance Summary</h3>
         </div>
-
         <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
           <TextField
             label="From Date"
             type="date"
             name="fromDate"
-            value={filters.fromDate}
+            // value={filters.fromDate}
+             value={filters.fromDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
-            fullWidth
             size="small"
+            fullWidth
           />
-
           <TextField
             label="To Date"
             type="date"
             name="toDate"
-            value={filters.toDate}
+            // value={filters.toDate}
+            value={filters.toDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
-            fullWidth
             size="small"
+            fullWidth
           />
-
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={() => setAppliedFilters(filters)}
+            onClick={() => fetchData(filters.fromDate, filters.toDate)}
           >
             View
           </Button>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white">
-        <div className="border-b border-[#EAECF0] bg-[#F8F9FC] px-6 py-5 text-center">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
-            Vendor Balance Summary
-          </h1>
+      {/* Table */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
+          <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Vendor Balance Summary</h1>
           <p className="mt-1 text-sm text-[#475467]">
-            From {formatDisplayDate(appliedFilters.fromDate)} To {formatDisplayDate(appliedFilters.toDate)}
+            {filters.fromDate && filters.toDate
+              ? `From ${formatDisplayDate(filters.fromDate)} To ${formatDisplayDate(filters.toDate)}`
+              : "Select a date range and click View"}
           </p>
         </div>
 
         <div className="p-4">
           <EnhancedTaskTable
-            data={reportRows}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="vendor-balance-summary-report-v1"
             hideTableExport={true}
-            hideTableSearch={true}
-            enableSearch={false}
-            hideColumnsButton={false}
+            hideTableSearch={false}
+            // enableSearch={true}
+            hideColumnsButton={true}
             loading={loading}
             emptyMessage="There are no transactions during the selected date range."
-            rightActions={
-              <div className="text-sm font-medium text-[#475467]">
-                Group By : None
-              </div>
-            }
-            headerCellClassName="bg-[#F9FAFB] text-[#374151] text-[12px] font-semibold uppercase tracking-[0.5px] border-b border-[#E5E7EB] hover:bg-[#F9FAFB] px-6 py-4"
-            rowClassName="hover:bg-white border-b border-[#E5E7EB]"
-            cellClassName="px-6 py-4 text-[13px] text-[#374151] hover:bg-white align-middle"
           />
-
-          {reportRows.length > 0 && (
-            <div className="rounded-b-md border border-t-0 border-[#E5E7EB] bg-white px-6 py-4 text-sm font-semibold text-[#1A1A1A]">
-              <div className="grid grid-cols-4 gap-4">
-                <div>Total</div>
-                <div className="text-right text-gray-900">
-                  ₹{formatAmount(totals.billedAmount)}
-                </div>
-                <div className="text-right text-gray-900">
-                  ₹{formatAmount(totals.amountPaid)}
-                </div>
-                <div className="text-right text-gray-900">
-                  {formatClosingBalance(totals.closingBalanceAmount, totals.closingBalanceType)}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

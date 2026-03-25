@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { NotepadText } from "lucide-react";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface GSTR7Row {
+  id: string;
   gstin: string;
   vendor: string;
   amountPaid: number;
@@ -13,16 +16,54 @@ interface GSTR7Row {
   totalTax: number;
 }
 
+const columns: ColumnConfig[] = [
+  { key: "gstin", label: "GSTIN OF DEDUCTEE", sortable: true },
+  { key: "vendor", label: "VENDOR NAME", sortable: true },
+  {
+    key: "amountPaid",
+    label: "AMOUNT PAID TO DEDUCTEE ON WHICH TAX IS DEDUCTED",
+    sortable: true,
+  },
+  { key: "integratedTax", label: "INTEGRATED TAX", sortable: true },
+  { key: "centralTax", label: "CENTRAL TAX", sortable: true },
+  { key: "stateTax", label: "STATE/UT TAX", sortable: true },
+  {
+    key: "totalTax",
+    label: "TOTAL TAX DEDUCTED AT SOURCE",
+    sortable: true,
+  },
+];
+
+const toInputDate = (ddmmyyyy: string) => {
+  const [day, month, year] = ddmmyyyy.split("/");
+  return `${year}-${month}-${day}`;
+};
+
+const formatCurrency = (value: number) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
 const GSTR7Report: React.FC = () => {
 
-  const [filters, setFilters] = useState({
-    fromDate: "",
-    toDate: "",
-  });
+  const defaultDateRange = useMemo(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    return {
+      fromDate: firstDay.toLocaleDateString("en-GB"),
+      toDate: lastDay.toLocaleDateString("en-GB"),
+    };
+  }, []);
+
+  const [filters, setFilters] = useState(defaultDateRange);
 
   // Dummy data for UI preview
   const [data] = useState<GSTR7Row[]>([
     {
+      id: "1",
       gstin: "27ABCDE1234F1Z5",
       vendor: "ABC Vendor Pvt Ltd",
       amountPaid: 25000,
@@ -35,28 +76,103 @@ const GSTR7Report: React.FC = () => {
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const formatted = value ? value.split("-").reverse().join("/") : "";
 
     setFilters((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: formatted,
     }));
   };
 
   const handleView = () => {
-    console.log("Filters:", filters);
+    // API call will be wired here.
+  };
+
+  const totals = useMemo(
+    () =>
+      data.reduce(
+        (acc, row) => ({
+          amountPaid: acc.amountPaid + row.amountPaid,
+          integratedTax: acc.integratedTax + row.integratedTax,
+          centralTax: acc.centralTax + row.centralTax,
+          stateTax: acc.stateTax + row.stateTax,
+          totalTax: acc.totalTax + row.totalTax,
+        }),
+        {
+          amountPaid: 0,
+          integratedTax: 0,
+          centralTax: 0,
+          stateTax: 0,
+          totalTax: 0,
+        }
+      ),
+    [data]
+  );
+
+  const totalRow: GSTR7Row = {
+    id: "total-row",
+    gstin: "",
+    vendor: "",
+    amountPaid: totals.amountPaid,
+    integratedTax: totals.integratedTax,
+    centralTax: totals.centralTax,
+    stateTax: totals.stateTax,
+    totalTax: totals.totalTax,
+  };
+
+  const renderRow = (row: GSTR7Row) => {
+    const isTotalRow = row.id === "total-row";
+
+    return {
+      gstin: (
+        <span className="text-[13px] font-semibold text-[#111827]">
+          {isTotalRow ? "" : row.gstin}
+        </span>
+      ),
+      vendor: (
+        <span className="text-[13px] font-semibold text-[#2563eb]">
+          {isTotalRow ? "Total" : row.vendor}
+        </span>
+      ),
+      amountPaid: (
+        <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#111827]">
+          {formatCurrency(row.amountPaid)}
+        </span>
+      ),
+      integratedTax: (
+        <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#111827]">
+          {formatCurrency(row.integratedTax)}
+        </span>
+      ),
+      centralTax: (
+        <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#111827]">
+          {formatCurrency(row.centralTax)}
+        </span>
+      ),
+      stateTax: (
+        <span className="inline-flex w-full justify-end text-[13px] font-semibold text-[#111827]">
+          {formatCurrency(row.stateTax)}
+        </span>
+      ),
+      totalTax: (
+        <span className="inline-flex w-full justify-end text-[13px] font-bold text-[#2563eb]">
+          {formatCurrency(row.totalTax)}
+        </span>
+      ),
+    };
   };
 
   return (
-    <div className="w-full bg-[#f9f7f2] p-6 min-h-screen">
+    <div className="w-full min-h-screen bg-white">
 
       {/* FILTER SECTION */}
-      <div className="bg-white rounded-lg border-2 p-6 mb-6">
+      <div className="mb-6 rounded-lg border border-[#EAECF0] bg-white p-6">
 
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
             <NotepadText className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+          <h3 className="text-lg font-semibold text-[#111827]">
             GSTR-7 Report
           </h3>
         </div>
@@ -67,7 +183,7 @@ const GSTR7Report: React.FC = () => {
             label="From Date"
             type="date"
             name="fromDate"
-            value={filters.fromDate}
+            value={toInputDate(filters.fromDate)}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
             fullWidth
@@ -78,7 +194,7 @@ const GSTR7Report: React.FC = () => {
             label="To Date"
             type="date"
             name="toDate"
-            value={filters.toDate}
+            value={toInputDate(filters.toDate)}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
             fullWidth
@@ -98,88 +214,24 @@ const GSTR7Report: React.FC = () => {
 
       {/* TABLE */}
 
-      <div className="bg-white rounded-lg border p-6 overflow-x-auto">
+      <div className="overflow-hidden rounded-lg border border-[#EAECF0] bg-white">
+        <div className="border-b border-[#EAECF0] bg-[#F8F9FC] px-6 py-5 text-center">
+          <h1 className="text-2xl font-semibold text-[#111827]">GSTR-7 Report</h1>
+          <p className="text-sm text-[#667085]">
+            From {filters.fromDate} To {filters.toDate}
+          </p>
+        </div>
 
-        <table className="w-full border-collapse">
-
-          <thead>
-
-            <tr className="bg-[#E5E0D3] text-sm">
-
-              <th className="border px-4 py-3 text-left">
-                GSTIN OF DEDUCTEE
-              </th>
-
-              <th className="border px-4 py-3 text-left">
-                VENDOR NAME
-              </th>
-
-              <th className="border px-4 py-3 text-right">
-                AMOUNT PAID TO DEDUCTEE ON WHICH TAX IS DEDUCTED
-              </th>
-
-              <th className="border px-4 py-3 text-right">
-                INTEGRATED TAX
-              </th>
-
-              <th className="border px-4 py-3 text-right">
-                CENTRAL TAX
-              </th>
-
-              <th className="border px-4 py-3 text-right">
-                STATE/UT TAX
-              </th>
-
-              <th className="border px-4 py-3 text-right">
-                TOTAL TAX DEDUCTED AT SOURCE
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {data.map((row, index) => (
-
-              <tr key={index} className="hover:bg-gray-50">
-
-                <td className="border px-4 py-3">
-                  {row.gstin}
-                </td>
-
-                <td className="border px-4 py-3">
-                  {row.vendor}
-                </td>
-
-                <td className="border px-4 py-3 text-right">
-                  ₹{row.amountPaid.toFixed(2)}
-                </td>
-
-                <td className="border px-4 py-3 text-right">
-                  ₹{row.integratedTax.toFixed(2)}
-                </td>
-
-                <td className="border px-4 py-3 text-right">
-                  ₹{row.centralTax.toFixed(2)}
-                </td>
-
-                <td className="border px-4 py-3 text-right">
-                  ₹{row.stateTax.toFixed(2)}
-                </td>
-
-                <td className="border px-4 py-3 text-right font-semibold">
-                  ₹{row.totalTax.toFixed(2)}
-                </td>
-
-              </tr>
-
-            ))}
-
-          </tbody>
-
-        </table>
-
+        <div className="p-4">
+          <EnhancedTaskTable
+            data={[...data, totalRow]}
+            columns={columns}
+            renderRow={renderRow}
+            storageKey="gstr-7-report"
+            hideTableExport
+            hideColumnsButton={true}
+          />
+        </div>
       </div>
 
     </div>

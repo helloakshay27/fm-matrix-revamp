@@ -350,7 +350,6 @@ const modulesByPackage = {
           ],
         },
         { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
-        { name: "Trial Balance", href: "/accounting/reports/trial-balance" },
         {
           name: "Cash Flow Statement",
           href: "/accounting/reports/cash-flow-statement",
@@ -358,40 +357,6 @@ const modulesByPackage = {
         {
           name: "Profit & Loss",
           href: "/accounting/reports/profit-and-loss",
-        },
-        // {
-        //     name: "GST Payable",
-        //     href: "/accounting/reports/gst-payable",
-        // },
-        //  {
-        //     name: "GST Receivable",
-        //     href: "/accounting/reports/gst-receivable",
-        // },
-        {
-          name: "Tax Summary",
-          href: "/accounting/reports/tax-summary",
-        },
-        {
-          name: "GSTR-7",
-          href: "/accounting/reports/gstr-7",
-        },
-        {
-          name: "GSTR-3B Summary",
-          href: "/accounting/reports/gstr-3b-summary",
-        },
-
-        // {
-        //     name: "GSTR-9",
-        //     href: "/accounting/reports/gstr-9"
-        // }
-
-        {
-          name: "TDS Summary",
-          href: "/accounting/reports/tds-summary",
-        },
-        {
-          name: "TDS Receivables Summary",
-          href: "/accounting/reports/tds-receivables-summary",
         },
         {
           name: "Debtors & Creditors ",
@@ -647,6 +612,96 @@ const modulesByPackage = {
             {
               name: "Billable Expense Details",
               href: "/accounting/purchases-and-expenses/billable-expense-details",
+            },
+          ],
+        },
+
+        {
+          name: "Taxes",
+          subItems: [
+            {
+              name: "Tax Summary",
+              href: "/accounting/reports/tax-summary",
+            },
+            {
+              name: "GSTR-7",
+              href: "/accounting/reports/gstr-7",
+            },
+            {
+              name: "GSTR-3B Summary",
+              href: "/accounting/reports/gstr-3b-summary",
+            },
+            {
+              name: "Summary of Inward Supplies",
+              href: "/accounting/reports/summary-of-inward-supplies",
+            },
+            {
+              name: "PMT-06 (Self Assessment Basis)",
+              href: "/accounting/reports/pmt-06-self-assessment-basis",
+            },
+            {
+              name: "Summary of Outward Supplies (GSTR-1)",
+              href: "/accounting/reports/summary-of-outward-supplies-gstr-1",
+            },
+            {
+              name: "Invoice Furnishing Facility (IFF)",
+              href: "/accounting/reports/invoice-furnishing-facility-iff",
+            },
+            {
+              name: "Self-invoice Summary",
+              href: "/accounting/reports/self-invoice-summary",
+            },
+            {
+              name: "TCS Summary (Form No. 27EQ)",
+              href: "/accounting/reports/tcs-summary-form-27eq",
+            },
+            {
+              name: "TDS Summary",
+              href: "/accounting/reports/tds-summary",
+            },
+            {
+              name: "TDS Receivables Summary",
+              href: "/accounting/reports/tds-receivables-summary",
+            },
+          ],
+        },
+
+        {
+          name: "Account",
+          subItems: [
+            {
+              name: "Account Transactions",
+              href: "/accounting/reports/account-transactions",
+            },
+            {
+              name: "Day Book",
+              href: "/accounting/reports/day-book",
+            },
+            {
+              name: "Journal Report",
+              href: "/accounting/reports/journal-report",
+            },
+            {
+              name: "General Ledger",
+              href: "/accounting/reports/general-ledger",
+            },
+            {
+              name: "Detailed General Ledger",
+              href: "/accounting/reports/detailed-general-ledger",
+            },
+            {
+              name: "Trial Balance",
+              href: "/accounting/reports/trial-balance",
+            },
+          ],
+        },
+
+        {
+          name: "Fixed Asset",
+          subItems: [
+            {
+              name: "Fixed Asset Register",
+              href: "/accounting/reports/fixed-asset-register",
             },
           ],
         },

@@ -146,6 +146,8 @@ interface EnhancedTableProps<T> {
   tableWrapperClassName?: string;
   headerCellClassName?: string;
   rowClassName?: string;
+  /** Merged after default row styles; use for per-row backgrounds (e.g. grouped report rows). */
+  getRowClassName?: (item: T) => string | undefined;
   cellClassName?: string;
 }
 
@@ -189,6 +191,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   tableWrapperClassName,
   headerCellClassName,
   rowClassName,
+  getRowClassName,
   cellClassName,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState("");
@@ -691,6 +694,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                           onRowClick && "cursor-pointer",
                           "hover:bg-blue-50 hover:shadow-sm transition-colors duration-200",
                           isSelected && "bg-blue-100 hover:bg-blue-150",
+                          getRowClassName?.(item),
                           rowClassName
                         )}
                         onClick={(e) => handleRowClick(item, e)}

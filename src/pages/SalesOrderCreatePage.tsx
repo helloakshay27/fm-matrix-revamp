@@ -330,6 +330,23 @@ export const SalesOrderCreatePage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    // Delete confirmation dialog state
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+    const [deleteTargetType, setDeleteTargetType] = useState<'item' | 'attachment'>('item');
+
+    const handleDeleteConfirm = () => {
+        if (deleteTargetIndex !== null) {
+            if (deleteTargetType === 'item') {
+                removeItem(deleteTargetIndex);
+            } else {
+                removeAttachment(deleteTargetIndex);
+            }
+        }
+        setDeleteConfirmOpen(false);
+        setDeleteTargetIndex(null);
+    };
+
     const fieldStyles = {
         height: { xs: 28, sm: 36, md: 45 },
         '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -708,7 +725,7 @@ export const SalesOrderCreatePage: React.FC = () => {
 
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
+        if (!validate()) {
             return;
         }
 
@@ -749,7 +766,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('sale_order[customer_notes]', customerNotes);
             formData.append('sale_order[terms_and_conditions]', termsAndConditions);
-            formData.append('sale_order[status]', 'draft');
+            formData.append('sale_order[status]', saveAsDraft ? 'draft' : 'confirmed');
             formData.append('sale_order[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('sale_order[discount_per]', String(discountOnTotal));
@@ -1496,7 +1513,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                                             <td className="px-4 py-3 text-center">
                                                 <IconButton
                                                     size="small"
-                                                    onClick={() => removeItem(index)}
+                                                    onClick={() => {
+                                                        setDeleteTargetType('item');
+                                                        setDeleteTargetIndex(index);
+                                                        setDeleteConfirmOpen(true);
+                                                    }}
                                                     disabled={items.length === 1}
                                                     color="error"
                                                 >
@@ -1730,9 +1751,9 @@ export const SalesOrderCreatePage: React.FC = () => {
                                             </span>
                                         </div>
                                         <IconButton size="small" onClick={() => {
-                                            if (window.confirm("Are you sure about deleting this item?")) {
-                                                removeAttachment(index);
-                                            }
+                                            setDeleteTargetType('attachment');
+                                            setDeleteTargetIndex(index);
+                                            setDeleteConfirmOpen(true);
                                         }}>
                                             <Close fontSize="small" />
                                         </IconButton>
@@ -2031,6 +2052,46 @@ export const SalesOrderCreatePage: React.FC = () => {
                     </div>
                 )}
             </Drawer>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontWeight: 600 }}>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1">
+                        Are you sure about deleting this item?
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+                    <Button
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            textTransform: 'none',
+                            borderColor: '#C72030',
+                            color: '#C72030',
+                            '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1' }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        sx={{
+                            textTransform: 'none',
+                            bgcolor: '#C72030',
+                            '&:hover': { bgcolor: '#A01020' }
+                        }}
+                    >
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Add External User Dialog */}
             <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>

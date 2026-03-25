@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,9 +46,27 @@ const formatAmount = (value: number) =>
     maximumFractionDigits: 2,
   })}`;
 
+const toApiDate = (iso: string) => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "--";
+  if (dateStr.includes("-")) {
+    const [y, m, d] = dateStr.split("-");
+    return `${d}-${m}-${y}`;
+  }
+  return dateStr;
+};
+
 const statusColorMap: Record<string, string> = {
-  Open: "text-blue-500",
-  Paid: "text-green-500",
+  Open: "bg-blue-100 text-blue-700",
+  Paid: "bg-green-100 text-green-700",
+  Draft: "bg-gray-100 text-gray-700",
+  Void: "bg-red-100 text-red-700",
+  Overdue: "bg-orange-100 text-orange-700",
 };
 
 const columns: ColumnConfig[] = [
@@ -61,48 +80,54 @@ const columns: ColumnConfig[] = [
   { key: "project", label: "PROJECT", sortable: true },
 ];
 
-const seedRows: BillRow[] = [
-  {
-    id: "1",
-    status: "Open",
-    billDate: "2026-03-11",
-    dueDate: "2026-03-21",
-    billNo: "45",
-    vendorName: "Gophygital",
-    billAmount: 262.50,
-    balanceAmount: 262.50,
-    project: "",
-  },
-  {
-    id: "2",
-    status: "Paid",
-    billDate: "2026-03-17",
-    dueDate: "2026-03-17",
-    billNo: "1221",
-    vendorName: "Gophygital",
-    billAmount: 262.50,
-    balanceAmount: 0.00,
-    project: "",
-  },
-  {
-    id: "3",
-    status: "Paid",
-    billDate: "2026-03-17",
-    dueDate: "2026-03-17",
-    billNo: "fgfgr",
-    vendorName: "Gophygital",
-    billAmount: 31616.00,
-    balanceAmount: 0.00,
-    project: "",
-  },
-];
-
 const BillDetailsReport: React.FC = () => {
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
-  const [appliedFilters, setAppliedFilters] = useState(defaultRange);
-  const [rows] = useState<BillRow[]>(seedRows);
-  const [loading] = useState(false);
+  const [rows, setRows] = useState<BillRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchBills = useCallback(async (from: string, to: string) => {
+    setLoading(true);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      const lock_account_id = localStorage.getItem("lock_account_id");
+
+      const res = await axios.get(`https://${baseUrl}/lock_account_bills.json`, {
+        params: {
+          lock_account_id,
+          "q[date_gteq]": toApiDate(from),
+          "q[date_lteq]": toApiDate(to),
+        },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const apiData: any[] = res.data?.lock_account_bills || res.data || [];
+      const mapped: BillRow[] = apiData.map((item: any, i: number) => ({
+        id: String(item.id || i),
+        status: item.status
+          ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
+          : "--",
+        billDate: formatDate(item.date || item.bill_date || ""),
+        dueDate: formatDate(item.due_date || ""),
+        billNo: item.bill_number || item.number || "--",
+        vendorName: item.vendor_name || item.contact_name || "--",
+        billAmount: parseFloat(String(item.total_amount ?? item.amount ?? 0)) || 0,
+        balanceAmount: parseFloat(String(item.balance_due ?? item.balance_amount ?? 0)) || 0,
+        project: item.project_name || item.project || "",
+      }));
+
+      setRows(mapped);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBills(defaultRange.fromDate, defaultRange.toDate);
+  }, [fetchBills]);
 
   const totals = useMemo(
     () =>
@@ -116,47 +141,52 @@ const BillDetailsReport: React.FC = () => {
     [rows]
   );
 
-  const totalRow: BillRow = {
-    id: "total-row",
-    status: "Total",
-    billDate: "",
-    dueDate: "",
-    billNo: "",
-    vendorName: "",
-    billAmount: totals.billAmount,
-    balanceAmount: totals.balanceAmount,
-    project: "",
-  };
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: "total-row",
+        status: "__total__",
+        billDate: "",
+        dueDate: "",
+        billNo: "Total",
+        vendorName: "",
+        billAmount: totals.billAmount,
+        balanceAmount: totals.balanceAmount,
+        project: "",
+      },
+    ];
+  }, [rows, totals]);
 
   const renderRow = (row: BillRow) => {
     const isTotal = row.id === "total-row";
 
-    if (isTotal) {
-      return {
-        status: <span className="text-[13px] font-bold text-[#1A1A1A]">Total</span>,
-        billDate: <span></span>,
-        dueDate: <span></span>,
-        billNo: <span></span>,
-        vendorName: <span></span>,
-        billAmount: <span className="font-bold text-[#1A1A1A]">{formatAmount(row.billAmount)}</span>,
-        balanceAmount: <span className="font-bold text-[#1A1A1A]">{formatAmount(row.balanceAmount)}</span>,
-        project: <span></span>,
-      };
-    }
-
     return {
-      status: (
-        <span className={`text-[13px] ${statusColorMap[row.status] || "text-gray-800"}`}>
+      status: isTotal ? <span /> : (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status] || "bg-gray-100 text-gray-700"}`}>
           {row.status}
         </span>
       ),
-      billDate: <span className="text-[13px] font-medium text-gray-900">{formatDisplayDate(row.billDate)}</span>,
-      dueDate: <span className="text-[13px] font-medium text-gray-900">{formatDisplayDate(row.dueDate)}</span>,
-      billNo: <span className="text-[13px] font-medium text-blue-600">{row.billNo}</span>,
-      vendorName: <span className="text-[13px] font-medium text-blue-600">{row.vendorName}</span>,
-      billAmount: <span className="text-[13px] font-medium text-blue-600">{formatAmount(row.billAmount)}</span>,
-      balanceAmount: <span className="text-[13px] font-medium text-blue-600">{formatAmount(row.balanceAmount)}</span>,
-      project: <span className="text-[13px] text-gray-900">{row.project}</span>,
+      billDate: <span className="text-sm text-gray-600">{isTotal ? "" : row.billDate}</span>,
+      dueDate: <span className="text-sm text-gray-600">{isTotal ? "" : row.dueDate}</span>,
+      billNo: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+          {row.billNo}
+        </span>
+      ),
+      vendorName: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.vendorName}</span>,
+      billAmount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+          {formatAmount(row.billAmount)}
+        </span>
+      ),
+      balanceAmount: (
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
+          {formatAmount(row.balanceAmount)}
+        </span>
+      ),
+      project: <span className="text-sm text-gray-600">{isTotal ? "" : row.project}</span>,
     };
   };
 
@@ -166,16 +196,16 @@ const BillDetailsReport: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-[#f9f7f2] p-6 min-h-screen">
-      <div className="bg-white rounded-lg border-2 p-6 mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 flex items-center justify-center bg-[#E5E0D3] rounded-full text-[#C72030]">
-            <NotepadText className="w-6 h-6" />
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-semibold text-[#1A1A1A]">Bill Details</h3>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Bill Details</h3>
         </div>
-
-        <div className="grid md:grid-cols-4 items-end gap-6">
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
           <TextField
             label="From Date"
             type="date"
@@ -186,7 +216,6 @@ const BillDetailsReport: React.FC = () => {
             size="small"
             fullWidth
           />
-
           <TextField
             label="To Date"
             type="date"
@@ -197,46 +226,37 @@ const BillDetailsReport: React.FC = () => {
             size="small"
             fullWidth
           />
-
           <Button
-            onClick={() => setAppliedFilters(filters)}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white h-[36px] px-6"
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={() => fetchBills(filters.fromDate, filters.toDate)}
           >
             View
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="px-6 py-5 text-center border-b bg-[#F8F9FC]">
+      {/* Table */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
           <p className="text-sm font-medium text-[#667085]">Lockated</p>
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Bill Details</h1>
           <p className="mt-1 text-sm text-[#475467]">
-            From {formatDisplayDate(appliedFilters.fromDate)} To{" "}
-            {formatDisplayDate(appliedFilters.toDate)}
+            From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
           </p>
         </div>
 
         <div className="p-4">
           <EnhancedTaskTable
-            data={[...rows, totalRow]}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="bill-details-report"
             loading={loading}
             hideTableExport={true}
-            hideTableSearch={true}
-            enableSearch={false}
-            hideColumnsButton={false}
+            hideTableSearch={false}
+            enableSearch={true}
             emptyMessage="There are no transactions during the selected date range."
-            rightActions={
-              <div className="text-sm font-medium text-[#475467]">
-                Group By : None
-              </div>
-            }
-            headerCellClassName="bg-[#F9FAFB] text-[#374151] text-[12px] font-semibold uppercase tracking-[0.5px] border-b border-[#E5E7EB] hover:bg-[#F9FAFB] px-6 py-4"
-            rowClassName="hover:bg-white border-b border-[#E5E7EB]"
-            cellClassName="px-6 py-4 text-[13px] text-[#374151] hover:bg-white align-middle"
           />
         </div>
       </div>

@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
+import { toast } from "sonner";
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -1106,34 +1107,40 @@ export const BillsAdd: React.FC = () => {
                             <label className="block text-sm font-medium mb-2">
                                 Billing Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
+                                maxLength={500}
                                 value={selectedCustomer?.billing_address?.address
                                     ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
                                     : billingAddress}
-                                onChange={(e) => setBillingAddress(e.target.value)}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setBillingAddress(e.target.value);
+                                }}
                                 placeholder="Enter billing address"
                                 disabled={!!selectedCustomer?.billing_address?.address}
                             />
+                            <p className="text-xs text-gray-400 text-right mt-1">{billingAddress.length}/500</p>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Shipping Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
+                                maxLength={500}
                                 value={selectedCustomer?.shipping_address?.address
                                     ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
                                     : shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setShippingAddress(e.target.value);
+                                }}
                                 placeholder="Enter shipping address"
                                 disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
                             />
+                            <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p>
                             {/* <FormControlLabel
                                 control={
                                     <Checkbox
@@ -1209,7 +1216,14 @@ export const BillsAdd: React.FC = () => {
                                 fullWidth
                                 type="date"
                                 value={expectedShipmentDate}
-                                onChange={(e) => setExpectedShipmentDate(e.target.value)}
+                                onChange={(e) => {
+                                    const dueDate = e.target.value;
+                                    if (salesOrderDate && dueDate <= salesOrderDate) {
+                                        toast.error('Due Date must be after Bill Date');
+                                        return;
+                                    }
+                                    setExpectedShipmentDate(dueDate);
+                                }}
                                 error={!!errors.expectedShipmentDate}
                                 helperText={errors.expectedShipmentDate}
                                 sx={fieldStyles}
@@ -1321,19 +1335,20 @@ export const BillsAdd: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium ">
+                            <label className="block text-sm font-medium mb-2">
                                 Subject
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                minRows={0}
-                                maxRows={8}
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                rows={3}
+                                maxLength={500}
                                 value={subject}
-                                onChange={e => setSubject(e.target.value)}
+                                onChange={e => {
+                                    if (e.target.value.length <= 500) setSubject(e.target.value);
+                                }}
                                 placeholder="Enter subject"
-                                sx={fieldStyles}
                             />
+                            <p className="text-xs text-gray-400 text-right mt-1">{subject.length}/500</p>
                         </div>
 
                         {/* <div>
@@ -1505,8 +1520,16 @@ export const BillsAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 1, step: 1 }}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Quantity cannot be negative');
+                                                            updateItem(index, 'quantity', 0);
+                                                        } else {
+                                                            updateItem(index, 'quantity', isNaN(val) ? '' : val);
+                                                        }
+                                                    }}
+                                                    inputProps={{ min: 0, step: 1 }}
                                                     sx={{ width: 80 }}
                                                 />
                                             </td>
@@ -1515,7 +1538,15 @@ export const BillsAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Rate cannot be negative');
+                                                            updateItem(index, 'rate', 0);
+                                                        } else {
+                                                            updateItem(index, 'rate', isNaN(val) ? '' : val);
+                                                        }
+                                                    }}
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
@@ -1677,36 +1708,54 @@ export const BillsAdd: React.FC = () => {
                             <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
-                                    <TextField
-                                        type="number"
-                                        size="small"
-                                        value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
-                                        inputProps={{ min: 0, step: 0.01 }}
-                                        sx={{ width: 80 }}
-                                    />
                                     <Select
                                         size="small"
                                         value={discountTypeOnTotal}
                                         onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
-                                        sx={{ width: 100 }}
+                                        sx={{ width: 110 }}
                                     >
                                         <MenuItem value="percentage">%</MenuItem>
-                                        <MenuItem value="amount">Amount</MenuItem>
+                                        <MenuItem value="amount">₹</MenuItem>
                                     </Select>
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={discountOnTotal}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Discount cannot be negative');
+                                                setDiscountOnTotal(0);
+                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                                toast.error('Discount percentage cannot exceed 100%');
+                                                setDiscountOnTotal(100);
+                                            } else {
+                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 0.01 }}
+                                        sx={{ width: 80 }}
+                                    />
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-                            {taxBreakdown.map((tax, index) => (
-                                <div key={index} className="flex justify-between items-center py-2">
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {tax.name} ({tax.rate}%)
-                                    </span>
-                                    <span className="font-semibold text-base">
-                                        ₹{tax.amount.toFixed(2)}
-                                    </span>
-                                </div>
-                            ))}
+                            {taxBreakdown.length > 0 && (
+                                <>
+                                    <div className="flex justify-between items-center py-1">
+                                        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Tax Summary</span>
+                                    </div>
+                                    {taxBreakdown.map((tax, index) => (
+                                        <div key={index} className="flex justify-between items-center py-2">
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                {tax.name} ({tax.rate}%)
+                                            </span>
+                                            <span className="font-semibold text-base">
+                                                ₹{tax.amount.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
                             <Divider />
 
                             <div className="flex flex-wrap items-center gap-3 py-2">
@@ -1768,8 +1817,16 @@ export const BillsAdd: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
-                                        inputProps={{ step: 0.01 }}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Adjustment cannot be negative');
+                                                setAdjustment(0);
+                                            } else {
+                                                setAdjustment(isNaN(val) ? 0 : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />
                                 </div>
@@ -1787,14 +1844,17 @@ export const BillsAdd: React.FC = () => {
 
                 {/* Customer Notes */}
                 <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={3}
+                        maxLength={500}
                         value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        placeholder="Enter any notes for the customer"
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
+                        }}
+                        placeholder="Enter any notes for the bill"
                     />
+                    <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
                 </Section>
 
                 {/* Terms & Conditions */}

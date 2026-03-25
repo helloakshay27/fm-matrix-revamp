@@ -520,6 +520,23 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
         }]);
     };
 
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+    const [deleteTargetType, setDeleteTargetType] = useState<'item' | 'attachment' | null>(null);
+
+    const handleDeleteConfirm = () => {
+        if (deleteTargetIndex !== null) {
+            if (deleteTargetType === 'item') {
+                removeItem(deleteTargetIndex);
+            } else if (deleteTargetType === 'attachment') {
+                removeAttachment(deleteTargetIndex);
+            }
+        }
+        setDeleteConfirmOpen(false);
+        setDeleteTargetIndex(null);
+        setDeleteTargetType(null);
+    };
+
     // Remove item
     const removeItem = (index: number) => {
         if (items.length > 1) {
@@ -1562,7 +1579,11 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                             <td className="px-4 py-3 text-center">
                                                 <IconButton
                                                     size="small"
-                                                    onClick={() => removeItem(index)}
+                                                    onClick={() => {
+                                                        setDeleteTargetIndex(index);
+                                                        setDeleteTargetType('item');
+                                                        setDeleteConfirmOpen(true);
+                                                    }}
                                                     disabled={items.length === 1}
                                                     color="error"
                                                 >
@@ -1794,9 +1815,9 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                             </span>
                                         </div>
                                         <IconButton size="small" onClick={() => {
-                                            if (window.confirm("Are you sure about deleting this item?")) {
-                                                removeAttachment(index);
-                                            }
+                                            setDeleteTargetIndex(index);
+                                            setDeleteTargetType('attachment');
+                                            setDeleteConfirmOpen(true);
                                         }}>
                                             <Close fontSize="small" />
                                         </IconButton>
@@ -2264,6 +2285,48 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 </DialogActions>
 
             </Dialog>
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure about deleting this {deleteTargetType}?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            color: '#C72030',
+                            borderColor: '#C72030',
+                            '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#C72030',
+                            '&:hover': {
+                                backgroundColor: '#A01926'
+                            }
+                        }}
+                    >
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
         </div>
     );
 };
