@@ -1381,7 +1381,7 @@ function App() {
       console.warn("🧹 Cleaning up WebSocket subscriptions");
     };
   }, [token, connect, socketUrl]);
-
+  
   useEffect(() => {
     const subscriptionTimer = setTimeout(() => {
       const sub = webSocketManager.subscribeToUserNotifications({
