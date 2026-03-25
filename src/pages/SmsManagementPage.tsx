@@ -227,6 +227,19 @@ const SmsManagementPage: React.FC = () => {
     fetchOrgs();
   }, []);
 
+  // Auto-fill logic for Service Provider based on Priority selection (Add Template mode only)
+  useEffect(() => {
+    if (!editingId && isModalOpen) {
+      if (formData.priority === "primary") {
+        setFormData((prev) => ({ ...prev, service_provider: "Immense" }));
+      } else if (formData.priority === "secondary") {
+        setFormData((prev) => ({ ...prev, service_provider: "Gupshup" }));
+      } else {
+        setFormData((prev) => ({ ...prev, service_provider: "" }));
+      }
+    }
+  }, [formData.priority, editingId, isModalOpen]);
+
   const orgOptions = useMemo(
     () =>
       orgsList.map((org: any) => ({
@@ -1047,10 +1060,11 @@ const SmsManagementPage: React.FC = () => {
                   <Input
                     id="service_provider"
                     name="service_provider"
-                    placeholder="e.g. Immense"
+                    placeholder="Please select the Priority first to auto-fill the Service Provider."
                     value={formData.service_provider}
                     onChange={handleInputChange}
-                    className="h-11 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                    readOnly={true}
+                    className="h-11 border-slate-200 bg-slate-50 text-slate-500 cursor-not-allowed focus:ring-0 rounded-md transition-all font-medium"
                   />
                 </div>
 
