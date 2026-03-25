@@ -1169,6 +1169,7 @@ import SummaryOfOutwardSuppliesGSTR1 from "./pages/ClubManagement/SummaryOfOutwa
 import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishingFacilityIFF";
 import DayBook from "./pages/ClubManagement/DayBook";
 import JournalReport from "./pages/ClubManagement/JournalReport";
+import FixedAssetReport from "./pages/ClubManagement/FixedAssetReport";
 import GeneralLedger from "./pages/ClubManagement/GeneralLedger";
 import DetailedGeneralLedger from "./pages/ClubManagement/DetailedGeneralLedger";
 import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
@@ -2805,6 +2806,14 @@ function App() {
                           <Route
                             path="/accounting/reports/journal-report"
                             element={<JournalReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/fixed-asset"
+                            element={<FixedAssetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/fixed-asset-register"
+                            element={<FixedAssetReport />}
                           />
                           <Route
                             path="/accounting/reports/general-ledger"
