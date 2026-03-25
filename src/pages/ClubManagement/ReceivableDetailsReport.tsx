@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import TextField from "@mui/material/TextField";
-import { NotepadText, ChevronDown, SlidersHorizontal, SquareGanttChart } from "lucide-react";
+import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
@@ -24,10 +24,9 @@ const getCurrentMonthRange = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return {
-    fromDate: firstDay.toISOString().split("T")[0],
-    toDate: lastDay.toISOString().split("T")[0],
-  };
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
 };
 
 const toApiDate = (iso: string) => {
@@ -88,7 +87,7 @@ const ReceivableDetailsReport: React.FC = () => {
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (fromDate: string, toDate: string) => {
     try {
       setLoading(true);
       const res = await axios.get(
@@ -96,8 +95,8 @@ const ReceivableDetailsReport: React.FC = () => {
         {
           params: {
             lock_account_id,
-            "q[date_gteq]": toApiDate(filters.fromDate),
-            "q[date_lteq]": toApiDate(filters.toDate),
+            "q[date_gteq]": toApiDate(fromDate),
+            "q[date_lteq]": toApiDate(toDate),
           },
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -127,11 +126,11 @@ const ReceivableDetailsReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [baseUrl, token, lock_account_id]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(defaultRange.fromDate, defaultRange.toDate);
+  }, [defaultRange.fromDate, defaultRange.toDate, fetchData]);
 
   const totals = useMemo(
     () =>
@@ -220,20 +219,19 @@ const ReceivableDetailsReport: React.FC = () => {
   };
 
   return (
-    <div
-      className="w-full bg-[#f9f7f2]"
-      style={{ minHeight: "100vh", boxSizing: "border-box" }}
-    >
-      {/* Filter Bar */}
-      <div className="border-b border-[#EAECF0] bg-white px-6 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
-            <NotepadText className="h-5 w-5" />
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
+      {/* Filter */}
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
           </div>
-          <span className="font-semibold text-[#1A1A1A]">Receivable Details</span>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            Receivable Details
+          </h3>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
           <TextField
             label="From Date"
             type="date"
@@ -241,6 +239,7 @@ const ReceivableDetailsReport: React.FC = () => {
             value={filters.fromDate}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
+            fullWidth
             size="small"
           />
           <TextField
@@ -250,40 +249,22 @@ const ReceivableDetailsReport: React.FC = () => {
             value={filters.toDate}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
+            fullWidth
             size="small"
           />
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={fetchData}
+            onClick={() => fetchData(filters.fromDate, filters.toDate)}
           >
             View
           </Button>
         </div>
-
-        <div className="flex items-center gap-5 text-sm text-[#667085]">
-          <button className="flex items-center gap-2 hover:text-[#475467]">
-            <SquareGanttChart className="h-4 w-4" />
-            <span>
-              Group By : <span className="font-semibold text-[#1A1A1A]">None</span>
-            </span>
-            <ChevronDown className="h-4 w-4" />
-          </button>
-
-          <button className="flex items-center gap-2 hover:text-[#475467]">
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className="text-[#1A1A1A]">Customize Report Columns</span>
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E7EEF9] px-1.5 text-xs font-semibold text-[#2563EB]">
-              10
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border bg-white overflow-hidden m-6 mt-4">
+      <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
             Receivable Details
           </h1>
@@ -300,7 +281,7 @@ const ReceivableDetailsReport: React.FC = () => {
             storageKey="receivable-details-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            hideColumnsButton={true}
             loading={loading}
             emptyMessage="No data to display"
           />

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
@@ -9,6 +9,7 @@ import { NotepadText } from "lucide-react";
 
 interface TimeToGetPaidRow {
   id: string;
+  customerId: string | number;
   customer_name: string;
   bucket_0_15: number;
   bucket_16_30: number;
@@ -46,10 +47,11 @@ const TimeToGetPaidReport: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const defaultDateRange = useState(() => {
     const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     return {
-      fromDate: toFilterDate(firstDayOfMonth),
-      toDate: toFilterDate(today),
+      fromDate: toFilterDate(firstDay),
+      toDate: toFilterDate(lastDay),
     };
   })[0];
   const [filters, setFilters] = useState({
@@ -87,6 +89,7 @@ const TimeToGetPaidReport: React.FC = () => {
       const apiData: any[] = response.data || [];
       const mapped: TimeToGetPaidRow[] = apiData.map((item: any, i: number) => ({
         id: String(item.id || i),
+        customerId: item.customer_id || item.id || "",
         customer_name: item.customer_name || item.name || "--",
         bucket_0_15: item["0_15"] ?? item.bucket_0_15 ?? 0,
         bucket_16_30: item["16_30"] ?? item.bucket_16_30 ?? 0,
@@ -107,21 +110,54 @@ const TimeToGetPaidReport: React.FC = () => {
     fetchPayments(defaultDateRange.fromDate, defaultDateRange.toDate);
   }, [defaultDateRange.fromDate, defaultDateRange.toDate, fetchPayments]);
 
-  const renderRow = (row: TimeToGetPaidRow) => ({
-    customer_name: (
-      <button
-        onClick={() => navigate("/accounting/customers")}
-        className="text-[13px] font-medium text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
-      >
-        {row.customer_name}
-      </button>
-    ),
-    bucket_0_15: <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.bucket_0_15)}</span>,
-    bucket_16_30: <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.bucket_16_30)}</span>,
-    bucket_31_45: <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.bucket_31_45)}</span>,
-    bucket_above_45: <span className="text-[13px] font-semibold text-[#2563eb]">{formatCurrency(row.bucket_above_45)}</span>,
-    average_days: <span className="text-[13px] font-medium text-[#111827]">{row.average_days ? `${row.average_days} Days` : "--"}</span>,
-  });
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    const totals = rows.reduce(
+      (acc, r) => ({
+        bucket_0_15: acc.bucket_0_15 + r.bucket_0_15,
+        bucket_16_30: acc.bucket_16_30 + r.bucket_16_30,
+        bucket_31_45: acc.bucket_31_45 + r.bucket_31_45,
+        bucket_above_45: acc.bucket_above_45 + r.bucket_above_45,
+        average_days: acc.average_days + r.average_days,
+      }),
+      { bucket_0_15: 0, bucket_16_30: 0, bucket_31_45: 0, bucket_above_45: 0, average_days: 0 }
+    );
+    return [
+      ...rows,
+      {
+        id: "__total__",
+        customerId: "",
+        customer_name: "__total__",
+        ...totals,
+      },
+    ];
+  }, [rows]);
+
+  const renderRow = (row: TimeToGetPaidRow) => {
+    const isTotal = row.id === "__total__";
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`;
+    return {
+      customer_name: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+      ) : (
+        <button
+          onClick={() => navigate(`/accounting/customers/details/${row.customerId}`)}
+          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+        >
+          {row.customer_name}
+        </button>
+      ),
+      bucket_0_15: <span className={amtClass}>{formatCurrency(row.bucket_0_15)}</span>,
+      bucket_16_30: <span className={amtClass}>{formatCurrency(row.bucket_16_30)}</span>,
+      bucket_31_45: <span className={amtClass}>{formatCurrency(row.bucket_31_45)}</span>,
+      bucket_above_45: <span className={amtClass}>{formatCurrency(row.bucket_above_45)}</span>,
+      average_days: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">{row.average_days ? `${row.average_days} Days` : "--"}</span>
+      ) : (
+        <span className="text-sm text-gray-900">{row.average_days ? `${row.average_days} Days` : "--"}</span>
+      ),
+    };
+  };
 
   return (
     <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
@@ -168,22 +204,23 @@ const TimeToGetPaidReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Time to Get Paid</h1>
           <p className="mt-1 text-sm text-[#475467]">From {filters.fromDate} To {filters.toDate}</p>
         </div>
 
         <div className="p-4">
           <EnhancedTaskTable
-            data={rows}
+            data={tableData}
             columns={columns}
             renderRow={renderRow}
             storageKey="time-to-get-paid-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
             loading={loading}
             emptyMessage="No customer payment data found"
+            hideColumnsButton={true}
           />
         </div>
       </div>

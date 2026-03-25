@@ -356,7 +356,6 @@ export const PurchaseOrderDetailPage = () => {
   const status = purchaseOrder.all_level_approved ? "approved" : "pending"; // Dynamic status based on all_level_approved
   const paymentTermsDisplay =
     purchaseOrder.payment_term ||
-    purchaseOrder.payment_terms ||
     purchaseOrder.payment_tern ||
     "N/A";
   const deliveryAddressDisplay =
@@ -555,7 +554,8 @@ export const PurchaseOrderDetailPage = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-primary" />
-                        Line Items
+                        Item Table
+
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -613,26 +613,26 @@ export const PurchaseOrderDetailPage = () => {
                       {/* Pricing Summary */}
                       <div className="mt-6 flex justify-end">
                         <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              Net Amount
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Sub Total
                             </span>
-                            <span className="font-semibold">
-                              ₹{purchaseOrder.net_amount_formatted || "0.00"}
+                            <span className="font-semibold text-base">
+                              ₹{purchaseOrder.net_amount_formatted || purchaseOrder.pms_po_inventories?.reduce((sum, item) => sum + item.total_value, 0).toFixed(2) || "0.00"}
                             </span>
                           </div>
-                          {purchaseOrder.total_tax_amount && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Tax</span>
-                              <span className="font-semibold">
-                                ₹{purchaseOrder.total_tax_amount.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-                          <div className="border-t pt-3 flex justify-between text-lg">
-                            <span className="font-bold">Total Amount</span>
-                            <span className="font-bold text-primary">
-                              ₹{purchaseOrder.total_amount_formatted || "0.00"}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Tax
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{(purchaseOrder.total_tax_amount || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-primary text-2xl">
+                              ₹{purchaseOrder.total_amount_formatted || purchaseOrder.amount?.toFixed(2) || "0.00"}
                             </span>
                           </div>
                           {purchaseOrder.amount_in_words && (

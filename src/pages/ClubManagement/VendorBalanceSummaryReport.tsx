@@ -59,13 +59,32 @@ const formatAmount = (value: number) =>
 const toNumber = (v?: string | number) => parseFloat(String(v ?? 0)) || 0;
 
 const VendorBalanceSummaryReport: React.FC = () => {
-  const [filters, setFilters] = useState({ fromDate: "", toDate: "" });
+   const defaultRange = useMemo(() => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const fmt = (d: Date) =>
+        `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+      return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
+    }, []);
+    const [filters, setFilters] = useState(defaultRange);
+  // const [filters, setFilters] = useState({ fromDate: "", toDate: "" });
   const [rows, setRows] = useState<VendorBalanceRow[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    // const { name, value } = e.target;
+    // setFilters((prev) => ({ ...prev, [name]: value }));
+     const { name, value } = e.target;
+
+  const formatted = value
+    ? value.split("-").reverse().join("/") // YYYY-MM-DD → DD/MM/YYYY
+    : "";
+
+  setFilters((prev) => ({
+    ...prev,
+    [name]: formatted,
+  }));
   };
 
   const fetchData = useCallback(async (fromDate: string, toDate: string) => {
@@ -190,7 +209,8 @@ const VendorBalanceSummaryReport: React.FC = () => {
             label="From Date"
             type="date"
             name="fromDate"
-            value={filters.fromDate}
+            // value={filters.fromDate}
+             value={filters.fromDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
             size="small"
@@ -200,7 +220,8 @@ const VendorBalanceSummaryReport: React.FC = () => {
             label="To Date"
             type="date"
             name="toDate"
-            value={filters.toDate}
+            // value={filters.toDate}
+            value={filters.toDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
             InputLabelProps={{ shrink: true }}
             size="small"
@@ -219,7 +240,7 @@ const VendorBalanceSummaryReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Vendor Balance Summary</h1>
           <p className="mt-1 text-sm text-[#475467]">
             {filters.fromDate && filters.toDate
@@ -236,7 +257,8 @@ const VendorBalanceSummaryReport: React.FC = () => {
             storageKey="vendor-balance-summary-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
+            hideColumnsButton={true}
             loading={loading}
             emptyMessage="There are no transactions during the selected date range."
           />

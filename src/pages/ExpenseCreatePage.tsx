@@ -404,8 +404,18 @@ export const ExpenseCreatePage: React.FC = () => {
         if (!line.amount || parseFloat(line.amount) <= 0) e[`line_${i}_amount`] = 'Amount required';
       });
     }
+
     setErrors(e);
-    return Object.keys(e).length === 0;
+
+    // Show toasts one by one with delay
+    const errorMessages = Object.values(e);
+    errorMessages.forEach((message, index) => {
+      setTimeout(() => {
+        sonnerToast.error(message);
+      }, index * 800); // 800ms gap between each toast
+    });
+
+    return errorMessages.length === 0;
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -1020,7 +1030,7 @@ export const ExpenseCreatePage: React.FC = () => {
                             - Goods / Services dropdown below it
                             - HSN Code / SAC inline "Update" link (Zoho-style)
                         */}
-                        <td className="px-3 py-3 align-middle"> 
+                        <td className="px-3 py-3 align-middle">
                           <div className="flex flex-col gap-1">
                             {/* Account selector */}
                             <FormControl fullWidth size="small" error={!!errors[`line_${idx}_account`]}>

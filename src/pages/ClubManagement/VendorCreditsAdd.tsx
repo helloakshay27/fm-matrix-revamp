@@ -626,22 +626,55 @@ export const VendorCreditsAdd: React.FC = () => {
         }
     };
 
-    // Validation
-    const validate = (): string | null => {
-        if (!selectedCustomer) return "Please select a vendor";
-        if (!referenceNumber.trim()) return "Credit note number is required";
-        if (!salesOrderDate) return "Date is required";
-        if (items.length === 0) return "At least one item is required";
-
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            if (!item.name.trim()) return `Item ${i + 1}: Name is required`;
-            if (!item.account) return `Item ${i + 1}: Account is required`;
-            if (item.quantity <= 0) return `Item ${i + 1}: Quantity must be greater than 0`;
-            if (item.rate < 0) return `Item ${i + 1}: Rate cannot be negative`;
+    // ====================== VALIDATION FUNCTION ======================
+    const validateForm = (): boolean => {
+        if (!selectedCustomer) {
+            toast.error("Please select a vendor");
+            return false;
         }
 
-        return null;
+        if (!referenceNumber.trim()) {
+            toast.error("Please enter the order number.");
+            return false;
+        }
+
+        if (!salesOrderDate) {
+            toast.error("Please select Vendor Credit Date");
+            return false;
+        }
+
+        if (!sourceOfSupply) {
+            toast.error("Please select a source of supply");
+            return false;
+        }
+
+        // Items validation
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const itemNum = i + 1;
+
+            if (!item.name?.trim()) {
+                toast.error(`Item ${itemNum}: Please select an item`);
+                return false;
+            }
+
+            if (!item.account) {
+                toast.error(`Item ${itemNum}: The Account field cannot be empty.`);
+                return false;
+            }
+
+            if (!item.item_tax_type) {
+                toast.error(`Item ${itemNum}: Please set the GST treatment for the item`);
+                return false;
+            }
+
+            if (!item.quantity || item.quantity <= 0) {
+                toast.error(`Item ${itemNum}: Quantity must be greater than 0`);
+                return false;
+            }
+        }
+
+        return true;
     };
 
     const saleOrderPayload = {
@@ -736,123 +769,185 @@ export const VendorCreditsAdd: React.FC = () => {
     console.log('Sale Order Payload:', saleOrderPayload2);
     console.log("items:", items)
     // Handle submit
+    // const handleSubmit = async (saveAsDraft: boolean = false) => {
+    //     if (isSubmitting) return;
+
+    //     const error = validate();
+    //     if (error) {
+    //         toast.error(error);
+    //         return;
+    //     }
+
+    //     const loadingToast = toast.loading("Creating...");
+
+    //     setIsSubmitting(true);
+
+    //     try {
+    //         const baseUrl = localStorage.getItem('baseUrl');
+    //         const token = localStorage.getItem('token');
+    //         const lock_account_id = localStorage.getItem('lock_account_id');
+
+    //         // Build FormData for sale order
+    //         const formData = new FormData();
+    //         const totalGSTAmount = taxBreakdown.reduce(
+    //             (sum, tax) => sum + Number(tax.amount || 0),
+    //             0
+    //         );
+
+    //         formData.append(
+    //             'lock_account_supplier_credit[sub_total_amount]',
+    //             String(subTotal)
+    //         );
+
+    //         formData.append(
+    //             'lock_account_supplier_credit[taxable_amount]',
+    //             String(totalGSTAmount)
+    //         );
+
+    //         formData.append(
+    //             'lock_account_supplier_credit[lock_account_tax_amount]',
+    //             String(taxAmount2)
+    //         );
+    //         formData.append('lock_account_supplier_credit[pms_supplier_id]', selectedCustomer?.id || '');
+    //         formData.append('lock_account_supplier_credit[order_number]', referenceNumber);
+    //         formData.append('lock_account_supplier_credit[bill_date]', salesOrderDate);
+    //         formData.append('lock_account_supplier_credit[date]', expectedShipmentDate);
+    //         // formData.append('lock_account_supplier_credit[payment_term_id]', selectedTerm);
+    //         // formData.append('sale_order[delivery_method]', deliveryMethod);
+    //         // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
+    //         formData.append('lock_account_supplier_credit[notes]', customerNotes);
+    //         // formData.append('lock_account_supplier_credit[terms_and_conditions]', termsAndConditions);
+    //         formData.append('lock_account_supplier_credit[status]', 'draft');
+    //         formData.append('lock_account_supplier_credit[subject]', subject || '');
+    //         formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount));
+    //         if (discountTypeOnTotal === 'percentage') {
+    //             formData.append('lock_account_supplier_credit[discount_per]', String(discountOnTotal));
+    //             formData.append('lock_account_supplier_credit[discount_amount]', String(totalDiscount));
+    //         } else {
+    //             formData.append('lock_account_supplier_credit[discount_amount]', String(discountOnTotal));
+    //         }
+    //         formData.append('lock_account_supplier_credit[charge_amount]', String(adjustment));
+    //         formData.append('lock_account_supplier_credit[charge_name]', adjustmentLabel);
+    //         formData.append('lock_account_supplier_credit[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
+    //         formData.append('lock_account_supplier_credit[tax_type]', taxType.toLowerCase());
+    //         const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
+    //         formData.append('lock_account_supplier_credit[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
+    //         //new
+    //         formData.append('lock_account_supplier_credit[source_of_supply]', sourceOfSupply || '');
+    //         formData.append('lock_account_supplier_credit[destination_of_supply]', destinationOfSupply || '');
+    //         // Sale order items
+    //         items.forEach((item, idx) => {
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][name]`, item.description || '');
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
+    //             // formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_customer_id]`, item.customer || '');
+
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+    //         });
+
+    //         // Email contact persons
+    //         // selectedContactPersons.forEach((id, idx) => {
+    //         //     formData.append(`lock_account_supplier_credit[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
+    //         // });
+
+    //         // Attachments
+    //         attachments.forEach((file, idx) => {
+    //             formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][document]`, file);
+    //             formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][active]`, 'true');
+    //         });
+
+    //         await fetch(`https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 Authorization: token ? `Bearer ${token}` : undefined
+    //                 // Do NOT set Content-Type, browser will set it for FormData
+    //             },
+    //             body: formData
+    //         });
+
+    //         toast.dismiss(loadingToast);
+    //         if (saveAsDraft) {
+    //             toast.success("Saved as draft");
+    //         } else {
+    //             toast.success("Vendor credit created!");
+    //         }
+    //         navigate('/accounting/vendor-credits');
+    //     } catch (error) {
+    //         console.error('Error submitting sales order:', error);
+    //         toast.dismiss(loadingToast);
+    //         toast.error("Failed to save vendor credit");
+    //     } finally {
+    //         setIsSubmitting(false);
+    //     }
+    // };
+
+
     const handleSubmit = async (saveAsDraft: boolean = false) => {
         if (isSubmitting) return;
 
-        const error = validate();
-        if (error) {
-            toast.error(error);
-            return;
-        }
-
-        const loadingToast = toast.loading("Creating...");
+        // ←←← ADD THIS LINE
+        if (!validateForm()) return;
 
         setIsSubmitting(true);
+        const loadingToast = toast.loading("Creating Vendor Credit...");
 
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
 
-            // Build FormData for sale order
             const formData = new FormData();
-            const totalGSTAmount = taxBreakdown.reduce(
-                (sum, tax) => sum + Number(tax.amount || 0),
-                0
-            );
 
-            formData.append(
-                'lock_account_supplier_credit[sub_total_amount]',
-                String(subTotal)
-            );
+            // ... your existing formData appends (keep all of them) ...
 
-            formData.append(
-                'lock_account_supplier_credit[taxable_amount]',
-                String(totalGSTAmount)
-            );
-
-            formData.append(
-                'lock_account_supplier_credit[lock_account_tax_amount]',
-                String(taxAmount2)
-            );
             formData.append('lock_account_supplier_credit[pms_supplier_id]', selectedCustomer?.id || '');
-            formData.append('lock_account_supplier_credit[order_number]', referenceNumber);
+            formData.append('lock_account_supplier_credit[order_number]', referenceNumber.trim());
             formData.append('lock_account_supplier_credit[bill_date]', salesOrderDate);
-            formData.append('lock_account_supplier_credit[date]', expectedShipmentDate);
-            // formData.append('lock_account_supplier_credit[payment_term_id]', selectedTerm);
-            // formData.append('sale_order[delivery_method]', deliveryMethod);
-            // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
-            formData.append('lock_account_supplier_credit[notes]', customerNotes);
-            // formData.append('lock_account_supplier_credit[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_supplier_credit[status]', 'draft');
             formData.append('lock_account_supplier_credit[subject]', subject || '');
-            formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount));
-            if (discountTypeOnTotal === 'percentage') {
-                formData.append('lock_account_supplier_credit[discount_per]', String(discountOnTotal));
-                formData.append('lock_account_supplier_credit[discount_amount]', String(totalDiscount));
-            } else {
-                formData.append('lock_account_supplier_credit[discount_amount]', String(discountOnTotal));
-            }
-            formData.append('lock_account_supplier_credit[charge_amount]', String(adjustment));
-            formData.append('lock_account_supplier_credit[charge_name]', adjustmentLabel);
-            formData.append('lock_account_supplier_credit[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
-            formData.append('lock_account_supplier_credit[tax_type]', taxType.toLowerCase());
-            const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-            formData.append('lock_account_supplier_credit[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
-            //new
-            formData.append('lock_account_supplier_credit[source_of_supply]', sourceOfSupply || '');
+            formData.append('lock_account_supplier_credit[notes]', customerNotes);
+            formData.append('lock_account_supplier_credit[source_of_supply]', sourceOfSupply);
             formData.append('lock_account_supplier_credit[destination_of_supply]', destinationOfSupply || '');
-            // Sale order items
+            formData.append('lock_account_supplier_credit[status]', saveAsDraft ? 'draft' : 'confirmed');
+            formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount2));
+
+            // Items loop (keep your existing one)
             items.forEach((item, idx) => {
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][name]`, item.description || '');
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_item_id]`,
+                    itemOptions.find(opt => opt.name === item.name)?.id || '');
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
-                // formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_customer_id]`, item.customer || '');
-
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, item.item_tax_type || '');
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id || ''));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id || ''));
             });
 
-            // Email contact persons
-            // selectedContactPersons.forEach((id, idx) => {
-            //     formData.append(`lock_account_supplier_credit[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
-            // });
+            // ... rest of your fetch call remains same ...
 
-            // Attachments
-            attachments.forEach((file, idx) => {
-                formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][document]`, file);
-                formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][active]`, 'true');
-            });
-
-            await fetch(`https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`, {
+            const response = await fetch(`https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined
-                    // Do NOT set Content-Type, browser will set it for FormData
-                },
-                body: formData
+                headers: { Authorization: token ? `Bearer ${token}` : undefined },
+                body: formData,
             });
+
+            if (!response.ok) throw new Error();
 
             toast.dismiss(loadingToast);
-            if (saveAsDraft) {
-                toast.success("Saved as draft");
-            } else {
-                toast.success("Vendor credit created!");
-            }
+            toast.success(saveAsDraft ? "Saved as draft" : "Vendor credit created successfully!");
             navigate('/accounting/vendor-credits');
+
         } catch (error) {
-            console.error('Error submitting sales order:', error);
             toast.dismiss(loadingToast);
             toast.error("Failed to save vendor credit");
         } finally {
             setIsSubmitting(false);
         }
     };
-
     // --- Tax Section State and Effect ---
 
 
@@ -1435,21 +1530,19 @@ export const VendorCreditsAdd: React.FC = () => {
                                                             const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
                                                             if (selectedItem) {
                                                                 updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-                                                                // TAX HANDLING
+                                                                updateItem(index, 'rate', selectedItem.rate || 0);
+                                                                updateItem(index, 'description', selectedItem.description || '');
+
+                                                                // Set GST Treatment
                                                                 if (selectedItem.tax_preference === 'non_taxable') {
                                                                     updateItem(index, 'item_tax_type', 'non_taxable');
                                                                     updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
-                                                                }
-                                                                if (selectedItem.tax_preference === 'taxable') {
+                                                                } else if (selectedItem.tax_preference === 'taxable') {
                                                                     updateItem(index, 'item_tax_type', 'tax_group');
                                                                     updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
-                                                                }
-                                                                if (selectedItem.tax_preference === 'out_of_scope') {
+                                                                } else if (selectedItem.tax_preference === 'out_of_scope') {
                                                                     updateItem(index, 'item_tax_type', 'out_of_scope');
-                                                                }
-                                                                if (selectedItem.tax_preference === 'non_gst_supply') {
+                                                                } else if (selectedItem.tax_preference === 'non_gst_supply') {
                                                                     updateItem(index, 'item_tax_type', 'non_gst_supply');
                                                                 }
                                                             }
@@ -2028,7 +2121,7 @@ export const VendorCreditsAdd: React.FC = () => {
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{
-                        bgcolor: 'primary.main',    
+                        bgcolor: 'primary.main',
                         color: 'white',
                         px: 4,
                         '&:hover': {

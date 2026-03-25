@@ -157,11 +157,11 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                 // page: String(page),
                 // per_page: String(per_page),
             });
-            if (search) params.append('search', search);
-            if (filters.status) params.append('status', filters.status);
-            if (filters.customerId) params.append('customer_id', String(filters.customerId));
-            if (filters.dateFrom) params.append('date_from', filters.dateFrom);
-            if (filters.dateTo) params.append('date_to', filters.dateTo);
+            if (search) params.append('q[invoice_number_or_customer_name_cont]', search);
+            if (filters.status) params.append('q[status_eq]', filters.status);
+            if (filters.customerId) params.append('q[lock_account_customer_id_eq]', String(filters.customerId));
+            if (filters.dateFrom) params.append('q[date_gteq]', filters.dateFrom);
+            if (filters.dateTo) params.append('q[date_lteq]', filters.dateTo);
 
             const response = await fetch(`https://${baseUrl}/lock_account_invoices.json?${params.toString()}`, {
                 headers: {

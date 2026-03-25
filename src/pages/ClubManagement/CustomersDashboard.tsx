@@ -87,16 +87,14 @@ export const CustomersDashboard = () => {
     endDate: ''
   });
   const [customers, setCustomers] = useState<CustomerData[]>([]);
-  useEffect(() => {
-  setCustomers(dummyCustomers);
-}, []);
 
-useEffect(() => {
+  const fetchCustomers = (search = '') => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
-    const lock_account_id = localStorage.getItem("lock_account_id");
-    // Fetch customer list
-    axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
+    const lock_account_id = localStorage.getItem('lock_account_id');
+    const params = new URLSearchParams({ lock_account_id: lock_account_id || '' });
+    if (search) params.append('q[display_name_or_email_cont]', search);
+    axios.get(`https://${baseUrl}/lock_account_customers.json?${params.toString()}`, {
       headers: {
         Authorization: token ? `Bearer ${token}` : undefined,
         'Content-Type': 'application/json'
@@ -104,20 +102,14 @@ useEffect(() => {
     }).then(res => {
       console.log('Customer List:', res.data);
       setCustomers(res.data || []);
-      // Fetch customer detail for first customer (example)
-      if (res.data && res.data.length > 0) {
-        const customerId = res.data[0].id;
-        axios.get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : undefined,
-            'Content-Type': 'application/json'
-          }
-        }).then(detailRes => {
-          console.log('Customer Detail:', detailRes.data);
-        });
-      }
+    }).catch(err => {
+      console.error('Error fetching customers:', err);
     });
-  }, []);
+  };
+
+  useEffect(() => {
+    fetchCustomers(debouncedSearchQuery);
+  }, [debouncedSearchQuery]);
 
   const perPage = 20;
 

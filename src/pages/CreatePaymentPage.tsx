@@ -29,6 +29,17 @@ interface Supplier {
   payment_terms: string | null;
   currency: string | null;
 }
+
+interface Ledger {
+  id: number;
+  name: string;
+}
+
+interface AccountGroup {
+  id: number;
+  group_name: string;
+  ledgers?: Ledger[];
+}
 import {
   X,
   Settings,
@@ -96,6 +107,8 @@ import {
   FormControl,
   Select as MuiSelect,
   MenuItem as MuiMenuItem,
+  ListSubheader,
+  InputLabel,
   Typography,
   IconButton,
 } from "@mui/material";
@@ -171,11 +184,10 @@ export const CreatePaymentPage: React.FC = () => {
   }, [isConfigModalOpen, paymentConfig]);
   const [amount, setAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("Cash");
-  const [paidThrough, setPaidThrough] = useState("Petty Cash");
+  const [paidThrough, setPaidThrough] = useState("");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
   // Ledger & tax IDs
-  const [paidFromLedgerId] = useState(1);
   const [depositToLedgerId] = useState(2);
   const [lockAccountTaxId] = useState(1);
   // Attachments
@@ -189,6 +201,8 @@ export const CreatePaymentPage: React.FC = () => {
   const [appliedAmounts, setAppliedAmounts] = useState<Record<number, string>>(
     {}
   );
+  const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
 
   // Suppliers
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -215,6 +229,25 @@ export const CreatePaymentPage: React.FC = () => {
   useEffect(() => {
     fetchSuppliers();
   }, [fetchSuppliers]);
+
+  useEffect(() => {
+    const fetchAccountGroups = async () => {
+      if (!API_CONFIG.TOKEN || !lock_account_id) return;
+      setLoadingAccounts(true);
+      try {
+        const res = await pmsClient.get(
+          `/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`
+        );
+        setAccountGroups(res.data.data || []);
+      } catch (err) {
+        console.error("Failed to fetch account groups:", err);
+        setAccountGroups([]);
+      } finally {
+        setLoadingAccounts(false);
+      }
+    };
+    fetchAccountGroups();
+  }, [pmsClient, lock_account_id]);
 
   const fetchBills = useCallback(
     async (vendorId: string) => {
@@ -269,6 +302,10 @@ export const CreatePaymentPage: React.FC = () => {
       sonnerToast.error("Please enter a valid amount.");
       return;
     }
+    if (!paidThrough) {
+      sonnerToast.error("Please select an account in 'Paid Through'.");
+      return;
+    }
     if (!API_CONFIG.TOKEN) {
       sonnerToast.error("API not configured. Please log in.");
       return;
@@ -312,7 +349,7 @@ export const CreatePaymentPage: React.FC = () => {
           payment_date: paymentDate,
           payment_mode: paymentMode,
           order_number: paymentNumber || "",
-          paid_from_ledger_id: paidFromLedgerId,
+          paid_from_ledger_id: parseInt(paidThrough, 10),
           deposit_to_ledger_id: depositToLedgerId,
           advance: activeTab === "vendor_advance",
           notes: notes,
@@ -692,20 +729,54 @@ export const CreatePaymentPage: React.FC = () => {
                       <label className="block text-sm font-medium mb-2 text-gray-700">
                         Paid Through<span className="text-red-500">*</span>
                       </label>
-                      <Select
-                        value={paidThrough}
-                        onValueChange={setPaidThrough}
-                      >
-                        <SelectTrigger className="border-gray-300 bg-white text-gray-700 h-[38px] text-sm shadow-sm">
-                          <SelectValue placeholder="Select an account" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="petty_cash">Petty Cash</SelectItem>
-                          <SelectItem value="undeposited_funds">
-                            Undeposited Funds
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl fullWidth size="small">
+                        <MuiSelect
+                          value={paidThrough || ""}
+                          onChange={(e) => setPaidThrough(e.target.value as string)}
+                          displayEmpty
+                          sx={{
+                            height: { xs: 28, sm: 36, md: 45 },
+                            "& .MuiInputBase-input, & .MuiSelect-select": {
+                              padding: { xs: "8px", sm: "10px", md: "12px" },
+                            },
+                            backgroundColor: "#fff",
+                            borderRadius: "6px",
+                          }}
+                          MenuProps={{
+                            anchorOrigin: {
+                              vertical: "bottom",
+                              horizontal: "left",
+                            },
+                            transformOrigin: {
+                              vertical: "top",
+                              horizontal: "left",
+                            },
+                            PaperProps: {
+                              style: {
+                                maxHeight: 350,
+                              },
+                            },
+                          }}
+                        >
+                          <MuiMenuItem value="" disabled>
+                            Select an account
+                          </MuiMenuItem>
+                          {accountGroups.map((group) =>
+                            group.ledgers && group.ledgers.length > 0
+                              ? [
+                                  <ListSubheader key={`group-${group.id}`} className="bg-gray-50 font-bold text-gray-900 leading-8">
+                                    {group.group_name}
+                                  </ListSubheader>,
+                                  ...group.ledgers.map((ledger: Ledger) => (
+                                    <MuiMenuItem key={ledger.id} value={ledger.id} className="pl-6">
+                                      {ledger.name}
+                                    </MuiMenuItem>
+                                  )),
+                                ]
+                              : null
+                          )}
+                        </MuiSelect>
+                      </FormControl>
                     </div>
 
                     {/* Deposit To & Reference (Vendor Advance Only) */}

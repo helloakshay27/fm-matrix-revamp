@@ -469,7 +469,7 @@ const JournalReport: React.FC = () => {
             emptyMessage="There are no transactions during the selected date range."
             tableWrapperClassName="min-h-[520px] border border-[#EAECF0]"
             headerCellClassName="text-[11px] font-semibold uppercase text-[#667085]"
-            cellClassName="py-2.5 align-middle"
+            cellClassName="py-2.5 align-middle border border-gray-300"
           />
         </div>
       </div>

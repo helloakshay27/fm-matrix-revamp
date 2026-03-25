@@ -18,7 +18,14 @@ const createApiSlice = <T>(name: string, fetchThunk: any) => {
     return createSlice({
         name,
         initialState,
-        reducers: {},
+        reducers: {
+            reset: (state) => {
+                state.loading = false;
+                state.success = false;
+                state.error = null;
+                state.data = [] as unknown as T;
+            },
+        },
         extraReducers: (builder) => {
             builder
                 .addCase(fetchThunk.pending, (state) => {

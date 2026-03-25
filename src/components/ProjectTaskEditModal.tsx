@@ -254,7 +254,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      const projectsList = response.data?.project_managements || response.data?.data?.project_managements || [];
+      const projectsList = response.data || response.data?.project_managements || [];
       setProjects(projectsList);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -749,8 +749,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 >
                   <MenuItem value="">Select a milestone</MenuItem>
                   {milestones.map((ms) => (
-                    <MenuItem key={ms.id} value={ms.id}>
-                      {ms.title}
+                    <MenuItem key={ms[0]} value={ms[0]}>
+                      {ms[1]}
                     </MenuItem>
                   ))}
                 </Select>
