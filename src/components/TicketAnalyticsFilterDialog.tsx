@@ -9,7 +9,8 @@ interface TicketAnalyticsFilterDialogProps {
   onClose: () => void;
   onApplyFilters: (filters: { startDate: string; endDate: string }) => void;
   currentStartDate?: string; // Current applied start date in DD/MM/YYYY format
-  currentEndDate?: string;   // Current applied end date in DD/MM/YYYY format
+  currentEndDate?: string; 
+  title?: string;  // Current applied end date in DD/MM/YYYY format
 }
 
 export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogProps> = ({
@@ -18,6 +19,7 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
   onApplyFilters,
   currentStartDate,
   currentEndDate,
+  title,
 }) => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -70,7 +72,7 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Filter Ticket Analytics</DialogTitle>
+          <DialogTitle>Filter Analytics {title}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
