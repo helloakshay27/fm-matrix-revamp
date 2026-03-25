@@ -202,7 +202,7 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Recurring Invoice Details</h1>
           <p className="mt-1 text-sm text-[#475467]">From {filters.fromDate} To {filters.toDate}</p>
         </div>
@@ -215,7 +215,8 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
             storageKey="recurring-invoice-details-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
+            hideColumnsButton={true}
             loading={loading}
             emptyMessage="There are no transactions during the selected date range."
           />

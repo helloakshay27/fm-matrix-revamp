@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
@@ -48,11 +48,15 @@ const InvoiceDetailsReport: React.FC = () => {
   const [rows, setRows] = useState<InvoiceDetailRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Date filters
-  const [filters, setFilters] = useState({
-    fromDate: "01/03/2026",
-    toDate: "12/03/2026",
-  });
+  const defaultRange = useMemo(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const fmt = (d: Date) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
+  }, []);
+  const [filters, setFilters] = useState(defaultRange);
 
    const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");

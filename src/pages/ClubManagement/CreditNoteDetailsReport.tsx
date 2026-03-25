@@ -92,10 +92,15 @@ const CreditNoteDetailsReport: React.FC = () => {
   const navigate = useNavigate();
   const [rows, setRows] = useState<CreditNoteRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    fromDate: "01/03/2026",
-    toDate: "31/03/2026",
-  });
+  const defaultRange = useMemo(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const fmt = (d: Date) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
+  }, []);
+  const [filters, setFilters] = useState(defaultRange);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -153,8 +158,8 @@ const CreditNoteDetailsReport: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchCreditNotes("01/03/2026", "31/03/2026");
-  }, [fetchCreditNotes]);
+    fetchCreditNotes(defaultRange.fromDate, defaultRange.toDate);
+  }, [defaultRange.fromDate, defaultRange.toDate, fetchCreditNotes]);
 
   const totals = useMemo(
     () =>
@@ -203,13 +208,15 @@ const CreditNoteDetailsReport: React.FC = () => {
         </span>
       ),
       credit_date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDate(row.credit_date)}</span>,
-      credit_note_number: (
-        <span
-          onClick={() => !isTotal && navigate(`/accounting/credit-note/${row.id}`)}
-          className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600 cursor-pointer hover:underline"}`}
+      credit_note_number: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">{row.credit_note_number}</span>
+      ) : (
+        <button
+          onClick={() => navigate(`/accounting/credit-note/${row.id}`)}
+          className="text-sm font-medium !text-blue-600 hover:underline text-left"
         >
           {row.credit_note_number}
-        </span>
+        </button>
       ),
       credit_reference_number: <span className="text-sm text-gray-600">{isTotal ? "" : row.credit_reference_number}</span>,
       customer_name: (
@@ -278,7 +285,7 @@ const CreditNoteDetailsReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Credit Note Details</h1>
           <p className="mt-1 text-sm text-[#475467]">From {filters.fromDate} To {filters.toDate}</p>
         </div>
@@ -291,8 +298,9 @@ const CreditNoteDetailsReport: React.FC = () => {
             storageKey="credit-note-details-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
             loading={loading}
+            hideColumnsButton={true}
             emptyMessage="No credit note details found"
           />
         </div>
