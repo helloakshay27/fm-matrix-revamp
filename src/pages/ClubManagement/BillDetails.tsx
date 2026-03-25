@@ -522,6 +522,22 @@ export const BillDetails = () => {
                         {salesOrder?.vendor_name}
                       </p>
                     </div>
+                     <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Source of Supply
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.source_of_supply}
+                      </p>
+                    </div>
+                     <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Destination of Supply
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.destination_of_supply}
+                      </p>
+                    </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Bill Number
