@@ -1097,7 +1097,7 @@ export const BillsAdd: React.FC = () => {
                                         displayEmpty
                                         sx={fieldStyles}
                                     >
-                                        <MenuItem value="" disabled>Select a customer</MenuItem>
+                                        <MenuItem value="">Select a Vendor</MenuItem>
 
                                         {customers.map((customer) => (
                                             <MenuItem key={customer.id} value={customer.id}>
