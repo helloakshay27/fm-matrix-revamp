@@ -215,7 +215,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; inventory_name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<any[]>([]);
+    const [loadingItems, setLoadingItems] = useState(false);
     const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
 
     // additional tax dropdown data (copied from QuotesAdd)
@@ -315,16 +316,36 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
     // Fetch items, addresses & payment terms
     useEffect(() => {
-        const fetchInventories = async () => {
-            // Mock data or dispatch - restoring original logic
+        const fetchItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+
+            if (!baseUrl || !token) {
+                console.error('Missing baseUrl or token');
+                return;
+            }
+
+            setLoadingItems(true);
             try {
-                const response = await dispatch(
-                    getInventories({ baseUrl, token })
-                ).unwrap();
-                setItemOptions(response.inventories);
+                const response = await axios.get(
+                    `https://${baseUrl}/lock_account_items.json?lock_account_id=${lockAccountId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                const items = response.data?.data || response.data || [];
+                setItemOptions(items);
             } catch (error) {
-                console.log(error);
-                toast.error(error as any);
+                console.error('Error fetching lock_account_items:', error);
+                toast.error('Failed to load items');
+                setItemOptions([]);
+            } finally {
+                setLoadingItems(false);
             }
         };
 
@@ -370,7 +391,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         };
 
         fetchAddresses();
-        fetchInventories();
+        fetchItems();
         fetchPaymentTerms();
     }, []);
 
@@ -785,10 +806,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             }
         }, [open]);
 
-        const filteredItems = itemOptions.filter(item =>
-            item.inventory_name.toLowerCase().includes(search.toLowerCase()) ||
-            (item.sku && item.sku.toLowerCase().includes(search.toLowerCase()))
-        );
+        const filteredItems = itemOptions.filter(item => {
+            const name = (item.inventory_name || item.name || '').toString().toLowerCase();
+            const sku = (item.sku || '').toString().toLowerCase();
+            const query = search.toLowerCase();
+
+            return name.includes(query) || (sku && sku.includes(query));
+        });
 
         const isSelected = (id: string) => selectedItems.some(i => i.id === id);
 
@@ -1394,38 +1418,53 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
                                                     <Select
-                                                        value={item.id}
+                                                        value={item.id || ''}
                                                         onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.id === e.target.value);
+                                                            const selectedItem = itemOptions.find(
+                                                                (opt: any) => opt.id === e.target.value
+                                                            );
                                                             if (selectedItem) {
-                                                                updateItem(index, 'id', selectedItem.id);
-                                                                updateItem(index, 'name', selectedItem.inventory_name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
+                                                                setItems((prev) =>
+                                                                    prev.map((it, i) =>
+                                                                        i === index
+                                                                            ? {
+                                                                                ...it,
+                                                                                id: selectedItem.id,
+                                                                                name: selectedItem.inventory_name || selectedItem.name || '',
+                                                                                rate: Number(selectedItem.rate) || 0,
+                                                                            }
+                                                                            : it
+                                                                    )
+                                                                );
                                                             }
                                                         }}
                                                         displayEmpty
                                                         size="small"
+                                                        disabled={loadingItems}
                                                     >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
+                                                        <MenuItem value="" disabled>
+                                                            {loadingItems ? 'Loading items...' : 'Select an item'}
+                                                        </MenuItem>
+
+                                                        {itemOptions.map((option: any) => (
                                                             <MenuItem key={option.id} value={option.id}>
-                                                                {option.inventory_name}
+                                                                {option.inventory_name || option.name}
+                                                                {option.sku && ` (${option.sku})`}
                                                             </MenuItem>
                                                         ))}
                                                     </Select>
                                                 </FormControl>
-                                                {
-                                                    item.id && (
-                                                        <TextField
-                                                            fullWidth
-                                                            size="small"
-                                                            placeholder="Description"
-                                                            value={item.description}
-                                                            onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                            sx={{ mt: 1 }}
-                                                        />
-                                                    )
-                                                }
+
+                                                {item.id && (
+                                                    <TextField
+                                                        fullWidth
+                                                        size="small"
+                                                        placeholder="Description"
+                                                        value={item.description}
+                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                        sx={{ mt: 1 }}
+                                                    />
+                                                )}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
