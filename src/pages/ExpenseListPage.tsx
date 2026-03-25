@@ -16,9 +16,11 @@ interface Expense {
     paid_through_account_id: string;
     vendor_id: string | null;
     customer_id: string | null;
+    customer_name?: string | null;
     reference_number: string;
     description: string;
     amount: number;
+    billable: boolean;
     expense_accounts: Array<{
         id: number;
         lock_account_ledger_id: number;
@@ -364,10 +366,10 @@ export const ExpenseListPage: React.FC = () => {
             <span className="text-sm text-gray-600">{getAccountName(expense.paid_through_account_id)}</span>
         ),
         customer_name: (
-            <span className="text-sm text-gray-900">{expense.customer_id || '-'}</span>
+            <span className="text-sm text-gray-900">{expense.customer_name || '-'}</span>
         ),
         status: (
-            <span className="text-sm text-gray-600">{expense.transaction?.transaction_type || 'Expense'}</span>
+            <span className="text-sm text-gray-600">{expense.billable ? 'Unbilled' : 'Non billable'}</span>
         ),
         amount: (
             <span className="text-sm font-medium text-gray-900">
