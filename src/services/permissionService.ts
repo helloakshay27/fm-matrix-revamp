@@ -38,7 +38,7 @@ export interface UserRoleResponse {
   lock_modules?: LockModule[];
   activeFunctions?: ActiveFunction[]; // Add support for the actual API response
 }
-  const org_id = localStorage.getItem("org_id");
+const org_id = localStorage.getItem("org_id");
 
 export const permissionService = {
   /**
@@ -54,8 +54,11 @@ export const permissionService = {
         return null;
       }
 
+      // Get org_id dynamically when the function is called
+      const currentOrgId = localStorage.getItem("org_id");
+
       const response = await apiClient.get<UserRoleResponse>(
-        `${window.location.hostname === "web.gophygital.work" && org_id === "34" ? "/pms/users/get_role.json" : "/pms/users/get_user_role.json"}`
+        `${window.location.hostname === "web.gophygital.work" && currentOrgId === "34" ? "/pms/users/get_role.json" : "/pms/users/get_user_role.json"}`
       );
 
       if (response.data.success) {
@@ -79,8 +82,10 @@ export const permissionService = {
         throw new Error("SERVER_ERROR_500");
       }
       // Check for "No Role" in error message
-      if (error.response?.data?.message?.toLowerCase().includes("no role") ||
-        error.message === "NO_ROLE_ASSIGNED") {
+      if (
+        error.response?.data?.message?.toLowerCase().includes("no role") ||
+        error.message === "NO_ROLE_ASSIGNED"
+      ) {
         throw new Error("NO_ROLE_ASSIGNED");
       }
       // Re-throw other errors

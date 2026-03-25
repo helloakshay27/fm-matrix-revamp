@@ -5,6 +5,7 @@ import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { ViewSelectionModal } from "@/components/ViewSelectionModal";
+import { getUser } from "@/utils/auth";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -17,7 +18,6 @@ const Index = () => {
   useEffect(() => {
     const hostname = window.location.hostname;
     const isLocalhost =
-      hostname.includes("localhost") ||
       hostname.includes("lockated.gophygital.work") ||
       hostname.includes("fm-matrix.lockated.com");
 
@@ -51,15 +51,18 @@ const Index = () => {
 
     const hostname = window.location.hostname;
     const isViSite = hostname === "vi-web.gophygital.work";
+    const isWebSite =
+      hostname === "web.gophygital.work" || hostname.includes("localhost");
     const userType = localStorage.getItem("userType");
+    const currentUser = getUser();
+    const userEmail = currentUser?.email || "No email";
     const isLocalhost =
-      hostname.includes("localhost") ||
       hostname.includes("lockated.gophygital.work") ||
-      hostname.includes("fm-matrix.lockated.com");
+      hostname.includes("fm-matrix.lockated.com") ||
+      userEmail === "deveshjain928@gmail.com";
 
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
-      hostname.includes("localhost") ||
       hostname.includes("pulse.panchshil.com") ||
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
@@ -87,15 +90,16 @@ const Index = () => {
       }
     }
 
-    // PRIORITY 3: Company ID-based routing for specific companies
+    // PRIORITY 3: Company ID-based routing for specific companies and domains
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      isPulseSite
+      isPulseSite ||
+      (isWebSite && userEmail === "deveshjain928@gmail.com")
     ) {
-      // For these companies, use dynamic routing from permissions
+      // For these companies and domains, use dynamic routing from permissions
       if (userRole) {
         const firstRoute = findFirstAccessibleRoute(userRole);
         if (firstRoute) {
