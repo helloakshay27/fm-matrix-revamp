@@ -1836,6 +1836,36 @@ const modulesByPackage = {
           ],
         },
         {
+          name: "Activity",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "System Mails",
+              href: "/accounting/reports/system-mails",
+            },
+            {
+              name: "Activity Logs & Audit Trail",
+              href: "/accounting/reports/activity-logs-audit-trail",
+            },
+            {
+              name: "Exception Report",
+              href: "/accounting/reports/exception-report",
+            },
+            {
+              name: "Portal Activities",
+              href: "/accounting/reports/portal-activities",
+            },
+            {
+              name: "Customer Reviews",
+              href: "/accounting/reports/customer-reviews",
+            },
+            {
+              name: "API Usage",
+              href: "/accounting/reports/api-usage",
+            },
+          ],
+        },
+        {
           name: "Fixed Asset",
           subItems: [
             {
