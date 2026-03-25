@@ -696,6 +696,16 @@ const modulesByPackage = {
           ],
         },
 
+        {
+          name: "Fixed Asset",
+          subItems: [
+            {
+              name: "Fixed Asset Register",
+              href: "/accounting/reports/fixed-asset-register",
+            },
+          ],
+        },
+
       ],
     },
   ],
