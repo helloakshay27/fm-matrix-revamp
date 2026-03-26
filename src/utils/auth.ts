@@ -4,6 +4,7 @@ export interface User {
   id: number;
   email: string;
   firstname: string;
+  
   lastname: string;
   mobile?: string;
   phone?: string;
@@ -208,14 +209,14 @@ export const getOrganizationsByEmail = async (
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
     }
-
+  
     const data = await response.json();
     return data.organizations || [];
   }
 
   if (isViSite) {
     const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

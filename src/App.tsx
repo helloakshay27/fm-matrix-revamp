@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  
   useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -1170,6 +1171,20 @@ import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishi
 import DayBook from "./pages/ClubManagement/DayBook";
 import JournalReport from "./pages/ClubManagement/JournalReport";
 import FixedAssetReport from "./pages/ClubManagement/FixedAssetReport";
+import AccountingReportStub from "./pages/Accounting/AccountingReportStub";
+import TimesheetDetails from "./pages/Accounting/TimesheetDetails";
+import TimesheetProfitabilitySummary from "./pages/Accounting/TimesheetProfitabilitySummary";
+import ProjectSummary from "./pages/Accounting/ProjectSummary";
+import ProjectDetails from "./pages/Accounting/ProjectDetails";
+import ProjectsCostSummary from "./pages/Accounting/ProjectsCostSummary";
+import ProjectsRevenueSummary from "./pages/Accounting/ProjectsRevenueSummary";
+import ProjectsPerformanceSummary from "./pages/Accounting/ProjectsPerformanceSummary";
+import SystemMails from "./pages/ClubManagement/SystemMails";
+import ActivityLogsAuditTrail from "./pages/ClubManagement/ActivityLogsAuditTrail";
+import ExceptionReport from "./pages/ClubManagement/ExceptionReport";
+import PortalActivities from "./pages/ClubManagement/PortalActivities";
+import CustomerReviews from "./pages/ClubManagement/CustomerReviews";
+import APIUsage from "./pages/ClubManagement/APIUsage";
 import GeneralLedger from "./pages/ClubManagement/GeneralLedger";
 import DetailedGeneralLedger from "./pages/ClubManagement/DetailedGeneralLedger";
 import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
@@ -1381,7 +1396,7 @@ function App() {
       console.warn("🧹 Cleaning up WebSocket subscriptions");
     };
   }, [token, connect, socketUrl]);
-
+  
   useEffect(() => {
     const subscriptionTimer = setTimeout(() => {
       const sub = webSocketManager.subscribeToUserNotifications({
@@ -2816,6 +2831,44 @@ function App() {
                             element={<FixedAssetReport />}
                           />
                           <Route
+                            path="/accounting/reports/name-of-project"
+                            element={
+                              <AccountingReportStub title="Name of Project" />
+                            }
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet"
+                            element={<TimesheetDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet-details"
+                            element={<TimesheetDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet-profitability-summary"
+                            element={<TimesheetProfitabilitySummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/project-summary"
+                            element={<ProjectSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/project-details"
+                            element={<ProjectDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-cost-summary"
+                            element={<ProjectsCostSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-revenue-summary"
+                            element={<ProjectsRevenueSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-performance-summary"
+                            element={<ProjectsPerformanceSummary />}
+                          />
+                          <Route
                             path="/accounting/reports/general-ledger"
                             element={<GeneralLedger />}
                           />
@@ -2864,6 +2917,39 @@ function App() {
                           <Route
                             path="/accounting/reports/tax-summary/details/:id"
                             element={<TaxSummaryDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/system-mails"
+                            element={<SystemMails />}
+                          />
+                          <Route
+                            path="/accounting/reports/activity"
+                            element={
+                              <Navigate
+                                to="/accounting/reports/system-mails"
+                                replace
+                              />
+                            }
+                          />
+                          <Route
+                            path="/accounting/reports/activity-logs-audit-trail"
+                            element={<ActivityLogsAuditTrail />}
+                          />
+                          <Route
+                            path="/accounting/reports/exception-report"
+                            element={<ExceptionReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/portal-activities"
+                            element={<PortalActivities />}
+                          />
+                          <Route
+                            path="/accounting/reports/customer-reviews"
+                            element={<CustomerReviews />}
+                          />
+                          <Route
+                            path="/accounting/reports/api-usage"
+                            element={<APIUsage />}
                           />
                           {/* <Route */}
                           <Route

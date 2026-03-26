@@ -211,7 +211,7 @@ const mockSalesOrder = {
   updatedAt: "2024-01-15T14:45:00",
 };
 
-export const BillDetails = () => {
+export const RecurringBillDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -229,7 +229,7 @@ export const BillDetails = () => {
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
         const lock_account_id = localStorage.getItem("lock_account_id");
-        const apiUrl = `https://${baseUrl}/lock_account_bills/${id}.json?lock_account_id=${lock_account_id}&show=true`;
+        const apiUrl = `https://${baseUrl}/lock_account_bills/${id}.json?q[recurring_eq]=true&lock_account_id=${lock_account_id}&show=true`;
         const response = await axios.get(apiUrl, {
           headers: {
             Authorization: token ? `Bearer ${token}` : undefined,
@@ -374,7 +374,7 @@ export const BillDetails = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/accounting/bills")}
+              onClick={() => navigate("/accounting/recurring-bills")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -546,14 +546,14 @@ export const BillDetails = () => {
                         {salesOrder?.bill_number}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Order Number
                       </p>
                       <p className="text-base font-semibold mt-1">
                         {salesOrder?.order_number}
                       </p>
-                    </div>
+                    </div> */}
 
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
@@ -1008,4 +1008,4 @@ export const BillDetails = () => {
   );
 };
 
-export default BillDetails;
+export default RecurringBillDetails;

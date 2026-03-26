@@ -6,6 +6,7 @@ interface Props {
     onClose: () => void;
     setShowNewRuleForm?: React.Dispatch<React.SetStateAction<boolean>>;
     handleSubmit?: () => void;
+    
     handleUpdate?: () => void;
     handleCancel?: () => void;
 }
