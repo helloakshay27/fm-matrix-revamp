@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  
   useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -1170,6 +1171,12 @@ import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishi
 import DayBook from "./pages/ClubManagement/DayBook";
 import JournalReport from "./pages/ClubManagement/JournalReport";
 import FixedAssetReport from "./pages/ClubManagement/FixedAssetReport";
+import SystemMails from "./pages/ClubManagement/SystemMails";
+import ActivityLogsAuditTrail from "./pages/ClubManagement/ActivityLogsAuditTrail";
+import ExceptionReport from "./pages/ClubManagement/ExceptionReport";
+import PortalActivities from "./pages/ClubManagement/PortalActivities";
+import CustomerReviews from "./pages/ClubManagement/CustomerReviews";
+import APIUsage from "./pages/ClubManagement/APIUsage";
 import GeneralLedger from "./pages/ClubManagement/GeneralLedger";
 import DetailedGeneralLedger from "./pages/ClubManagement/DetailedGeneralLedger";
 import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
@@ -2864,6 +2871,39 @@ function App() {
                           <Route
                             path="/accounting/reports/tax-summary/details/:id"
                             element={<TaxSummaryDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/system-mails"
+                            element={<SystemMails />}
+                          />
+                          <Route
+                            path="/accounting/reports/activity"
+                            element={
+                              <Navigate
+                                to="/accounting/reports/system-mails"
+                                replace
+                              />
+                            }
+                          />
+                          <Route
+                            path="/accounting/reports/activity-logs-audit-trail"
+                            element={<ActivityLogsAuditTrail />}
+                          />
+                          <Route
+                            path="/accounting/reports/exception-report"
+                            element={<ExceptionReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/portal-activities"
+                            element={<PortalActivities />}
+                          />
+                          <Route
+                            path="/accounting/reports/customer-reviews"
+                            element={<CustomerReviews />}
+                          />
+                          <Route
+                            path="/accounting/reports/api-usage"
+                            element={<APIUsage />}
                           />
                           {/* <Route */}
                           <Route
