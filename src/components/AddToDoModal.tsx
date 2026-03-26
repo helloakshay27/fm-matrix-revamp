@@ -1,11 +1,19 @@
 import axios from 'axios';
-import { Dialog, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel, Slide } from '@mui/material';
 import { X } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
+import { TransitionProps } from '@mui/material/transitions';
+
+const Transition = forwardRef(function Transition(
+    props: TransitionProps & { children: React.ReactElement },
+    ref: React.Ref<unknown>
+) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false }) => {
     const baseURL = localStorage.getItem('baseUrl');
@@ -182,6 +190,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
             open={isModalOpen}
             onClose={closeModal}
             maxWidth={false}
+            TransitionComponent={Transition}
             PaperProps={{
                 sx: {
                     width: '40%',

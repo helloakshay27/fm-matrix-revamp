@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter, GripVertical } from "lucide-react";
+import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter, GripVertical, Eye } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AddToDoModal from "@/components/AddToDoModal";
@@ -628,7 +628,10 @@ export default function Todo() {
                 todos={priorityFilteredTodos}
                 isLoading={isPriorityLoading}
                 onTodoToggle={toggleTodo}
-                onEditTodo={handleEditTodo}
+                onViewTodo={(todo) => {
+                  setSelectedTodo(todo);
+                  setIsDetailsModalOpen(true);
+                }}
                 onConvertTodo={handleConvertTodo}
                 onFlagTodo={(todo) => handleFlagTodo(todo)}
                 hasNextPage={priorityHasNextPage}
@@ -733,6 +736,7 @@ export default function Todo() {
           isModalOpen={isDetailsModalOpen}
           setIsModalOpen={setIsDetailsModalOpen}
           todo={selectedTodo}
+          onEditClick={() => handleEditTodo(selectedTodo)}
         />
 
         {/* Drag Overlay - shows preview of dragged item */}
@@ -1216,12 +1220,12 @@ const TodoItem = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleEditTodo(todo);
+            handleOpenDetails();
           }}
           className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-          title="Edit todo"
+          title="View todo"
         >
-          <Pencil size={14} />
+          <Eye size={14} />
         </button>
         <button
           onClick={(e) => {
@@ -1255,11 +1259,7 @@ const TodoItem = ({
       <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
           <span
-            className="text-sm text-foreground cursor-pointer hover:text-[#c72030] transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenDetails();
-            }}
+            className="text-sm text-foreground cursor-pointer"
           >
             {todo.task_management_id && (
               <span
@@ -1466,11 +1466,7 @@ const CompletedTodoItem = ({ todo, toggleTodo, setIsDetailsModalOpen, setSelecte
       <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
           <span
-            className="text-sm text-foreground cursor-pointer hover:text-[#c72030] transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenDetails();
-            }}
+            className="text-sm text-foreground cursor-pointer"
           >
             {todo.task_management_id && (
               <span
