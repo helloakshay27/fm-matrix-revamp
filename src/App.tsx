@@ -355,6 +355,7 @@ import { EmployeeCalendarPage } from "./pages/EmployeeCalendarPage";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
 import CompanyHub from "./pages/CompanyHub";
+import CompanyHubNew from "./pages/CompanyHubNew";
 import BusinessPlan from "./pages/BusinessPlan";
 import OurGroup from "./pages/OurGroup";
 import Products from "./pages/Products";
@@ -1946,6 +1947,14 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <CompanyHub />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/employee/company-hub-new"
+                            element={
+                              <ProtectedRoute>
+                                <CompanyHubNew />
                               </ProtectedRoute>
                             }
                           />

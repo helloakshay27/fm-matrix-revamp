@@ -385,11 +385,17 @@ export const PaymentsMadePage: React.FC = () => {
         {payment.payment_number}
       </div>
     ),
-    reference_number: <span className="text-sm text-gray-900">-</span>,
+    reference_number: (
+      <span className="text-sm text-gray-900">
+        {payment.bank_reference_number || "-"}
+      </span>
+    ),
     vendor_name: (
       <span className="text-sm text-gray-900">{payment.vendor_name}</span>
     ),
-    bill_number: <span className="text-sm text-gray-900">-</span>,
+    bill_number: (
+      <span className="text-sm text-gray-900">{payment.bill_numbers}</span>
+    ),
     mode: <span className="text-sm text-gray-900">{payment.mode}</span>,
     status: (
       <span
