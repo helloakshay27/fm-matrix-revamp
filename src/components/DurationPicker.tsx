@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Clock, Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
     Table,
     TableBody,
@@ -162,7 +163,8 @@ export const DurationPicker = ({
         return existing?.id || null;
     };
 
-    let hoursPerDay = shift?.[0]?.total_hour - 1 || 8;
+    // let hoursPerDay = shift?.[0]?.total_hour - 1 || 8;
+    let hoursPerDay = 0;
 
     if (!Array.isArray(shift) && shift?.shift) {
         const [startTime, endTime] = shift.shift.split(" to ");
@@ -413,16 +415,37 @@ export const DurationPicker = ({
         }
     }, [dailyHours, taskType]);
 
+    const validateAndClose = () => {
+        if (totalWorkingHours <= 0) {
+            toast.error("Total hours must be greater than 0");
+            return false;
+        }
+
+        // Additional check for "defined hours" if needed
+        // For example, ensuring shift produces some hours in standard mode
+        if (taskType === "standard" && hoursPerDay <= 0) {
+            toast.error("Shift hours must be defined and greater than 0");
+            return false;
+        }
+
+        setIsOpen(false);
+        return true;
+    };
+
     /** ✅ Close picker on outside click */
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (pickerRef.current && !pickerRef.current.contains(event.target)) {
-                setIsOpen(false);
+                validateAndClose();
             }
         };
         if (isOpen) document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen]);
+    }, [isOpen, totalWorkingHours, taskType, hoursPerDay]);
+
+    const handleDone = () => {
+        validateAndClose();
+    };
 
     return (
         <div className={`relative ${className}`} ref={pickerRef}>
@@ -615,7 +638,7 @@ export const DurationPicker = ({
                             Clear
                         </button>
                         <button
-                            onClick={() => setIsOpen(false)}
+                            onClick={handleDone}
                             className="flex-1 px-4 py-2 bg-[#c72030] text-white rounded-lg transition-colors font-medium"
                             type="button"
                         >
