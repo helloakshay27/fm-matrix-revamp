@@ -1,10 +1,18 @@
-import { Dialog, DialogContent, DialogTitle } from '@mui/material';
-import { X, CheckCircle2, AlertCircle, Calendar, User, Link2, Clock, Flag } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { Dialog, DialogContent, DialogTitle, Slide } from '@mui/material';
+import { X, CheckCircle2, AlertCircle, Calendar, User, Link2, Clock, Flag, Edit } from 'lucide-react';
+import { forwardRef, useEffect, useRef } from 'react';
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
+import { TransitionProps } from '@mui/material/transitions';
 
-const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null }) => {
+const Transition = forwardRef(function Transition(
+    props: TransitionProps & { children: React.ReactElement },
+    ref: React.Ref<unknown>
+) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
+
+const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClick }) => {
     const quillRef = useRef<HTMLDivElement>(null);
     const quillEditorRef = useRef<Quill | null>(null);
 
@@ -88,6 +96,7 @@ const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null }) => {
             open={isModalOpen}
             onClose={closeModal}
             maxWidth={false}
+            TransitionComponent={Transition}
             PaperProps={{
                 sx: {
                     width: '40%',
@@ -127,9 +136,19 @@ const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null }) => {
                     <div className="space-y-6">
                         {/* Title Section with Status */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4 leading-tight pr-8">
-                                {todo.title || 'Untitled'}
-                            </h2>
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-gray-900 mb-4 leading-tight pr-8">
+                                    {todo.title || 'Untitled'}
+                                </h2>
+                                <Edit
+                                    size={20}
+                                    className="text-[#c72030] cursor-pointer"
+                                    onClick={() => {
+                                        onEditClick();
+                                        closeModal();
+                                    }}
+                                />
+                            </div>
                             <div className="flex flex-wrap gap-2 items-center">
                                 {/* Priority Badge */}
                                 <div className={`flex items-center gap-2 px-4 py-2 rounded-[10px] font-semibold text-sm transition-all ${getPriorityColor(todo.priority)}`}>
