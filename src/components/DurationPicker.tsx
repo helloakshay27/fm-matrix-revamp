@@ -29,7 +29,7 @@ export const DurationPicker = ({
     isConversion = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [taskType, setTaskType] = useState("standard");
+    const [taskType, setTaskType] = useState("flexible");
     const [dailyHours, setDailyHours] = useState([]);
     const [daysList, setDaysList] = useState([]);
     const [manualDuration, setManualDuration] = useState("");
@@ -458,7 +458,7 @@ export const DurationPicker = ({
             {isOpen && (
                 <div className="absolute top-full mt-2 w-full bg-white rounded-sm shadow-xl border border-gray-200 py-6 px-3 z-50">
                     {/* Task Type */}
-                    <RadioGroup
+                    {/* <RadioGroup
                         value={taskType}
                         onValueChange={(val) => setTaskType(val)}
                         className="flex gap-3 mb-8"
@@ -471,7 +471,7 @@ export const DurationPicker = ({
                             <RadioGroupItem value="flexible" id="flexible" />
                             <Label htmlFor="flexible">Flexible</Label>
                         </div>
-                    </RadioGroup>
+                    </RadioGroup> */}
 
                     {/* === Flexible Table === */}
                     {taskType === "flexible" ? (
