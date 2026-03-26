@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
@@ -13,6 +13,68 @@ const Index = () => {
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const [showViewModal, setShowViewModal] = useState(false);
   const [isViewCheckComplete, setIsViewCheckComplete] = useState(false);
+
+  // Helper function to get first available employee link
+  const getFirstEmployeeLink = useCallback((): string => {
+    if (!userRole || !userRole.lock_modules) {
+      return "/vas/projects"; // Fallback
+    }
+
+    // Find first module from Employee modules (Employee Sidebar or Employee Projects Sidebar)
+    for (const module of userRole.lock_modules) {
+      // Only look for Employee-specific modules
+      if (
+        module.module_name === "Employee Sidebar" ||
+        module.module_name === "Employee Projects Sidebar"
+      ) {
+        // Find first active function with a react_link
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const firstActiveFunction = (module.lock_functions as any[]).find(
+          (func) =>
+            func.function_active === 1 &&
+            func.react_link &&
+            !func.parent_function
+        );
+
+        if (firstActiveFunction && firstActiveFunction.react_link) {
+          return firstActiveFunction.react_link;
+        }
+      }
+    }
+
+    return "/vas/projects"; // Fallback to projects
+  }, [userRole]);
+
+  // Helper function to get first available admin link
+  const getFirstAdminLink = useCallback((): string => {
+    if (!userRole || !userRole.lock_modules) {
+      return "/maintenance/asset"; // Fallback to asset management
+    }
+
+    // Find first module with active functions (excluding Employee modules)
+    for (const module of userRole.lock_modules) {
+      // Skip Employee Sidebar and Employee Projects Sidebar modules
+      if (
+        module.module_name === "Employee Sidebar" ||
+        module.module_name === "Employee Projects Sidebar"
+      ) {
+        continue;
+      }
+
+      // Find first active function with a react_link
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const firstActiveFunction = (module.lock_functions as any[]).find(
+        (func) =>
+          func.function_active === 1 && func.react_link && !func.parent_function
+      );
+
+      if (firstActiveFunction && firstActiveFunction.react_link) {
+        return firstActiveFunction.react_link;
+      }
+    }
+
+    return "/maintenance/asset"; // Fallback to asset management
+  }, [userRole]);
 
   // First check if view selection is needed
   useEffect(() => {
@@ -68,24 +130,26 @@ const Index = () => {
       hostname.includes("pulse-uat.panchshil.com");
     const isClubSite = hostname.includes("club.lockated.com");
 
-    // PRIORITY 1: Dynamic route from userRole permissions (highest priority)
+    // PRIORITY 1: Localhost with userType-based routing (highest priority for localhost)
+    if (userType && isLocalhost) {
+      // Navigate based on userType using dynamic links
+      if (userType === "pms_organization_admin") {
+        const adminLink = getFirstAdminLink();
+        navigate(adminLink, { replace: true });
+        return;
+      } else if (userType === "pms_occupant") {
+        const employeeLink = getFirstEmployeeLink();
+        navigate(employeeLink, { replace: true });
+        return;
+      }
+    }
+
+    // PRIORITY 2: Dynamic route from userRole permissions
     if (userRole) {
       const firstRoute = findFirstAccessibleRoute(userRole);
 
       if (firstRoute) {
         navigate(firstRoute, { replace: true });
-        return;
-      }
-    }
-
-    // PRIORITY 2: Localhost with userType-based routing
-    if (userType && isLocalhost) {
-      // Navigate based on userType
-      if (userType === "pms_organization_admin") {
-        navigate("/maintenance/asset", { replace: true });
-        return;
-      } else if (userType === "pms_occupant") {
-        navigate("/vas/projects", { replace: true });
         return;
       }
     }
@@ -122,7 +186,15 @@ const Index = () => {
     } else {
       navigate("/maintenance/asset", { replace: true });
     }
-  }, [navigate, userRole, loading, selectedCompany, isViewCheckComplete]);
+  }, [
+    navigate,
+    userRole,
+    loading,
+    selectedCompany,
+    isViewCheckComplete,
+    getFirstAdminLink,
+    getFirstEmployeeLink,
+  ]);
 
   const handleViewSelectionComplete = () => {
     setShowViewModal(false);
