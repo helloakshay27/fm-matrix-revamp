@@ -4,6 +4,7 @@ export interface User {
   id: number;
   email: string;
   firstname: string;
+  
   lastname: string;
   mobile?: string;
   phone?: string;
@@ -208,7 +209,7 @@ export const getOrganizationsByEmail = async (
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
     }
-
+  
     const data = await response.json();
     return data.organizations || [];
   }

@@ -1,20 +1,35 @@
 import axios from 'axios';
-import { Dialog, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel, Slide } from '@mui/material';
 import { X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
+import { TransitionProps } from '@mui/material/transitions';
+
+const Transition = forwardRef(function Transition(
+    props: TransitionProps & { children: React.ReactElement },
+    ref: React.Ref<unknown>
+) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false }) => {
     const baseURL = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const [title, setTitle] = useState('');
+    const [description, setDescription] = useState("")
     const [date, setDate] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);
     const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
     const [selectedResponsiblePerson, setSelectedResponsiblePerson] = useState(userId || '');
     const [priority, setPriority] = useState('');
+    const [isEditorReady, setIsEditorReady] = useState(false);
+
+    const quillRef = useRef<HTMLDivElement>(null);
+    const quillEditorRef = useRef<Quill | null>(null);
 
     const priorityOptions = [
         { value: 'P1', label: 'Q1: Urgent & Important' },
@@ -22,6 +37,65 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
         { value: 'P3', label: 'Q3: Urgent, Not Important' },
         { value: 'P4', label: 'Q4: Not Urgent or Important' },
     ];
+
+    useEffect(() => {
+        if (isModalOpen) {
+            if (isEditMode && editingTodo) {
+                setTitle(editingTodo.title || '');
+                setDescription(editingTodo.description || '');
+                setDate(editingTodo.target_date || null);
+                setSelectedResponsiblePerson(editingTodo.user_id || '');
+                setPriority(editingTodo.priority || '');
+            } else {
+                setTitle('');
+                setDescription('');
+                setDate(null);
+                setSelectedResponsiblePerson(userId || '');
+                setPriority('');
+            }
+
+            setIsEditorReady(true);
+        }
+    }, [isModalOpen, isEditMode, editingTodo, userId]);
+
+    useEffect(() => {
+        if (!isModalOpen || !isEditorReady || !quillRef.current) return;
+
+        // 🔥 destroy previous instance properly
+        if (quillEditorRef.current) {
+            quillEditorRef.current.off('text-change');
+            quillEditorRef.current = null;
+            quillRef.current.innerHTML = ""; // VERY IMPORTANT
+        }
+
+        const quill = new Quill(quillRef.current, {
+            theme: "snow",
+            placeholder: "Type description...",
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ["bold", "italic", "underline", "strike"],
+                    ["blockquote"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["link"],
+                    ["clean"],
+                ],
+            },
+        });
+
+        quillEditorRef.current = quill;
+
+        // ✅ set initial content AFTER init
+        if (description) {
+            quill.root.innerHTML = description;
+        }
+
+        // ✅ update state on change
+        quill.on("text-change", () => {
+            setDescription(quill.root.innerHTML);
+        });
+
+    }, [isModalOpen, isEditorReady]);
 
     // Fetch users on mount
     useEffect(() => {
@@ -53,21 +127,6 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
         }
     }, [isModalOpen, baseURL, token]);
 
-    // Initialize form with editing data if in edit mode
-    useEffect(() => {
-        if (isEditMode && editingTodo) {
-            setTitle(editingTodo.title || '');
-            setDate(editingTodo.target_date || null);
-            setSelectedResponsiblePerson(editingTodo.user_id || '');
-            setPriority(editingTodo.priority || '');
-        } else {
-            setTitle('');
-            setDate(null);
-            setSelectedResponsiblePerson(userId || '');
-            setPriority('');
-        }
-    }, [isEditMode, editingTodo, userId]);
-
     const closeModal = () => {
         setIsModalOpen();
         setTitle('');
@@ -89,6 +148,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
             const payload = {
                 todo: {
                     title,
+                    description,
                     target_date: date,
                     user_id: selectedResponsiblePerson,
                     priority: priority,
@@ -130,9 +190,10 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
             open={isModalOpen}
             onClose={closeModal}
             maxWidth={false}
+            TransitionComponent={Transition}
             PaperProps={{
                 sx: {
-                    width: '35%',
+                    width: '40%',
                     height: '100%',
                     maxHeight: '100%',
                     margin: 0,
@@ -177,6 +238,18 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                             size="small"
                             variant="outlined"
                         />
+
+                        <div>
+                            <div
+                                ref={quillRef}
+                                style={{
+                                    border: "1px solid rgba(0, 0, 0, 0.23)",
+                                    borderRadius: "4px",
+                                    minHeight: "200px",
+                                }}
+                            />
+                        </div>
+
                         <TextField
                             fullWidth
                             label="Target Date"
