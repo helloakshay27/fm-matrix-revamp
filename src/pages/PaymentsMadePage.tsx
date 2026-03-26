@@ -63,6 +63,15 @@ interface LockPayment {
   resource_id: number;
   resource_type: string;
   sgst: string | null;
+  tds_amount: string | null;
+  tds_percentage: string | null;
+  net_amount: string | null;
+  vendor_name?: string;
+  resident_name?: string;
+  payment_date?: string;
+  payment_amount?: string | number;
+  deposit_to_ledger_name?: string;
+  bill_payments?: { formatted_number?: string; payment_date?: string }[];
 }
 
 // Internal display type for the table / detail view
@@ -78,6 +87,11 @@ interface Payment {
   bank_reference_number: string;
   paid_through_account: string;
   currency_symbol: string;
+  tds_percentage: number;
+  tds_amount: number;
+  net_amount: number;
+  bill_numbers: string;
+  deposit_to_ledger_name?: string;
 }
 
 interface PaymentFilters {
@@ -94,26 +108,37 @@ const mapLockPayment = (lp: LockPayment): Payment => {
   if (statusRaw === "paid" || statusRaw === "success") status = "PAID";
   else if (statusRaw === "void" || statusRaw === "failed") status = "VOID";
 
-  const date = lp.created_at
-    ? new Date(lp.created_at).toLocaleDateString("en-GB", {
+  const dateRaw = lp.payment_date || lp.bill_payments?.[0]?.payment_date || lp.created_at || "";
+  const date = dateRaw
+    ? new Date(dateRaw).toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       })
     : "-";
 
+  const billNums = (lp.bill_payments || [])
+    .map((b) => b.formatted_number)
+    .filter(Boolean)
+    .join(", ");
+
   return {
     id: String(lp.id),
     payment_number: lp.receipt_number || lp.order_number || String(lp.id),
-    vendor_name: lp.payment_of || "-",
+    vendor_name: lp.vendor_name || lp.resident_name || lp.payment_of || "-",
     date,
     mode: lp.payment_mode || lp.payment_method || "-",
     status,
-    amount: parseFloat(lp.total_amount || "0") || 0,
+    amount: parseFloat(String(lp.paid_amount ?? lp.payment_amount ?? lp.total_amount ?? "0")) || 0,
     unused_amount: 0,
-    bank_reference_number: lp.neft_reference || lp.pg_transaction_id || "",
-    paid_through_account: lp.payment_gateway || lp.bank_name || "-",
+    bank_reference_number: lp.neft_reference || lp.order_number || lp.pg_transaction_id || "",
+    paid_through_account: lp.deposit_to_ledger_name || lp.payment_gateway || lp.bank_name || "-",
     currency_symbol: "₹",
+    tds_percentage: parseFloat(lp.tds_percentage || "0") || 0,
+    tds_amount: parseFloat(lp.tds_amount || "0") || 0,
+    net_amount: parseFloat(lp.net_amount || "0") || 0,
+    bill_numbers: billNums || "-",
+    deposit_to_ledger_name: lp.deposit_to_ledger_name,
   };
 };
 
@@ -253,7 +278,8 @@ export const PaymentsMadePage: React.FC = () => {
         payment.status.toLowerCase().includes(q) ||
         payment.date.toLowerCase().includes(q) ||
         (payment.bank_reference_number || "").toLowerCase().includes(q) ||
-        (payment.paid_through_account || "").toLowerCase().includes(q);
+        (payment.paid_through_account || "").toLowerCase().includes(q) ||
+        payment.bill_numbers.toLowerCase().includes(q);
       if (!matchesSearch) return false;
     }
     return true;
