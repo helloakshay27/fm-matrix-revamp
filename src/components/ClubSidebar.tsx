@@ -735,6 +735,43 @@ const modulesByPackage = {
             },
           ],
         },
+        {
+          name: "Project",
+          subItems: [
+            {
+              name: "Name of Project",
+              href: "/accounting/reports/name-of-project",
+            },
+            {
+              name: "Timesheet Details",
+              href: "/accounting/reports/timesheet-details",
+            },
+            {
+              name: "Timesheet Profitability Summary",
+              href: "/accounting/reports/timesheet-profitability-summary",
+            },
+            {
+              name: "Project Summary",
+              href: "/accounting/reports/project-summary",
+            },
+            {
+              name: "Project Details",
+              href: "/accounting/reports/project-details",
+            },
+            {
+              name: "Projects Cost Summary",
+              href: "/accounting/reports/projects-cost-summary",
+            },
+            {
+              name: "Projects Revenue Summary",
+              href: "/accounting/reports/projects-revenue-summary",
+            },
+            {
+              name: "Projects Performance Summary",
+              href: "/accounting/reports/projects-performance-summary",
+            },
+          ],
+        },
 
       ],
     },
