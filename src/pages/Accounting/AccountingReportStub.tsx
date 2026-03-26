@@ -3,7 +3,7 @@ import React from "react";
 interface AccountingReportStubProps {
   title: string;
 }
-
+ 
 const AccountingReportStub: React.FC<AccountingReportStubProps> = ({
   title,
 }) => {
