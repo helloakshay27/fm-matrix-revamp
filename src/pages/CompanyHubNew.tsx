@@ -228,7 +228,7 @@ const GlassCard = ({
   <div
     style={style}
     onClick={onClick}
-    className={`backdrop-blur-3xl bg-white border border-white rounded-2xl shadow-sm ${className}`}
+    className={`bg-[rgba(255,255,255,1)] border border-[rgba(211,209,199,1)] rounded-2xl shadow-[0px_2px_12px_0px_rgba(0,0,0,0.05)] ${className}`}
   >
     {children}
   </div>
@@ -387,7 +387,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         if (data && typeof data.other_config === "string") {
           try {
             data.other_config = JSON.parse(data.other_config);
-          } catch (e) {}
+          } catch (e) { }
         }
         setCompanyData(data);
 
@@ -425,7 +425,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   const p = JSON.parse(desc);
                   desc = p.description || p.content || desc;
                   active = p.isActive !== undefined ? p.isActive : true;
-                } catch (e) {}
+                } catch (e) { }
               }
               return { ...a, displayDescription: desc, isActive: active };
             })
@@ -445,8 +445,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
           if (rawEom) {
             const newest = Array.isArray(rawEom)
               ? [...rawEom].sort(
-                  (a, b) => (b.extra_field_id || 0) - (a.extra_field_id || 0)
-                )[0]
+                (a, b) => (b.extra_field_id || 0) - (a.extra_field_id || 0)
+              )[0]
               : rawEom;
             if (newest?.extra_field_id) {
               const detailRes = await axios.get(
@@ -463,7 +463,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                 parsedRec = JSON.parse(
                   rawRecRes.data?.data?.field_value || "{}"
                 );
-              } catch (e) {}
+              } catch (e) { }
               setCurrentEmployee({ ...newest, ...detail, ...parsedRec });
             }
           }
@@ -727,20 +727,18 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   className="flex items-center gap-1.5 cursor-pointer group"
                 >
                   <span
-                    className={`text-[13px] font-bold uppercase tracking-wider transition-colors ${
-                      activeNavMenu === item
-                        ? "text-[#E67E5F]"
-                        : "text-gray-600 group-hover:text-gray-900"
-                    }`}
+                    className={`text-[13px] font-bold uppercase tracking-wider transition-colors ${activeNavMenu === item
+                      ? "text-[#E67E5F]"
+                      : "text-gray-600 group-hover:text-gray-900"
+                      }`}
                   >
                     {item}
                   </span>
                   <ChevronRight
-                    className={`w-3.5 h-3.5 transition-transform ${
-                      activeNavMenu === item
-                        ? "-rotate-90 text-[#E67E5F]"
-                        : "rotate-90 text-gray-400"
-                    }`}
+                    className={`w-3.5 h-3.5 transition-transform ${activeNavMenu === item
+                      ? "-rotate-90 text-[#E67E5F]"
+                      : "rotate-90 text-gray-400"
+                      }`}
                   />
                 </div>
               ))}
@@ -779,7 +777,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
         {/* ── TOP NAV TABS ──────────────────────────────────────────────────── */}
         <div className="flex justify-center pt-8 pb-4">
-          <div className="flex gap-1 bg-[#F1F0EA] border border-gray-200/50 rounded-full p-1 shadow-sm">
+          <div className="flex gap-1 bg-[rgba(232,229,220,0.2)] border-[1.31px] border-[rgba(211,209,199,1)] rounded-full p-1 shadow-sm">
             {(
               [
                 { key: "dashboard", label: "Dashboard" },
@@ -790,11 +788,10 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-8 py-2.5 rounded-full text-[13px] font-black tracking-wider transition-all duration-300 ${
-                  activeTab === tab.key
-                    ? "bg-white shadow-xl shadow-black/5 text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`px-8 py-2.5 rounded-full text-[13px] font-black tracking-wider transition-all duration-300 ${activeTab === tab.key
+                  ? "bg-white shadow-xl shadow-black/5 text-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -994,50 +991,49 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                               tasks:
                                 item.q === "Q1"
                                   ? [
-                                      "Finalize Quarterly Budget - 10:00 AM",
-                                      "Client Crisis Call (Runwal) - 2:30 PM",
-                                      "HR Compliance Audit - 4:00 PM",
-                                      "Submit Monthly Tax Returns - 5:00 PM",
-                                      "Server Maintenance Alert - Immediate",
-                                      "Sign Vendor Contracts - Today",
-                                      "Prepare AGM Slides - Today",
-                                      "Resolve Customer Refund Case",
-                                    ]
+                                    "Finalize Quarterly Budget - 10:00 AM",
+                                    "Client Crisis Call (Runwal) - 2:30 PM",
+                                    "HR Compliance Audit - 4:00 PM",
+                                    "Submit Monthly Tax Returns - 5:00 PM",
+                                    "Server Maintenance Alert - Immediate",
+                                    "Sign Vendor Contracts - Today",
+                                    "Prepare AGM Slides - Today",
+                                    "Resolve Customer Refund Case",
+                                  ]
                                   : item.q === "Q2"
                                     ? [
-                                        "Schedule quarterly strategic planning session",
-                                        "Design team skill development program",
-                                        "Research process improvement methodologies",
-                                        "Build relationships with key stakeholders",
-                                        "Create long-term product roadmap",
-                                        "Develop succession planning strategy",
-                                        "Review and update company policies",
-                                        "Plan team building activities",
-                                        "Conduct market research for new opportunities",
-                                        "Document best practices and workflows",
-                                        "Invest in professional development courses",
-                                        "Design customer feedback collection system",
-                                      ]
+                                      "Schedule quarterly strategic planning session",
+                                      "Design team skill development program",
+                                      "Research process improvement methodologies",
+                                      "Build relationships with key stakeholders",
+                                      "Create long-term product roadmap",
+                                      "Develop succession planning strategy",
+                                      "Review and update company policies",
+                                      "Plan team building activities",
+                                      "Conduct market research for new opportunities",
+                                      "Document best practices and workflows",
+                                      "Invest in professional development courses",
+                                      "Design customer feedback collection system",
+                                    ]
                                     : item.q === "Q3"
                                       ? [
-                                          "Format Internal Memos",
-                                          "Schedule Minor Logistics",
-                                          "Respond to Routine Emails",
-                                          "Update Office Inventory",
-                                          "Coordinate Printing Samples",
-                                        ]
+                                        "Format Internal Memos",
+                                        "Schedule Minor Logistics",
+                                        "Respond to Routine Emails",
+                                        "Update Office Inventory",
+                                        "Coordinate Printing Samples",
+                                      ]
                                       : [
-                                          "Review Outdated HR Policies",
-                                          "Archive 2024 Audit Logs",
-                                          "Update Internal Wiki Fonts",
-                                        ],
+                                        "Review Outdated HR Policies",
+                                        "Archive 2024 Audit Logs",
+                                        "Update Internal Wiki Fonts",
+                                      ],
                             })
                           }
-                          className={`rounded-[20px] p-6 border cursor-pointer transition-all flex flex-col items-center justify-center relative overflow-hidden ${
-                            item.focus
-                              ? "bg-[#D9D7D2] border-[#D9D1BD]"
-                              : "bg-[#FDFCFB] border-[#F2F0EA]"
-                          }`}
+                          className={`rounded-[20px] p-6 border cursor-pointer transition-all flex flex-col items-center justify-center relative overflow-hidden ${item.focus
+                            ? "bg-[radial-gradient(235.58%_575.5%_at_50%_50%,_#F6F4EE_0%,_#2C2C2A_100%)] border-[#D9D1BD]"
+                            : "bg-[#FDFCFB] border-[#F2F0EA]"
+                            }`}
                         >
                           {item.focus && (
                             <span className="absolute top-4 right-4 text-[9px] font-black bg-[#C6C0F3] text-[#5D56C1] px-2 py-0.5 rounded-full z-10 uppercase tracking-widest shadow-sm">
@@ -1045,7 +1041,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                             </span>
                           )}
                           <div className="flex flex-col items-center flex-1 justify-center py-2 text-center">
-                            <span className="text-[10px] font-black text-gray-400 opacity-30 uppercase tracking-[0.4em] mb-1">
+                            <span className="text-[12px] font-medium text-[rgba(106,114,130,1)] uppercase tracking-[0.1em] mb-1">
                               {item.q}
                             </span>
                             <p className="text-3xl font-black text-gray-800 tracking-tighter">
@@ -1061,7 +1057,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col animate-slide-in-right">
+                  <div className="h-full flex flex-col origin-bottom-right animate-matrix-expand">
                     <div className="flex items-center justify-between mb-4">
                       <button
                         onClick={() => setSelectedMatrixQuadrant(null)}
@@ -1128,11 +1124,10 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                             v.toLowerCase() as "hourly" | "weekly" | "monthly"
                           )
                         }
-                        className={`px-4 py-1.5 text-[11px] font-bold rounded-[8px] transition-all ${
-                          activeTimeView === v.toLowerCase()
-                            ? "bg-white/80 shadow-sm text-gray-900 backdrop-blur-sm"
-                            : "text-gray-500 hover:text-gray-700"
-                        }`}
+                        className={`px-4 py-1.5 text-[11px] font-bold rounded-[8px] transition-all ${activeTimeView === v.toLowerCase()
+                          ? "bg-white/80 shadow-sm text-gray-900 backdrop-blur-sm"
+                          : "text-gray-500 hover:text-gray-700"
+                          }`}
                       >
                         {v} View
                       </button>
@@ -1239,29 +1234,29 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   <div className="flex gap-2 justify-between items-start flex-1 mt-2">
                     {(activeTimeView === "hourly"
                       ? [
-                          { t: "12 PM", tasks: 0 },
-                          { t: "1 PM", tasks: 1 },
-                          { t: "2 PM", tasks: 0 },
-                          { t: "3 PM", tasks: 0 },
-                          { t: "4 PM", tasks: 3, active: true },
-                          { t: "5 PM", tasks: 0 },
-                          { t: "6 PM", tasks: 1 },
-                          { t: "7 PM", tasks: 0 },
-                          { t: "8 PM", tasks: 0 },
-                          { t: "9 PM", tasks: 0 },
-                        ]
+                        { t: "12 PM", tasks: 0 },
+                        { t: "1 PM", tasks: 1 },
+                        { t: "2 PM", tasks: 0 },
+                        { t: "3 PM", tasks: 0 },
+                        { t: "4 PM", tasks: 3, active: true },
+                        { t: "5 PM", tasks: 0 },
+                        { t: "6 PM", tasks: 1 },
+                        { t: "7 PM", tasks: 0 },
+                        { t: "8 PM", tasks: 0 },
+                        { t: "9 PM", tasks: 0 },
+                      ]
                       : [
-                          { t: "Tues", v: "—" },
-                          { t: "Wed", v: "1 task" },
-                          { t: "Thurs", v: "3 tasks", active: true },
-                          { t: "Fri", v: "—" },
-                          { t: "Sat", v: "Weekly Off", off: true },
-                          { t: "Sun", v: "Weekly Off", off: true },
-                          { t: "Mon", v: "—" },
-                          { t: "Tues", v: "1 task" },
-                          { t: "Wed", v: "—" },
-                          { t: "Thurs", v: "—" },
-                        ]
+                        { t: "Tues", v: "—" },
+                        { t: "Wed", v: "1 task" },
+                        { t: "Thurs", v: "3 tasks", active: true },
+                        { t: "Fri", v: "—" },
+                        { t: "Sat", v: "Weekly Off", off: true },
+                        { t: "Sun", v: "Weekly Off", off: true },
+                        { t: "Mon", v: "—" },
+                        { t: "Tues", v: "1 task" },
+                        { t: "Wed", v: "—" },
+                        { t: "Thurs", v: "—" },
+                      ]
                     ).map((item: any, i) => (
                       <div
                         key={i}
@@ -1273,15 +1268,14 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                           {item.t}
                         </p>
                         <div
-                          className={`w-full max-w-[62px] h-[75px] rounded-[14px] border flex items-center justify-center text-[9px] font-bold transition-all p-1 text-center leading-tight ${
-                            item.active
-                              ? activeTimeView === "weekly"
-                                ? "bg-red-50/50 border-red-500 text-red-500 shadow-sm"
-                                : "bg-[#FDFCFB]/90 border-[#E67E5F] text-[#E67E5F] shadow-sm"
-                              : item.off
-                                ? "bg-orange-50/50 border-orange-200 text-[#E67E5F]"
-                                : "bg-[#FAF9F6]/80 border-[#E8E4D9] text-gray-400"
-                          }`}
+                          className={`w-full max-w-[62px] h-[75px] rounded-[14px] border flex items-center justify-center text-[9px] font-bold transition-all p-1 text-center leading-tight ${item.active
+                            ? activeTimeView === "weekly"
+                              ? "bg-red-50/50 border-red-500 text-red-500 shadow-sm"
+                              : "bg-[#FDFCFB]/90 border-[#E67E5F] text-[#E67E5F] shadow-sm"
+                            : item.off
+                              ? "bg-orange-50/50 border-orange-200 text-[#E67E5F]"
+                              : "bg-[#FAF9F6]/80 border-[#E8E4D9] text-gray-400"
+                            }`}
                         >
                           {item.v ||
                             (item.tasks > 0
@@ -1757,32 +1751,40 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
       {/* Floating Bottom Bar */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1.5 backdrop-blur-3xl bg-white/20 border border-white/30 rounded-full p-1.5 shadow-2xl shadow-black/5">
+        <div className="flex items-center gap-1.5 
+  backdrop-blur-sm
+  bg-[rgba(0,0,0,0.1)]
+  border-2 border-[rgba(255,255,255,0.4)] 
+  rounded-full 
+  p-2 
+  shadow-[0_8px_32px_rgba(0,0,0,0.15)] 
+  ring-1 ring-white/10
+">
           <button
             onClick={() => setIsQuickActionsOpen(true)}
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-md bg-white/10 border border-white/20 text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
           >
-            <Zap className="w-5 h-5 text-[#E67E5F]" strokeWidth={2} /> Quick
+            <Zap className="w-5 h-5 text-[#DA7756]" strokeWidth={2} /> Quick
             Actions
           </button>
 
           <div className="w-px h-6 bg-gray-400/20" />
 
           <button
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-md bg-white/10 border border-white/20 text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
             onClick={() => setIsExploreOpen(true)}
           >
-            <Compass className="w-5 h-5 text-[#E67E5F]" strokeWidth={2} />{" "}
+            <Compass className="w-5 h-5 text-[#DA7756]" strokeWidth={2} />{" "}
             Explore
           </button>
 
           <div className="w-px h-6 bg-gray-400/20" />
 
           <button
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-md bg-white/10 border border-white/20 text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
             onClick={() => navigate("/ask-ai")}
           >
-            <Bot className="w-5 h-5 text-[#E67E5F]" strokeWidth={2} /> Ask AI
+            <Bot className="w-5 h-5 text-[#DA7756]" strokeWidth={2} /> Ask AI
           </button>
         </div>
       </div>
@@ -1810,7 +1812,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                     setIsExploreOpen(false);
                     navigate(
                       item.link ||
-                        `/${item.name.toLowerCase().replace(/\s+/g, "-")}`
+                      `/${item.name.toLowerCase().replace(/\s+/g, "-")}`
                     );
                   }}
                 >
