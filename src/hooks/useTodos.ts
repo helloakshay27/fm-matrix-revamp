@@ -38,8 +38,8 @@ export const todosQueryKeys = {
     infinite: (taskType: "my" | "all", userIds: string[], search?: string, fromDate?: string, toDate?: string, selectedAssignedTo?: string[], selectedCreators?: string[]) =>
         [...todosQueryKeys.lists(), "infinite", { taskType, userIds: userIds.join(","), search, fromDate, toDate, selectedAssignedTo: selectedAssignedTo?.join(","), selectedCreators: selectedCreators?.join(",") }] as const,
     priority: () => [...todosQueryKeys.all, "priority"] as const,
-    priorityInfinite: (priority: string, taskType: "my" | "all", fromDate?: string, toDate?: string, selectedAssignedTo?: string[], selectedCreators?: string[]) =>
-        [...todosQueryKeys.priority(), "infinite", { priority, taskType, fromDate, toDate, selectedAssignedTo: selectedAssignedTo?.join(","), selectedCreators: selectedCreators?.join(",") }] as const,
+    priorityInfinite: (priority: string, taskType: "my" | "all", userIds: string[], fromDate?: string, toDate?: string, selectedAssignedTo?: string[], selectedCreators?: string[]) =>
+        [...todosQueryKeys.priority(), "infinite", { priority, taskType, userIds: userIds.join(","), fromDate, toDate, selectedAssignedTo: selectedAssignedTo?.join(","), selectedCreators: selectedCreators?.join(",") }] as const,
     details: () => [...todosQueryKeys.all, "detail"] as const,
     detail: (id: number | string) =>
         [...todosQueryKeys.details(), id] as const,
@@ -97,6 +97,7 @@ export const useTodos = ({
 interface UsePriorityTodosOptions {
     priority: string;
     taskType?: "my" | "all";
+    userIds?: string[];
     excludeCompleted?: boolean;
     fromDate?: string;
     toDate?: string;
@@ -127,6 +128,7 @@ interface UsePriorityTodosOptions {
 export const usePriorityTodos = ({
     priority,
     taskType = "my",
+    userIds = [],
     excludeCompleted = true,
     fromDate,
     toDate,
@@ -134,9 +136,9 @@ export const usePriorityTodos = ({
     selectedCreators = [],
 }: UsePriorityTodosOptions) => {
     return useInfiniteQuery({
-        queryKey: todosQueryKeys.priorityInfinite(priority, taskType, fromDate, toDate, selectedAssignedTo, selectedCreators),
+        queryKey: todosQueryKeys.priorityInfinite(priority, taskType, userIds, fromDate, toDate, selectedAssignedTo, selectedCreators),
         queryFn: ({ pageParam = 1 }) =>
-            fetchPriorityTodos(pageParam, priority, taskType, excludeCompleted, fromDate, toDate, selectedAssignedTo, selectedCreators),
+            fetchPriorityTodos(pageParam, priority, taskType, userIds, excludeCompleted, fromDate, toDate, selectedAssignedTo, selectedCreators),
         getNextPageParam: (lastPage) => lastPage.pagination.next_page,
         initialPageParam: 1,
         staleTime: 30 * 1000, // 30 seconds

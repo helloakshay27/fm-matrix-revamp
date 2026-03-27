@@ -37,6 +37,17 @@ export const DurationPicker = ({
     const [totalHoursInput, setTotalHoursInput] = useState("");
     const pickerRef = useRef(null);
 
+    /** ✅ Sync initial dailyHours from props if editing */
+    useEffect(() => {
+        if (isEdit && Array.isArray(dateWiseHours) && dateWiseHours.length > 0 && dailyHours.length === 0) {
+            const initialHours = dateWiseHours.map(h => {
+                const total = (h.hours || 0) + (h.minutes || 0) / 60;
+                return total > 0 ? formatTotalHours(total) : "";
+            });
+            setDailyHours(initialHours);
+        }
+    }, [dateWiseHours, isEdit]);
+
     const parseHours = (val) => {
         if (!val) return 0;
         if (typeof val === "number") return val;
@@ -237,9 +248,7 @@ export const DurationPicker = ({
                             _destroy: false,
                         };
                     });
-                    onDateWiseHoursChange(
-                        dateWiseHours && dateWiseHours.length > 0 ? dateWiseHours : dateWise
-                    );
+                    onDateWiseHoursChange(dateWise);
                 }
 
                 setDaysList(allDays);
@@ -408,9 +417,7 @@ export const DurationPicker = ({
                         date: formattedDate,
                     };
                 });
-                onDateWiseHoursChange(
-                    dateWiseHours && dateWiseHours.length > 0 ? dateWiseHours : dateWise
-                );
+                onDateWiseHoursChange(dateWise);
             }
         }
     }, [dailyHours, taskType]);
