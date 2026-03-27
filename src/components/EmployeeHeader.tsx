@@ -301,7 +301,7 @@ export const EmployeeHeader: React.FC = () => {
   // Wrap handleNotificationClickContext to add navigation
   const handleNotificationClick = async (notification: any) => {
     await handleNotificationClickContext(notification);
-    
+
     // Navigate based on notification type
     if (notification.ntype === "conversation") {
       navigate(
@@ -312,6 +312,9 @@ export const EmployeeHeader: React.FC = () => {
       navigate(
         `/vas/channels/groups/${notification.payload.project_space_id}`
       );
+    }
+    if (notification.payload.ntype === "newtaskmanagement") {
+      navigate(`/vas/tasks/${notification.payload.task_management_id}`);
     }
   };
 
@@ -841,17 +844,22 @@ export const EmployeeHeader: React.FC = () => {
                               {notification.message}
                             </p>
                             <div className="mt-2">
-                              <Badge
-                                variant="outline"
-                                className={`text-xs ${notification.type === "task"
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : notification.type === "meeting"
-                                    ? "bg-green-50 text-green-700 border-green-200"
-                                    : "bg-gray-50 text-gray-700 border-gray-200"
-                                  }`}
-                              >
-                                {notification.type}
-                              </Badge>
+                              {notification.ntype === "conversation" && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                >
+                                  Conversation
+                                </Badge>
+                              )}
+                              {notification.ntype === "projectspace" && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                                >
+                                  Project Space
+                                </Badge>
+                              )}
                             </div>
                           </div>
                         </div>
