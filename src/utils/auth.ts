@@ -4,6 +4,7 @@ export interface User {
   id: number;
   email: string;
   firstname: string;
+  
   lastname: string;
   mobile?: string;
   phone?: string;
@@ -178,14 +179,10 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work") ||
-  hostname === "localhost";
+  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" ||
-  hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com";
+  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -195,7 +192,8 @@ const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
 const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
 
-const isClubSite = hostname.includes("club.lockated.com");
+const isClubSite =
+  hostname.includes("club.lockated.com");
 
 const isPanchshilClubSite =
   // hostname.includes("club.lockated.com");
@@ -211,7 +209,7 @@ export const getOrganizationsByEmail = async (
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
     }
-
+  
     const data = await response.json();
     return data.organizations || [];
   }
@@ -337,12 +335,10 @@ const ASSET_RESTRICTED_EMAILS = [
   "reception1@gmail.com",
   "reception.pune@zycus.com",
   "reception.blr@zycus.com",
-  "Reception@zycusitis.onmicrosoft.com",
+  "Reception@zycusitis.onmicrosoft.com"
 ].map((email) => email.toLowerCase());
 
-export const isAssetRestrictedUser = (
-  user: User | null | undefined
-): boolean => {
+export const isAssetRestrictedUser = (user: User | null | undefined): boolean => {
   if (!user?.email) return false;
   return ASSET_RESTRICTED_EMAILS.includes(user.email.toLowerCase());
 };
@@ -649,8 +645,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
   const isOmanSite = hostname.includes("oig.gophygital.work");
   const isViSite =
     hostname.includes("vi-web.gophygital.work") ||
-    hostname.includes("web.gophygital.work") ||
-    hostname === "localhost";
+    hostname.includes("web.gophygital.work") || hostname === "localhost";
   const isFmSite =
     hostname.includes("fm-uat.gophygital.work") ||
     hostname.includes("fm.gophygital.work") ||

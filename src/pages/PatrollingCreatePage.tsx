@@ -815,7 +815,7 @@ export const PatrollingCreatePage: React.FC = () => {
       });
 
       const errorFields = [];
-      if (hasPatrolNameError) errorFields.push('Patrol Name');
+      // if (hasPatrolNameError) errorFields.push('Patrol Name');
       if (hasEstimatedDurationError) errorFields.push('Estimated Duration');
       if (hasStartDateError) errorFields.push('Start Date');
       if (hasEndDateError) errorFields.push('End Date');
@@ -1240,31 +1240,33 @@ export const PatrollingCreatePage: React.FC = () => {
 
       <Section title="Patrol Details" icon={<Type className="w-3.5 h-3.5" />}>
         <div className="space-y-6">
-          {/* Checklist and Description on first row */}
+          {/* Name and Duration on first row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Checklist</InputLabel>
-                <MuiSelect
-                  value={selectedChecklist?.id || ''}
-                  onChange={e => {
-                    const selected = checklistOptions.find(opt => opt.id === e.target.value);
-                    setSelectedChecklist(selected || null);
-                  }}
-                  label="Checklist"
-                  notched
-                  displayEmpty
-                  disabled={isSubmitting || isChecklistLoading}
-                >
-                  <MenuItem value="">Select Checklist</MenuItem>
-                  {checklistOptions.map(opt => (
-                    <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-              {selectedChecklist && (
-                <div className="mt-2 text-xs text-gray-600">Selected: <span className="font-semibold">{selectedChecklist.name}</span></div>
-              )}
+              <TextField
+                label={
+                  <>
+                    Name
+                    {/* <span className="text-red-500">*</span> */}
+                  </>
+                }
+                placeholder="Enter Patrol Name"
+                value={patrolName}
+                onChange={(e) => handlePatrolNameChange(e.target.value)}
+                fullWidth
+                variant="outlined"
+                error={errors.patrolName}
+                // helperText={errors.patrolName ? 'Patrol Name is required' : ''}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+                disabled={isSubmitting}
+              />
             </div>
             <div>
               <TextField
@@ -1289,125 +1291,7 @@ export const PatrollingCreatePage: React.FC = () => {
 
           </div>
 
-          {/* Questions from selected checklist */}
-          {selectedChecklist && questions.length > 0 && (
-            <div className="space-y-4">
-              {questions.map((q, idx) => (
-                <div key={q.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id={`mandatory-${idx}`}
-                        checked={q.mandatory}
-                        className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
-                        disabled
-                      />
-                      <label
-                        htmlFor={`mandatory-${idx}`}
-                        className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-                      >
-                        Mandatory
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <TextField
-                        label={
-                          <>
-                            Question<span className="text-red-500">*</span>
-                          </>
-                        }
-                        placeholder="Enter Task"
-                        value={q.task}
-                        fullWidth
-                        variant="outlined"
-                        slotProps={{
-                          inputLabel: {
-                            shrink: true,
-                          },
-                        }}
-                        InputProps={{
-                          sx: fieldStyles,
-                        }}
-                        disabled
-                      />
-                    </div>
-                    <div>
-                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Input Type<span className="text-red-500">*</span></InputLabel>
-                        <MuiSelect
-                          value={q.inputType}
-                          label="Input Type*"
-                          notched
-                          displayEmpty
-                          disabled
-                        >
-                          <MenuItem value="">Select Input Type</MenuItem>
-                          <MenuItem value="yes_no">Yes/No</MenuItem>
-                          <MenuItem value="multiple_choice">Multiple Choice</MenuItem>
-                          <MenuItem value="rating">Rating</MenuItem>
-                          <MenuItem value="text_input">Text Input</MenuItem>
-                          <MenuItem value="description">Description</MenuItem>
-                          <MenuItem value="emoji">Emoji</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
-                  </div>
-
-                  {q.inputType === 'multiple_choice' && (
-                    <div className="mt-4">
-                      <Label className="mb-2 block">Options (comma separated)</Label>
-                      <div className="relative">
-                        <div className="w-full">
-                          <input
-                            type="text"
-                            className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
-                            placeholder="Option 1, Option 2, Option 3"
-                            value={q.optionsText || ''}
-                            disabled
-                            style={{ height: '45px', fontSize: '14px' }}
-                          />
-                          <div className="mt-1 text-xs text-gray-600">
-                            Enter options separated by commas. At least 2 options required for multiple choice.
-                          </div>
-                          {(!q.options || q.options.length === 0) && (
-                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-                              <p className="font-medium text-blue-800 mb-1">💡 Examples:</p>
-                              <div className="text-blue-700 space-y-1">
-                                <div>• <code>Yes, No, Maybe</code></div>
-                                <div>• <code>Secure, Issues Found, Needs Attention</code></div>
-                              </div>
-                            </div>
-                          )}
-                          {q.options && q.options.length > 0 && (
-                            <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
-                              <p className="font-medium text-gray-800 mb-1">✅ Multi-Options ({q.options.length}):</p>
-                              <div className="flex flex-wrap gap-1">
-                                {q.options.map((option, optIdx) => (
-                                  <span
-                                    key={optIdx}
-                                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded group"
-                                  >
-                                    {option}
-                                  </span>
-                                ))}
-                              </div>
-                              {q.options.length < 2 && (
-                                <p className="text-amber-600 mt-1">⚠️ Add at least {2 - q.options.length} more option(s)</p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Description on second row - full width */}
 
         </div>
       </Section>
@@ -1496,6 +1380,171 @@ export const PatrollingCreatePage: React.FC = () => {
 
         </div>
       </Section>
+
+      <Section title="Question" icon={<ListChecks className="w-3.5 h-3.5" />}>
+        <div className="space-y-4">
+          {/* Checklist Dropdown */}
+          <div className="mb-4">
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Checklist</InputLabel>
+              <MuiSelect
+                value={selectedChecklist?.id || ''}
+                onChange={e => {
+                  const selected = checklistOptions.find(opt => opt.id === e.target.value);
+                  setSelectedChecklist(selected || null);
+                }}
+                label="Checklist"
+                notched
+                displayEmpty
+                disabled={isSubmitting || isChecklistLoading}
+              >
+                <MenuItem value="">Select Checklist</MenuItem>
+                {checklistOptions.map(opt => (
+                  <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+            {selectedChecklist && (
+              <div className="mt-2 text-xs text-gray-600">Selected: <span className="font-semibold">{selectedChecklist.name}</span></div>
+            )}
+          </div>
+          {selectedChecklist && questions.map((q, idx) => (
+            <div key={q.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+            
+              <div className="mb-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id={`mandatory-${idx}`}
+                    checked={q.mandatory}
+                    className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
+                    disabled
+                  />
+                  <label 
+                    htmlFor={`mandatory-${idx}`}
+                    className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                  >
+                    Mandatory
+                  </label>
+                </div>
+              </div>
+
+              {/* Second Row - Task and Input Type */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label={
+                      <>
+                        Question<span className="text-red-500">*</span>
+                      </>
+                    }
+                    placeholder="Enter Task"
+                    value={q.task}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
+                      },
+                    }}
+                    InputProps={{
+                      sx: fieldStyles,
+                    }}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Input Type<span className="text-red-500">*</span></InputLabel>
+                    <MuiSelect
+                      value={q.inputType}
+                      label="Input Type*"
+                      notched
+                      displayEmpty
+                      disabled
+                    >
+                      <MenuItem value="">Select Input Type</MenuItem>
+                      <MenuItem value="yes_no">Yes/No</MenuItem>
+                      <MenuItem value="multiple_choice">Multiple Choice</MenuItem>
+                      <MenuItem value="rating">Rating</MenuItem>
+                      <MenuItem value="text_input">Text Input</MenuItem>
+                      <MenuItem value="description">Description</MenuItem>
+                      <MenuItem value="emoji">Emoji</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              </div>
+
+              {/* Options for multiple choice */}
+              {q.inputType === 'multiple_choice' && (
+                <div className="mt-4">
+                  <Label className="mb-2 block">Options (comma separated)</Label>
+                  <div className="relative">
+                    <div className="w-full">
+                      {/* Simple comma-separated input that works */}
+                      <input
+                        type="text"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+                        placeholder="Option 1, Option 2, Option 3"
+                        value={q.optionsText || ''}
+                        disabled
+                        style={{
+                          height: '45px',
+                          fontSize: '14px',
+                        }}
+                      />
+
+                      {/* Help text and examples */}
+                      <div className="mt-1 text-xs text-gray-600">
+                        Enter options separated by commas. At least 2 options required for multiple choice.
+                      </div>
+
+                      {/* Show examples when field is empty */}
+                      {(!q.options || q.options.length === 0) && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                          <p className="font-medium text-blue-800 mb-1">💡 Examples:</p>
+                          <div className="text-blue-700 space-y-1">
+                            <div>• <code>Yes, No, Maybe</code></div>
+                            <div>• <code>Secure, Issues Found, Needs Attention</code></div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Show parsed options preview */}
+                      {q.options && q.options.length > 0 && (
+                        <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
+                          <p className="font-medium text-gray-800 mb-1">
+                            ✅ Multi-Options  ({q.options.length}):
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {q.options.map((option, optIdx) => (
+                              <span
+                                key={optIdx}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded group"
+                              >
+                                {option}
+                              {/* Remove button not shown, always read-only */}
+                              </span>
+                            ))}
+                          </div>
+                          {q.options.length < 2 && (
+                            <p className="text-amber-600 mt-1">
+                              ⚠️ Add at least {2 - q.options.length} more option(s)
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {/* Add Question button removed, always read-only */}
+        </div>
+      </Section>
+
+
 
       <Section title="Assignment" icon={<Clock className="w-3.5 h-3.5" />}>
         <div className="space-y-4">

@@ -4,7 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
-  
+
   useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -1397,7 +1397,7 @@ function App() {
       console.warn("🧹 Cleaning up WebSocket subscriptions");
     };
   }, [token, connect, socketUrl]);
-  
+
   useEffect(() => {
     const subscriptionTimer = setTimeout(() => {
       const sub = webSocketManager.subscribeToUserNotifications({
@@ -1410,7 +1410,7 @@ function App() {
         },
         onMessageNotification: (message) => {
           console.warn(message);
-          if (message.user_id !== currentUser.id) {
+          if ((message.ntype === "conversation" || message.ntype === "projectspace") && message.user_id !== currentUser.id) {
             return;
           }
 
@@ -1421,7 +1421,7 @@ function App() {
 
           Notification.requestPermission().then((permission) => {
             if (permission === "granted") {
-              const notification = new Notification("New Message Received", {
+              const notification = new Notification(message.title, {
                 body: message.body,
               });
 
@@ -5286,18 +5286,18 @@ function App() {
                             path="/master/inventory-type/edit/:id"
                             element={<EditInventoryTypePage />}
                           />
-                           <Route
-                             path="/settings/company-hub/Company-setup"
-                             element={<CompanySetup />}
-                           />
-                            <Route
-                              path="/settings/company-hub/employee-of-the-month"
-                              element={<EmployeeOfTheMonthSetup />}
-                            />
-                            <Route
-                              path="/settings/company-hub/announcements"
-                              element={<AnnouncementsSetup />}
-                            />
+                          <Route
+                            path="/settings/company-hub/Company-setup"
+                            element={<CompanySetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/employee-of-the-month"
+                            element={<EmployeeOfTheMonthSetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/announcements"
+                            element={<AnnouncementsSetup />}
+                          />
                           <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
@@ -5579,7 +5579,7 @@ function App() {
                             path="/pulse/carpool/ride-detail"
                             element={<RideDetail />}
                           />
-                           <Route
+                          <Route
                             path="/pulse/carpool/ride-reviews"
                             element={<RideReviews />}
                           />
