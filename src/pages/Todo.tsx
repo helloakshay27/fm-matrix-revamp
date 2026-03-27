@@ -183,6 +183,7 @@ export default function Todo() {
   } = usePriorityTodos({
     priority: selectedPriority || '',
     taskType,
+    userIds,
     fromDate: appliedFilters.fromDate,
     toDate: appliedFilters.toDate,
     selectedAssignedTo: assignedToIds,
@@ -628,6 +629,7 @@ export default function Todo() {
                 todos={priorityFilteredTodos}
                 isLoading={isPriorityLoading}
                 onTodoToggle={toggleTodo}
+                onEditTodo={handleEditTodo}
                 onViewTodo={(todo) => {
                   setSelectedTodo(todo);
                   setIsDetailsModalOpen(true);
@@ -1216,6 +1218,16 @@ const TodoItem = ({
           title="Drag todo"
         >
           <GripVertical size={14} />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditTodo(todo);
+          }}
+          className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+          title="View todo"
+        >
+          <Pencil size={14} />
         </button>
         <button
           onClick={(e) => {

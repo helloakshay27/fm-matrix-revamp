@@ -13,6 +13,8 @@ import {
   RadioGroup,
   CircularProgress,
   InputAdornment,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { CloudUpload } from "@mui/icons-material";
 import {
@@ -50,7 +52,7 @@ const fieldStyles = {
   },
 };
 
-interface Customer {
+export interface Customer {
   id: number;
   salutation: string;
   first_name: string;
@@ -59,6 +61,8 @@ interface Customer {
   email: string;
   mobile: string;
   pan: string;
+  gst_treatment?: string;
+  gstin?: string;
 }
 
 interface Ledger {
@@ -101,6 +105,7 @@ export const RecordPaymentPage: React.FC = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | string>(
     ""
   );
+  const [activeTab, setActiveTab] = useState(0);
   const [date, setDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
 
   const [amountReceived, setAmountReceived] = useState("");
@@ -112,6 +117,14 @@ export const RecordPaymentPage: React.FC = () => {
   const [tdsAccount, setTdsAccount] = useState("Advance Tax");
   const [notes, setNotes] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
+
+  // Customer Advance fields
+  const [placeOfSupply, setPlaceOfSupply] = useState("");
+  const [descriptionOfSupply, setDescriptionOfSupply] = useState("");
+  const [advanceAmount, setAdvanceAmount] = useState("");
+  const [advanceBankCharges, setAdvanceBankCharges] = useState("");
+  const [advanceTax, setAdvanceTax] = useState("");
+  const [paymentNumber, setPaymentNumber] = useState("15");
 
   const [receivedFullAmount, setReceivedFullAmount] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -318,10 +331,20 @@ export const RecordPaymentPage: React.FC = () => {
         </div>
       )}
 
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Record Payment</h1>
+      <header className="flex items-center justify-between mb-2">
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, v) => setActiveTab(v)}
+          sx={{
+            "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "1.1rem", paddingX: 3 },
+          }}
+        >
+          <Tab label="Invoice Payment" />
+          <Tab label="Customer Advance" />
+        </Tabs>
       </header>
 
+      {activeTab === 0 && (
       <div className="space-y-6">
         {/* Customer Section */}
         <Section
@@ -985,6 +1008,300 @@ export const RecordPaymentPage: React.FC = () => {
           </div>
         </Section>
       </div>
+      )}
+
+      {activeTab === 1 && (
+        <div className="space-y-6">
+          {/* Customer Information Section */}
+          <Section
+            title="Customer Information"
+            icon={<Receipt className="w-5 h-5" />}
+          >
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Customer Name<span className="text-red-500">*</span>
+                  </label>
+                  <FormControl fullWidth>
+                    <Select
+                      value={selectedCustomerId}
+                      onChange={(e) => setSelectedCustomerId(e.target.value as number)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>Select a customer</MenuItem>
+                      {customers.map((c) => (
+                        <MenuItem key={c.id} value={c.id}>{getCustomerDisplayName(c)}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {selectedCustomer && (
+                    <div className="mt-2 text-[12px] text-gray-500 space-y-1">
+                      <p>PAN: <span className="text-blue-500">{selectedCustomer.pan || "—"}</span></p>
+                      <p>GST Treatment: {selectedCustomer.gst_treatment || "Registered Business - Regular"} <span className="text-blue-500 cursor-pointer ml-1">✎</span></p>
+                      <p>GSTIN: {selectedCustomer.gstin || "—"} <span className="text-blue-500 cursor-pointer ml-1">✎</span></p>
+                    </div>
+                  )}
+                  {selectedCustomer && (
+                    <div className="mt-3">
+                      <MuiButton
+                        variant="outlined"
+                        endIcon={<ChevronRight className="w-4 h-4" />}
+                        sx={{
+                          textTransform: "none",
+                          borderColor: "#404b69",
+                          color: "#404b69",
+                          "&:hover": {
+                            borderColor: "#353f5a",
+                            bgcolor: "#404b69",
+                            color: "white",
+                          },
+                        }}
+                      >
+                        {getCustomerDisplayName(selectedCustomer)}'s Details
+                      </MuiButton>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Place of Supply<span className="text-red-500">*</span>
+                  </label>
+                  <FormControl fullWidth>
+                    <Select
+                      value={placeOfSupply}
+                      onChange={(e) => setPlaceOfSupply(e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>Select Place of Supply</MenuItem>
+                      <MenuItem value="Maharashtra">Maharashtra</MenuItem>
+                      <MenuItem value="Delhi">Delhi</MenuItem>
+                      <MenuItem value="Karnataka">Karnataka</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Description of Supply</label>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={descriptionOfSupply}
+                  onChange={(e) => setDescriptionOfSupply(e.target.value)}
+                  placeholder="Will be displayed on the Payment Receipt"
+                />
+              </div>
+            </div>
+          </Section>
+
+          {/* Payment Details Section */}
+          <Section
+            title="Payment Details"
+            icon={<DollarSign className="w-5 h-5" />}
+          >
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Amount Received<span className="text-red-500">*</span>
+                  </label>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    value={advanceAmount}
+                    onChange={(e) => setAdvanceAmount(e.target.value)}
+                    sx={fieldStyles}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">INR</InputAdornment>,
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Bank Charges (if any)</label>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    value={advanceBankCharges}
+                    onChange={(e) => setAdvanceBankCharges(e.target.value)}
+                    sx={fieldStyles}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Tax</label>
+                  <FormControl fullWidth>
+                    <Select
+                      value={advanceTax}
+                      onChange={(e) => setAdvanceTax(e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>Select a Tax</MenuItem>
+                      <MenuItem value="GST 18%">GST 18%</MenuItem>
+                      <MenuItem value="GST 12%">GST 12%</MenuItem>
+                      <MenuItem value="GST 5%">GST 5%</MenuItem>
+                      <MenuItem value="Exempt">Exempt</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Payment Date<span className="text-red-500">*</span>
+                  </label>
+                  <TextField
+                    fullWidth
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Payment #<span className="text-red-500">*</span>
+                  </label>
+                  <TextField
+                    fullWidth
+                    value={paymentNumber}
+                    onChange={(e) => setPaymentNumber(e.target.value)}
+                    sx={fieldStyles}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <span className="text-blue-500 cursor-pointer text-lg">⚙️</span>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Payment Mode</label>
+                  <FormControl fullWidth>
+                    <Select
+                      value={paymentMode}
+                      onChange={(e) => setPaymentMode(e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>Select payment mode</MenuItem>
+                      {PAYMENT_MODES.map((mode) => (
+                        <MenuItem key={mode} value={mode}>{mode}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Deposit To<span className="text-red-500">*</span>
+                  </label>
+                  <FormControl fullWidth>
+                    <Select
+                      value={depositTo}
+                      onChange={(e) => setDepositTo(e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>Select ledger</MenuItem>
+                      {ledgers.map((l) => (
+                        <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Reference#</label>
+                  <TextField
+                    fullWidth
+                    value={reference}
+                    onChange={(e) => setReference(e.target.value)}
+                    sx={fieldStyles}
+                  />
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* Notes & Attachments Section */}
+          <Section
+            title="Notes & Attachments"
+            icon={<FileText className="w-5 h-5" />}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Notes{" "}
+                  <span className="text-gray-400 font-normal">
+                    (Internal use. Not visible to customer)
+                  </span>
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                  rows={4}
+                  value={notes}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) setNotes(e.target.value);
+                  }}
+                  placeholder="Add notes for internal reference... (max 500 characters)"
+                  maxLength={500}
+                />
+                <div className="text-xs text-gray-400 text-right mt-1">
+                  {notes?.length || 0}/500
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Attachments</label>
+                <div className="flex flex-col gap-2 items-start mt-1">
+                  <MuiButton
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUpload />}
+                    sx={{
+                      textTransform: "none",
+                      borderColor: "divider",
+                      color: "text.secondary",
+                      px: 3,
+                    }}
+                  >
+                    Upload File
+                    <input
+                      type="file"
+                      multiple
+                      hidden
+                      onChange={(e) => {
+                        if (e.target.files) setAttachments(Array.from(e.target.files));
+                      }}
+                    />
+                  </MuiButton>
+                  <span className="text-xs text-gray-500">
+                    You can upload a maximum of 5 files, 5MB each
+                  </span>
+                  {attachments.length > 0 && (
+                    <ul className="mt-2 text-sm list-disc list-inside text-gray-600">
+                      {attachments.map((f, idx) => (
+                        <li key={idx}>{f.name}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Section>
+        </div>
+      )}
 
       {/* Action Buttons - matching InvoiceAdd pattern */}
       <div className="flex items-center gap-3 justify-center pt-2">

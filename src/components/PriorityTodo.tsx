@@ -15,6 +15,7 @@ interface PriorityTodoProps {
     todos?: any[];
     isLoading?: boolean;
     onTodoToggle?: (todoId: number | string) => void;
+    onEditTodo?: (todo: any) => void;
     onViewTodo?: (todo: any) => void;
     onConvertTodo?: (todo: any) => void;
     onFlagTodo?: (todo: any) => void;
@@ -89,6 +90,7 @@ const TodoSkeleton = () => {
 const DraggablePriorityTodoItem = ({
     todo,
     onTodoToggle,
+    onEditTodo,
     onViewTodo,
     onConvertTodo,
     onFlagTodo,
@@ -144,12 +146,22 @@ const DraggablePriorityTodoItem = ({
                     </span>
                 </div>
             )}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center">
                 <button
                     className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors cursor-grab"
                     title="Drag todo"
                 >
                     <GripVertical size={14} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onEditTodo?.(todo);
+                    }}
+                    className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+                    title="Edit todo"
+                >
+                    <Pencil size={14} />
                 </button>
                 <button
                     onClick={(e) => {
@@ -238,6 +250,7 @@ const PriorityTodo = ({
     todos = [],
     isLoading = false,
     onTodoToggle,
+    onEditTodo,
     onViewTodo,
     onConvertTodo,
     onFlagTodo,
@@ -296,6 +309,7 @@ const PriorityTodo = ({
                                             key={todo.id}
                                             todo={todo}
                                             onTodoToggle={onTodoToggle}
+                                            onEditTodo={onEditTodo}
                                             onViewTodo={onViewTodo}
                                             onConvertTodo={onConvertTodo}
                                             onFlagTodo={onFlagTodo}
@@ -315,6 +329,7 @@ const PriorityTodo = ({
                                             key={todo.id}
                                             todo={todo}
                                             onTodoToggle={onTodoToggle}
+                                            onEditTodo={onEditTodo}
                                             onViewTodo={onViewTodo}
                                             onConvertTodo={onConvertTodo}
                                             onFlagTodo={onFlagTodo}

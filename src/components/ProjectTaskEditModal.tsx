@@ -636,26 +636,25 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     let taskAllocationTimesAttributes: any[] = [];
 
     if (Array.isArray(originalDateWiseHrs) && Array.isArray(dateWiseHours)) {
-      // Dates currently present in UI
-      const currentDatesSet = new Set(dateWiseHours.map((d) => d.date));
+      // Map of current UI entries by date for fast lookup
+      const currentUIMap = new Map(dateWiseHours.map((d) => [d.date, d]));
 
-      // 1️⃣ Handle ORIGINAL records (mark destroy if removed)
+      // 1️⃣ Handle ORIGINAL records (update values or mark destroy)
       const originalPayload = originalDateWiseHrs.map((allocation) => {
-        const isRemoved = !currentDatesSet.has(allocation.date);
+        const uiEntry = currentUIMap.get(allocation.date);
+        const isRemoved = !uiEntry;
 
         return {
-          ...allocation,
-          id: allocation.id, // existing id
+          ...(uiEntry || allocation), // Prioritize updated hours/minutes from UI
+          id: allocation.id, // Ensure we keep the original ID for the backend
           _destroy: isRemoved,
         };
       });
 
-      // 2️⃣ Handle NEW records (id === null)
+      // 2️⃣ Handle NEW records (dates that weren't in original data)
       const newPayload = dateWiseHours
         .filter(
-          (d) =>
-            !d.id && // new record
-            !originalDateWiseHrs.some((o) => o.date === d.date)
+          (d) => !originalDateWiseHrs.some((o) => o.date === d.date)
         )
         .map((d) => ({
           ...d,
@@ -663,7 +662,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           _destroy: false,
         }));
 
-      // 3️⃣ Merge both
+      // 3️⃣ Merge both for the final payload
       taskAllocationTimesAttributes = [...originalPayload, ...newPayload];
     }
 
