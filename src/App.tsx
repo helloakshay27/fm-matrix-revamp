@@ -1220,6 +1220,12 @@ import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessP
 import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
 import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
 import RecurringBillDetails from "./pages/ClubManagement/RecurringBillDetails";
+import Feedback from "./pages/BusinessCompass/Feedback";
+import Announcement from "./pages/BusinessCompass/Announcement";
+import Leaderboard from "./pages/BusinessCompass/Leaderboard";
+import DiscPersonalityAssessment from "./pages/BusinessCompass/DiscPersonalityAssessment";
+import HelpCenter from "./pages/BusinessCompass/HelpCenter";
+import BugReports from "./pages/BusinessCompass/BugReports";
 
 const queryClient = new QueryClient();
 
@@ -1999,6 +2005,30 @@ function App() {
                           <Route
                             path="/business-compass/dashboard"
                             element={<BusinessCompassDashboard />}
+                          />
+                          <Route
+                            path="/business-compass/feedback"
+                            element={<Feedback />}
+                          />
+                          <Route
+                            path="/business-compass/announcements"
+                            element={<Announcement />}
+                          />
+                          <Route
+                            path="/business-compass/leaderboard"
+                            element={<Leaderboard />}
+                          />
+                          <Route
+                            path="/business-compass/disc-personality-assessment"
+                            element={<DiscPersonalityAssessment />}
+                          />
+                          <Route
+                            path="/business-compass/help-center"
+                            element={<HelpCenter />}
+                          />
+                          <Route
+                            path="/business-compass/bug-reports"
+                            element={<BugReports />}
                           />
 
                           {/* Dashboard Routes */}

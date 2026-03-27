@@ -14,6 +14,12 @@ import {
   Briefcase,
   Compass,
   User,
+  MessageSquare,
+  Megaphone,
+  Trophy,
+  Brain,
+  HelpCircle,
+  Bug,
 } from "lucide-react";
 
 // Module-based navigation structures for Business Compass
@@ -25,6 +31,30 @@ const businessCompassNavigation: Record<string, any> = {
   Dashboard: {
     icon: User,
     href: "/business-compass/dashboard",
+  },
+  Feedback: {
+    icon: MessageSquare,
+    href: "/business-compass/feedback",
+  },
+  Announcements: {
+    icon: Megaphone,
+    href: "/business-compass/announcements",
+  },
+  Leaderboard: {
+    icon: Trophy,
+    href: "/business-compass/leaderboard",
+  },
+  DISC: {
+    icon: Brain,
+    href: "/business-compass/disc-personality-assessment",
+  },
+  "Help Center": {
+    icon: HelpCircle,
+    href: "/business-compass/help-center",
+  },
+  "Bug Reports": {
+    icon: Bug,
+    href: "/business-compass/bug-reports",
   },
 };
 
