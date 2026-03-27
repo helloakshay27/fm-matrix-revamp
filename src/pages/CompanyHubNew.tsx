@@ -64,7 +64,6 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const [activeTimeView, setActiveTimeView] = useState<
     "hourly" | "weekly" | "monthly"
   >("hourly");
-  const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
 
   // Community State
   const [posts, setPosts] = useState<Post[]>([]);
@@ -412,13 +411,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   return (
     <div className="min-h-screen bg-[#FAF9F6] pb-24 overflow-x-hidden font-poppins">
       <div className="pb-10">
-        <TopNavigation
-          activeNavMenu={activeNavMenu}
-          setActiveNavMenu={setActiveNavMenu}
-        />
-
         {/* --- TOP NAV TABS --- */}
-        <div className="flex justify-center pt-8 pb-4">
+        <div className="flex justify-center pb-2">
           <div className="flex gap-1 bg-[rgba(232,229,220,0.2)] border-[1.31px] border-[rgba(211,209,199,1)] rounded-full p-1 shadow-sm">
             {(
               [
@@ -430,7 +424,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-8 py-2.5 rounded-full text-[13px] font-black tracking-wider transition-all duration-300 ${activeTab === tab.key
+                className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${activeTab === tab.key
                   ? "bg-white shadow-xl shadow-black/5 text-gray-900"
                   : "text-gray-500 hover:text-gray-700"
                   }`}
