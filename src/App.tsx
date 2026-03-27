@@ -1219,6 +1219,7 @@ import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsRepo
 import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
 import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
 import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
+import RecurringBillDetails from "./pages/ClubManagement/RecurringBillDetails";
 
 const queryClient = new QueryClient();
 
@@ -3181,6 +3182,11 @@ function App() {
                           <Route
                             path="/accounting/recurring-bills/create"
                             element={<RecurringBillCreatePage />}
+                          />
+
+                          <Route
+                            path="/accounting/recurring-bills/details/:id"
+                            element={<RecurringBillDetails />}
                           />
                           <Route
                             path="/accounting/recurring-expenses"
