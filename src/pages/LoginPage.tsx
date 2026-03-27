@@ -82,6 +82,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
+    hostname.includes("localhost") ||
     hostname === "pulse.lockated.com" ||
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
@@ -412,8 +413,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         const isLocalhost =
           hostname.includes("lockated.gophygital.work") ||
           hostname.includes("fm-matrix.lockated.com") ||
-          userEmail === "deveshjain928@gmail.com";
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work";
         const isPulseSite =
+          hostname.includes("localhost") ||
           hostname.includes("pulse.lockated.com") ||
           hostname.includes("pulse.gophygital.work") ||
           hostname.includes("pulse-uat.panchshil.com") ||
