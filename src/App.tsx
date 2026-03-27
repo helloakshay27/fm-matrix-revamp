@@ -1037,6 +1037,7 @@ import RecurringExpensesListPage from "./pages/ClubManagement/RecurringExpensesL
 import RecurringExpenseDetailPage from "./pages/ClubManagement/RecurringExpenseDetailPage";
 import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
 import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
+import RecurringBillDetails from "./pages/ClubManagement/RecurringBillDetails"; // FIX: Add missing import for RecurringBillDetails
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
 import { RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
 import { SalesOrderCreatePage } from "./pages/SalesOrderCreatePage";

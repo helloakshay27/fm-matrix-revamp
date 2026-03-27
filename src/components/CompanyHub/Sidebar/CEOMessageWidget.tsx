@@ -17,7 +17,7 @@ const CEOMessageWidget: React.FC<CEOMessageWidgetProps> = ({ setIsVideoOpen }) =
         <img
           src={ceoImage}
           alt="CEO"
-          className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform transition-duration-[2s] group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
           <div className="w-16 h-16 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 shadow-2xl group-hover:scale-110 transition-transform">
