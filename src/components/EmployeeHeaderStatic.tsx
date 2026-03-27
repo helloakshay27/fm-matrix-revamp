@@ -20,6 +20,7 @@ import {
   Calendar1,
   Car,
   Wallet,
+  Compass,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -48,6 +49,7 @@ import { toast } from "sonner";
 // Employee modules/packages
 const employeeModules = [
   { name: "Company Hub", icon: Globe },
+  { name: "Business Compass", icon: Compass },
   { name: "Dashboard", icon: Home },
   { name: "PATM", icon: FolderKanban },
   { name: "Ticket", icon: Ticket },
@@ -267,6 +269,9 @@ export const EmployeeHeaderStatic: React.FC = () => {
         break;
       case "Dashboard":
         navigate("/employee/dashboard");
+        break;
+      case "Business Compass":
+        navigate("/business-compass");
         break;
       case "PATM":
       case "Project Task":

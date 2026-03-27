@@ -21,6 +21,7 @@ import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
 import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeSidebarStatic } from "./EmployeeSidebarStatic";
+import { BusinessCompassSidebar } from "./BusinessCompassSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
 import { EmployeeHeaderStatic } from "./EmployeeHeaderStatic";
@@ -151,7 +152,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // IMPORTANT: Only show employee sidebar if userType is explicitly pms_occupant
     // This prevents employee sidebar from showing in admin view on /vas/projects
     if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
-      // Only render sidebar for Project Task module
+      // Only render sidebar for Project Task or Business Compass module
       if (currentSection === "Project Task") {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
         if (
@@ -175,6 +176,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
         return <EmployeeSidebarStatic />;
       }
+
+      if (
+        currentSection === "Business Compass" ||
+        location.pathname.startsWith("/business-compass")
+      ) {
+        return <BusinessCompassSidebar />;
+      }
+
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
       return null;
     }
