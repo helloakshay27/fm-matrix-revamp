@@ -613,7 +613,7 @@ export const RecurringBillDetails = () => {
                       <TableHeader>
                         <TableRow className="bg-muted/50">
                           <TableHead>Item Details</TableHead>
-                          <TableHead className="text-right">Account</TableHead>
+                          {/* <TableHead className="text-right">Account</TableHead> */}
                           <TableHead className="text-right">Quantity</TableHead>
                           <TableHead className="text-right">Rate</TableHead>
                           <TableHead className="text-right">Tax</TableHead>
@@ -634,9 +634,9 @@ export const RecurringBillDetails = () => {
                                 </p>
                               </div>
                             </TableCell>
-                            <TableCell className="text-right">
+                            {/* <TableCell className="text-right">
                               {item.account || "-"}
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell className="text-right">
                               {item.quantity} {item.item_unit}
                             </TableCell>

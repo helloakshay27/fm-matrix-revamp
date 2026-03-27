@@ -826,15 +826,15 @@ if (!profileName || profileName.trim() === "") {
       );
       // Invoice items
       items.forEach((item, idx) => {
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][description]`, item.description || '');
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][rate]`, String(item.rate));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][quantity]`, String(item.quantity));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][total_amount]`, String(item.amount));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][description]`, item.description || '');
 
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_type]`, String(item.item_tax_type));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
       });
 
       // Email contact persons
