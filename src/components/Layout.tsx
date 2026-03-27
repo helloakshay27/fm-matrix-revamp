@@ -167,7 +167,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
           userEmail === "jevosak839@cimario.com" ||
-          userEmail === "deveshjain928@gmail.com"
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work"
         ) {
           return <EmployeeSidebar />;
         }
@@ -201,7 +203,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
       userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com"
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -284,7 +288,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
       userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com"
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       return <ActionHeader />;
     }
@@ -405,23 +411,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Conditional Header - Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          org_id === "1" ||
-          org_id === "84" ||
-          org_id === "1" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ? (
+        selectedCompany?.id === 295 ||
+        selectedCompany?.id === 298 ||
+        selectedCompany?.id === 199 ||
+        org_id === "90" ||
+        org_id === "1" ||
+        org_id === "84" ||
+        org_id === "1" ||
+        userEmail === "ubaid.hashmat@lockated.com" ||
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           // <EmployeeHeader />
           isNewEmpHubRoute ? (
             <TopNavigation
               activeNavMenu={activeNavMenu}
               setActiveNavMenu={setActiveNavMenu}
-            />   // 👈 your new header
+            /> // 👈 your new header
           ) : (
             <EmployeeHeader />
           )
@@ -447,12 +453,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : "ml-64"
               : "ml-0" // No margin for other modules
             : // For action sidebar, add extra top padding and adjust left margin
-            isActionSidebarVisible
+              isActionSidebarVisible
               ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
               : isSidebarCollapsed
                 ? "ml-16"
                 : "ml-64"
-          } ${isEmployeeUser && isLocalhost ? !isNewEmpHubRoute ? "pt-16" : "pt-6" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+        } ${isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
