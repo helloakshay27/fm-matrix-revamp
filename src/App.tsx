@@ -1219,13 +1219,7 @@ import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsRepo
 import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
 import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
 import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import RecurringBillDetails from "./pages/ClubManagement/RecurringBillDetails";
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import Feedback from "./pages/BusinessCompass/Feedback";
 import Announcement from "./pages/BusinessCompass/Announcement";
 import Leaderboard from "./pages/BusinessCompass/Leaderboard";
