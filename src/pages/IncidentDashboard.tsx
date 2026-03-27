@@ -1,1471 +1,626 @@
-// import React, { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { Button } from "@/components/ui/button";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon, PauseCircle, LifeBuoy } from "lucide-react";
-// import { Badge } from "@/components/ui/badge";
-// import IncidentFilterModal from "@/components/IncidentFilterModal";
-// import { incidentService, type Incident } from "@/services/incidentService";
-// import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-// import { ColumnConfig } from "@/hooks/useEnhancedTable";
-// import {
-//   Pagination,
-//   PaginationContent,
-//   PaginationEllipsis,
-//   PaginationItem,
-//   PaginationLink,
-//   PaginationNext,
-//   PaginationPrevious,
-// } from "@/components/ui/pagination";
-
-// // Stats calculation
-// const calculateStats = (incidents: any[]) => {
-//   return {
-//     total: incidents.length,
-//     open: incidents.filter(i => i.current_status === "Open").length,
-//     underObservation: incidents.filter(i => i.current_status === "Under Observation").length,
-//     closed: incidents.filter(i => i.current_status === "Closed").length,
-//     highRisk: incidents.filter(i => i.inc_level_name === "High Risk").length,
-//     mediumRisk: incidents.filter(i => i.inc_level_name === "Medium Risk").length,
-//     lowRisk: incidents.filter(i => i.inc_level_name === "Low Risks").length,
-//   };
-// };
-
-// const getLevelColor = (level: string) => {
-//   switch (level) {
-//     case "High Risk": return "bg-red-100 text-red-800";
-//     case "Medium Risk": return "bg-yellow-100 text-yellow-800";
-//     case "Low Risk": return "bg-green-100 text-green-800";
-//     default: return "bg-gray-100 text-gray-800";
-//   }
-// };
-
-// const getStatusColor = (status: string) => {
-//   switch (status) {
-//     case "Open": return "bg-blue-100 text-blue-800";
-//     case "Under Observation": return "bg-yellow-100 text-yellow-800";
-//     case "Closed": return "bg-green-100 text-green-800";
-//     default: return "bg-gray-100 text-gray-800";
-//   }
-// };
-
-// export const IncidentDashboard = () => {
-//   const navigate = useNavigate();
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [selectedIncidents, setSelectedIncidents] = useState<string[]>([]);
-//   const [incidents, setIncidents] = useState<Incident[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-//   const [originalIncidents, setOriginalIncidents] = useState<Incident[]>([]);
-//   const [countStats, setCountStats] = useState<{ total_incidents: number; open: number; under_investigation: number; closed: number; pending: number; support_required: number } | null>(null);
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [totalPages, setTotalPages] = useState(1);
-//   const [totalCount, setTotalCount] = useState(0);
-
-//   // Define columns for the EnhancedTable
-//   const columns: ColumnConfig[] = [
-//     {
-//       key: "srNo",
-//       label: "Sr. No.",
-//       sortable: false,
-//       defaultVisible: true,
-//       draggable: false,
-//     },
-//     {
-//       key: "id",
-//       label: "ID",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "description",
-//       label: "Description",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "region",
-//       label: "Region",
-//       sortable: false,
-//       defaultVisible: false,
-//       draggable: true,
-//     },
-//     {
-//       key: "site_name",
-//       label: "Site",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: false, // Make it non-draggable to test
-//     },
-//     {
-//       key: "test_site",
-//       label: "Test Site",
-//       sortable: false,
-//       defaultVisible: true,
-//       draggable: false,
-//     },
-//     {
-//       key: "building_name",
-//       label: "Tower",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "inc_time",
-//       label: "Incident Time",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "inc_level_name",
-//       label: " Incident Level",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "category_name",
-//       label: "Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sub_category_name",
-//       label: "Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sub_sub_category_name",
-//       label: "Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sub_sub_sub_category_name",
-//       label: "Sub Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_category_name",
-//       label: "Secondary Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_sub_category_name",
-//       label: "Secondary Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_sub_sub_category_name",
-//       label: "Secondary Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_sub_sub_sub_category_name",
-//       label: "Secondary Sub Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "support_required",
-//       label: "Support Required",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "assigned_to_user_name",
-//       label: "Assigned To",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "current_status",
-//       label: "Status",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//   ];
-
-//   // Debug: Log columns configuration
-//   console.log("Columns configuration:", columns);
-
-//   useEffect(() => {
-//     // Clear old table settings to force refresh
-//     localStorage.removeItem('incidents-table');
-//     localStorage.removeItem('incidents-table-columns');
-//     localStorage.removeItem('incidents-table-visibility');
-
-//     fetchIncidents(currentPage);
-//     fetchCounts();
-//   }, [currentPage]);
-
-//   const fetchIncidents = async (page: number = 1) => {
-//     try {
-//       setLoading(true);
-//       setError(null);
-//       const query = `page=${page}`;
-//       const response = await incidentService.getIncidents(query);
-//       console.log("API Response - First incident:", response.data.incidents[0]); // Debug log
-//       setIncidents(response.data.incidents);
-//       setOriginalIncidents(response.data.incidents);
-//       if (response.data.pagination) {
-//         setCurrentPage(response.data.pagination.current_page || 1);
-//         setTotalPages(response.data.pagination.total_pages || 1);
-//         setTotalCount(response.data.pagination.total_count || 0);
-//       } else {
-//         setTotalPages(1);
-//         setTotalCount(response.data.total || response.data.incidents.length || 0);
-//       }
-//     } catch (err) {
-//       setError("Failed to fetch incidents");
-//       console.error("Error fetching incidents:", err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const fetchCounts = async () => {
-//     try {
-//       const counts = await incidentService.getIncidentCounts();
-//       setCountStats(counts);
-//     } catch (err) {
-//       console.error('Failed to fetch incident counts:', err);
-//     }
-//   };
-
-//   // Render cell function for custom formatting
-//   const renderCell = (item: Incident, columnKey: string): React.ReactNode => {
-//     const index = incidents.findIndex(incident => incident.id === item.id);
-
-//     switch (columnKey) {
-//       case "srNo":
-//         return <span className="font-medium">{index + 1}</span>;
-//       case "id":
-//         return <span className="font-medium">{item.id}</span>;
-//       case "description":
-//         return <div className="w-[15rem] overflow-hidden text-ellipsis text-center">{item.description}</div>;
-//       case "site_name":
-//         console.log("Rendering site_name:", item.site_name, "building_name:", item.building_name);
-//         return <span>{item.site_name || item.building_name || "-"}</span>;
-//       case "test_site":
-//         return <span style={{ color: 'red', fontWeight: 'bold' }}>TEST SITE</span>;
-//       case "region":
-//         return <span>-</span>;
-//       case "building_name":
-//         return <span>{item.building_name || "-"}</span>;
-//       case "inc_time":
-//         return (
-//           <span>
-//             {item.inc_time ? new Date(item.inc_time).toLocaleString() : "-"}
-//           </span>
-//         );
-//       case "inc_level_name":
-//         return (
-//           <Badge className={getLevelColor(item.inc_level_name)}>
-//             {item.inc_level_name}
-//           </Badge>
-//         );
-//       case "category_name":
-//         return <span>{item.category_name || "-"}</span>;
-//       case "sub_category_name":
-//         return <span>{item.sub_category_name || "-"}</span>;
-//       case "sub_sub_category_name":
-//         return <span>{item.sub_sub_category_name || "-"}</span>;
-//       case "sub_sub_sub_category_name":
-//         return <span>{item.sub_sub_sub_category_name || "-"}</span>;
-//       case "sec_category_name":
-//         return <span>{item.sec_category_name || "-"}</span>;
-//       case "sec_sub_category_name":
-//         return <span>{item.sec_sub_category_name || "-"}</span>;
-//       case "sec_sub_sub_category_name":
-//         return <span>{item.sec_sub_sub_category_name || "-"}</span>;
-//       case "sec_sub_sub_sub_category_name":
-//         return <span>{item.sec_sub_sub_sub_category_name || "-"}</span>;
-//       case "support_required":
-//         return (
-//           <Badge className={item.support_required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-//             {item.support_required ? "Yes" : "No"}
-//           </Badge>
-//         );
-//       case "assigned_to_user_name":
-//         return <span>{item.assigned_to_user_name || "-"}</span>;
-//       case "current_status":
-//         return (
-//           <Badge className={getStatusColor(item.current_status)}>
-//             {item.current_status}
-//           </Badge>
-//         );
-//       default:
-//         const value = item[columnKey as keyof Incident];
-//         if (value === null || value === undefined) {
-//           return <span>-</span>;
-//         }
-//         return <span>{String(value)}</span>;
-//     }
-//   };
-
-//   // Render actions function
-//   const renderActions = (item: Incident): React.ReactNode => {
-//     return (
-//       <Button
-//         variant="ghost"
-//         size="sm"
-//         onClick={() => handleViewIncident(item.id.toString())}
-//         title="View Incident"
-//       >
-//         <Eye className="w-4 h-4" />
-//       </Button>
-//     );
-//   };
-
-//   const stats = calculateStats(incidents);
-
-//   // Prefer API counts if available for analytics
-//   const totalForAnalytics = countStats ? countStats.total_incidents : stats.total;
-//   const openCount = countStats ? countStats.open : stats.open;
-//   const underInvestigationCount = countStats ? countStats.under_investigation : stats.underObservation;
-//   const closedCount = countStats ? countStats.closed : stats.closed;
-//   const pendingCount = countStats ? countStats.pending : 0;
-//   const supportRequiredCount = countStats ? countStats.support_required : 0;
-
-//   const handleAddIncident = () => {
-//     navigate("/safety/incident/add");
-//   };
-
-//   const handleCardClick = async (type: 'total' | 'open' | 'closed' | 'pending' | 'under_investigation' | 'support_required') => {
-//     try {
-//       setLoading(true);
-//       setError(null);
-//       let query = '';
-//       if (type === 'open') query = 'q[current_status_eq]=Open';
-//       else if (type === 'closed') query = 'q[current_status_eq]=Closed';
-//       else if (type === 'pending') query = 'q[current_status_eq]=Pending';
-//       else if (type === 'under_investigation') query = 'q[current_status_eq]=Under%20Investigation';
-//       else if (type === 'support_required') query = 'q[current_status_eq]=Support%20Required';
-//       // total => no query
-
-//       const response = await incidentService.getIncidents(query);
-//       setIncidents(response.data.incidents);
-//       setOriginalIncidents(response.data.incidents);
-//     } catch (err) {
-//       setError('Failed to fetch incidents');
-//       console.error('Error fetching incidents by card:', err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const handleViewIncident = (incidentId: string) => {
-//     navigate(`/safety/incident/${incidentId}`);
-//   };
-
-//   // Handle export functionality
-//   const handleExport = async () => {
-//     try {
-//       // Create CSV content
-//       const headers = columns
-//         .filter(col => col.defaultVisible !== false)
-//         .map(col => col.label)
-//         .join(',');
-
-//       const csvContent = [
-//         headers,
-//         ...incidents.map(incident =>
-//           columns
-//             .filter(col => col.defaultVisible !== false)
-//             .map(col => {
-//               let value = '';
-//               switch (col.key) {
-//                 case 'srNo':
-//                   value = String(incidents.findIndex(inc => inc.id === incident.id) + 1);
-//                   break;
-//                 case 'inc_time':
-//                   value = incident.inc_time ? new Date(incident.inc_time).toLocaleString() : '-';
-//                   break;
-//                 case 'support_required':
-//                   value = incident.support_required ? 'Yes' : 'No';
-//                   break;
-//                 case 'site_name':
-//                   value = incident.site_name || incident.building_name || '-';
-//                   break;
-//                 default:
-//                   const fieldValue = incident[col.key as keyof Incident];
-//                   value = String(fieldValue || '-');
-//               }
-
-//               // Handle values that might contain commas or quotes
-//               const stringValue = String(value).replace(/"/g, '""');
-//               return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
-//                 ? `"${stringValue}"`
-//                 : stringValue;
-//             })
-//             .join(',')
-//         )
-//       ].join('\n');
-
-//       // Create and trigger download
-//       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-//       const link = document.createElement('a');
-//       const url = URL.createObjectURL(blob);
-//       link.setAttribute('href', url);
-//       link.setAttribute('download', `incidents_${new Date().toISOString().split('T')[0]}.csv`);
-//       link.style.visibility = 'hidden';
-//       document.body.appendChild(link);
-//       link.click();
-//       document.body.removeChild(link);
-//       URL.revokeObjectURL(url);
-//     } catch (error) {
-//       console.error('Error exporting incidents:', error);
-//       alert('Failed to export incidents');
-//     }
-//   };
-
-//   const StatCard = ({ icon, label, value, color }: any) => (
-//     <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow">
-//       <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-//         {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
-//       </div>
-//       <div>
-//         <div className="text-2xl font-semibold text-[#1A1A1A]">{value}</div>
-//         <div className="text-sm font-medium text-[#1A1A1A]">{label}</div>
-//       </div>
-//     </div>
-//   );
-
-//   return (
-//     <div className="p-4 sm:p-6">
-//       <Tabs defaultValue="list" className="w-full">
-//         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-//           <TabsTrigger
-//             value="list"
-//             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-//           >
-//             <AlertTriangle className="w-4 h-4" />
-//             List
-//           </TabsTrigger>
-//           <TabsTrigger
-//             value="analytics"
-//             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-//           >
-//             <Settings className="w-4 h-4" />
-//             Analytics
-//           </TabsTrigger>
-//         </TabsList>
-
-//         <TabsContent value="list" className="mt-6">
-//           {/* Stats Cards */}
-//           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-//             <div onClick={() => handleCardClick('total')} className="cursor-pointer">
-//               <StatCard icon={<AlertTriangle />} label="Total Incidents" value={countStats ? countStats.total_incidents : stats.total} />
-//             </div>
-//             <div onClick={() => handleCardClick('open')} className="cursor-pointer">
-//               <StatCard icon={<Clock />} label="Open" value={countStats ? countStats.open : stats.open} />
-//             </div>
-//             <div onClick={() => handleCardClick('under_investigation')} className="cursor-pointer">
-//               <StatCard icon={<Search />} label="Under Investigation" value={countStats ? countStats.under_investigation : stats.underObservation} />
-//             </div>
-//             <div onClick={() => handleCardClick('closed')} className="cursor-pointer">
-//               <StatCard icon={<CheckCircle />} label="Closed" value={countStats ? countStats.closed : stats.closed} />
-//             </div>
-//             <div onClick={() => handleCardClick('pending')} className="cursor-pointer">
-//               <StatCard icon={<PauseCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
-//             </div>
-//             <div onClick={() => handleCardClick('support_required')} className="cursor-pointer">
-//               <StatCard icon={<LifeBuoy />} label="Support Required" value={countStats ? countStats.support_required : 0} />
-//             </div>
-//             {/* <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
-//             <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
-//             <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} /> */}
-//           </div>
-
-//           {/* Enhanced Table */}
-//           <EnhancedTable
-//             data={incidents}
-//             columns={columns}
-//             renderCell={renderCell}
-//             renderActions={renderActions}
-//             onRowClick={(item) => handleViewIncident(item.id.toString())}
-//             loading={loading}
-//             emptyMessage={error ? error : "No incidents found"}
-//             enableSearch={true}
-//             searchPlaceholder="Search incidents..."
-//             enableExport={true}
-//             onExport={handleExport}
-//             exportFileName="incidents"
-//             storageKey="incidents-dashboard-new"
-//             className="min-w-full"
-//             pagination={false}
-//             leftActions={
-//               <div className="flex items-center gap-2">
-//                 <Button
-//                   onClick={handleAddIncident}
-//                   className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-//                 >
-//                   <Plus className="w-4 h-4" />
-//                   Add Incident
-//                 </Button>
-//               </div>
-//             }
-//             onFilterClick={() => setIsFilterModalOpen(true)}
-//           />
-
-//           {/* API-driven Pagination (same as AssetDashboard) */}
-//           <div className="mt-6">
-//             <Pagination>
-//               <PaginationContent>
-//                 <PaginationItem>
-//                   <PaginationPrevious
-//                     onClick={() => {
-//                       if (currentPage > 1) {
-//                         setCurrentPage(currentPage - 1);
-//                       }
-//                     }}
-//                     className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-//                   />
-//                 </PaginationItem>
-
-//                 <PaginationItem>
-//                   <PaginationLink
-//                     onClick={() => setCurrentPage(1)}
-//                     isActive={currentPage === 1}
-//                   >
-//                     1
-//                   </PaginationLink>
-//                 </PaginationItem>
-
-//                 {currentPage > 4 && (
-//                   <PaginationItem>
-//                     <PaginationEllipsis />
-//                   </PaginationItem>
-//                 )}
-
-//                 {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
-//                   .filter((page) => page > 1 && page < totalPages)
-//                   .map((page) => (
-//                     <PaginationItem key={page}>
-//                       <PaginationLink
-//                         onClick={() => setCurrentPage(page)}
-//                         isActive={currentPage === page}
-//                       >
-//                         {page}
-//                       </PaginationLink>
-//                     </PaginationItem>
-//                   ))}
-
-//                 {currentPage < totalPages - 3 && (
-//                   <PaginationItem>
-//                     <PaginationEllipsis />
-//                   </PaginationItem>
-//                 )}
-
-//                 {totalPages > 1 && (
-//                   <PaginationItem>
-//                     <PaginationLink
-//                       onClick={() => setCurrentPage(totalPages)}
-//                       isActive={currentPage === totalPages}
-//                     >
-//                       {totalPages}
-//                     </PaginationLink>
-//                   </PaginationItem>
-//                 )}
-
-//                 <PaginationItem>
-//                   <PaginationNext
-//                     onClick={() => {
-//                       if (currentPage < totalPages) {
-//                         setCurrentPage(currentPage + 1);
-//                       }
-//                     }}
-//                     className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-//                   />
-//                 </PaginationItem>
-//               </PaginationContent>
-//             </Pagination>
-
-//             <div className="text-center mt-2 text-sm text-gray-600">
-//               Showing page {currentPage} of {totalPages} ({totalCount} total incidents)
-//             </div>
-//           </div>
-//         </TabsContent>
-
-//         <TabsContent value="analytics" className="mt-6">
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//             <div className="bg-white p-6 rounded-lg shadow-sm">
-//               <h3 className="text-lg font-semibold mb-4">Incident Status Distribution</h3>
-//               <div className="space-y-2">
-//                 <div className="flex justify-between">
-//                   <span>Open: {openCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((openCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Under Investigation: {underInvestigationCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((underInvestigationCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Closed: {closedCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((closedCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Pending: {pendingCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((pendingCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Support Required: {supportRequiredCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((supportRequiredCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="bg-white p-6 rounded-lg shadow-sm">
-//               <h3 className="text-lg font-semibold mb-4">Risk Level Distribution</h3>
-//               <div className="space-y-2">
-//                 <div className="flex justify-between">
-//                   <span>High Risk: {stats.highRisk}</span>
-//                   <span>{totalForAnalytics > 0 ? ((stats.highRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Medium Risk: {stats.mediumRisk}</span>
-//                   <span>{totalForAnalytics > 0 ? ((stats.mediumRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Low Risk: {stats.lowRisk}</span>
-//                   <span>{totalForAnalytics > 0 ? ((stats.lowRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </TabsContent>
-//       </Tabs>
-//       <IncidentFilterModal
-//         isOpen={isFilterModalOpen}
-//         onClose={() => setIsFilterModalOpen(false)}
-//         incidents={originalIncidents}
-//         onApply={(filtered) => setIncidents(filtered)}
-//         onReset={() => setIncidents(originalIncidents)}
-//       />
-//     </div>
-//   );
-// };
-
-// import React, { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { Button } from "@/components/ui/button";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon, PauseCircle, LifeBuoy } from "lucide-react";
-// import { Badge } from "@/components/ui/badge";
-// import IncidentFilterModal from "@/components/IncidentFilterModal";
-// import { incidentService, type Incident } from "@/services/incidentService";
-// import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-// import { ColumnConfig } from "@/hooks/useEnhancedTable";
-// import {
-//   Pagination,
-//   PaginationContent,
-//   PaginationEllipsis,
-//   PaginationItem,
-//   PaginationLink,
-//   PaginationNext,
-//   PaginationPrevious,
-// } from "@/components/ui/pagination";
-
-// // Stats calculation
-// const calculateStats = (incidents: any[]) => {
-//   return {
-//     total: incidents.length,
-//     open: incidents.filter(i => i.current_status === "Open").length,
-//     underObservation: incidents.filter(i => i.current_status === "Under Observation").length,
-//     closed: incidents.filter(i => i.current_status === "Closed").length,
-//     highRisk: incidents.filter(i => i.inc_level_name === "High Risk").length,
-//     mediumRisk: incidents.filter(i => i.inc_level_name === "Medium Risk").length,
-//     lowRisk: incidents.filter(i => i.inc_level_name === "Low Risks").length,
-//   };
-// };
-
-// const getLevelColor = (level: string) => {
-//   switch (level) {
-//     case "High Risk": return "bg-red-100 text-red-800";
-//     case "Medium Risk": return "bg-yellow-100 text-yellow-800";
-//     case "Low Risk": return "bg-green-100 text-green-800";
-//     default: return "bg-gray-100 text-gray-800";
-//   }
-// };
-
-// const getStatusColor = (status: string) => {
-//   switch (status) {
-//     case "Open": return "bg-blue-100 text-blue-800";
-//     case "Under Observation": return "bg-yellow-100 text-yellow-800";
-//     case "Closed": return "bg-green-100 text-green-800";
-//     default: return "bg-gray-100 text-gray-800";
-//   }
-// };
-
-// export const IncidentDashboard = () => {
-//   const navigate = useNavigate();
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [selectedIncidents, setSelectedIncidents] = useState<string[]>([]);
-//   const [incidents, setIncidents] = useState<Incident[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-//   const [originalIncidents, setOriginalIncidents] = useState<Incident[]>([]);
-//   const [countStats, setCountStats] = useState<{ total_incidents: number; open: number; under_investigation: number; closed: number; pending: number; support_required: number } | null>(null);
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [totalPages, setTotalPages] = useState(1);
-//   const [totalCount, setTotalCount] = useState(0);
-
-
-//   // Define columns for the EnhancedTable
-//   const columns: ColumnConfig[] = [
-//     {
-//       key: "srNo",
-//       label: "Sr. No.",
-//       sortable: false,
-//       defaultVisible: true,
-//       draggable: false,
-//     },
-//     {
-//       key: "id",
-//       label: "ID",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "description",
-//       label: "Description",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     // {
-//     //   key: "region",
-//     //   label: "Region",
-//     //   sortable: false,
-//     //   defaultVisible: false,
-//     //   draggable: true,
-//     // },
-//     {
-//       key: "site_name",
-//       label: "Site",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: false, // Make it non-draggable to test
-//     },
-//     // {
-//     //   key: "test_site",
-//     //   label: "Test Site",
-//     //   sortable: false,
-//     //   defaultVisible: true,
-//     //   draggable: false,
-//     // },
-//     {
-//       key: "building_name",
-//       label: "Building",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "inc_time",
-//       label: "Incident Time",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "inc_level_name",
-//       label: " Incident Level",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "category_name",
-//       label: "Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sub_category_name",
-//       label: "Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sub_sub_category_name",
-//       label: "Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sub_sub_sub_category_name",
-//       label: "Sub Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_category_name",
-//       label: "Secondary Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_sub_category_name",
-//       label: "Secondary Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_sub_sub_category_name",
-//       label: "Secondary Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//     {
-//       key: "sec_sub_sub_sub_category_name",
-//       label: "Secondary Sub Sub Sub Category",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-
-
-//     {
-//       key: "current_status",
-//       label: "Status",
-//       sortable: true,
-//       defaultVisible: true,
-//       draggable: true,
-//     },
-//   ];
-
-//   // Debug: Log columns configuration
-//   console.log("Columns configuration:", columns);
-
-//   useEffect(() => {
-//     // Clear old table settings to force refresh
-//     localStorage.removeItem('incidents-table');
-//     localStorage.removeItem('incidents-table-columns');
-//     localStorage.removeItem('incidents-table-visibility');
-
-//     fetchIncidents(currentPage);
-//     fetchCounts();
-//   }, [currentPage]);
-
-//   const fetchIncidents = async (page: number = 1) => {
-//     try {
-//       setLoading(true);
-//       setError(null);
-//       const query = `page=${page}`;
-//       const response = await incidentService.getIncidents(query);
-
-//       // Extract data based on provided API response structure
-//       const incidentsArr = response.data?.incidents || [];
-//       setIncidents(incidentsArr);
-//       setOriginalIncidents(incidentsArr);
-
-//       // Extract pagination data
-//       const pagination = response.pagination || {};
-//       setCurrentPage(pagination.current_page || 1);
-//       setTotalPages(pagination.total_pages || 1);
-//       setTotalCount(pagination.total_count || incidentsArr.length || 0);
-//     } catch (err) {
-//       setError("Failed to fetch incidents");
-//       console.error("Error fetching incidents:", err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const fetchCounts = async () => {
-//     try {
-//       const counts = await incidentService.getIncidentCounts();
-//       setCountStats(counts);
-//     } catch (err) {
-//       console.error('Failed to fetch incident counts:', err);
-//     }
-//   };
-
-//   // Calculate page size for Sr. No. calculation
-//   // const pageSize = incidents.length > 0 && totalPages > 0 ? Math.ceil(totalCount / totalPages) : incidents.length;
-
-//   // Render cell function for custom formatting
-//   const renderCell = (item: Incident, columnKey: string): React.ReactNode => {
-//     const index = incidents.findIndex(incident => incident.id === item.id);
-
-//     switch (columnKey) {
-//       case "srNo":
-//         // Continuous Sr. No. across pages
-//         return <span className="font-medium">{(currentPage - 1) * 20 + index + 1}</span>;
-//       case "id":
-//         return <span className="font-medium">{item.id}</span>;
-//       case "description":
-//         return <div className="w-[15rem] overflow-hidden text-ellipsis text-center">{item.description}</div>;
-//       case "site_name":
-//         console.log("Rendering site_name:", item.site_name, "building_name:", item.building_name);
-//         return <span>{item.site_name || item.building_name || "-"}</span>;
-//       case "test_site":
-//         return <span style={{ color: 'red', fontWeight: 'bold' }}>TEST SITE</span>;
-//       case "region":
-//         return <span>-</span>;
-//       case "building_name":
-//         return <span>{item.building_name || "-"}</span>;
-//       case "inc_time":
-//         return (
-//           <span>
-//             {item.inc_time ? new Date(item.inc_time).toLocaleString() : "-"}
-//           </span>
-//         );
-//       case "inc_level_name":
-//         return (
-//           <Badge className={getLevelColor(item.inc_level_name)}>
-//             {item.inc_level_name}
-//           </Badge>
-//         );
-//       case "category_name":
-//         return <span>{item.category_name || "-"}</span>;
-//       case "sub_category_name":
-//         return <span>{item.sub_category_name || "-"}</span>;
-//       case "sub_sub_category_name":
-//         return <span>{item.sub_sub_category_name || "-"}</span>;
-//       case "sub_sub_sub_category_name":
-//         return <span>{item.sub_sub_sub_category_name || "-"}</span>;
-//       case "sec_category_name":
-//         return <span>{item.sec_category_name || "-"}</span>;
-//       case "sec_sub_category_name":
-//         return <span>{item.sec_sub_category_name || "-"}</span>;
-//       case "sec_sub_sub_category_name":
-//         return <span>{item.sec_sub_sub_category_name || "-"}</span>;
-//       case "sec_sub_sub_sub_category_name":
-//         return <span>{item.sec_sub_sub_sub_category_name || "-"}</span>;
-//       case "support_required":
-//         return (
-//           <Badge className={item.support_required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-//             {item.support_required ? "Yes" : "No"}
-//           </Badge>
-//         );
-//       case "assigned_to_user_name":
-//         return <span>{item.assigned_to_user_name || "-"}</span>;
-//       case "current_status":
-//         return (
-//           <Badge className={getStatusColor(item.current_status)}>
-//             {item.current_status}
-//           </Badge>
-//         );
-//       default:
-//         const value = item[columnKey as keyof Incident];
-//         if (value === null || value === undefined) {
-//           return <span>-</span>;
-//         }
-//         return <span>{String(value)}</span>;
-//     }
-//   };
-
-//   // Render actions function
-//   const renderActions = (item: Incident): React.ReactNode => {
-//     return (
-//       <Button
-//         variant="ghost"
-//         size="sm"
-//         onClick={() => handleViewIncident(item.id.toString())}
-//         title="View Incident"
-//       >
-//         <Eye className="w-4 h-4" />
-//       </Button>
-//     );
-//   };
-
-//   const stats = calculateStats(incidents);
-
-//   // Prefer API counts if available for analytics
-//   const totalForAnalytics = countStats ? countStats.total_incidents : stats.total;
-//   const openCount = countStats ? countStats.open : stats.open;
-//   const underInvestigationCount = countStats ? countStats.under_investigation : stats.underObservation;
-//   const closedCount = countStats ? countStats.closed : stats.closed;
-//   const pendingCount = countStats ? countStats.pending : 0;
-//   const supportRequiredCount = countStats ? countStats.support_required : 0;
-
-//   const handleAddIncident = () => {
-//     navigate("/safety/incident/add");
-//   };
-
-//   const handleCardClick = async (type: 'total' | 'open' | 'closed' | 'pending' | 'under_investigation' | 'support_required') => {
-//     try {
-//       setLoading(true);
-//       setError(null);
-//       let query = `page=1`; // Reset to page 1 for filtered results
-//       if (type === 'open') query += '&q[current_status_eq]=Open';
-//       else if (type === 'closed') query += '&q[current_status_eq]=Closed';
-//       else if (type === 'pending') query += '&q[current_status_eq]=Pending';
-//       else if (type === 'under_investigation') query += '&q[current_status_eq]=Under%20Investigation';
-//       else if (type === 'support_required') query += '&q[current_status_eq]=Support%20Required';
-
-//       const response = await incidentService.getIncidents(query);
-//       const incidentsArr = response.data?.incidents || [];
-//       setIncidents(incidentsArr);
-//       setOriginalIncidents(incidentsArr);
-//       setCurrentPage(1); // Reset to first page
-//       const pagination = response.pagination || {};
-//       setTotalPages(pagination.total_pages || 1);
-//       setTotalCount(pagination.total_count || incidentsArr.length || 0);
-//     } catch (err) {
-//       setError('Failed to fetch incidents');
-//       console.error('Error fetching incidents by card:', err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const handleViewIncident = (incidentId: string) => {
-//     navigate(`/safety/incident/${incidentId}`);
-//   };
-
-//   // Handle export functionality using API
-//   // const handleExport = async () => {
-//   //   try {
-
-//   //     const baseUrl = localStorage.getItem('baseUrl') || '';
-//   //     const token = localStorage.getItem('token') || '';
-//   //     if (!baseUrl || !token) {
-//   //       alert('API base URL or token not found in localStorage.');
-//   //       return;
-//   //     }
-
-
-//   //     const exportUrl = `${baseUrl}/pms/incidents/export.json`;
-
-
-//   //     const response = await fetch(exportUrl, {
-//   //       method: 'GET',
-//   //       headers: {
-//   //         'Authorization': `Bearer ${token}`,
-//   //       },
-//   //     });
-
-//   //     if (!response.ok) {
-//   //       throw new Error('Failed to export incidents');
-//   //     }
-
-
-//   //     let filename = `incidents_${new Date().toISOString().split('T')[0]}.csv`;
-//   //     const disposition = response.headers.get('Content-Disposition');
-//   //     if (disposition && disposition.includes('filename=')) {
-//   //       const match = disposition.match(/filename="?([^";]+)"?/);
-//   //       if (match && match[1]) filename = match[1];
-//   //     }
-
-//   //     const blob = await response.blob();
-//   //     const url = window.URL.createObjectURL(blob);
-//   //     const link = document.createElement('a');
-//   //     link.href = url;
-//   //     link.setAttribute('download', filename);
-//   //     document.body.appendChild(link);
-//   //     link.click();
-//   //     document.body.removeChild(link);
-//   //     window.URL.revokeObjectURL(url);
-//   //   } catch (error) {
-//   //     console.error('Error exporting incidents:', error);
-//   //     alert('Failed to export incidents');
-//   //   }
-//   // };
-//   // Handle export functionality using API
-//   const handleExport = async () => {
-//     try {
-//       const baseUrl = localStorage.getItem("baseUrl") || "";
-//       const token = localStorage.getItem("token") || "";
-//       if (!baseUrl || !token) {
-//         alert("API base URL or token not found in localStorage.");
-//         return;
-//       }
-
-//       const exportUrl = `https://${baseUrl}/pms/incidents/export.xlsx`;
-
-//       const response = await fetch(exportUrl, {
-//         method: "GET",
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-//         },
-//       });
-
-//       if (!response.ok) {
-//         throw new Error("Failed to export incidents");
-//       }
-
-//       let filename = `incidents_${new Date().toISOString().split("T")[0]}.xlsx`;
-//       const disposition = response.headers.get("Content-Disposition");
-//       if (disposition && disposition.includes("filename=")) {
-//         const match = disposition.match(/filename="?([^";]+)"?/);
-//         if (match && match[1]) filename = match[1];
-//       }
-
-//       const blob = await response.blob();
-//       const url = window.URL.createObjectURL(blob);
-//       const link = document.createElement("a");
-//       link.href = url;
-//       link.setAttribute("download", filename);
-//       document.body.appendChild(link);
-//       link.click();
-//       document.body.removeChild(link);
-//       window.URL.revokeObjectURL(url);
-//     } catch (error) {
-//       console.error("Error exporting incidents:", error);
-//       alert("Failed to export incidents");
-//     }
-//   };
-
-
-
-//   const StatCard = ({ icon, label, value, color }: any) => (
-//     <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow">
-//       <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-//         {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
-//       </div>
-//       <div>
-//         <div className="text-2xl font-semibold text-[#1A1A1A]">{value}</div>
-//         <div className="text-sm font-medium text-[#1A1A1A]">{label}</div>
-//       </div>
-//     </div>
-//   );
-
-//   // Generate page numbers for pagination
-//   const getPageNumbers = () => {
-//     const maxPagesToShow = 3; // Show up to 3 page numbers around current page
-//     const pages: (number | string)[] = [];
-
-//     if (totalPages <= 5) {
-//       // Show all pages if total pages are 5 or fewer
-//       for (let i = 1; i <= totalPages; i++) {
-//         pages.push(i);
-//       }
-//     } else {
-//       // Always show first page
-//       pages.push(1);
-
-//       // Calculate start and end page for the middle range
-//       let startPage = Math.max(2, currentPage - 1);
-//       let endPage = Math.min(totalPages - 1, currentPage + 1);
-
-//       // Adjust start and end to ensure 3 pages are shown if possible
-//       if (endPage - startPage < 2) {
-//         if (currentPage <= 3) {
-//           endPage = Math.min(4, totalPages - 1);
-//         } else if (currentPage >= totalPages - 2) {
-//           startPage = Math.max(totalPages - 3, 2);
-//         }
-//       }
-
-//       // Add ellipsis after first page if needed
-//       if (startPage > 2) {
-//         pages.push('...');
-//       }
-
-//       // Add middle pages
-//       for (let i = startPage; i <= endPage; i++) {
-//         pages.push(i);
-//       }
-
-//       // Add ellipsis before last page if needed
-//       if (endPage < totalPages - 1) {
-//         pages.push('...');
-//       }
-
-//       // Always show last page if more than one page
-//       if (totalPages > 1) {
-//         pages.push(totalPages);
-//       }
-//     }
-
-//     return pages;
-//   };
-
-//   return (
-//     <div className="p-4 sm:p-6">
-//       <Tabs defaultValue="list" className="w-full">
-//         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-//           <TabsTrigger
-//             value="list"
-//             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-//           >
-//             <AlertTriangle className="w-4 h-4" />
-//             List
-//           </TabsTrigger>
-//           <TabsTrigger
-//             value="analytics"
-//             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-//           >
-//             <Settings className="w-4 h-4" />
-//             Analytics
-//           </TabsTrigger>
-//         </TabsList>
-
-//         <TabsContent value="list" className="mt-6">
-//           {/* Stats Cards */}
-//           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-//             <div onClick={() => handleCardClick('total')} className="cursor-pointer">
-//               <StatCard icon={<AlertTriangle />} label="Total Incidents" value={countStats ? countStats.total_incidents : stats.total} />
-//             </div>
-//             <div onClick={() => handleCardClick('open')} className="cursor-pointer">
-//               <StatCard icon={<Clock />} label="Open" value={countStats ? countStats.open : stats.open} />
-//             </div>
-//             <div onClick={() => handleCardClick('under_investigation')} className="cursor-pointer">
-//               <StatCard icon={<Search />} label="Under Investigation" value={countStats ? countStats.under_investigation : stats.underObservation} />
-//             </div>
-//             <div onClick={() => handleCardClick('closed')} className="cursor-pointer">
-//               <StatCard icon={<CheckCircle />} label="Closed" value={countStats ? countStats.closed : stats.closed} />
-//             </div>
-//             <div onClick={() => handleCardClick('pending')} className="cursor-pointer">
-//               <StatCard icon={<PauseCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
-//             </div>
-//             <div onClick={() => handleCardClick('support_required')} className="cursor-pointer">
-//               <StatCard icon={<LifeBuoy />} label="Support Required" value={countStats ? countStats.support_required : 0} />
-//             </div>
-//             {/* <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
-//             <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
-//             <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} /> */}
-//           </div>
-
-//           {/* Enhanced Table */}
-//           <EnhancedTable
-//             data={incidents}
-//             columns={columns}
-//             renderCell={renderCell}
-//             renderActions={renderActions}
-//             onRowClick={(item) => handleViewIncident(item.id.toString())}
-//             loading={loading}
-//             emptyMessage={error ? error : "No incidents found"}
-//             enableSearch={true}
-//             searchPlaceholder="Search incidents..."
-//             enableExport={true}
-//             handleExport={handleExport}
-//             exportFileName="incidents"
-//             storageKey="incidents-dashboard-new"
-//             className="min-w-full"
-//             pagination={false}
-//             leftActions={
-//               <div className="flex items-center gap-2">
-//                 <Button
-//                   onClick={handleAddIncident}
-//                   className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-//                 >
-//                   <Plus className="w-4 h-4" />
-//                   Add Incident
-//                 </Button>
-//               </div>
-//             }
-//             onFilterClick={() => setIsFilterModalOpen(true)}
-//           />
-
-//           {/* Updated Pagination */}
-//           {totalPages > 0 && (
-//             <div className="mt-6">
-//               <Pagination>
-//                 <PaginationContent>
-//                   <PaginationItem>
-//                     <PaginationPrevious
-//                       onClick={() => {
-//                         if (currentPage > 1) {
-//                           setCurrentPage(currentPage - 1);
-//                         }
-//                       }}
-//                       className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-//                     />
-//                   </PaginationItem>
-
-//                   {getPageNumbers().map((page, index) => (
-//                     <PaginationItem key={index}>
-//                       {page === '...' ? (
-//                         <PaginationEllipsis />
-//                       ) : (
-//                         <PaginationLink
-//                           onClick={() => setCurrentPage(Number(page))}
-//                           isActive={currentPage === Number(page)}
-//                         >
-//                           {page}
-//                         </PaginationLink>
-//                       )}
-//                     </PaginationItem>
-//                   ))}
-
-//                   <PaginationItem>
-//                     <PaginationNext
-//                       onClick={() => {
-//                         if (currentPage < totalPages) {
-//                           setCurrentPage(currentPage + 1);
-//                         }
-//                       }}
-//                       className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-//                     />
-//                   </PaginationItem>
-//                 </PaginationContent>
-//               </Pagination>
-
-//               <div className="text-center mt-2 text-sm text-gray-600">
-//                 Showing page {currentPage} of {totalPages} ({totalCount} total incidents)
-//               </div>
-//             </div>
-//           )}
-//         </TabsContent>
-
-//         <TabsContent value="analytics" className="mt-6">
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//             <div className="bg-white p-6 rounded-lg shadow-sm">
-//               <h3 className="text-lg font-semibold mb-4">Incident Status Distribution</h3>
-//               <div className="space-y-2">
-//                 <div className="flex justify-between">
-//                   <span>Open: {openCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((openCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Under Investigation: {underInvestigationCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((underInvestigationCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Closed: {closedCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((closedCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Pending: {pendingCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((pendingCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Support Required: {supportRequiredCount}</span>
-//                   <span>{totalForAnalytics > 0 ? ((supportRequiredCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="bg-white p-6 rounded-lg shadow-sm">
-//               <h3 className="text-lg font-semibold mb-4">Risk Level Distribution</h3>
-//               <div className="space-y-2">
-//                 <div className="flex justify-between">
-//                   <span>High Risk: {stats.highRisk}</span>
-//                   <span>{totalForAnalytics > 0 ? ((stats.highRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Medium Risk: {stats.mediumRisk}</span>
-//                   <span>{totalForAnalytics > 0 ? ((stats.mediumRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>Low Risk: {stats.lowRisk}</span>
-//                   <span>{totalForAnalytics > 0 ? ((stats.lowRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </TabsContent>
-//       </Tabs>
-//       <IncidentFilterModal
-//         isOpen={isFilterModalOpen}
-//         onClose={() => setIsFilterModalOpen(false)}
-//         incidents={originalIncidents}
-//         onApply={(filtered) => setIncidents(filtered)}
-//         onReset={() => setIncidents(originalIncidents)}
-//         setCurrentPage={setCurrentPage}
-//         setTotalPages={setTotalPages}
-//         setTotalCount={setTotalCount}
-//       />
-//     </div>
-//   );
-// };
-
-
-
-
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon, PauseCircle, LifeBuoy } from "lucide-react";
+import {
+  Plus,
+  Eye,
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  Search,
+  Calendar,
+  Filter,
+  BarChart3,
+  ShieldCheck,
+  TrendingUp,
+  Activity,
+  Download,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import IncidentFilterModal from "@/components/IncidentFilterModal";
 import { incidentService, type Incident } from "@/services/incidentService";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { toast } from 'sonner';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { toast } from "sonner";
+import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
+import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
+import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
+import { SiteWisePowerConsumptionChart } from "@/components/charts/SiteWisePowerConsumptionChart";
 
-const calculateStats = (incidents: any[]) => {
-  return {
-    total: incidents.length,
-    open: incidents.filter(i => i.current_status === "Open").length,
-    underObservation: incidents.filter(i => i.current_status === "Under Observation").length,
-    closed: incidents.filter(i => i.current_status === "Closed").length,
-    highRisk: incidents.filter(i => i.inc_level_name === "High Risk").length,
-    mediumRisk: incidents.filter(i => i.inc_level_name === "Medium Risk").length,
-    lowRisk: incidents.filter(i => i.inc_level_name === "Low Risks").length,
-  };
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface PieSource {
+  name: string;
+  value: number;
+  color: string;
+}
+interface BarDataItem {
+  site: string;
+  mains: number;
+  dg: number;
+  renewable: number;
+  consumptionPerSqFt: number;
+  costPerSqFt: number;
+}
+interface KpiData {
+  zero_incident_days: number;
+  incident_rate: { incidents: number; area: number; rate: number };
+  ltir: { injuries: number; work_hours: number; value: number };
+}
+interface RcaRow {
+  site_name: string | null;
+  society_building_name: string | null;
+  incident_occurrence_date: string | null;
+  incident_occurrence_time: string | null;
+  incident_category_name: string | null;
+  incident_description: string | null;
+  incident_rca_text: string | null;
+  incident_corrective_action: string | null;
+  incident_preventive_action: string | null;
+  incident_status_raw: string | null;
+  assigned_to_user_name: string | null;
+  incident_level_name: string | null;
+}
+interface RcaPagination {
+  current_page: number;
+  per_page: number;
+  total_records: number;
+  total_pages: number;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const PIE_COLORS = ["#A89078", "#D8DCDD", "#6B4C3A", "#C4B8A8", "#9E9E9E"];
+
+const INCIDENT_CHART_OPTIONS = [
+  {
+    id: "categoryPieChart",
+    label: "Top 5 Category-wise Incidents",
+    description: "Incidents divided by main categories",
+  },
+  {
+    id: "statusWiseChart",
+    label: "Incident Status Distribution",
+    description: "Open vs Closed vs Under Investigation",
+  },
+  {
+    id: "levelWiseChart",
+    label: "Level Wise Incidents",
+    description: "Incidents grouped by risk levels",
+  },
+  {
+    id: "rcaTable",
+    label: "RCA Data Table",
+    description: "Root cause analysis detailed logs",
+  },
+];
+
+const INCIDENT_CHART_KEYS = INCIDENT_CHART_OPTIONS.map((opt) => opt.id);
+
+// ─── RCA column config ────────────────────────────────────────────────────────
+const RCA_COLUMNS: { key: keyof RcaRow; label: string }[] = [
+  { key: "site_name", label: "Site" },
+  { key: "incident_occurrence_date", label: "Date" },
+  { key: "incident_occurrence_time", label: "Time" },
+  { key: "incident_category_name", label: "Category" },
+  { key: "incident_level_name", label: "Level" },
+  { key: "incident_status_raw", label: "Status" },
+  { key: "incident_description", label: "Description" },
+  { key: "incident_rca_text", label: "RCA" },
+  { key: "incident_corrective_action", label: "Corrective Action" },
+  { key: "incident_preventive_action", label: "Preventive Action" },
+  { key: "assigned_to_user_name", label: "Assigned To" },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const ddmmyyyyToYYYYMMDD = (d: string) => {
+  const [dd, mm, yyyy] = d.split("/");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const formatTime = (iso: string | null) => {
+  if (!iso) return "-";
+  try {
+    return new Date(iso).toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "-";
+  }
 };
 
 const getLevelColor = (level: string) => {
   switch (level) {
-    case "High Risk": return "bg-red-100 text-red-800";
-    case "Medium Risk": return "bg-yellow-100 text-yellow-800";
-    case "Low Risk": return "bg-green-100 text-green-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "High Risk":
+    case "Extreme Risk":
+      return "bg-red-100 text-red-800";
+    case "Medium Risk":
+    case "Moderate Risk":
+      return "bg-yellow-100 text-yellow-800";
+    case "Low Risk":
+      return "bg-green-100 text-green-800";
+    default:
+      return "bg-gray-100 text-gray-800";
   }
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "Open": return "bg-blue-100 text-blue-800";
-    case "Under Observation": return "bg-yellow-100 text-yellow-800";
-    case "Closed": return "bg-green-100 text-green-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "Open":
+      return "bg-blue-100 text-blue-800";
+    case "Closed":
+      return "bg-green-100 text-green-800";
+    case "Under Observation":
+      return "bg-yellow-100 text-yellow-800";
+    case "final_closure":
+      return "bg-purple-100 text-purple-800";
+    case "provisional_closure":
+      return "bg-orange-100 text-orange-800";
+    case "Draft":
+      return "bg-gray-100 text-gray-600";
+    default:
+      return "bg-gray-100 text-gray-800";
   }
 };
 
+const getIncidentStatusColor = (status: string) => {
+  switch (status) {
+    case "Open":
+      return "bg-blue-100 text-blue-800";
+    case "Under Observation":
+      return "bg-yellow-100 text-yellow-800";
+    case "Closed":
+      return "bg-green-100 text-green-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const calculateStats = (incidents: any[]) => ({
+  total: incidents.length,
+  open: incidents.filter((i) => i.current_status === "Open").length,
+  underObservation: incidents.filter(
+    (i) => i.current_status === "Under Observation"
+  ).length,
+  closed: incidents.filter((i) => i.current_status === "Closed").length,
+});
+
+const downloadFile = async (url: string, filename: string) => {
+  const res = await fetch(url, { method: "GET" });
+  if (!res.ok) throw new Error("Export failed");
+  const disposition = res.headers.get("Content-Disposition");
+  if (disposition?.includes("filename=")) {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match?.[1]) filename = match[1];
+  }
+  const blob = await res.blob();
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(blob);
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(link.href);
+};
+
+// ─── SortableChartItem ────────────────────────────────────────────────────────
+const SortableChartItem = ({
+  id,
+  children,
+  className = "",
+}: {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("textarea") ||
+      target.closest(".recharts-wrapper") ||
+      target.closest("[data-no-drag]") ||
+      target.tagName === "BUTTON" ||
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA"
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    listeners?.onPointerDown?.(e);
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      onPointerDown={handlePointerDown}
+      className={`cursor-grab active:cursor-grabbing transition-all duration-200 h-full ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+// ─── StatCard ─────────────────────────────────────────────────────────────────
+const StatCard = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactElement;
+  label: string;
+  value: number | string;
+}) => (
+  <div className="bg-[#F6F4EE] rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow px-5 py-4 min-h-[96px] h-full">
+    <div className="w-14 h-14 min-w-[56px] bg-[#C4B89D54] flex items-center justify-center rounded flex-shrink-0">
+      {React.cloneElement(icon, { className: "w-6 h-6 text-[#C72030]" })}
+    </div>
+    <div className="flex flex-col justify-center min-w-0">
+      <div className="text-2xl font-semibold text-[#1A1A1A] leading-tight">
+        {value}
+      </div>
+      <div className="text-sm font-medium text-[#1A1A1A] whitespace-nowrap">
+        {label}
+      </div>
+    </div>
+  </div>
+);
+
+const StatCardGrid = ({ children }: { children: React.ReactNode }) => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-stretch">
+    {children}
+  </div>
+);
+
+// ─── RCA Table ────────────────────────────────────────────────────────────────
+const RcaTable = ({
+  data,
+  pagination,
+  loading,
+  onPageChange,
+  onDownload,
+  onSearch,
+  searchValue,
+}: {
+  data: RcaRow[];
+  pagination: RcaPagination | null;
+  loading: boolean;
+  onPageChange: (page: number) => void;
+  onDownload: () => void;
+  onSearch: (val: string) => void;
+  searchValue: string;
+}) => {
+  const totalPages = pagination?.total_pages ?? 1;
+  const currentPage = pagination?.current_page ?? 1;
+  const totalRecords = pagination?.total_records ?? 0;
+  const perPage = pagination?.per_page ?? 20;
+
+  // 🌟 FIX: Local Filtering for Sr. No.
+  // Hum pehle data ko original index ke sath map karte hain,
+  // phir target Sr. No. se filter karte hain taaki row number kharab na ho.
+  const displayData = searchValue.trim()
+    ? data
+        .map((row, index) => ({ row, originalIndex: index }))
+        .filter(({ originalIndex }) => {
+          const currentSrNo = (currentPage - 1) * perPage + originalIndex + 1;
+          return currentSrNo.toString().includes(searchValue.trim());
+        })
+    : data.map((row, index) => ({ row, originalIndex: index }));
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-[#1A1A1A]">RCA Data</h3>
+        <div className="flex items-center gap-2" data-no-drag>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search by Sr. No..."
+              type="number"
+              value={searchValue}
+              onChange={(e) => onSearch(e.target.value)}
+              className="pl-9 h-9 w-full sm:w-[220px] text-sm"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDownload}
+            className="h-9 gap-1.5 whitespace-nowrap"
+          >
+            <Download className="w-4 h-4" /> Export
+          </Button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        {loading ? (
+          <div className="py-16 text-center text-gray-400 text-sm">
+            Loading...
+          </div>
+        ) : displayData.length === 0 ? (
+          <div className="py-16 text-center text-gray-400 text-sm">
+            No RCA data found.
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                  Sr. No.
+                </th>
+                {RCA_COLUMNS.map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap"
+                  >
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {displayData.map(({ row, originalIndex }) => (
+                <tr
+                  key={originalIndex}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <td className="px-4 py-3 text-gray-500 font-medium text-sm">
+                    {(currentPage - 1) * perPage + originalIndex + 1}
+                  </td>
+                  {RCA_COLUMNS.map((col) => {
+                    const val = row[col.key];
+                    if (col.key === "incident_occurrence_time") {
+                      return (
+                        <td
+                          key={col.key}
+                          className="px-4 py-3 text-gray-700 whitespace-nowrap text-sm"
+                        >
+                          {formatTime(val)}
+                        </td>
+                      );
+                    }
+                    if (col.key === "incident_level_name") {
+                      return (
+                        <td
+                          key={col.key}
+                          className="px-4 py-3 whitespace-nowrap"
+                        >
+                          {val ? (
+                            <Badge className={`text-xs ${getLevelColor(val)}`}>
+                              {val}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                      );
+                    }
+                    if (col.key === "incident_status_raw") {
+                      return (
+                        <td
+                          key={col.key}
+                          className="px-4 py-3 whitespace-nowrap"
+                        >
+                          {val ? (
+                            <Badge className={`text-xs ${getStatusColor(val)}`}>
+                              {val
+                                .replace(/_/g, " ")
+                                .replace(/\b\w/g, (c) => c.toUpperCase())}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                      );
+                    }
+                    const isLong = [
+                      "incident_description",
+                      "incident_rca_text",
+                      "incident_corrective_action",
+                      "incident_preventive_action",
+                    ].includes(col.key);
+                    if (isLong) {
+                      return (
+                        <td
+                          key={col.key}
+                          className="px-4 py-3 text-sm text-gray-700 max-w-[200px]"
+                        >
+                          {val ? (
+                            <span title={val} className="block truncate">
+                              {val}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                      );
+                    }
+                    return (
+                      <td
+                        key={col.key}
+                        className="px-4 py-3 text-gray-700 whitespace-nowrap text-sm"
+                      >
+                        {val ?? <span className="text-gray-400">-</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {!loading && totalRecords > 0 && (
+        <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span className="text-xs text-gray-500">
+            Showing {Math.min((currentPage - 1) * perPage + 1, totalRecords)}–
+            {Math.min(currentPage * perPage, totalRecords)} of {totalRecords}{" "}
+            records
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(currentPage - 1)}
+              className="h-8"
+            >
+              Previous
+            </Button>
+            <span className="text-xs text-gray-600 px-1">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+              className="h-8"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export const IncidentDashboard = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedIncidents, setSelectedIncidents] = useState<string[]>([]);
+
+  // ── List tab state
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [originalIncidents, setOriginalIncidents] = useState<Incident[]>([]);
-  const [countStats, setCountStats] = useState<{ total_incidents: number; open: number; under_investigation: number; closed: number; pending: number; support_required: number } | null>(null);
+  const [countStats, setCountStats] = useState<{
+    total_incidents: number;
+    open: number;
+    under_investigation: number;
+    closed: number;
+    pending: number;
+    support_required: number;
+  } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [activeFilterQuery, setActiveFilterQuery] = useState<string>("");
+  const [activeFilterQuery, setActiveFilterQuery] = useState("");
+
+  // ── KPI state
+  const [kpiData, setKpiData] = useState<KpiData | null>(null);
+
+  // ── RCA state
+  const [rcaData, setRcaData] = useState<RcaRow[]>([]);
+  const [rcaPagination, setRcaPagination] = useState<RcaPagination | null>(
+    null
+  );
+  const [rcaLoading, setRcaLoading] = useState(false);
+  const [rcaPage, setRcaPage] = useState(1);
+  const [rcaSearch, setRcaSearch] = useState("");
+
+  // ── Analytics tab state
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [selectedCharts, setSelectedCharts] =
+    useState<string[]>(INCIDENT_CHART_KEYS);
+  const [chartOrder, setChartOrder] = useState<string[]>(INCIDENT_CHART_KEYS);
+
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const lastYear = new Date(today);
+    lastYear.setFullYear(today.getFullYear() - 1);
+    const fmt = (d: Date) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    return { startDate: fmt(lastYear), endDate: fmt(today) };
+  };
+  const [analyticsDateRange, setAnalyticsDateRange] =
+    useState(getDefaultDateRange);
+
+  const getDialogDate = (dateStr: string) => {
+    const [dd, mm, yyyy] = dateStr.split("/");
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  };
+
+  const handleApplyAnalyticsFilters = (startStr: string, endStr: string) => {
+    const formatToDDMMYYYY = (d: string) => {
+      const [y, m, day] = d.split("-");
+      return `${day}/${m}/${y}`;
+    };
+    setAnalyticsDateRange({
+      startDate: formatToDDMMYYYY(startStr),
+      endDate: formatToDDMMYYYY(endStr),
+    });
+  };
+
+  // ── Analytics API data states
+  const [analyticsStats, setAnalyticsStats] = useState({
+    total: 0,
+    open: 0,
+    under_investigation: 0,
+    closed: 0,
+    other: 0,
+  });
+  const [statusSummaryData, setStatusSummaryData] = useState<PieSource[]>([]);
+  const [levelData, setLevelData] = useState<BarDataItem[]>([]);
+  const [categoryData, setCategoryData] = useState<PieSource[]>([]);
+
+  // ── dnd sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over?.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   const columns: ColumnConfig[] = [
     {
@@ -1497,13 +652,6 @@ export const IncidentDashboard = () => {
       draggable: false,
     },
     {
-      key: "building_name",
-      label: "Building",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
       key: "inc_time",
       label: "Incident Time",
       sortable: true,
@@ -1512,7 +660,7 @@ export const IncidentDashboard = () => {
     },
     {
       key: "inc_level_name",
-      label: " Incident Level",
+      label: "Level",
       sortable: true,
       defaultVisible: true,
       draggable: true,
@@ -1520,55 +668,6 @@ export const IncidentDashboard = () => {
     {
       key: "category_name",
       label: "Category",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "sub_category_name",
-      label: "Sub Category",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "sub_sub_category_name",
-      label: "Sub Sub Category",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "sub_sub_sub_category_name",
-      label: "Sub Sub Sub Category",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "sec_category_name",
-      label: "Secondary Category",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "sec_sub_category_name",
-      label: "Secondary Sub Category",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "sec_sub_sub_category_name",
-      label: "Secondary Sub Sub Category",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "sec_sub_sub_sub_category_name",
-      label: "Secondary Sub Sub Sub Category",
       sortable: true,
       defaultVisible: true,
       draggable: true,
@@ -1582,36 +681,70 @@ export const IncidentDashboard = () => {
     },
   ];
 
+  // ── Effects
   useEffect(() => {
-    localStorage.removeItem('incidents-table');
-    localStorage.removeItem('incidents-table-columns');
-    localStorage.removeItem('incidents-table-visibility');
-
     fetchIncidents(currentPage, activeFilterQuery);
     fetchCounts();
   }, [currentPage, activeFilterQuery]);
+
+  useEffect(() => {
+    const { startDate, endDate } = analyticsDateRange;
+    fetchStatusSummary(startDate, endDate);
+    fetchLevelWise(startDate, endDate);
+    fetchTopCategories(startDate, endDate);
+    fetchKpis(startDate, endDate);
+    setRcaPage(1);
+  }, [analyticsDateRange]);
+
+  // 🌟 FIX: API sirf tabhi call hoga jab page badlega. Typing par nahi.
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchRcaData(
+        analyticsDateRange.startDate,
+        analyticsDateRange.endDate,
+        rcaPage
+      );
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [rcaPage, analyticsDateRange]);
+
+  const getApiBase = () => {
+    const baseUrl = localStorage.getItem("baseUrl") || "";
+    const token = localStorage.getItem("token") || "";
+    return { baseUrl, token, valid: !!(baseUrl && token) };
+  };
+
+  const buildParams = (
+    fromDate: string,
+    toDate: string,
+    extra: Record<string, string> = {}
+  ) => {
+    const { token } = getApiBase();
+    return new URLSearchParams({
+      from_date: ddmmyyyyToYYYYMMDD(fromDate),
+      to_date: ddmmyyyyToYYYYMMDD(toDate),
+      access_token: token,
+      ...extra,
+    });
+  };
 
   const fetchIncidents = async (page: number = 1, filterQuery: string = "") => {
     try {
       setLoading(true);
       setError(null);
-      let query = `page=${page}`;
-      if (filterQuery) {
-        query += `&${filterQuery}`;
-      }
+      const query = `page=${page}${filterQuery ? `&${filterQuery}` : ""}`;
       const response = await incidentService.getIncidents(query);
-
       const incidentsArr = response.data?.incidents || [];
       setIncidents(incidentsArr);
       setOriginalIncidents(incidentsArr);
-
       const pagination = response.pagination || {};
       setCurrentPage(pagination.current_page || 1);
       setTotalPages(pagination.total_pages || 1);
       setTotalCount(pagination.total_count || incidentsArr.length || 0);
     } catch (err) {
       setError("Failed to fetch incidents");
-      console.error("Error fetching incidents:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -1622,24 +755,245 @@ export const IncidentDashboard = () => {
       const counts = await incidentService.getIncidentCounts();
       setCountStats(counts);
     } catch (err) {
-      console.error('Failed to fetch incident counts:', err);
+      console.error(err);
     }
   };
 
-  const renderCell = (item: Incident, columnKey: string): React.ReactNode => {
-    const index = incidents.findIndex(incident => incident.id === item.id);
+  const fetchKpis = async (fromDate: string, toDate: string) => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) return;
+    try {
+      const params = buildParams(fromDate, toDate);
+      const res = await fetch(
+        `https://${baseUrl}/incident_dashboard/incident_kpis.json?${params}`
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success === 1 && json.data) setKpiData(json.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
+  // 🌟 FIX: Removed search text from Backend API call
+  const fetchRcaData = async (
+    fromDate: string,
+    toDate: string,
+    page: number
+  ) => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) return;
+    setRcaLoading(true);
+    try {
+      const extra: Record<string, string> = { page: String(page) };
+      const params = buildParams(fromDate, toDate, extra);
+      const res = await fetch(
+        `https://${baseUrl}/incident_dashboard/rca_data.json?${params}`
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success === 1) {
+        setRcaData(json.response || []);
+        setRcaPagination(json.pagination || null);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRcaLoading(false);
+    }
+  };
+
+  // 🌟 FIX: Search krne par auto-calculate target page
+  const handleRcaSearch = (val: string) => {
+    setRcaSearch(val);
+    const srNo = parseInt(val.trim(), 10);
+    const perPage = rcaPagination?.per_page ?? 20;
+
+    if (!isNaN(srNo) && srNo > 0) {
+      const targetPage = Math.ceil(srNo / perPage);
+      const maxPage = rcaPagination?.total_pages ?? 1;
+      const validPage = Math.min(targetPage, maxPage);
+
+      if (validPage !== rcaPage) {
+        setRcaPage(validPage);
+      }
+    } else if (!val.trim()) {
+      setRcaPage(1); // clear krne par wapas page 1 pe
+    }
+  };
+
+  const handleRcaPageChange = (page: number) => setRcaPage(page);
+
+  const handleExportRca = async () => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) {
+      toast.error("API details missing.");
+      return;
+    }
+    try {
+      const params = buildParams(
+        analyticsDateRange.startDate,
+        analyticsDateRange.endDate,
+        { export: "true" }
+      );
+      await downloadFile(
+        `https://${baseUrl}/incident_dashboard/rca_data.json?${params}`,
+        `rca_data_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+    } catch {
+      toast.error("Failed to export RCA data");
+    }
+  };
+
+  const fetchStatusSummary = async (fromDate: string, toDate: string) => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) return;
+    try {
+      const params = buildParams(fromDate, toDate);
+      const res = await fetch(
+        `https://${baseUrl}/incident_dashboard/status_summary.json?${params}`
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success === 1 && json.response) {
+        const r = json.response;
+        const open = r.open ?? 0,
+          closed = r.closed ?? 0,
+          other = r.other ?? 0,
+          under = r.under_investigation ?? 0;
+        setAnalyticsStats({
+          total: open + closed + other + under,
+          open,
+          under_investigation: under,
+          closed,
+          other,
+        });
+        setStatusSummaryData([
+          { name: "Open", value: open, color: "#A89078" },
+          { name: "Closed", value: closed, color: "#C4B8A8" },
+          { name: "Other", value: other, color: "#D8DCDD" },
+          { name: "Under Investigation", value: under, color: "#6B4C3A" },
+        ]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchLevelWise = async (fromDate: string, toDate: string) => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) return;
+    try {
+      const params = buildParams(fromDate, toDate);
+      const res = await fetch(
+        `https://${baseUrl}/incident_dashboard/level_wise.json?${params}`
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success === 1 && json.response) {
+        setLevelData(
+          Object.entries(json.response).map(([site, value]) => ({
+            site,
+            mains: Number(value),
+            dg: 0,
+            renewable: 0,
+            consumptionPerSqFt: 0,
+            costPerSqFt: 0,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchTopCategories = async (fromDate: string, toDate: string) => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) return;
+    try {
+      const params = buildParams(fromDate, toDate);
+      const res = await fetch(
+        `https://${baseUrl}/incident_dashboard/top_categories.json?${params}`
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success === 1 && json.response) {
+        setCategoryData(
+          Object.entries(json.response).map(([name, value], i) => ({
+            name,
+            value: Number(value),
+            color: PIE_COLORS[i % PIE_COLORS.length],
+          }))
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleExportLevelWise = async () => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) return;
+    try {
+      const params = buildParams(
+        analyticsDateRange.startDate,
+        analyticsDateRange.endDate,
+        { export: "true" }
+      );
+      await downloadFile(
+        `https://${baseUrl}/incident_dashboard/level_wise.json?${params}`,
+        `level_wise_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+    } catch {
+      toast.error("Failed to export level wise data");
+    }
+  };
+
+  const handleExportTopCategories = async () => {
+    const { baseUrl, valid } = getApiBase();
+    if (!valid) return;
+    try {
+      const params = buildParams(
+        analyticsDateRange.startDate,
+        analyticsDateRange.endDate,
+        { export: "true" }
+      );
+      await downloadFile(
+        `https://${baseUrl}/incident_dashboard/top_categories.json?${params}`,
+        `top_categories_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+    } catch {
+      toast.error("Failed to export top categories");
+    }
+  };
+
+  const handleExportIncidents = async () => {
+    const { baseUrl, token, valid } = getApiBase();
+    if (!valid) {
+      toast.error("API details missing.");
+      return;
+    }
+    try {
+      await downloadFile(
+        `https://${baseUrl}/pms/incidents/export.xlsx`,
+        `incidents_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+    } catch {
+      toast.error("Failed to export incidents");
+    }
+  };
+
+  const renderCell = (item: Incident, columnKey: string) => {
+    const index = incidents.findIndex((i) => i.id === item.id);
     switch (columnKey) {
       case "srNo":
-        return <span className="font-medium">{(currentPage - 1) * 20 + index + 1}</span>;
-      case "id":
-        return <span className="font-medium">{item.id}</span>;
-      case "description":
-        return <div className="w-[15rem] overflow-hidden text-ellipsis text-center">{item.description}</div>;
+        return (
+          <span className="font-medium">
+            {(currentPage - 1) * 20 + index + 1}
+          </span>
+        );
       case "site_name":
         return <span>{item.site_name || item.building_name || "-"}</span>;
-      case "building_name":
-        return <span>{item.building_name || "-"}</span>;
       case "inc_time":
         return (
           <span>
@@ -1652,193 +1006,31 @@ export const IncidentDashboard = () => {
             {item.inc_level_name}
           </Badge>
         );
-      case "category_name":
-        return <span>{item.category_name || "-"}</span>;
-      case "sub_category_name":
-        return <span>{item.sub_category_name || "-"}</span>;
-      case "sub_sub_category_name":
-        return <span>{item.sub_sub_category_name || "-"}</span>;
-      case "sub_sub_sub_category_name":
-        return <span>{item.sub_sub_sub_category_name || "-"}</span>;
-      case "sec_category_name":
-        return <span>{item.sec_category_name || "-"}</span>;
-      case "sec_sub_category_name":
-        return <span>{item.sec_sub_category_name || "-"}</span>;
-      case "sec_sub_sub_category_name":
-        return <span>{item.sec_sub_sub_category_name || "-"}</span>;
-      case "sec_sub_sub_sub_category_name":
-        return <span>{item.sec_sub_sub_sub_category_name || "-"}</span>;
-      case "support_required":
-        return (
-          <Badge className={item.support_required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-            {item.support_required ? "Yes" : "No"}
-          </Badge>
-        );
-      case "assigned_to_user_name":
-        return <span>{item.assigned_to_user_name || "-"}</span>;
       case "current_status":
         return (
-          <Badge className={getStatusColor(item.current_status)}>
+          <Badge className={getIncidentStatusColor(item.current_status)}>
             {item.current_status}
           </Badge>
         );
       default:
-        const value = item[columnKey as keyof Incident];
-        if (value === null || value === undefined) {
-          return <span>-</span>;
-        }
-        return <span>{String(value)}</span>;
+        return <span>{String(item[columnKey as keyof Incident] ?? "-")}</span>;
     }
   };
 
-  const renderActions = (item: Incident): React.ReactNode => {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleViewIncident(item.id.toString())}
-        title="View Incident"
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-    );
+  const handleCardClick = (type: string) => {
+    const map: Record<string, string> = {
+      open: "q[current_status_eq]=Open",
+      closed: "q[current_status_eq]=Closed",
+      under_investigation: "q[current_status_eq]=Under%20Investigation",
+    };
+    setActiveFilterQuery(map[type] ?? "");
+    setCurrentPage(1);
   };
 
   const stats = calculateStats(incidents);
-
-  const totalForAnalytics = countStats ? countStats.total_incidents : stats.total;
-  const openCount = countStats ? countStats.open : stats.open;
-  const underInvestigationCount = countStats ? countStats.under_investigation : stats.underObservation;
-  const closedCount = countStats ? countStats.closed : stats.closed;
-  const pendingCount = countStats ? countStats.pending : 0;
-  const supportRequiredCount = countStats ? countStats.support_required : 0;
-
-  const handleAddIncident = () => {
-    navigate("/safety/incident/add");
-  };
-
-  const handleCardClick = async (type: 'total' | 'open' | 'closed' | 'pending' | 'under_investigation' | 'support_required') => {
-    try {
-      setLoading(true);
-      setError(null);
-      let filterQuery = '';
-      if (type === 'open') filterQuery = 'q[current_status_eq]=Open';
-      else if (type === 'closed') filterQuery = 'q[current_status_eq]=Closed';
-      else if (type === 'pending') filterQuery = 'q[current_status_eq]=Pending';
-      else if (type === 'under_investigation') filterQuery = 'q[current_status_eq]=Under%20Investigation';
-      else if (type === 'support_required') filterQuery = 'q[support_required_eq]=true';
-
-      setActiveFilterQuery(filterQuery);
-      setCurrentPage(1);
-    } catch (err) {
-      setError('Failed to fetch incidents');
-      console.error('Error fetching incidents by card:', err);
-      setLoading(false);
-    }
-  };
-
-  const handleViewIncident = (incidentId: string) => {
-    // navigate(`/safety/incident/${incidentId}`);
-    navigate(`/safety/incident/new-details/${incidentId}`);
-  };
-
-  const handleExport = async () => {
-    try {
-      const baseUrl = localStorage.getItem("baseUrl") || "";
-      const token = localStorage.getItem("token") || "";
-      if (!baseUrl || !token) {
-        toast.error("API base URL or token not found in localStorage.");
-        return;
-      }
-
-      const exportUrl = `https://${baseUrl}/pms/incidents/export.xlsx`;
-
-      const response = await fetch(exportUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to export incidents");
-      }
-      let filename = `incidents_${new Date().toISOString().split("T")[0]}.xlsx`;
-      const disposition = response.headers.get("Content-Disposition");
-      if (disposition && disposition.includes("filename=")) {
-        const match = disposition.match(/filename="?([^";]+)"?/);
-        if (match && match[1]) filename = match[1];
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error exporting incidents:", error);
-      toast.error("Failed to export incidents");
-    }
-  };
-
-  const StatCard = ({ icon, label, value, color }: any) => (
-    <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow">
-      <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-        {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
-      </div>
-      <div>
-        <div className="text-2xl font-semibold text-[#1A1A1A]">{value}</div>
-        <div className="text-sm font-medium text-[#1A1A1A]">{label}</div>
-      </div>
-    </div>
+  const orderedVisibleCharts = chartOrder.filter((k) =>
+    selectedCharts.includes(k)
   );
-
-  const getPageNumbers = () => {
-    const maxPagesToShow = 3;
-    const pages: (number | string)[] = [];
-
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-
-      let startPage = Math.max(2, currentPage - 1);
-      let endPage = Math.min(totalPages - 1, currentPage + 1);
-
-      if (endPage - startPage < 2) {
-        if (currentPage <= 3) {
-          endPage = Math.min(4, totalPages - 1);
-        } else if (currentPage >= totalPages - 2) {
-          startPage = Math.max(totalPages - 3, 2);
-        }
-      }
-
-      if (startPage > 2) {
-        pages.push('...');
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
-      }
-
-      if (endPage < totalPages - 1) {
-        pages.push('...');
-      }
-
-      if (totalPages > 1) {
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
 
   return (
     <div className="p-4 sm:p-6">
@@ -1846,39 +1038,62 @@ export const IncidentDashboard = () => {
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="list"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold"
           >
-            <AlertTriangle className="w-4 h-4" />
-            List
+            <AlertTriangle className="w-4 h-4" /> List
           </TabsTrigger>
           <TabsTrigger
             value="analytics"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold"
           >
-            <Settings className="w-4 h-4" />
-            Analytics
+            <BarChart3 className="w-4 h-4" /> Analytics
           </TabsTrigger>
         </TabsList>
 
+        {/* ── LIST TAB ─────────────────────────────────────────────────────── */}
         <TabsContent value="list" className="mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-            <div onClick={() => handleCardClick('total')} className="cursor-pointer">
-              <StatCard icon={<AlertTriangle />} label="Total Incidents" value={countStats ? countStats.total_incidents : stats.total} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 items-stretch">
+            <div
+              onClick={() => handleCardClick("total")}
+              className="cursor-pointer"
+            >
+              <StatCard
+                icon={<AlertTriangle />}
+                label="Total Incidents"
+                value={countStats?.total_incidents ?? stats.total}
+              />
             </div>
-            <div onClick={() => handleCardClick('open')} className="cursor-pointer">
-              <StatCard icon={<Clock />} label="Open" value={countStats ? countStats.open : stats.open} />
+            <div
+              onClick={() => handleCardClick("open")}
+              className="cursor-pointer"
+            >
+              <StatCard
+                icon={<Clock />}
+                label="Open"
+                value={countStats?.open ?? stats.open}
+              />
             </div>
-            <div onClick={() => handleCardClick('under_investigation')} className="cursor-pointer">
-              <StatCard icon={<Search />} label="Under Investigation" value={countStats ? countStats.under_investigation : stats.underObservation} />
+            <div
+              onClick={() => handleCardClick("under_investigation")}
+              className="cursor-pointer"
+            >
+              <StatCard
+                icon={<Search />}
+                label="Under Investigation"
+                value={
+                  countStats?.under_investigation ?? stats.underObservation
+                }
+              />
             </div>
-            <div onClick={() => handleCardClick('closed')} className="cursor-pointer">
-              <StatCard icon={<CheckCircle />} label="Closed" value={countStats ? countStats.closed : stats.closed} />
-            </div>
-            <div onClick={() => handleCardClick('pending')} className="cursor-pointer">
-              <StatCard icon={<PauseCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
-            </div>
-            <div onClick={() => handleCardClick('support_required')} className="cursor-pointer">
-              <StatCard icon={<LifeBuoy />} label="Support Required" value={countStats ? countStats.support_required : 0} />
+            <div
+              onClick={() => handleCardClick("closed")}
+              className="cursor-pointer"
+            >
+              <StatCard
+                icon={<CheckCircle />}
+                label="Closed"
+                value={countStats?.closed ?? stats.closed}
+              />
             </div>
           </div>
 
@@ -1886,129 +1101,205 @@ export const IncidentDashboard = () => {
             data={incidents}
             columns={columns}
             renderCell={renderCell}
-            renderActions={renderActions}
-            onRowClick={(item) => handleViewIncident(item.id.toString())}
+            renderActions={(item) => (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  navigate(`/safety/incident/new-details/${item.id}`)
+                }
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+            )}
             loading={loading}
-            emptyMessage={error ? error : "No incidents found"}
-            enableSearch={true}
-            searchPlaceholder="Search incidents..."
-            enableExport={true}
-            handleExport={handleExport}
-            exportFileName="incidents"
-            storageKey="incidents-dashboard-new"
-            className="min-w-full"
+            emptyMessage={error ?? "No incidents found"}
+            enableSearch
+            enableExport
+            handleExport={handleExportIncidents}
+            storageKey="incidents-dashboard"
             pagination={false}
             leftActions={
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleAddIncident}
-                  className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Incident
-                </Button>
-              </div>
+              <Button
+                onClick={() => navigate("/safety/incident/add")}
+                className="bg-[#C72030] text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add Incident
+              </Button>
             }
             onFilterClick={() => setIsFilterModalOpen(true)}
           />
 
           {totalPages > 0 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => {
-                        if (currentPage > 1) {
-                          setCurrentPage(currentPage - 1);
-                        }
-                      }}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-
-                  {getPageNumbers().map((page, index) => (
-                    <PaginationItem key={index}>
-                      {page === '...' ? (
-                        <PaginationEllipsis />
-                      ) : (
-                        <PaginationLink
-                          onClick={() => setCurrentPage(Number(page))}
-                          isActive={currentPage === Number(page)}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      )}
-                    </PaginationItem>
-                  ))}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => {
-                        if (currentPage < totalPages) {
-                          setCurrentPage(currentPage + 1);
-                        }
-                      }}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-
-              <div className="text-center mt-2 text-sm text-gray-600">
-                Showing page {currentPage} of {totalPages} ({totalCount} total incidents)
-              </div>
+            <div className="mt-6 flex justify-center items-center gap-4 text-sm text-gray-600">
+              <Button
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Next
+              </Button>
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="analytics" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Incident Status Distribution</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Open: {openCount}</span>
-                  <span>{totalForAnalytics > 0 ? ((openCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Under Investigation: {underInvestigationCount}</span>
-                  <span>{totalForAnalytics > 0 ? ((underInvestigationCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Closed: {closedCount}</span>
-                  <span>{totalForAnalytics > 0 ? ((closedCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Pending: {pendingCount}</span>
-                  <span>{totalForAnalytics > 0 ? ((pendingCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Support Required: {supportRequiredCount}</span>
-                  <span>{totalForAnalytics > 0 ? ((supportRequiredCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
+        {/* ── ANALYTICS TAB ────────────────────────────────────────────────── */}
+        <TabsContent value="analytics" className="space-y-4 mt-6">
+          <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsAnalyticsFilterOpen(true)}
+              className="w-full sm:w-[280px] justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" /> {analyticsDateRange.startDate}{" "}
+                - {analyticsDateRange.endDate}
               </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Risk Level Distribution</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>High Risk: {stats.highRisk}</span>
-                  <span>{totalForAnalytics > 0 ? ((stats.highRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Medium Risk: {stats.mediumRisk}</span>
-                  <span>{totalForAnalytics > 0 ? ((stats.mediumRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Low Risk: {stats.lowRisk}</span>
-                  <span>{totalForAnalytics > 0 ? ((stats.lowRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
-                </div>
-              </div>
+              <Filter className="w-4 h-4" />
+            </Button>
+            <div className="w-full sm:w-auto">
+              <AssetAnalyticsSelector
+                // @ts-ignore
+                options={INCIDENT_CHART_OPTIONS}
+                selectedOptions={selectedCharts}
+                onSelectionChange={setSelectedCharts}
+                title="Select Incident Charts"
+                buttonLabel="Charts"
+                dateRange={{
+                  startDate: getDialogDate(analyticsDateRange.startDate),
+                  endDate: getDialogDate(analyticsDateRange.endDate),
+                }}
+              />
             </div>
           </div>
+
+          <StatCardGrid>
+            <StatCard
+              icon={<AlertTriangle />}
+              label="Total Incidents"
+              value={analyticsStats.total}
+            />
+            <StatCard
+              icon={<Clock />}
+              label="Open"
+              value={analyticsStats.open}
+            />
+            <StatCard
+              icon={<Search />}
+              label="Under Investigation"
+              value={analyticsStats.under_investigation}
+            />
+            <StatCard
+              icon={<CheckCircle />}
+              label="Closed"
+              value={analyticsStats.closed}
+            />
+            <StatCard
+              icon={<ShieldCheck />}
+              label="Zero Incident Days"
+              value={kpiData?.zero_incident_days ?? "-"}
+            />
+            <StatCard
+              icon={<TrendingUp />}
+              label="Incident Rate"
+              value={kpiData ? kpiData.incident_rate.rate.toFixed(2) : "-"}
+            />
+            <StatCard
+              icon={<Activity />}
+              label="LTIR"
+              value={kpiData ? kpiData.ltir.value.toFixed(2) : "-"}
+            />
+          </StatCardGrid>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                {orderedVisibleCharts.map((key) => {
+                  const isFullWidth =
+                    key === "levelWiseChart" || key === "rcaTable";
+                  return (
+                    <div
+                      key={key}
+                      className={
+                        isFullWidth ? "lg:col-span-2 col-span-1" : "col-span-1"
+                      }
+                    >
+                      <SortableChartItem id={key} className="h-full">
+                        {key === "categoryPieChart" && (
+                          <CumulativePowerWidget
+                            title="Top 5 Category-wise Incidents"
+                            sources={categoryData}
+                            showPercentage={false}
+                            onDownload={handleExportTopCategories}
+                            className="h-full"
+                          />
+                        )}
+                        {key === "statusWiseChart" && (
+                          <CumulativePowerWidget
+                            title="Incident Status Distribution"
+                            sources={statusSummaryData}
+                            showPercentage={false}
+                            className="h-full"
+                          />
+                        )}
+                        {key === "levelWiseChart" && (
+                          <SiteWisePowerConsumptionChart
+                            title="Level Wise Incidents"
+                            data={levelData}
+                            bars={[
+                              {
+                                dataKey: "mains",
+                                name: "Count",
+                                fill: "#A89078",
+                              },
+                            ]}
+                            lines={[]}
+                            leftYFormatter={(v) => String(v)}
+                            onDownload={handleExportLevelWise}
+                            className="w-full"
+                          />
+                        )}
+                        {key === "rcaTable" && (
+                          <RcaTable
+                            data={rcaData}
+                            pagination={rcaPagination}
+                            loading={rcaLoading}
+                            onPageChange={handleRcaPageChange}
+                            onDownload={handleExportRca}
+                            onSearch={handleRcaSearch}
+                            searchValue={rcaSearch}
+                          />
+                        )}
+                      </SortableChartItem>
+                    </div>
+                  );
+                })}
+
+                {orderedVisibleCharts.length === 0 && (
+                  <div className="lg:col-span-2 py-12 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                    <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                    <p>
+                      No charts selected. Use "Display Charts" to show charts.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
         </TabsContent>
       </Tabs>
 
@@ -2016,9 +1307,9 @@ export const IncidentDashboard = () => {
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
         incidents={originalIncidents}
-        onApply={(filtered, filterQuery) => {
-          setIncidents(filtered);
-          setActiveFilterQuery(filterQuery || "");
+        onApply={(f, q) => {
+          setIncidents(f);
+          setActiveFilterQuery(q || "");
           setCurrentPage(1);
         }}
         onReset={() => {
@@ -2030,6 +1321,13 @@ export const IncidentDashboard = () => {
         setCurrentPage={setCurrentPage}
         setTotalPages={setTotalPages}
         setTotalCount={setTotalCount}
+      />
+      <AssetAnalyticsFilterDialog
+        isOpen={isAnalyticsFilterOpen}
+        onClose={() => setIsAnalyticsFilterOpen(false)}
+        onApplyFilters={handleApplyAnalyticsFilters}
+        currentStartDate={getDialogDate(analyticsDateRange.startDate)}
+        currentEndDate={getDialogDate(analyticsDateRange.endDate)}
       />
     </div>
   );

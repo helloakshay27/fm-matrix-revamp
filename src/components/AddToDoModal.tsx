@@ -1,11 +1,20 @@
 import axios from 'axios';
-import { Dialog, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { X } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { Dialog, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel, Slide, IconButton, InputAdornment } from '@mui/material';
+import { X, Mic, MicOff } from 'lucide-react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
+import { TransitionProps } from '@mui/material/transitions';
+import { useSpeechToText } from '../hooks/useSpeechToText';
+
+const Transition = forwardRef(function Transition(
+    props: TransitionProps & { children: React.ReactElement },
+    ref: React.Ref<unknown>
+) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false }) => {
     const baseURL = localStorage.getItem('baseUrl');
@@ -19,9 +28,29 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
     const [selectedResponsiblePerson, setSelectedResponsiblePerson] = useState(userId || '');
     const [priority, setPriority] = useState('');
     const [isEditorReady, setIsEditorReady] = useState(false);
+    const [baseValue, setBaseValue] = useState("");
+
+    const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
 
     const quillRef = useRef<HTMLDivElement>(null);
     const quillEditorRef = useRef<Quill | null>(null);
+
+    // Handle STT for Title and Description
+    useEffect(() => {
+        if (isListening && transcript) {
+            if (activeId === "todo-title") {
+                const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+                setTitle(newValue);
+            } else if (activeId === "todo-description") {
+                const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+                setDescription(newValue);
+                if (quillEditorRef.current) {
+                    const formattedValue = newValue.startsWith("<") ? newValue : `<p>${newValue}</p>`;
+                    quillEditorRef.current.root.innerHTML = formattedValue;
+                }
+            }
+        }
+    }, [isListening, transcript, activeId, baseValue]);
 
     const priorityOptions = [
         { value: 'P1', label: 'Q1: Urgent & Important' },
@@ -182,6 +211,7 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
             open={isModalOpen}
             onClose={closeModal}
             maxWidth={false}
+            TransitionComponent={Transition}
             PaperProps={{
                 sx: {
                     width: '40%',
@@ -228,9 +258,50 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                             required
                             size="small"
                             variant="outlined"
+                            InputProps={{
+                                endAdornment: supported && (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => {
+                                                if (isListening && activeId === "todo-title") {
+                                                    stopListening();
+                                                } else {
+                                                    setBaseValue(title);
+                                                    startListening("todo-title");
+                                                }
+                                            }}
+                                            color={isListening && activeId === "todo-title" ? "secondary" : "default"}
+                                            sx={{ color: isListening && activeId === "todo-title" ? "#C72030" : "inherit" }}
+                                        >
+                                            {isListening && activeId === "todo-title" ? <Mic size={18} /> : <MicOff size={18} />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
                         />
 
                         <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-sm font-medium">Description</label>
+                                {supported && (
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            if (isListening && activeId === "todo-description") {
+                                                stopListening();
+                                            } else {
+                                                setBaseValue(description);
+                                                startListening("todo-description");
+                                            }
+                                        }}
+                                        color={isListening && activeId === "todo-description" ? "secondary" : "default"}
+                                        sx={{ color: isListening && activeId === "todo-description" ? "#C72030" : "inherit" }}
+                                    >
+                                        {isListening && activeId === "todo-description" ? <Mic size={18} /> : <MicOff size={18} />}
+                                    </IconButton>
+                                )}
+                            </div>
                             <div
                                 ref={quillRef}
                                 style={{

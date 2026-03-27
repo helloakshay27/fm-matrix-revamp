@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Clock, Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
     Table,
     TableBody,
@@ -35,6 +36,17 @@ export const DurationPicker = ({
     const [manualDuration, setManualDuration] = useState("");
     const [totalHoursInput, setTotalHoursInput] = useState("");
     const pickerRef = useRef(null);
+
+    /** ✅ Sync initial dailyHours from props if editing */
+    useEffect(() => {
+        if (isEdit && Array.isArray(dateWiseHours) && dateWiseHours.length > 0 && dailyHours.length === 0) {
+            const initialHours = dateWiseHours.map(h => {
+                const total = (h.hours || 0) + (h.minutes || 0) / 60;
+                return total > 0 ? formatTotalHours(total) : "";
+            });
+            setDailyHours(initialHours);
+        }
+    }, [dateWiseHours, isEdit]);
 
     const parseHours = (val) => {
         if (!val) return 0;
@@ -162,7 +174,8 @@ export const DurationPicker = ({
         return existing?.id || null;
     };
 
-    let hoursPerDay = shift?.[0]?.total_hour - 1 || 8;
+    // let hoursPerDay = shift?.[0]?.total_hour - 1 || 8;
+    let hoursPerDay = 0.5; // Default to 30 minutes (0.5 hours)
 
     if (!Array.isArray(shift) && shift?.shift) {
         const [startTime, endTime] = shift.shift.split(" to ");
@@ -235,9 +248,7 @@ export const DurationPicker = ({
                             _destroy: false,
                         };
                     });
-                    onDateWiseHoursChange(
-                        dateWiseHours && dateWiseHours.length > 0 ? dateWiseHours : dateWise
-                    );
+                    onDateWiseHoursChange(dateWise);
                 }
 
                 setDaysList(allDays);
@@ -399,30 +410,53 @@ export const DurationPicker = ({
             if (onDateWiseHoursChange && daysList.length > 0) {
                 const dateWise = daysList.map((d, idx) => {
                     const formattedDate = formatLocalDate(d.date);
+                    const total = parseHours(dailyHours[idx]);
+                    const hours = Math.floor(total);
+                    const minutes = Math.round((total - hours) * 60);
+
                     return {
                         id: getIdFromExistingHours(formattedDate),
-                        hours: parseHours(dailyHours[idx]),
-                        minutes: 0,
+                        hours,
+                        minutes,
                         date: formattedDate,
                     };
                 });
-                onDateWiseHoursChange(
-                    dateWiseHours && dateWiseHours.length > 0 ? dateWiseHours : dateWise
-                );
+                onDateWiseHoursChange(dateWise);
             }
         }
     }, [dailyHours, taskType]);
+
+    const validateAndClose = () => {
+        // if (totalWorkingHours <= 0) {
+        //     toast.error("Total hours must be greater than 0");
+        //     return false;
+        // }
+
+        // // Additional check for "defined hours" if needed
+        // // For example, ensuring shift produces some hours in standard mode
+        // if (taskType === "standard" && hoursPerDay <= 0) {
+        //     toast.error("Shift hours must be defined and greater than 0");
+        //     return false;
+        // }
+
+        setIsOpen(false);
+        return true;
+    };
 
     /** ✅ Close picker on outside click */
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (pickerRef.current && !pickerRef.current.contains(event.target)) {
-                setIsOpen(false);
+                validateAndClose();
             }
         };
         if (isOpen) document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen]);
+    }, [isOpen, totalWorkingHours, taskType, hoursPerDay]);
+
+    const handleDone = () => {
+        validateAndClose();
+    };
 
     return (
         <div className={`relative ${className}`} ref={pickerRef}>
@@ -602,12 +636,18 @@ export const DurationPicker = ({
                     <div className="mt-6 flex gap-3">
                         <button
                             onClick={() => {
+                                // Clear only input-related values
                                 setDailyHours([]);
-                                setDaysList([]);
-                                setTotalWorkingHours(0);
                                 setManualDuration("");
-                                if (onChange) onChange(0);
-                                if (onDateWiseHoursChange) onDateWiseHoursChange([]);
+                                setTotalHoursInput("");
+
+                                // We keep daysList and totalWorkingHours (if calculated from dates)
+                                // to ensure the structural view remains visible.
+                                if (taskType === "flexible") {
+                                    setTotalWorkingHours(0);
+                                    if (onChange) onChange(0);
+                                    if (onDateWiseHoursChange) onDateWiseHoursChange([]);
+                                }
                             }}
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
                             type="button"
@@ -615,7 +655,7 @@ export const DurationPicker = ({
                             Clear
                         </button>
                         <button
-                            onClick={() => setIsOpen(false)}
+                            onClick={handleDone}
                             className="flex-1 px-4 py-2 bg-[#c72030] text-white rounded-lg transition-colors font-medium"
                             type="button"
                         >

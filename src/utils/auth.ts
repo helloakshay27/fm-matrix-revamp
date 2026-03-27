@@ -216,7 +216,7 @@ export const getOrganizationsByEmail = async (
 
   if (isViSite) {
     const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

@@ -40,6 +40,20 @@ interface AccountGroup {
   group_name: string;
   ledgers?: Ledger[];
 }
+
+interface TaxRate {
+  id: number;
+  name: string;
+  rate: number;
+  rate_type?: string;
+}
+
+interface TaxGroup {
+  id: number;
+  name: string;
+  tax_rates?: TaxRate[];
+  rate?: number;
+}
 import {
   X,
   Settings,
@@ -190,6 +204,29 @@ export const CreatePaymentPage: React.FC = () => {
   // Ledger & tax IDs
   const [depositToLedgerId] = useState(2);
   const [lockAccountTaxId] = useState(1);
+
+  // TDS state
+  const [tdsOptions, setTdsOptions] = useState<{ id: string | number; name: string; percentage?: number }[]>([]);
+  const [selectedTds, setSelectedTds] = useState("");
+  const [loadingTds, setLoadingTds] = useState(false);
+  
+  // Reverse Charge state
+  const [rcTaxOptions, setRcTaxOptions] = useState<{ id: string | number; name: string; percentage?: number }[]>([]);
+  const [loadingRcTaxes, setLoadingRcTaxes] = useState(false);
+  const [isReverseCharge, setIsReverseCharge] = useState(false);
+  const [reverseChargeTax, setReverseChargeTax] = useState("");
+  const [sourceOfSupply, setSourceOfSupply] = useState("");
+  const [destinationOfSupply, setDestinationOfSupply] = useState("");
+  const [descriptionOfSupply, setDescriptionOfSupply] = useState("");
+  const indianStates = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+    "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+    "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+    "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+  ];
   // Attachments
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -229,6 +266,78 @@ export const CreatePaymentPage: React.FC = () => {
   useEffect(() => {
     fetchSuppliers();
   }, [fetchSuppliers]);
+
+  // Fetch TDS taxes from API (only TDS, not TCS)
+  useEffect(() => {
+    const fetchTdsOptions = async () => {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
+      if (!baseUrl || !token || !lock_account_id) return;
+      setLoadingTds(true);
+      try {
+        const url = `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=tds&lock_account_id=${lock_account_id}`;
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        setTdsOptions(Array.isArray(data) ? data : data?.tax_sections || []);
+      } catch (error) {
+        console.error('Failed to fetch TDS options:', error);
+        setTdsOptions([]);
+      } finally {
+        setLoadingTds(false);
+      }
+    };
+    fetchTdsOptions();
+  }, []);
+
+  // Fetch Reverse Charge (Tax Group) options from API
+  useEffect(() => {
+    const fetchRcTaxOptions = async () => {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
+      if (!baseUrl || !token || !lock_account_id) return;
+      setLoadingRcTaxes(true);
+      try {
+        const url = `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`;
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        // data is expected to be an array of TaxGroups
+        const formattedGroups = (Array.isArray(data) ? (data as TaxGroup[]) : []).map((group) => {
+          // If the group has a rate aggregate, use it; otherwise sum the rates from tax_rates
+          const totalRate = typeof group.rate === 'number' 
+            ? group.rate 
+            : Array.isArray(group.tax_rates) 
+              ? group.tax_rates.reduce((sum, r) => sum + (r.rate || 0), 0)
+              : 0;
+            
+          return {
+            id: group.id,
+            name: group.name,
+            percentage: totalRate
+          };
+        });
+        setRcTaxOptions(formattedGroups);
+      } catch (error) {
+        console.error('Failed to fetch RC Tax options:', error);
+        setRcTaxOptions([]);
+      } finally {
+        setLoadingRcTaxes(false);
+      }
+    };
+    fetchRcTaxOptions();
+  }, []);
+
 
   useEffect(() => {
     const fetchAccountGroups = async () => {
@@ -345,13 +454,23 @@ export const CreatePaymentPage: React.FC = () => {
           payment_of: "Pms::Supplier",
           payment_of_id: parseInt(selectedVendor, 10),
           paid_amount: paidAmount,
-          lock_account_tax_id: lockAccountTaxId,
+          // Use the dynamically selected TDS id (vendor_advance tab only)
+          lock_account_tax_id: selectedTds ? parseInt(selectedTds, 10) : (lockAccountTaxId),
+          tds_amount: tdsAmount > 0 ? tdsAmount : undefined,
+          tds_percentage: tdsPercentage > 0 ? tdsPercentage : undefined,
+          net_amount: tdsAmount > 0 ? paidAmount - tdsAmount : undefined,
           payment_date: paymentDate,
           payment_mode: paymentMode,
           order_number: paymentNumber || "",
+          neft_reference: reference,
           paid_from_ledger_id: parseInt(paidThrough, 10),
           deposit_to_ledger_id: depositToLedgerId,
           advance: activeTab === "vendor_advance",
+          reverse_charge: activeTab === "vendor_advance" ? isReverseCharge : undefined,
+          reverse_charge_tax_id: (activeTab === "vendor_advance" && isReverseCharge && reverseChargeTax) ? parseInt(reverseChargeTax, 10) : undefined,
+          source_of_supply: activeTab === "vendor_advance" ? sourceOfSupply : undefined,
+          destination_of_supply: activeTab === "vendor_advance" ? destinationOfSupply : undefined,
+          description_of_supply: activeTab === "vendor_advance" ? descriptionOfSupply : undefined,
           notes: notes,
           payment_amount: paymentAmount,
           excess_amount: excessAmount,
@@ -389,24 +508,39 @@ export const CreatePaymentPage: React.FC = () => {
     setSelectedVendor(vendorId);
     setIsVendorOpen(false);
     fetchBills(vendorId);
-    
-    // Fetch count of payments for this vendor to determine the sequential count
+
+    // Auto-set Payment # = (number of existing payments for this vendor) + 1
     try {
-      const res = await accountingClient.get("/lock_account_payments.json", {
-        params: { lock_account_id: lock_account_id }
+      const res = await accountingClient.get("/lock_payments.json", {
+        params: {
+          lock_account_id: lock_account_id,
+          per_page: 9999, // fetch all to count accurately
+        },
       });
-      const allPayments = res.data.lock_payments || [];
-      const vendorPayments = allPayments.filter((p: { payment_of_id: number | string }) => String(p.payment_of_id) === String(vendorId));
-      const nextCount = vendorPayments.length + 1;
-      
-      if (paymentConfig.autoGenerate) {
-        setPaymentNumber(`${paymentConfig.prefix}${nextCount}`);
-      }
+      // API returns { lock_payments: [...] } or an array
+      const allPayments: { payment_of_id: number | string }[] =
+        res.data?.lock_payments ?? (Array.isArray(res.data) ? res.data : []);
+
+      // Count only payments that belong to this specific vendor
+      const vendorPaymentCount = allPayments.filter(
+        (p) => String(p.payment_of_id) === String(vendorId)
+      ).length;
+
+      const nextNumber = vendorPaymentCount + 1;
+      // Always auto-set the Payment # field with the sequential count
+      setPaymentNumber(
+        paymentConfig.prefix
+          ? `${paymentConfig.prefix}${nextNumber}`
+          : String(nextNumber)
+      );
     } catch (err) {
-      console.error("Failed to fetch payment count:", err);
-      if (paymentConfig.autoGenerate) {
-        setPaymentNumber(`${paymentConfig.prefix}${paymentConfig.nextNumber}`);
-      }
+      console.error("Failed to fetch vendor payment count:", err);
+      // Fallback: just increment from config
+      setPaymentNumber(
+        paymentConfig.prefix
+          ? `${paymentConfig.prefix}${paymentConfig.nextNumber}`
+          : String(paymentConfig.nextNumber)
+      );
     }
   };
 
@@ -423,6 +557,13 @@ export const CreatePaymentPage: React.FC = () => {
     0
   );
   const amountInExcess = Math.max(0, (parseFloat(amount) || 0) - totalApplied);
+
+  // TDS deduction: amount × (selectedTds percentage / 100)
+  const selectedTdsOption = tdsOptions.find((opt) => String(opt.id) === selectedTds);
+  const tdsPercentage = selectedTdsOption?.percentage ?? 0;
+  const tdsAmount = tdsPercentage > 0 && parseFloat(amount) > 0
+    ? (parseFloat(amount) * tdsPercentage) / 100
+    : 0;
 
   return (
     <TooltipProvider>
@@ -520,6 +661,90 @@ export const CreatePaymentPage: React.FC = () => {
                   ></MuiMenuItem>
                 </MuiSelect>
               </FormControl>
+
+              {/* Supply Details (Vendor Advance Only) - Moved here and shows only after vendor selection */}
+              {selectedVendor && activeTab === "vendor_advance" && (
+                <div className="mt-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700">Source of Supply</label>
+                      <FormControl fullWidth size="small">
+                        <MuiSelect
+                          value={sourceOfSupply}
+                          onChange={(e) => setSourceOfSupply(e.target.value as string)}
+                          displayEmpty
+                          sx={{
+                            height: { xs: 28, sm: 36, md: 38 },
+                            "& .MuiInputBase-input, & .MuiSelect-select": {
+                              padding: { xs: "8px", sm: "10px", md: "8px" },
+                              fontSize: "14px",
+                            },
+                            backgroundColor: "#fff",
+                            borderRadius: "6px",
+                          }}
+                        >
+                          <MuiMenuItem value="" disabled>Select State</MuiMenuItem>
+                          {indianStates.map((state) => (
+                            <MuiMenuItem key={state} value={state}>
+                              {state}
+                            </MuiMenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700">Destination of Supply</label>
+                      <FormControl fullWidth size="small">
+                        <MuiSelect
+                          value={destinationOfSupply}
+                          onChange={(e) => setDestinationOfSupply(e.target.value as string)}
+                          displayEmpty
+                          sx={{
+                            height: { xs: 28, sm: 36, md: 38 },
+                            "& .MuiInputBase-input, & .MuiSelect-select": {
+                              padding: { xs: "8px", sm: "10px", md: "8px" },
+                              fontSize: "14px",
+                            },
+                            backgroundColor: "#fff",
+                            borderRadius: "6px",
+                          }}
+                        >
+                          <MuiMenuItem value="" disabled>Select State</MuiMenuItem>
+                          {indianStates.map((state) => (
+                            <MuiMenuItem key={state} value={state}>
+                              {state}
+                            </MuiMenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <label className="block text-sm font-medium text-gray-700 cursor-help">
+                            Description of Supply
+                          </label>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-[#1e293b] text-white border-none text-[12px] py-1.5 px-3 max-w-[250px]">
+                          <p>provide description for goods or services that you are going to supply</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      value={descriptionOfSupply}
+                      onChange={(e) => setDescriptionOfSupply(e.target.value)}
+                      className="h-[38px] w-full text-sm border-gray-300 focus-visible:ring-1 shadow-sm bg-white"
+                      placeholder="Enter description of supply"
+                    />
+                    <p className="mt-1.5 text-[11px] text-gray-500 italic">
+                      Will be displayed on the Payment Voucher
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -590,68 +815,123 @@ export const CreatePaymentPage: React.FC = () => {
                           className="flex-1 w-full outline-none text-sm bg-transparent"
                         />
                       </div>
+                      {/* Net amount after TDS — shown only in vendor_advance */}
+                      {activeTab === "vendor_advance" && tdsAmount > 0 && (
+                        <p className="mt-1.5 text-xs text-gray-500">
+                          Amount paid after deducting TDS:{" "}
+                          <span className="font-semibold text-gray-800">
+                            ₹{(parseFloat(amount) - tdsAmount).toFixed(2)}
+                          </span>
+                        </p>
+                      )}
                     </div>
+
+                    {/* Reverse Charge (Vendor Advance Only) */}
+                    {activeTab === "vendor_advance" && (
+                      <div className="md:col-span-2 flex items-start border-b border-transparent pb-2">
+                         <label className="text-sm font-medium text-gray-700 min-w-[200px] pt-[2px]">
+                           Reverse Charge
+                         </label>
+                         <div className="flex flex-col flex-1">
+                           <div className="flex items-center gap-2">
+                             <input
+                               type="checkbox"
+                               id="reverseCharge"
+                               className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                               checked={isReverseCharge}
+                               onChange={(e) => setIsReverseCharge(e.target.checked)}
+                             />
+                             <label htmlFor="reverseCharge" className="text-[13px] text-gray-700 cursor-pointer hover:text-gray-900 transition-colors">
+                               This transaction is applicable for reverse charge
+                             </label>
+                           </div>
+                           
+                           {isReverseCharge && (
+                             <div className="w-full md:w-[50%] lg:w-[40%] mt-4">
+                               <label className="block text-sm font-medium mb-1.5 text-gray-700">Tax</label>
+                               <FormControl fullWidth size="small">
+                                 <MuiSelect
+                                   value={reverseChargeTax}
+                                   onChange={(e) => setReverseChargeTax(e.target.value as string)}
+                                   displayEmpty
+                                   sx={{
+                                     height: { xs: 28, sm: 36, md: 38 },
+                                     "& .MuiInputBase-input, & .MuiSelect-select": {
+                                       padding: { xs: "8px", sm: "10px", md: "8px" },
+                                       fontSize: "14px",
+                                     },
+                                     backgroundColor: "#fff",
+                                     borderRadius: "6px",
+                                   }}
+                                 >
+                                   <MuiMenuItem value="" disabled>
+                                     {loadingRcTaxes ? "Loading Tax options..." : "Select Tax Group"}
+                                   </MuiMenuItem>
+                                   {!loadingRcTaxes && rcTaxOptions.map((opt) => (
+                                     <MuiMenuItem key={opt.id} value={String(opt.id)}>
+                                       {opt.name}
+                                       {typeof opt.percentage === "number" ? ` [${opt.percentage}%]` : ""}
+                                     </MuiMenuItem>
+                                   ))}
+                                 </MuiSelect>
+                               </FormControl>
+                             </div>
+                           )}
+                         </div>
+                      </div>
+                    )}
 
                     {/* TDS (Vendor Advance Only) */}
                     {activeTab === "vendor_advance" && (
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700">
-                          TDS
-                        </label>
-                        <Select>
-                          <SelectTrigger className="h-[38px] border-gray-300 text-gray-700 text-sm shadow-sm bg-white">
-                            <SelectValue placeholder="Select a Tax" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[300px]">
-                            <SelectItem value="commission_brokerage_2">
-                              Commission or Brokerage [2%]
-                            </SelectItem>
-                            <SelectItem value="commission_brokerage_reduced_3_75">
-                              Commission or Brokerage (Reduced) [3.75%]
-                            </SelectItem>
-                            <SelectItem value="dividend_10">
-                              Dividend [10%]
-                            </SelectItem>
-                            <SelectItem value="dividend_reduced_7_5">
-                              Dividend (Reduced) [7.5%]
-                            </SelectItem>
-                            <SelectItem value="other_interest_10">
-                              Other Interest than securities [10%]
-                            </SelectItem>
-                            <SelectItem value="other_interest_reduced_7_5">
-                              Other Interest than securities (Reduced) [7.5%]
-                            </SelectItem>
-                            <SelectItem value="contractors_others_2">
-                              Payment of contractors for Others [2%]
-                            </SelectItem>
-                            <SelectItem value="contractors_others_reduced_1_5">
-                              Payment of contractors for Others (Reduced) [1.5%]
-                            </SelectItem>
-                            <SelectItem value="contractors_huf_1">
-                              Payment of contractors HUF/Indiv [1%]
-                            </SelectItem>
-                            <SelectItem value="contractors_huf_reduced_0_75">
-                              Payment of contractors HUF/Indiv (Reduced) [0.75%]
-                            </SelectItem>
-                            <SelectItem value="professional_fees_10">
-                              Professional Fees [10%]
-                            </SelectItem>
-                            <SelectItem value="professional_fees_reduced_7_5">
-                              Professional Fees (Reduced) [7.5%]
-                            </SelectItem>
-                            <SelectItem value="rent_land_furniture_10">
-                              Rent on land or furniture etc [10%]
-                            </SelectItem>
-                            <SelectItem value="rent_land_furniture_reduced_7_5">
-                              Rent on land or furniture etc (Reduced) [7.5%]
-                            </SelectItem>
-                            <SelectItem value="tds_1">TDS [1%]</SelectItem>
-                            <SelectItem value="technical_fees_2">
-                              Technical Fees (2%) [2%]
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                          <label className="block text-sm font-medium mb-2 text-gray-700">
+                            TDS
+                          </label>
+                          <FormControl fullWidth>
+                          <MuiSelect
+                            value={selectedTds || ""}
+                            onChange={(e) => setSelectedTds(e.target.value as string)}
+                            displayEmpty
+                            sx={{
+                              height: { xs: 28, sm: 36, md: 45 },
+                              "& .MuiInputBase-input, & .MuiSelect-select": {
+                                padding: { xs: "8px", sm: "10px", md: "12px" },
+                              },
+                              backgroundColor: "#fff",
+                              borderRadius: "6px",
+                            }}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  maxHeight: 350,
+                                },
+                              },
+                            }}
+                          >
+                            <MuiMenuItem value="" disabled>
+                              {loadingTds ? "Loading TDS options..." : "Select a Tax"}
+                            </MuiMenuItem>
+                            {!loadingTds && tdsOptions.length === 0 && (
+                              <MuiMenuItem value="" disabled>
+                                No TDS options available
+                              </MuiMenuItem>
+                            )}
+                            {tdsOptions.map((opt) => (
+                              <MuiMenuItem key={opt.id} value={String(opt.id)}>
+                                {opt.name}
+                                {typeof opt.percentage === "number" ? ` [${opt.percentage}%]` : ""}
+                              </MuiMenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                        {/* TDS deduction breakdown — shown below TDS dropdown */}
+                        {tdsAmount > 0 && (
+                          <p className="mt-1.5 text-xs font-medium text-red-500 flex items-center gap-1">
+                            <span>−</span>
+                            <span>TDS ({tdsPercentage}%): ₹{tdsAmount.toFixed(2)}</span>
+                          </p>
+                        )}
+                        </div>
                     )}
 
                     {/* Payment Date */}

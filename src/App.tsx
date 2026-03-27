@@ -4,7 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
-  
+
   useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -355,6 +355,7 @@ import { EmployeeCalendarPage } from "./pages/EmployeeCalendarPage";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
 import CompanyHub from "./pages/CompanyHub";
+import CompanyHubNew from "./pages/CompanyHubNew";
 import BusinessPlan from "./pages/BusinessPlan";
 import OurGroup from "./pages/OurGroup";
 import Products from "./pages/Products";
@@ -1171,6 +1172,14 @@ import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishi
 import DayBook from "./pages/ClubManagement/DayBook";
 import JournalReport from "./pages/ClubManagement/JournalReport";
 import FixedAssetReport from "./pages/ClubManagement/FixedAssetReport";
+import AccountingReportStub from "./pages/Accounting/AccountingReportStub";
+import TimesheetDetails from "./pages/Accounting/TimesheetDetails";
+import TimesheetProfitabilitySummary from "./pages/Accounting/TimesheetProfitabilitySummary";
+import ProjectSummary from "./pages/Accounting/ProjectSummary";
+import ProjectDetails from "./pages/Accounting/ProjectDetails";
+import ProjectsCostSummary from "./pages/Accounting/ProjectsCostSummary";
+import ProjectsRevenueSummary from "./pages/Accounting/ProjectsRevenueSummary";
+import ProjectsPerformanceSummary from "./pages/Accounting/ProjectsPerformanceSummary";
 import SystemMails from "./pages/ClubManagement/SystemMails";
 import ActivityLogsAuditTrail from "./pages/ClubManagement/ActivityLogsAuditTrail";
 import ExceptionReport from "./pages/ClubManagement/ExceptionReport";
@@ -1208,6 +1217,9 @@ import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
 import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
+import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
+import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
+import RecurringBillDetails from "./pages/ClubManagement/RecurringBillDetails";
 
 const queryClient = new QueryClient();
 
@@ -1941,6 +1953,14 @@ function App() {
                               </ProtectedRoute>
                             }
                           />
+                          <Route
+                            path="/employee/company-hub-new"
+                            element={
+                              <ProtectedRoute>
+                                <CompanyHubNew />
+                              </ProtectedRoute>
+                            }
+                          />
                           <Route path="/vas/channels" element={<ChannelsLayout />}>
                             <Route
                               index
@@ -1971,6 +1991,16 @@ function App() {
                             path="/vas/channels/tasks/:id"
                             element={<ChatTaskDetailsPage />}
                           />
+
+                          <Route
+                            path="/business-compass/profile"
+                            element={<BusinessCompassProfile />}
+                          />
+                          <Route
+                            path="/business-compass/dashboard"
+                            element={<BusinessCompassDashboard />}
+                          />
+
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route
@@ -2823,6 +2853,44 @@ function App() {
                             element={<FixedAssetReport />}
                           />
                           <Route
+                            path="/accounting/reports/name-of-project"
+                            element={
+                              <AccountingReportStub title="Name of Project" />
+                            }
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet"
+                            element={<TimesheetDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet-details"
+                            element={<TimesheetDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet-profitability-summary"
+                            element={<TimesheetProfitabilitySummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/project-summary"
+                            element={<ProjectSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/project-details"
+                            element={<ProjectDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-cost-summary"
+                            element={<ProjectsCostSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-revenue-summary"
+                            element={<ProjectsRevenueSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-performance-summary"
+                            element={<ProjectsPerformanceSummary />}
+                          />
+                          <Route
                             path="/accounting/reports/general-ledger"
                             element={<GeneralLedger />}
                           />
@@ -3114,6 +3182,11 @@ function App() {
                           <Route
                             path="/accounting/recurring-bills/create"
                             element={<RecurringBillCreatePage />}
+                          />
+
+                          <Route
+                            path="/accounting/recurring-bills/details/:id"
+                            element={<RecurringBillDetails />}
                           />
                           <Route
                             path="/accounting/recurring-expenses"
@@ -4291,6 +4364,7 @@ function App() {
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
+
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}
@@ -5231,18 +5305,18 @@ function App() {
                             path="/master/inventory-type/edit/:id"
                             element={<EditInventoryTypePage />}
                           />
-                           <Route
-                             path="/settings/company-hub/Company-setup"
-                             element={<CompanySetup />}
-                           />
-                            <Route
-                              path="/settings/company-hub/employee-of-the-month"
-                              element={<EmployeeOfTheMonthSetup />}
-                            />
-                            <Route
-                              path="/settings/company-hub/announcements"
-                              element={<AnnouncementsSetup />}
-                            />
+                          <Route
+                            path="/settings/company-hub/Company-setup"
+                            element={<CompanySetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/employee-of-the-month"
+                            element={<EmployeeOfTheMonthSetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/announcements"
+                            element={<AnnouncementsSetup />}
+                          />
                           <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
@@ -5524,7 +5598,7 @@ function App() {
                             path="/pulse/carpool/ride-detail"
                             element={<RideDetail />}
                           />
-                           <Route
+                          <Route
                             path="/pulse/carpool/ride-reviews"
                             element={<RideReviews />}
                           />
