@@ -36,7 +36,6 @@ import { ClubSidebar } from "./ClubSidebar";
 import ClubDynamicHeader from "./ClubDynamicHeader";
 import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
 import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
-import TopNavigation from "./CompanyHub/TopNavigation";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -423,14 +422,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         userEmail === "megipow156@aixind.com" ||
         userEmail === "jevosak839@cimario.com" ? (
           // <EmployeeHeader />
-          isNewEmpHubRoute ? (
-            <TopNavigation
-              activeNavMenu={activeNavMenu}
-              setActiveNavMenu={setActiveNavMenu}
-            /> // 👈 your new header
-          ) : (
-            <EmployeeHeader />
-          )
+          <EmployeeHeader />
         ) : (
           <EmployeeHeaderStatic />
         )
