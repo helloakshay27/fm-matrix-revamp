@@ -36,6 +36,7 @@ import { ClubSidebar } from "./ClubSidebar";
 import ClubDynamicHeader from "./ClubDynamicHeader";
 import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
 import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
+import TopNavigation from "./CompanyHub/TopNavigation";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -166,7 +167,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
           userEmail === "jevosak839@cimario.com" ||
-          userEmail === "deveshjain928@gmail.com"
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work"
         ) {
           return <EmployeeSidebar />;
         }
@@ -200,7 +203,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
       userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com"
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -283,7 +288,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
       userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com"
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       return <ActionHeader />;
     }
@@ -387,6 +394,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [location.search]);
 
+  const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
+  const isNewEmpHubRoute = location.pathname === "/employee/company-hub-new";
+
   return (
     <div
       className="min-h-screen bg-[#fafafa]"
@@ -412,7 +422,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         userEmail === "besis69240@azeriom.com" ||
         userEmail === "megipow156@aixind.com" ||
         userEmail === "jevosak839@cimario.com" ? (
-          <EmployeeHeader />
+          // <EmployeeHeader />
+          isNewEmpHubRoute ? (
+            <TopNavigation
+              activeNavMenu={activeNavMenu}
+              setActiveNavMenu={setActiveNavMenu}
+            /> // 👈 your new header
+          ) : (
+            <EmployeeHeader />
+          )
         ) : (
           <EmployeeHeaderStatic />
         )
@@ -440,7 +458,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               : isSidebarCollapsed
                 ? "ml-16"
                 : "ml-64"
-        } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+        } ${isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

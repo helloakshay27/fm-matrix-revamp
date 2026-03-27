@@ -48,7 +48,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   return (
     <>
       {/* --- TOP NAV BAR --- */}
-      <div className="flex items-center justify-between px-8 py-4 bg-[#FAF9F6]/80 backdrop-blur-md sticky top-0 z-50">
+      <div className="flex items-center justify-between px-8 py-4 bg-[#FAF9F6]/80 backdrop-blur-md sticky top-0 z-50 border-b border-[rgba(211,209,199,1)]">
         <div className="flex items-center gap-12 w-full">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
@@ -75,17 +75,17 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 className="flex items-center gap-1.5 cursor-pointer group"
               >
                 <span
-                  className={`text-[13px] font-bold uppercase tracking-wider transition-colors ${activeNavMenu === item
-                      ? "text-[#E67E5F]"
-                      : "text-gray-600 group-hover:text-gray-900"
+                  className={`text-[13px] font-medium tracking-wider transition-colors ${activeNavMenu === item
+                    ? "text-[#DA7756]"
+                    : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
                     }`}
                 >
                   {item}
                 </span>
                 <ChevronRight
                   className={`w-3.5 h-3.5 transition-transform ${activeNavMenu === item
-                      ? "-rotate-90 text-[#E67E5F]"
-                      : "rotate-90 text-gray-400"
+                    ? "-rotate-90 text-[#DA7756]"
+                    : "rotate-90 text-[rgba(16,24,40,1)]"
                     }`}
                 />
               </div>
@@ -96,7 +96,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
 
       {/* --- NAV MENU DROPDOWN --- */}
       {activeNavMenu && navMenuOptions[activeNavMenu] && (
-        <div className="absolute top-[72px] left-0 w-full bg-white border-b border-gray-200 shadow-md z-40 px-8 py-8 animate-in slide-in-from-top-2 fade-in duration-200">
+        <div className="absolute top-[65px] left-0 w-full bg-white border-b border-gray-200 shadow-md z-40 px-8 py-8 animate-in slide-in-from-top-2 fade-in duration-200">
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">
             {activeNavMenu}
           </h3>

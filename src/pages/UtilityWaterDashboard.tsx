@@ -1,22 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
-import { fetchWaterAssetsData } from '@/store/slices/waterAssetsSlice';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchWaterAssetsData } from "@/store/slices/waterAssetsSlice";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Search, Plus, Import, RefreshCw, FileDown, Printer, Filter,
-  Package, CheckCircle, AlertTriangle, Droplets, Activity, Settings, Calendar, BarChart3 
-} from 'lucide-react';
-import { WaterFilterDialog } from '../components/WaterFilterDialog';
-import { BulkUploadDialog } from '../components/BulkUploadDialog';
-import { AssetDataTable } from '../components/AssetDataTable';
-import { AssetStats } from '../components/AssetStats';
-import { StatsCard } from '../components/StatsCard';
-import { useWaterAssetSearch } from '../hooks/useWaterAssetSearch';
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Search,
+  Plus,
+  Import,
+  RefreshCw,
+  FileDown,
+  Printer,
+  Filter,
+  Package,
+  CheckCircle,
+  AlertTriangle,
+  Droplets,
+  Activity,
+  Settings,
+  Calendar,
+  BarChart3,
+} from "lucide-react";
+import { WaterFilterDialog } from "../components/WaterFilterDialog";
+import { BulkUploadDialog } from "../components/BulkUploadDialog";
+import { AssetDataTable } from "../components/AssetDataTable";
+import { AssetStats } from "../components/AssetStats";
+import { StatsCard } from "../components/StatsCard";
+import { useWaterAssetSearch } from "../hooks/useWaterAssetSearch";
 import {
   Pagination,
   PaginationContent,
@@ -25,11 +38,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { TicketAnalyticsFilterDialog } from "@/components/TicketAnalyticsFilterDialog";
-import { SiteWisePowerConsumptionChart } from "@/components/charts/SiteWisePowerConsumptionChart";
-import { WaterTimeSeriesChart } from '@/components/charts/WaterTimeSeriesChart';
 
-// ── dnd-kit — same imports as TicketDashboard ─────────────────────────────────
+// ── Same components as IncidentDashboard ──────────────────────────────────────
+import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
+import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
+
+import { SiteWisePowerConsumptionChart } from "@/components/charts/SiteWisePowerConsumptionChart";
+import { WaterTimeSeriesChart } from "@/components/charts/WaterTimeSeriesChart";
+
+// ── dnd-kit ───────────────────────────────────────────────────────────────────
 import {
   DndContext,
   closestCenter,
@@ -49,11 +66,30 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 type ChartKey = "sourceBreakdown" | "siteWise" | "timeSeries";
 
-// ─── SortableChartItem — same component as TicketDashboard ───────────────────
+// ─── Chart Options — same pattern as INCIDENT_CHART_OPTIONS ──────────────────
+const WATER_CHART_OPTIONS = [
+  {
+    id: "sourceBreakdown",
+    label: "Source Breakdown",
+    description: "Water consumption by source type",
+  },
+  {
+    id: "siteWise",
+    label: "Site Wise Water",
+    description: "Site-wise domestic water consumption",
+  },
+  {
+    id: "timeSeries",
+    label: "Water Consumption Time Series",
+    description: "Water consumption trend over time",
+  },
+];
 
+const WATER_CHART_KEYS = WATER_CHART_OPTIONS.map((opt) => opt.id);
+
+// ─── SortableChartItem ────────────────────────────────────────────────────────
 const SortableChartItem = ({
   id,
   children,
@@ -108,18 +144,7 @@ const SortableChartItem = ({
   );
 };
 
-// ─── Chart label map ──────────────────────────────────────────────────────────
-
-const CHART_LABELS: Record<ChartKey, string> = {
-  sourceBreakdown: "Source Breakdown",
-  siteWise: "Site Wise Water",
-  timeSeries: "Water Consumption Time Series",
-};
-
-const ALL_CHART_KEYS: ChartKey[] = ["sourceBreakdown", "siteWise", "timeSeries"];
-
 // ─── Main Component ───────────────────────────────────────────────────────────
-
 export const UtilityWaterDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -138,41 +163,16 @@ export const UtilityWaterDashboard = () => {
   // List tab state
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
+  const [uploadType, setUploadType] = useState<"import" | "update">("import");
 
   // Analytics tab state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
-  const [isChartSelectorOpen, setIsChartSelectorOpen] = useState(false);
-  const [selectedCharts, setSelectedCharts] = useState<Record<ChartKey, boolean>>({
-    sourceBreakdown: true,
-    siteWise: true,
-    timeSeries: true,
-  });
-
-  // ── Drag & drop state ─────────────────────────────────────────────────────
-  const [chartOrder, setChartOrder] = useState<ChartKey[]>([...ALL_CHART_KEYS]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // Exact same handler as TicketDashboard
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      setChartOrder((items) => {
-        const oldIndex = items.indexOf(active.id as ChartKey);
-        const newIndex = items.indexOf(over?.id as ChartKey);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
+  const [selectedCharts, setSelectedCharts] =
+    useState<string[]>(WATER_CHART_KEYS);
+  const [chartOrder, setChartOrder] = useState<string[]>(WATER_CHART_KEYS);
 
   // ── Date range ────────────────────────────────────────────────────────────
   const getDefaultDateRange = () => {
@@ -180,10 +180,48 @@ export const UtilityWaterDashboard = () => {
     const lastYear = new Date(today);
     lastYear.setFullYear(today.getFullYear() - 1);
     const fmt = (d: Date) =>
-      `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
     return { startDate: fmt(lastYear), endDate: fmt(today) };
   };
-  const [analyticsDateRange, setAnalyticsDateRange] = useState(getDefaultDateRange);
+  const [analyticsDateRange, setAnalyticsDateRange] =
+    useState(getDefaultDateRange);
+
+  // Convert DD/MM/YYYY → Date (for AssetAnalyticsFilterDialog props)
+  const getDialogDate = (dateStr: string) => {
+    const [dd, mm, yyyy] = dateStr.split("/");
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  };
+
+  // Called when AssetAnalyticsFilterDialog applies — receives YYYY-MM-DD strings
+  const handleApplyAnalyticsFilters = (startStr: string, endStr: string) => {
+    const formatToDDMMYYYY = (d: string) => {
+      const [y, m, day] = d.split("-");
+      return `${day}/${m}/${y}`;
+    };
+    setAnalyticsDateRange({
+      startDate: formatToDDMMYYYY(startStr),
+      endDate: formatToDDMMYYYY(endStr),
+    });
+  };
+
+  // ── dnd sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over?.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   // Water asset search hook
   const {
@@ -214,7 +252,7 @@ export const UtilityWaterDashboard = () => {
   // Static chart data
   const siteWaterData = [
     {
-      site: 'Lockated Site 2',
+      site: "Lockated Site 2",
       mains: 560,
       dg: 0,
       renewable: 0,
@@ -225,7 +263,7 @@ export const UtilityWaterDashboard = () => {
 
   const WaterSourceComsumpton = [
     {
-      site: 'Borewell',
+      site: "Borewell",
       mains: 100,
       dg: 0,
       renewable: 0,
@@ -264,16 +302,31 @@ export const UtilityWaterDashboard = () => {
     assetNumber: asset.asset_number || "",
     status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
     siteName: asset.site_name || "",
-    building: typeof asset.building === 'string' ? { name: asset.building } : asset.building || null,
-    wing: typeof asset.wing === 'string' ? { name: asset.wing } : asset.wing || null,
-    area: typeof asset.area === 'string' ? { name: asset.area } : asset.area || null,
-    pmsRoom: typeof asset.room === 'string' ? { name: asset.room } : asset.room || null,
+    building:
+      typeof asset.building === "string"
+        ? { name: asset.building }
+        : asset.building || null,
+    wing:
+      typeof asset.wing === "string"
+        ? { name: asset.wing }
+        : asset.wing || null,
+    area:
+      typeof asset.area === "string"
+        ? { name: asset.area }
+        : asset.area || null,
+    pmsRoom:
+      typeof asset.room === "string"
+        ? { name: asset.room }
+        : asset.room || null,
     assetGroup: asset.meter_type || "",
     assetSubGroup: asset.asset_type || "",
     assetType: false,
     purchaseCost: asset.purchase_cost,
     currentBookValue: asset.current_book_value,
-    floor: typeof asset.floor === 'string' ? { name: asset.floor } : asset.floor || null,
+    floor:
+      typeof asset.floor === "string"
+        ? { name: asset.floor }
+        : asset.floor || null,
     category: asset.meter_type || "Water Asset",
   }));
 
@@ -284,18 +337,35 @@ export const UtilityWaterDashboard = () => {
     assetNumber: asset.asset_number || "",
     status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
     siteName: asset.site_name || "",
-    building: typeof asset.building === 'string' ? { name: asset.building } : asset.building || null,
-    wing: typeof asset.wing === 'string' ? { name: asset.wing } : asset.wing || null,
-    area: typeof asset.area === 'string' ? { name: asset.area } : asset.area || null,
-    pmsRoom: typeof asset.room === 'string' ? { name: asset.room } : asset.room || null,
+    building:
+      typeof asset.building === "string"
+        ? { name: asset.building }
+        : asset.building || null,
+    wing:
+      typeof asset.wing === "string"
+        ? { name: asset.wing }
+        : asset.wing || null,
+    area:
+      typeof asset.area === "string"
+        ? { name: asset.area }
+        : asset.area || null,
+    pmsRoom:
+      typeof asset.room === "string"
+        ? { name: asset.room }
+        : asset.room || null,
     assetGroup: asset.meter_type || "",
     assetSubGroup: asset.asset_type || "",
     assetType: false,
-    floor: typeof asset.floor === 'string' ? { name: asset.floor } : asset.floor || null,
+    floor:
+      typeof asset.floor === "string"
+        ? { name: asset.floor }
+        : asset.floor || null,
     category: asset.meter_type || "Water Asset",
   }));
 
-  const displayAssets = searchTerm.trim() ? transformedSearchedAssets : transformedAssets;
+  const displayAssets = searchTerm.trim()
+    ? transformedSearchedAssets
+    : transformedAssets;
   const isSearchMode = searchTerm.trim().length > 0;
 
   const pagination = {
@@ -304,15 +374,23 @@ export const UtilityWaterDashboard = () => {
     totalCount: totalCount || 0,
   };
 
-  const handleAdd = () => navigate('/utility/water/add-asset?type=Water');
-  const handleAddSchedule = () => navigate('/maintenance/schedule/add?type=Water');
-  const handleImport = () => { setUploadType('import'); setIsBulkUploadOpen(true); };
-  const handleUpdate = () => { setUploadType('update'); setIsBulkUploadOpen(true); };
+  const handleAdd = () => navigate("/utility/water/add-asset?type=Water");
+  const handleAddSchedule = () =>
+    navigate("/maintenance/schedule/add?type=Water");
+  const handleImport = () => {
+    setUploadType("import");
+    setIsBulkUploadOpen(true);
+  };
+  const handleUpdate = () => {
+    setUploadType("update");
+    setIsBulkUploadOpen(true);
+  };
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim()) performSearch(term);
   };
-  const handleRefresh = () => dispatch(fetchWaterAssetsData({ page: currentPage, filters }));
+  const handleRefresh = () =>
+    dispatch(fetchWaterAssetsData({ page: currentPage, filters }));
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     dispatch(fetchWaterAssetsData({ page, filters }));
@@ -329,13 +407,21 @@ export const UtilityWaterDashboard = () => {
     navigate(`/maintenance/asset/details/${assetId}?type=Water`);
 
   // Only render charts that are visible and in drag order
-  const orderedVisibleCharts = chartOrder.filter((key) => selectedCharts[key]);
+  const orderedVisibleCharts = chartOrder.filter((key) =>
+    selectedCharts.includes(key)
+  );
+  const twoColCharts = orderedVisibleCharts.filter(
+    (k) => k === "sourceBreakdown" || k === "siteWise"
+  );
+  const timeSeriesVisible = orderedVisibleCharts.includes("timeSeries");
 
   return (
     <div className="p-4 sm:p-6 space-y-6 min-h-screen">
       {/* Breadcrumb & Title */}
       <div>
-        <div className="text-sm text-gray-600 mb-2">Assets &gt; Water Asset List</div>
+        <div className="text-sm text-gray-600 mb-2">
+          Assets &gt; Water Asset List
+        </div>
         <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">
           WATER ASSET LIST
         </h1>
@@ -397,12 +483,19 @@ export const UtilityWaterDashboard = () => {
                 loading={loading || searchLoading}
               />
 
-              {!loading && !searchLoading && displayAssets.length === 0 && Object.keys(filters).length > 0 && (
-                <div className="text-center py-8">
-                  <div className="text-gray-500 text-lg mb-2">No water assets found</div>
-                  <div className="text-gray-400 text-sm">Try adjusting your filters to see more results</div>
-                </div>
-              )}
+              {!loading &&
+                !searchLoading &&
+                displayAssets.length === 0 &&
+                Object.keys(filters).length > 0 && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500 text-lg mb-2">
+                      No water assets found
+                    </div>
+                    <div className="text-gray-400 text-sm">
+                      Try adjusting your filters to see more results
+                    </div>
+                  </div>
+                )}
             </div>
 
             {!isSearchMode && (
@@ -411,38 +504,66 @@ export const UtilityWaterDashboard = () => {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious
-                        onClick={() => pagination.currentPage > 1 && handlePageChange(pagination.currentPage - 1)}
-                        className={pagination.currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        onClick={() =>
+                          pagination.currentPage > 1 &&
+                          handlePageChange(pagination.currentPage - 1)
+                        }
+                        className={
+                          pagination.currentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
                       />
                     </PaginationItem>
 
                     <PaginationItem>
-                      <PaginationLink onClick={() => handlePageChange(1)} isActive={pagination.currentPage === 1}>1</PaginationLink>
+                      <PaginationLink
+                        onClick={() => handlePageChange(1)}
+                        isActive={pagination.currentPage === 1}
+                      >
+                        1
+                      </PaginationLink>
                     </PaginationItem>
 
                     {pagination.currentPage > 4 && (
-                      <PaginationItem><span className="px-4 py-2">...</span></PaginationItem>
+                      <PaginationItem>
+                        <span className="px-4 py-2">...</span>
+                      </PaginationItem>
                     )}
 
-                    {Array.from({ length: 3 }, (_, i) => pagination.currentPage - 1 + i)
-                      .filter((page) => page > 1 && page < pagination.totalPages)
+                    {Array.from(
+                      { length: 3 },
+                      (_, i) => pagination.currentPage - 1 + i
+                    )
+                      .filter(
+                        (page) => page > 1 && page < pagination.totalPages
+                      )
                       .map((page) => (
                         <PaginationItem key={page}>
-                          <PaginationLink onClick={() => handlePageChange(page)} isActive={pagination.currentPage === page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={pagination.currentPage === page}
+                          >
                             {page}
                           </PaginationLink>
                         </PaginationItem>
                       ))}
 
                     {pagination.currentPage < pagination.totalPages - 3 && (
-                      <PaginationItem><span className="px-4 py-2">...</span></PaginationItem>
+                      <PaginationItem>
+                        <span className="px-4 py-2">...</span>
+                      </PaginationItem>
                     )}
 
                     {pagination.totalPages > 1 && (
                       <PaginationItem>
                         <PaginationLink
-                          onClick={() => handlePageChange(pagination.totalPages)}
-                          isActive={pagination.currentPage === pagination.totalPages}
+                          onClick={() =>
+                            handlePageChange(pagination.totalPages)
+                          }
+                          isActive={
+                            pagination.currentPage === pagination.totalPages
+                          }
                         >
                           {pagination.totalPages}
                         </PaginationLink>
@@ -451,15 +572,24 @@ export const UtilityWaterDashboard = () => {
 
                     <PaginationItem>
                       <PaginationNext
-                        onClick={() => pagination.currentPage < pagination.totalPages && handlePageChange(pagination.currentPage + 1)}
-                        className={pagination.currentPage === pagination.totalPages ? "pointer-events-none opacity-50" : ""}
+                        onClick={() =>
+                          pagination.currentPage < pagination.totalPages &&
+                          handlePageChange(pagination.currentPage + 1)
+                        }
+                        className={
+                          pagination.currentPage === pagination.totalPages
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
                       />
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
 
                 <div className="text-center mt-2 text-sm text-gray-600">
-                  Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalCount} total water assets)
+                  Showing page {pagination.currentPage} of{" "}
+                  {pagination.totalPages} ({pagination.totalCount} total water
+                  assets)
                 </div>
               </div>
             )}
@@ -467,11 +597,9 @@ export const UtilityWaterDashboard = () => {
 
           {/* ── Analytics Tab ─────────────────────────────────────────────── */}
           <TabsContent value="analytics" className="space-y-4 mt-6">
-
             {/* Filters row */}
             <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
-
-              {/* Date filter */}
+              {/* Date filter — same as IncidentDashboard */}
               <Button
                 variant="outline"
                 onClick={() => setIsAnalyticsFilterOpen(true)}
@@ -480,59 +608,47 @@ export const UtilityWaterDashboard = () => {
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-700">
-                    {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+                    {analyticsDateRange.startDate} -{" "}
+                    {analyticsDateRange.endDate}
                   </span>
                 </div>
                 <Filter className="w-4 h-4 text-gray-600" />
               </Button>
 
-              {/* Chart visibility selector */}
-              <div className="relative w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsChartSelectorOpen((p) => !p)}
-                  className="flex items-center justify-between w-full sm:w-[280px] px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
-                >
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-700">Display Charts</span>
-                  </div>
-                </Button>
-
-                {isChartSelectorOpen && (
-                  <div className="absolute right-0 mt-2 w-full sm:w-[280px] bg-white border border-gray-200 rounded-md shadow-lg z-50 p-2">
-                    <div className="text-xs font-semibold text-gray-500 mb-2 px-2 uppercase tracking-wider">
-                      Select Visible Charts
-                    </div>
-                    {ALL_CHART_KEYS.map((key) => (
-                      <label
-                        key={key}
-                        className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedCharts[key]}
-                          onChange={() =>
-                            setSelectedCharts((prev) => ({ ...prev, [key]: !prev[key] }))
-                          }
-                          className="w-4 h-4 rounded border-gray-300 text-[#C72030] focus:ring-[#C72030] cursor-pointer"
-                        />
-                        <span className="text-sm font-medium text-gray-700">
-                          {CHART_LABELS[key]}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
+              {/* Chart selector — SAME AssetAnalyticsSelector as IncidentDashboard */}
+              <div className="w-full sm:w-auto">
+                <AssetAnalyticsSelector
+                  options={WATER_CHART_OPTIONS}
+                  selectedOptions={selectedCharts}
+                  onSelectionChange={setSelectedCharts}
+                  title="Select Water Charts"
+                  buttonLabel="Charts"
+                  dateRange={{
+                    startDate: getDialogDate(analyticsDateRange.startDate),
+                    endDate: getDialogDate(analyticsDateRange.endDate),
+                  }}
+                />
               </div>
             </div>
 
-            {/* Water stats cards */}
+            {/* Water stats cards — EXACTLY as original, not touched */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
               {[
-                { label: "Total Water Consumption", value: "0 kL", icon: <Droplets className="w-6 h-6 text-[#C72030]" /> },
-                { label: "Domestic Total", value: "0 kL", icon: <Activity className="w-6 h-6 text-[#C72030]" /> },
-                { label: "Flushing Total", value: "0 kL", icon: <RefreshCw className="w-6 h-6 text-[#C72030]" /> },
+                {
+                  label: "Total Water Consumption",
+                  value: "0 kL",
+                  icon: <Droplets className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: "Domestic Total",
+                  value: "0 kL",
+                  icon: <Activity className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: "Flushing Total",
+                  value: "0 kL",
+                  icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
+                },
               ].map((item, i) => (
                 <div
                   key={i}
@@ -543,83 +659,73 @@ export const UtilityWaterDashboard = () => {
                   </div>
                   <div>
                     <div className="text-xl font-semibold">{item.value}</div>
-                    <div className="text-sm font-medium text-[#1A1A1A]">{item.label}</div>
+                    <div className="text-sm font-medium text-[#1A1A1A]">
+                      {item.label}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* ── DndContext — same structure as TicketDashboard ─────────── */}
+            {/* ── DndContext ─────────────────────────────────────────────── */}
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+              <SortableContext
+                items={chartOrder}
+                strategy={rectSortingStrategy}
+              >
                 <div className="space-y-6 mt-6">
+                  {twoColCharts.length > 0 && (
+                    <div
+                      className={`grid grid-cols-1 gap-6 ${twoColCharts.length > 1 ? "md:grid-cols-2" : ""}`}
+                    >
+                      {twoColCharts.map((key) => {
+                        if (key === "sourceBreakdown") {
+                          return (
+                            <SortableChartItem key={key} id={key}>
+                              <SiteWisePowerConsumptionChart
+                                title="Water Source Consumption"
+                                data={WaterSourceComsumpton}
+                              />
+                            </SortableChartItem>
+                          );
+                        }
+                        if (key === "siteWise") {
+                          return (
+                            <SortableChartItem key={key} id={key}>
+                              <SiteWisePowerConsumptionChart
+                                title="Site Wise Domestic Water Consumption"
+                                data={siteWaterData}
+                              />
+                            </SortableChartItem>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  )}
 
-                  {/* sourceBreakdown + siteWise — rendered side-by-side when both visible */}
-                  {(() => {
-                    const twoColCharts = orderedVisibleCharts.filter(
-                      (k) => k === "sourceBreakdown" || k === "siteWise"
-                    );
-                    const timeSeriesVisible = orderedVisibleCharts.includes("timeSeries");
+                  {timeSeriesVisible && (
+                    <SortableChartItem key="timeSeries" id="timeSeries">
+                      <WaterTimeSeriesChart title="Water Consumption - Time Series" />
+                    </SortableChartItem>
+                  )}
 
-                    return (
-                      <>
-                        {twoColCharts.length > 0 && (
-                          <div
-                            className={`grid grid-cols-1 gap-6 ${
-                              twoColCharts.length > 1 ? "md:grid-cols-2" : ""
-                            }`}
-                          >
-                            {twoColCharts.map((key) => {
-                              if (key === "sourceBreakdown") {
-                                return (
-                                  <SortableChartItem key={key} id={key}>
-                                    <SiteWisePowerConsumptionChart
-                                      title="Water Source Consumption"
-                                      data={WaterSourceComsumpton}
-                                    />
-                                  </SortableChartItem>
-                                );
-                              }
-                              if (key === "siteWise") {
-                                return (
-                                  <SortableChartItem key={key} id={key}>
-                                    <SiteWisePowerConsumptionChart
-                                      title="Site Wise Domestic Water Consumption"
-                                      data={siteWaterData}
-                                    />
-                                  </SortableChartItem>
-                                );
-                              }
-                              return null;
-                            })}
-                          </div>
-                        )}
-
-                        {/* timeSeries — always full width */}
-                        {timeSeriesVisible && (
-                          <SortableChartItem key="timeSeries" id="timeSeries">
-                            <WaterTimeSeriesChart title="Water Consumption - Time Series" />
-                          </SortableChartItem>
-                        )}
-                      </>
-                    );
-                  })()}
-
-                  {/* Empty state */}
                   {orderedVisibleCharts.length === 0 && (
                     <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                       <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-20" />
-                      <p>No charts selected. Please select a chart from the dropdown above.</p>
+                      <p>
+                        No charts selected. Please select a chart from the
+                        dropdown above.
+                      </p>
                     </div>
                   )}
                 </div>
               </SortableContext>
             </DndContext>
-
           </TabsContent>
         </Tabs>
       )}
@@ -633,16 +739,20 @@ export const UtilityWaterDashboard = () => {
       <BulkUploadDialog
         open={isBulkUploadOpen}
         onOpenChange={setIsBulkUploadOpen}
-        title={uploadType === 'import' ? 'Import Water Assets' : 'Update Water Assets'}
+        title={
+          uploadType === "import"
+            ? "Import Water Assets"
+            : "Update Water Assets"
+        }
       />
 
-      <TicketAnalyticsFilterDialog
+      {/* SAME AssetAnalyticsFilterDialog as IncidentDashboard */}
+      <AssetAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
-        title="Water"
         onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={(filters) => setAnalyticsDateRange(filters)}
-        currentStartDate={analyticsDateRange.startDate}
-        currentEndDate={analyticsDateRange.endDate}
+        onApplyFilters={handleApplyAnalyticsFilters}
+        currentStartDate={getDialogDate(analyticsDateRange.startDate)}
+        currentEndDate={getDialogDate(analyticsDateRange.endDate)}
       />
     </div>
   );
