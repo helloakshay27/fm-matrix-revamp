@@ -175,7 +175,7 @@ export const DurationPicker = ({
     };
 
     // let hoursPerDay = shift?.[0]?.total_hour - 1 || 8;
-    let hoursPerDay = 0;
+    let hoursPerDay = 0.5; // Default to 30 minutes (0.5 hours)
 
     if (!Array.isArray(shift) && shift?.shift) {
         const [startTime, endTime] = shift.shift.split(" to ");
@@ -410,10 +410,14 @@ export const DurationPicker = ({
             if (onDateWiseHoursChange && daysList.length > 0) {
                 const dateWise = daysList.map((d, idx) => {
                     const formattedDate = formatLocalDate(d.date);
+                    const total = parseHours(dailyHours[idx]);
+                    const hours = Math.floor(total);
+                    const minutes = Math.round((total - hours) * 60);
+
                     return {
                         id: getIdFromExistingHours(formattedDate),
-                        hours: parseHours(dailyHours[idx]),
-                        minutes: 0,
+                        hours,
+                        minutes,
                         date: formattedDate,
                     };
                 });
