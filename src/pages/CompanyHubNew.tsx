@@ -410,7 +410,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-[#FAF9F6] pb-24 overflow-x-hidden font-poppins">
       <div className="pb-10">
         <TopNavigation
           activeNavMenu={activeNavMenu}

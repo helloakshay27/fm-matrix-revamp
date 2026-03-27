@@ -28,6 +28,7 @@ export default {
 		},
 		extend: {
 			fontFamily: {
+				poppins: ["Poppins", "sans-serif"],
 				'work-sans': ['Work Sans', 'sans-serif'],
 			},
 			colors: {
