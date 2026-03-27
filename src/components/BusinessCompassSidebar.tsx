@@ -20,11 +20,11 @@ import {
 const businessCompassNavigation: Record<string, any> = {
   "My Profile": {
     icon: User,
-    href: "/business-compass",
+    href: "/business-compass/profile",
   },
   Dashboard: {
     icon: User,
-    href: "/business-compass-dashboard",
+    href: "/business-compass/dashboard",
   },
 };
 

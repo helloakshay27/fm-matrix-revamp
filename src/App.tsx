@@ -1217,6 +1217,8 @@ import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
 import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
+import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
+import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
 
 const queryClient = new QueryClient();
 
@@ -1988,6 +1990,16 @@ function App() {
                             path="/vas/channels/tasks/:id"
                             element={<ChatTaskDetailsPage />}
                           />
+
+                          <Route
+                            path="/business-compass/profile"
+                            element={<BusinessCompassProfile />}
+                          />
+                          <Route
+                            path="/business-compass/dashboard"
+                            element={<BusinessCompassDashboard />}
+                          />
+
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route
@@ -4346,6 +4358,7 @@ function App() {
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
+
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}
