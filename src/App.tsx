@@ -1219,6 +1219,12 @@ import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsRepo
 import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
 import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
 import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
+import Feedback from "./pages/BusinessCompass/Feedback";
+import Announcement from "./pages/BusinessCompass/Announcement";
+import Leaderboard from "./pages/BusinessCompass/Leaderboard";
+import DiscPersonalityAssessment from "./pages/BusinessCompass/DiscPersonalityAssessment";
+import HelpCenter from "./pages/BusinessCompass/HelpCenter";
+import BugReports from "./pages/BusinessCompass/BugReports";
 
 const queryClient = new QueryClient();
 
