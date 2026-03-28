@@ -115,7 +115,7 @@ export const getToken = (): string | null => {
 };
 
 /**
- * Normalize a base URL - removes duplicate protocols and ensures proper https:// format
+ * Normalize a base URL - removes duplicate protocols and ensures clean format
  * Handles cases like:
  * - "https://https//domain.com" -> "https://domain.com"
  * - "https://domain.com" -> "https://domain.com"
@@ -142,19 +142,41 @@ export const normalizeBaseUrl = (url: string): string => {
   return `https://${normalized}`;
 };
 
-// Save base URL to localStorage (normalized)
-export const saveBaseUrl = (baseUrl: string): void => {
-  const normalized = normalizeBaseUrl(baseUrl);
-  localStorage.setItem(AUTH_KEYS.BASE_URL, normalized);
+/**
+ * Strip protocol from URL - returns just the domain
+ * Used for localStorage compatibility with legacy code that adds https:// manually
+ */
+export const stripProtocol = (url: string): string => {
+  if (!url) return "";
+  return url.trim().replace(/^(https?:\/\/)+/gi, "").replace(/^\/+/, "");
 };
 
-// Get base URL from localStorage (already normalized on save, but double-check)
+// Save base URL to localStorage (WITHOUT protocol for backward compatibility)
+// Many existing files read from localStorage and add https:// manually
+export const saveBaseUrl = (baseUrl: string): void => {
+  // Store without protocol so legacy code that adds https:// won't double it
+  const domainOnly = stripProtocol(normalizeBaseUrl(baseUrl));
+  localStorage.setItem(AUTH_KEYS.BASE_URL, domainOnly);
+};
+
+// Get base URL from localStorage WITH https:// prefix
+// Use this for new code that expects full URL
 export const getBaseUrl = (): string | null => {
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
 
-  // Always normalize to handle any edge cases
-  return normalizeBaseUrl(savedUrl);
+  // Add https:// prefix if not present
+  return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
+};
+
+/**
+ * Get base URL from localStorage WITHOUT protocol
+ * For compatibility with code that adds https:// manually
+ */
+export const getBaseUrlDomain = (): string | null => {
+  const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
+  if (!savedUrl) return null;
+  return stripProtocol(savedUrl);
 };
 
 // Check if user is authenticated
