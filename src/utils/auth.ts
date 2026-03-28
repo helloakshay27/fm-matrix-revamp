@@ -4,7 +4,7 @@ export interface User {
   id: number;
   email: string;
   firstname: string;
-  
+
   lastname: string;
   mobile?: string;
   phone?: string;
@@ -114,18 +114,47 @@ export const getToken = (): string | null => {
   return localStorage.getItem(AUTH_KEYS.TOKEN);
 };
 
-// Save base URL to localStorage
-export const saveBaseUrl = (baseUrl: string): void => {
-  localStorage.setItem(AUTH_KEYS.BASE_URL, baseUrl);
+/**
+ * Normalize a base URL - removes duplicate protocols and ensures proper https:// format
+ * Handles cases like:
+ * - "https://https//domain.com" -> "https://domain.com"
+ * - "https://domain.com" -> "https://domain.com"
+ * - "domain.com" -> "https://domain.com"
+ * - "http://domain.com" -> "https://domain.com"
+ */
+export const normalizeBaseUrl = (url: string): string => {
+  if (!url) return "";
+
+  // Remove any leading/trailing whitespace
+  let normalized = url.trim();
+
+  // Remove any duplicate https:// or http:// patterns (e.g., "https://https//")
+  normalized = normalized.replace(/^(https?:\/\/)+/gi, "");
+
+  // Also handle cases like "https//" (missing colon)
+  normalized = normalized.replace(/^https\/\//gi, "");
+  normalized = normalized.replace(/^http\/\//gi, "");
+
+  // Remove any remaining leading slashes
+  normalized = normalized.replace(/^\/+/, "");
+
+  // Ensure https:// prefix
+  return `https://${normalized}`;
 };
 
-// Get base URL from localStorage
+// Save base URL to localStorage (normalized)
+export const saveBaseUrl = (baseUrl: string): void => {
+  const normalized = normalizeBaseUrl(baseUrl);
+  localStorage.setItem(AUTH_KEYS.BASE_URL, normalized);
+};
+
+// Get base URL from localStorage (already normalized on save, but double-check)
 export const getBaseUrl = (): string | null => {
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
 
-  // Ensure the URL includes the protocol
-  return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
+  // Always normalize to handle any edge cases
+  return normalizeBaseUrl(savedUrl);
 };
 
 // Check if user is authenticated
@@ -143,7 +172,7 @@ export const fetchLockAccount = async (): Promise<void> => {
 
     if (!baseUrl || !token) return;
 
-    const base = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+    const base = normalizeBaseUrl(baseUrl);
     const url = `${base.replace(/\/+$/, "")}/get_lock_account.json`;
 
     const response = await fetch(url, {
@@ -209,7 +238,7 @@ export const getOrganizationsByEmail = async (
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
     }
-  
+
     const data = await response.json();
     return data.organizations || [];
   }
