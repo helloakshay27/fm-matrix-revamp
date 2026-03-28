@@ -1,4 +1,5 @@
 import axios from "axios";
+import { normalizeBaseUrl, saveBaseUrl } from "@/utils/auth";
 
 // Organization type for API response
 interface Organization {
@@ -139,28 +140,16 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
     const response = await axios.get(apiUrl);
     const { organizations, backend_url } = response.data;
 
-    // Helper function to normalize URL - removes duplicate protocols and ensures proper format
-    const normalizeUrl = (url: string): string => {
-      if (!url) return "";
-      // Remove any duplicate https:// or http:// patterns
-      let normalized = url.replace(/^(https?:\/\/)+/i, "");
-      // Also handle cases like "https//" (missing colon)
-      normalized = normalized.replace(/^https\/\//i, "");
-      normalized = normalized.replace(/^http\/\//i, "");
-      // Ensure https:// prefix
-      return `https://${normalized}`;
-    };
-
     // Priority 1: Use backend_url from API response
     if (backend_url) {
-      const formattedUrl = normalizeUrl(backend_url);
+      const formattedUrl = normalizeBaseUrl(backend_url);
 
       // Cache the result
       cachedBaseUrl = formattedUrl;
       cachedOrgId = orgId;
 
-      // Also save to localStorage for other components
-      localStorage.setItem("baseUrl", formattedUrl);
+      // Save to localStorage using auth utility (handles normalization)
+      saveBaseUrl(formattedUrl);
 
       console.warn("✅ Base URL resolved from backend_url:", formattedUrl);
       return formattedUrl;
@@ -173,14 +162,14 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
       );
 
       if (selectedOrg?.backend_domain) {
-        const formattedUrl = normalizeUrl(selectedOrg.backend_domain);
+        const formattedUrl = normalizeBaseUrl(selectedOrg.backend_domain);
 
         // Cache the result
         cachedBaseUrl = formattedUrl;
         cachedOrgId = orgId;
 
-        // Also save to localStorage
-        localStorage.setItem("baseUrl", formattedUrl);
+        // Save to localStorage using auth utility
+        saveBaseUrl(formattedUrl);
 
         console.warn("✅ Base URL resolved from organization:", formattedUrl);
         return formattedUrl;
@@ -189,11 +178,11 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
       // Priority 3: Use first organization's backend_domain
       const firstOrg = organizations[0];
       if (firstOrg?.backend_domain) {
-        const formattedUrl = normalizeUrl(firstOrg.backend_domain);
+        const formattedUrl = normalizeBaseUrl(firstOrg.backend_domain);
 
         cachedBaseUrl = formattedUrl;
         cachedOrgId = orgId;
-        localStorage.setItem("baseUrl", formattedUrl);
+        saveBaseUrl(formattedUrl);
 
         console.warn("✅ Base URL resolved from first org:", formattedUrl);
         return formattedUrl;

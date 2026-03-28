@@ -221,18 +221,22 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   };
 
   const handleOrganizationSelect = (org: Organization) => {
+    const baseUrl = `${org.sub_domain}.${org.domain}`;
+
+    // Save org details
     localStorage.setItem("selectedOrg", org.name);
-    localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     localStorage.setItem("org_id", org.id.toString());
+
+    // Use saveBaseUrl for normalized URL storage
+    saveBaseUrl(baseUrl);
+
     //Session Storage For App-Level
     sessionStorage.setItem("selectedOrg", org.name);
-    sessionStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    sessionStorage.setItem("baseUrl", baseUrl); // Session storage doesn't need normalization
     sessionStorage.setItem("org_id", org.id.toString());
-    setBaseUrl(`${org.sub_domain}.${org.domain}`);
+
+    setBaseUrl(baseUrl);
     setSelectedOrganization(org);
-    // Save the base URL in the format: sub_domain.domain
-    const baseUrl = `${org.sub_domain}.${org.domain}`;
-    saveBaseUrl(baseUrl);
     setCurrentStep(3);
   };
 
