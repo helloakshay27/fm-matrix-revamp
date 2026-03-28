@@ -40,6 +40,20 @@ interface AccountGroup {
   group_name: string;
   ledgers?: Ledger[];
 }
+
+interface TaxRate {
+  id: number;
+  name: string;
+  rate: number;
+  rate_type?: string;
+}
+
+interface TaxGroup {
+  id: number;
+  name: string;
+  tax_rates?: TaxRate[];
+  rate?: number;
+}
 import {
   X,
   Settings,
@@ -281,6 +295,50 @@ export const CreatePaymentPage: React.FC = () => {
     fetchTdsOptions();
   }, []);
 
+  // Fetch Reverse Charge (Tax Group) options from API
+  useEffect(() => {
+    const fetchRcTaxOptions = async () => {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
+      if (!baseUrl || !token || !lock_account_id) return;
+      setLoadingRcTaxes(true);
+      try {
+        const url = `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`;
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        // data is expected to be an array of TaxGroups
+        const formattedGroups = (Array.isArray(data) ? (data as TaxGroup[]) : []).map((group) => {
+          // If the group has a rate aggregate, use it; otherwise sum the rates from tax_rates
+          const totalRate = typeof group.rate === 'number' 
+            ? group.rate 
+            : Array.isArray(group.tax_rates) 
+              ? group.tax_rates.reduce((sum, r) => sum + (r.rate || 0), 0)
+              : 0;
+            
+          return {
+            id: group.id,
+            name: group.name,
+            percentage: totalRate
+          };
+        });
+        setRcTaxOptions(formattedGroups);
+      } catch (error) {
+        console.error('Failed to fetch RC Tax options:', error);
+        setRcTaxOptions([]);
+      } finally {
+        setLoadingRcTaxes(false);
+      }
+    };
+    fetchRcTaxOptions();
+  }, []);
+
+
   useEffect(() => {
     const fetchAccountGroups = async () => {
       if (!API_CONFIG.TOKEN || !lock_account_id) return;
@@ -408,6 +466,11 @@ export const CreatePaymentPage: React.FC = () => {
           paid_from_ledger_id: parseInt(paidThrough, 10),
           deposit_to_ledger_id: depositToLedgerId,
           advance: activeTab === "vendor_advance",
+          reverse_charge: activeTab === "vendor_advance" ? isReverseCharge : undefined,
+          reverse_charge_tax_id: (activeTab === "vendor_advance" && isReverseCharge && reverseChargeTax) ? parseInt(reverseChargeTax, 10) : undefined,
+          source_of_supply: activeTab === "vendor_advance" ? sourceOfSupply : undefined,
+          destination_of_supply: activeTab === "vendor_advance" ? destinationOfSupply : undefined,
+          description_of_supply: activeTab === "vendor_advance" ? descriptionOfSupply : undefined,
           notes: notes,
           payment_amount: paymentAmount,
           excess_amount: excessAmount,
@@ -801,8 +864,10 @@ export const CreatePaymentPage: React.FC = () => {
                                      borderRadius: "6px",
                                    }}
                                  >
-                                   <MuiMenuItem value="" disabled>Select Tax</MuiMenuItem>
-                                   {rcTaxOptions.map((opt) => (
+                                   <MuiMenuItem value="" disabled>
+                                     {loadingRcTaxes ? "Loading Tax options..." : "Select Tax Group"}
+                                   </MuiMenuItem>
+                                   {!loadingRcTaxes && rcTaxOptions.map((opt) => (
                                      <MuiMenuItem key={opt.id} value={String(opt.id)}>
                                        {opt.name}
                                        {typeof opt.percentage === "number" ? ` [${opt.percentage}%]` : ""}

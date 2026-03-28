@@ -121,7 +121,9 @@ const Index = () => {
     const isLocalhost =
       hostname.includes("lockated.gophygital.work") ||
       hostname.includes("fm-matrix.lockated.com") ||
-      userEmail === "deveshjain928@gmail.com";
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work";
 
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
@@ -161,7 +163,9 @@ const Index = () => {
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
       isPulseSite ||
-      (isWebSite && userEmail === "deveshjain928@gmail.com")
+      (isWebSite && userEmail === "deveshjain928@gmail.com") ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       // For these companies and domains, use dynamic routing from permissions
       if (userRole) {

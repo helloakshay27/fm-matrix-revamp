@@ -1037,6 +1037,7 @@ import RecurringExpensesListPage from "./pages/ClubManagement/RecurringExpensesL
 import RecurringExpenseDetailPage from "./pages/ClubManagement/RecurringExpenseDetailPage";
 import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
 import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
+import RecurringBillDetails from "./pages/ClubManagement/RecurringBillDetails"; // FIX: Add missing import for RecurringBillDetails
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
 import { RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
 import { SalesOrderCreatePage } from "./pages/SalesOrderCreatePage";
@@ -1217,6 +1218,16 @@ import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
 import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
 import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
+import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
+import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
+import Feedback from "./pages/BusinessCompass/Feedback";
+import Announcement from "./pages/BusinessCompass/Announcement";
+import Leaderboard from "./pages/BusinessCompass/Leaderboard";
+import DiscPersonalityAssessment from "./pages/BusinessCompass/DiscPersonalityAssessment";
+import HelpCenter from "./pages/BusinessCompass/HelpCenter";
+import BugReports from "./pages/BusinessCompass/BugReports";
+import BusinessWeeklyReport from "./pages/BusinessCompass/BusinessWeeklyReport";
+import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompassTasksAndIssues";
 
 const queryClient = new QueryClient();
 
@@ -1988,6 +1999,48 @@ function App() {
                             path="/vas/channels/tasks/:id"
                             element={<ChatTaskDetailsPage />}
                           />
+
+                          <Route
+                            path="/business-compass/profile"
+                            element={<BusinessCompassProfile />}
+                          />
+                          <Route
+                            path="/business-compass/dashboard"
+                            element={<BusinessCompassDashboard />}
+                          />
+                          <Route
+                            path="/business-compass/weekly-report"
+                            element={<BusinessWeeklyReport />}
+                          />
+                          <Route
+                            path="/business-compass/tasks-and-issues"
+                            element={<BusinessCompassTasksAndIssues />}
+                          />
+                          <Route
+                            path="/business-compass/feedback"
+                            element={<Feedback />}
+                          />
+                          <Route
+                            path="/business-compass/announcements"
+                            element={<Announcement />}
+                          />
+                          <Route
+                            path="/business-compass/leaderboard"
+                            element={<Leaderboard />}
+                          />
+                          <Route
+                            path="/business-compass/disc-personality-assessment"
+                            element={<DiscPersonalityAssessment />}
+                          />
+                          <Route
+                            path="/business-compass/help-center"
+                            element={<HelpCenter />}
+                          />
+                          <Route
+                            path="/business-compass/bug-reports"
+                            element={<BugReports />}
+                          />
+
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route
@@ -3170,6 +3223,11 @@ function App() {
                             path="/accounting/recurring-bills/create"
                             element={<RecurringBillCreatePage />}
                           />
+
+                          <Route
+                            path="/accounting/recurring-bills/details/:id"
+                            element={<RecurringBillDetails />}
+                          />
                           <Route
                             path="/accounting/recurring-expenses"
                             element={<RecurringExpensesListPage />}
@@ -4346,6 +4404,7 @@ function App() {
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
+
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}

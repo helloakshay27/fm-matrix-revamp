@@ -14,7 +14,6 @@ import {
   Calendar,
   Settings,
 } from "lucide-react";
-import { TicketAnalyticsFilterDialog } from "@/components/TicketAnalyticsFilterDialog";
 import {
   Pagination,
   PaginationContent,
@@ -28,7 +27,11 @@ import type { Asset } from "@/hooks/useAssets";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
 import { SiteWisePowerConsumptionChart } from "@/components/charts/SiteWisePowerConsumptionChart";
 
-// ── dnd-kit — same imports as TicketDashboard ─────────────────────────────────
+// ── Same components as IncidentDashboard ──────────────────────────────────────
+import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
+import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
+
+// ── dnd-kit ───────────────────────────────────────────────────────────────────
 import {
   DndContext,
   closestCenter,
@@ -48,11 +51,25 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 type ChartKey = "cumulative" | "siteWise";
 
-// ─── SortableChartItem — exact same component as in TicketDashboard ───────────
+// ─── Chart Options ────────────────────────────────────────────────────────────
+const ENERGY_CHART_OPTIONS = [
+  {
+    id: "cumulative",
+    label: "Sub Meter Sources",
+    description: "Cumulative power from sub meter sources",
+  },
+  {
+    id: "siteWise",
+    label: "Site Wise Power",
+    description: "Site-wise power consumption breakdown",
+  },
+];
 
+const ENERGY_CHART_KEYS = ENERGY_CHART_OPTIONS.map((opt) => opt.id);
+
+// ─── SortableChartItem ────────────────────────────────────────────────────────
 const SortableChartItem = ({
   id,
   children,
@@ -75,7 +92,6 @@ const SortableChartItem = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Prevent drag from triggering on button / icon clicks
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
     if (
@@ -109,7 +125,6 @@ const SortableChartItem = ({
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const transformEnergyAsset = (
   asset: any,
   index: number,
@@ -171,21 +186,11 @@ const calculateStats = (energyData: any[] = []) => ({
     : 0,
 });
 
-// ─── Chart label map ──────────────────────────────────────────────────────────
-
-const CHART_LABELS: Record<ChartKey, string> = {
-  cumulative: "Sub Meter Sources",
-  siteWise: "Site Wise Power",
-};
-
-const ALL_CHART_KEYS: ChartKey[] = ["cumulative", "siteWise"];
-
 // ─── Main Component ───────────────────────────────────────────────────────────
-
 export const EnergyDashboard = () => {
   const navigate = useNavigate();
 
-  // List tab
+  // ── List tab state
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [energyAssets, setEnergyAssets] = useState<any[]>([]);
@@ -196,36 +201,13 @@ export const EnergyDashboard = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
 
-  // Analytics tab
-  const [isChartSelectorOpen, setIsChartSelectorOpen] = useState(false);
-  const [selectedCharts, setSelectedCharts] = useState<
-    Record<ChartKey, boolean>
-  >({ cumulative: true, siteWise: true });
+  // ── Analytics tab state
+  const [selectedCharts, setSelectedCharts] =
+    useState<string[]>(ENERGY_CHART_KEYS);
+  const [chartOrder, setChartOrder] = useState<string[]>(ENERGY_CHART_KEYS);
   const [sitePowerData, setSitePowerData] = useState([]);
 
-  // ── Drag & drop state ─────────────────────────────────────────────────────
-  const [chartOrder, setChartOrder] = useState<ChartKey[]>([...ALL_CHART_KEYS]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // Exact same handler as TicketDashboard
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      setChartOrder((items) => {
-        const oldIndex = items.indexOf(active.id as ChartKey);
-        const newIndex = items.indexOf(over?.id as ChartKey);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  // ── Date range ────────────────────────────────────────────────────────────
+  // ── Date range
   const getDefaultDateRange = () => {
     const today = new Date();
     const lastYear = new Date(today);
@@ -239,7 +221,42 @@ export const EnergyDashboard = () => {
   const [analyticsDateRange, setAnalyticsDateRange] =
     useState(getDefaultDateRange);
 
-  // ── Fetch assets ──────────────────────────────────────────────────────────
+  const getDialogDate = (dateStr: string) => {
+    const [dd, mm, yyyy] = dateStr.split("/");
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  };
+
+  const handleApplyAnalyticsFilters = (startStr: string, endStr: string) => {
+    const formatToDDMMYYYY = (d: string) => {
+      const [y, m, day] = d.split("-");
+      return `${day}/${m}/${y}`;
+    };
+    setAnalyticsDateRange({
+      startDate: formatToDDMMYYYY(startStr),
+      endDate: formatToDDMMYYYY(endStr),
+    });
+  };
+
+  // ── dnd sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id as ChartKey);
+        const newIndex = items.indexOf(over?.id as ChartKey);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // ── Fetch assets
   useEffect(() => {
     const fetchAssets = async () => {
       setLoading(true);
@@ -342,8 +359,9 @@ export const EnergyDashboard = () => {
     setCurrentPage(1);
   };
 
-  // Only render charts that are both selected and in order
-  const orderedVisibleCharts = chartOrder.filter((key) => selectedCharts[key]);
+  const orderedVisibleCharts = chartOrder.filter((k) =>
+    selectedCharts.includes(k)
+  );
 
   return (
     <div className="p-4 sm:p-6">
@@ -436,10 +454,8 @@ export const EnergyDashboard = () => {
 
         {/* ── Analytics Tab ─────────────────────────────────────────────────── */}
         <TabsContent value="analytics" className="space-y-4 mt-4">
-
           {/* Filters row */}
           <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
-
             {/* Date filter */}
             <Button
               variant="outline"
@@ -455,53 +471,23 @@ export const EnergyDashboard = () => {
               <Filter className="w-4 h-4 text-gray-600" />
             </Button>
 
-            {/* Chart visibility selector */}
-            <div className="relative w-full sm:w-auto">
-              <Button
-                variant="outline"
-                onClick={() => setIsChartSelectorOpen((p) => !p)}
-                className="flex items-center justify-between w-full sm:w-[280px] px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
-              >
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Display Charts
-                  </span>
-                </div>
-              </Button>
-
-              {isChartSelectorOpen && (
-                <div className="absolute right-0 mt-2 w-full sm:w-[280px] bg-white border border-gray-200 rounded-md shadow-lg z-50 p-2">
-                  <div className="text-xs font-semibold text-gray-500 mb-2 px-2 uppercase tracking-wider">
-                    Select Visible Charts
-                  </div>
-                  {ALL_CHART_KEYS.map((key) => (
-                    <label
-                      key={key}
-                      className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedCharts[key]}
-                        onChange={() =>
-                          setSelectedCharts((prev) => ({
-                            ...prev,
-                            [key]: !prev[key],
-                          }))
-                        }
-                        className="w-4 h-4 rounded border-gray-300 text-[#C72030] focus:ring-[#C72030] cursor-pointer"
-                      />
-                      <span className="text-sm font-medium text-gray-700">
-                        {CHART_LABELS[key]}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
+            {/* Chart selector */}
+            <div className="w-full sm:w-auto">
+              <AssetAnalyticsSelector
+                options={ENERGY_CHART_OPTIONS}
+                selectedOptions={selectedCharts}
+                onSelectionChange={setSelectedCharts}
+                title="Select Energy Charts"
+                buttonLabel="Charts"
+                dateRange={{
+                  startDate: getDialogDate(analyticsDateRange.startDate),
+                  endDate: getDialogDate(analyticsDateRange.endDate),
+                }}
+              />
             </div>
           </div>
 
-          {/* Metric cards */}
+          {/* Metric cards — ORIGINAL CSS restored */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
               {
@@ -545,7 +531,7 @@ export const EnergyDashboard = () => {
             ))}
           </div>
 
-          {/* ── DndContext — same structure as TicketDashboard ─────────────── */}
+          {/* ── Charts with DnD ───────────────────────────────────────────── */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -558,24 +544,21 @@ export const EnergyDashboard = () => {
                 }`}
               >
                 {orderedVisibleCharts.map((key) => {
-                  if (key === "cumulative") {
+                  if (key === "cumulative")
                     return (
                       <SortableChartItem key={key} id={key}>
                         <CumulativePowerWidget />
                       </SortableChartItem>
                     );
-                  }
-                  if (key === "siteWise") {
+                  if (key === "siteWise")
                     return (
                       <SortableChartItem key={key} id={key}>
                         <SiteWisePowerConsumptionChart data={sitePowerData} />
                       </SortableChartItem>
                     );
-                  }
                   return null;
                 })}
 
-                {/* Empty state */}
                 {orderedVisibleCharts.length === 0 && (
                   <div className="col-span-full py-12 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                     <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -591,13 +574,13 @@ export const EnergyDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      <TicketAnalyticsFilterDialog
+      {/* AssetAnalyticsFilterDialog */}
+      <AssetAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
-        title="Energy"
         onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={(filters) => setAnalyticsDateRange(filters)}
-        currentStartDate={analyticsDateRange.startDate}
-        currentEndDate={analyticsDateRange.endDate}
+        onApplyFilters={handleApplyAnalyticsFilters}
+        currentStartDate={getDialogDate(analyticsDateRange.startDate)}
+        currentEndDate={getDialogDate(analyticsDateRange.endDate)}
       />
     </div>
   );

@@ -21,6 +21,7 @@ import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
 import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeSidebarStatic } from "./EmployeeSidebarStatic";
+import { BusinessCompassSidebar } from "./BusinessCompassSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
 import { EmployeeHeaderStatic } from "./EmployeeHeaderStatic";
@@ -151,7 +152,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // IMPORTANT: Only show employee sidebar if userType is explicitly pms_occupant
     // This prevents employee sidebar from showing in admin view on /vas/projects
     if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
-      // Only render sidebar for Project Task module
+      // Only render sidebar for Project Task or Business Compass module
       if (currentSection === "Project Task") {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
         if (
@@ -167,12 +168,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
           userEmail === "jevosak839@cimario.com" ||
-          userEmail === "deveshjain928@gmail.com"
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work"
         ) {
           return <EmployeeSidebar />;
         }
         return <EmployeeSidebarStatic />;
       }
+
+      if (
+        currentSection === "Business Compass" ||
+        location.pathname.startsWith("/business-compass")
+      ) {
+        return <BusinessCompassSidebar />;
+      }
+
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
       return null;
     }
@@ -201,7 +212,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
       userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com"
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -284,7 +297,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
       userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com"
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       return <ActionHeader />;
     }
@@ -421,7 +436,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <TopNavigation
               activeNavMenu={activeNavMenu}
               setActiveNavMenu={setActiveNavMenu}
-            />   // 👈 your new header
+            /> // 👈 your new header
           ) : (
             <EmployeeHeader />
           )
@@ -442,6 +457,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           // For employee users, only add left margin if on Project Task module
           isEmployeeUser && isLocalhost
             ? currentSection === "Project Task"
+              || currentSection === "Business Compass"
+              || location.pathname.includes("/business-compass")
               ? isSidebarCollapsed
                 ? "ml-16"
                 : "ml-64"
@@ -452,7 +469,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               : isSidebarCollapsed
                 ? "ml-16"
                 : "ml-64"
-          } ${isEmployeeUser && isLocalhost ? !isNewEmpHubRoute ? "pt-16" : "pt-6" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+          } ${isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

@@ -413,7 +413,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         const isLocalhost =
           hostname.includes("lockated.gophygital.work") ||
           hostname.includes("fm-matrix.lockated.com") ||
-          userEmail === "deveshjain928@gmail.com";
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work";
         const isPulseSite =
           hostname.includes("localhost") ||
           hostname.includes("pulse.lockated.com") ||
