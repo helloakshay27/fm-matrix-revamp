@@ -4,7 +4,6 @@ import {
   Routes,
   Route,
   Navigate,
-
   useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,7 +11,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster, toast } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
-import { NotificationProvider, useNotification } from "./contexts/NotificationContext";
+import {
+  NotificationProvider,
+  useNotification,
+} from "./contexts/NotificationContext";
 import { EnhancedSelectProvider } from "./providers/EnhancedSelectProvider";
 import { initializeGlobalMUISelectSearchEnhancer } from "./utils/globalMUISelectSearchEnhancer";
 import "./styles/enhanced-select.css"; // Global enhanced select styles
@@ -203,7 +205,6 @@ import CompanySetup from "./pages/CompanySetup";
 import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
 import AnnouncementsSetup from "./pages/AnnouncementsSetup";
 import { EditPermitPage } from "./pages/EditPermitPage";
-
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -1229,11 +1230,14 @@ import BugReports from "./pages/BusinessCompass/BugReports";
 import BusinessWeeklyReport from "./pages/BusinessCompass/BusinessWeeklyReport";
 import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompassTasksAndIssues";
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
+import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 
 const queryClient = new QueryClient();
 
 // WebSocket Notification Handler Component
-const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const WebSocketNotificationInitializer: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
   const { manager: webSocketManager, connect } = useWebSocket();
   const { addNotification } = useNotification();
   const navigate = useNavigate();
@@ -1279,10 +1283,14 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
           const notification = {
             id: message.id || Date.now(),
             title: message.title || "New Notification",
-            message: message.body || message.message || "You have a new notification",
+            message:
+              message.body || message.message || "You have a new notification",
             ntype: message.ntype,
             type: message.type,
-            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
             read: false,
             payload: message.payload,
           };
@@ -1301,9 +1309,13 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
                 notif.onclick = () => {
                   window.focus();
                   if (message.ntype === "conversation") {
-                    navigate(`/vas/channels/messages/${message.conversation_id}`);
+                    navigate(
+                      `/vas/channels/messages/${message.conversation_id}`
+                    );
                   } else if (message.ntype === "projectspace") {
-                    navigate(`/vas/channels/groups/${message.project_space_id}`);
+                    navigate(
+                      `/vas/channels/groups/${message.project_space_id}`
+                    );
                   }
                 };
               }
@@ -1323,7 +1335,13 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
       console.warn("⏰ Clearing subscription timer");
       clearTimeout(subscriptionTimer);
     };
-  }, [isSubscribed, webSocketManager, currentUser?.id, navigate, addNotification]);
+  }, [
+    isSubscribed,
+    webSocketManager,
+    currentUser?.id,
+    navigate,
+    addNotification,
+  ]);
 
   return <>{children}</>;
 };
@@ -1377,7 +1395,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1422,7 +1440,11 @@ function App() {
         },
         onMessageNotification: (message) => {
           console.warn(message);
-          if ((message.ntype === "conversation" || message.ntype === "projectspace") && message.user_id !== currentUser.id) {
+          if (
+            (message.ntype === "conversation" ||
+              message.ntype === "projectspace") &&
+            message.user_id !== currentUser.id
+          ) {
             return;
           }
 
@@ -1494,16 +1516,12 @@ function App() {
                             </ProtectedRoute>
                           }
                         >
-                          <Route
-                            index
-                            element={<div className="p-8" />}
-                          />
+                          <Route index element={<div className="p-8" />} />
                           <Route
                             path="sms-management"
                             element={<SmsManagementPage />}
                           />
                         </Route>
-
 
                         {/* Admin Routes */}
                         <Route
@@ -1707,7 +1725,10 @@ function App() {
                           path="/forgot-password-otp"
                           element={<ForgotPasswordOTPPage />}
                         />
-                        <Route path="/new-password" element={<NewPasswordPage />} />
+                        <Route
+                          path="/new-password"
+                          element={<NewPasswordPage />}
+                        />
                         <Route
                           path="/login-success"
                           element={<LoginSuccessPage />}
@@ -1970,7 +1991,10 @@ function App() {
                               </ProtectedRoute>
                             }
                           />
-                          <Route path="/vas/channels" element={<ChannelsLayout />}>
+                          <Route
+                            path="/vas/channels"
+                            element={<ChannelsLayout />}
+                          >
                             <Route
                               index
                               element={
@@ -1994,13 +2018,15 @@ function App() {
                             path="/vas/channels/tasks"
                             element={<ChannelTasksAll />}
                           />
-                          <Route path="/business-card" element={<BusinessCard />} />
+                          <Route
+                            path="/business-card"
+                            element={<BusinessCard />}
+                          />
                           <Route path="/ask-ai" element={<AskAI />} />
                           <Route
                             path="/vas/channels/tasks/:id"
                             element={<ChatTaskDetailsPage />}
                           />
-
                           <Route
                             path="/business-compass/profile"
                             element={<BusinessCompassProfile />}
@@ -2008,6 +2034,10 @@ function App() {
                           <Route
                             path="/business-compass/dashboard"
                             element={<BusinessCompassDashboard />}
+                          />
+                          <Route
+                            path="/business-compass/daily-report"
+                            element={<BusinessCompassDailyReport />}
                           />
                           <Route
                             path="/business-compass/weekly-report"
@@ -2045,7 +2075,6 @@ function App() {
                             path="/business-compass/bug-reports"
                             element={<BugReports />}
                           />
-
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route
@@ -2326,7 +2355,10 @@ function App() {
                             path="/crm/occupant-users"
                             element={<CRMOccupantUsersDashboard />}
                           />
-                          <Route path="/crm/events" element={<CRMEventsPage />} />
+                          <Route
+                            path="/crm/events"
+                            element={<CRMEventsPage />}
+                          />
                           <Route
                             path="/crm/events/add"
                             element={<AddEventPage />}
@@ -2348,7 +2380,10 @@ function App() {
                             element={<BroadcastDetailsPage />}
                           />
                           <Route path="/crm/polls" element={<CRMPollsPage />} />
-                          <Route path="/crm/polls/add" element={<AddPollPage />} />
+                          <Route
+                            path="/crm/polls/add"
+                            element={<AddPollPage />}
+                          />
                           <Route
                             path="/crm/groups/details/:id"
                             element={<CRMGroupDetailsPage />}
@@ -2837,7 +2872,6 @@ function App() {
                           <Route
                             path="/accounting/reports/sales-by-item"
                             element={<SalesByItemReport />}
-
                           />
                           <Route
                             path="/accounting/reports/sales-by-item/details/:itemName"
@@ -2847,8 +2881,6 @@ function App() {
                             path="/accounting/reports/sales-by-sales-person"
                             element={<SalesBySalesPersonReport />}
                           />
-
-
                           <Route
                             path="/accounting/reports/sales-summary"
                             element={<SalesSummaryReport />}
@@ -2951,9 +2983,10 @@ function App() {
                             path="/accounting/reports/tcs-summary-form-27eq"
                             element={<TCSSummaryForm27EQ />}
                           />
-                          <Route path="/accounting/reports/gstr-9" element={<GSTR9Summary />} />
-
-
+                          <Route
+                            path="/accounting/reports/gstr-9"
+                            element={<GSTR9Summary />}
+                          />
                           <Route
                             path="/accounting/reports/balance-sheet/details/:id"
                             element={<BalanceSheetDetails />}
@@ -2962,7 +2995,6 @@ function App() {
                             path="/accounting/reports/trial-balance"
                             element={<TrialBalance />}
                           />
-
                           <Route
                             path="/accounting/reports/trial-balance/details/:id"
                             element={<TrialBalanceDetails />}
@@ -3043,7 +3075,6 @@ function App() {
                             path="/accounting/reports/gst-receivable"
                             element={<GstReceivableReport />}
                           />
-
                           <Route
                             path="/accounting/reports/gst-receivable/details/:id"
                             element={<GSTReceivableDetails />}
@@ -3228,7 +3259,6 @@ function App() {
                             path="/accounting/recurring-bills/create"
                             element={<RecurringBillCreatePage />}
                           />
-
                           <Route
                             path="/accounting/recurring-bills/details/:id"
                             element={<RecurringBillDetails />}
@@ -3785,7 +3815,9 @@ function App() {
                           />
                           <Route
                             path="/maintenance/audit/operational/master-checklists"
-                            element={<OperationalAuditMasterChecklistsDashboard />}
+                            element={
+                              <OperationalAuditMasterChecklistsDashboard />
+                            }
                           />
                           <Route
                             path="/maintenance/audit/operational/master-checklists/add"
@@ -4346,7 +4378,10 @@ function App() {
                             path="/vas/projects/:id/milestones/:mid/tasks"
                             element={<ProjectTasksPage />}
                           />
-                          <Route path="/vas/tasks" element={<ProjectTasksPage />} />
+                          <Route
+                            path="/vas/tasks"
+                            element={<ProjectTasksPage />}
+                          />
                           <Route
                             path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                             element={<ProjectTaskDetails />}
@@ -4355,7 +4390,10 @@ function App() {
                             path="/vas/tasks/:taskId"
                             element={<ProjectTaskDetails />}
                           />
-                          <Route path="/vas/sprint" element={<SprintDashboard />} />
+                          <Route
+                            path="/vas/sprint"
+                            element={<SprintDashboard />}
+                          />
                           <Route
                             path="/vas/sprint/details/:id"
                             element={<SprintDetailsPage />}
@@ -4369,7 +4407,10 @@ function App() {
                             element={<MilestoneDetailsPage />}
                           />
                           {/* Issues Routes */}
-                          <Route path="/vas/issues" element={<IssuesListPage />} />
+                          <Route
+                            path="/vas/issues"
+                            element={<IssuesListPage />}
+                          />
                           <Route
                             path="/vas/issues/:id"
                             element={<IssueDetailsPage />}
@@ -4399,7 +4440,10 @@ function App() {
                             path="/vas/documents"
                             element={<DocumentManagement />}
                           />
-                          <Route path="/vas/mom" element={<MinutesOfMeeting />} />
+                          <Route
+                            path="/vas/mom"
+                            element={<MinutesOfMeeting />}
+                          />
                           <Route
                             path="/vas/project-dashboard"
                             element={<SupersetDashboard />}
@@ -4409,7 +4453,6 @@ function App() {
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
-
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}
@@ -4750,7 +4793,9 @@ function App() {
                           />
                           <Route
                             path="/vas/fnb"
-                            element={<RestaurantOrdersTable needPadding={true} />}
+                            element={
+                              <RestaurantOrdersTable needPadding={true} />
+                            }
                           />
                           {/* <Route path="/vas/fnb/add" element={<AddRestaurantPage />} /> */}
                           <Route
@@ -4902,7 +4947,10 @@ function App() {
                           <Route
                             path="/vas/redemonection-marketplace"
                             element={
-                              <Navigate to="/vas/redemption-marketplace" replace />
+                              <Navigate
+                                to="/vas/redemption-marketplace"
+                                replace
+                              />
                             }
                           />
                           {/* Space Management Routes */}
@@ -5441,7 +5489,10 @@ function App() {
                             path="/pulse/stepathon"
                             element={<StepathonPage />}
                           />
-                          <Route path="/pulse/events" element={<CRMEventsPage />} />
+                          <Route
+                            path="/pulse/events"
+                            element={<CRMEventsPage />}
+                          />
                           <Route
                             path="/pulse/events/add"
                             element={<AddEventPage />}
@@ -5476,7 +5527,10 @@ function App() {
                             element={<BroadcastDetailsPage />}
                           />
 
-                          <Route path="/pulse/community" element={<Communtiy />} />
+                          <Route
+                            path="/pulse/community"
+                            element={<Communtiy />}
+                          />
 
                           <Route
                             path="/pulse/community/add"
@@ -5589,7 +5643,10 @@ function App() {
                             path="/pulse/pulse-privilege/service-category/edit/:id"
                             element={<EditServiceCategoryPage />}
                           />
-                          <Route path="/pulse/amenity" element={<BookingList />} />
+                          <Route
+                            path="/pulse/amenity"
+                            element={<BookingList />}
+                          />
                           {/* Plus curated Service Routes */}
                           <Route
                             path="/pulse/curated-services/service"
@@ -5637,7 +5694,6 @@ function App() {
                             path="/pulse/carpool"
                             element={<CarpoolDashboard />}
                           />
-
 
                           <Route
                             path="/pulse/carpool/ride-detail"
@@ -5973,10 +6029,16 @@ function App() {
                         />
 
                         {/* Quick Links Routes */}
-                        <Route path="/business-plan" element={<BusinessPlan />} />
+                        <Route
+                          path="/business-plan"
+                          element={<BusinessPlan />}
+                        />
                         <Route path="/our-group" element={<OurGroup />} />
                         <Route path="/products" element={<Products />} />
-                        <Route path="/document-drive" element={<DocumentDrive />} />
+                        <Route
+                          path="/document-drive"
+                          element={<DocumentDrive />}
+                        />
                         <Route path="/hr-policies" element={<HRPolicies />} />
                         <Route path="/directory" element={<Directory />} />
                         <Route path="/eployee-faq" element={<EmployeeFAQ />} />
@@ -6112,7 +6174,10 @@ function App() {
                           path="/mobile-projects/:id/milestones/:mid/tasks/:taskId"
                           element={<ProjectTaskDetailsMobile />}
                         />
-                        <Route path="/mobile-tasks" element={<TasksMobileView />} />
+                        <Route
+                          path="/mobile-tasks"
+                          element={<TasksMobileView />}
+                        />
                         <Route
                           path="/mobile-tasks/:taskId"
                           element={<TaskDetailsMobile />}
@@ -6159,7 +6224,10 @@ function App() {
                         />
                         {/* Flip Card Routes */}
                         <Route path="/flipcard" element={<FlipCard />} />
-                        <Route path="/flipcard/:gameId" element={<FlipCard />} />
+                        <Route
+                          path="/flipcard/:gameId"
+                          element={<FlipCard />}
+                        />
                         <Route
                           path="/flipcard/details/:rewardId"
                           element={<FlipCardDetails />}

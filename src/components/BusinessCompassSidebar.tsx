@@ -20,6 +20,7 @@ import {
   Brain,
   HelpCircle,
   Bug,
+  FileText,
 } from "lucide-react";
 
 // Module-based navigation structures for Business Compass
@@ -31,6 +32,10 @@ const businessCompassNavigation: Record<string, any> = {
   Dashboard: {
     icon: User,
     href: "/business-compass/dashboard",
+  },
+  "Daily Report": {
+    icon: FileText,
+    href: "/business-compass/daily-report",
   },
   "Weekly Report": {
     icon: User,
