@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdminViewEmulationBanner } from "@/components/BusinessCompass/AdminViewEmulationBanner";
+import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 
 function ScoresNotLiveAlert() {
   return (
@@ -303,10 +303,9 @@ const Leaderboard = () => {
   const [timeRange, setTimeRange] = useState("30");
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-6">
-        <AdminViewEmulationBanner />
-
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">

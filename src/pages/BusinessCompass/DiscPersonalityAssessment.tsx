@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -125,7 +126,7 @@ const ASSESSMENT_QUESTIONS = [
     question: "In a group discussion, I tend to be:",
     options: [
       "Direct and to the point",
-      "Enthusiastic and persuasive", 
+      "Enthusiastic and persuasive",
       "Supportive and cooperative",
       "Analytical and precise"
     ]
@@ -1421,7 +1422,7 @@ function AssessmentInterface({
           <span>{Math.round(((currentQuestion + 1) / totalQuestions) * 100)}% Complete</span>
         </div>
         <div className="h-2 w-full rounded-full bg-neutral-200 overflow-hidden">
-          <div 
+          <div
             className="h-full bg-[#DA7756] transition-all duration-300 ease-out"
             style={{ width: `${((currentQuestion + 1) / totalQuestions) * 100}%` }}
           />
@@ -1433,7 +1434,7 @@ function AssessmentInterface({
         <h2 className="text-xl font-bold text-neutral-900 mb-6">
           {question.question}
         </h2>
-        
+
         {/* Options */}
         <div className="space-y-3">
           {question.options.map((option, index) => (
@@ -1487,7 +1488,7 @@ function AssessmentInterface({
         >
           Previous
         </button>
-        
+
         {currentQuestion === totalQuestions - 1 ? (
           <button
             type="button"
@@ -1634,7 +1635,8 @@ const DiscPersonalityAssessment = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6">
+      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">

@@ -35,6 +35,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 
 type SummaryStat = {
   label: string;
@@ -492,7 +493,7 @@ function GiveFeedbackForm() {
                   seg.bg,
                   seg.text,
                   rating === seg.stars &&
-                    "relative z-10 ring-2 ring-inset ring-neutral-900/80"
+                  "relative z-10 ring-2 ring-inset ring-neutral-900/80"
                 )}
               >
                 <span className="block text-[10px] font-semibold leading-tight sm:text-xs">
@@ -640,7 +641,8 @@ const Feedback = () => {
     selectedCompany?.name?.toUpperCase() ?? "YOUR ORGANIZATION";
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-6">
         {bannerVisible && (
           <div
@@ -655,7 +657,7 @@ const Feedback = () => {
             <button
               type="button"
               className="min-w-0 flex-1 text-left"
-              onClick={() => {}}
+              onClick={() => { }}
             >
               <p className="text-sm font-semibold text-sky-950">
                 Giving & Receiving Feedback

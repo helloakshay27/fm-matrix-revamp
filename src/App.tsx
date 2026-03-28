@@ -1226,6 +1226,8 @@ import Leaderboard from "./pages/BusinessCompass/Leaderboard";
 import DiscPersonalityAssessment from "./pages/BusinessCompass/DiscPersonalityAssessment";
 import HelpCenter from "./pages/BusinessCompass/HelpCenter";
 import BugReports from "./pages/BusinessCompass/BugReports";
+import BusinessWeeklyReport from "./pages/BusinessCompass/BusinessWeeklyReport";
+import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompassTasksAndIssues";
 
 const queryClient = new QueryClient();
 
@@ -2005,6 +2007,14 @@ function App() {
                           <Route
                             path="/business-compass/dashboard"
                             element={<BusinessCompassDashboard />}
+                          />
+                          <Route
+                            path="/business-compass/weekly-report"
+                            element={<BusinessWeeklyReport />}
+                          />
+                          <Route
+                            path="/business-compass/tasks-and-issues"
+                            element={<BusinessCompassTasksAndIssues />}
                           />
                           <Route
                             path="/business-compass/feedback"

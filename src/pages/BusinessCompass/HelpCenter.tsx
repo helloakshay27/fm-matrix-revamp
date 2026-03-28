@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 
 type Tutorial = {
   id: string;
@@ -466,7 +467,8 @@ const HelpCenter = () => {
   const [tab, setTab] = useState("tutorials");
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6">
+      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">

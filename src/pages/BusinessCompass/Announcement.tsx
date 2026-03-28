@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { AdminViewEmulationBanner } from "@/components/BusinessCompass/AdminViewEmulationBanner";
+import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 
 type AnnouncementItem = {
   id: string;
@@ -119,7 +119,8 @@ function AnnouncementCard({ item }: { item: AnnouncementItem }) {
 
 const Announcement = () => {
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
@@ -134,8 +135,6 @@ const Announcement = () => {
             </p>
           </div>
         </header>
-
-        <AdminViewEmulationBanner />
 
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">

@@ -32,6 +32,14 @@ const businessCompassNavigation: Record<string, any> = {
     icon: User,
     href: "/business-compass/dashboard",
   },
+  "Weekly Report": {
+    icon: User,
+    href: "/business-compass/weekly-report",
+  },
+  "Tasks and Issues": {
+    icon: Target,
+    href: "/business-compass/tasks-and-issues",
+  },
   Feedback: {
     icon: MessageSquare,
     href: "/business-compass/feedback",
