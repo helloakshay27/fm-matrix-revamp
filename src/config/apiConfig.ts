@@ -21,6 +21,7 @@ const getApiConfig = () => {
     TOKEN: savedToken,
   };
 };
+const org_id = localStorage.getItem("org_id");
 
 export const API_CONFIG = {
   get BASE_URL() {
@@ -29,6 +30,7 @@ export const API_CONFIG = {
   get TOKEN() {
     return getApiConfig().TOKEN;
   },
+
   ENDPOINTS: {
     ASSETS: "/pms/assets.json",
     AMC: "/pms/asset_amcs.json",
@@ -46,8 +48,8 @@ export const API_CONFIG = {
     SEND_STAFF_OTP: "/pms/admin/society_staffs/send_otp.json",
     VERIFY_STAFF_NUMBER: "/pms/admin/society_staffs/verify_number.json",
     PRINT_QR_CODES: "/pms/admin/society_staffs/print_qr_codes.json",
-    ROLES: "/lock_roles.json",
-    ROLES_WITH_MODULES: "/lock_roles_with_modules.json",
+    ROLES: `${window.location.hostname === "web.gophygital.work" && org_id === "34" ? "/roles.json" : "/lock_roles.json"}`,
+    ROLES_WITH_MODULES: `${window.location.hostname === "web.gophygital.work" && org_id === "34" ? "/roles_with_modules.json" : "/lock_roles_with_modules.json"}`,
     FUNCTIONS: "/lock_functions.json",
     FUNCTION_DETAILS: "/lock_functions", // Base path, will append /:id.json
     SUB_FUNCTIONS: "/lock_sub_functions.json",
@@ -154,6 +156,7 @@ export const API_CONFIG = {
     CHECKLIST_SAMPLE_FORMAT: "/assets/checklist.xlsx",
     // Bulk upload for custom forms
     CUSTOM_FORMS_BULK_UPLOAD: "/pms/custom_forms/bulk_upload.json",
+    PATROLLING_IMPORT_CHECKPOINTS: "/patrolling/import_checkpoints.json",
     // Asset dashboard endpoints
     // ASSET_STATISTICS: '/pms/asset_statistics.json',
     // ASSET_STATUS: '/pms/asset_status.json',

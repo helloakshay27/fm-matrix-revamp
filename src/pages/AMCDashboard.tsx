@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // MUI components for revamped Filter dialog
 import { Box, Typography, FormControl, InputLabel, Select as MUISelect, MenuItem, TextField } from '@mui/material';
-import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter, Pencil } from 'lucide-react';
+import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter, Pencil, CalendarPlus } from 'lucide-react';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
 import { amcAnalyticsAPI, AMCStatusData, AMCStatusSummary, AMCTypeDistribution, AMCExpiryAnalysis, AMCServiceTrackingLog, AMCVendorPerformance, AMCComplianceReport, AMCUnitResourceData, AMCServiceStatsData, AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
 import { amcAnalyticsDownloadAPI } from '@/services/amcAnalyticsDownloadAPI';
@@ -45,6 +45,7 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUploadModal';
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
+import { AddVisitModal } from '@/components/AddVisitModal';
 
 // Unified analytics color palette
 const analyticsColorPalette = {
@@ -142,7 +143,13 @@ interface AMCRecord {
   service_name?: string;
   status: string;
   amc_assets?: Array<{ id: number; asset_id: number; asset_name: string }>;
+  associated_assets?: Array<{ id: number; asset_id: number; asset_name: string }>;
   amc_services?: Array<{ id: number; service_id: number; service_name: string; group_name?: string; sub_group_name?: string }>;
+}
+
+interface SelectOption {
+  id: number;
+  name: string;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -151,6 +158,7 @@ const columns: ColumnConfig[] = [
   { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
   { key: 'asset_name', label: 'Asset/ Service Name', sortable: true, defaultVisible: true },
+  { key: 'associated_asset_service', label: 'Associated Asset/Service', sortable: false, defaultVisible: true },
   { key: 'amc_type', label: 'AMC Type', sortable: true, defaultVisible: true },
   { key: 'vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
   { key: 'contract_name', label: 'Contract Name', sortable: true, defaultVisible: true },
@@ -192,14 +200,28 @@ export const AMCDashboard = () => {
   const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null);
   const [startDateFilter, setStartDateFilter] = useState<string | null>(null);
   const [endDateFilter, setEndDateFilter] = useState<string | null>(null);
+  const [vendorNameFilter, setVendorNameFilter] = useState<string | null>(null);
+  const [assetNameFilter, setAssetNameFilter] = useState<string | null>(null);
+  const [serviceNameFilter, setServiceNameFilter] = useState<string | null>(null);
+  const [groupFilter, setGroupFilter] = useState<string | null>(null);
+  const [subGroupFilter, setSubGroupFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null);
   const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null);
   const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null);
+  const [tempVendorNameFilter, setTempVendorNameFilter] = useState<string | null>(null);
+  const [tempAssetNameFilter, setTempAssetNameFilter] = useState<string | null>(null);
+  const [tempServiceNameFilter, setTempServiceNameFilter] = useState<string | null>(null);
+  const [tempGroupFilter, setTempGroupFilter] = useState<string | null>(null);
+  const [tempSubGroupFilter, setTempSubGroupFilter] = useState<string | null>(null);
+  const [tempStatusFilter, setTempStatusFilter] = useState<string | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("amclist");
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [showAddVisitModal, setShowAddVisitModal] = useState(false);
+  const [addVisitAmcId, setAddVisitAmcId] = useState<string>('');
   const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 600);
@@ -234,6 +256,19 @@ export const AMCDashboard = () => {
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   // Track which summary tile is selected; null means none selected on initial load
   const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'underObservation' | 'expiring' | 'totalCost'>(null);
+
+  // Filter dropdown options (fetched from APIs)
+  const [assetOptions, setAssetOptions] = useState<SelectOption[]>([]);
+  const [serviceOptions, setServiceOptions] = useState<SelectOption[]>([]);
+  const [groupOptions, setGroupOptions] = useState<SelectOption[]>([]);
+  const [subGroupOptions, setSubGroupOptions] = useState<SelectOption[]>([]);
+  const [filtersOptionsLoading, setFiltersOptionsLoading] = useState({
+    assets: false,
+    services: false,
+    groups: false,
+    subGroups: false,
+  });
+  const [tempGroupIdForSubGroups, setTempGroupIdForSubGroups] = useState<number | null>(null);
 
   const getDefaultDateRange = () => {
     const today = new Date();
@@ -279,8 +314,25 @@ export const AMCDashboard = () => {
       setTempAmcTypeFilter(amcTypeFilter);
       setTempStartDateFilter(startDateFilter);
       setTempEndDateFilter(endDateFilter);
+      setTempVendorNameFilter(vendorNameFilter);
+      setTempAssetNameFilter(assetNameFilter);
+      setTempServiceNameFilter(serviceNameFilter);
+      setTempGroupFilter(groupFilter);
+      setTempSubGroupFilter(subGroupFilter);
+      setTempStatusFilter(statusFilter);
     }
-  }, [isFilterModalOpen, amcTypeFilter, startDateFilter, endDateFilter]);
+  }, [
+    isFilterModalOpen,
+    amcTypeFilter,
+    startDateFilter,
+    endDateFilter,
+    vendorNameFilter,
+    assetNameFilter,
+    serviceNameFilter,
+    groupFilter,
+    subGroupFilter,
+    statusFilter,
+  ]);
 
   const fetchAMCAnalyticsData = async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
@@ -416,7 +468,7 @@ export const AMCDashboard = () => {
         coverage_by_location: false
       });
 
-      toast.error('Failed to fetch AMC analytics data');
+      // toast.error('Failed to fetch AMC analytics data');
     } finally {
       setAnalyticsLoading(false);
     }
@@ -431,9 +483,110 @@ export const AMCDashboard = () => {
 
   const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
   const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
+  const paginationSafe = {
+    current_page: Number((pagination as any)?.current_page) || 1,
+    total_count: Number((pagination as any)?.total_count) || 0,
+    total_pages: Number((pagination as any)?.total_pages) || 1,
+  };
+
+  const uniqueVendorNames = Array.from(
+    new Set<string>(
+      (amcData || [])
+        .map((amc: AMCRecord) => (amc.vendor_name || '').trim())
+        .filter(Boolean) as string[]
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      if (!isFilterModalOpen) return;
+      if (!baseUrl || !token) return;
+
+      setFiltersOptionsLoading({ assets: true, services: true, groups: true, subGroups: false });
+      try {
+        const [assetsResp, servicesResp, groupsResp] = await Promise.all([
+          axios.get(`https://${baseUrl}/pms/assets/get_assets.json`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`https://${baseUrl}/pms/services/get_services.json`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`https://${baseUrl}/pms/assets/get_asset_group_sub_group.json`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+
+        const assetsData = assetsResp.data;
+        const servicesData = servicesResp.data;
+        const groupsData = groupsResp.data;
+
+        const assetsArr: SelectOption[] = Array.isArray(assetsData)
+          ? assetsData
+            .map((a: any) => ({ id: Number(a.id), name: String(a.name ?? '').trim() }))
+            .filter((a: SelectOption) => a.id && a.name)
+          : [];
+
+        const servicesArr: SelectOption[] = Array.isArray(servicesData)
+          ? servicesData
+            .map((s: any) => ({ id: Number(s.id), name: String(s.service_name ?? s.name ?? '').trim() }))
+            .filter((s: SelectOption) => s.id && s.name)
+          : [];
+
+        const groupsArr: SelectOption[] = Array.isArray(groupsData?.asset_groups)
+          ? groupsData.asset_groups
+            .map((g: any) => ({ id: Number(g.id), name: String(g.name ?? '').trim() }))
+            .filter((g: SelectOption) => g.id && g.name)
+          : [];
+
+        assetsArr.sort((a, b) => a.name.localeCompare(b.name));
+        servicesArr.sort((a, b) => a.name.localeCompare(b.name));
+        groupsArr.sort((a, b) => a.name.localeCompare(b.name));
+
+        setAssetOptions(assetsArr);
+        setServiceOptions(servicesArr);
+        setGroupOptions(groupsArr);
+      } catch (e) {
+        console.error('Failed to fetch filter dropdown options', e);
+        setAssetOptions([]);
+        setServiceOptions([]);
+        setGroupOptions([]);
+      } finally {
+        setFiltersOptionsLoading(prev => ({ ...prev, assets: false, services: false, groups: false }));
+      }
+    };
+
+    fetchFilterOptions();
+  }, [isFilterModalOpen, baseUrl, token]);
+
+  useEffect(() => {
+    const fetchSubGroups = async () => {
+      if (!isFilterModalOpen) return;
+      if (!baseUrl || !token) return;
+      if (!tempGroupIdForSubGroups) {
+        setSubGroupOptions([]);
+        return;
+      }
+
+      setFiltersOptionsLoading(prev => ({ ...prev, subGroups: true }));
+      try {
+        const resp = await axios.get(
+          `https://${baseUrl}/pms/assets/get_asset_group_sub_group.json?group_id=${tempGroupIdForSubGroups}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const arr: SelectOption[] = Array.isArray(resp.data?.asset_groups)
+          ? resp.data.asset_groups
+            .map((sg: any) => ({ id: Number(sg.id), name: String(sg.name ?? '').trim() }))
+            .filter((sg: SelectOption) => sg.id && sg.name)
+          : [];
+        arr.sort((a, b) => a.name.localeCompare(b.name));
+        setSubGroupOptions(arr);
+      } catch (e) {
+        console.error('Failed to fetch sub groups', e);
+        setSubGroupOptions([]);
+      } finally {
+        setFiltersOptionsLoading(prev => ({ ...prev, subGroups: false }));
+      }
+    };
+
+    fetchSubGroups();
+  }, [isFilterModalOpen, baseUrl, token, tempGroupIdForSubGroups]);
 
   const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amcs + amcAnalyticsData.inactive_amcs) :
-    ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0);
+    ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : paginationSafe.total_count || 0);
   const activeAMCs = amcAnalyticsData?.active_amcs ||
     ((apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0);
   const inactiveAMCs = amcAnalyticsData?.inactive_amcs ||
@@ -453,12 +606,18 @@ export const AMCDashboard = () => {
     let url = `https://${baseUrl}/pms/asset_amcs.json?page=${page}`;
     const queryParams: string[] = [];
 
-    if (filterValue === 'active') {
+    const effectiveStatus =
+      statusFilter ||
+      (filterValue === 'UnderObservation' ? 'under_observation' : filterValue);
+
+    if (effectiveStatus === 'active') {
       queryParams.push('q[status_eq]=active');
-    } else if (filterValue === 'inactive') {
+    } else if (effectiveStatus === 'inactive') {
       queryParams.push('q[status_eq]=inactive');
-    } else if (filterValue === 'UnderObservation') {
+    } else if (effectiveStatus === 'under_observation') {
       queryParams.push('q[status_eq]=under_observation');
+    } else if (effectiveStatus === 'expired') {
+      queryParams.push('q[status_eq]=expired');
     }
 
     if (expiryFilter === 'expiring_in_15_days') {
@@ -475,6 +634,21 @@ export const AMCDashboard = () => {
     }
     if (endDateFilter) {
       queryParams.push(`q[amc_end_date_eq]=${endDateFilter}`);
+    }
+    if (vendorNameFilter) {
+      queryParams.push(`q[supplier_company_name_cont]=${encodeURIComponent(vendorNameFilter)}`);
+    }
+    if (assetNameFilter) {
+      queryParams.push(`q[amc_assets_asset_name_cont]=${encodeURIComponent(assetNameFilter)}`);
+    }
+    if (serviceNameFilter) {
+      queryParams.push(`q[amc_services_service_name_cont]=${encodeURIComponent(serviceNameFilter)}`);
+    }
+    if (groupFilter) {
+      queryParams.push(`q[amc_assets_asset_pms_asset_group_id_eq]=${encodeURIComponent(groupFilter)}`);
+    }
+    if (subGroupFilter) {
+      queryParams.push(`q[amc_assets_asset_pms_asset_sub_group_id_eq]=${encodeURIComponent(subGroupFilter)}`);
     }
 
     if (searchTerm && searchTerm.trim()) {
@@ -533,7 +707,22 @@ export const AMCDashboard = () => {
         debouncedSearchQuery
       );
     }
-  }, [baseUrl, token, currentPage, filter, amcTypeFilter, debouncedSearchQuery]);
+  }, [
+    baseUrl,
+    token,
+    currentPage,
+    filter,
+    amcTypeFilter,
+    startDateFilter,
+    endDateFilter,
+    vendorNameFilter,
+    assetNameFilter,
+    serviceNameFilter,
+    groupFilter,
+    subGroupFilter,
+    statusFilter,
+    debouncedSearchQuery,
+  ]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -716,6 +905,16 @@ export const AMCDashboard = () => {
         } else {
           return '-';
         }
+      case 'associated_asset_service': {
+        // Map from associated_assets key and combine with service names from amc_services
+        const rawAssocAssets = Array.isArray(item.associated_assets) ? item.associated_assets
+          : Array.isArray(item.amc_assets) ? item.amc_assets : [];
+        const rawAssocServices = Array.isArray(item.amc_services) ? item.amc_services : [];
+        const assetAssocNames = rawAssocAssets.map((a: any) => a.asset_name).filter(Boolean);
+        const serviceAssocNames = rawAssocServices.map((s: any) => s.service_name).filter(Boolean);
+        const allAssocNames = [...assetAssocNames, ...serviceAssocNames];
+        return allAssocNames.length > 0 ? formatNamesWithEllipsis(allAssocNames) : '-';
+      }
       case 'amc_type':
         return item.amc_type || '-';
       case 'vendor_name':
@@ -920,8 +1119,8 @@ export const AMCDashboard = () => {
 
   const renderPaginationItems = () => {
     const items = [];
-    const totalPages = pagination.total_pages;
-    const currentPage = pagination.current_page;
+    const totalPages = paginationSafe.total_pages;
+    const currentPage = paginationSafe.current_page;
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
@@ -1100,6 +1299,16 @@ export const AMCDashboard = () => {
     setShowActionPanel(true);
   };
 
+  const clearSelectionsAndClosePanel = () => {
+    setSelectedItems([]);
+    setShowActionPanel(false);
+  };
+
+  useEffect(() => {
+    // Auto-open action panel when any checkbox is selected
+    setShowActionPanel(selectedItems.length > 0);
+  }, [selectedItems.length]);
+
   const handleFiltersClick = () => {
     setIsFilterModalOpen(true);
   };
@@ -1108,6 +1317,12 @@ export const AMCDashboard = () => {
     setAmcTypeFilter(tempAmcTypeFilter);
     setStartDateFilter(tempStartDateFilter);
     setEndDateFilter(tempEndDateFilter);
+    setVendorNameFilter(tempVendorNameFilter);
+    setAssetNameFilter(tempAssetNameFilter);
+    setServiceNameFilter(tempServiceNameFilter);
+    setGroupFilter(tempGroupFilter);
+    setSubGroupFilter(tempSubGroupFilter);
+    setStatusFilter(tempStatusFilter);
     setIsFilterModalOpen(false);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
@@ -1119,9 +1334,21 @@ export const AMCDashboard = () => {
     setTempAmcTypeFilter(null);
     setTempStartDateFilter(null);
     setTempEndDateFilter(null);
+    setTempVendorNameFilter(null);
+    setTempAssetNameFilter(null);
+    setTempServiceNameFilter(null);
+    setTempGroupFilter(null);
+    setTempSubGroupFilter(null);
+    setTempStatusFilter(null);
     setAmcTypeFilter(null);
     setStartDateFilter(null);
     setEndDateFilter(null);
+    setVendorNameFilter(null);
+    setAssetNameFilter(null);
+    setServiceNameFilter(null);
+    setGroupFilter(null);
+    setSubGroupFilter(null);
+    setStatusFilter(null);
     setFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
@@ -1418,15 +1645,35 @@ export const AMCDashboard = () => {
               <SelectionPanel
                 actions={[
                   {
+                    label: 'Add Visit',
+                    icon: CalendarPlus,
+                    onClick: () => {
+                      if (selectedItems.length !== 1) {
+                        toast.error('Please select exactly 1 AMC to add a visit');
+                        return;
+                      }
+                      setAddVisitAmcId(selectedItems[0]);
+                      setShowAddVisitModal(true);
+                    },
+                  },
+                  {
+                    label: 'Add AMC',
+                    icon: Plus,
+                    onClick: () => navigate('/maintenance/amc/add'),
+                  },
+                  {
                     label: 'Add Schedule',
                     icon: Plus,
                     onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
                   }]}
-                onAdd={handleAddClick}
-                onClearSelection={() => setShowActionPanel(false)}
-                onImport={handleImportClick}
+                onClearSelection={clearSelectionsAndClosePanel}
               />
             )}
+            <AddVisitModal
+              isOpen={showAddVisitModal}
+              onClose={() => setShowAddVisitModal(false)}
+              amcId={addVisitAmcId}
+            />
 
             <EnhancedTable
               handleExport={handleExport}
@@ -1467,15 +1714,15 @@ export const AMCDashboard = () => {
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                      className={pagination.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
+                      onClick={() => handlePageChange(Math.max(1, paginationSafe.current_page - 1))}
+                      className={paginationSafe.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
                     />
                   </PaginationItem>
                   {renderPaginationItems()}
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                      className={pagination.current_page === pagination.total_pages ? 'pointer-events-none opacity-50' : ''}
+                      onClick={() => handlePageChange(Math.min(paginationSafe.total_pages, paginationSafe.current_page + 1))}
+                      className={paginationSafe.current_page === paginationSafe.total_pages ? 'pointer-events-none opacity-50' : ''}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -1524,6 +1771,71 @@ export const AMCDashboard = () => {
                 <div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     <div>
+                      <FormControl fullWidth size="small">
+                        <InputLabel id="status-filter-label">Status</InputLabel>
+                        <MUISelect
+                          labelId="status-filter-label"
+                          label="Status"
+                          value={tempStatusFilter || 'all'}
+                          onChange={(e) => setTempStatusFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                        >
+                          <MenuItem value="all">All Status</MenuItem>
+                          <MenuItem value="active">Active</MenuItem>
+                          <MenuItem value="inactive">Inactive</MenuItem>
+                          <MenuItem value="under_observation">Under Observation</MenuItem>
+                          <MenuItem value="expired">Expired</MenuItem>
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <FormControl fullWidth size="small">
+                        <InputLabel id="vendor-filter-label">Vendor Name</InputLabel>
+                        <MUISelect
+                          labelId="vendor-filter-label"
+                          label="Vendor Name"
+                          value={tempVendorNameFilter || 'all'}
+                          onChange={(e) => setTempVendorNameFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                        >
+                          <MenuItem value="all">All Vendors</MenuItem>
+                          {uniqueVendorNames.map((v) => (
+                            <MenuItem key={v} value={v}>{v}</MenuItem>
+                          ))}
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <FormControl fullWidth size="small">
+                        <InputLabel id="asset-name-filter-label">Asset Name</InputLabel>
+                        <MUISelect
+                          labelId="asset-name-filter-label"
+                          label="Asset Name"
+                          value={tempAssetNameFilter || 'all'}
+                          onChange={(e) => setTempAssetNameFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                        >
+                          <MenuItem value="all">All Assets</MenuItem>
+                          {assetOptions.map((a) => (
+                            <MenuItem key={a.id} value={a.name}>{a.name}</MenuItem>
+                          ))}
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <FormControl fullWidth size="small">
+                        <InputLabel id="service-name-filter-label">Service Name</InputLabel>
+                        <MUISelect
+                          labelId="service-name-filter-label"
+                          label="Service Name"
+                          value={tempServiceNameFilter || 'all'}
+                          onChange={(e) => setTempServiceNameFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                        >
+                          <MenuItem value="all">All Services</MenuItem>
+                          {serviceOptions.map((s) => (
+                            <MenuItem key={s.id} value={s.name}>{s.name}</MenuItem>
+                          ))}
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
                       <FormControl fullWidth size="small" ref={amcTypeControlRef}>
                         <InputLabel id="amc-type-label">AMC Type</InputLabel>
                         <MUISelect
@@ -1539,6 +1851,44 @@ export const AMCDashboard = () => {
                           <MenuItem value="all">All Types</MenuItem>
                           <MenuItem value="Asset">Asset</MenuItem>
                           <MenuItem value="Service">Service</MenuItem>
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <FormControl fullWidth size="small">
+                        <InputLabel id="group-filter-label">Group</InputLabel>
+                        <MUISelect
+                          labelId="group-filter-label"
+                          label="Group"
+                          value={tempGroupFilter || 'all'}
+                          onChange={(e) => {
+                            const nextGroupId = e.target.value === 'all' ? null : (e.target.value as string);
+                            setTempGroupFilter(nextGroupId);
+                            setTempGroupIdForSubGroups(nextGroupId ? Number(nextGroupId) : null);
+                            // Reset subgroup when group changes
+                            setTempSubGroupFilter(null);
+                          }}
+                        >
+                          <MenuItem value="all">All Groups</MenuItem>
+                          {groupOptions.map((g) => (
+                            <MenuItem key={g.id} value={String(g.id)}>{g.name}</MenuItem>
+                          ))}
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <FormControl fullWidth size="small" disabled={subGroupOptions.length === 0 || filtersOptionsLoading.subGroups}>
+                        <InputLabel id="subgroup-filter-label">Sub Group</InputLabel>
+                        <MUISelect
+                          labelId="subgroup-filter-label"
+                          label="Sub Group"
+                          value={tempSubGroupFilter || 'all'}
+                          onChange={(e) => setTempSubGroupFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                        >
+                          <MenuItem value="all">All Sub Groups</MenuItem>
+                          {subGroupOptions.map((sg) => (
+                            <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
+                          ))}
                         </MUISelect>
                       </FormControl>
                     </div>

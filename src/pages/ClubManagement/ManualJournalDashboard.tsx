@@ -148,6 +148,7 @@ export const ManualJournalDashboard = () => {
   });
 
   const perPage = 20;
+  const lock_account_id = localStorage.getItem("lock_account_id");
 
   // Fetch journal entries
   const fetchJournals = useCallback(async () => {
@@ -155,7 +156,7 @@ export const ManualJournalDashboard = () => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+      const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions.json?q[transaction_type_eq]=Journal Entry`;
       const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -606,7 +607,7 @@ export const ManualJournalDashboard = () => {
 
     if (columnKey === 'reporting_method') {
       // Not present in API, so show --
-      return '--';
+      return item.reporting_method || '--';
     }
 
     return item[columnKey] || '--';
@@ -641,7 +642,11 @@ export const ManualJournalDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {/* Memberships Table */}
-      <div className="overflow-x-auto animate-fade-in">
+        <header className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold">All Manual Journals</h1>
+            </header>
+
+      <div className="overflow-x-auto animate-fade-in mt-5">
         {searchLoading && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
             <div className="flex items-center gap-2 text-blue-600">

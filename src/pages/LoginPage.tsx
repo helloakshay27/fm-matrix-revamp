@@ -11,7 +11,9 @@ import {
   saveUser,
   saveToken,
   saveBaseUrl,
+  fetchLockAccount,
   Organization,
+  getUser,
 } from "@/utils/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -85,6 +87,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
     org_id === "90";
+
+  const currentUser = getUser();
+  const userEmail = currentUser?.email || "No email";
   // Check URL for email and orgId parameters on components mount
   React.useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -380,14 +385,17 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id?.toString() || "");
       localStorage.setItem("userType", response.user_type?.toString() || "");
+
+      // Fetch and store lock_account_id
+      await fetchLockAccount();
       // Session storage
       sessionStorage.setItem("userId", response.id?.toString() || "");
       sessionStorage.setItem("userType", response.user_type?.toString() || "");
 
-      const from =
-        (location.state as { from?: Location })?.from?.pathname +
-        (location.state as { from?: Location })?.from?.search ||
-        "/maintenance/asset";
+      // const from =
+      //   (location.state as { from?: Location })?.from?.pathname +
+      //     (location.state as { from?: Location })?.from?.search ||
+      //   "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
@@ -409,7 +417,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         const userType = localStorage.getItem("userType");
         const isLocalhost =
           hostname.includes("lockated.gophygital.work") ||
-          hostname.includes("fm-matrix.lockated.com");
+          hostname.includes("fm-matrix.lockated.com") ||
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work";
         const isPulseSite =
           hostname.includes("localhost") ||
           hostname.includes("pulse.lockated.com") ||

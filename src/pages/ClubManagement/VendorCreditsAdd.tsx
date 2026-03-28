@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -126,15 +127,16 @@ export const VendorCreditsAdd: React.FC = () => {
         const fetchItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -149,8 +151,9 @@ export const VendorCreditsAdd: React.FC = () => {
         const fetchSalespersons = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -170,8 +173,9 @@ export const VendorCreditsAdd: React.FC = () => {
         const fetchPaymentTerms = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -278,11 +282,12 @@ export const VendorCreditsAdd: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -310,11 +315,12 @@ export const VendorCreditsAdd: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         setLoadingExemptions(true);
 
         axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -441,6 +447,7 @@ export const VendorCreditsAdd: React.FC = () => {
     const [accountGroups, setAccountGroups] = React.useState([]);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
 
@@ -448,7 +455,7 @@ export const VendorCreditsAdd: React.FC = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -619,20 +626,55 @@ export const VendorCreditsAdd: React.FC = () => {
         }
     };
 
-    // Validation
-    const validate = (): boolean => {
-        const newErrors: Record<string, string> = {};
+    // ====================== VALIDATION FUNCTION ======================
+    const validateForm = (): boolean => {
+        if (!selectedCustomer) {
+            toast.error("Please select a vendor");
+            return false;
+        }
 
-        if (!selectedCustomer) newErrors.customer = 'Customer is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
-        if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
-        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+        if (!referenceNumber.trim()) {
+            toast.error("Please enter the order number.");
+            return false;
+        }
 
-        const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+        if (!salesOrderDate) {
+            toast.error("Please select Vendor Credit Date");
+            return false;
+        }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        if (!sourceOfSupply) {
+            toast.error("Please select a source of supply");
+            return false;
+        }
+
+        // Items validation
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const itemNum = i + 1;
+
+            if (!item.name?.trim()) {
+                toast.error(`Item ${itemNum}: Please select an item`);
+                return false;
+            }
+
+            if (!item.account) {
+                toast.error(`Item ${itemNum}: The Account field cannot be empty.`);
+                return false;
+            }
+
+            if (!item.item_tax_type) {
+                toast.error(`Item ${itemNum}: Please set the GST treatment for the item`);
+                return false;
+            }
+
+            if (!item.quantity || item.quantity <= 0) {
+                toast.error(`Item ${itemNum}: Quantity must be greater than 0`);
+                return false;
+            }
+        }
+
+        return true;
     };
 
     const saleOrderPayload = {
@@ -727,91 +769,185 @@ export const VendorCreditsAdd: React.FC = () => {
     console.log('Sale Order Payload:', saleOrderPayload2);
     console.log("items:", items)
     // Handle submit
+    // const handleSubmit = async (saveAsDraft: boolean = false) => {
+    //     if (isSubmitting) return;
+
+    //     const error = validate();
+    //     if (error) {
+    //         toast.error(error);
+    //         return;
+    //     }
+
+    //     const loadingToast = toast.loading("Creating...");
+
+    //     setIsSubmitting(true);
+
+    //     try {
+    //         const baseUrl = localStorage.getItem('baseUrl');
+    //         const token = localStorage.getItem('token');
+    //         const lock_account_id = localStorage.getItem('lock_account_id');
+
+    //         // Build FormData for sale order
+    //         const formData = new FormData();
+    //         const totalGSTAmount = taxBreakdown.reduce(
+    //             (sum, tax) => sum + Number(tax.amount || 0),
+    //             0
+    //         );
+
+    //         formData.append(
+    //             'lock_account_supplier_credit[sub_total_amount]',
+    //             String(subTotal)
+    //         );
+
+    //         formData.append(
+    //             'lock_account_supplier_credit[taxable_amount]',
+    //             String(totalGSTAmount)
+    //         );
+
+    //         formData.append(
+    //             'lock_account_supplier_credit[lock_account_tax_amount]',
+    //             String(taxAmount2)
+    //         );
+    //         formData.append('lock_account_supplier_credit[pms_supplier_id]', selectedCustomer?.id || '');
+    //         formData.append('lock_account_supplier_credit[order_number]', referenceNumber);
+    //         formData.append('lock_account_supplier_credit[bill_date]', salesOrderDate);
+    //         formData.append('lock_account_supplier_credit[date]', expectedShipmentDate);
+    //         // formData.append('lock_account_supplier_credit[payment_term_id]', selectedTerm);
+    //         // formData.append('sale_order[delivery_method]', deliveryMethod);
+    //         // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
+    //         formData.append('lock_account_supplier_credit[notes]', customerNotes);
+    //         // formData.append('lock_account_supplier_credit[terms_and_conditions]', termsAndConditions);
+    //         formData.append('lock_account_supplier_credit[status]', 'draft');
+    //         formData.append('lock_account_supplier_credit[subject]', subject || '');
+    //         formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount));
+    //         if (discountTypeOnTotal === 'percentage') {
+    //             formData.append('lock_account_supplier_credit[discount_per]', String(discountOnTotal));
+    //             formData.append('lock_account_supplier_credit[discount_amount]', String(totalDiscount));
+    //         } else {
+    //             formData.append('lock_account_supplier_credit[discount_amount]', String(discountOnTotal));
+    //         }
+    //         formData.append('lock_account_supplier_credit[charge_amount]', String(adjustment));
+    //         formData.append('lock_account_supplier_credit[charge_name]', adjustmentLabel);
+    //         formData.append('lock_account_supplier_credit[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
+    //         formData.append('lock_account_supplier_credit[tax_type]', taxType.toLowerCase());
+    //         const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
+    //         formData.append('lock_account_supplier_credit[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
+    //         //new
+    //         formData.append('lock_account_supplier_credit[source_of_supply]', sourceOfSupply || '');
+    //         formData.append('lock_account_supplier_credit[destination_of_supply]', destinationOfSupply || '');
+    //         // Sale order items
+    //         items.forEach((item, idx) => {
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][name]`, item.description || '');
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
+    //             // formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_customer_id]`, item.customer || '');
+
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
+    //             formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+    //         });
+
+    //         // Email contact persons
+    //         // selectedContactPersons.forEach((id, idx) => {
+    //         //     formData.append(`lock_account_supplier_credit[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
+    //         // });
+
+    //         // Attachments
+    //         attachments.forEach((file, idx) => {
+    //             formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][document]`, file);
+    //             formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][active]`, 'true');
+    //         });
+
+    //         await fetch(`https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 Authorization: token ? `Bearer ${token}` : undefined
+    //                 // Do NOT set Content-Type, browser will set it for FormData
+    //             },
+    //             body: formData
+    //         });
+
+    //         toast.dismiss(loadingToast);
+    //         if (saveAsDraft) {
+    //             toast.success("Saved as draft");
+    //         } else {
+    //             toast.success("Vendor credit created!");
+    //         }
+    //         navigate('/accounting/vendor-credits');
+    //     } catch (error) {
+    //         console.error('Error submitting sales order:', error);
+    //         toast.dismiss(loadingToast);
+    //         toast.error("Failed to save vendor credit");
+    //     } finally {
+    //         setIsSubmitting(false);
+    //     }
+    // };
+
+
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
-            return;
-        }
+        if (isSubmitting) return;
+
+        // ←←← ADD THIS LINE
+        if (!validateForm()) return;
 
         setIsSubmitting(true);
+        const loadingToast = toast.loading("Creating Vendor Credit...");
 
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
 
-            // Build FormData for sale order
             const formData = new FormData();
+
+            // ... your existing formData appends (keep all of them) ...
+
             formData.append('lock_account_supplier_credit[pms_supplier_id]', selectedCustomer?.id || '');
-            formData.append('lock_account_supplier_credit[order_number]', referenceNumber);
+            formData.append('lock_account_supplier_credit[order_number]', referenceNumber.trim());
             formData.append('lock_account_supplier_credit[bill_date]', salesOrderDate);
-            formData.append('lock_account_supplier_credit[date]', expectedShipmentDate);
-            // formData.append('lock_account_supplier_credit[payment_term_id]', selectedTerm);
-            // formData.append('sale_order[delivery_method]', deliveryMethod);
-            // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
-            formData.append('lock_account_supplier_credit[notes]', customerNotes);
-            // formData.append('lock_account_supplier_credit[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_supplier_credit[status]', 'draft');
             formData.append('lock_account_supplier_credit[subject]', subject || '');
-            formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount));
-            if (discountTypeOnTotal === 'percentage') {
-                formData.append('lock_account_supplier_credit[discount_per]', String(discountOnTotal));
-                formData.append('lock_account_supplier_credit[discount_amount]', String(totalDiscount));
-            } else {
-                formData.append('lock_account_supplier_credit[discount_amount]', String(discountOnTotal));
-            }
-            formData.append('lock_account_supplier_credit[charge_amount]', String(adjustment));
-            formData.append('lock_account_supplier_credit[charge_name]', adjustmentLabel);
-            formData.append('lock_account_supplier_credit[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
-            formData.append('lock_account_supplier_credit[tax_type]', taxType.toLowerCase());
-            const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-            formData.append('lock_account_supplier_credit[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
-            //new
-            formData.append('lock_account_supplier_credit[source_of_supply]', sourceOfSupply || '');
+            formData.append('lock_account_supplier_credit[notes]', customerNotes);
+            formData.append('lock_account_supplier_credit[source_of_supply]', sourceOfSupply);
             formData.append('lock_account_supplier_credit[destination_of_supply]', destinationOfSupply || '');
-            // Sale order items
+            formData.append('lock_account_supplier_credit[status]', saveAsDraft ? 'draft' : 'confirmed');
+            formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount2));
+
+            // Items loop (keep your existing one)
             items.forEach((item, idx) => {
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][name]`, item.description || '');
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_item_id]`,
+                    itemOptions.find(opt => opt.name === item.name)?.id || '');
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
-                // formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_customer_id]`, item.customer || '');
-
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
-                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, item.item_tax_type || '');
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id || ''));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id || ''));
             });
 
-            // Email contact persons
-            // selectedContactPersons.forEach((id, idx) => {
-            //     formData.append(`lock_account_supplier_credit[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
-            // });
+            // ... rest of your fetch call remains same ...
 
-            // Attachments
-            attachments.forEach((file, idx) => {
-                formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][document]`, file);
-                formData.append(`lock_account_supplier_credit[attachments_attributes][${idx}][active]`, 'true');
-            });
-
-            await fetch(`https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=1`, {
+            const response = await fetch(`https://${baseUrl}/lock_account_supplier_credits.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined
-                    // Do NOT set Content-Type, browser will set it for FormData
-                },
-                body: formData
+                headers: { Authorization: token ? `Bearer ${token}` : undefined },
+                body: formData,
             });
 
-            alert(`Vendor Credit ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            if (!response.ok) throw new Error();
+
+            toast.dismiss(loadingToast);
+            toast.success(saveAsDraft ? "Saved as draft" : "Vendor credit created successfully!");
             navigate('/accounting/vendor-credits');
+
         } catch (error) {
-            console.error('Error submitting sales order:', error);
-            alert('Failed to create sales order');
+            toast.dismiss(loadingToast);
+            toast.error("Failed to save vendor credit");
         } finally {
             setIsSubmitting(false);
         }
     };
-
     // --- Tax Section State and Effect ---
 
 
@@ -822,11 +958,12 @@ export const VendorCreditsAdd: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
+                const lock_account_id = localStorage.getItem('lock_account_id');
                 const type = taxType.toLowerCase();
                 const url =
 
 
-                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
@@ -955,7 +1092,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                 />
                             </div>
 
-                           
+
 
                         </div>
 
@@ -970,59 +1107,59 @@ export const VendorCreditsAdd: React.FC = () => {
                             </Button>
                         )} */}
 
-                         {selectedCustomer && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {selectedCustomer && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                                    {/* Source of Supply */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">
-                                            Source of Supply
-                                        </label>
+                                {/* Source of Supply */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Source of Supply
+                                    </label>
 
-                                        <FormControl fullWidth>
-                                            <Select
-                                                value={sourceOfSupply}
-                                                onChange={(e) => setSourceOfSupply(e.target.value)}
-                                                displayEmpty
-                                                sx={fieldStyles}
-                                            >
-                                                <MenuItem value="">Select State</MenuItem>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={sourceOfSupply}
+                                            onChange={(e) => setSourceOfSupply(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="">Select State</MenuItem>
 
-                                                {indianStates.map((state) => (
-                                                    <MenuItem key={state} value={state}>
-                                                        {state}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </div>
-
-                                    {/* Destination of Supply */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">
-                                            Destination of Supply
-                                        </label>
-
-                                        <FormControl fullWidth>
-                                            <Select
-                                                value={destinationOfSupply}
-                                                onChange={(e) => setDestinationOfSupply(e.target.value)}
-                                                displayEmpty
-                                                sx={fieldStyles}
-                                            >
-                                                <MenuItem value="">Select State</MenuItem>
-
-                                                {indianStates.map((state) => (
-                                                    <MenuItem key={state} value={state}>
-                                                        {state}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </div>
-
+                                            {indianStates.map((state) => (
+                                                <MenuItem key={state} value={state}>
+                                                    {state}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 </div>
-                            )}
+
+                                {/* Destination of Supply */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Destination of Supply
+                                    </label>
+
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={destinationOfSupply}
+                                            onChange={(e) => setDestinationOfSupply(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="">Select State</MenuItem>
+
+                                            {indianStates.map((state) => (
+                                                <MenuItem key={state} value={state}>
+                                                    {state}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </div>
+
+                            </div>
+                        )}
                     </div>
                 </Section>
 
@@ -1043,6 +1180,24 @@ export const VendorCreditsAdd: React.FC = () => {
                                 onChange={(e) => setBillingAddress(e.target.value)}
                                 placeholder="Enter billing address"
                                 disabled={!!selectedCustomer?.billing_address?.address}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
+                                    },
+                                }}
                             />
                         </div>
 
@@ -1060,6 +1215,24 @@ export const VendorCreditsAdd: React.FC = () => {
                                 onChange={(e) => setShippingAddress(e.target.value)}
                                 placeholder="Enter shipping address"
                                 disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
+                                    },
+                                }}
                             />
                             {/* <FormControlLabel
                                 control={
@@ -1276,7 +1449,25 @@ export const VendorCreditsAdd: React.FC = () => {
                                 value={subject}
                                 onChange={e => setSubject(e.target.value)}
                                 placeholder="Enter subject"
-                                sx={fieldStyles}
+                                // sx={fieldStyles}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
+                                    },
+                                }}
                             />
                         </div>
 
@@ -1339,8 +1530,21 @@ export const VendorCreditsAdd: React.FC = () => {
                                                             const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
                                                             if (selectedItem) {
                                                                 updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
+                                                                updateItem(index, 'rate', selectedItem.rate || 0);
+                                                                updateItem(index, 'description', selectedItem.description || '');
+
+                                                                // Set GST Treatment
+                                                                if (selectedItem.tax_preference === 'non_taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'non_taxable');
+                                                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                                                } else if (selectedItem.tax_preference === 'taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'tax_group');
+                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                                                } else if (selectedItem.tax_preference === 'out_of_scope') {
+                                                                    updateItem(index, 'item_tax_type', 'out_of_scope');
+                                                                } else if (selectedItem.tax_preference === 'non_gst_supply') {
+                                                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                                                }
                                                             }
                                                         }}
                                                         displayEmpty
@@ -1421,7 +1625,11 @@ export const VendorCreditsAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                                                    onChange={(e) => {
+                                                        const parsed = parseFloat(e.target.value);
+                                                        const safeRate = isNaN(parsed) ? '' : Math.max(0, parsed);
+                                                        updateItem(index, 'rate', safeRate);
+                                                    }}
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
@@ -1603,7 +1811,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-    {taxBreakdown.map((tax, index) => (
+                            {taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">
                                         {tax.name} ({tax.rate}%)
@@ -1700,6 +1908,24 @@ export const VendorCreditsAdd: React.FC = () => {
                         value={customerNotes}
                         onChange={(e) => setCustomerNotes(e.target.value)}
                         placeholder="Enter any notes for the customer"
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                                display: "flex",
+                            },
+                            "& .MuiInputBase-input[aria-hidden='true']": {
+                                flex: 0,
+                                width: 0,
+                                height: 0,
+                                padding: "0 !important",
+                                margin: 0,
+                                display: "none",
+                            },
+                            "& .MuiInputBase-input": {
+                                resize: "none !important",
+                            },
+                        }}
                     />
                 </Section>
 
@@ -1888,7 +2114,7 @@ export const VendorCreditsAdd: React.FC = () => {
                         }
                     }}
                 >
-                    Save as Draft
+                    {isSubmitting ? 'Saving...' : 'Save as Draft'}
                 </Button>
                 <Button
                     variant="contained"
@@ -1904,7 +2130,7 @@ export const VendorCreditsAdd: React.FC = () => {
                         textTransform: 'none'
                     }}
                 >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    {isSubmitting ? 'Creating...' : 'Save and Send'}
                 </Button>
             </div>
 
@@ -2161,58 +2387,58 @@ export const VendorCreditsAdd: React.FC = () => {
                 </DialogActions>
             </Dialog>
 
-              <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
-                            maxWidth="sm" fullWidth>
-                            <DialogTitle>Exemption Reason</DialogTitle>
-            
-                            <DialogContent>
-            
-                                <FormControl fullWidth>
-            
-                                    <Select
-                                        value={selectedExemption}
-                                        onChange={(e) => setSelectedExemption(e.target.value)}
-                                    >
-            
-                                        <MenuItem value="">Select Reason</MenuItem>
-            
-                                        {customerExemptions.map(ex => (
-                                            <MenuItem key={ex.id} value={ex.id}>
-                                                {ex.reason}
-                                            </MenuItem>
-                                        ))}
-            
-                                    </Select>
-            
-                                </FormControl>
-            
-                            </DialogContent>
-            
-                            <DialogActions>
-                                <button
-                                    className="bg-gray-200 px-4 py-2 rounded"
-                                    onClick={() => setExemptionModalOpen(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
-                                    onClick={() => {
-                                        if (currentItemIndex !== null) {
-                                            updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
-                                        }
-            
-                                        setSelectedExemption("");
-                                        setCurrentItemIndex(null);
-                                        setExemptionModalOpen(false);
-                                    }}
-                                >
-                                    Update
-                                </button>
-            
-                            </DialogActions>
-            
-                        </Dialog>
+            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
+                maxWidth="sm" fullWidth>
+                <DialogTitle>Exemption Reason</DialogTitle>
+
+                <DialogContent>
+
+                    <FormControl fullWidth>
+
+                        <Select
+                            value={selectedExemption}
+                            onChange={(e) => setSelectedExemption(e.target.value)}
+                        >
+
+                            <MenuItem value="">Select Reason</MenuItem>
+
+                            {customerExemptions.map(ex => (
+                                <MenuItem key={ex.id} value={ex.id}>
+                                    {ex.reason}
+                                </MenuItem>
+                            ))}
+
+                        </Select>
+
+                    </FormControl>
+
+                </DialogContent>
+
+                <DialogActions>
+                    <button
+                        className="bg-gray-200 px-4 py-2 rounded"
+                        onClick={() => setExemptionModalOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        onClick={() => {
+                            if (currentItemIndex !== null) {
+                                updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
+                            }
+
+                            setSelectedExemption("");
+                            setCurrentItemIndex(null);
+                            setExemptionModalOpen(false);
+                        }}
+                    >
+                        Update
+                    </button>
+
+                </DialogActions>
+
+            </Dialog>
         </div>
     );
 };

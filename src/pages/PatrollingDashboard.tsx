@@ -3,7 +3,7 @@ import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loa
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { BulkUploadModal } from '@/components/BulkUploadModal';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { ExportModal } from '@/components/ExportModal';
 import { PatrollingFilterModal, PatrollingFilters } from '@/components/PatrollingFilterModal';
 import { AddPatrollingModal } from '@/components/AddPatrollingModal';
@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { userService, User } from '@/services/userService';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 // Type definitions for the API response
 interface PatrollingItem {
@@ -147,6 +148,8 @@ export const PatrollingDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [selectedPatrollingId, setSelectedPatrollingId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -158,7 +161,7 @@ export const PatrollingDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
-    per_page: 10,
+    per_page: 20,
     total_pages: 1,
     total_count: 0,
     has_next_page: false,
@@ -354,9 +357,9 @@ export const PatrollingDashboard = () => {
       <button onClick={() => handleEdit(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Edit">
         <Edit className="w-4 h-4" />
       </button>
-      <button onClick={() => handleDelete(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Delete">
+      {/* <button onClick={() => handleDelete(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Delete">
         <Trash2 className="w-4 h-4" />
-      </button>
+      </button> */}
     </div>,
     name: <div className="font-medium">{patrol.name}</div>,
     checkpoints: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-black">
@@ -515,10 +518,34 @@ export const PatrollingDashboard = () => {
         onFilterClick={() => setIsFilterOpen(true)}
         loading={loading}
         leftActions={(
-          <Button className='bg-primary text-primary-foreground hover:bg-primary/90'  onClick={() => navigate('/security/patrolling/create')}>
-            <Plus className="w-4 h-4 mr-2" /> Add
+          <Button
+            className='bg-[#C72030] text-white hover:bg-[#C72030]/90'
+            onClick={() => setShowActionPanel((prev) => !prev)}
+          >
+            <Plus className="w-4 h-4 mr-2" /> Action
           </Button>
         )}
+      />
+
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={() => {
+            setShowActionPanel(false);
+            navigate('/security/patrolling/create');
+          }}
+          onImport={() => {
+            setShowActionPanel(false);
+            setShowImportModal(true);
+          }}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+
+      <BulkUploadDialog
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        title="Bulk Upload Patrolling Checkpoints"
+        context="patrolling"
       />
 
       {totalRecords > 0 && (

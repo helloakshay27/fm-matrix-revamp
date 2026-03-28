@@ -126,15 +126,16 @@ export const CreditNoteAddPage: React.FC = () => {
         const fetchItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description })));
+                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -149,8 +150,9 @@ export const CreditNoteAddPage: React.FC = () => {
         const fetchSalespersons = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -170,8 +172,9 @@ export const CreditNoteAddPage: React.FC = () => {
         const fetchPaymentTerms = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=1`, {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -265,11 +268,12 @@ export const CreditNoteAddPage: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         setLoadingTaxGroups(true);
 
         axios
-            .get(`https://${baseUrl}/lock_accounts/1/tax_groups_view.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -297,11 +301,12 @@ export const CreditNoteAddPage: React.FC = () => {
     useEffect(() => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
         setLoadingExemptions(true);
 
         axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=1&q[exemption_type_eq]=item`, {
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -386,9 +391,10 @@ export const CreditNoteAddPage: React.FC = () => {
         setLoadingCustomers(true);
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
         // Fetch customer list
         axios
-            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=1`, {
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     'Content-Type': 'application/json'
@@ -424,6 +430,7 @@ export const CreditNoteAddPage: React.FC = () => {
     const [accountGroups, setAccountGroups] = React.useState([]);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
 
@@ -431,7 +438,7 @@ export const CreditNoteAddPage: React.FC = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -675,9 +682,29 @@ export const CreditNoteAddPage: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
 
             // Build FormData for sale order
             const formData = new FormData();
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
+
+            formData.append(
+                'lock_account_credit_note[sub_total_amount]',
+                String(subTotal)
+            );
+
+            formData.append(
+                'lock_account_credit_note[taxable_amount]',
+                String(totalGSTAmount)
+            );
+
+            formData.append(
+                'lock_account_credit_note[lock_account_tax_amount]',
+                String(taxAmount2)
+            );
             formData.append('lock_account_credit_note[lock_account_customer_id]', selectedCustomer?.id || '');
             formData.append('lock_account_credit_note[reference_number]', referenceNumber);
             formData.append('lock_account_credit_note[bill_date]', salesOrderDate);
@@ -728,7 +755,7 @@ export const CreditNoteAddPage: React.FC = () => {
             //     formData.append(`lock_account_credit_note[attachments_attributes][${idx}][active]`, 'true');
             // });
 
-            await fetch(`https://${baseUrl}/lock_account_credit_notes.json?lock_account_id=1`, {
+            await fetch(`https://${baseUrl}/lock_account_credit_notes.json?lock_account_id=${lock_account_id}`, {
                 method: 'POST',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
@@ -757,11 +784,12 @@ export const CreditNoteAddPage: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
+                const lock_account_id = localStorage.getItem('lock_account_id');
                 const type = taxType.toLowerCase();
                 const url =
 
 
-                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=1`;
+                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
                 const response = await fetch(url, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
@@ -1083,6 +1111,21 @@ export const CreditNoteAddPage: React.FC = () => {
                                                                 updateItem(index, 'name', selectedItem.name);
                                                                 updateItem(index, 'rate', selectedItem.rate);
                                                                 updateItem(index, 'description', selectedItem.description);
+                                                                // TAX HANDLING
+                                                                if (selectedItem.tax_preference === 'non_taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'non_taxable');
+                                                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                                                }
+                                                                if (selectedItem.tax_preference === 'taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'tax_group');
+                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                                                }
+                                                                if (selectedItem.tax_preference === 'out_of_scope') {
+                                                                    updateItem(index, 'item_tax_type', 'out_of_scope');
+                                                                }
+                                                                if (selectedItem.tax_preference === 'non_gst_supply') {
+                                                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                                                }
                                                             }
                                                         }}
                                                         displayEmpty

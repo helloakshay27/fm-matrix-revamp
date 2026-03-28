@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState({
@@ -26,7 +27,7 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
     useEffect(() => {
         const fetchParentGroups = async () => {
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -86,6 +87,17 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
     };
 
     const handleSubmit = async () => {
+        // VALIDATION
+        if (!formData.accountName) {
+            toast.error('Account Name is required');
+            return;
+        }
+
+        if (formData.isSubAccount && !formData.parentAccountId) {
+            toast.error('Parent Account is required when Sub-account is selected');
+            return;
+        }
+
         setIsSubmitting(true);
         const groupData = {
             group_name: formData.accountName || '',
@@ -99,7 +111,7 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
         console.log('Submitting group data:', groupData);
         try {
             await axios.post(
-                `https://${baseUrl}/lock_accounts/1/lock_account_groups.json`,
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups.json`,
                 { lock_account_group: groupData },
                 {
                     headers: {
@@ -118,7 +130,17 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
     };
 
     return (
-        <Dialog open={open} onClose={onOpenChange} fullWidth>
+        // <Dialog open={open} onClose={onOpenChange} fullWidth>
+        <Dialog
+            open={open}
+            onClose={(event, reason) => {
+                if (reason === "backdropClick" || reason === "escapeKeyDown") {
+                    return; // prevent closing
+                }
+                onOpenChange(false);
+            }}
+            fullWidth
+        >
             <div className="flex items-center justify-between px-6 pt-6">
                 <h5 className="text-lg font-semibold">{editingAccessory ? "Edit Group" : "Create Group"}</h5>
                 <Button
@@ -301,6 +323,7 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
                     </div>
                     <div className="mt-4 pt-5 flex justify-center gap-3">
                         <Button
+                            type="button"
                             onClick={handleSubmit}
                             disabled={isSubmitting}
                             style={{ backgroundColor: "#C72030" }}
@@ -326,7 +349,7 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
                     </div>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 };
 

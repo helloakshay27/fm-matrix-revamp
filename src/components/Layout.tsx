@@ -16,11 +16,13 @@ import ViSidebarWithToken from "./ViSidebarWithToken";
 import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl, getUser } from "../utils/auth";
+import { isEmbeddedMode } from "../utils/embeddedMode";
 import { ProtectionLayer } from "./ProtectionLayer";
 import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
 import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeSidebarStatic } from "./EmployeeSidebarStatic";
+import { BusinessCompassSidebar } from "./BusinessCompassSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
 import { EmployeeHeaderStatic } from "./EmployeeHeaderStatic";
@@ -36,6 +38,7 @@ import { ClubSidebar } from "./ClubSidebar";
 import ClubDynamicHeader from "./ClubDynamicHeader";
 import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
 import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
+import TopNavigation from "./CompanyHub/TopNavigation";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -61,6 +64,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
     location.pathname.startsWith("/club-management");
+
+  // Detect embedded mode - hide sidebar and header when embedded
+  const isEmbedded = isEmbeddedMode();
 
   /**
    * EMPLOYEE VIEW DETECTION
@@ -125,7 +131,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Render sidebar component based on configuration
   const renderSidebar = () => {
-    console.log("🔧 Layout renderSidebar - checking conditions:", {
+    // Hide sidebar in embedded mode
+    if (isEmbedded) {
+      console.warn("🔌 Embedded mode - hiding sidebar");
+      return null;
+    }
+
+    console.warn("🔧 Layout renderSidebar - checking conditions:", {
       isClubManagementRoute,
       isEmployeeUser,
       isLocalhost,
@@ -136,13 +148,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     });
 
     if (isViSite) {
-      console.log("✅ Rendering ViSidebar");
+      console.warn("✅ Rendering ViSidebar");
       return <ViSidebar />;
     }
 
     // Check if user is in Club Management route - render ClubSidebar
     if (isClubManagementRoute) {
-      console.log("✅ Rendering ClubSidebar");
+      console.warn("✅ Rendering ClubSidebar");
       return <ClubSidebar />;
     }
 
@@ -150,7 +162,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // IMPORTANT: Only show employee sidebar if userType is explicitly pms_occupant
     // This prevents employee sidebar from showing in admin view on /vas/projects
     if (isEmployeeUser && isLocalhost && userType === "pms_occupant") {
-      // Only render sidebar for Project Task module
+      // Only render sidebar for Project Task or Business Compass module
       if (currentSection === "Project Task") {
         // Use EmployeeSidebar for specific companies, otherwise EmployeeSidebarStatic
         if (
@@ -161,15 +173,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "90" ||
           org_id === "1" ||
           org_id === "84" ||
+          org_id === "1" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com"
+          userEmail === "jevosak839@cimario.com" ||
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work"
         ) {
           return <EmployeeSidebar />;
         }
         return <EmployeeSidebarStatic />;
       }
+
+      if (
+        currentSection === "Business Compass" ||
+        location.pathname.startsWith("/business-compass")
+      ) {
+        return <BusinessCompassSidebar />;
+      }
+
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
       return null;
     }
@@ -193,10 +217,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "90" ||
       org_id === "1" ||
       org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
-      userEmail === "jevosak839@cimario.com"
+      userEmail === "jevosak839@cimario.com" ||
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -249,6 +277,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Render header component based on configuration
   const renderDynamicHeader = () => {
+    // Hide dynamic header in embedded mode
+    if (isEmbedded) {
+      console.warn("🔌 Embedded mode - hiding dynamic header");
+      return null;
+    }
+
     if (isViSite) {
       return <ViDynamicHeader />;
     }
@@ -274,16 +308,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "90" ||
       org_id === "1" ||
       org_id === "84" ||
+      org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
-      userEmail === "jevosak839@cimario.com"
+      userEmail === "jevosak839@cimario.com" ||
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
     ) {
       return <ActionHeader />;
     }
 
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
+    }
+    if (org_id === "3") {
+      return <ZycusDynamicHeaderCopy />;
     }
 
     if (isFMSite) {
@@ -378,6 +419,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [location.search]);
 
+  const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
+  const isNewEmpHubRoute = location.pathname === "/employee/company-hub-new";
+
   return (
     <div
       className="min-h-screen bg-[#fafafa]"
@@ -389,8 +433,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         allowedDomains={["vi-web.gophygital.work"]}
       />
 
-      {/* Conditional Header - Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
-      {isEmployeeUser && isLocalhost ? (
+      {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
+      {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
         selectedCompany?.id === 295 ||
         selectedCompany?.id === 298 ||
@@ -398,11 +442,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         org_id === "90" ||
         org_id === "1" ||
         org_id === "84" ||
+        org_id === "1" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
         userEmail === "megipow156@aixind.com" ||
         userEmail === "jevosak839@cimario.com" ? (
-          <EmployeeHeader />
+          // <EmployeeHeader />
+          isNewEmpHubRoute ? (
+            <TopNavigation
+              activeNavMenu={activeNavMenu}
+              setActiveNavMenu={setActiveNavMenu}
+            /> // 👈 your new header
+          ) : (
+            <EmployeeHeader />
+          )
         ) : (
           <EmployeeHeaderStatic />
         )
@@ -417,20 +470,25 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <main
         className={`${
-          // For employee users, only add left margin if on Project Task module
-          isEmployeeUser && isLocalhost
-            ? currentSection === "Project Task"
-              ? isSidebarCollapsed
-                ? "ml-16"
-                : "ml-64"
-              : "ml-0" // No margin for other modules
-            : // For action sidebar, add extra top padding and adjust left margin
-              isActionSidebarVisible
-              ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
-              : isSidebarCollapsed
-                ? "ml-16"
-                : "ml-64"
-        } ${isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+          // No margins in embedded mode
+          isEmbedded
+            ? "ml-0 pt-4"
+            : // For employee users, only add left margin if on Project Task module
+              isEmployeeUser && isLocalhost
+              ? currentSection === "Project Task" ||
+                currentSection === "Business Compass" ||
+                location.pathname.includes("/business-compass")
+                ? isSidebarCollapsed
+                  ? "ml-16"
+                  : "ml-64"
+                : "ml-0" // No margin for other modules
+              : // For action sidebar, add extra top padding and adjust left margin
+                isActionSidebarVisible
+                ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
+                : isSidebarCollapsed
+                  ? "ml-16"
+                  : "ml-64"
+        } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

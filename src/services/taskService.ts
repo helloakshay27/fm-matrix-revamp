@@ -568,4 +568,147 @@ export const taskService = {
       throw new Error("Failed to submit task response");
     }
   },
+
+  // New async export with status polling
+  async initiateTaskExport(params?: {
+    status?: string;
+    [key: string]: any;
+  }): Promise<string> {
+    try {
+      const queryParams: any = {
+        status: params?.status || "open",
+      };
+
+      // Add other parameters if provided
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (key !== "status" && value !== undefined && value !== null && value !== "") {
+            queryParams[key] = value;
+          }
+        });
+      }
+
+      console.log("Export query params:", queryParams);
+
+      const response = await apiClient.get("/pms/users/tasks_data_report_export", {
+        params: queryParams,
+      });
+      
+      // Extract export_key from response
+      const exportKey = response.data?.export_key;
+      
+      if (!exportKey) {
+        throw new Error("No export_key returned from export initiation");
+      }
+      
+      console.log("Export initiated with export_key:", exportKey);
+      return exportKey;
+    } catch (error) {
+      console.error("Error initiating task export:", error);
+      throw error;
+    }
+  },
+
+  async checkExportStatus(fileName: string): Promise<{
+    status: string;
+    ready: boolean;
+    download_url?: string;
+    [key: string]: any;
+  }> {
+    try {
+      const response = await apiClient.get("/pms/users/export_status.json", {
+        params: { key: fileName },
+        responseType: "json", // Explicitly expect JSON response
+      });
+      
+      const statusData = response.data;
+      const isReady = 
+        statusData.status?.toLowerCase() === "completed" ||
+        statusData.status?.toLowerCase() === "ready" ||
+        statusData.status?.toLowerCase() === "done" ||
+        statusData.ready === true ||
+        !!statusData.download_url;
+      
+      console.log("Export status check:", { status: statusData.status, ready: isReady });
+      
+      return {
+        status: statusData.status || "processing",
+        ready: isReady, 
+        ...statusData,
+      };
+    } catch (error) {
+      console.error("Error checking export status:", error);
+      throw error;
+    }
+  },
+
+  async downloadTaskExportWithStatus(params?: {
+    status?: string;
+    [key: string]: any;
+  }): Promise<void> {
+    try {
+      // Step 1: Initiate the export
+      const fileName = await this.initiateTaskExport(params);
+      
+      // Step 2: Poll the status until the file is ready
+      let isReady = false;
+      let statusData: any = {};
+      let attempts = 0;
+      const maxAttempts = 120; // 10 minutes with 5 second intervals
+      const pollInterval = 5000; // 5 seconds
+      
+      while (!isReady && attempts < maxAttempts) {
+        // Wait before polling
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+        try {
+          statusData = await this.checkExportStatus(fileName);
+          isReady = statusData.ready;
+          
+          if (isReady) {
+            console.log("Export file is ready:", statusData);
+            break;
+          }
+          
+          attempts++;
+          console.log(`Export status check ${attempts}/${maxAttempts}:`, statusData.status);
+        } catch (statusError) {
+          console.warn("Error checking status, retrying...", statusError);
+          attempts++;
+          // Continue polling even if there's an error
+        }
+      }
+      
+      if (!isReady) {
+        throw new Error("Export file generation timed out after 10 minutes");
+      }
+      
+      // Step 3: Download the file if a download URL is provided
+      if (statusData.download_url) {
+        const downloadUrl = statusData.download_url;
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        
+        // Generate filename
+        const statusSuffix = params?.status
+          ? `_${params.status.toLowerCase().replace(/\s+/g, "_")}`
+          : "";
+        const filename = `tasks_export${statusSuffix}_${
+          new Date().toISOString().split("T")[0]
+        }.xlsx`;
+        
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log("File downloaded successfully");
+      } else {
+        console.warn("No download URL provided in status response");
+      }
+    } catch (error) {
+      console.error("Error in downloadTaskExportWithStatus:", error);
+      throw error;
+    }
+  },
 };

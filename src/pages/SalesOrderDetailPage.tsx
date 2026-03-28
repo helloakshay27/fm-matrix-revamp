@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,8 +112,13 @@ interface SalesOrder {
     status: string;
     customer_notes: string;
     terms_and_conditions: string;
+    subject?: string;
+    payment_term?: string;
     created_at: string;
     updated_at: string;
+    sub_total_amount: number;
+    lock_account_tax_amount: number;
+    charge_name: string;
     item_details: {
         id: number;
         item_name: string;
@@ -121,6 +127,8 @@ interface SalesOrder {
         rate: number;
         total_amount: number;
         item_unit: string;
+        tax_type: string;
+        tax_group: { name: string; tax_rates: { name: string; rate: number }[] } | null;
     }[];
     attachments: any[];
 }
@@ -313,6 +321,20 @@ export const SalesOrderDetailPage = () => {
         );
     }
 
+    const taxBreakdown: Record<string, { rate: number; amount: number }> = {};
+    salesOrder?.item_details?.forEach((item) => {
+        if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+            item.tax_group.tax_rates.forEach((tax) => {
+                const taxAmount = (item.total_amount * tax.rate) / 100;
+                if (!taxBreakdown[tax.name]) {
+                    taxBreakdown[tax.name] = { rate: tax.rate, amount: 0 };
+                }
+                taxBreakdown[tax.name].amount += taxAmount;
+            });
+        }
+    });
+    const taxRows = Object.entries(taxBreakdown);
+
     return (
         <div className="min-h-screen bg-background p-6">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -329,7 +351,7 @@ export const SalesOrderDetailPage = () => {
                                 {/* Created on {new Date(salesOrder.created_at).toLocaleDateString()} */}
                             </h1>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Created on {new Date(salesOrder.created_at).toLocaleDateString()}
+                                Created on {salesOrder?.created_at ? format(new Date(salesOrder.created_at), 'dd/MM/yyyy') : "N/A"}
                             </p>
                         </div>
                     </div>
@@ -401,26 +423,30 @@ export const SalesOrderDetailPage = () => {
                                         <p className="text-sm font-medium text-muted-foreground">Order Number</p>
                                         <p className="text-base font-semibold mt-1">{salesOrder?.sale_order_number}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder?.reference_number}</p>
-                                    </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.reference_number || "N/A"}</p>
+                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Order Date</p>
                                         <p className="text-base font-semibold mt-1">
-                                            {new Date(salesOrder?.date).toLocaleDateString()}
+                                            {salesOrder?.date ? format(new Date(salesOrder.date), 'dd/MM/yyyy') : "N/A"}
                                         </p>
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Expected Shipment Date</p>
                                         <p className="text-base font-semibold mt-1">
-                                            {new Date(salesOrder?.shipment_date).toLocaleDateString()}
+                                            {salesOrder?.shipment_date ? format(new Date(salesOrder.shipment_date), 'dd/MM/yyyy') : "N/A"}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
-                                        <p className="text-base font-semibold mt-1">{salesOrder?.payment_term}</p>
-                                    </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.payment_term || "N/A"}</p>
+                                     </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.subject || "N/A"}</p>
+                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Delivery Method</p>
                                         <p className="text-base font-semibold mt-1">{salesOrder?.delivery_method}</p>
@@ -449,8 +475,7 @@ export const SalesOrderDetailPage = () => {
                                                 <TableHead>Item Details</TableHead>
                                                 <TableHead className="text-right">Quantity</TableHead>
                                                 <TableHead className="text-right">Rate</TableHead>
-                                                {/* <TableHead className="text-right">Discount</TableHead> */}
-                                                {/* <TableHead className="text-right">Tax</TableHead> */}
+                                                <TableHead className="text-right">Tax</TableHead>
                                                 <TableHead className="text-right">Amount</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -467,23 +492,23 @@ export const SalesOrderDetailPage = () => {
                                                             </p>
                                                         </div>
                                                     </TableCell>
-
                                                     <TableCell className="text-right">
                                                         {item.quantity} {item.item_unit}
                                                     </TableCell>
-
                                                     <TableCell className="text-right">
                                                         ₹{Number(item.rate).toFixed(2)}
                                                     </TableCell>
-
-                                                    {/* <TableCell className="text-right">
-        -
-      </TableCell> */}
-
-                                                    {/* <TableCell className="text-right">
-        -
-      </TableCell> */}
-
+                                                    <TableCell className="text-right">
+                                                        {item.tax_type === "tax_group"
+                                                            ? item.tax_group?.name
+                                                            : item.tax_type === "non_taxable"
+                                                                ? "Non Taxable"
+                                                                : item.tax_type === "out_of_scope"
+                                                                    ? "Out of Scope"
+                                                                    : item.tax_type === "non_gst_supply"
+                                                                        ? "Non GST Supply"
+                                                                        : "-"}
+                                                    </TableCell>
                                                     <TableCell className="text-right font-semibold">
                                                         ₹{Number(item.total_amount).toFixed(2)}
                                                     </TableCell>
@@ -497,31 +522,31 @@ export const SalesOrderDetailPage = () => {
                                 {/* Pricing Summary */}
                                 <div className="mt-6 flex justify-end">
                                     <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Sub Total</span>
-                                            <span className="font-semibold">₹{
-                                                salesOrder?.item_details
-                                                    ?.reduce((sum, item) => sum + Number(item.total_amount || 0), 0)
-                                                    ?.toFixed(2)
-                                            }</span>
+                                        <div className="flex justify-between items-center py-2">
+                                            <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                                            <span className="font-semibold text-base">₹{salesOrder?.sub_total_amount?.toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Discount</span>
-                                            <span className="font-semibold text-red-600">-₹{salesOrder?.discount_amount}</span>
+                                        <div className="flex justify-between items-center py-2">
+                                            <span className="text-sm font-medium text-muted-foreground">Discount ({salesOrder?.discount_per}%)</span>
+                                            <span className="font-semibold text-base text-red-600">-₹{salesOrder?.discount_amount?.toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Tax</span>
-                                            <span className="font-semibold">{salesOrder?.tax_type}</span>
+                                        {taxRows.map(([name, tax], index) => (
+                                            <div key={index} className="flex justify-between items-center py-2">
+                                                <span className="text-sm font-medium text-muted-foreground">{name} ({tax.rate}%)</span>
+                                                <span className="font-semibold text-base">₹{tax.amount.toFixed(2)}</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center py-2">
+                                            <span className="text-sm font-medium text-muted-foreground">{salesOrder?.tax_type?.toUpperCase()}</span>
+                                            <span className="font-semibold text-base text-red-600">-₹{salesOrder?.lock_account_tax_amount?.toFixed(2)}</span>
                                         </div>
-                                        {/* {salesOrder.pricing.adjustment !== 0 && ( */}
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Charge</span>
-                                            <span className="font-semibold">₹{salesOrder?.charge_amount}</span>
+                                        <div className="flex justify-between items-center py-2">
+                                            <span className="text-sm font-medium text-muted-foreground">{salesOrder?.charge_name || "Adjustment"}</span>
+                                            <span className="font-semibold text-base">₹{salesOrder?.charge_amount?.toFixed(2)}</span>
                                         </div>
-                                        {/* )}  */}
-                                        <div className="border-t pt-3 flex justify-between text-lg">
-                                            <span className="font-bold">Total</span>
-                                            <span className="font-bold text-primary">₹{salesOrder.total_amount}</span>
+                                        <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                                            <span className="font-bold text-base">Total ( ₹ )</span>
+                                            <span className="font-bold text-primary text-2xl">₹{salesOrder?.total_amount?.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -530,24 +555,23 @@ export const SalesOrderDetailPage = () => {
 
                         {/* Notes and Terms */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {salesOrder.customerNotes && (
+                            {salesOrder.customer_notes && (
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-base">Customer Notes</CardTitle>
+                                        <CardTitle className="text-base font-semibold">Customer Notes</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground">{salesOrder.customerNotes}</p>
+                                        <p className="text-sm text-muted-foreground break-all whitespace-pre-wrap">{salesOrder.customer_notes}</p>
                                     </CardContent>
                                 </Card>
                             )}
-
-                            {salesOrder.termsAndConditions && (
+                            {salesOrder.terms_and_conditions && (
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-base">Terms & Conditions</CardTitle>
+                                        <CardTitle className="text-base font-semibold">Terms & Conditions</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground">{salesOrder.termsAndConditions}</p>
+                                        <p className="text-sm text-muted-foreground break-all whitespace-pre-wrap">{salesOrder.terms_and_conditions}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -594,10 +618,10 @@ export const SalesOrderDetailPage = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-                                    <p className="text-base font-semibold mt-1">{salesOrder?.customer_name}</p>
-                                </div>
+                                 <div>
+                                     <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+                                     <p className="text-base font-semibold mt-1 break-all">{salesOrder?.customer_name}</p>
+                                 </div>
                                 <div>
                                     {/* <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         <Mail className="h-4 w-4" />
@@ -617,14 +641,14 @@ export const SalesOrderDetailPage = () => {
                                         {/* <Phone className="h-4 w-4" /> */}
                                         Customer Notes
                                     </p>
-                                    <p className="text-base mt-1">{salesOrder?.customer_notes}</p>
+                                    <p className="text-base mt-1 break-all whitespace-pre-wrap">{salesOrder?.customer_notes}</p>
                                 </div>
                                  <div>
                                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         {/* <Phone className="h-4 w-4" /> */}
                                         Terms and Conditions
                                     </p>
-                                    <p className="text-base mt-1">{salesOrder?.terms_and_conditions}</p>
+                                    <p className="text-base mt-1 break-all whitespace-pre-wrap">{salesOrder?.terms_and_conditions}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -674,7 +698,7 @@ export const SalesOrderDetailPage = () => {
                                         <div className="flex-grow">
                                             <p className="font-medium">Order Created</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {new Date(salesOrder?.created_at).toLocaleString()}
+                                                {salesOrder?.created_at ? format(new Date(salesOrder.created_at), 'dd/MM/yyyy hh:mm a') : "N/A"}
                                             </p>
                                         </div>
                                     </div>
@@ -683,9 +707,9 @@ export const SalesOrderDetailPage = () => {
                                             <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                                         </div>
                                         <div className="flex-grow">
-                                            <p className="font-medium">Order Confirmed</p>
+                                            <p className="font-medium">Order Updated</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {new Date(salesOrder?.updated_at).toLocaleString()}
+                                                {salesOrder?.updated_at ? format(new Date(salesOrder.updated_at), 'dd/MM/yyyy hh:mm a') : "N/A"}
                                             </p>
                                         </div>
                                     </div>

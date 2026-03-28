@@ -173,6 +173,7 @@ interface CreateRoleWithPayload {
   permissions_hash: Record<string, Record<string, string>>;
   lock_modules: number[]; // Array of module IDs instead of null
 }
+  const org_id = localStorage.getItem("org_id");
 
 export const roleService = {
   // Fetch all roles
@@ -238,9 +239,20 @@ export const roleService = {
         modules: roleData.modules,
       };
 
+
+      const viPayload = {
+        role: {
+          name: roleData.role_name,
+        },
+        permissions_hash: {}, // You may need to build this from the modules data
+        lock_modules: roleData.modules?.length || 0,
+        modules: roleData.modules,
+      };
+
+
       const response = await apiClient.post<CreateRoleResponse>(
         ENDPOINTS.ROLES,
-        payload
+        window.location.hostname === "web.gophygital.work" && org_id === "34" ? viPayload : payload
       );
       return response.data;
     } catch (error) {
@@ -755,6 +767,20 @@ export const roleService = {
         lock_modules: enabledModuleIds,
       };
 
+      const viPayload = {
+        role: {
+          user_id: localStorage.getItem("userId"),
+          name: roleWithModules.role_name,
+          title: roleWithModules.role_name,
+          description: "",
+          resource_type: "Pms::CompanySetup",
+          resource_id: localStorage.getItem("selectedCompanyId"),
+          active: true,
+          modules: enabledModuleIds,
+          the_role: permissionsHash,
+        }
+      }
+
       console.log("Updating role with payload:", payload);
       console.log("Role ID being used:", roleWithModules.role_id);
       console.log(
@@ -764,7 +790,7 @@ export const roleService = {
 
       await apiClient.patch(
         `${ENDPOINTS.ROLES.replace(".json", "")}/${roleWithModules.role_id}.json`,
-        payload
+        window.location.hostname === "web.gophygital.work" && org_id === "34" ? viPayload : payload
       );
     } catch (error) {
       console.error("Error updating role with modules:", error);

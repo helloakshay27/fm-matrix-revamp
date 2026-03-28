@@ -242,6 +242,7 @@ export const AddEventPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+<<<<<<< HEAD
       // Create preview for image files
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -251,7 +252,27 @@ export const AddEventPage = () => {
         reader.readAsDataURL(file);
       } else {
         setAttachments(prev => [...prev, { file, preview: null }]);
+=======
+      // Validate that file is an image
+      if (!file.type.startsWith('image/')) {
+        toast.error("Only image files are allowed. Please select an image.");
+        if (attachmentInputRef.current) {
+          attachmentInputRef.current.value = "";
+        }
+        return;
+>>>>>>> ab33440376dca4ba98342d04774479745ce4ba18
       }
+
+      // Create preview for image files
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAttachments(prev => [...prev, { file, preview: reader.result as string }]);
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset the input
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
     }
     // Reset the input
     if (attachmentInputRef.current) {
@@ -505,9 +526,6 @@ export const AddEventPage = () => {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   size="small"
-                  inputProps={{
-                    min: new Date().toISOString().split('T')[0],
-                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: '#FAFAFA',

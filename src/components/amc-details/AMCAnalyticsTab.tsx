@@ -41,12 +41,16 @@ interface AMCAnalyticsResponse {
 
 interface PastPPMEntry {
   id: number;
+  contract_name?: string | null;
   amc_cost?: number | null;
   amc_start_date?: string | null;
   amc_end_date?: string | null;
   status?: string | null;
   amc_type?: string | null;
+  checklist_type?: string | null;
   supplier_company_name?: string | null;
+  amc_assets?: any[];
+  total_associated_assets?: number | null;
 }
 
 export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
@@ -474,12 +478,12 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
             <table className="min-w-full">
               <thead>
                 <tr className="bg-gray-50" style={{ backgroundColor: '#F6F4EE' }}>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Start Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">End Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Vendor</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Contract Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Start & End Date</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">AMC Type</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Value</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Action Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Total Associated Assets</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">AMC Value</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -496,37 +500,44 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
                     </td>
                   </tr>
                 ) : (
-                  pastPPM.map((entry) => (
-                    <tr
-                      key={entry.id}
-                      className="border-b"
-                      style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
-                    >
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {formatDate(entry.amc_start_date)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {formatDate(entry.amc_end_date)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {entry.supplier_company_name || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {entry.amc_type || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {entry.amc_cost !== undefined && entry.amc_cost !== null
-                          ? `₹ ${entry.amc_cost.toLocaleString()}`
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge
-                          status={entry.status || "Action Pending"}
-                          assetId={`past-amc-${entry.id}`}
-                        />
-                      </td>
-                    </tr>
-                  ))
+                  pastPPM.map((entry) => {
+                    const statusVal = (entry.status || '').toLowerCase();
+                    const isActive = statusVal === 'active';
+                    const isExpired = statusVal === 'expired';
+                    const statusBg = isActive
+                      ? 'bg-green-100 text-green-800'
+                      : isExpired
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-gray-100 text-gray-700';
+                    const statusLabel = isActive ? 'Active' : isExpired ? 'Expired' : (entry.status || '—');
+                    const totalAssets = Array.isArray(entry.amc_assets)
+                      ? entry.amc_assets.length
+                      : (entry.total_associated_assets ?? '—');
+                    return (
+                      <tr
+                        key={entry.id}
+                        className="border-b"
+                        style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-600">{entry.contract_name || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                          {formatDate(entry.amc_start_date)} – {formatDate(entry.amc_end_date)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {entry.checklist_type || entry.amc_type || '—'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{totalAssets}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {entry.amc_cost !== undefined && entry.amc_cost !== null
+                            ? `₹ ${entry.amc_cost.toLocaleString()}`
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusBg}`}>{statusLabel}</span>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

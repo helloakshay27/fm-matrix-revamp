@@ -133,6 +133,8 @@ export const SalesOrderListPage: React.FC = () => {
         has_prev_page: false
     });
 
+    const lock_account_id = localStorage.getItem("lock_account_id");
+
 
     
 
@@ -143,15 +145,15 @@ export const SalesOrderListPage: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             const params = new URLSearchParams({
-                lock_account_id: '1',
+                lock_account_id: lock_account_id,
                 // page: String(page),
                 // per_page: String(per_page),
             });
-            if (search) params.append('search', search);
-            if (filters.status) params.append('status', filters.status);
-            if (filters.customerId) params.append('customer_id', String(filters.customerId));
-            if (filters.dateFrom) params.append('date_from', filters.dateFrom);
-            if (filters.dateTo) params.append('date_to', filters.dateTo);
+            if (search) params.append('q[sale_order_number_or_customer_name_cont]', search);
+            if (filters.status) params.append('q[status_eq]', filters.status);
+            if (filters.customerId) params.append('q[lock_account_customer_id_eq]', String(filters.customerId));
+            if (filters.dateFrom) params.append('q[date_gteq]', filters.dateFrom);
+            if (filters.dateTo) params.append('q[date_lteq]', filters.dateTo);
 
             const response = await fetch(`https://${baseUrl}/sale_orders.json?${params.toString()}`, {
                 headers: {
@@ -233,18 +235,20 @@ console.log('Sales Order Data:', salesOrderData);
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
-                <input
-                    type="checkbox"
-                    checked={selectedRows.includes(order.id)}
-                    onChange={e => {
-                        setSelectedRows(prev =>
-                            e.target.checked
-                                ? [...prev, order.id]
-                                : prev.filter(id => id !== order.id)
-                        );
-                    }}
-                    title="Select for status update"
-                />
+                {order.status !== 'confirmed' && (
+                    <input
+                        type="checkbox"
+                        checked={selectedRows.includes(order.id)}
+                        onChange={e => {
+                            setSelectedRows(prev =>
+                                e.target.checked
+                                    ? [...prev, order.id]
+                                    : prev.filter(id => id !== order.id)
+                            );
+                        }}
+                        title="Select for status update"
+                    />
+                )}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -306,33 +310,35 @@ console.log('Sales Order Data:', salesOrderData);
         status: (
             <div className="flex items-center justify-center gap-2">
                 {getStatusBadge(order.status)}
-                <input
-                    type="checkbox"
-                    checked={order.fulfilled}
-                    onChange={async () => {
-                        try {
-                            const baseUrl = localStorage.getItem('baseUrl');
-                            const token = localStorage.getItem('token');
-                            const payload = {
-                                sale_order_ids: [order.id],
-                                fulfilled: !order.fulfilled
-                            };
-                            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                                method: 'POST',
-                                headers: {
-                                    Authorization: token ? `Bearer ${token}` : undefined,
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(payload)
-                            });
-                            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-                        } catch (err) {
-                            toast.error('Failed to update fulfilled status');
-                        }
-                    }}
-                    style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
-                    title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
-                />
+                {order.status !== 'confirmed' && (
+                    <input
+                        type="checkbox"
+                        checked={order.fulfilled}
+                        onChange={async () => {
+                            try {
+                                const baseUrl = localStorage.getItem('baseUrl');
+                                const token = localStorage.getItem('token');
+                                const payload = {
+                                    sale_order_ids: [order.id],
+                                    fulfilled: !order.fulfilled
+                                };
+                                await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
+                                    method: 'POST',
+                                    headers: {
+                                        Authorization: token ? `Bearer ${token}` : undefined,
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify(payload)
+                                });
+                                fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+                            } catch (err) {
+                                toast.error('Failed to update fulfilled status');
+                            }
+                        }}
+                        style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
+                        title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
+                    />
+                )}
             </div>
         )
     });
@@ -397,7 +403,6 @@ console.log('Sales Order Data:', salesOrderData);
                 hideTableExport={true}
                 hideTableSearch={false}
                 enableSearch={true}
-                isLoading={loading}
                 searchTerm={searchTerm}
                 onSearchChange={handleSearch}
                 loading={loading}

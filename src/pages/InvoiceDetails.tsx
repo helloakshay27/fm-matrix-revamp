@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2 } from "lucide-react";
@@ -141,6 +142,17 @@ export const InvoiceDetails = () => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token") ?? "";
     const baseUrl = localStorage.getItem("baseUrl") ?? "";
+
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return "N/A";
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return format(date, "dd/MM/yyyy");
+        } catch (e) {
+            return dateString;
+        }
+    };
 
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
@@ -451,12 +463,12 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Date</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.invoice_date}</span>
+                        <span className="text-gray-900 font-medium">{formatDate(invoice.invoice_date)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Posting Date</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.posting_date}</span>
+                        <span className="text-gray-900 font-medium">{formatDate(invoice.posting_date)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">ID</span>

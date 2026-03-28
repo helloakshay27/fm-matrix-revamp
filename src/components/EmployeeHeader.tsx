@@ -20,6 +20,7 @@ import {
   Calendar1,
   Car,
   Wallet,
+  Compass,
 } from "lucide-react";
 import recessLogo from "../assets/recess-logo";
 
@@ -52,6 +53,7 @@ import { toast } from "sonner";
 // Icon mapping for employee header modules based on action_name
 const headerIconMap: Record<string, any> = {
   employee_company_hub: Globe,
+  employee_company_hub_new: Globe,
   employee_dashboard: Home,
   employee_projects_overview: FolderKanban,
   employee_ticket: Ticket,
@@ -64,11 +66,14 @@ const headerIconMap: Record<string, any> = {
   employee_parking: Car,
   employee_booking: Package,
   employee_fb: ChartArea,
+  employee_business_compass: Compass,
 };
 
 // Fallback static employeeModules for backward compatibility
 const staticEmployeeModules = [
   { name: "Company Hub", icon: Globe, action_name: "employee_company_hub" },
+  { name: "Company Hub New", icon: Globe, action_name: "employee_company_hub_new" },
+  { name: "Business Compass", icon: Compass, action_name: "employee_business_compass" },
   { name: "Dashboard", icon: Home, action_name: "employee_dashboard" },
   {
     name: "Project Task",
@@ -177,6 +182,16 @@ export const EmployeeHeader: React.FC = () => {
           react_link: func.react_link,
         };
       });
+
+    // Manually add "Company Hub New" if it doesn't exist
+    if (!dynamicModules.some((m) => m.name === "Company Hub New")) {
+      dynamicModules.push({
+        name: "Company Hub New",
+        icon: Globe,
+        action_name: "employee_company_hub_new",
+        react_link: "/employee/company-hub-new",
+      });
+    }
 
     return dynamicModules.length > 0 ? dynamicModules : staticEmployeeModules;
   }, [userRole]);
@@ -383,8 +398,11 @@ export const EmployeeHeader: React.FC = () => {
       case "TO DO":
         navigate("/vas/todo");
         break;
-      case "Ask AI":
-        navigate("/ask-ai");
+      case "Company Hub New":
+        navigate("/employee/company-hub-new");
+        break;
+      case "Business Compass":
+        navigate("/business-compass");
         break;
       default:
         break;

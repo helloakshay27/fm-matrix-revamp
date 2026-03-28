@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -22,9 +22,18 @@ import {
   Plus,
   AlertCircle,
   Code,
+  GripVertical,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { LocationSelectionPanel } from "@/components/LocationSelectionPanel";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -38,6 +47,23 @@ import {
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { DeletePatrollingModal } from "@/components/DeletePatrollingModal";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Type definitions matching the API response
 interface ChecklistData {
@@ -114,6 +140,7 @@ interface CheckpointData {
   updated_at: string;
   qr_code_available: boolean;
   qr_code_url?: string;
+  location_qr_code_url?: string | null;
   building_name?: string;
   wing_name?: string;
   floor_name?: string;
@@ -149,6 +176,86 @@ interface PatrollingDetail {
   };
 }
 
+// ── Sortable row component for checkpoint drag-and-drop reordering ──────────
+interface SortableCheckpointRowProps {
+  item: {
+    id: number;
+    order_sequence: number;
+    name: string;
+    description: string;
+    building_name: string;
+    wing_name: string;
+    area_name: string;
+    floor_name: string;
+    room_name: string;
+    location_qr_code_url: string | null;
+    created_at: string;
+  };
+  isSelected: boolean;
+  onSelect: (checked: boolean) => void;
+  children: React.ReactNode; // rendered cells
+}
+
+const SortableCheckpointRow: React.FC<SortableCheckpointRowProps> = ({
+  item,
+  isSelected,
+  onSelect,
+  children,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : undefined,
+    position: isDragging ? "relative" : undefined,
+    background: isDragging ? "#f0f0f0" : undefined,
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={isSelected ? "bg-blue-50" : "hover:bg-gray-50"}
+    >
+      {/* Drag handle cell */}
+      <TableCell className="p-3 w-10 min-w-10 text-center">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing flex items-center justify-center text-gray-400 hover:text-gray-600 touch-none"
+          title="Drag to reorder"
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+      </TableCell>
+      {/* Checkbox cell */}
+      <TableCell className="p-3 w-10 min-w-10 text-center">
+        <div className="flex justify-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => onSelect(e.target.checked)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Select row"
+            className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+          />
+        </div>
+      </TableCell>
+      {children}
+    </TableRow>
+  );
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const PatrollingDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -156,6 +263,16 @@ export const PatrollingDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("patrol-information");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [localCheckpoints, setLocalCheckpoints] = useState<CheckpointData[]>([]);
+  const [isReordering, setIsReordering] = useState(false);
+
+  // Checkpoint table: selection state for EnhancedTable + LocationSelectionPanel
+  const [selectedCheckpointIds, setSelectedCheckpointIds] = useState<number[]>([]);
+  const [selectedCheckpointObjects, setSelectedCheckpointObjects] = useState<CheckpointData[]>([]);
+
+  // Checkpoint table: search + column sort
+  const [checkpointSearch, setCheckpointSearch] = useState("");
+  const [checkpointSort, setCheckpointSort] = useState<{ column: string; direction: "asc" | "desc" } | null>(null);
 
   // State for checklist questions when checklist is selected
   const [checklistQuestions, setChecklistQuestions] = useState<QuestionData[]>(
@@ -169,6 +286,15 @@ export const PatrollingDetailPage: React.FC = () => {
       fetchPatrollingDetail(parseInt(id));
     }
   }, [id]);
+
+  // Sync localCheckpoints whenever patrolling data changes
+  useEffect(() => {
+    if (patrolling?.checkpoints) {
+      setLocalCheckpoints(
+        [...patrolling.checkpoints].sort((a, b) => a.order_sequence - b.order_sequence)
+      );
+    }
+  }, [patrolling?.checkpoints]);
 
   // Fetch checklist questions when patrolling has a checklist
   useEffect(() => {
@@ -278,6 +404,77 @@ export const PatrollingDetailPage: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleCheckpointDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !id) return;
+
+    const oldIndex = localCheckpoints.findIndex((c) => c.id === active.id);
+    const newIndex = localCheckpoints.findIndex((c) => c.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Reorder locally and assign new order_sequence values
+    const reordered = arrayMove(localCheckpoints, oldIndex, newIndex).map(
+      (cp, idx) => ({ ...cp, order_sequence: idx + 1 })
+    );
+    setLocalCheckpoints(reordered);
+
+    setIsReordering(true);
+    try {
+      const apiUrl = getFullUrl(`/patrolling/routes/${id}/reorder_checkpoints`);
+      const response = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify({
+          checkpoints: reordered.map((cp) => ({
+            id: cp.id,
+            order_sequence: cp.order_sequence,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success("Checkpoint order updated successfully!");
+
+      // Also update the patrolling state so re-renders stay consistent
+      setPatrolling((prev) =>
+        prev
+          ? {
+              ...prev,
+              checkpoints: prev.checkpoints.map((cp) => {
+                const updated = reordered.find((r) => r.id === cp.id);
+                return updated ? { ...cp, order_sequence: updated.order_sequence } : cp;
+              }),
+            }
+          : prev
+      );
+    } catch (error: unknown) {
+      console.error("Error reordering checkpoints:", error);
+      toast.error("Failed to update checkpoint order. Please try again.");
+      // Revert to original order on failure
+      if (patrolling?.checkpoints) {
+        setLocalCheckpoints(
+          [...patrolling.checkpoints].sort((a, b) => a.order_sequence - b.order_sequence)
+        );
+      }
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -445,6 +642,177 @@ export const PatrollingDetailPage: React.FC = () => {
       });
     }
   };
+
+  // ── Checkpoint table: EnhancedTable columns + data ─────────────────────────
+  interface CheckpointTableItem {
+    id: number;
+    order_sequence: number;
+    name: string;
+    description: string;
+    building_name: string;
+    wing_name: string;
+    area_name: string;
+    floor_name: string;
+    room_name: string;
+    location_qr_code_url: string | null;
+    created_at: string;
+  }
+
+  const checkpointTableColumns: ColumnConfig[] = [
+    { key: "order_sequence", label: "Order", sortable: true, draggable: false, defaultVisible: true },
+    { key: "name", label: "Name", sortable: true, draggable: false, defaultVisible: true },
+    { key: "description", label: "Description", sortable: false, draggable: false, defaultVisible: true },
+    { key: "building_name", label: "Building", sortable: true, draggable: false, defaultVisible: true },
+    { key: "wing_name", label: "Wing", sortable: false, draggable: false, defaultVisible: true },
+    { key: "area_name", label: "Area", sortable: false, draggable: false, defaultVisible: true },
+    { key: "floor_name", label: "Floor", sortable: false, draggable: false, defaultVisible: true },
+    { key: "room_name", label: "Room", sortable: false, draggable: false, defaultVisible: true },
+    { key: "location_qr_code_url", label: "QR Code", sortable: false, draggable: false, defaultVisible: true },
+    { key: "created_at", label: "Created On", sortable: true, draggable: false, defaultVisible: true },
+  ];
+
+  const checkpointTableData = useMemo((): CheckpointTableItem[] => {
+    return localCheckpoints.map((cp) => ({
+      id: cp.id,
+      order_sequence: cp.order_sequence,
+      name: cp.name,
+      description: cp.description || "—",
+      building_name: cp.building_name || "—",
+      wing_name: cp.wing_name || "—",
+      area_name: cp.area_name || "—",
+      floor_name: cp.floor_name || "—",
+      room_name: cp.room_name || "—",
+      location_qr_code_url: cp.location_qr_code_url || null,
+      created_at: cp.created_at,
+    }));
+  }, [localCheckpoints]);
+
+  // Derived: search-filtered + sorted checkpoint rows (used for display)
+  const filteredSortedCheckpointData = useMemo((): CheckpointTableItem[] => {
+    const q = checkpointSearch.trim().toLowerCase();
+    let rows = q
+      ? checkpointTableData.filter(
+          (r) =>
+            r.name.toLowerCase().includes(q) ||
+            r.description.toLowerCase().includes(q) ||
+            r.building_name.toLowerCase().includes(q) ||
+            r.wing_name.toLowerCase().includes(q) ||
+            r.area_name.toLowerCase().includes(q) ||
+            r.floor_name.toLowerCase().includes(q) ||
+            r.room_name.toLowerCase().includes(q)
+        )
+      : [...checkpointTableData];
+
+    if (checkpointSort) {
+      const { column, direction } = checkpointSort;
+      rows = [...rows].sort((a, b) => {
+        let aVal: string | number = (a as Record<string, unknown>)[column] as string | number ?? "";
+        let bVal: string | number = (b as Record<string, unknown>)[column] as string | number ?? "";
+        if (column === "order_sequence") {
+          aVal = Number(aVal);
+          bVal = Number(bVal);
+          return direction === "asc" ? aVal - bVal : bVal - aVal;
+        }
+        aVal = String(aVal).toLowerCase();
+        bVal = String(bVal).toLowerCase();
+        if (aVal < bVal) return direction === "asc" ? -1 : 1;
+        if (aVal > bVal) return direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    return rows;
+  }, [checkpointTableData, checkpointSearch, checkpointSort]);
+
+  const handleCheckpointSortToggle = (column: string) => {
+    setCheckpointSort((prev) => {
+      if (prev?.column === column) {
+        return prev.direction === "asc"
+          ? { column, direction: "desc" }
+          : null; // third click clears sort
+      }
+      return { column, direction: "asc" };
+    });
+  };
+
+  const handleCheckpointSelect = (itemId: string, isSelected: boolean) => {
+    const cpId = parseInt(itemId);
+    const cp = localCheckpoints.find((c) => c.id === cpId);
+    setSelectedCheckpointIds((prev) =>
+      isSelected ? [...prev, cpId] : prev.filter((id) => id !== cpId)
+    );
+    if (cp) {
+      setSelectedCheckpointObjects((prev) =>
+        isSelected ? [...prev, cp] : prev.filter((c) => c.id !== cpId)
+      );
+    }
+  };
+
+  const handleSelectAllCheckpoints = (isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedCheckpointIds(localCheckpoints.map((c) => c.id));
+      setSelectedCheckpointObjects([...localCheckpoints]);
+    } else {
+      setSelectedCheckpointIds([]);
+      setSelectedCheckpointObjects([]);
+    }
+  };
+
+  const handleClearCheckpointSelection = () => {
+    setSelectedCheckpointIds([]);
+    setSelectedCheckpointObjects([]);
+  };
+
+  const handlePrintCheckpointQR = () => {
+    if (selectedCheckpointIds.length === 0) return;
+    const ids = selectedCheckpointIds.join(",");
+    const apiUrl = `${API_CONFIG.BASE_URL}/patrolling/print_qr_codes?checkpoint_ids=${ids}&access_token=${API_CONFIG.TOKEN}`;
+    window.open(apiUrl, "_blank");
+    toast.success(`Opening QR codes for ${selectedCheckpointIds.length} checkpoint(s)...`);
+  };
+
+  const renderCheckpointCell = (item: CheckpointTableItem, columnKey: string): React.ReactNode => {
+    switch (columnKey) {
+      case "order_sequence":
+        return <Badge variant="outline">#{item.order_sequence}</Badge>;
+      case "location_qr_code_url":
+        return item.location_qr_code_url ? (
+          <div className="flex items-center gap-1.5">
+            {/* QR preview — click opens full size */}
+            <button
+              onClick={() => window.open(item.location_qr_code_url!, "_blank")}
+              className="group flex items-center justify-center flex-shrink-0"
+              title="Click to view QR code"
+            >
+              <img
+                src={item.location_qr_code_url}
+                alt={`QR Code – ${item.name}`}
+                className="w-12 h-12 object-contain border border-gray-200 rounded group-hover:opacity-80 group-hover:border-[#C72030] transition-all cursor-pointer"
+              />
+            </button>
+            {/* Download button — calls print_qr_codes API for this single checkpoint */}
+            <button
+              title="Download QR code"
+              className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors text-gray-500 hover:text-[#C72030]"
+              onClick={(e) => {
+                e.stopPropagation();
+                const apiUrl = `${API_CONFIG.BASE_URL}/patrolling/print_qr_codes?checkpoint_ids=${item.id}&access_token=${API_CONFIG.TOKEN}`;
+                window.open(apiUrl, "_blank");
+                toast.success(`Opening QR code for "${item.name}"...`);
+              }}
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        );
+      case "created_at":
+        return <span className="text-xs text-gray-600">{formatDateTime(item.created_at)}</span>;
+      default:
+        return <span>{String((item as Record<string, unknown>)[columnKey] ?? "—")}</span>;
+    }
+  };
+  // ────────────────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -1379,176 +1747,165 @@ export const PatrollingDetailPage: React.FC = () => {
           </TabsContent>
 
           {/* Checkpoints */}
-          <TabsContent value="checkpoints" className="p-4 sm:p-6">
-            <Card className="mb-6 border-none bg-transparent shadow-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <MapPin className="figma-card-icon" />
+          <TabsContent value="checkpoints" className="mt-4">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+                    <MapPin className="h-5 w-5 text-[#C72030]" />
                   </div>
-                  <h3 className="figma-card-title">Checkpoints ({patrolling.checkpoints?.length || 0})</h3>
+                  Checkpoints ({patrolling.checkpoints?.length || 0})
+                  {isReordering && (
+                    <span className="ml-4 flex items-center gap-1 text-sm font-normal text-gray-500">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#C72030]" />
+                      Saving order...
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                {selectedCheckpointIds.length > 0 && (
+                  <LocationSelectionPanel
+                    selectedLocations={selectedCheckpointIds}
+                    selectedLocationObjects={selectedCheckpointObjects.map((cp) => ({
+                      site_name: "",
+                      building_name: cp.name,
+                    }))}
+                    onMoveAssets={() => {}}
+                    onPrintQR={handlePrintCheckpointQR}
+                    onDownload={() => {}}
+                    onDispose={() => {}}
+                    onClearSelection={handleClearCheckpointSelection}
+                  />
+                )}
+
+                {/* Search bar — above table, aligned to the right */}
+                <div className="mb-3 flex items-center justify-end gap-2">
+                  {checkpointSearch && (
+                    <span className="text-xs text-gray-500">
+                      {filteredSortedCheckpointData.length} of {checkpointTableData.length} results
+                    </span>
+                  )}
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Input
+                      placeholder="Search checkpoints..."
+                      value={checkpointSearch}
+                      onChange={(e) => setCheckpointSearch(e.target.value)}
+                      className="pl-9 h-9 text-sm"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="figma-card-content">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Building</TableHead>
-                        <TableHead>Wing</TableHead>
-                        <TableHead>Area</TableHead>
-                        <TableHead>Floor</TableHead>
-                        <TableHead>Room</TableHead>
-                        {/* <TableHead>QR Code</TableHead> */}
-                        <TableHead>Created On</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {patrolling.checkpoints &&
-                      patrolling.checkpoints.length > 0 ? (
-                        patrolling.checkpoints
-                          .sort((a, b) => a.order_sequence - b.order_sequence)
-                          .map((checkpoint) => (
-                            <TableRow key={checkpoint.id}>
-                              <TableCell>
-                                <Badge variant="outline">
-                                  #{checkpoint.order_sequence}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {checkpoint.name}
-                              </TableCell>
-                              <TableCell>
-                                {checkpoint.description || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.building_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.wing_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.area_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.floor_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {checkpoint.room_name || "—"}
-                              </TableCell>
-                            
-                              {/* <TableCell>
-                                {checkpoint.qr_code_available ? (
-                                  <div className="flex items-center gap-2">
-                                    <Badge
-                                      variant="default"
-                                      className="text-xs"
-                                    >
-                                      <QrCode className="w-3 h-3 mr-1" />
-                                      Available
-                                    </Badge>
-                                    {checkpoint.qr_code_url && (
-                                      <div className="flex gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            window.open(
-                                              checkpoint.qr_code_url,
-                                              "_blank"
-                                            )
-                                          }
-                                          className="p-1 h-6 w-6"
-                                          title="View QR Code"
-                                        >
-                                          <Eye className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={async () => {
-                                            try {
-                                              const baseUrl = API_CONFIG.BASE_URL;
-                                              const token = API_CONFIG.TOKEN;
 
-                                              if (!baseUrl || !token) {
-                                                throw new Error("API configuration is missing");
-                                              }
-
-                                              // Use the new API endpoint for downloading QR codes
-                                              const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes.pdf?checkpoint_ids=[${checkpoint.id}]`);
-
-                                              const response = await fetch(apiUrl, {
-                                                method: "GET",
-                                                headers: {
-                                                  "Content-Type": "application/json",
-                                                  Accept: "application/json",
-                                                  Authorization: getAuthHeader(),
-                                                },
-                                              });
-
-                                              if (!response.ok) {
-                                                throw new Error(`HTTP error! status: ${response.status}`);
-                                              }
-
-                                              const blob = await response.blob();
-                                              const url = window.URL.createObjectURL(blob);
-                                              const a = document.createElement("a");
-                                              a.href = url;
-                                              a.download = `checkpoint_${checkpoint.id}_qr_code.pdf`;
-                                              document.body.appendChild(a);
-                                              a.click();
-                                              window.URL.revokeObjectURL(url);
-                                              document.body.removeChild(a);
-                                              toast.success(
-                                                "QR Code downloaded successfully!"
-                                              );
-                                            } catch (error: any) {
-                                              console.error('Error downloading QR Code:', error);
-                                              toast.error(
-                                                `Failed to download QR Code: ${error.message}`
-                                              );
-                                            }
-                                          }}
-                                          className="p-1 h-6 w-6"
-                                          title="Download QR Code"
-                                        >
-                                          <Download className="w-3 h-3" />
-                                        </Button>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    Not Available
-                                  </Badge>
-                                )}
-                              </TableCell> */}
-                              <TableCell className="text-xs text-gray-600">
-                                {formatDateTime(checkpoint.created_at)}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleCheckpointDragEnd}
+                >
+                  <SortableContext
+                    items={filteredSortedCheckpointData.map((item) => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-auto">
+                      <Table className="w-full min-w-max">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="bg-[#f6f4ee] w-10 min-w-10" />
+                            <TableHead className="bg-[#f6f4ee] w-10 min-w-10 text-center">
+                              <div className="flex justify-center">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    filteredSortedCheckpointData.length > 0 &&
+                                    filteredSortedCheckpointData.every((r) =>
+                                      selectedCheckpointIds.includes(r.id)
+                                    )
+                                  }
+                                  ref={(el) => {
+                                    if (el) {
+                                      const selected = filteredSortedCheckpointData.filter((r) =>
+                                        selectedCheckpointIds.includes(r.id)
+                                      ).length;
+                                      el.indeterminate =
+                                        selected > 0 && selected < filteredSortedCheckpointData.length;
+                                    }
+                                  }}
+                                  onChange={(e) => handleSelectAllCheckpoints(e.target.checked)}
+                                  aria-label="Select all checkpoints"
+                                  className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                                />
+                              </div>
+                            </TableHead>
+                            {/* Sortable column headers */}
+                            {([
+                              { key: "order_sequence", label: "Order", sortable: true, minW: "min-w-24" },
+                              { key: "name", label: "Name", sortable: true, minW: "min-w-36" },
+                              { key: "description", label: "Description", sortable: false, minW: "min-w-40" },
+                              { key: "building_name", label: "Building", sortable: true, minW: "min-w-32" },
+                              { key: "wing_name", label: "Wing", sortable: false, minW: "min-w-28" },
+                              { key: "area_name", label: "Area", sortable: false, minW: "min-w-28" },
+                              { key: "floor_name", label: "Floor", sortable: false, minW: "min-w-28" },
+                              { key: "room_name", label: "Room", sortable: false, minW: "min-w-28" },
+                              { key: "location_qr_code_url", label: "QR Code", sortable: false, minW: "min-w-28" },
+                              { key: "created_at", label: "Created On", sortable: true, minW: "min-w-36" },
+                            ] as { key: string; label: string; sortable: boolean; minW: string }[]).map((col) => (
+                              <TableHead
+                                key={col.key}
+                                className={`bg-[#f6f4ee] text-black ${col.minW} ${col.sortable ? "cursor-pointer select-none" : ""}`}
+                                onClick={col.sortable ? () => handleCheckpointSortToggle(col.key) : undefined}
+                              >
+                                <div className="flex items-center gap-1">
+                                  {col.label}
+                                  {col.sortable && (
+                                    checkpointSort?.column === col.key ? (
+                                      checkpointSort.direction === "asc" ? (
+                                        <ChevronUp className="w-3.5 h-3.5 text-[#C72030]" />
+                                      ) : (
+                                        <ChevronDown className="w-3.5 h-3.5 text-[#C72030]" />
+                                      )
+                                    ) : (
+                                      <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
+                                    )
+                                  )}
+                                </div>
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredSortedCheckpointData.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                                {checkpointSearch ? `No checkpoints match "${checkpointSearch}"` : "No checkpoints available"}
                               </TableCell>
                             </TableRow>
-                          ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={9}
-                            className="text-center text-gray-600"
-                          >
-                            No checkpoints available.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+                          ) : (
+                            filteredSortedCheckpointData.map((item) => (
+                              <SortableCheckpointRow
+                                key={item.id}
+                                item={item}
+                                isSelected={selectedCheckpointIds.includes(item.id)}
+                                onSelect={(checked) => handleCheckpointSelect(String(item.id), checked)}
+                              >
+                                <TableCell className="p-3">{renderCheckpointCell(item, "order_sequence")}</TableCell>
+                                <TableCell className="p-3">{renderCheckpointCell(item, "name")}</TableCell>
+                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "description")}</TableCell>
+                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "building_name")}</TableCell>
+                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "wing_name")}</TableCell>
+                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "area_name")}</TableCell>
+                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "floor_name")}</TableCell>
+                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "room_name")}</TableCell>
+                                <TableCell className="p-3">{renderCheckpointCell(item, "location_qr_code_url")}</TableCell>
+                                <TableCell className="p-3">{renderCheckpointCell(item, "created_at")}</TableCell>
+                              </SortableCheckpointRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </CardContent>
             </Card>
           </TabsContent>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +45,8 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import axios from "axios";
+
+
 
 export const QuotesDetails = () => {
     const { id } = useParams();
@@ -171,7 +174,7 @@ export const QuotesDetails = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
-        return new Date(dateString).toLocaleDateString();
+        return format(new Date(dateString), "dd/MM/yyyy");
     };
 
     if (loading) {
@@ -199,6 +202,26 @@ export const QuotesDetails = () => {
         );
     }
 
+    const taxBreakdown = {};
+
+    quoteData?.item_details?.forEach((item) => {
+        if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+            item.tax_group.tax_rates.forEach((tax) => {
+                const taxAmount = (item.total_amount * tax.rate) / 100;
+
+                if (!taxBreakdown[tax.name]) {
+                    taxBreakdown[tax.name] = {
+                        rate: tax.rate,
+                        amount: 0,
+                    };
+                }
+
+                taxBreakdown[tax.name].amount += taxAmount;
+            });
+        }
+    });
+
+    const taxRows = Object.entries(taxBreakdown);
     return (
         <div className="min-h-screen bg-background p-6">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -286,6 +309,10 @@ export const QuotesDetails = () => {
                                         <p className="text-sm font-medium text-muted-foreground">Quote Number</p>
                                         <p className="text-base font-semibold mt-1">{quoteData.quote_number}</p>
                                     </div>
+                                     <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Place of Supply</p>
+                                        <p className="text-base font-semibold mt-1">{quoteData.place_of_supply || "N/A"}</p>
+                                    </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
                                         <p className="text-base font-semibold mt-1">{quoteData.reference_number || "N/A"}</p>
@@ -302,18 +329,15 @@ export const QuotesDetails = () => {
                                             {formatDate(quoteData.expiry_date)}
                                         </p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
-                                        <p className="text-base font-semibold mt-1">{quoteData.payment_term || "N/A"}</p>
-                                    </div>
+                                   
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Salesperson</p>
                                         <p className="text-base font-semibold mt-1">{quoteData.sales_person_name || "N/A"}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                                        <p className="text-base font-semibold mt-1">{quoteData.subject || "N/A"}</p>
-                                    </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{quoteData.subject || "N/A"}</p>
+                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Tax Type</p>
                                         <p className="text-base font-semibold mt-1">{quoteData.tax_type?.toUpperCase() || "N/A"}</p>
@@ -347,6 +371,7 @@ export const QuotesDetails = () => {
                                                         <TableHead className="text-right">Unit</TableHead>
                                                         <TableHead className="text-right">Quantity</TableHead>
                                                         <TableHead className="text-right">Rate</TableHead>
+                                                        <TableHead className="text-right">Tax</TableHead>
                                                         <TableHead className="text-right">Amount</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
@@ -364,6 +389,18 @@ export const QuotesDetails = () => {
                                                             <TableCell className="text-right">{item.item_unit || "N/A"}</TableCell>
                                                             <TableCell className="text-right">{item.quantity || 0}</TableCell>
                                                             <TableCell className="text-right">{formatCurrency(item.rate || 0)}</TableCell>
+                                                            <TableCell className="text-right">
+                                                                {item.tax_type === "tax_group"
+                                                                    ? item.tax_group?.name
+                                                                    : item.tax_type === "non_taxable"
+                                                                        ? "Non Taxable"
+                                                                        : item.tax_type === "out_of_scope"
+                                                                            ? "Out of Scope"
+                                                                            : item.tax_type === "non_gst_supply"
+                                                                                ? "Non GST Supply"
+                                                                                : "-"}
+                                                            </TableCell>
+
                                                             <TableCell className="text-right font-semibold">{formatCurrency(item.total_amount || 0)}</TableCell>
                                                         </TableRow>
                                                     ))}
@@ -374,35 +411,85 @@ export const QuotesDetails = () => {
                                         {/* Pricing Summary */}
                                         <div className="mt-6 flex justify-end">
                                             <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                                                {quoteData.discount_amount > 0 && (
-                                                    <div className="flex justify-between text-sm">
-                                                        <span className="text-muted-foreground">
-                                                            Discount ({quoteData.discount_per}%)
+                                                {/* Subtotal */}
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">
+                                                        Sub Total
+                                                    </span>
+                                                    <span className="font-semibold text-base">
+                                                        ₹{quoteData.sub_total_amount?.toFixed(2)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Discount */}
+
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">
+                                                        Discount ({quoteData.discount_per}%)
+                                                    </span>
+                                                    <span className="font-semibold text-base text-red-600">
+                                                        -₹{quoteData.discount_amount?.toFixed(2)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Tax Breakdown */}
+
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">
+                                                        {/* {tax.name} ({tax.rate}%) */}
+                                                    </span>
+                                                    <span className="font-semibold text-base">
+                                                        {/* ₹{tax.amount?.toFixed(2)} */}
+                                                    </span>
+                                                </div>
+
+
+                                                {taxRows.map(([name, tax], index) => (
+                                                    <div key={index} className="flex justify-between items-center py-2">
+                                                        <span className="text-sm font-medium text-muted-foreground">
+                                                            {name} ({tax.rate}%)
                                                         </span>
-                                                        <span className="font-semibold text-red-600">
-                                                            -{formatCurrency(quoteData.discount_amount)}
+                                                        <span className="font-semibold text-base">
+                                                            ₹{tax.amount.toFixed(2)}
                                                         </span>
                                                     </div>
-                                                )}
-                                                {quoteData.charge_amount && (
-                                                    <div className="flex justify-between text-sm">
-                                                        <span className="text-muted-foreground">
-                                                            {quoteData.charge_name || "Additional Charge"}
-                                                        </span>
-                                                        <span className="font-semibold">
-                                                            {quoteData.charge_type === "plus" ? "+" : "-"}
-                                                            {formatCurrency(quoteData.charge_amount)}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                <div className="border-t pt-3 flex justify-between text-lg">
-                                                    <span className="font-bold">Total Amount</span>
-                                                    <span className="font-bold text-primary">
-                                                        {formatCurrency(quoteData.total_amount)}
+                                                ))}
+
+                                                {/* TDS / TCS */}
+
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">
+                                                        {quoteData?.tax_type?.toUpperCase()}
+                                                        {/* ({quoteData.tax_name}) */}
+                                                    </span>
+                                                    <span className="font-semibold text-base text-red-600">
+                                                        -₹{quoteData.lock_account_tax_amount?.toFixed(2)}
+                                                    </span>
+                                                </div>
+
+
+                                                {/* Adjustment */}
+
+                                                <div className="flex justify-between items-center py-2">
+                                                    <span className="text-sm font-medium text-muted-foreground">
+                                                        {quoteData.charge_name || "Adjustment"}
+                                                    </span>
+                                                    <span className="font-semibold text-base">
+                                                        ₹{quoteData.charge_amount?.toFixed(2)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Total */}
+                                                <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                                                    <span className="font-bold text-base">Total ( ₹ )</span>
+                                                    <span className="font-bold text-primary text-2xl">
+                                                        ₹{quoteData.total_amount?.toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
+
+                                     
                                     </>
                                 ) : (
                                     <p className="text-center text-muted-foreground py-8">No items found</p>
@@ -418,7 +505,7 @@ export const QuotesDetails = () => {
                                         <CardTitle className="text-base">Customer Notes</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{quoteData.customer_notes}</p>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap break-all">{quoteData.customer_notes}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -429,7 +516,7 @@ export const QuotesDetails = () => {
                                         <CardTitle className="text-base">Terms & Conditions</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{quoteData.terms_and_conditions}</p>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap break-all">{quoteData.terms_and_conditions}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -446,10 +533,26 @@ export const QuotesDetails = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-                                    <p className="text-base font-semibold mt-1">{quoteData.customer_name || "N/A"}</p>
-                                </div>
+                                 <div>
+                                     <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+                                     <p className="text-base font-semibold mt-1 break-all">{quoteData.customer_name || "N/A"}</p>
+                                 </div>
+                                {quoteData.customer_notes && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Customer Notes</p>
+                                        <p className="text-base mt-1 break-all whitespace-pre-wrap">
+                                            {quoteData.customer_notes}
+                                        </p>
+                                    </div>
+                                )}
+                                {quoteData.terms_and_conditions && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Terms & Conditions</p>
+                                        <p className="text-base mt-1 break-all whitespace-pre-wrap">
+                                            {quoteData.terms_and_conditions}
+                                        </p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>

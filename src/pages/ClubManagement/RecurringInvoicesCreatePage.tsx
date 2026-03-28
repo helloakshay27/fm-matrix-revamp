@@ -3,31 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import {
     TextField,
     Button,
+    Autocomplete,
     FormControlLabel,
     Checkbox,
     IconButton,
     MenuItem,
     Select,
     FormControl,
+    InputLabel,
+    Drawer,
+    Typography,
+    Box,
+    Divider,
+    Radio,
+    RadioGroup,
     CircularProgress,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
-    InputAdornment
+    InputAdornment,
+    Chip
 } from '@mui/material';
 import {
     Close,
     Add,
     Delete,
-    Search,
-    MoreVert
+    CloudUpload,
+    AttachFile,
+    PersonAdd,
+    ChevronRight
 } from '@mui/icons-material';
-import { RefreshCcw, ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 
-// Section component - matching SalesOrderCreatePage style
+// Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <section className="bg-card rounded-lg border border-border shadow-sm mt-6">
+    <section className="bg-card rounded-lg border border-border shadow-sm">
         <div className="px-6 py-4 border-b border-border flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 {icon}
@@ -42,46 +56,216 @@ interface Customer {
     id: string;
     name: string;
     email: string;
+    currency: string;
+    billingAddress: string;
+    shippingAddress: string;
+    customerType: string;
+    paymentTerms: string;
+    portalStatus: string;
+    language: string;
+    outstandingReceivables: number;
+    unusedCredits: number;
+    contactPersons: ContactPerson[];
+    billing_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    shipping_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    contact_persons?: ContactPerson[];
 }
 
+interface ContactPerson {
+    id: string;
+    salutation: string;
+    firstName: string;
+    lastName: string;
+    first_name?: string;
+    last_name?: string;
+    email: string;
+    workPhone: string;
+    mobile: string;
+    skype: string;
+    designation: string;
+    department: string;
+}
+
+interface ExternalUser {
+    name: string;
+    email: string;
+}
 interface Item {
     id: string;
     name: string;
     description: string;
-    quantity: number;
-    rate: number;
+    quantity: number | '';
+    rate: number | '';
+    discount: number | '';
+    discountType: 'percentage' | 'amount';
+    tax: string;
+    taxRate: number;
     amount: number;
+    item_tax_type?: string
+    tax_group_id?: number | null
+    tax_exemption_id?: number | null
 }
 
-interface BulkItem {
-    id: string;
+interface ExternalUser {
     name: string;
-    rate: number;
-    sku?: string;
+    email: string;
 }
 
 export const RecurringInvoicesCreatePage: React.FC = () => {
+    // Subject field
+    const [subject, setSubject] = useState('');
+    // Fetch item list from API
+    useEffect(() => {
+        const fetchItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id,            tax_group_id: Number(item.intra_state_tax_rate_id) || null
+        })));
+                    console.log('Fetched items:', res.data);
+                }
+            } catch (err) {
+                setItemOptions([]);
+            }
+        };
+        fetchItems();
+    }, []);
+
+    // Fetch salespersons from API
+    useEffect(() => {
+        const fetchSalespersons = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            try {
+                const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    setSalespersons(res.data.map(person => ({ id: person.id, name: person.name })));
+                }
+            } catch (err) {
+                setSalespersons([]);
+            }
+        };
+        fetchSalespersons();
+    }, []);
+    // Fetch payment terms from API and set as dropdown options
+    useEffect(() => {
+        const fetchPaymentTerms = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            try {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+                }
+            } catch (err) {
+                setPaymentTermsList([]);
+            }
+        };
+        fetchPaymentTerms();
+    }, []);
+    // Payment Terms Modal Handlers
+    const handleAddNewTerm = () => {
+        setEditTerms((prev) => [...prev, { name: '', days: '' }]);
+    };
+    const handleNewRowChange = (idx, field, value) => {
+        setEditTerms(rows => rows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    };
+    const handleRemoveNewRow = (idx) => {
+        setEditTerms(rows => rows.filter((_, i) => i !== idx));
+    };
+    // Payment Terms Dropdown State
+    const [selectedTerm, setSelectedTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showConfig, setShowConfig] = useState(false);
+    const [editTerms, setEditTerms] = useState([]);
+    const [paymentTermsList, setPaymentTermsList] = useState([]);
+    const filteredTerms = paymentTermsList.filter(term =>
+        term.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleRemovePaymentTerm = async (id: string, idx: number) => {
+        // Implementation for removing payment term from API
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            await axios.delete(`https://${baseUrl}/payment_terms/${id}.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined
+                }
+            });
+            setPaymentTermsList(prev => prev.filter(t => t.id !== id));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleSaveTerms = async () => {
+        // Implementation for saving payment terms
+        setShowConfig(false);
+    };
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.title = 'New Recurring Invoice';
+        document.title = 'New Sales Order';
     }, []);
 
     // Customer data
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [loadingCustomers, setLoadingCustomers] = useState(false);
+    const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
+    // Contact persons selected for email
+    const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
 
-    // Recurring Invoice Details
-    const [profileName, setProfileName] = useState('');
-    const [orderNumber, setOrderNumber] = useState('');
-    const [repeatEvery, setRepeatEvery] = useState('Week');
-    const [startOn, setStartOn] = useState('');
-    const [endsOn, setEndsOn] = useState('');
-    const [neverExpires, setNeverExpires] = useState(true);
-    const [paymentTerms, setPaymentTerms] = useState('Net 45');
+    // Address
+    const [billingAddress, setBillingAddress] = useState('');
+    const [shippingAddress, setShippingAddress] = useState('');
+    const [sameAsBilling, setSameAsBilling] = useState(false);
+
+    // Sales Order Details
+    const [salesOrderNumber, setSalesOrderNumber] = useState('');
+    const [referenceNumber, setReferenceNumber] = useState('');
+    const [salesOrderDate, setSalesOrderDate] = useState('');
+    const [expectedShipmentDate, setExpectedShipmentDate] = useState('');
+    const [paymentTerms, setPaymentTerms] = useState('');
+    const [deliveryMethod, setDeliveryMethod] = useState('');
     const [salesperson, setSalesperson] = useState('');
-    const [associateProjects, setAssociateProjects] = useState('There are no active projects for this customer.');
-    const [subject, setSubject] = useState('');
+    const [profileName, setProfileName] = useState("");
+    const [repeatCount, setRepeatCount] = useState("");
+    const [repeatType, setRepeatType] = useState("month");
+    const [neverExpires, setNeverExpires] = useState(false);
 
     // Items
     const [items, setItems] = useState<Item[]>([
@@ -91,84 +275,231 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             description: '',
             quantity: 1,
             rate: 0,
-            amount: 0
+            discount: 0,
+            discountType: 'percentage',
+            tax: '',
+            taxRate: 0,
+            amount: 0,
+            item_tax_type: "",
+            tax_group_id: "",
+            tax_exemption_id: ""
         }
     ]);
 
+    const taxTypeOptions = [
+        { value: "non_taxable", label: "Non-Taxable" },
+        { value: "out_of_scope", label: "Out of Scope" },
+        { value: "non_gst_supply", label: "Non-GST Supply" },
+        //   { value: "tax_group", label: "Tax Group" }
+    ];
+    const [placeOfSupply, setPlaceOfSupply] = useState("");
+    const [taxGroups, setTaxGroups] = useState<any[]>([]);
+    const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingTaxGroups(true);
+
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setTaxGroups(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax groups:", error);
+            })
+            .finally(() => {
+                setLoadingTaxGroups(false);
+            });
+    }, []);
+
+    const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
+    const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+    const [selectedExemption, setSelectedExemption] = useState("");
+    const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
+
+    const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
+    const [loadingExemptions, setLoadingExemptions] = useState(false);
+
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingExemptions(true);
+
+        axios
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setCustomerExemptions(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax exemptions:", error);
+            })
+            .finally(() => {
+                setLoadingExemptions(false);
+            });
+    }, []);
+
+
     // Summary
-    const [discountOnTotal, setDiscountOnTotal] = useState(0);
-    const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
-    const [taxType, setTaxType] = useState('TDS');
-    const [selectedTax, setSelectedTax] = useState('');
+    const [discountOnTotal, setDiscountOnTotal] = useState<number | ''>(0);
+    const [discountTypeOnTotal, setDiscountTypeOnTotal] = useState<'percentage' | 'amount'>('percentage');
+    // const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
+    // const [selectedTax, setSelectedTax] = useState('');
     const [adjustment, setAdjustment] = useState(0);
-    const [adjustmentLabel, setAdjustmentLabel] = useState('aaaa');
+    const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
 
-    // Notes
-    const [customerNotes, setCustomerNotes] = useState('Thanks for your business.');
+    // Notes & Attachments
+    const [customerNotes, setCustomerNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
+    const [attachments, setAttachments] = useState<File[]>([]);
+    const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
-    // Add Items in Bulk Modal
-    const [bulkItemsModalOpen, setBulkItemsModalOpen] = useState(false);
-    const [bulkSearchQuery, setBulkSearchQuery] = useState('');
-    const [selectedBulkItems, setSelectedBulkItems] = useState<string[]>([]);
+    // Email Communications
+    const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
+    const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
+    const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+    const [newUserName, setNewUserName] = useState('');
+    const [newUserEmail, setNewUserEmail] = useState('');
+
+    // Contact Person Dialog
+    const [contactPersonDialogOpen, setContactPersonDialogOpen] = useState(false);
+    const [newContactPerson, setNewContactPerson] = useState<ContactPerson>({
+        id: '',
+        salutation: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        workPhone: '',
+        mobile: '',
+        skype: '',
+        designation: '',
+        department: ''
+    });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<BulkItem[]>([]);
+    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description: string; tax_preference: string; tax_exemption_id: number | null; tax_group_id: number | null }[]>([]);
     const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
-    const [taxOptions, setTaxOptions] = useState<{ id: string; name: string }[]>([]);
-    const [paymentTermsOptions] = useState(['Net 15', 'Net 30', 'Net 45', 'Net 60', 'Due on Receipt']);
-
+    // const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
+    const [taxOptions, setTaxOptions] = useState<any[]>([]);
+    const [selectedTax, setSelectedTax] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
 
     const fieldStyles = {
+        height: { xs: 28, sm: 36, md: 45 },
         '& .MuiInputBase-input, & .MuiSelect-select': {
-            padding: '10px 12px',
+            padding: { xs: '8px', sm: '10px', md: '12px' },
         },
     };
 
-    // Generate auto order number and set default date
+    // Generate auto sales order number
     useEffect(() => {
-        const today = new Date();
-        const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-        setStartOn(formattedDate);
+        const generateOrderNumber = () => {
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 1000);
+            setSalesOrderNumber(`SO-${timestamp.toString().slice(-5)}${random}`);
+        };
+        generateOrderNumber();
     }, []);
 
-    // Fetch customers, items, etc.
+    // Fetch customers on mount
     useEffect(() => {
-        setCustomers([
-            { id: '1', name: 'Lockated', email: 'contact@lockated.com' },
-            { id: '2', name: 'Gurughar', email: 'contact@gurughar.com' }
-        ]);
-
-        setItemOptions([
-            { id: '1', name: 'Cement', rate: 300, sku: '100' },
-            { id: '2', name: 'Cement Kg', rate: 500, sku: '100' },
-            { id: '3', name: 'FM SASS', rate: 25000 }
-        ]);
-
-        setSalespersons([
-            { id: '1', name: 'Rajesh Kumar' },
-            { id: '2', name: 'Priya Sharma' }
-        ]);
-
-        setTaxOptions([
-            { id: '1', name: 'GST 18%' },
-            { id: '2', name: 'GST 12%' },
-            { id: '3', name: 'GST 5%' }
-        ]);
+        setLoadingCustomers(true);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        // Fetch customer list
+        axios
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => {
+                setCustomers(res.data || []);
+                // Optionally fetch detail for first customer
+                if (res.data && res.data.length > 0) {
+                    const customerId = res.data[0].id;
+                    axios
+                        .get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
+                            headers: {
+                                Authorization: token ? `Bearer ${token}` : undefined,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(detailRes => {
+                            // Optionally handle detailRes.data
+                        });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching customers:', error);
+            })
+            .finally(() => {
+                setLoadingCustomers(false);
+            });
     }, []);
+
+    console.log('Customers:', customers)
+    // Fetch items, salespersons, taxes
+    useEffect(() => {
+
+        // setTermsAndConditions('1. Use this to issue for all sales orders of all customers.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
+    }, []);
+
+    // When customer is selected
+    useEffect(() => {
+        if (selectedCustomer) {
+            setBillingAddress(selectedCustomer.billingAddress);
+            setShippingAddress(selectedCustomer.shippingAddress);
+            setPaymentTerms(selectedCustomer.paymentTerms);
+        }
+    }, [selectedCustomer]);
+
+    // Same as billing address
+    useEffect(() => {
+        if (sameAsBilling) {
+            setShippingAddress(billingAddress);
+        }
+    }, [sameAsBilling, billingAddress]);
 
     // Calculate item amount
-    const calculateItemAmount = (quantity: number, rate: number): number => {
-        return quantity * rate;
+    const calculateItemAmount = (item: Item): number => {
+        const baseAmount = Number(item.quantity || 0) * Number(item.rate || 0);
+        const discountAmount = item.discountType === 'percentage'
+            ? (baseAmount * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
+        const afterDiscount = baseAmount - discountAmount;
+        const taxAmount = (afterDiscount * Number(item.taxRate || 0)) / 100;
+        return afterDiscount + taxAmount;
     };
 
     // Update item
-    const updateItem = (index: number, field: keyof Item, value: string | number) => {
+    const updateItem = (index: number, field: keyof Item, value: string | number | 'percentage' | 'amount') => {
         setItems(prev => {
             const newItems = [...prev];
             newItems[index] = { ...newItems[index], [field]: value };
-            newItems[index].amount = calculateItemAmount(newItems[index].quantity, newItems[index].rate);
+
+            // Recalculate amount
+            newItems[index].amount = calculateItemAmount(newItems[index]);
+
             return newItems;
         });
     };
@@ -181,8 +512,29 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             description: '',
             quantity: 1,
             rate: 0,
+            discount: 0,
+            discountType: 'percentage',
+            tax: '',
+            taxRate: 0,
             amount: 0
         }]);
+    };
+
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+    const [deleteTargetType, setDeleteTargetType] = useState<'item' | 'attachment' | null>(null);
+
+    const handleDeleteConfirm = () => {
+        if (deleteTargetIndex !== null) {
+            if (deleteTargetType === 'item') {
+                removeItem(deleteTargetIndex);
+            } else if (deleteTargetType === 'attachment') {
+                removeAttachment(deleteTargetIndex);
+            }
+        }
+        setDeleteConfirmOpen(false);
+        setDeleteTargetIndex(null);
+        setDeleteTargetType(null);
     };
 
     // Remove item
@@ -191,348 +543,1052 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             setItems(prev => prev.filter((_, i) => i !== index));
         }
     };
-
-    // Handle bulk item selection
-    const toggleBulkItem = (itemId: string) => {
-        setSelectedBulkItems(prev =>
-            prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
-        );
-    };
-
-    // Add selected bulk items
-    const handleAddBulkItems = () => {
-        const newItems = itemOptions
-            .filter(opt => selectedBulkItems.includes(opt.id))
-            .map(opt => ({
-                id: Date.now().toString() + Math.random(),
-                name: opt.name,
-                description: '',
-                quantity: 1,
-                rate: opt.rate,
-                amount: opt.rate
-            }));
-        
-        setItems(prev => [...prev, ...newItems]);
-        setSelectedBulkItems([]);
-        setBulkItemsModalOpen(false);
-    };
+    const [taxAmount2, setTaxAmount2] = useState(0);
+    const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
-    const subTotal = items.reduce((sum, item) => sum + item.amount, 0);
-    const discountAmount = discountType === 'percentage' ? (subTotal * discountOnTotal) / 100 : discountOnTotal;
-    const afterDiscount = subTotal - discountAmount;
-    const taxAmount = 0; // TDS/TCS calculation
-    const roundOff = 0; // No rounding by default
-    const totalAmount = afterDiscount - taxAmount + adjustment;
+    const subTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.rate || 0)), 0);
+    const totalDiscount = discountTypeOnTotal === 'percentage'
+        ? (subTotal * (Number(discountOnTotal) || 0)) / 100
+        : (Number(discountOnTotal) || 0);
+    const afterDiscount = subTotal - totalDiscount;
+    const taxAmount = items.reduce((sum, item) => {
+        const itemSubtotal = Number(item.quantity || 0) * Number(item.rate || 0);
+        const itemDiscount = item.discountType === 'percentage'
+            ? (itemSubtotal * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
+        return sum + ((itemSubtotal - itemDiscount) * Number(item.taxRate || 0) / 100);
+    }, 0);
+    // Update totalAmount to subtract TDS/TCS (taxAmount2)
+    const totalAmount = afterDiscount + adjustment - taxAmount2;
 
-    // Filtered bulk items based on search
-    const filteredBulkItems = itemOptions.filter(item =>
-        item.name.toLowerCase().includes(bulkSearchQuery.toLowerCase()) ||
-        (item.sku && item.sku.includes(bulkSearchQuery))
-    );
+    // Handle file upload
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files) {
+            const newFiles = Array.from(files).filter(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`${file.name} exceeds 5MB limit`);
+                    return false;
+                }
+                return true;
+            });
 
+            if (attachments.length + newFiles.length > 10) {
+                alert('Maximum 10 files allowed');
+                return;
+            }
+
+            setAttachments(prev => [...prev, ...newFiles]);
+        }
+    };
+
+    // Remove attachment
+    const removeAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Add external user
+    const handleAddExternalUser = () => {
+        if (newUserName && newUserEmail) {
+            setExternalUsers(prev => [...prev, { name: newUserName, email: newUserEmail }]);
+            setNewUserName('');
+            setNewUserEmail('');
+            setAddUserDialogOpen(false);
+        }
+    };
+
+    // Remove external user
+    const removeExternalUser = (index: number) => {
+        setExternalUsers(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Add contact person
+    const handleAddContactPerson = () => {
+        if (selectedCustomer && newContactPerson.firstName && newContactPerson.email) {
+            const updatedCustomer = {
+                ...selectedCustomer,
+                contactPersons: [
+                    ...selectedCustomer.contactPersons,
+                    { ...newContactPerson, id: Date.now().toString() }
+                ]
+            };
+            setSelectedCustomer(updatedCustomer);
+            setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+            setContactPersonDialogOpen(false);
+            setNewContactPerson({
+                id: '',
+                salutation: '',
+                firstName: '',
+                lastName: '',
+                email: '',
+                workPhone: '',
+                mobile: '',
+                skype: '',
+                designation: '',
+                department: ''
+            });
+        }
+    };
+
+    // Validation
+    const validate = (): boolean => {
+        const newErrors: Record<string, string> = {};
+
+        if (!selectedCustomer) newErrors.customer = 'Customer is required';
+        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
+        if (!neverExpires && !expectedShipmentDate) {
+            newErrors.expectedShipmentDate = 'Expected shipment date is required';
+        } else if (!neverExpires && expectedShipmentDate && salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+            newErrors.expectedShipmentDate = 'Cannot be earlier than Start On Date';
+        }
+        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+
+        const hasValidItems = items.some(item => (item.name && Number(item.quantity) > 0 && Number(item.rate) > 0));
+        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+
+    // --- INVOICE PAYLOADS ---
+
+    const invoicePayload2 = {
+        lock_account_invoice: {
+            lock_account_customer_id: selectedCustomer?.id,
+            order_number: referenceNumber,
+            date: salesOrderDate,
+            due_date: expectedShipmentDate,
+            payment_term_id: selectedTerm,
+            delivery_method: deliveryMethod,
+            sales_person_id: salespersons.find(sp => sp.name === salesperson)?.id || salesperson,
+            customer_notes: customerNotes,
+            terms_and_conditions: termsAndConditions,
+            subject: subject,
+            status: 'draft',
+            total_amount: totalAmount,
+            discount_per: discountTypeOnTotal === 'percentage' ? discountOnTotal : undefined,
+            discount_amount: discountTypeOnTotal === 'percentage' ? totalDiscount : discountOnTotal,
+            charge_amount: adjustment,
+            charge_name: adjustmentLabel,
+            charge_type: adjustment >= 0 ? 'plus' : 'minus',
+            tax_type: taxType.toLowerCase(),
+            lock_account_tax_id: (() => {
+                const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
+                return found && found.id ? found.id : selectedTax || '';
+            })(),
+            lock_account_invoice_items_attributes: items.map(item => ({
+                lock_account_item_id: itemOptions.find(opt => opt.name === item.name)?.id || item.name,
+                rate: item.rate,
+                quantity: item.quantity,
+                total_amount: item.amount,
+                description: item.description || ''
+            })),
+            email_contact_persons_attributes: selectedContactPersons.map(id => ({ contact_person_id: id })),
+            attachments_attributes: attachments.map(f => ({
+                document: f,
+                active: true
+            }))
+        }
+    };
+    console.log('Invoice Payload:', invoicePayload2);
+
+    // Handle submit
+    const handleSubmit = async (saveAsDraft: boolean = false) => {
+        // if (!saveAsDraft && !validate()) {
+        //     return;
+        // }
+
+        setIsSubmitting(true);
+
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+
+            // Build FormData for invoice
+            const formData = new FormData();
+
+            const totalGSTAmount = taxBreakdown.reduce(
+                (sum, tax) => sum + Number(tax.amount || 0),
+                0
+            );
+
+            formData.append(
+                'lock_account_invoice[sub_total_amount]',
+                String(subTotal)
+            );
+
+            formData.append(
+                'lock_account_invoice[taxable_amount]',
+                String(totalGSTAmount)
+            );
+
+            formData.append(
+                'lock_account_invoice[lock_account_tax_amount]',
+                String(taxAmount2)
+            );
+            formData.append('lock_account_invoice[lock_account_customer_id]', selectedCustomer?.id || '');
+            formData.append('lock_account_invoice[order_number]', referenceNumber);
+            formData.append('lock_account_invoice[payment_term_id]', selectedTerm);
+            formData.append('lock_account_invoice[delivery_method]', deliveryMethod);
+            formData.append('lock_account_invoice[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
+            formData.append('lock_account_invoice[customer_notes]', customerNotes);
+            formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
+            formData.append('lock_account_invoice[subject]', subject);
+            // formData.append('lock_account_invoice[status]', 'draft');
+            formData.append(
+                'lock_account_invoice[status]',
+                saveAsDraft ? 'draft' : 'submit'
+            );
+            formData.append('lock_account_invoice[total_amount]', String(totalAmount2));
+            if (discountTypeOnTotal === 'percentage') {
+                formData.append('lock_account_invoice[discount_per]', String(discountOnTotal));
+                formData.append('lock_account_invoice[discount_amount]', String(totalDiscount));
+            } else {
+                formData.append('lock_account_invoice[discount_amount]', String(discountOnTotal));
+            }
+            formData.append('lock_account_invoice[charge_amount]', String(adjustment));
+            formData.append('lock_account_invoice[charge_name]', adjustmentLabel);
+            formData.append('lock_account_invoice[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
+            formData.append('lock_account_invoice[tax_type]', taxType.toLowerCase());
+            const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
+            formData.append('lock_account_invoice[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
+            formData.append('lock_account_invoice[place_of_supply]', placeOfSupply); //new added
+            formData.append('lock_account_invoice[recurring]', 'true');
+            formData.append('lock_account_invoice[profile_name]', profileName);
+
+            // formData.append('lock_account_invoice[recurring_detail][start_date]', salesOrderDate);
+            // formData.append('lock_account_invoice[recurring_detail][end_date]', neverExpires ? '' : expectedShipmentDate);
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][repeat_type]',
+            //     repeatType
+            // );
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][repeat_value]',
+            //     String(repeatCount)
+            // );
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][never_expires]',
+            //     neverExpires ? 'true' : 'false'
+            // );
+
+            formData.append('recurring_detail[start_date]', salesOrderDate);
+
+            formData.append(
+                'recurring_detail[end_date]',
+                neverExpires ? '' : expectedShipmentDate
+            );
+
+            formData.append(
+                'recurring_detail[repeat_type]',
+                repeatType
+            );
+
+            formData.append(
+                'recurring_detail[repeat_value]',
+                String(repeatCount)
+            );
+
+            formData.append(
+                'recurring_detail[never_expires]',
+                neverExpires ? 'true' : 'false'
+            );
+            // Invoice items
+            items.forEach((item, idx) => {
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][description]`, item.description || '');
+
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+            });
+
+            // Email contact persons
+            selectedContactPersons.forEach((id, idx) => {
+                formData.append(`lock_account_invoice[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
+            });
+
+            // Attachments
+            attachments.forEach((file, idx) => {
+                formData.append(`lock_account_invoice[attachments_attributes][${idx}][document]`, file);
+                formData.append(`lock_account_invoice[attachments_attributes][${idx}][active]`, 'true');
+            });
+
+            await fetch(`https://${baseUrl}/lock_account_invoices.json?lock_account_id=${lock_account_id}`, {
+                method: 'POST',
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined
+                    // Do NOT set Content-Type, browser will set it for FormData
+                },
+                body: formData
+            });
+
+            // alert(`Recurring Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            navigate('/accounting/recurring-invoices');
+        } catch (error) {
+            console.error('Error submitting invoice:', error);
+            alert('Failed to create invoice');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // --- Tax Section State and Effect ---
+
+
+
+    useEffect(() => {
+        // Fetch tax options based on taxType, using baseUrl and Bearer token
+        const fetchTaxSections = async () => {
+            try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const lock_account_id = localStorage.getItem('lock_account_id');
+                const type = taxType.toLowerCase();
+                const url =
+
+
+                    `https://${baseUrl}/lock_account_taxes.json?q[tax_type_eq]=${type}&lock_account_id=${lock_account_id}`;
+                const response = await fetch(url, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = await response.json();
+                setTaxOptions(Array.isArray(data) ? data : data?.tax_sections || []);
+            } catch (error) {
+                setTaxOptions([]);
+            }
+        };
+        fetchTaxSections();
+        setSelectedTax('');
+    }, [taxType]);
+
+
+
+
+    // Update taxAmount using percentage from selected tax option
+    useEffect(() => {
+        const selected = taxOptions.find(t => t.name === selectedTax);
+        // Use percentage key for calculation
+        if (selected && typeof selected.percentage === 'number') {
+            // Calculate tax on afterDiscount
+            setTaxAmount2((afterDiscount * selected.percentage) / 100);
+        } else {
+            setTaxAmount2(0);
+        }
+    }, [selectedTax, taxOptions, afterDiscount]);
+
+    const selectedTaxGroups = items
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .map(item => {
+            const group = taxGroups.find(g => g.id === item.tax_group_id);
+            return {
+                itemAmount: item.amount,
+                taxRates: group?.tax_rates || []
+            };
+        });
+    const taxBreakdown: any[] = [];
+
+    selectedTaxGroups.forEach(group => {
+        group.taxRates.forEach(rate => {
+            const taxAmount = (group.itemAmount * rate.rate) / 100;
+
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({
+                    name: rate.name,
+                    rate: rate.rate,
+                    amount: taxAmount
+                });
+            }
+        });
+    });
+    // Calculate Final Total
+
+    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    useEffect(() => {
+        const total =
+            afterDiscount +
+            totalTax  // tax from tax groups
+            - taxAmount2 + // TDS/TCS
+            (Number(adjustment) || 0);
+
+        setTotalAmount2(total);
+
+
+    }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+    console.log('Tax Options:', taxOptions);
+    const states = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+        "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+        "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
+    ];
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="p-6 space-y-6 relative">
             {isSubmitting && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <CircularProgress size={60} />
                 </div>
             )}
 
-            {/* Header */}
             <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold ml-6 mt-5">New Recurring Invoice</h1>
+                <h1 className="text-2xl font-bold">New Recurring Invoice</h1>
             </header>
 
-            <div className="max-w-7xl mx-auto p-6">
-                {/* Customer Information Section */}
+            <div className="space-y-6">
+                {/* Customer Section */}
                 <Section title="Customer Information" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-6">
-                        {/* Customer Name */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
                                     Customer Name<span className="text-red-500">*</span>
                                 </label>
-                                <div className="flex gap-2">
-                                    <FormControl fullWidth error={false}>
-                                        <Select
-                                            value={selectedCustomer?.id || ''}
-                                            onChange={(e) => {
-                                                const customer = customers.find(c => c.id === e.target.value);
-                                                setSelectedCustomer(customer || null);
-                                            }}
-                                            displayEmpty
-                                            sx={fieldStyles}
-                                        >
-                                            <MenuItem value="" disabled>Select Customer</MenuItem>
-                                            {customers.map((customer) => (
-                                                <MenuItem key={customer.id} value={customer.id}>
-                                                    {customer.name}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                    <IconButton
-                                        sx={{
-                                            bgcolor: 'primary.main',
-                                            color: 'white',
-                                            '&:hover': { bgcolor: 'primary.dark' },
-                                            borderRadius: 1
+                                <FormControl fullWidth error={!!errors.customer}>
+                                    <Select
+                                        value={selectedCustomer?.id || ''}
+                                        onChange={(e) => {
+                                            const customer = customers.find(c => c.id === e.target.value);
+                                            setSelectedCustomer(customer || null);
+                                        }}
+                                        displayEmpty
+                                        sx={fieldStyles}
+                                    >
+                                        <MenuItem value="" disabled>Select a customer</MenuItem>
+                                        {customers.map((customer) => (
+                                            <MenuItem key={customer.id} value={customer.id}>
+                                                {customer.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">
+                                    Currency
+                                </label>
+                                <TextField
+                                    fullWidth
+                                    value={selectedCustomer?.currency || 'INR'}
+                                    disabled
+                                    sx={fieldStyles}
+                                />
+                            </div>
+                        </div>
+                        {selectedCustomer && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Place of Supply
+                                    </label>
+
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        value={placeOfSupply}
+                                        onChange={(e) => setPlaceOfSupply(e.target.value)}
+                                        sx={fieldStyles}
+                                        SelectProps={{
+                                            displayEmpty: true
                                         }}
                                     >
-                                        <Search fontSize="small" />
-                                    </IconButton>
+                                        <MenuItem value="">Select Place of Supply</MenuItem>
+                                        {/* <MenuItem value="India">India</MenuItem>
+                                        <MenuItem value="United States">United States</MenuItem>
+                                        <MenuItem value="United Kingdom">United Kingdom</MenuItem>
+                                        <MenuItem value="Australia">Australia</MenuItem>
+                                        <MenuItem value="Canada">Canada</MenuItem> */}
+                                        {states.map((state) => (
+                                            <MenuItem key={state} value={state}>
+                                                {state}
+                                            </MenuItem>
+                                        ))}
+
+                                    </TextField>
                                 </div>
                             </div>
+                        )}
+
+                        {/* {selectedCustomer && (
+                            <Button
+                                variant="outlined"
+                                onClick={() => setCustomerDrawerOpen(true)}
+                                endIcon={<ChevronRight />}
+                                sx={{ textTransform: 'none' }}
+                            >
+                                View Customer Details
+                            </Button>
+                        )} */}
+                    </div>
+                </Section>
+
+                {/* Address Section */}
+                <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Billing Address
+                            </label>
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                rows={4}
+                                value={selectedCustomer?.billing_address?.address
+                                    ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
+                                    : billingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setBillingAddress(e.target.value);
+                                }}
+                                placeholder="Enter billing address (max 500 characters)"
+                                disabled={!!selectedCustomer?.billing_address?.address}
+                                maxLength={500}
+                            />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(billingAddress?.length || 0)}/500
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Shipping Address
+                            </label>
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                rows={4}
+                                value={selectedCustomer?.shipping_address?.address
+                                    ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
+                                    : shippingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setShippingAddress(e.target.value);
+                                }}
+                                placeholder="Enter shipping address (max 500 characters)"
+                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                maxLength={500}
+                            />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(shippingAddress?.length || 0)}/500
+                            </div>
+                            {/* <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={sameAsBilling}
+                                        onChange={(e) => setSameAsBilling(e.target.checked)}
+                                    />
+                                }
+                                label="Same as Billing Address"
+                                className="mt-2"
+                            /> */}
                         </div>
                     </div>
                 </Section>
 
-                {/* Recurring Invoice Details Section */}
-                <Section title="Recurring Invoice Details" icon={<Calendar className="w-5 h-5" />}>
-                    <div className="space-y-6">
-                        {/* Profile Name & Order Number */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Profile Name<span className="text-red-500">*</span>
-                                </label>
-                                <TextField
-                                    fullWidth
-                                    value={profileName}
-                                    onChange={(e) => setProfileName(e.target.value)}
-                                    sx={fieldStyles}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Order Number
-                                </label>
-                                <TextField
-                                    fullWidth
-                                    value={orderNumber}
-                                    onChange={(e) => setOrderNumber(e.target.value)}
-                                    sx={fieldStyles}
-                                />
-                            </div>
+                {/* Sales Order Details */}
+                <Section title=" Recurring Invoice Details" icon={<Calendar className="w-5 h-5" />}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Profile Name<span className="text-red-500">*</span>
+                            </label>
+                            <TextField
+                                fullWidth
+                                value={profileName}
+                                onChange={(e) => setProfileName(e.target.value)}
+                                placeholder="Enter profile name"
+                                sx={fieldStyles}
+                            />
                         </div>
 
-                        {/* Repeat Every & Start/End Dates */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Repeat Every<span className="text-red-500">*</span>
-                                </label>
-                                <FormControl fullWidth>
+
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Order Number
+                            </label>
+                            <TextField
+                                fullWidth
+                                value={referenceNumber}
+                                onChange={(e) => setReferenceNumber(e.target.value)}
+                                placeholder="Enter order number"
+                                sx={fieldStyles}
+                            />
+                        </div>
+
+                        {/* Repeat Every */}
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Repeat Every
+                            </label>
+
+                            <div className="flex gap-2">
+
+                                <TextField
+                                    type="number"
+                                    size="small"
+                                    value={repeatCount}
+                                    onChange={(e) => setRepeatCount(e.target.value)}
+                                    sx={{ width: "90px" }}
+                                />
+
+                                <FormControl fullWidth size="small">
                                     <Select
-                                        value={repeatEvery}
-                                        onChange={(e) => setRepeatEvery(e.target.value)}
+                                        value={repeatType}
+                                        onChange={(e) => setRepeatType(e.target.value)}
                                         sx={fieldStyles}
                                     >
-                                        <MenuItem value="Day">Day</MenuItem>
-                                        <MenuItem value="Week">Week</MenuItem>
-                                        <MenuItem value="Month">Month</MenuItem>
-                                        <MenuItem value="Year">Year</MenuItem>
+
+                                        <MenuItem value="day">Day</MenuItem>
+                                        <MenuItem value="week">Week</MenuItem>
+                                        <MenuItem value="month">Month</MenuItem>
+                                        <MenuItem value="year">Year</MenuItem>
+
                                     </Select>
                                 </FormControl>
+
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                            <div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Start On<span className="text-red-500">*</span>
+                            </label>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                value={salesOrderDate}
+                                onChange={(e) => setSalesOrderDate(e.target.value)}
+                                error={!!errors.salesOrderDate}
+                                helperText={errors.salesOrderDate}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: salesOrderDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: salesOrderDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(salesOrderDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
+                            />
+                        </div>
+
+
+
+                        <div className="flex gap-4 items-end">
+
+                            {/* Ends On Date */}
+                            <div className="w-1/2">
                                 <label className="block text-sm font-medium mb-2">
-                                    Start On
+                                    Ends On<span className="text-red-500">*</span>
                                 </label>
+
                                 <TextField
                                     fullWidth
-                                    type="text"
-                                    placeholder="dd/MM/yyyy"
-                                    value={startOn}
-                                    onChange={(e) => setStartOn(e.target.value)}
-                                    sx={fieldStyles}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Ends On
-                                </label>
-                                <TextField
-                                    fullWidth
-                                    type="text"
-                                    placeholder="dd/MM/yyyy"
-                                    value={endsOn}
-                                    onChange={(e) => setEndsOn(e.target.value)}
+                                    type="date"
+                                    value={neverExpires ? "" : expectedShipmentDate}
+                                    onChange={(e) => setExpectedShipmentDate(e.target.value)}
                                     disabled={neverExpires}
-                                    sx={fieldStyles}
+                                    error={!neverExpires && !!errors.expectedShipmentDate}
+                                    helperText={!neverExpires ? errors.expectedShipmentDate : ""}
+                                    sx={{
+                                        ...fieldStyles,
+                                        '& .MuiInputBase-input': {
+                                            color: (!neverExpires && expectedShipmentDate) ? 'transparent' : 'inherit',
+                                        }
+                                    }}
+                                    InputLabelProps={{ shrink: true }}
+                                    inputProps={{ min: salesOrderDate }}
+                                    InputProps={{
+                                        startAdornment: (!neverExpires && expectedShipmentDate) ? (
+                                            <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                                {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
+                                            </InputAdornment>
+                                        ) : null
+                                    }}
                                 />
                             </div>
-                            <div>
+
+                            {/* Never Expires Checkbox */}
+                            <div className="flex items-center pb-2">
                                 <FormControlLabel
                                     control={
                                         <Checkbox
                                             checked={neverExpires}
-                                            onChange={(e) => setNeverExpires(e.target.checked)}
-                                            sx={{ color: '#2563eb', '&.Mui-checked': { color: '#2563eb' } }}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setNeverExpires(checked);
+
+                                                if (checked) {
+                                                    setExpectedShipmentDate(""); // clear date
+                                                }
+                                            }}
                                         />
                                     }
                                     label="Never Expires"
                                 />
                             </div>
+
                         </div>
 
-                        {/* Payment Terms */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Payment Terms
-                                </label>
-                                <FormControl fullWidth>
-                                    <Select
-                                        value={paymentTerms}
-                                        onChange={(e) => setPaymentTerms(e.target.value)}
-                                        sx={fieldStyles}
-                                    >
-                                        {paymentTermsOptions.map(term => (
-                                            <MenuItem key={term} value={term}>{term}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </div>
-                        </div>
-
-                        {/* Salesperson */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Salesperson
-                                </label>
-                                <FormControl fullWidth>
-                                    <Select
-                                        value={salesperson}
-                                        onChange={(e) => setSalesperson(e.target.value)}
-                                        displayEmpty
-                                        sx={fieldStyles}
-                                    >
-                                        <MenuItem value="" disabled>Select or Add Salesperson</MenuItem>
-                                        {salespersons.map(person => (
-                                            <MenuItem key={person.id} value={person.id}>{person.name}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </div>
-                        </div>
-
-                        {/* Associate Projects */}
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Associate Project(s) Hours
+                                Payment Terms<span className="text-red-500">*</span>
                             </label>
-                            <TextField
-                                fullWidth
-                                value={associateProjects}
-                                disabled
-                                sx={{
-                                    ...fieldStyles,
-                                    '& .MuiInputBase-input.Mui-disabled': {
-                                        WebkitTextFillColor: '#6b7280',
-                                        fontStyle: 'italic'
-                                    }
-                                }}
-                            />
+                            <FormControl fullWidth error={!!errors.paymentTerms}>
+                                {/* <InputLabel>Payment Terms</InputLabel> */}
+                                <Select
+                                    value={selectedTerm}
+                                    label="Payment Terms"
+                                    onChange={e => setSelectedTerm(e.target.value)}
+                                    renderValue={val => {
+                                        const found = filteredTerms.find(term => term.id === val);
+                                        return found ? found.name : val;
+                                    }}
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>Select payment term</MenuItem>
+                                    {filteredTerms.map(term => (
+                                        <MenuItem key={term.id || term.name} value={term.id}>{term.name}</MenuItem>
+                                    ))}
+
+                                </Select>
+                            </FormControl>
+                            {/* Configure Payment Terms Modal */}
+                            {showConfig && (
+                                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                                    <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
+                                        <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
+                                        <table className="w-full mb-4 text-sm">
+                                            <thead>
+                                                <tr className="bg-gray-100">
+                                                    <th className="p-2 border">Term Name</th>
+                                                    <th className="p-2 border">Number of Days</th>
+                                                    <th className="p-2 border"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {editTerms.map((row, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="border p-2">
+                                                            <input
+                                                                className="border rounded px-2 py-1 w-full"
+                                                                placeholder="Term Name"
+                                                                value={row.name}
+                                                                onChange={e => handleNewRowChange(idx, 'name', e.target.value)}
+                                                            />
+                                                        </td>
+                                                        <td className="border p-2">
+                                                            <input
+                                                                className="border rounded px-2 py-1 w-full"
+                                                                placeholder="Days"
+                                                                type="number"
+                                                                value={row.days}
+                                                                onChange={e => handleNewRowChange(idx, 'days', e.target.value)}
+                                                            />
+                                                        </td>
+                                                        <td className="border p-2">
+                                                            <button className="text-red-600 text-xs" onClick={async () => {
+                                                                if (row.id) {
+                                                                    await handleRemovePaymentTerm(row.id, idx);
+                                                                } else {
+                                                                    handleRemoveNewRow(idx);
+                                                                }
+                                                            }}>Remove</button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        <div className="flex gap-2 mb-2">
+                                            <button
+                                                className="text-blue-600 text-sm"
+                                                onClick={handleAddNewTerm}
+                                            >
+                                                + Add New
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                                onClick={handleSaveTerms}
+                                            >
+                                                Save
+                                            </button>
+                                            <button
+                                                className="bg-gray-200 px-4 py-2 rounded"
+                                                onClick={() => {
+                                                    setEditTerms(paymentTermsList.map(term => ({ ...term })));
+                                                    setShowConfig(false);
+                                                }}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Subject */}
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm font-medium ">
                                 Subject
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={2}
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                rows={4}
                                 value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                                placeholder="Let your customer know what this Recurring Invoice is for"
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setSubject(e.target.value);
+                                }}
+                                placeholder="Enter subject (max 500 characters)"
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(subject?.length || 0)}/500
+                            </div>
                         </div>
+
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Salesperson
+                            </label>
+                            <FormControl fullWidth>
+                                <Select
+                                    value={salesperson}
+                                    onChange={(e) => setSalesperson(e.target.value)}
+                                    displayEmpty
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="" disabled>Select or Add Salesperson</MenuItem>
+                                    {salespersons.map(person => (
+                                        <MenuItem key={person.id} value={person.id}>{person.name}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </div>
+
+
                     </div>
                 </Section>
 
-                {/* Item Table Section */}
-                <Section title="Item Table" icon={<ShoppingCart className="w-5 h-5" />}>
+                {/* Item Table */}
+                <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-4">
-                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {errors.items && (
+                            <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
+                        )}
+
+                        <div className="border border-border rounded-lg overflow-hidden">
                             <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-200">
+                                <thead className="bg-muted/50">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Item Details
-                                        </th>
-                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Quantity
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Rate
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                            Amount
-                                        </th>
-                                        <th className="px-4 py-3"></th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                        {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
+                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
+                                        <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                                        <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200">
+                                <tbody className="divide-y divide-border">
+
                                     {items.map((item, index) => (
-                                        <tr key={item.id} className="hover:bg-gray-50">
+                                        <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
-                                                        <span className="text-gray-400 text-xs">📦</span>
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Type or click to select an item."
-                                                        className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
+                                                    <Select
                                                         value={item.name}
-                                                        onChange={(e) => updateItem(index, 'name', e.target.value)}
-                                                    />
-                                                </div>
+                                                        onChange={(e) => {
+                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
+                                                            if (selectedItem) {
+                                                                updateItem(index, 'name', selectedItem.name);
+                                                                updateItem(index, 'rate', selectedItem.rate);
+                                                                updateItem(index, 'description', selectedItem.description);
+                                                                // TAX HANDLING
+                                                                if (selectedItem.tax_preference === 'non_taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'non_taxable');
+                                                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                                                }
+                                                                if (selectedItem.tax_preference === 'taxable') {
+                                                                    updateItem(index, 'item_tax_type', 'tax_group');
+                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                                                }
+                                                                if (selectedItem.tax_preference === 'out_of_scope') {
+                                                                    updateItem(index, 'item_tax_type', 'out_of_scope');
+                                                                }
+                                                                if (selectedItem.tax_preference === 'non_gst_supply') {
+                                                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                                                }
+                                                            }
+                                                        }}
+                                                        displayEmpty
+                                                        size="small"
+                                                    >
+                                                        <MenuItem value="" disabled>Select an item</MenuItem>
+                                                        {itemOptions.map((option) => (
+                                                            <MenuItem key={option.id} value={option.name}>
+                                                                {option.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Description"
+                                                    value={item.description}
+                                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                    sx={{ mt: 1 }}
+                                                />
                                             </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <input
+                                            <td className="px-4 py-3">
+                                                <TextField
                                                     type="number"
-                                                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    size="small"
                                                     value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 1)}
-                                                    min="1"
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Quantity cannot be negative');
+                                                            updateItem(index, 'quantity', 0);
+                                                        } else {
+                                                            updateItem(index, 'quantity', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
+                                                    inputProps={{ min: 0, step: 1 }}
+                                                    sx={{ width: 80 }}
                                                 />
                                             </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <input
+                                            <td className="px-4 py-3">
+                                                <TextField
                                                     type="number"
-                                                    className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                                                    min="0"
-                                                    step="0.01"
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Rate cannot be negative');
+                                                            updateItem(index, 'rate', 0);
+                                                        } else {
+                                                            updateItem(index, 'rate', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
+                                                    inputProps={{ min: 0, step: 0.01 }}
+                                                    sx={{ width: 100 }}
                                                 />
+                                            </td>
+                                            {/* <td className="px-4 py-3"> */}
+                                            {/* <div className="flex items-center gap-2">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.discount}
+                                                        onChange={(e) => updateItem(index, 'discount', parseFloat(e.target.value) || 0)}
+                                                        inputProps={{ min: 0, step: 0.01 }}
+                                                        sx={{ width: 80 }}
+                                                    />
+                                                    <FormControl size="small" sx={{ width: 80 }}>
+                                                        <Select
+                                                            value={item.discountType}
+                                                            onChange={(e) => updateItem(index, 'discountType', e.target.value)}
+                                                        >
+                                                            <MenuItem value="percentage">%</MenuItem>
+                                                            <MenuItem value="amount">₹</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                </div> */}
+                                            {/* </td> */}
+                                            <td className="px-4 py-3">
+                                                <FormControl size="small" sx={{ width: 200 }}>
+                                                    <Select
+                                                        //   value={item.tax_type || ""}
+                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                                                        displayEmpty
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+
+                                                            // Static tax types
+                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                                updateItem(index, "item_tax_type", value);
+                                                                updateItem(index, "tax_group_id", null);
+
+                                                                if (value === "non_taxable") {
+                                                                    setCurrentItemIndex(index);
+                                                                    setExemptionModalOpen(true);
+                                                                }
+                                                            }
+                                                            // Tax group selected
+                                                            else {
+                                                                updateItem(index, "item_tax_type", "tax_group");
+                                                                updateItem(index, "tax_group_id", value);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <MenuItem value="">Select Tax</MenuItem>
+
+                                                        {/* Static Options */}
+                                                        {taxTypeOptions.map((opt) => (
+                                                            <MenuItem key={opt.value} value={opt.value}>
+                                                                {opt.label}
+                                                            </MenuItem>
+                                                        ))}
+
+                                                        {/* Divider */}
+                                                        <MenuItem disabled>
+                                                            Tax Groups
+                                                        </MenuItem>
+
+                                                        {/* Tax Groups */}
+                                                        {taxGroups.map((group) => (
+                                                            <MenuItem key={group.id} value={group.id}>
+                                                                {group.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
                                             </td>
                                             <td className="px-4 py-3 text-right font-semibold">
-                                                {item.amount.toFixed(2)}
+                                                ₹{item.amount.toFixed(2)}
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <IconButton size="small" onClick={() => {}}>
-                                                        <MoreVert fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => removeItem(index)}
-                                                        disabled={items.length === 1}
-                                                    >
-                                                        <Close fontSize="small" />
-                                                    </IconButton>
-                                                </div>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => {
+                                                        setDeleteTargetIndex(index);
+                                                        setDeleteTargetType('item');
+                                                        setDeleteConfirmOpen(true);
+                                                    }}
+                                                    disabled={items.length === 1}
+                                                    color="error"
+                                                >
+                                                    <Delete fontSize="small" />
+                                                </IconButton>
                                             </td>
                                         </tr>
                                     ))}
@@ -540,7 +1596,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                             </table>
                         </div>
 
-                        <div className="flex gap-3 mt-4">
+                        <div className="flex gap-3 pt-4">
                             <Button
                                 startIcon={<Add />}
                                 onClick={addItem}
@@ -549,385 +1605,728 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                             >
                                 Add New Row
                             </Button>
-                            <Button
-                                startIcon={<Add />}
-                                onClick={() => setBulkItemsModalOpen(true)}
+                            {/* <Button
                                 variant="outlined"
                                 sx={{ textTransform: 'none' }}
                             >
                                 Add Items in Bulk
-                            </Button>
-                        </div>
-
-                        {/* Summary */}
-                        <div className="mt-6 flex justify-end">
-                            <div className="w-full md:w-96 space-y-3">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Sub Total</span>
-                                    <span className="font-semibold">{subTotal.toFixed(2)}</span>
-                                </div>
-
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Discount</span>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-right"
-                                            value={discountOnTotal}
-                                            onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || 0)}
-                                            min="0"
-                                        />
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{
-                                                minWidth: '40px',
-                                                textTransform: 'none',
-                                                fontSize: '12px'
-                                            }}
-                                        >
-                                            %
-                                        </Button>
-                                        <span className="font-semibold">{discountAmount.toFixed(2)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">TDS</span>
-                                    <div className="flex items-center gap-2">
-                                        <FormControl size="small" sx={{ minWidth: 150 }}>
-                                            <Select
-                                                value={selectedTax}
-                                                onChange={(e) => setSelectedTax(e.target.value)}
-                                                displayEmpty
-                                            >
-                                                <MenuItem value="">Select a Tax</MenuItem>
-                                                {taxOptions.map(tax => (
-                                                    <MenuItem key={tax.id} value={tax.id}>{tax.name}</MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                        <span className="font-semibold">- {taxAmount.toFixed(2)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-center text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            className="px-2 py-1 border border-gray-300 rounded text-sm"
-                                            value={adjustmentLabel}
-                                            onChange={(e) => setAdjustmentLabel(e.target.value)}
-                                            placeholder="Label"
-                                        />
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-right"
-                                            value={adjustment}
-                                            onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
-                                        />
-                                        <IconButton size="small">
-                                            <span className="text-gray-400">?</span>
-                                        </IconButton>
-                                        <span className="font-semibold">{adjustment.toFixed(2)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Round Off</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold">{roundOff.toFixed(2)}</span>
-                                    </div>
-                                </div>
-                                <div className="text-xs text-gray-500 text-right">(No Rounding)</div>
-
-                                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                                    <span className="font-bold text-base">Total ( ₹ )</span>
-                                    <span className="font-bold text-lg">{totalAmount.toFixed(2)}</span>
-                                </div>
-                            </div>
+                            </Button> */}
                         </div>
                     </div>
                 </Section>
 
-                {/* Customer Notes Section */}
-                <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
-                        rows={3}
-                        value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        placeholder="Enter any notes for the customer"
-                    />
-                </Section>
-
-                {/* Terms & Conditions Section */}
-                <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
-                        rows={4}
-                        value={termsAndConditions}
-                        onChange={(e) => setTermsAndConditions(e.target.value)}
-                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-                    />
-                </Section>
-
-                {/* Payment Gateway Promotion */}
-                <div className="mt-6 bg-gray-50 rounded-lg border border-gray-200 p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-medium">Want to get paid faster?</span>
-                                <span className="text-xl">💳</span>
+                {/* Summary Section */}
+                <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+                    <div className="flex justify-end">
+                        <div className="w-full md:w-1/2 space-y-4">
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                                <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
                             </div>
-                            <p className="text-sm text-gray-600 mb-3">
-                                Configure payment gateways and receive payments online.{' '}
-                                <a href="#" className="text-blue-600 hover:underline">Set up Payment Gateway</a>
-                            </p>
-                            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                                        <span className="text-blue-600 text-xs">💎</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm">
-                                            Introducing <strong>Zoho Payments</strong>, our unified payment solution designed to work seamlessly
-                                            with your business apps. Set up now and manage payments, refunds, and disputes
-                                            effortlessly. <a href="#" className="text-blue-600 hover:underline">View Platform Fee Details</a>
-                                        </p>
-                                    </div>
-                                    <Button
-                                        variant="contained"
+
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">Discount</span>
+                                <div className="flex items-center gap-2">
+                                    <Select
                                         size="small"
-                                        sx={{
-                                            textTransform: 'none',
-                                            bgcolor: '#2563eb',
-                                            '&:hover': { bgcolor: '#1d4ed8' }
+                                        value={discountTypeOnTotal}
+                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
+                                        sx={{ width: 100 }}
+                                    >
+                                        <MenuItem value="percentage">%</MenuItem>
+                                        <MenuItem value="amount">Amount</MenuItem>
+                                    </Select>
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={discountOnTotal}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Discount cannot be negative');
+                                                setDiscountOnTotal(0);
+                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                                toast.error('Discount percentage cannot exceed 100%');
+                                                setDiscountOnTotal(100);
+                                            } else {
+                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 0.01 }}
+                                        sx={{ width: 80 }}
+                                    />
+                                    <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            {taxBreakdown.map((tax, index) => (
+                                <div key={index} className="flex justify-between items-center py-2">
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        {tax.name} ({tax.rate}%)
+                                    </span>
+                                    <span className="font-semibold text-base">
+                                        ₹{tax.amount.toFixed(2)}
+                                    </span>
+                                </div>
+                            ))}
+                            <Divider />
+
+                            <div className="flex flex-wrap items-center gap-3 py-2">
+                                <RadioGroup
+                                    row
+                                    value={taxType}
+                                    onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
+                                >
+                                    <FormControlLabel
+                                        value="TDS"
+                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        label={<span className="text-sm">TDS</span>}
+                                    />
+                                    <FormControlLabel
+                                        value="TCS"
+                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        label={<span className="text-sm">TCS</span>}
+                                    />
+                                </RadioGroup>
+                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                                    <Select
+                                        value={selectedTax}
+                                        onChange={(e) => setSelectedTax(e.target.value)}
+                                        displayEmpty
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: 224,
+                                                    backgroundColor: 'white',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '8px',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                                },
+                                            },
+                                            disablePortal: true,
                                         }}
                                     >
-                                        Set Up Now
-                                    </Button>
-                                    <IconButton size="small">
-                                        <Close fontSize="small" />
-                                    </IconButton>
+                                        <MenuItem value="">Select a Tax</MenuItem>
+                                        {taxOptions.map(tax => (
+                                            <MenuItem key={tax.id || tax.name} value={tax.name}>{tax.name}
+                                                {/* {typeof tax.percentage === 'number' ? `(${tax.percentage}%)` : ''} */}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <span className="font-semibold text-base text-red-600">-₹{taxAmount2.toFixed(2)}</span>
+                            </div>
+
+                            <div className="flex justify-between items-center py-2">
+                                <div className="flex items-center gap-2">
+                                    <TextField
+                                        size="small"
+                                        value={adjustmentLabel}
+                                        onChange={e => setAdjustmentLabel(e.target.value)}
+                                        sx={{ width: 120 }}
+                                        placeholder="Adjustment Name"
+                                    />
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={adjustment}
+                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
+                                        inputProps={{ step: 0.01 }}
+                                        sx={{ width: 100 }}
+                                    />
                                 </div>
+                            </div>
+
+                            <Divider sx={{ my: 2 }} />
+
+                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                                <span className="font-bold text-base">Total ( ₹ )</span>
+                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
-                </div>
+                </Section>
 
-                {/* Preferences */}
-                <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-gray-700">Preferences :</span>
-                        <FormControlLabel
-                            control={<Checkbox defaultChecked size="small" />}
-                            label={<span className="text-sm text-gray-600">Create Invoices as Drafts</span>}
-                        />
-                        <IconButton size="small">
-                            <span className="text-gray-400">⚙️</span>
-                        </IconButton>
+                {/* Customer Notes */}
+                <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        rows={3}
+                        value={customerNotes}
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
+                        }}
+                        placeholder="Enter any notes for the customer (max 500 characters)"
+                        maxLength={500}
+                    />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(customerNotes?.length || 0)}/500
                     </div>
-                </div>
+                </Section>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 justify-center pt-6 pb-8">
-                    <Button
-                        variant="outlined"
-                        onClick={() => navigate(-1)}
-                        disabled={isSubmitting}
-                        sx={{
-                            textTransform: 'none',
-                            px: 4,
-                            borderColor: 'divider',
-                            color: 'text.secondary',
-                            '&:hover': {
-                                borderColor: 'primary.main',
-                                bgcolor: 'primary.main',
-                                color: 'white'
-                            }
+                {/* Terms & Conditions */}
+                <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        rows={4}
+                        value={termsAndConditions}
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
                         }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        onClick={() => {}}
-                        disabled={isSubmitting}
-                        sx={{
-                            textTransform: 'none',
-                            px: 4,
-                            borderColor: 'primary.main',
-                            color: 'primary.main',
-                            '&:hover': {
-                                borderColor: 'primary.dark',
-                                bgcolor: 'primary.main',
-                                color: 'white'
-                            }
-                        }}
-                    >
-                        Save as Draft
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={() => {}}
-                        disabled={isSubmitting}
-                        sx={{
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            px: 4,
-                            '&:hover': {
-                                bgcolor: 'primary.dark'
-                            },
-                            textTransform: 'none'
-                        }}
-                    >
-                        {isSubmitting ? 'Submitting...' : 'Save and Send'}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Add Items in Bulk Modal */}
-            <Dialog
-                open={bulkItemsModalOpen}
-                onClose={() => setBulkItemsModalOpen(false)}
-                maxWidth="lg"
-                fullWidth
-            >
-                <DialogTitle sx={{ borderBottom: 1, borderColor: 'divider', pb: 2 }}>
-                    <div className="flex items-center justify-between">
-                        <span>Add Items in Bulk</span>
-                        <IconButton onClick={() => setBulkItemsModalOpen(false)} size="small">
-                            <Close />
-                        </IconButton>
+                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction (max 500 characters)"
+                        maxLength={500}
+                    />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(termsAndConditions?.length || 0)}/500
                     </div>
-                </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>
-                    <div className="grid grid-cols-2 min-h-[500px]">
-                        {/* Left Panel - Item List */}
-                        <div className="border-r border-gray-200 p-4">
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Type to search or scan the barcode of the item"
-                                value={bulkSearchQuery}
-                                onChange={(e) => setBulkSearchQuery(e.target.value)}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Search fontSize="small" />
-                                        </InputAdornment>
-                                    )
-                                }}
-                                sx={{ mb: 2 }}
+                </Section>
+
+                {/* Attachments */}
+                {/* <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
+                    <div className="space-y-4">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                            <input
+                                type="file"
+                                id="file-upload"
+                                multiple
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                             />
+                            <label htmlFor="file-upload" className="cursor-pointer">
+                                <CloudUpload className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                                <Typography variant="body1" className="text-gray-700 font-semibold">
+                                    Upload File
+                                </Typography>
+                                <Typography variant="body2" className="text-gray-500 mt-1">
+                                    You can upload a maximum of 10 files, 5MB each
+                                </Typography>
+                            </label>
+                        </div>
+
+                        {attachments.length > 0 && (
                             <div className="space-y-2">
-                                {filteredBulkItems.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => toggleBulkItem(item.id)}
-                                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                                            selectedBulkItems.includes(item.id)
-                                                ? 'bg-blue-50 border-blue-300'
-                                                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <div className="font-medium text-blue-600">{item.name}</div>
-                                                <div className="text-sm text-gray-600">
-                                                    Rate: ₹{item.rate.toFixed(2)}
-                                                </div>
-                                            </div>
-                                            {selectedBulkItems.includes(item.id) && (
-                                                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                                    <span className="text-white text-xs">✓</span>
-                                                </div>
-                                            )}
+                                {attachments.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                                        <div className="flex items-center gap-2">
+                                            <AttachFile fontSize="small" />
+                                            <span className="text-sm">{file.name}</span>
+                                            <span className="text-xs text-gray-500">
+                                                ({(file.size / 1024).toFixed(2)} KB)
+                                            </span>
                                         </div>
-                                        {item.sku && (
-                                            <div className="text-xs text-gray-500 mt-1">
-                                                SKU: {item.sku}
-                                            </div>
-                                        )}
+                                        <IconButton size="small" onClick={() => {
+                                            setDeleteTargetIndex(index);
+                                            setDeleteTargetType('attachment');
+                                            setDeleteConfirmOpen(true);
+                                        }}>
+                                            <Close fontSize="small" />
+                                        </IconButton>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        )}
 
-                        {/* Right Panel - Selected Items */}
-                        <div className="p-4 bg-gray-50">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 className="font-semibold text-gray-900">Selected Items</h3>
-                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 text-xs font-medium">
-                                        {selectedBulkItems.length}
-                                    </span>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    Total Quantity: <strong>{selectedBulkItems.length}</strong>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={displayAttachmentsInPortal}
+                                    onChange={(e) => setDisplayAttachmentsInPortal(e.target.checked)}
+                                />
+                            }
+                            label="Display attachments in customer portal and emails"
+                        />
+                    </div>
+                </Section> */}
+
+                {/* Email Communications */}
+                {/* <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
+                    <div className="space-y-4">
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={sendEmailToCustomer}
+                                    onChange={(e) => setSendEmailToCustomer(e.target.checked)}
+                                />
+                            }
+                            label="Send email to selected customer above"
+                        />
+
+                        {/* Contact Persons Section */}
+                {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+                            <div>
+                                <Typography variant="body2" className="font-semibold mb-2">
+                                    Select contact persons to email
+                                </Typography>
+                                <div className="flex flex-col gap-2">
+                                    {selectedCustomer.contact_persons.map((person) => (
+                                        <div key={person.id} className="flex items-center gap-2">
+                                            <Checkbox
+                                                checked={selectedContactPersons.includes(person.id)}
+                                                onChange={e => {
+                                                    if (e.target.checked) {
+                                                        setSelectedContactPersons([...selectedContactPersons, person.id]);
+                                                    } else {
+                                                        setSelectedContactPersons(selectedContactPersons.filter(id => id !== person.id));
+                                                    }
+                                                }}
+                                                size="small"
+                                            />
+                                            <Chip
+                                                label={`${person.first_name} ${person.last_name} (${person.email})`}
+                                                variant={selectedContactPersons.includes(person.id) ? "filled" : "outlined"}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            {selectedBulkItems.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-64 text-center">
-                                    <p className="text-gray-500 text-sm">
-                                        Click the item names from the left pane to select them
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {selectedBulkItems.map((itemId) => {
-                                        const item = itemOptions.find(opt => opt.id === itemId);
-                                        return item ? (
-                                            <div
-                                                key={itemId}
-                                                className="p-3 bg-white rounded-lg border border-gray-200"
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <div className="font-medium">{item.name}</div>
-                                                        <div className="text-sm text-gray-600">₹{item.rate.toFixed(2)}</div>
-                                                    </div>
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => toggleBulkItem(itemId)}
-                                                    >
-                                                        <Close fontSize="small" />
-                                                    </IconButton>
-                                                </div>
-                                            </div>
-                                        ) : null;
-                                    })}
+                        )} */}
+
+                {/* External Users Section */}
+                {/* <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <Typography variant="body2" className="font-semibold">
+                                    Add external users (email users other than the selected customer above)
+                                </Typography> */}
+                {/* <Button
+                                                    startIcon={<PersonAdd />}
+                                                    onClick={() => setAddUserDialogOpen(true)}
+                                                    size="small"
+                                                    variant="outlined"
+                                                    sx={{ textTransform: 'none' }}
+                                                >
+                                                    Add More
+                                                </Button> */}
+                {/* </div>
+
+                            {externalUsers.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {externalUsers.map((user, index) => (
+                                        <Chip
+                                            key={index}
+                                            label={`${user.name} (${user.email})`}
+                                            onDelete={() => removeExternalUser(index)}
+                                            variant="outlined"
+                                        />
+                                    ))}
                                 </div>
                             )}
                         </div>
                     </div>
+                </Section> */}
+
+                {/* Additional Fields */}
+                {/* <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
+                    <Typography variant="body2" className="text-gray-600">
+                        Add custom fields to your sales orders by going to Settings → Sales → Sales Orders → Field Customization
+                    </Typography>
+                </Section> */}
+            </div>
+
+            <div className="flex items-center gap-3 justify-center pt-2">
+                <Button
+                    variant="text"
+                    onClick={() => handleSubmit(true)}
+                    disabled={isSubmitting}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
+                        }
+                    }}
+                >
+                    Save as Draft
+                </Button>
+                <Button
+                    variant="text"
+                    onClick={() => handleSubmit(false)}
+                    disabled={isSubmitting}
+                    sx={{
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        px: 4,
+                        '&:hover': {
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
+                        },
+                        textTransform: 'none'
+                    }}
+                >
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => navigate('/accounting/recurring-invoices')}
+                    disabled={isSubmitting}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        borderColor: '#C72030',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            borderColor: '#A01020',
+                            bgcolor: '#f8f1f1',
+                            color: '#A01020'
+                        }
+                    }}
+                >
+                    Cancel
+                </Button>
+            </div>
+
+            {/* Customer Details Drawer */}
+            <Drawer
+                anchor="right"
+                open={customerDrawerOpen}
+                onClose={() => setCustomerDrawerOpen(false)}
+                PaperProps={{ sx: { width: { xs: '100%', sm: 500 } } }}
+            >
+                {selectedCustomer && (
+                    <div className="p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span className="text-xl font-bold text-blue-600">
+                                        {selectedCustomer.name.charAt(0)}
+                                    </span>
+                                </div>
+                                <div>
+                                    <Typography variant="h6" className="font-bold">
+                                        {selectedCustomer.name}
+                                    </Typography>
+                                    <Typography variant="body2" className="text-gray-600">
+                                        {selectedCustomer.email}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <IconButton onClick={() => setCustomerDrawerOpen(false)}>
+                                <Close />
+                            </IconButton>
+                        </div>
+
+                        <Divider />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
+                                <Typography variant="h6" className="font-bold">
+                                    {/* ₹{typeof selectedCustomer.outstandingReceivables === 'number' ? selectedCustomer.outstandingReceivables.toLocaleString() : '0'} */}
+                                </Typography>
+                                <Typography variant="body2" className="text-gray-600">
+                                    Outstanding Receivables
+                                </Typography>
+                            </div>
+                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                                <Typography variant="h6" className="font-bold">
+                                    {/* ₹{selectedCustomer.unusedCredits.toLocaleString()} */}
+                                </Typography>
+                                <Typography variant="body2" className="text-gray-600">
+                                    Unused Credits
+                                </Typography>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Typography variant="subtitle1" className="font-semibold mb-3">
+                                Contact Details
+                            </Typography>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Customer Type</span>
+                                    <span className="font-semibold">{selectedCustomer.customerType}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Currency</span>
+                                    <span className="font-semibold">{selectedCustomer.currency}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Payment Terms</span>
+                                    <span className="font-semibold">{selectedCustomer.paymentTerms}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Portal Status</span>
+                                    <span className="font-semibold">{selectedCustomer.portalStatus}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Customer Language</span>
+                                    <span className="font-semibold">{selectedCustomer.language}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Divider />
+
+                        <div>
+                            <div className="flex items-center justify-between mb-3">
+                                <Typography variant="subtitle1" className="font-semibold">
+                                    Contact Persons
+                                </Typography>
+                                <Button
+                                    size="small"
+                                    startIcon={<Add />}
+                                    onClick={() => setContactPersonDialogOpen(true)}
+                                    variant="outlined"
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    Add
+                                </Button>
+                            </div>
+
+                            {/* {selectedCustomer.contactPersons.length === 0 ? (
+                                <Typography variant="body2" className="text-gray-500">
+                                    No contact persons added
+                                </Typography>
+                            ) : (
+                                <div className="space-y-3">
+                                    {selectedCustomer.contactPersons.map(person => (
+                                        <div key={person.id} className="bg-gray-50 rounded-lg p-4">
+                                            <Typography variant="body1" className="font-semibold">
+                                                {person.salutation} {person.firstName} {person.lastName}
+                                            </Typography>
+                                            <Typography variant="body2" className="text-gray-600">
+                                                {person.email}
+                                            </Typography>
+                                            {person.designation && (
+                                                <Typography variant="body2" className="text-gray-600">
+                                                    {person.designation} {person.department && `- ${person.department}`}
+                                                </Typography>
+                                            )}
+                                            <div className="flex gap-3 mt-2">
+                                                {person.workPhone && (
+                                                    <Typography variant="body2" className="text-gray-600">
+                                                        Work: {person.workPhone}
+                                                    </Typography>
+                                                )}
+                                                {person.mobile && (
+                                                    <Typography variant="body2" className="text-gray-600">
+                                                        Mobile: {person.mobile}
+                                                    </Typography>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )} */}
+                        </div>
+                    </div>
+                )}
+            </Drawer>
+
+            {/* Add External User Dialog */}
+            <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Add External User</DialogTitle>
+                <DialogContent>
+                    <div className="space-y-4 mt-2">
+                        <TextField
+                            fullWidth
+                            label="Name"
+                            value={newUserName}
+                            onChange={(e) => setNewUserName(e.target.value)}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Email"
+                            type="email"
+                            value={newUserEmail}
+                            onChange={(e) => setNewUserEmail(e.target.value)}
+                        />
+                    </div>
                 </DialogContent>
-                <DialogActions sx={{ borderTop: 1, borderColor: 'divider', p: 2 }}>
+                <DialogActions>
+                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Add Contact Person Dialog */}
+            <Dialog
+                open={contactPersonDialogOpen}
+                onClose={() => setContactPersonDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>Add Contact Person</DialogTitle>
+                <DialogContent>
+                    <div className="space-y-4 mt-2">
+                        <div className="grid grid-cols-3 gap-4">
+                            <FormControl fullWidth>
+                                <InputLabel>Salutation</InputLabel>
+                                <Select
+                                    value={newContactPerson.salutation}
+                                    onChange={(e) => setNewContactPerson({ ...newContactPerson, salutation: e.target.value })}
+                                    label="Salutation"
+                                >
+                                    <MenuItem value="Mr.">Mr.</MenuItem>
+                                    <MenuItem value="Mrs.">Mrs.</MenuItem>
+                                    <MenuItem value="Ms.">Ms.</MenuItem>
+                                    <MenuItem value="Dr.">Dr.</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <TextField
+                                fullWidth
+                                label="First Name"
+                                value={newContactPerson.firstName}
+                                onChange={(e) => setNewContactPerson({ ...newContactPerson, firstName: e.target.value })}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Last Name"
+                                value={newContactPerson.lastName}
+                                onChange={(e) => setNewContactPerson({ ...newContactPerson, lastName: e.target.value })}
+                            />
+                        </div>
+
+                        <TextField
+                            fullWidth
+                            label="Email Address"
+                            type="email"
+                            value={newContactPerson.email}
+                            onChange={(e) => setNewContactPerson({ ...newContactPerson, email: e.target.value })}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <TextField
+                                fullWidth
+                                label="Work Phone"
+                                value={newContactPerson.workPhone}
+                                onChange={(e) => setNewContactPerson({ ...newContactPerson, workPhone: e.target.value })}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Mobile"
+                                value={newContactPerson.mobile}
+                                onChange={(e) => setNewContactPerson({ ...newContactPerson, mobile: e.target.value })}
+                            />
+                        </div>
+
+                        <TextField
+                            fullWidth
+                            label="Skype Name/Number"
+                            value={newContactPerson.skype}
+                            onChange={(e) => setNewContactPerson({ ...newContactPerson, skype: e.target.value })}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <TextField
+                                fullWidth
+                                label="Designation"
+                                value={newContactPerson.designation}
+                                onChange={(e) => setNewContactPerson({ ...newContactPerson, designation: e.target.value })}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Department"
+                                value={newContactPerson.department}
+                                onChange={(e) => setNewContactPerson({ ...newContactPerson, department: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)}
+                maxWidth="sm" fullWidth>
+                <DialogTitle>Exemption Reason</DialogTitle>
+
+                <DialogContent>
+
+                    <FormControl fullWidth>
+
+                        <Select
+                            value={selectedExemption}
+                            onChange={(e) => setSelectedExemption(e.target.value)}
+                        >
+
+                            <MenuItem value="">Select Reason</MenuItem>
+
+                            {customerExemptions.map(ex => (
+                                <MenuItem key={ex.id} value={ex.id}>
+                                    {ex.reason}
+                                </MenuItem>
+                            ))}
+
+                        </Select>
+
+                    </FormControl>
+
+                </DialogContent>
+
+                <DialogActions>
+                    <button
+                        className="bg-gray-200 px-4 py-2 rounded"
+                        onClick={() => setExemptionModalOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        onClick={() => {
+                            if (currentItemIndex !== null) {
+                                updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
+                            }
+
+                            setSelectedExemption("");
+                            setCurrentItemIndex(null);
+                            setExemptionModalOpen(false);
+                        }}
+                    >
+                        Update
+                    </button>
+
+                </DialogActions>
+
+            </Dialog>
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure about deleting this {deleteTargetType}?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
                     <Button
-                        onClick={() => setBulkItemsModalOpen(false)}
-                        sx={{ textTransform: 'none' }}
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            color: '#C72030',
+                            borderColor: '#C72030',
+                            '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                            }
+                        }}
                     >
                         Cancel
                     </Button>
                     <Button
-                        onClick={handleAddBulkItems}
+                        onClick={handleDeleteConfirm}
                         variant="contained"
-                        disabled={selectedBulkItems.length === 0}
                         sx={{
-                            textTransform: 'none',
-                            bgcolor: '#2563eb',
-                            '&:hover': { bgcolor: '#1d4ed8' }
+                            backgroundColor: '#C72030',
+                            '&:hover': {
+                                backgroundColor: '#A01926'
+                            }
                         }}
                     >
-                        Add Items
+                        Delete
                     </Button>
                 </DialogActions>
             </Dialog>
+
         </div>
     );
 };

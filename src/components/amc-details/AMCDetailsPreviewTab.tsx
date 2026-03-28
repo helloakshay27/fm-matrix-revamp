@@ -855,6 +855,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
           </CardContent>
         </Card>
 
+
       {/* Schedule Section */}
       <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
         borderRadius: '4px',
@@ -912,27 +913,31 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
               <table className="min-w-full">
                 <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
                   <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600 w-16">Sr. No.</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Time</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">AMC Type</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Vendor</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 ? (
                     amc.amc_visit_logs.map((visit: any, index: number) => (
                       <tr key={visit.id || index} className="border-b border-gray-100">
-                        <td className="py-3 px-4">{index + 1}.</td>
-                        <td className="py-3 px-4">{visit.scheduled_date || '-'}</td>
-                        <td className="py-3 px-4">{visit.scheduled_time || '-'}</td>
-                      <td className="py-3 px-4">{amc?.amc_type || '-'}</td>
-                        <td className="py-3 px-4">{visit.vendor_name || '-'}</td>
-                    </tr>
+                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
+                        <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
+                      </tr>
                     ))
                   ) : (
                     <tr className="border-b border-gray-100">
-                      <td colSpan={5} className="py-3 px-4 text-center text-gray-500">
+                      <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
                         No schedule visits found
                       </td>
                     </tr>

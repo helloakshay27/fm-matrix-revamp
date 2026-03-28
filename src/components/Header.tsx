@@ -39,7 +39,7 @@ import {
   changeSite,
   clearSites,
 } from "@/store/slices/siteSlice";
-import { getUser, clearAuth } from "@/utils/auth";
+import { getUser, clearAuth, fetchLockAccount } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
@@ -104,7 +104,8 @@ export const Header = () => {
 
   const isWebSite = hostname.includes("web.gophygital.work");
 
-  const isClubSite = hostname === "club.lockated.com";
+  const isClubSite =
+    hostname === "club.lockated.com" || hostname.includes("localhost");
   const org_id = localStorage.getItem("org_id");
 
   const isPulseSite =
@@ -117,6 +118,7 @@ export const Header = () => {
     hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -134,7 +136,10 @@ export const Header = () => {
   };
   const userId = user.id;
   const isRestrictedUser =
-    user?.email === "karan.balsara@zycus.com" || org_id === "90" || isPulseSite; // Example condition for restricted user
+    user?.email === "karan.balsara@zycus.com" ||
+    org_id === "90" ||
+    isPulseSite ||
+    isClubSite; // Example condition for restricted user
 
   const assetSuggestions = [
     "sdcdsc",
@@ -246,6 +251,9 @@ export const Header = () => {
   const handleCompanyChange = async (companyId: number) => {
     try {
       const response = await dispatch(changeCompany(companyId)).unwrap();
+      // Re-fetch lock_account_id for the new company
+      localStorage.removeItem("lock_account_id");
+      await fetchLockAccount();
       // Reload page smoothly after successful company change
       window.location.reload();
     } catch (error) {
@@ -276,6 +284,9 @@ export const Header = () => {
   const handleSiteChange = async (siteId: number) => {
     try {
       await dispatch(changeSite(siteId)).unwrap();
+      // Re-fetch lock_account_id for the new site
+      localStorage.removeItem("lock_account_id");
+      await fetchLockAccount();
       // Reload page smoothly after successful site change
       window.location.reload();
     } catch (error) {
