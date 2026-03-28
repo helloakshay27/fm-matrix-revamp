@@ -40,6 +40,10 @@ const businessCompassNavigation: Record<string, any> = {
     icon: Target,
     href: "/business-compass/tasks-and-issues",
   },
+  "Directory and Chat": {
+    icon: User,
+    href: "/business-compass/directory-and-chat",
+  },
   Feedback: {
     icon: MessageSquare,
     href: "/business-compass/feedback",
