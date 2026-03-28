@@ -14,6 +14,7 @@ import {
   storeEmbeddedData,
   resolveBaseUrlByOrgId,
   hasEmbeddedSession,
+  initializeEmbeddedNavigation,
 } from "@/utils/embeddedMode";
 
 interface ProtectedRouteProps {
@@ -53,6 +54,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
         // Store embedded data
         storeEmbeddedData(embeddedConfig);
+
+        // Initialize embedded navigation interceptor to auto-add embedded=true to all routes
+        initializeEmbeddedNavigation();
 
         // Save token using auth utility
         saveToken(embeddedConfig.accessToken);
@@ -99,6 +103,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       // Check for existing embedded session
       if (hasEmbeddedSession()) {
         console.warn("🔌 ProtectedRoute: Existing embedded session found");
+        // Re-initialize navigation interceptor for existing session
+        initializeEmbeddedNavigation();
         setIsAuthorized(true);
         return;
       }
