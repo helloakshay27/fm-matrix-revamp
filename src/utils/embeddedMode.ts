@@ -139,11 +139,21 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
     const response = await axios.get(apiUrl);
     const { organizations, backend_url } = response.data;
 
+    // Helper function to normalize URL - removes duplicate protocols and ensures proper format
+    const normalizeUrl = (url: string): string => {
+      if (!url) return "";
+      // Remove any duplicate https:// or http:// patterns
+      let normalized = url.replace(/^(https?:\/\/)+/i, "");
+      // Also handle cases like "https//" (missing colon)
+      normalized = normalized.replace(/^https\/\//i, "");
+      normalized = normalized.replace(/^http\/\//i, "");
+      // Ensure https:// prefix
+      return `https://${normalized}`;
+    };
+
     // Priority 1: Use backend_url from API response
     if (backend_url) {
-      const formattedUrl = backend_url.startsWith("http")
-        ? backend_url
-        : `https://${backend_url}`;
+      const formattedUrl = normalizeUrl(backend_url);
 
       // Cache the result
       cachedBaseUrl = formattedUrl;
@@ -163,9 +173,7 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
       );
 
       if (selectedOrg?.backend_domain) {
-        const formattedUrl = selectedOrg.backend_domain.startsWith("http")
-          ? selectedOrg.backend_domain
-          : `https://${selectedOrg.backend_domain}`;
+        const formattedUrl = normalizeUrl(selectedOrg.backend_domain);
 
         // Cache the result
         cachedBaseUrl = formattedUrl;
@@ -181,9 +189,7 @@ export const resolveBaseUrlByOrgId = async (orgId: string): Promise<string> => {
       // Priority 3: Use first organization's backend_domain
       const firstOrg = organizations[0];
       if (firstOrg?.backend_domain) {
-        const formattedUrl = firstOrg.backend_domain.startsWith("http")
-          ? firstOrg.backend_domain
-          : `https://${firstOrg.backend_domain}`;
+        const formattedUrl = normalizeUrl(firstOrg.backend_domain);
 
         cachedBaseUrl = formattedUrl;
         cachedOrgId = orgId;
