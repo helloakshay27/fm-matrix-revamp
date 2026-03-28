@@ -231,6 +231,128 @@ export const clearEmbeddedMode = (): void => {
   cachedOrgId = null;
 };
 
+/**
+ * Append embedded parameters to a URL/path
+ * This ensures embedded=true is added to all navigation when in embedded mode
+ */
+export const appendEmbeddedParams = (path: string): string => {
+  if (!hasEmbeddedSession() && !isEmbeddedMode()) {
+    return path;
+  }
+
+  try {
+    // Handle both full URLs and relative paths
+    const isFullUrl = path.startsWith("http");
+    const url = isFullUrl
+      ? new URL(path)
+      : new URL(path, window.location.origin);
+
+    // Only add if not already present
+    if (!url.searchParams.has("embedded")) {
+      url.searchParams.set("embedded", "true");
+    }
+
+    return isFullUrl
+      ? url.toString()
+      : `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    // Fallback for invalid URLs - simple string append
+    if (path.includes("embedded=true")) {
+      return path;
+    }
+    const separator = path.includes("?") ? "&" : "?";
+    return `${path}${separator}embedded=true`;
+  }
+};
+
+/**
+ * Initialize global navigation interceptor for embedded mode
+ * This patches history.pushState and history.replaceState to automatically
+ * add embedded=true to all navigation when in embedded mode
+ */
+export const initializeEmbeddedNavigation = (): void => {
+  // Only initialize if in embedded mode
+  if (!hasEmbeddedSession() && !isEmbeddedMode()) {
+    return;
+  }
+
+  console.warn("🔌 Initializing embedded navigation interceptor");
+
+  // Store original methods
+  const originalPushState = history.pushState.bind(history);
+  const originalReplaceState = history.replaceState.bind(history);
+
+  // Patch pushState
+  history.pushState = function (
+    state: unknown,
+    unused: string,
+    url?: string | URL | null
+  ) {
+    if (url) {
+      const urlString = url.toString();
+      // Don't modify external URLs or already embedded URLs
+      if (
+        !urlString.startsWith("http") ||
+        urlString.includes(window.location.origin)
+      ) {
+        const modifiedUrl = appendEmbeddedParams(urlString);
+        return originalPushState(state, unused, modifiedUrl);
+      }
+    }
+    return originalPushState(state, unused, url);
+  };
+
+  // Patch replaceState
+  history.replaceState = function (
+    state: unknown,
+    unused: string,
+    url?: string | URL | null
+  ) {
+    if (url) {
+      const urlString = url.toString();
+      // Don't modify external URLs or already embedded URLs
+      if (
+        !urlString.startsWith("http") ||
+        urlString.includes(window.location.origin)
+      ) {
+        const modifiedUrl = appendEmbeddedParams(urlString);
+        return originalReplaceState(state, unused, modifiedUrl);
+      }
+    }
+    return originalReplaceState(state, unused, url);
+  };
+
+  // Handle link clicks globally
+  document.addEventListener(
+    "click",
+    (e) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+
+      if (anchor && anchor.href) {
+        const href = anchor.getAttribute("href");
+
+        // Only handle internal links
+        if (
+          href &&
+          !href.startsWith("http") &&
+          !href.startsWith("mailto:") &&
+          !href.startsWith("tel:")
+        ) {
+          // Check if it's a react-router link (data-discover attribute or no target)
+          if (!anchor.target || anchor.target === "_self") {
+            // Let React Router handle it, the history patch will add embedded=true
+            return;
+          }
+        }
+      }
+    },
+    true
+  );
+
+  console.warn("✅ Embedded navigation interceptor initialized");
+};
+
 export default {
   getEmbeddedConfig,
   isEmbeddedMode,
@@ -241,4 +363,6 @@ export default {
   resolveBaseUrlByOrgId,
   initializeEmbeddedMode,
   clearEmbeddedMode,
+  appendEmbeddedParams,
+  initializeEmbeddedNavigation,
 };
