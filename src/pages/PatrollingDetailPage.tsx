@@ -27,6 +27,10 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +51,12 @@ import {
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { DeletePatrollingModal } from "@/components/DeletePatrollingModal";
+import { TicketPagination } from "@/components/TicketPagination";
+import { CheckpointFilterDialog } from "@/components/CheckpointFilterDialog";
+import {
+  CheckpointFilters,
+  EMPTY_CP_FILTERS,
+} from "@/types/checkpointFilters";
 import {
   DndContext,
   closestCenter,
@@ -273,6 +283,14 @@ export const PatrollingDetailPage: React.FC = () => {
   // Checkpoint table: search + column sort
   const [checkpointSearch, setCheckpointSearch] = useState("");
   const [checkpointSort, setCheckpointSort] = useState<{ column: string; direction: "asc" | "desc" } | null>(null);
+
+  // Checkpoint table: location filter dialog
+  const [isCpFilterOpen, setIsCpFilterOpen] = useState(false);
+  const [cpFilters, setCpFilters] = useState<CheckpointFilters>(EMPTY_CP_FILTERS);
+
+  // Checkpoint table: pagination
+  const [cpPage, setCpPage] = useState(1);
+  const cpPageSize = 20;
 
   // State for checklist questions when checklist is selected
   const [checklistQuestions, setChecklistQuestions] = useState<QuestionData[]>(
@@ -687,7 +705,17 @@ export const PatrollingDetailPage: React.FC = () => {
     }));
   }, [localCheckpoints]);
 
-  // Derived: search-filtered + sorted checkpoint rows (used for display)
+  const activeCpFilterCount = [
+    cpFilters.buildingName,
+    cpFilters.wingName,
+    cpFilters.areaName,
+    cpFilters.floorName,
+    cpFilters.roomName,
+  ].filter(Boolean).length;
+
+  const clearAllCpFilters = () => setCpFilters(EMPTY_CP_FILTERS);
+
+  // Derived: search-filtered + location-filtered + sorted checkpoint rows
   const filteredSortedCheckpointData = useMemo((): CheckpointTableItem[] => {
     const q = checkpointSearch.trim().toLowerCase();
     let rows = q
@@ -703,11 +731,18 @@ export const PatrollingDetailPage: React.FC = () => {
         )
       : [...checkpointTableData];
 
+    // Apply location filters (name-based matching from dialog)
+    if (cpFilters.buildingName) rows = rows.filter((r) => r.building_name === cpFilters.buildingName);
+    if (cpFilters.wingName) rows = rows.filter((r) => r.wing_name === cpFilters.wingName);
+    if (cpFilters.areaName) rows = rows.filter((r) => r.area_name === cpFilters.areaName);
+    if (cpFilters.floorName) rows = rows.filter((r) => r.floor_name === cpFilters.floorName);
+    if (cpFilters.roomName) rows = rows.filter((r) => r.room_name === cpFilters.roomName);
+
     if (checkpointSort) {
       const { column, direction } = checkpointSort;
       rows = [...rows].sort((a, b) => {
-        let aVal: string | number = (a as Record<string, unknown>)[column] as string | number ?? "";
-        let bVal: string | number = (b as Record<string, unknown>)[column] as string | number ?? "";
+        let aVal: string | number = (a as unknown as Record<string, unknown>)[column] as string | number ?? "";
+        let bVal: string | number = (b as unknown as Record<string, unknown>)[column] as string | number ?? "";
         if (column === "order_sequence") {
           aVal = Number(aVal);
           bVal = Number(bVal);
@@ -721,7 +756,19 @@ export const PatrollingDetailPage: React.FC = () => {
       });
     }
     return rows;
-  }, [checkpointTableData, checkpointSearch, checkpointSort]);
+  }, [checkpointTableData, checkpointSearch, checkpointSort, cpFilters]);
+
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setCpPage(1);
+  }, [checkpointSearch, cpFilters]);
+
+  // Paginated checkpoint data
+  const cpTotalPages = Math.max(1, Math.ceil(filteredSortedCheckpointData.length / cpPageSize));
+  const paginatedCheckpointData = useMemo(() => {
+    const start = (cpPage - 1) * cpPageSize;
+    return filteredSortedCheckpointData.slice(start, start + cpPageSize);
+  }, [filteredSortedCheckpointData, cpPage, cpPageSize]);
 
   const handleCheckpointSortToggle = (column: string) => {
     setCheckpointSort((prev) => {
@@ -809,7 +856,7 @@ export const PatrollingDetailPage: React.FC = () => {
       case "created_at":
         return <span className="text-xs text-gray-600">{formatDateTime(item.created_at)}</span>;
       default:
-        return <span>{String((item as Record<string, unknown>)[columnKey] ?? "—")}</span>;
+        return <span>{String((item as unknown as Record<string, unknown>)[columnKey] ?? "—")}</span>;
     }
   };
   // ────────────────────────────────────────────────────────────────────────────
@@ -1779,21 +1826,86 @@ export const PatrollingDetailPage: React.FC = () => {
                   />
                 )}
 
-                {/* Search bar — above table, aligned to the right */}
-                <div className="mb-3 flex items-center justify-end gap-2">
-                  {checkpointSearch && (
-                    <span className="text-xs text-gray-500">
-                      {filteredSortedCheckpointData.length} of {checkpointTableData.length} results
-                    </span>
-                  )}
-                  <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    <Input
-                      placeholder="Search checkpoints..."
-                      value={checkpointSearch}
-                      onChange={(e) => setCheckpointSearch(e.target.value)}
-                      className="pl-9 h-9 text-sm"
-                    />
+                {/* Search bar + Filter button — above table */}
+                <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    {(checkpointSearch || activeCpFilterCount > 0) && (
+                      <span className="text-xs text-gray-500">
+                        {filteredSortedCheckpointData.length} of {checkpointTableData.length} results
+                      </span>
+                    )}
+                    {/* Active filter tags */}
+                    {activeCpFilterCount > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {cpFilters.buildingName && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                            Building: {cpFilters.buildingName}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, buildingId: "", buildingName: "", wingId: "", wingName: "", areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                          </Badge>
+                        )}
+                        {cpFilters.wingName && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                            Wing: {cpFilters.wingName}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, wingId: "", wingName: "", areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                          </Badge>
+                        )}
+                        {cpFilters.areaName && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                            Area: {cpFilters.areaName}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                          </Badge>
+                        )}
+                        {cpFilters.floorName && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                            Floor: {cpFilters.floorName}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                          </Badge>
+                        )}
+                        {cpFilters.roomName && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                            Room: {cpFilters.roomName}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, roomId: "", roomName: "" }))} />
+                          </Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAllCpFilters}
+                          className="text-xs text-[#C72030] hover:text-[#C72030] hover:bg-red-50 h-6 px-1.5"
+                        >
+                          Clear All
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <Input
+                        placeholder="Search checkpoints..."
+                        value={checkpointSearch}
+                        onChange={(e) => setCheckpointSearch(e.target.value)}
+                        className="pl-9 h-9 text-sm"
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsCpFilterOpen(true)}
+                      className={`flex items-center gap-1.5 h-9 text-sm ${
+                        activeCpFilterCount > 0
+                          ? "border-[#C72030] text-[#C72030] bg-red-50 hover:bg-red-100"
+                          : ""
+                      }`}
+                    >
+                      <Filter className="w-4 h-4" />
+                             {/* Filter */}
+                      {/* {activeCpFilterCount > 0 && (
+                        <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">
+                          {activeCpFilterCount}
+                        </Badge>
+                      )} */}
+                    </Button>
                   </div>
                 </div>
 
@@ -1803,7 +1915,7 @@ export const PatrollingDetailPage: React.FC = () => {
                   onDragEnd={handleCheckpointDragEnd}
                 >
                   <SortableContext
-                    items={filteredSortedCheckpointData.map((item) => item.id)}
+                    items={paginatedCheckpointData.map((item) => item.id)}
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-auto">
@@ -1816,18 +1928,18 @@ export const PatrollingDetailPage: React.FC = () => {
                                 <input
                                   type="checkbox"
                                   checked={
-                                    filteredSortedCheckpointData.length > 0 &&
-                                    filteredSortedCheckpointData.every((r) =>
+                                    paginatedCheckpointData.length > 0 &&
+                                    paginatedCheckpointData.every((r) =>
                                       selectedCheckpointIds.includes(r.id)
                                     )
                                   }
                                   ref={(el) => {
                                     if (el) {
-                                      const selected = filteredSortedCheckpointData.filter((r) =>
+                                      const selected = paginatedCheckpointData.filter((r) =>
                                         selectedCheckpointIds.includes(r.id)
                                       ).length;
                                       el.indeterminate =
-                                        selected > 0 && selected < filteredSortedCheckpointData.length;
+                                        selected > 0 && selected < paginatedCheckpointData.length;
                                     }
                                   }}
                                   onChange={(e) => handleSelectAllCheckpoints(e.target.checked)}
@@ -1873,14 +1985,16 @@ export const PatrollingDetailPage: React.FC = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {filteredSortedCheckpointData.length === 0 ? (
+                          {paginatedCheckpointData.length === 0 ? (
                             <TableRow>
                               <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                                {checkpointSearch ? `No checkpoints match "${checkpointSearch}"` : "No checkpoints available"}
+                                {checkpointSearch || activeCpFilterCount > 0
+                                  ? `No checkpoints match the current filters`
+                                  : "No checkpoints available"}
                               </TableCell>
                             </TableRow>
                           ) : (
-                            filteredSortedCheckpointData.map((item) => (
+                            paginatedCheckpointData.map((item) => (
                               <SortableCheckpointRow
                                 key={item.id}
                                 item={item}
@@ -1905,6 +2019,19 @@ export const PatrollingDetailPage: React.FC = () => {
                     </div>
                   </SortableContext>
                 </DndContext>
+
+                {/* Pagination */}
+                {filteredSortedCheckpointData.length > 0 && (
+                  <TicketPagination
+                    currentPage={cpPage}
+                    totalPages={cpTotalPages}
+                    totalRecords={filteredSortedCheckpointData.length}
+                    perPage={cpPageSize}
+                    isLoading={false}
+                    onPageChange={(page) => setCpPage(page)}
+                    onPerPageChange={() => {}}
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -2015,6 +2142,14 @@ export const PatrollingDetailPage: React.FC = () => {
           patrollingId={parseInt(id)}
         />
       )}
+
+      {/* Checkpoint location filter dialog */}
+      <CheckpointFilterDialog
+        isOpen={isCpFilterOpen}
+        onClose={() => setIsCpFilterOpen(false)}
+        onApply={(filters) => setCpFilters(filters)}
+        currentFilters={cpFilters}
+      />
     </div>
   );
 };

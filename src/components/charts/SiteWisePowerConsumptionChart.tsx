@@ -66,7 +66,7 @@ export const SiteWisePowerConsumptionChart: React.FC<SiteWisePowerChartProps> = 
   onDownload,
 }) => {
   const chartData = useMemo(() => {
-    if (data && Array.isArray(data) && data.length > 0) return data;
+    if (Array.isArray(data)) return data;
     return DEFAULT_DATA;
   }, [data]);
 
