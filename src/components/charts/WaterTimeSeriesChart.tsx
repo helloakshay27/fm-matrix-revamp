@@ -7,16 +7,18 @@ interface WaterTimeSeriesChartProps {
   data?: any[];
   title?: string;
   className?: string;
+  onDownload?: () => void;
 }
 
 export const WaterTimeSeriesChart: React.FC<WaterTimeSeriesChartProps> = ({ 
   data, 
   title = "Water Consumption - Time Series",
-  className = "" 
+  className = "",
+  onDownload,
 }) => {
 
   const chartData = useMemo(() => {
-    if (data && Array.isArray(data) && data.length > 0) return data;
+    if (Array.isArray(data)) return data;
     return [
       { date: '01', consumption: 366, peak: 366 },
       { date: '02', consumption: 302, peak: 302 },
@@ -36,7 +38,7 @@ export const WaterTimeSeriesChart: React.FC<WaterTimeSeriesChartProps> = ({
     ];
   }, [data]);
 
-  const handleDownload = () => {
+  const handleDefaultDownload = () => {
     const headers = ['Date', 'Consumption (KL)', 'Peak Level'];
     const rows = chartData.map(row => [row.date, row.consumption ?? '', row.peak ?? '']);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
@@ -47,6 +49,11 @@ export const WaterTimeSeriesChart: React.FC<WaterTimeSeriesChartProps> = ({
     a.download = `${title.replace(/\s+/g, '_')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownload = () => {
+    if (onDownload) onDownload();
+    else handleDefaultDownload();
   };
 
   return (

@@ -2,17 +2,10 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
 import {
-  Home,
   ChevronDown,
   ChevronRight,
   ChevronLeft,
   Target,
-  BarChart3,
-  TrendingUp,
-  PieChart,
-  Settings,
-  Briefcase,
-  Compass,
   User,
   MessageSquare,
   Megaphone,
@@ -23,59 +16,15 @@ import {
   FileText,
 } from "lucide-react";
 
-// Module-based navigation structures for Business Compass
-const businessCompassNavigation: Record<string, any> = {
-  "My Profile": {
+// Module-based navigation structures for Admin Compass
+const adminCompassNavigation: Record<string, any> = {
+  "Business Plan & Goals": {
     icon: User,
-    href: "/business-compass/profile",
-  },
-  Dashboard: {
-    icon: User,
-    href: "/business-compass/dashboard",
-  },
-  "Daily Report": {
-    icon: FileText,
-    href: "/business-compass/daily-report",
-  },
-  "Weekly Report": {
-    icon: User,
-    href: "/business-compass/weekly-report",
-  },
-  "Tasks and Issues": {
-    icon: Target,
-    href: "/business-compass/tasks-and-issues",
-  },
-  "Directory and Chat": {
-    icon: User,
-    href: "/business-compass/directory-and-chat",
-  },
-  Feedback: {
-    icon: MessageSquare,
-    href: "/business-compass/feedback",
-  },
-  Announcements: {
-    icon: Megaphone,
-    href: "/business-compass/announcements",
-  },
-  Leaderboard: {
-    icon: Trophy,
-    href: "/business-compass/leaderboard",
-  },
-  DISC: {
-    icon: Brain,
-    href: "/business-compass/disc-personality-assessment",
-  },
-  "Help Center": {
-    icon: HelpCircle,
-    href: "/business-compass/help-center",
-  },
-  "Bug Reports": {
-    icon: Bug,
-    href: "/business-compass/bug-reports",
+    href: "/admin-compass/business-plan-goals",
   },
 };
 
-export const BusinessCompassSidebar: React.FC = () => {
+export const AdminCompassSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
@@ -126,7 +75,7 @@ export const BusinessCompassSidebar: React.FC = () => {
       {!isSidebarCollapsed && (
         <div className="mb-2 sm:mb-4 px-2 sm:px-3">
           <h3 className="text-xs sm:text-sm font-medium text-[#1a1a1a] opacity-70 uppercase tracking-wide">
-            Business Compass
+            Admin Compass
           </h3>
         </div>
       )}
@@ -134,7 +83,7 @@ export const BusinessCompassSidebar: React.FC = () => {
       {/* Sidebar Content */}
       <div className="h-[calc(100%-120px)] py-1 sm:py-2">
         <nav className="space-y-1 sm:space-y-2 px-1 sm:px-2">
-          {Object.entries(businessCompassNavigation).map(
+          {Object.entries(adminCompassNavigation).map(
             ([key, section]: [string, any]) => {
               const Icon = section.icon;
               const hasItems = section.items && section.items.length > 0;

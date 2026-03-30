@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -24,6 +24,7 @@ import {
   Calendar,
   BarChart3,
 } from "lucide-react";
+import { API_CONFIG } from "@/config/apiConfig";
 import { WaterFilterDialog } from "../components/WaterFilterDialog";
 import { BulkUploadDialog } from "../components/BulkUploadDialog";
 import { AssetDataTable } from "../components/AssetDataTable";
@@ -174,6 +175,27 @@ export const UtilityWaterDashboard = () => {
     useState<string[]>(WATER_CHART_KEYS);
   const [chartOrder, setChartOrder] = useState<string[]>(WATER_CHART_KEYS);
 
+  // KPI card data from API
+  const [kpiData, setKpiData] = useState<{
+    total_consumption: number;
+    domestic: number;
+    flushing: number;
+    irrigation: number;
+  } | null>(null);
+  const [kpiLoading, setKpiLoading] = useState(false);
+
+  // Water source chart data from API
+  const [waterSourceData, setWaterSourceData] = useState<any[]>([]);
+  const [waterSourceLoading, setWaterSourceLoading] = useState(false);
+
+  // Site-wise water consumption data from API
+  const [siteWaterApiData, setSiteWaterApiData] = useState<any[]>([]);
+  const [siteWaterLoading, setSiteWaterLoading] = useState(false);
+
+  // Time series data from API
+  const [timeSeriesApiData, setTimeSeriesApiData] = useState<any[]>([]);
+  const [timeSeriesLoading, setTimeSeriesLoading] = useState(false);
+
   // ── Date range ────────────────────────────────────────────────────────────
   const getDefaultDateRange = () => {
     const today = new Date();
@@ -249,29 +271,6 @@ export const UtilityWaterDashboard = () => {
     assetType: true,
   });
 
-  // Static chart data
-  const siteWaterData = [
-    {
-      site: "Lockated Site 2",
-      mains: 560,
-      dg: 0,
-      renewable: 0,
-      consumptionPerSqFt: 0.00031,
-      costPerSqFt: null,
-    },
-  ];
-
-  const WaterSourceComsumpton = [
-    {
-      site: "Borewell",
-      mains: 100,
-      dg: 0,
-      renewable: 0,
-      consumptionPerSqFt: null,
-      costPerSqFt: null,
-    },
-  ];
-
   // Fetch on mount
   useEffect(() => {
     dispatch(fetchWaterAssetsData({ page: currentPage }));
@@ -283,16 +282,214 @@ export const UtilityWaterDashboard = () => {
     }
   }, [currentPage, filters, dispatch]);
 
-  useEffect(() => {
-    const fetchSiteWaterData = async () => {
-      try {
-        // API logic goes here for Water Analytics
-      } catch (err) {
-        console.error("Error fetching water chart data", err);
+  // ── Helper: convert DD/MM/YYYY → YYYY-MM-DD for API ────────────────────
+  const toApiDate = (ddmmyyyy: string): string => {
+    const parts = ddmmyyyy.split("/");
+    if (parts.length !== 3) return ddmmyyyy;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  };
+
+  // ── Helper: get site_id from localStorage ─────────────────────────────────
+  const getSiteId = () => localStorage.getItem("selectedSiteId") || "";
+
+  // ── Fetch all water analytics data ────────────────────────────────────────
+  const fetchWaterAnalytics = useCallback(async () => {
+    const siteId = getSiteId();
+    const fromDate = toApiDate(analyticsDateRange.startDate);
+    const toDate = toApiDate(analyticsDateRange.endDate);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+    if (!baseUrl || !token) return;
+
+    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+    // 1️⃣ KPI cards
+    setKpiLoading(true);
+    try {
+      const kpiRes = await fetch(
+        `${baseUrl}/utility_dashboard/water_kpis.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
+        { headers }
+      );
+      if (kpiRes.ok) {
+        const kpiJson = await kpiRes.json();
+        if (kpiJson.success === 1 && kpiJson.response) {
+          setKpiData(kpiJson.response);
+        }
       }
-    };
-    fetchSiteWaterData();
-  }, []);
+    } catch (err) {
+      console.error("Error fetching water KPIs:", err);
+    } finally {
+      setKpiLoading(false);
+    }
+
+    // 2️⃣ Water Source Consumption chart
+    setWaterSourceLoading(true);
+    try {
+      const srcRes = await fetch(
+        `${baseUrl}/utility_dashboard/water_source.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
+        { headers }
+      );
+      if (srcRes.ok) {
+        const srcJson = await srcRes.json();
+        if (srcJson.success === 1 && srcJson.response && typeof srcJson.response === "object") {
+          const transformed = Object.entries(srcJson.response).map(([sourceName, values]: [string, any]) => ({
+            site: sourceName,
+            mains: values.domestic || values.total || 0,
+            dg: values.flushing || 0,
+            renewable: values.irrigation || 0,
+            consumptionPerSqFt: values.consumption_per_sq_feet ?? null,
+            costPerSqFt: values.cost_per_sq_feet ?? null,
+          }));
+          setWaterSourceData(transformed);
+        } else {
+          setWaterSourceData([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching water source data:", err);
+    } finally {
+      setWaterSourceLoading(false);
+    }
+
+    // 3️⃣ Site Wise Water Consumption chart
+    setSiteWaterLoading(true);
+    try {
+      const siteRes = await fetch(
+        `${baseUrl}/utility_dashboard/site_wise_water_consumption.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
+        { headers }
+      );
+      if (siteRes.ok) {
+        const siteJson = await siteRes.json();
+        if (siteJson.success === 1 && siteJson.response && typeof siteJson.response === "object") {
+          const transformed = Object.entries(siteJson.response).map(([siteName, values]: [string, any]) => ({
+            site: siteName,
+            mains: values.domestic || 0,
+            dg: values.flushing || 0,
+            renewable: values.irrigation || 0,
+            consumptionPerSqFt: values.consumption_per_sq_feet ?? null,
+            costPerSqFt: values.cost_per_sq_feet ?? null,
+          }));
+          setSiteWaterApiData(transformed);
+        } else {
+          setSiteWaterApiData([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching site-wise water data:", err);
+    } finally {
+      setSiteWaterLoading(false);
+    }
+
+    // 4️⃣ Water Consumption Time Series
+    setTimeSeriesLoading(true);
+    try {
+      const tsRes = await fetch(
+        `${baseUrl}/utility_dashboard/water_consumption_time_series.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
+        { headers }
+      );
+      if (tsRes.ok) {
+        const tsJson = await tsRes.json();
+        if (tsJson.success === 1 && tsJson.response && typeof tsJson.response === "object") {
+          const transformed = Object.entries(tsJson.response).map(([monthKey, values]: [string, any]) => ({
+            date: monthKey,
+            consumption: values.total || 0,
+            domestic: values.domestic_KL || 0,
+            flushing: values.flushing_KL || 0,
+            irrigation: values.irrigation_KL || 0,
+            average: values.average || 0,
+            peak: values.total || 0,
+          }));
+          setTimeSeriesApiData(transformed);
+        } else {
+          setTimeSeriesApiData([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching water time series data:", err);
+    } finally {
+      setTimeSeriesLoading(false);
+    }
+  }, [analyticsDateRange]);
+
+  useEffect(() => {
+    fetchWaterAnalytics();
+  }, [fetchWaterAnalytics]);
+
+  // ── Download handlers ─────────────────────────────────────────────────────
+  const handleWaterSourceDownload = async () => {
+    const siteId = getSiteId();
+    const fromDate = toApiDate(analyticsDateRange.startDate);
+    const toDate = toApiDate(analyticsDateRange.endDate);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+    try {
+      const res = await fetch(
+        `${baseUrl}/utility_dashboard/water_download.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&type=source`,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `water_source_consumption_${fromDate}_to_${toDate}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    } catch (err) {
+      console.error("Error downloading water source data:", err);
+    }
+  };
+
+  const handleSiteWiseWaterDownload = async () => {
+    const siteId = getSiteId();
+    const fromDate = toApiDate(analyticsDateRange.startDate);
+    const toDate = toApiDate(analyticsDateRange.endDate);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+    try {
+      const res = await fetch(
+        `${baseUrl}/utility_dashboard/water_download.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&type=sitewise`,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `site_wise_water_consumption_${fromDate}_to_${toDate}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    } catch (err) {
+      console.error("Error downloading site-wise water data:", err);
+    }
+  };
+
+  const handleTimeSeriesDownload = async () => {
+    const siteId = getSiteId();
+    const fromDate = toApiDate(analyticsDateRange.startDate);
+    const toDate = toApiDate(analyticsDateRange.endDate);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+    try {
+      const res = await fetch(
+        `${baseUrl}/utility_dashboard/water_download.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&type=timeseries`,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `water_time_series_${fromDate}_to_${toDate}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    } catch (err) {
+      console.error("Error downloading water time series data:", err);
+    }
+  };
 
   // Transform assets
   const transformedAssets = waterAssets.map((asset, index) => ({
@@ -636,17 +833,22 @@ export const UtilityWaterDashboard = () => {
               {[
                 {
                   label: "Total Water Consumption",
-                  value: "0 kL",
+                  value: kpiLoading ? "Loading..." : `${(kpiData?.total_consumption ?? 0).toLocaleString()} kL`,
                   icon: <Droplets className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
                   label: "Domestic Total",
-                  value: "0 kL",
+                  value: kpiLoading ? "Loading..." : `${(kpiData?.domestic ?? 0).toLocaleString()} kL`,
                   icon: <Activity className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
                   label: "Flushing Total",
-                  value: "0 kL",
+                  value: kpiLoading ? "Loading..." : `${(kpiData?.flushing ?? 0).toLocaleString()} kL`,
+                  icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: "Irrigation Total",
+                  value: kpiLoading ? "Loading..." : `${(kpiData?.irrigation ?? 0).toLocaleString()} kL`,
                   icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
                 },
               ].map((item, i) => (
@@ -688,7 +890,13 @@ export const UtilityWaterDashboard = () => {
                             <SortableChartItem key={key} id={key}>
                               <SiteWisePowerConsumptionChart
                                 title="Water Source Consumption"
-                                data={WaterSourceComsumpton}
+                                data={waterSourceData}
+                                bars={[
+                                  { dataKey: "mains", name: "Domestic", fill: "#C72030" },
+                                  { dataKey: "dg", name: "Flushing", fill: "#C6B692" },
+                                  { dataKey: "renewable", name: "Irrigation", fill: "#8B6914" },
+                                ]}
+                                onDownload={handleWaterSourceDownload}
                               />
                             </SortableChartItem>
                           );
@@ -698,7 +906,13 @@ export const UtilityWaterDashboard = () => {
                             <SortableChartItem key={key} id={key}>
                               <SiteWisePowerConsumptionChart
                                 title="Site Wise Domestic Water Consumption"
-                                data={siteWaterData}
+                                data={siteWaterApiData}
+                                bars={[
+                                  { dataKey: "mains", name: "Domestic", fill: "#C72030" },
+                                  { dataKey: "dg", name: "Flushing", fill: "#C6B692" },
+                                  { dataKey: "renewable", name: "Irrigation", fill: "#8B6914" },
+                                ]}
+                                onDownload={handleSiteWiseWaterDownload}
                               />
                             </SortableChartItem>
                           );
@@ -710,7 +924,11 @@ export const UtilityWaterDashboard = () => {
 
                   {timeSeriesVisible && (
                     <SortableChartItem key="timeSeries" id="timeSeries">
-                      <WaterTimeSeriesChart title="Water Consumption - Time Series" />
+                      <WaterTimeSeriesChart
+                        title="Water Consumption - Time Series"
+                        data={timeSeriesApiData}
+                        onDownload={handleTimeSeriesDownload}
+                      />
                     </SortableChartItem>
                   )}
 
