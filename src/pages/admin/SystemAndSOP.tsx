@@ -242,7 +242,7 @@ function EditSystemSopDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-0 shadow-xl sm:max-w-2xl">
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-neutral-200 bg-[#FFF0EE] p-0 shadow-xl sm:max-w-2xl">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-white px-5 py-4 sm:px-6">
           <DialogHeader className="m-0 flex-1 space-y-0 p-0 text-left">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[#DA7756]">
@@ -604,7 +604,7 @@ function AddNewSystemSopDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-0 shadow-xl sm:max-w-2xl">
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-neutral-200 bg-[#FFF0EE] p-0 shadow-xl sm:max-w-2xl">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-white px-5 py-4 sm:px-6">
           <DialogHeader className="m-0 flex-1 space-y-0 p-0 text-left">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[#DA7756]">
