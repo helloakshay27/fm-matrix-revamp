@@ -27,6 +27,10 @@ const adminCompassNavigation: Record<string, any> = {
     icon: Trophy,
     href: "/admin-compass/weekly-meetings",
   },
+  "Team Dashboard": {
+    icon: MessageSquare,
+    href: "/admin-compass/team-dashboard",
+  },
   "FB Dashboard": {
     icon: LineChart,
     href: "/admin-compass/feedback-dashboard",
