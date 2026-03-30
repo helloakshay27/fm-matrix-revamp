@@ -131,12 +131,51 @@ const initialColumns = (): Record<ColumnKey, SopCardData[]> => ({
   running: [],
 });
 
-function healthForColumn(col: ColumnKey): number {
-  if (col === "running") return 100;
-  return 0;
+const SOP_KANBAN_STORAGE_KEY = "fm-system-sops-kanban-v1";
+
+function coerceHealthPercent(n: unknown): number {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, v));
 }
 
-const SOP_KANBAN_STORAGE_KEY = "fm-system-sops-kanban-v1";
+function normalizeSopCard(c: SopCardData): SopCardData {
+  return {
+    ...c,
+    healthPercent: coerceHealthPercent(c.healthPercent),
+  };
+}
+
+function buildHealthMapFromColumns(
+  cols: Record<ColumnKey, SopCardData[]>
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const key of Object.keys(cols) as ColumnKey[]) {
+    for (const c of cols[key]) {
+      out[c.id] = coerceHealthPercent(c.healthPercent);
+    }
+  }
+  return out;
+}
+
+function mergeHealthIntoColumns(
+  cols: Record<ColumnKey, SopCardData[]>,
+  healthByCardId: Record<string, number>
+): Record<ColumnKey, SopCardData[]> {
+  const apply = (cards: SopCardData[]): SopCardData[] =>
+    cards.map((c) => ({
+      ...c,
+      healthPercent:
+        healthByCardId[c.id] !== undefined
+          ? healthByCardId[c.id]
+          : coerceHealthPercent(c.healthPercent),
+    }));
+  return {
+    toStart: apply(cols.toStart),
+    broken: apply(cols.broken),
+    running: apply(cols.running),
+  };
+}
 
 function loadColumnsFromStorage(): Record<ColumnKey, SopCardData[]> {
   try {
@@ -150,10 +189,12 @@ function loadColumnsFromStorage(): Record<ColumnKey, SopCardData[]> {
     ) {
       return initialColumns();
     }
+    const mapCol = (arr: unknown[]) =>
+      (arr as SopCardData[]).map((c) => normalizeSopCard(c));
     return {
-      toStart: parsed.toStart as SopCardData[],
-      broken: parsed.broken as SopCardData[],
-      running: parsed.running as SopCardData[],
+      toStart: mapCol(parsed.toStart),
+      broken: mapCol(parsed.broken),
+      running: mapCol(parsed.running),
     };
   } catch {
     return initialColumns();
@@ -889,6 +930,7 @@ function AddNewSystemSopDialog({
 function SopKanbanCard({
   item,
   column,
+  displayHealthPercent,
   dragHandleProps,
   onEditClick,
   onDuplicateClick,
@@ -896,12 +938,14 @@ function SopKanbanCard({
 }: {
   item: SopCardData;
   column: ColumnKey;
+  /** User-controlled health; not derived from drag. */
+  displayHealthPercent: number;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
   onEditClick?: () => void;
   onDuplicateClick?: () => void;
   onDeleteClick?: () => void;
 }) {
-  const health = item.healthPercent;
+  const health = coerceHealthPercent(displayHealthPercent);
   const statusBadge =
     column === "running" ? (
       <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
@@ -960,7 +1004,7 @@ function SopKanbanCard({
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
               <div
-                className={cn("h-full rounded-full transition-all", barClass)}
+                className={cn("h-full rounded-full transition-colors", barClass)}
                 style={{ width: `${health}%` }}
               />
             </div>
@@ -1012,6 +1056,7 @@ function SopKanbanCard({
 function DraggableSopCard({
   item,
   column,
+  displayHealthPercent,
   disabled,
   onEditClick,
   onDuplicateClick,
@@ -1019,6 +1064,7 @@ function DraggableSopCard({
 }: {
   item: SopCardData;
   column: ColumnKey;
+  displayHealthPercent: number;
   disabled?: boolean;
   onEditClick?: () => void;
   onDuplicateClick?: () => void;
@@ -1042,6 +1088,7 @@ function DraggableSopCard({
       <SopKanbanCard
         item={item}
         column={column}
+        displayHealthPercent={displayHealthPercent}
         dragHandleProps={{ ...listeners, ...attributes }}
         onEditClick={onEditClick}
         onDuplicateClick={onDuplicateClick}
@@ -1159,8 +1206,12 @@ const SystemAndSOP = () => {
   const [bannerVisible, setBannerVisible] = useState(true);
   const [sopTab, setSopTab] = useState<SopTab>("my");
   const [search, setSearch] = useState("");
-  const [columns, setColumns] = useState<Record<ColumnKey, SopCardData[]>>(
-    () => loadColumnsFromStorage()
+  // Fresh read on each mount (e.g. after navigating away and back). Do not cache in module scope.
+  const [columns, setColumns] = useState<Record<ColumnKey, SopCardData[]>>(() =>
+    loadColumnsFromStorage()
+  );
+  const [healthByCardId, setHealthByCardId] = useState<Record<string, number>>(
+    () => buildHealthMapFromColumns(loadColumnsFromStorage())
   );
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -1172,11 +1223,12 @@ const SystemAndSOP = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(SOP_KANBAN_STORAGE_KEY, JSON.stringify(columns));
+      const merged = mergeHealthIntoColumns(columns, healthByCardId);
+      localStorage.setItem(SOP_KANBAN_STORAGE_KEY, JSON.stringify(merged));
     } catch {
       /* ignore quota / private mode */
     }
-  }, [columns]);
+  }, [columns, healthByCardId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1263,10 +1315,6 @@ const SystemAndSOP = () => {
       if (fromIdx < 0) return prev;
 
       const [moved] = fromList.splice(fromIdx, 1);
-      const updated: SopCardData = {
-        ...moved,
-        healthPercent: healthForColumn(targetCol),
-      };
 
       if (sourceCol === targetCol) {
         const list = fromList;
@@ -1274,7 +1322,7 @@ const SystemAndSOP = () => {
           ? list.findIndex((c) => c.id === insertBeforeId)
           : list.length;
         if (insertIdx < 0) insertIdx = list.length;
-        list.splice(insertIdx, 0, updated);
+        list.splice(insertIdx, 0, moved);
         return { ...prev, [sourceCol]: list };
       }
 
@@ -1283,7 +1331,7 @@ const SystemAndSOP = () => {
         ? toList.findIndex((c) => c.id === insertBeforeId)
         : toList.length;
       if (insertIdx < 0) insertIdx = toList.length;
-      toList.splice(insertIdx, 0, updated);
+      toList.splice(insertIdx, 0, moved);
 
       return {
         ...prev,
@@ -1299,6 +1347,8 @@ const SystemAndSOP = () => {
 
   const handleEditSave = useCallback(
     (next: SopCardData, targetColumn: ColumnKey) => {
+      const hp = coerceHealthPercent(next.healthPercent);
+      setHealthByCardId((prev) => ({ ...prev, [next.id]: hp }));
       setColumns((prev) => {
         const sourceCol = findColumnForCard(prev, next.id);
         if (!sourceCol) return prev;
@@ -1307,9 +1357,10 @@ const SystemAndSOP = () => {
           broken: prev.broken.filter((c) => c.id !== next.id),
           running: prev.running.filter((c) => c.id !== next.id),
         };
+        const withHealth = { ...next, healthPercent: hp };
         return {
           ...cleaned,
-          [targetColumn]: [...cleaned[targetColumn], next],
+          [targetColumn]: [...cleaned[targetColumn], withHealth],
         };
       });
       setEditOpen(false);
@@ -1320,9 +1371,11 @@ const SystemAndSOP = () => {
 
   const handleAddCreate = useCallback(
     (item: SopCardData, targetColumn: ColumnKey) => {
+      const hp = coerceHealthPercent(item.healthPercent);
+      setHealthByCardId((prev) => ({ ...prev, [item.id]: hp }));
       setColumns((prev) => ({
         ...prev,
-        [targetColumn]: [...prev[targetColumn], item],
+        [targetColumn]: [...prev[targetColumn], { ...item, healthPercent: hp }],
       }));
       setAddOpen(false);
     },
@@ -1336,6 +1389,11 @@ const SystemAndSOP = () => {
         id: `sop-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         title: `${item.title} (copy)`,
       };
+      setHealthByCardId((prev) => ({
+        ...prev,
+        [copy.id]:
+          prev[item.id] ?? coerceHealthPercent(item.healthPercent),
+      }));
       setColumns((prev) => {
         const list = [...prev[column]];
         const idx = list.findIndex((c) => c.id === item.id);
@@ -1356,6 +1414,11 @@ const SystemAndSOP = () => {
     ) {
       return;
     }
+    setHealthByCardId((prev) => {
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
     setColumns((prev) => ({
       toStart: prev.toStart.filter((c) => c.id !== itemId),
       broken: prev.broken.filter((c) => c.id !== itemId),
@@ -1380,6 +1443,14 @@ const SystemAndSOP = () => {
     if (!col) return null;
     return columns[col].find((c) => c.id === activeDragId) ?? null;
   }, [activeDragId, columns]);
+
+  const activeDisplayHealth = useMemo(() => {
+    if (!activeItem || !activeDragId) return 0;
+    return (
+      healthByCardId[activeDragId] ??
+      coerceHealthPercent(activeItem.healthPercent)
+    );
+  }, [activeItem, activeDragId, healthByCardId]);
 
   const activeColumn = activeDragId
     ? findColumnForCard(columns, activeDragId)
@@ -1583,8 +1654,18 @@ const SystemAndSOP = () => {
                                 key={item.id}
                                 item={item}
                                 column={col.key}
+                                displayHealthPercent={
+                                  healthByCardId[item.id] ??
+                                  coerceHealthPercent(item.healthPercent)
+                                }
                                 onEditClick={() => {
-                                  setEditTarget({ item, column: col.key });
+                                  const hp =
+                                    healthByCardId[item.id] ??
+                                    coerceHealthPercent(item.healthPercent);
+                                  setEditTarget({
+                                    item: { ...item, healthPercent: hp },
+                                    column: col.key,
+                                  });
                                   setEditOpen(true);
                                 }}
                                 onDuplicateClick={() =>
@@ -1606,7 +1687,11 @@ const SystemAndSOP = () => {
             <DragOverlay dropAnimation={null}>
               {activeItem && activeColumn ? (
                 <div className="w-[min(100vw-2rem,320px)] cursor-grabbing opacity-95 shadow-xl">
-                  <SopKanbanCard item={activeItem} column={activeColumn} />
+                  <SopKanbanCard
+                    item={activeItem}
+                    column={activeColumn}
+                    displayHealthPercent={activeDisplayHealth}
+                  />
                 </div>
               ) : null}
             </DragOverlay>
