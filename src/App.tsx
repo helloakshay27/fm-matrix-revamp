@@ -1235,6 +1235,7 @@ import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompa
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
+import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
 
 const queryClient = new QueryClient();
 
@@ -2095,6 +2096,10 @@ function App() {
                           <Route
                             path="/admin-compass/business-plan-goals"
                             element={<BusinessPlanAndGoles />}
+                          />
+                          <Route
+                            path="/admin-compass/weekly-meetings"
+                            element={<WeeklyMeetings />}
                           />
                           <Route
                             path="/admin-compass/feedback-dashboard"

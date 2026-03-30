@@ -23,17 +23,21 @@ const adminCompassNavigation: Record<string, any> = {
     icon: User,
     href: "/admin-compass/business-plan-goals",
   },
-  "Feedback Dashboard": {
+  "Weekly Meetings": {
+    icon: Trophy,
+    href: "/admin-compass/weekly-meetings",
+  },
+  "FB Dashboard": {
     icon: LineChart,
     href: "/admin-compass/feedback-dashboard",
-  },
-  "Systems & SOPs": {
-    icon: FileText,
-    href: "/admin-compass/systems-sops",
   },
   "DISC Report": {
     icon: Brain,
     href: "/admin-compass/disc-report",
+  },
+  "Systems & SOPs": {
+    icon: FileText,
+    href: "/admin-compass/systems-sops",
   },
 };
 
