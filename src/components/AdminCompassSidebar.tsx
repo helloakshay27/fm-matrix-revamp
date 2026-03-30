@@ -18,53 +18,9 @@ import {
 
 // Module-based navigation structures for Admin Compass
 const adminCompassNavigation: Record<string, any> = {
-  "My Profile": {
+  "Business Plan & Goals": {
     icon: User,
-    href: "/admin-compass/profile",
-  },
-  Dashboard: {
-    icon: User,
-    href: "/admin-compass/dashboard",
-  },
-  "Daily Report": {
-    icon: FileText,
-    href: "/admin-compass/daily-report",
-  },
-  "Weekly Report": {
-    icon: User,
-    href: "/admin-compass/weekly-report",
-  },
-  "Tasks and Issues": {
-    icon: Target,
-    href: "/admin-compass/tasks-and-issues",
-  },
-  "Directory and Chat": {
-    icon: User,
-    href: "/admin-compass/directory-and-chat",
-  },
-  Feedback: {
-    icon: MessageSquare,
-    href: "/admin-compass/feedback",
-  },
-  Announcements: {
-    icon: Megaphone,
-    href: "/admin-compass/announcements",
-  },
-  Leaderboard: {
-    icon: Trophy,
-    href: "/admin-compass/leaderboard",
-  },
-  DISC: {
-    icon: Brain,
-    href: "/admin-compass/disc-personality-assessment",
-  },
-  "Help Center": {
-    icon: HelpCircle,
-    href: "/admin-compass/help-center",
-  },
-  "Bug Reports": {
-    icon: Bug,
-    href: "/admin-compass/bug-reports",
+    href: "/admin-compass/business-plan-goals",
   },
 };
 

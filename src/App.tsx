@@ -1231,6 +1231,7 @@ import BusinessWeeklyReport from "./pages/BusinessCompass/BusinessWeeklyReport";
 import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompassTasksAndIssues";
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
+import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
 
 const queryClient = new QueryClient();
 
@@ -1395,7 +1396,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2075,6 +2076,12 @@ function App() {
                             path="/business-compass/bug-reports"
                             element={<BugReports />}
                           />
+
+                          <Route
+                            path="/admin-compass/business-plan-goals"
+                            element={<BusinessPlanAndGoles />}
+                          />
+
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route

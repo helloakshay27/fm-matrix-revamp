@@ -483,7 +483,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             isEmployeeUser && isLocalhost
               ? currentSection === "Project Task" ||
                 currentSection === "Business Compass" ||
-                location.pathname.includes("/business-compass")
+                currentSection === "Admin Compass" ||
+                location.pathname.includes("/business-compass") ||
+                location.pathname.includes("/admin-compass")
                 ? isSidebarCollapsed
                   ? "ml-16"
                   : "ml-64"
