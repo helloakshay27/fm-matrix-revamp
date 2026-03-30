@@ -96,7 +96,7 @@ const FeedbackDashboard = () => {
     <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-white shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
             <LineChart className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
           </div>
           <div>
@@ -179,7 +179,7 @@ const FeedbackDashboard = () => {
           </Card>
         </div>
 
-        <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-md sm:p-6">
+        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 text-lg font-semibold text-neutral-900">
             Feedback by Department
           </h2>
@@ -187,7 +187,7 @@ const FeedbackDashboard = () => {
             {DEPARTMENTS.map((d) => (
               <li
                 key={d.name}
-                className="flex items-center gap-3 rounded-xl border border-neutral-100 bg-[#FFFDF0]/80 px-3 py-3 sm:gap-4 sm:px-4"
+                className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4]/90 px-3 py-3 sm:gap-4 sm:px-4"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
                   {d.rank}
@@ -207,7 +207,7 @@ const FeedbackDashboard = () => {
         </Card>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-md sm:p-6">
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
             <h2 className="mb-4 text-lg font-semibold text-neutral-900">
               Most Feedback Received
             </h2>
@@ -232,7 +232,7 @@ const FeedbackDashboard = () => {
             </ul>
           </Card>
 
-          <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-md sm:p-6">
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
             <h2 className="mb-4 text-lg font-semibold text-neutral-900">
               Most Feedback Given
             </h2>
@@ -258,17 +258,17 @@ const FeedbackDashboard = () => {
           </Card>
         </div>
 
-        <div className="rounded-2xl border border-violet-200/80 bg-violet-50/90 px-4 py-5 shadow-sm sm:px-6 sm:py-6">
+        <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-5 shadow-sm sm:px-6 sm:py-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex gap-3 sm:gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-200/80">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-200/70">
                 <Wand2 className="h-5 w-5 text-violet-700" strokeWidth={2} />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-violet-950 sm:text-lg">
+                <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
                   AI-Powered Feedback Analysis
                 </h2>
-                <p className="mt-1 max-w-xl text-sm text-violet-900/85">
+                <p className="mt-1 max-w-xl text-sm text-neutral-600">
                   Click &quot;Generate AI Summary&quot; to get insights on team
                   feedback patterns and recommendations.
                 </p>
@@ -289,7 +289,7 @@ const FeedbackDashboard = () => {
           </div>
         </div>
 
-        <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-md sm:p-6">
+        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 text-lg font-semibold text-neutral-900">
             Recent Feedback Activity
           </h2>
@@ -297,7 +297,7 @@ const FeedbackDashboard = () => {
             {RECENT.map((row) => (
               <li
                 key={row.id}
-                className="flex flex-col gap-3 rounded-xl border border-neutral-200/90 bg-[#FFFDF0] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-neutral-900">

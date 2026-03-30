@@ -242,8 +242,8 @@ function EditSystemSopDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-neutral-200 bg-[#FFF0EE] p-0 shadow-xl sm:max-w-2xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-white px-5 py-4 sm:px-6">
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-0 shadow-xl sm:max-w-2xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
           <DialogHeader className="m-0 flex-1 space-y-0 p-0 text-left">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[#DA7756]">
               <Pencil className="h-5 w-5 shrink-0 text-[#C72030]" strokeWidth={2} />
@@ -272,8 +272,8 @@ function EditSystemSopDialog({
 
         <div className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
           {fieldWrap(
-            "border-pink-200/80",
-            "bg-pink-50/40",
+            "border-neutral-200",
+            "bg-white",
             <>
               <Label htmlFor="sop-system-name" className="font-semibold text-neutral-900">
                 System Name <span className="text-[#DA7756]">*</span>
@@ -306,8 +306,8 @@ function EditSystemSopDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             {fieldWrap(
-              "border-pink-200/90",
-              "bg-pink-50/30",
+              "border-neutral-200",
+              "bg-white",
               <>
                 <Label className="font-semibold text-neutral-900">
                   Department <span className="text-[#DA7756]">*</span>
@@ -402,8 +402,8 @@ function EditSystemSopDialog({
           )}
 
           {fieldWrap(
-            "border-violet-200/90",
-            "bg-violet-50/40",
+            "border-neutral-200",
+            "bg-white",
             <>
               <Label className="font-semibold text-neutral-900">
                 Assign to User <span className="text-[#DA7756]">*</span>
@@ -503,11 +503,11 @@ function EditSystemSopDialog({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-neutral-100 bg-neutral-50/50 px-5 py-4 sm:px-6">
+        <div className="flex justify-end gap-2 border-t border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-300 bg-white px-5 text-sm font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"
+            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50"
           >
             Cancel
           </button>
@@ -604,8 +604,8 @@ function AddNewSystemSopDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-neutral-200 bg-[#FFF0EE] p-0 shadow-xl sm:max-w-2xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-white px-5 py-4 sm:px-6">
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-0 shadow-xl sm:max-w-2xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
           <DialogHeader className="m-0 flex-1 space-y-0 p-0 text-left">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[#DA7756]">
               <Plus className="h-5 w-5 shrink-0 text-[#C72030]" strokeWidth={2} />
@@ -630,8 +630,8 @@ function AddNewSystemSopDialog({
 
         <div className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
           {fieldWrap(
-            "border-sky-200/90",
-            "bg-sky-50/40",
+            "border-neutral-200",
+            "bg-white",
             <>
               <Label htmlFor="add-sop-name" className="font-semibold text-neutral-900">
                 System Name <span className="text-[#DA7756]">*</span>
@@ -665,8 +665,8 @@ function AddNewSystemSopDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             {fieldWrap(
-              "border-violet-200/90",
-              "bg-violet-50/40",
+              "border-neutral-200",
+              "bg-white",
               <>
                 <Label className="font-semibold text-neutral-900">
                   Department <span className="text-[#DA7756]">*</span>
@@ -764,8 +764,8 @@ function AddNewSystemSopDialog({
           )}
 
           {fieldWrap(
-            "border-sky-200/90",
-            "bg-sky-50/30",
+            "border-neutral-200",
+            "bg-white",
             <>
               <Label className="font-semibold text-neutral-900">
                 Assign to User <span className="text-[#DA7756]">*</span>
@@ -868,11 +868,11 @@ function AddNewSystemSopDialog({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-neutral-100 bg-neutral-50/50 px-5 py-4 sm:px-6">
+        <div className="flex justify-end gap-2 border-t border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-300 bg-white px-5 text-sm font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"
+            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50"
           >
             Cancel
           </button>
@@ -1486,7 +1486,7 @@ const SystemAndSOP = () => {
           </div>
         </div>
 
-        <Card className="rounded-2xl border border-neutral-200/90 bg-white p-3 shadow-sm sm:p-4">
+        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-3 shadow-sm sm:p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
             <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <FilterSelect label="All Departments" />
@@ -1662,10 +1662,10 @@ const SystemAndSOP = () => {
         )}
 
         {showBottomEmpty && (
-          <Card className="rounded-2xl border border-neutral-200/90 bg-white py-16 shadow-sm">
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 py-16 shadow-sm">
             <div className="flex flex-col items-center justify-center px-4 text-center">
               <FileText
-                className="mb-4 h-14 w-14 text-neutral-300"
+                className="mb-4 h-14 w-14 text-[#DA7756]/40"
                 strokeWidth={1.25}
               />
               <p className="text-lg font-semibold text-neutral-900">

@@ -414,8 +414,8 @@ function LearnTabContent() {
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-sm">
-        <div className="border-b border-neutral-100 p-4 sm:p-6">
+      <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+        <div className="border-b border-[#DA7756]/20 p-4 sm:p-6">
           <div className="flex flex-wrap items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#DA7756]/10">
               <FileVideo className="h-6 w-6 text-[#C72030]" strokeWidth={2} />
@@ -430,8 +430,8 @@ function LearnTabContent() {
             </div>
           </div>
         </div>
-        <div className="bg-neutral-900/5 p-3 sm:p-4">
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-neutral-200 bg-black shadow-inner">
+        <div className="bg-[#DA7756]/5 p-3 sm:p-4">
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-[#DA7756]/25 bg-black shadow-inner">
             <iframe
               title="How to Use DISC Test in HR — What is DISC?"
               className="absolute inset-0 h-full w-full"
@@ -443,9 +443,9 @@ function LearnTabContent() {
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-sm sm:p-6">
+      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
         <div className="mb-4 flex flex-wrap items-start gap-3 sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-white shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
             <BookOpen className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
           </div>
           <div>
@@ -474,7 +474,7 @@ function LearnTabContent() {
                 "rounded-xl border px-3 py-3 text-center text-sm font-semibold transition-all",
                 discKey === t.key
                   ? LEARN_PROFILE_ICON_BY_DISC[t.key].tabSelected
-                  : "border-neutral-200 bg-neutral-100/90 text-neutral-600 hover:bg-neutral-200/80 hover:text-neutral-900"
+                  : "border-[#DA7756]/20 bg-[#DA7756]/10 text-neutral-600 hover:bg-[#DA7756]/15 hover:text-neutral-900"
               )}
             >
               <span className="text-lg font-bold">{t.label}</span>
@@ -491,7 +491,7 @@ function LearnTabContent() {
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-sm sm:p-6">
+      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
         <div className="mb-4 flex flex-wrap items-start gap-3 sm:gap-4">
           <div
             className={cn(
@@ -520,7 +520,7 @@ function LearnTabContent() {
           </div>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-1 rounded-xl bg-neutral-100/90 p-1.5">
+        <div className="mb-5 flex flex-wrap gap-1 rounded-xl border border-[#DA7756]/15 bg-[#DA7756]/10 p-1.5">
           {LEARN_SUB_TABS.map((st) => (
             <button
               key={st.key}
@@ -529,7 +529,7 @@ function LearnTabContent() {
               className={cn(
                 "flex-1 min-w-[5.5rem] rounded-lg px-2 py-2.5 text-center text-xs font-medium transition-all sm:min-w-0 sm:text-sm",
                 subTab === st.key
-                  ? "bg-white font-semibold text-neutral-900 shadow-sm"
+                  ? "bg-[#DA7756]/10 font-semibold text-neutral-900 shadow-sm"
                   : "text-neutral-600 hover:text-neutral-900"
               )}
             >
@@ -579,7 +579,7 @@ function LearnTabContent() {
         )}
       </Card>
 
-      <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-sm sm:p-6">
+      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-bold text-neutral-900">
           How DISC Types Interact
         </h3>
@@ -703,12 +703,12 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
   return (
     <div
       className={cn(
-        "w-full rounded-2xl border border-neutral-200/90 bg-white p-4 text-left shadow-sm transition-all sm:p-5",
+        "w-full rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 text-left shadow-sm transition-all sm:p-5",
         "hover:border-[#DA7756]/35 hover:shadow-md"
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-white shadow-sm">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
           <Users className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
         </div>
         <div className="min-w-0 flex-1">
@@ -777,7 +777,7 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border border-neutral-200/80 bg-[#f6f4ee]/80 px-3 py-2.5">
+      <div className="mt-4 rounded-xl border border-[#DA7756]/20 bg-[#f6f4ee]/80 px-3 py-2.5">
         <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
           Department Head
         </p>
@@ -801,7 +801,7 @@ function TeamsTabContent() {
   }, [deptSearch]);
 
   return (
-    <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-sm sm:p-6">
+    <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
       <div className="mb-4 flex flex-wrap items-start gap-2">
         <Users
           className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
@@ -832,7 +832,7 @@ function TeamsTabContent() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-neutral-200 bg-[#f6f4ee]/50 py-10 text-center">
+        <div className="rounded-xl border border-dashed border-[#DA7756]/30 bg-[#DA7756]/10 py-10 text-center">
           <p className="text-sm text-neutral-500">
             No departments match your search.
           </p>
@@ -970,7 +970,7 @@ const DiscReport = () => {
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-white shadow-sm">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
               <Brain className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
             </div>
             <div>
@@ -992,7 +992,7 @@ const DiscReport = () => {
         >
           <TabsList
             className={cn(
-              "grid h-auto w-full grid-cols-1 gap-1 rounded-xl border border-neutral-200/80 bg-neutral-100/90 p-2 sm:grid-cols-3"
+              "grid h-auto w-full grid-cols-1 gap-1 rounded-xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-2 sm:grid-cols-3"
             )}
             aria-label="DISC sections"
           >
@@ -1002,7 +1002,7 @@ const DiscReport = () => {
                 "gap-2 rounded-lg py-3 text-sm font-medium text-neutral-600 sm:py-3.5",
                 "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
                 "data-[state=active]:shadow-sm data-[state=active]:font-semibold",
-                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-neutral-200/80 data-[state=inactive]:hover:text-neutral-900"
+                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-[#DA7756]/15 data-[state=inactive]:hover:text-neutral-900"
               )}
             >
               <Brain
@@ -1017,7 +1017,7 @@ const DiscReport = () => {
                 "gap-2 rounded-lg py-3 text-sm font-medium text-neutral-600 sm:py-3.5",
                 "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
                 "data-[state=active]:shadow-sm data-[state=active]:font-semibold",
-                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-neutral-200/80 data-[state=inactive]:hover:text-neutral-900"
+                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-[#DA7756]/15 data-[state=inactive]:hover:text-neutral-900"
               )}
             >
               <BarChart3
@@ -1032,7 +1032,7 @@ const DiscReport = () => {
                 "gap-2 rounded-lg py-3 text-sm font-medium text-neutral-600 sm:py-3.5",
                 "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
                 "data-[state=active]:shadow-sm data-[state=active]:font-semibold",
-                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-neutral-200/80 data-[state=inactive]:hover:text-neutral-900"
+                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-[#DA7756]/15 data-[state=inactive]:hover:text-neutral-900"
               )}
             >
               <BookOpen
@@ -1049,7 +1049,7 @@ const DiscReport = () => {
 
         {tab === "dashboard" && (
           <>
-            <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-sm sm:p-6">
+            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
               <div className="mb-4 flex flex-wrap items-start gap-2">
                 <TrendingUp
                   className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
@@ -1090,7 +1090,7 @@ const DiscReport = () => {
               </div>
             </Card>
 
-            <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-sm sm:p-6">
+            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
               <div className="mb-4 flex flex-wrap items-start gap-2">
                 <Users
                   className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
@@ -1113,7 +1113,7 @@ const DiscReport = () => {
                     "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                     profileFilter === null
                       ? "border-[#DA7756] bg-[#DA7756]/10 text-[#C72030]"
-                      : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                      : "border-[#DA7756]/25 bg-[#f6f4ee]/90 text-neutral-700 hover:bg-[#f6f4ee]"
                   )}
                 >
                   All
@@ -1131,7 +1131,7 @@ const DiscReport = () => {
                       "rounded-lg border px-3 py-2 text-sm transition-colors",
                       profileFilter === p.name
                         ? "border-[#DA7756] bg-[#DA7756]/10 font-semibold text-[#C72030]"
-                        : "border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50"
+                        : "border-[#DA7756]/25 bg-[#f6f4ee]/90 text-neutral-800 hover:bg-[#f6f4ee]"
                     )}
                   >
                     {p.name}{" "}
@@ -1141,7 +1141,7 @@ const DiscReport = () => {
               </div>
             </Card>
 
-            <Card className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-sm sm:p-6">
+            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex flex-wrap items-start gap-2">
                   <Users
@@ -1166,14 +1166,14 @@ const DiscReport = () => {
                   <button
                     type="button"
                     onClick={toggleSelectAll}
-                    className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-800 shadow-sm hover:bg-neutral-50"
+                    className="rounded-lg border border-[#DA7756]/25 bg-[#f6f4ee]/90 px-3 py-2 text-sm font-medium text-neutral-800 shadow-sm hover:bg-[#DA7756]/10"
                   >
                     Select All
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowAllRows((s) => !s)}
-                    className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-800 shadow-sm hover:bg-neutral-50"
+                    className="rounded-lg border border-[#DA7756]/25 bg-[#f6f4ee]/90 px-3 py-2 text-sm font-medium text-neutral-800 shadow-sm hover:bg-[#DA7756]/10"
                   >
                     {showAllRows
                       ? "Show less"
@@ -1213,10 +1213,10 @@ const DiscReport = () => {
                 </Select>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-neutral-200/80">
+              <div className="overflow-x-auto rounded-xl border border-[#DA7756]/20">
                 <table className="w-full min-w-[880px] border-collapse text-left text-sm">
                   <thead>
-                    <tr className="border-b border-neutral-200 bg-neutral-50/90">
+                    <tr className="border-b border-[#DA7756]/20 bg-[#DA7756]/10">
                       <th className="w-10 px-3 py-3">
                         <Checkbox
                           checked={allSelected}
@@ -1295,7 +1295,7 @@ const DiscReport = () => {
                                 )
                               )
                             }
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 shadow-sm hover:bg-neutral-50"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#DA7756]/25 bg-[#f6f4ee]/90 text-neutral-600 shadow-sm hover:bg-[#DA7756]/10"
                             aria-label={`View ${row.name}`}
                           >
                             <Eye className="h-4 w-4" />
