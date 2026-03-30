@@ -338,8 +338,20 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     }
                 );
 
-                const items = response.data?.data || response.data || [];
-                setItemOptions(items);
+                const raw = response.data?.data || response.data || [];
+                const normalised = raw.map((item: any) => ({
+                    id: item.id,
+                    name: item.inventory_name || item.name || '',
+                    inventory_name: item.inventory_name || item.name || '',
+                    rate: Number(item.purchase_rate ?? item.rate ?? 0),
+                    description: item.sale_description || item.description || '',
+                    account: item.purchase_lock_account_ledger_id || '',
+                    sku: item.sku || '',
+                    tax_preference: item.tax_preference || '',
+                    tax_exemption_id: item.tax_exemption_id || null,
+                    tax_group_id: item.intra_state_tax_rate_id || item.tax_group_id || null,
+                }));
+                setItemOptions(normalised);
             } catch (error) {
                 console.error('Error fetching lock_account_items:', error);
                 toast.error('Failed to load items');
@@ -692,30 +704,19 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
     // Update taxAmount2 using percentage from selected tax option
     useEffect(() => {
-        // Recalculate afterDiscount within the effect to avoid dependency issues
-        const calcTotalDiscount = discountTypeOnTotal === 'percentage'
-            ? (subTotal * discountOnTotal) / 100
-            : discountOnTotal;
-        const calcAfterDiscount = subTotal - calcTotalDiscount;
-
         const selected = taxOptions.find(t => t.name === selectedTax);
-        // Use percentage key for calculation
         if (selected && typeof selected.percentage === 'number') {
-            // Calculate tax on afterDiscount
-            setTaxAmount2((calcAfterDiscount * selected.percentage) / 100);
+            setTaxAmount2((afterDiscount * selected.percentage) / 100);
         } else {
             setTaxAmount2(0);
         }
-    }, [selectedTax, taxOptions, subTotal, discountOnTotal, discountTypeOnTotal]);
+    }, [selectedTax, taxOptions, afterDiscount]);
 
     // Update totalAmount2 to include tax groups and adjustment
     useEffect(() => {
-        const calcTotalDiscount = discountTypeOnTotal === 'percentage'
-            ? (subTotal * discountOnTotal) / 100
-            : discountOnTotal;
-        const calcAfterDiscount = subTotal - calcTotalDiscount;
-        setTotalAmount2(calcAfterDiscount + totalTaxGroups - taxAmount2 + adjustment);
-    }, [subTotal, discountOnTotal, discountTypeOnTotal, totalTaxGroups, taxAmount2, adjustment]);
+        const total = afterDiscount + totalTaxGroups - taxAmount2 + (Number(adjustment) || 0);
+        setTotalAmount2(total);
+    }, [afterDiscount, totalTaxGroups, taxAmount2, adjustment]);
 
     // Handle file upload
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -998,6 +999,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
 
+        if (referenceNumber && !/^\d{4,5}$/.test(referenceNumber)) {
+            newErrors.referenceNumber = 'Reference number must be 4 to 5 digits';
+        }
+
         if (expectedDeliveryDate && purchaseOrderDate && new Date(expectedDeliveryDate) <= new Date(purchaseOrderDate)) {
             newErrors.expectedDeliveryDate = 'Expected delivery date must be after purchase order date';
         }
@@ -1122,6 +1127,37 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleItemSelect = (index: number, selectedItemId: string) => {
+        const selectedItem = itemOptions.find((opt: any) => opt.id === selectedItemId);
+        if (!selectedItem) return;
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = {
+                ...newItems[index],
+                id: selectedItem.id,
+                name: selectedItem.name,
+                rate: Number(selectedItem.rate) || 0,
+                description: selectedItem.description || '',
+                account_id: selectedItem.account || '',
+                item_tax_type: (() => {
+                    if (selectedItem.tax_preference === 'non_taxable') return 'non_taxable';
+                    if (selectedItem.tax_preference === 'taxable') return 'tax_group';
+                    if (selectedItem.tax_preference === 'out_of_scope') return 'out_of_scope';
+                    if (selectedItem.tax_preference === 'non_gst_supply') return 'non_gst_supply';
+                    return '';
+                })(),
+                tax_group_id: selectedItem.tax_preference === 'taxable' ? selectedItem.tax_group_id : null,
+                tax_exemption_id: selectedItem.tax_preference === 'non_taxable' ? selectedItem.tax_exemption_id : null,
+            };
+            newItems[index].amount = calculateItemAmount(newItems[index]);
+            if (selectedItem.tax_preference === 'non_taxable') {
+                setCurrentItemIndex(index);
+                setExemptionModalOpen(true);
+            }
+            return newItems;
+        });
     };
 
     return (
@@ -1306,8 +1342,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             <TextField
                                 fullWidth
                                 value={referenceNumber}
-                                onChange={(e) => setReferenceNumber(e.target.value)}
+                                onChange={(e) => {
+                                    const onlyDigits = e.target.value.replace(/\D/g, '');
+                                    setReferenceNumber(onlyDigits.slice(0, 5));
+                                }}
                                 placeholder="Enter reference number"
+                                error={!!errors.referenceNumber}
+                                helperText={errors.referenceNumber}
                                 sx={fieldStyles}
                             />
                         </div>
@@ -1418,26 +1459,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
                                                     <Select
-                                                        value={item.id || ''}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(
-                                                                (opt: any) => opt.id === e.target.value
-                                                            );
-                                                            if (selectedItem) {
-                                                                setItems((prev) =>
-                                                                    prev.map((it, i) =>
-                                                                        i === index
-                                                                            ? {
-                                                                                ...it,
-                                                                                id: selectedItem.id,
-                                                                                name: selectedItem.inventory_name || selectedItem.name || '',
-                                                                                rate: Number(selectedItem.rate) || 0,
-                                                                            }
-                                                                            : it
-                                                                    )
-                                                                );
-                                                            }
-                                                        }}
+                                                        value={item.id && itemOptions.find(o => o.id === item.id) ? item.id : ''}
+                                                        onChange={(e) => handleItemSelect(index, e.target.value)}
                                                         displayEmpty
                                                         size="small"
                                                         disabled={loadingItems}
@@ -1652,16 +1675,25 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {taxBreakdown.map((tax, index) => (
-                                <div key={index} className="flex justify-between items-center py-2">
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {tax.name} ({tax.rate}%)
-                                    </span>
-                                    <span className="font-semibold text-base">
-                                        ₹{tax.amount.toFixed(2)}
-                                    </span>
-                                </div>
-                            ))}
+                            {taxBreakdown.length > 0 && (
+                                <>
+                                    <div className="flex justify-between items-center py-1">
+                                        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                            Tax Summary
+                                        </span>
+                                    </div>
+                                    {taxBreakdown.map((tax, index) => (
+                                        <div key={index} className="flex justify-between items-center py-2">
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                {tax.name} ({tax.rate}%)
+                                            </span>
+                                            <span className="font-semibold text-base">
+                                                ₹{tax.amount.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
 
                             <Divider />
 
