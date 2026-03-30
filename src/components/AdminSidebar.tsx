@@ -14,6 +14,9 @@ import {
   UserCheck,
   Database,
   CreditCard,
+  LineChart,
+  FileText,
+  Brain,
 } from "lucide-react";
 
 const adminNavigationStructure = {
@@ -80,6 +83,21 @@ const adminNavigationStructure = {
         name: "Wallet Top-up",
         icon: CreditCard,
         href: "/settings/wallet-topup",
+      },
+      {
+        name: "Feedback Dashboard",
+        icon: LineChart,
+        href: "/ops-console/admin/feedback-dashboard",
+      },
+      {
+        name: "Systems & SOPs",
+        icon: FileText,
+        href: "/ops-console/admin/systems-sops",
+      },
+      {
+        name: "DISC Report",
+        icon: Brain,
+        href: "/ops-console/admin/disc-report",
       },
     ],
   },

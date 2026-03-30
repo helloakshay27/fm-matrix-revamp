@@ -14,6 +14,7 @@ import {
   HelpCircle,
   Bug,
   FileText,
+  LineChart,
 } from "lucide-react";
 
 // Module-based navigation structures for Admin Compass
@@ -21,6 +22,18 @@ const adminCompassNavigation: Record<string, any> = {
   "Business Plan & Goals": {
     icon: User,
     href: "/admin-compass/business-plan-goals",
+  },
+  "Feedback Dashboard": {
+    icon: LineChart,
+    href: "/admin-compass/feedback-dashboard",
+  },
+  "Systems & SOPs": {
+    icon: FileText,
+    href: "/admin-compass/systems-sops",
+  },
+  "DISC Report": {
+    icon: Brain,
+    href: "/admin-compass/disc-report",
   },
 };
 
