@@ -12,9 +12,9 @@ const NotificationsPage: React.FC = () => {
     const baseUrl = localStorage.getItem("baseUrl") || "";
     const token = localStorage.getItem("token") || "";
 
-    useEffect(() => {
-        fetchAllNotifications();
-    }, []);
+    // useEffect(() => {
+    //     fetchAllNotifications();
+    // }, []);
 
     const fetchAllNotifications = async () => {
         try {

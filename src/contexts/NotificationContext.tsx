@@ -147,9 +147,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   // Fetch notifications on mount
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+  // useEffect(() => {
+  //   fetchNotifications();
+  // }, [fetchNotifications]);
 
   const value: NotificationContextType = {
     notifications,
