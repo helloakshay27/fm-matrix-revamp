@@ -22,6 +22,11 @@ const adminCompassNavigation: Record<string, any> = {
     icon: User,
     href: "/admin-compass/business-plan-goals",
   },
+  // Added Daily Meeting here
+  "Daily Meeting": {
+    icon: MessageSquare, 
+    href: "/admin-compass/daily-meeting",
+  },
 };
 
 export const AdminCompassSidebar: React.FC = () => {

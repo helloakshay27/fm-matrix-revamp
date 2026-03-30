@@ -1232,6 +1232,7 @@ import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompa
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
+import DailyMeeting from "./pages/AdminCompass/DailyMeeting";
 
 const queryClient = new QueryClient();
 
@@ -2081,6 +2082,12 @@ function App() {
                             path="/admin-compass/business-plan-goals"
                             element={<BusinessPlanAndGoles />}
                           />
+
+                             <Route
+                            path="/admin-compass/daily-meeting"
+                            element={<DailyMeeting/>}
+                          />
+
 
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
