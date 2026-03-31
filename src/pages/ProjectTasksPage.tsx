@@ -1546,6 +1546,23 @@ const ProjectTasksPage = () => {
         }
     }
 
+    function formatHours(hours: number): string {
+        console.log(hours)
+        if (hours < 1) {
+            const minutes = Math.round(hours * 60);
+            return `${minutes} min${minutes !== 1 ? 's' : ''}`;
+        }
+
+        const wholeHours = Math.floor(hours);
+        const remainingMinutes = Math.round((hours - wholeHours) * 60);
+
+        if (remainingMinutes === 0) {
+            return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''}`;
+        }
+
+        return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''} ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+    }
+
     const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
         const renderProgressBar = (
             completed: number,
@@ -1760,7 +1777,7 @@ const ProjectTasksPage = () => {
                 return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
             }
             case "efforts_duration": {
-                return `${item.estimated_hour || 0} hours`
+                return `${formatHours(taskDetails.total_allocated_hours || 0)}`
             }
             case "priority": {
                 return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";
