@@ -212,7 +212,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=PropertyDamageCategory`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -242,7 +242,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=RCACategory`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -272,7 +272,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=CorrectiveAction`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -302,7 +302,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=PreventiveAction`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -332,7 +332,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/{+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=SubstandardCondition`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -362,7 +362,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/{+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=SubstandardAct`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -544,7 +544,30 @@ export const IncidentNewDetails = () => {
                     switch (status) {
                         case 'reported':
                         case 'open':
-                            setCurrentStep(1);
+                            if (incidentData.incident_over_time) {
+                                if (
+                                    incidentData.investigator_details?.length > 0 ||
+                                    incidentData.incident_investigations?.length > 0 ||
+                                    incidentData.root_causes?.length > 0
+                                ) {
+                                    if (
+                                        incidentData.corrective_fields?.length > 0 ||
+                                        incidentData.preventive_fields?.length > 0
+                                    ) {
+                                        // has everything → step 4
+                                        setCurrentStep(4);
+                                    } else {
+                                        // has over_time + investigation but no corrective/preventive → step 3
+                                        setCurrentStep(3);
+                                    }
+                                } else {
+                                    // has over_time but no investigation details → step 2
+                                    setCurrentStep(2);
+                                }
+                            } else {
+                                // nothing filled → step 1
+                                setCurrentStep(1);
+                            }
                             break;
                         case 'investigation':
                         case 'investigating':
@@ -552,7 +575,7 @@ export const IncidentNewDetails = () => {
                             break;
                         case 'provisional_closure':
                         case 'provisional':
-                            setCurrentStep(3);
+                            setCurrentStep(4);
                             break;
                         case 'final_closure':
                         case 'closed':
@@ -721,11 +744,28 @@ export const IncidentNewDetails = () => {
         try {
             if (currentStep === 2) {
                 setLoading(true);
+                console.log(investigators)
 
-                if (!id) {
-                    toast.error('Incident ID not found');
+                if (!investigators || investigators.length === 0) {
+                    toast.error('Please add at least one investigator');
+                    setLoading(false);
                     return;
                 }
+
+                const hasValidInvestigation = investigationDescription || subStandardConditionId || subStandardActId;
+                if (!hasValidInvestigation) {
+                    toast.error('Please fill in the investigation details');
+                    setLoading(false);
+                    return;
+                }
+
+                const validRootCauses = rootCauses.filter(rc => rc.causeId && rc.description);
+                if (validRootCauses.length === 0) {
+                    toast.error('Please add at least one root cause with category and description');
+                    setLoading(false);
+                    return;
+                }
+
 
                 let baseUrl = localStorage.getItem('baseUrl') || '';
                 const token = localStorage.getItem('token') || '';
@@ -815,7 +855,7 @@ export const IncidentNewDetails = () => {
                         injuries.push({
                             injury_type: person.injuryType || '',
                             injury_number: person.injuryNumber || '',
-                            who_got_injured_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
+                            who_got_injured_id: investigators[0]?.id ? "" : null,
                             name: person.name,
                             mobile: person.mobile || '',
                             age: parseInt(person.age) || 0,
@@ -872,6 +912,23 @@ export const IncidentNewDetails = () => {
 
             } else if (currentStep === 3) {
                 setLoading(true);
+                const validCorrectiveActions = correctiveActions?.filter(a => a.action && a.description) || [];
+                const hasCorrectiveAction = validCorrectiveActions.length > 0 || (selectedCorrectiveAction && correctiveActionDescription);
+
+                const validPreventiveActions = preventiveActions?.filter(a => a.action && a.description) || [];
+                const hasPreventiveAction = validPreventiveActions.length > 0 || (selectedPreventiveAction && preventiveActionDescription);
+
+                if (!hasCorrectiveAction) {
+                    toast.error('Please add at least one corrective action with action type and description');
+                    setLoading(false);
+                    return;
+                }
+
+                if (!hasPreventiveAction) {
+                    toast.error('Please add at least one preventive action with action type and description');
+                    setLoading(false);
+                    return;
+                }
                 let baseUrl = localStorage.getItem('baseUrl') || '';
                 const token = localStorage.getItem('token') || '';
 
@@ -1197,7 +1254,7 @@ export const IncidentNewDetails = () => {
 
                 {/* Section 3: Investigation Details */}
                 {(Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0) ||
-                (Array.isArray(incident?.root_causes) && incident.root_causes.length > 0) ? (
+                    (Array.isArray(incident?.root_causes) && incident.root_causes.length > 0) ? (
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={3} />
@@ -1239,7 +1296,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Category</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
                                                 </tr>
@@ -1248,7 +1305,7 @@ export const IncidentNewDetails = () => {
                                                 {incident.root_causes.map((rc, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                                         <td className="py-3 px-4 text-gray-900 font-medium">{idx + 1}</td>
-                                                        <td className="py-3 px-4 text-gray-900 font-medium">{rc.rca_category_name || rc.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{rc.category_name || rc.name || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-700">{rc.description || '-'}</td>
                                                     </tr>
                                                 ))}
@@ -1263,7 +1320,7 @@ export const IncidentNewDetails = () => {
 
                 {/* Section 4: Injuries & Property */}
                 {(Array.isArray(incident?.injuries) && incident.injuries.length > 0) ||
-                (Array.isArray(incident?.property_damages) && incident.property_damages.length > 0) ? (
+                    (Array.isArray(incident?.property_damages) && incident.property_damages.length > 0) ? (
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={4} />
@@ -1309,7 +1366,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Property Type</th>
                                                 </tr>
                                             </thead>
@@ -1317,7 +1374,7 @@ export const IncidentNewDetails = () => {
                                                 {incident.property_damages.map((pd, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                                         <td className="py-3 px-4 text-gray-900 font-medium">{idx + 1}</td>
-                                                        <td className="py-3 px-4 text-gray-900">{pd.property_type_name || pd.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{pd.property_type || pd.name || '-'}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -1331,7 +1388,7 @@ export const IncidentNewDetails = () => {
 
                 {/* Section 5: Actions */}
                 {(Array.isArray(incident?.corrective_fields) && incident.corrective_fields.length > 0) ||
-                (Array.isArray(incident?.preventive_fields) && incident.preventive_fields.length > 0) ? (
+                    (Array.isArray(incident?.preventive_fields) && incident.preventive_fields.length > 0) ? (
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={5} />
@@ -1354,7 +1411,7 @@ export const IncidentNewDetails = () => {
                                             <tbody>
                                                 {incident.corrective_fields.map((action, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.action_name || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-700">{action.description || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-900">{action.date ? new Date(action.date).toLocaleDateString() : '-'}</td>
                                                     </tr>
@@ -1381,7 +1438,7 @@ export const IncidentNewDetails = () => {
                                             <tbody>
                                                 {incident.preventive_fields.map((action, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.action_name || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-700">{action.description || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-900">{action.date ? new Date(action.date).toLocaleDateString() : '-'}</td>
                                                     </tr>
@@ -1487,156 +1544,162 @@ export const IncidentNewDetails = () => {
 
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto">
-                {currentStep === 1 && (
-                    <ReportStep
-                        loading={loading}
-                        error={error}
-                        incident={incident}
-                        incidentOverTime={incidentOverTime}
-                        setIncidentOverTime={setIncidentOverTime}
-                    />
-                )}
-                {currentStep === 2 && (
-                    <InvestigateStep
-                        incident={incident}
-                        investigators={investigators}
-                        setInvestigators={setInvestigators}
-                        incidentOverTime={incidentOverTime}
-                        showInvestigateDetails={showInvestigateDetails}
-                        showInvestigatorForm={showInvestigatorForm}
-                        setShowInvestigatorForm={setShowInvestigatorForm}
-                        internalUsers={internalUsers}
-                        conditions={conditions}
-                        setConditions={setConditions}
-                        subStandardConditionId={subStandardConditionId}
-                        setSubStandardConditionId={setSubStandardConditionId}
-                        subStandardActId={subStandardActId}
-                        setSubStandardActId={setSubStandardActId}
-                        investigationDescription={investigationDescription}
-                        setInvestigationDescription={setInvestigationDescription}
-                        substandardConditionCategories={substandardConditionCategories}
-                        substandardActCategories={substandardActCategories}
-                        rootCauses={rootCauses}
-                        setRootCauses={setRootCauses}
-                        rcaCategories={rcaCategories}
-                        hasInjury={hasInjury}
-                        setHasInjury={setHasInjury}
-                        injuredPersons={injuredPersons}
-                        setInjuredPersons={setInjuredPersons}
-                        hasPropertyDamage={hasPropertyDamage}
-                        setHasPropertyDamage={setHasPropertyDamage}
-                        selectedPropertyDamage={selectedPropertyDamage}
-                        setSelectedPropertyDamage={setSelectedPropertyDamage}
-                        propertyDamageCategories={propertyDamageCategories}
-                        propertyDamages={propertyDamages}
-                        setPropertyDamages={setPropertyDamages}
-                    />
-                )}
-                {currentStep === 3 && (
-                    <ProvisionalStep
-                        incident={incident}
-                        investigators={investigators}
-                        incidentOverTime={incidentOverTime}
-                        correctiveActions={correctiveActions}
-                        setCorrectiveActions={setCorrectiveActions}
-                        preventiveActions={preventiveActions}
-                        setPreventiveActions={setPreventiveActions}
-                        selectedCorrectiveAction={selectedCorrectiveAction}
-                        setSelectedCorrectiveAction={setSelectedCorrectiveAction}
-                        correctiveActionDescription={correctiveActionDescription}
-                        setCorrectiveActionDescription={setCorrectiveActionDescription}
-                        correctiveActionResponsiblePerson={correctiveActionResponsiblePerson}
-                        setCorrectiveActionResponsiblePerson={setCorrectiveActionResponsiblePerson}
-                        correctiveActionDate={correctiveActionDate}
-                        setCorrectiveActionDate={setCorrectiveActionDate}
-                        selectedPreventiveAction={selectedPreventiveAction}
-                        setSelectedPreventiveAction={setSelectedPreventiveAction}
-                        preventiveActionDescription={preventiveActionDescription}
-                        setPreventiveActionDescription={setPreventiveActionDescription}
-                        preventiveActionResponsiblePerson={preventiveActionResponsiblePerson}
-                        setPreventiveActionResponsiblePerson={setPreventiveActionResponsiblePerson}
-                        preventiveActionDate={preventiveActionDate}
-                        setPreventiveActionDate={setPreventiveActionDate}
-                        nextReviewDate={nextReviewDate}
-                        setNextReviewDate={setNextReviewDate}
-                        nextReviewResponsible={nextReviewResponsible}
-                        setNextReviewResponsible={setNextReviewResponsible}
-                        correctiveActionsCategories={correctiveActionsCategories}
-                        preventiveActionsCategories={preventiveActionsCategories}
-                        internalUsers={internalUsers}
-                    />
-                )}
-                {currentStep === 4 && (
-                    <FinalClosureStep
-                        incident={incident}
-                        investigators={investigators}
-                        incidentOverTime={incidentOverTime}
-                        correctiveActions={correctiveActions}
-                        setCorrectiveActions={setCorrectiveActions}
-                        preventiveActions={preventiveActions}
-                        setPreventiveActions={setPreventiveActions}
-                        finalClosureCorrectiveDescription={finalClosureCorrectiveDescription}
-                        setFinalClosureCorrectiveDescription={setFinalClosureCorrectiveDescription}
-                        finalClosurePreventiveDescription={finalClosurePreventiveDescription}
-                        setFinalClosurePreventiveDescription={setFinalClosurePreventiveDescription}
-                        nextReviewDate={nextReviewDate}
-                        setNextReviewDate={setNextReviewDate}
-                        nextReviewResponsible={nextReviewResponsible}
-                        setNextReviewResponsible={setNextReviewResponsible}
-                        correctiveActionsCategories={correctiveActionsCategories}
-                        preventiveActionsCategories={preventiveActionsCategories}
-                        internalUsers={internalUsers}
-                    />
-                )}
-            </div>
+                        {currentStep === 1 && (
+                            <ReportStep
+                                loading={loading}
+                                error={error}
+                                incident={incident}
+                                incidentOverTime={incidentOverTime}
+                                setIncidentOverTime={setIncidentOverTime}
+                            />
+                        )}
+                        {currentStep === 2 && (
+                            <InvestigateStep
+                                incident={incident}
+                                investigators={investigators}
+                                setInvestigators={setInvestigators}
+                                incidentOverTime={incidentOverTime}
+                                showInvestigateDetails={showInvestigateDetails}
+                                showInvestigatorForm={showInvestigatorForm}
+                                setShowInvestigatorForm={setShowInvestigatorForm}
+                                internalUsers={internalUsers}
+                                conditions={conditions}
+                                setConditions={setConditions}
+                                subStandardConditionId={subStandardConditionId}
+                                setSubStandardConditionId={setSubStandardConditionId}
+                                subStandardActId={subStandardActId}
+                                setSubStandardActId={setSubStandardActId}
+                                investigationDescription={investigationDescription}
+                                setInvestigationDescription={setInvestigationDescription}
+                                substandardConditionCategories={substandardConditionCategories}
+                                substandardActCategories={substandardActCategories}
+                                rootCauses={rootCauses}
+                                setRootCauses={setRootCauses}
+                                rcaCategories={rcaCategories}
+                                hasInjury={hasInjury}
+                                setHasInjury={setHasInjury}
+                                injuredPersons={injuredPersons}
+                                setInjuredPersons={setInjuredPersons}
+                                hasPropertyDamage={hasPropertyDamage}
+                                setHasPropertyDamage={setHasPropertyDamage}
+                                selectedPropertyDamage={selectedPropertyDamage}
+                                setSelectedPropertyDamage={setSelectedPropertyDamage}
+                                propertyDamageCategories={propertyDamageCategories}
+                                propertyDamages={propertyDamages}
+                                setPropertyDamages={setPropertyDamages}
+                            />
+                        )}
+                        {currentStep === 3 && (
+                            <ProvisionalStep
+                                incident={incident}
+                                investigators={investigators}
+                                incidentOverTime={incidentOverTime}
+                                correctiveActions={correctiveActions}
+                                setCorrectiveActions={setCorrectiveActions}
+                                preventiveActions={preventiveActions}
+                                setPreventiveActions={setPreventiveActions}
+                                selectedCorrectiveAction={selectedCorrectiveAction}
+                                setSelectedCorrectiveAction={setSelectedCorrectiveAction}
+                                correctiveActionDescription={correctiveActionDescription}
+                                setCorrectiveActionDescription={setCorrectiveActionDescription}
+                                correctiveActionResponsiblePerson={correctiveActionResponsiblePerson}
+                                setCorrectiveActionResponsiblePerson={setCorrectiveActionResponsiblePerson}
+                                correctiveActionDate={correctiveActionDate}
+                                setCorrectiveActionDate={setCorrectiveActionDate}
+                                selectedPreventiveAction={selectedPreventiveAction}
+                                setSelectedPreventiveAction={setSelectedPreventiveAction}
+                                preventiveActionDescription={preventiveActionDescription}
+                                setPreventiveActionDescription={setPreventiveActionDescription}
+                                preventiveActionResponsiblePerson={preventiveActionResponsiblePerson}
+                                setPreventiveActionResponsiblePerson={setPreventiveActionResponsiblePerson}
+                                preventiveActionDate={preventiveActionDate}
+                                setPreventiveActionDate={setPreventiveActionDate}
+                                nextReviewDate={nextReviewDate}
+                                setNextReviewDate={setNextReviewDate}
+                                nextReviewResponsible={nextReviewResponsible}
+                                setNextReviewResponsible={setNextReviewResponsible}
+                                correctiveActionsCategories={correctiveActionsCategories}
+                                preventiveActionsCategories={preventiveActionsCategories}
+                                internalUsers={internalUsers}
+                            />
+                        )}
+                        {currentStep === 4 && (
+                            <FinalClosureStep
+                                incident={incident}
+                                investigators={investigators}
+                                incidentOverTime={incidentOverTime}
+                                correctiveActions={correctiveActions}
+                                setCorrectiveActions={setCorrectiveActions}
+                                preventiveActions={preventiveActions}
+                                setPreventiveActions={setPreventiveActions}
+                                finalClosureCorrectiveDescription={finalClosureCorrectiveDescription}
+                                setFinalClosureCorrectiveDescription={setFinalClosureCorrectiveDescription}
+                                finalClosurePreventiveDescription={finalClosurePreventiveDescription}
+                                setFinalClosurePreventiveDescription={setFinalClosurePreventiveDescription}
+                                nextReviewDate={nextReviewDate}
+                                setNextReviewDate={setNextReviewDate}
+                                nextReviewResponsible={nextReviewResponsible}
+                                setNextReviewResponsible={setNextReviewResponsible}
+                                correctiveActionsCategories={correctiveActionsCategories}
+                                preventiveActionsCategories={preventiveActionsCategories}
+                                internalUsers={internalUsers}
+                            />
+                        )}
+                    </div>
 
-            {/* Footer Buttons */}
-            <div className="border-t p-4 space-y-2">
-                {currentStep === 1 && (
-                    <Button
-                        className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                        onClick={handleNext}
-                    >
-                        Next
-                    </Button>
-                )}
+                    {/* Footer Buttons */}
+                    <div className="border-t p-4 space-y-2">
+                        {currentStep === 1 && (
+                            <Button
+                                className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                onClick={handleNext}
+                            >
+                                Next
+                            </Button>
+                        )}
 
-                {currentStep === 2 && (
-                    <>
-                        <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={handleSaveAsDraft}
-                        >
-                            Save as draft
-                        </Button>
-                        <Button
-                            className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                            onClick={handleSubmit}
-                        >
-                            Next
-                        </Button>
-                    </>
-                )}
+                        {currentStep === 2 && (
+                            <>
+                                <div className="flex justify-center items-center gap-3 p-4">
+                                    <Button
+                                        variant="outline"
+                                        className="w-25 mx-3"
+                                        onClick={handleSaveAsDraft}
+                                    >
+                                        Save as draft
+                                    </Button>
+                                    <Button
+                                        className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                        onClick={handleSubmit}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </>
+                        )}
 
-                {currentStep === 3 && (
-                    <Button
-                        className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                        onClick={handleSubmit}
-                    >
-                        Submit
-                    </Button>
-                )}
+                        {currentStep === 3 && (
+                            <div className="flex justify-center">
+                                <Button
+                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
+                            </div>
+                        )}
 
-                {currentStep === 4 && (
-                    <Button
-                        className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                        onClick={handleSubmit}
-                    >
-                        Submit
-                    </Button>
-                )}
-            </div>
+                        {currentStep === 4 && (
+                            <div className="flex justify-center">
+                                <Button
+                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
         </div>

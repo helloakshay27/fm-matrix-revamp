@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ import {
   Calendar,
   Settings,
 } from "lucide-react";
+import { TicketAnalyticsFilterDialog } from "@/components/TicketAnalyticsFilterDialog";
 import {
   Pagination,
   PaginationContent,
@@ -26,12 +27,9 @@ import { AssetDataTable } from "@/components/AssetDataTable";
 import type { Asset } from "@/hooks/useAssets";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
 import { SiteWisePowerConsumptionChart } from "@/components/charts/SiteWisePowerConsumptionChart";
+import { API_CONFIG } from "@/config/apiConfig";
 
-// ── Same components as IncidentDashboard ──────────────────────────────────────
-import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
-import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
-
-// ── dnd-kit ───────────────────────────────────────────────────────────────────
+// ── dnd-kit — same imports as TicketDashboard ─────────────────────────────────
 import {
   DndContext,
   closestCenter,
@@ -51,25 +49,11 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
 type ChartKey = "cumulative" | "siteWise";
 
-// ─── Chart Options ────────────────────────────────────────────────────────────
-const ENERGY_CHART_OPTIONS = [
-  {
-    id: "cumulative",
-    label: "Sub Meter Sources",
-    description: "Cumulative power from sub meter sources",
-  },
-  {
-    id: "siteWise",
-    label: "Site Wise Power",
-    description: "Site-wise power consumption breakdown",
-  },
-];
+// ─── SortableChartItem — exact same component as in TicketDashboard ───────────
 
-const ENERGY_CHART_KEYS = ENERGY_CHART_OPTIONS.map((opt) => opt.id);
-
-// ─── SortableChartItem ────────────────────────────────────────────────────────
 const SortableChartItem = ({
   id,
   children,
@@ -92,6 +76,7 @@ const SortableChartItem = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Prevent drag from triggering on button / icon clicks
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
     if (
@@ -125,6 +110,7 @@ const SortableChartItem = ({
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
 const transformEnergyAsset = (
   asset: any,
   index: number,
@@ -186,11 +172,21 @@ const calculateStats = (energyData: any[] = []) => ({
     : 0,
 });
 
+// ─── Chart label map ──────────────────────────────────────────────────────────
+
+const CHART_LABELS: Record<ChartKey, string> = {
+  cumulative: "Sub Meter Sources",
+  siteWise: "Site Wise Power",
+};
+
+const ALL_CHART_KEYS: ChartKey[] = ["cumulative", "siteWise"];
+
 // ─── Main Component ───────────────────────────────────────────────────────────
+
 export const EnergyDashboard = () => {
   const navigate = useNavigate();
 
-  // ── List tab state
+  // List tab
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [energyAssets, setEnergyAssets] = useState<any[]>([]);
@@ -201,13 +197,54 @@ export const EnergyDashboard = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
 
-  // ── Analytics tab state
-  const [selectedCharts, setSelectedCharts] =
-    useState<string[]>(ENERGY_CHART_KEYS);
-  const [chartOrder, setChartOrder] = useState<string[]>(ENERGY_CHART_KEYS);
-  const [sitePowerData, setSitePowerData] = useState([]);
+  // Analytics tab
+  const [isChartSelectorOpen, setIsChartSelectorOpen] = useState(false);
+  const [selectedCharts, setSelectedCharts] = useState<
+    Record<ChartKey, boolean>
+  >({ cumulative: true, siteWise: true });
 
-  // ── Date range
+  // KPI card data from API
+  const [kpiData, setKpiData] = useState<{
+    power_consumption: number;
+    dg_total: number;
+    renewable_total: number;
+    ev_total: number;
+    solar: number;
+    wind: number;
+    hydro: number;
+    percentage: { Solar: number; Wind: number; Hydro: number };
+    pie: { Solar: number; Wind: number; Hydro: number };
+    sub_meter_sources?: { name: string; value: number; color?: string }[];
+  } | null>(null);
+  const [kpiLoading, setKpiLoading] = useState(false);
+
+  // Site-wise power consumption data from API
+  const [sitePowerData, setSitePowerData] = useState<any[]>([]);
+  const [sitePowerLoading, setSitePowerLoading] = useState(false);
+
+  // ── Drag & drop state ─────────────────────────────────────────────────────
+  const [chartOrder, setChartOrder] = useState<ChartKey[]>([...ALL_CHART_KEYS]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Exact same handler as TicketDashboard
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id as ChartKey);
+        const newIndex = items.indexOf(over?.id as ChartKey);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // ── Date range ────────────────────────────────────────────────────────────
   const getDefaultDateRange = () => {
     const today = new Date();
     const lastYear = new Date(today);
@@ -221,42 +258,17 @@ export const EnergyDashboard = () => {
   const [analyticsDateRange, setAnalyticsDateRange] =
     useState(getDefaultDateRange);
 
-  const getDialogDate = (dateStr: string) => {
-    const [dd, mm, yyyy] = dateStr.split("/");
-    return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  // ── Helper: convert DD/MM/YYYY to YYYY-MM-DD for API ─────────────────────
+  const toApiDate = (ddmmyyyy: string): string => {
+    const parts = ddmmyyyy.split("/");
+    if (parts.length !== 3) return ddmmyyyy;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
   };
 
-  const handleApplyAnalyticsFilters = (startStr: string, endStr: string) => {
-    const formatToDDMMYYYY = (d: string) => {
-      const [y, m, day] = d.split("-");
-      return `${day}/${m}/${y}`;
-    };
-    setAnalyticsDateRange({
-      startDate: formatToDDMMYYYY(startStr),
-      endDate: formatToDDMMYYYY(endStr),
-    });
-  };
+  // ── Helper: get site_id from localStorage ─────────────────────────────────
+  const getSiteId = () => localStorage.getItem("selectedSiteId") || "";
 
-  // ── dnd sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      setChartOrder((items) => {
-        const oldIndex = items.indexOf(active.id as ChartKey);
-        const newIndex = items.indexOf(over?.id as ChartKey);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  // ── Fetch assets
+  // ── Fetch assets (list tab) ───────────────────────────────────────────────
   useEffect(() => {
     const fetchAssets = async () => {
       setLoading(true);
@@ -288,17 +300,122 @@ export const EnergyDashboard = () => {
       }
     };
 
-    const fetchSitePowerData = async () => {
-      try {
-        // API logic goes here
-      } catch (err) {
-        console.error("Error fetching chart data", err);
-      }
-    };
-
     fetchAssets();
-    fetchSitePowerData();
   }, [currentPage, searchTerm]);
+
+  // ── Fetch KPI cards + Site-wise power data (analytics tab) ────────────────
+  const fetchAnalyticsData = useCallback(async () => {
+    const siteId = getSiteId();
+    const fromDate = toApiDate(analyticsDateRange.startDate);
+    const toDate = toApiDate(analyticsDateRange.endDate);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+
+    if (!baseUrl || !token) return;
+
+    // Fetch KPI data
+    setKpiLoading(true);
+    try {
+      const kpiUrl = `${baseUrl}/utility_dashboard/energy_kpis.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`;
+      const kpiRes = await fetch(kpiUrl, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (kpiRes.ok) {
+        const kpiJson = await kpiRes.json();
+        if (kpiJson.success === 1 && kpiJson.response) {
+          setKpiData(kpiJson.response);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching energy KPIs:", err);
+    } finally {
+      setKpiLoading(false);
+    }
+
+    // Fetch site-wise power consumption
+    setSitePowerLoading(true);
+    try {
+      const siteUrl = `${baseUrl}/utility_dashboard/card_site_wise_power_consumption.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`;
+      const siteRes = await fetch(siteUrl, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (siteRes.ok) {
+        const siteJson = await siteRes.json();
+        if (siteJson.success === 1 && siteJson.response) {
+          // Transform API response object into array for chart
+          const transformed = Object.entries(siteJson.response).map(([siteName, values]: [string, any]) => ({
+            site: siteName,
+            mains: values.main || 0,
+            dg: values.dg || 0,
+            solar: values.solar || 0,
+            consumptionPerSqFt: values.consumption_per_sq_feet || 0,
+          }));
+          setSitePowerData(transformed);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching site-wise power data:", err);
+    } finally {
+      setSitePowerLoading(false);
+    }
+  }, [analyticsDateRange]);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
+
+  // ── Download handlers for charts ──────────────────────────────────────────
+  const handleSubMeterDownload = async () => {
+    const siteId = getSiteId();
+    const fromDate = toApiDate(analyticsDateRange.startDate);
+    const toDate = toApiDate(analyticsDateRange.endDate);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+
+    try {
+      const url = `${baseUrl}/utility_dashboard/energy_download.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&type=renewable`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `sub_meter_sources_${fromDate}_to_${toDate}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    } catch (err) {
+      console.error("Error downloading sub meter data:", err);
+    }
+  };
+
+  const handleSiteWiseDownload = async () => {
+    const siteId = getSiteId();
+    const fromDate = toApiDate(analyticsDateRange.startDate);
+    const toDate = toApiDate(analyticsDateRange.endDate);
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+
+    try {
+      const url = `${baseUrl}/utility_dashboard/energy_download.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&type=sitewise_consumption`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `site_wise_power_consumption_${fromDate}_to_${toDate}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    } catch (err) {
+      console.error("Error downloading site-wise data:", err);
+    }
+  };
 
   const filteredEnergyAssets = energyAssets.filter(
     (asset: any) =>
@@ -359,9 +476,8 @@ export const EnergyDashboard = () => {
     setCurrentPage(1);
   };
 
-  const orderedVisibleCharts = chartOrder.filter((k) =>
-    selectedCharts.includes(k)
-  );
+  // Only render charts that are both selected and in order
+  const orderedVisibleCharts = chartOrder.filter((key) => selectedCharts[key]);
 
   return (
     <div className="p-4 sm:p-6">
@@ -454,8 +570,10 @@ export const EnergyDashboard = () => {
 
         {/* ── Analytics Tab ─────────────────────────────────────────────────── */}
         <TabsContent value="analytics" className="space-y-4 mt-4">
+
           {/* Filters row */}
           <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
+
             {/* Date filter */}
             <Button
               variant="outline"
@@ -471,47 +589,82 @@ export const EnergyDashboard = () => {
               <Filter className="w-4 h-4 text-gray-600" />
             </Button>
 
-            {/* Chart selector */}
-            <div className="w-full sm:w-auto">
-              <AssetAnalyticsSelector
-                options={ENERGY_CHART_OPTIONS}
-                selectedOptions={selectedCharts}
-                onSelectionChange={setSelectedCharts}
-                title="Select Energy Charts"
-                buttonLabel="Charts"
-                dateRange={{
-                  startDate: getDialogDate(analyticsDateRange.startDate),
-                  endDate: getDialogDate(analyticsDateRange.endDate),
-                }}
-              />
+            {/* Chart visibility selector */}
+            <div className="relative w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setIsChartSelectorOpen((p) => !p)}
+                className="flex items-center justify-between w-full sm:w-[280px] px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+              >
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Display Charts
+                  </span>
+                </div>
+              </Button>
+
+              {isChartSelectorOpen && (
+                <div className="absolute right-0 mt-2 w-full sm:w-[280px] bg-white border border-gray-200 rounded-md shadow-lg z-50 p-2">
+                  <div className="text-xs font-semibold text-gray-500 mb-2 px-2 uppercase tracking-wider">
+                    Select Visible Charts
+                  </div>
+                  {ALL_CHART_KEYS.map((key) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCharts[key]}
+                        onChange={() =>
+                          setSelectedCharts((prev) => ({
+                            ...prev,
+                            [key]: !prev[key],
+                          }))
+                        }
+                        className="w-4 h-4 rounded border-gray-300 text-[#C72030] focus:ring-[#C72030] cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-gray-700">
+                        {CHART_LABELS[key]}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Metric cards — ORIGINAL CSS restored */}
+          {/* Metric cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
               {
                 label: "Power Consumption",
-                value:
-                  calculatedStats.totalConsumption > 0
-                    ? `${calculatedStats.totalConsumption.toFixed(1)} kWh`
-                    : "0 kWh",
+                value: kpiData?.power_consumption
+                  ? `${Number(kpiData.power_consumption).toLocaleString()} kWh`
+                  : "0 kWh",
                 icon: <ZapIcon className="w-6 h-6 text-[#C72030]" />,
               },
               {
-                label: "Total Diesel Consumed",
-                value: "0 kL",
-                icon: <Droplets className="w-6 h-6 text-[#C72030]" />,
+                label: "DG Total",
+                value: kpiData?.dg_total
+                  ? `${Number(kpiData.dg_total).toLocaleString()} kWh`
+                  : "0 kWh",
+                icon: <Flame className="w-6 h-6 text-[#C72030]" />,
               },
               {
-                label: "Solar Total",
-                value: "0 tCO₂",
+                label: "Solar",
+                value: kpiData?.solar
+                  ? `${Number(kpiData.solar).toLocaleString()} kWh`
+                  : "0 kWh",
                 icon: <Wind className="w-6 h-6 text-[#C72030]" />,
               },
               {
-                label: "DG Total",
-                value: "0 L",
-                icon: <Flame className="w-6 h-6 text-[#C72030]" />,
+                label: "Renewable Total",
+                value: kpiData?.renewable_total
+                  ? `${Number(kpiData.renewable_total).toLocaleString()} kWh`
+                  : "0 kWh",
+                icon: <Droplets className="w-6 h-6 text-[#C72030]" />,
               },
             ].map((item, i) => (
               <div
@@ -522,7 +675,9 @@ export const EnergyDashboard = () => {
                   {item.icon}
                 </div>
                 <div>
-                  <div className="text-xl font-semibold">{item.value}</div>
+                  <div className="text-xl font-semibold">
+                    {kpiLoading ? "..." : item.value}
+                  </div>
                   <div className="text-sm font-medium text-[#1A1A1A]">
                     {item.label}
                   </div>
@@ -531,7 +686,7 @@ export const EnergyDashboard = () => {
             ))}
           </div>
 
-          {/* ── Charts with DnD ───────────────────────────────────────────── */}
+          {/* ── DndContext — same structure as TicketDashboard ─────────────── */}
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -544,21 +699,63 @@ export const EnergyDashboard = () => {
                 }`}
               >
                 {orderedVisibleCharts.map((key) => {
-                  if (key === "cumulative")
+                  if (key === "cumulative") {
+                    // Build sources from KPI data for pie chart
+                    let pieSources: { name: string; value: number; color: string }[] | undefined;
+                    if (kpiData?.sub_meter_sources && kpiData.sub_meter_sources.length > 0) {
+                      pieSources = kpiData.sub_meter_sources.map((s, idx) => ({
+                        name: s.name,
+                        value: s.value,
+                        color: s.color || ["#A89078", "#D8DCDD", "#6B4C3A", "#8B7355", "#C4A882"][idx % 5],
+                      }));
+                    } else if (kpiData?.pie) {
+                      // Fallback: construct from pie object
+                      const pieColors: Record<string, string> = { Solar: "#A89078", Wind: "#D8DCDD", Hydro: "#6B4C3A" };
+                      pieSources = Object.entries(kpiData.pie).map(([name, value]) => ({
+                        name,
+                        value: Number(value),
+                        color: pieColors[name] || "#8B7355",
+                      }));
+                    }
                     return (
                       <SortableChartItem key={key} id={key}>
-                        <CumulativePowerWidget />
+                        <CumulativePowerWidget
+                          sources={pieSources}
+                          onDownload={handleSubMeterDownload}
+                        />
                       </SortableChartItem>
                     );
-                  if (key === "siteWise")
+                  }
+                  if (key === "siteWise") {
+                    const bars = [
+                      { dataKey: "mains", name: "Mains", fill: "#C4A882" },
+                      { dataKey: "dg", name: "DG", fill: "#A89078" },
+                      { dataKey: "solar", name: "Solar", fill: "#D8DCDD" },
+                    ];
+                    const lines: { dataKey: string; name: string; stroke: string; yAxisId?: "left" | "right" }[] = [
+                      {
+                        dataKey: "consumptionPerSqFt",
+                        name: "Consumption / Sq. Ft.",
+                        stroke: "#C72030",
+                        yAxisId: "right" as const,
+                      },
+                    ];
                     return (
                       <SortableChartItem key={key} id={key}>
-                        <SiteWisePowerConsumptionChart data={sitePowerData} />
+                        <SiteWisePowerConsumptionChart
+                          data={sitePowerData}
+                          bars={bars}
+                          lines={lines}
+                          xAxisKey="site"
+                          onDownload={handleSiteWiseDownload}
+                        />
                       </SortableChartItem>
                     );
+                  }
                   return null;
                 })}
 
+                {/* Empty state */}
                 {orderedVisibleCharts.length === 0 && (
                   <div className="col-span-full py-12 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                     <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -574,13 +771,13 @@ export const EnergyDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      {/* AssetAnalyticsFilterDialog */}
-      <AssetAnalyticsFilterDialog
+      <TicketAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
+        title="Energy"
         onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={handleApplyAnalyticsFilters}
-        currentStartDate={getDialogDate(analyticsDateRange.startDate)}
-        currentEndDate={getDialogDate(analyticsDateRange.endDate)}
+        onApplyFilters={(filters) => setAnalyticsDateRange(filters)}
+        currentStartDate={analyticsDateRange.startDate}
+        currentEndDate={analyticsDateRange.endDate}
       />
     </div>
   );

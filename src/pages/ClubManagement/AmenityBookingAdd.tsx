@@ -19,7 +19,7 @@ export const AddFacilityBookingClubPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  
+
   // Get URL parameters
   const urlFacilityId = searchParams.get('facility_id');
   const urlDate = searchParams.get('date');
@@ -54,9 +54,9 @@ export const AddFacilityBookingClubPage = () => {
       setOccupantUsersLoading(false);
     }
   };
-console.log("occupant users::::",occupantUsers)
+  console.log("occupant users::::", occupantUsers)
   // Direct API call for occupant users (bypassing Redux)
-  
+
   // const occupantUsersLoading = occupantUsersState?.loading;
   // const occupantUsersError = occupantUsersState?.error;
 
@@ -95,7 +95,24 @@ console.log("occupant users::::",occupantUsers)
     };
     gst?: number;
     sgst?: number;
+    facility_setup_accessories?: Array<{
+      facility_setup_accessory: {
+        id: number;
+        pms_inventory_id: number;
+        pms_inventory?: {
+          id: number;
+          name: string;
+        };
+      };
+    }>;
   } | null>(null);
+  const [selectedAccessories, setSelectedAccessories] = useState<{ [id: number]: number }>({});
+  const [availableAccessories, setAvailableAccessories] = useState<Array<{
+    id: number;
+    name: string;
+    inventoryId: number;
+    price: number;
+  }>>([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
     id: number;
@@ -182,27 +199,27 @@ console.log("occupant users::::",occupantUsers)
 
 
 
-//   // Fetch occupant users directly (like guest users)
-// const fetchOccupantUsersDirect = async () => {
-//   setGuestUsersLoading(true);
-//   setGuestUsersError(null);
-//   try {
-//     const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
-//       params: {
-//         'q[lock_user_permissions_user_type_eq]': 'pms_occupant'
-//       }
-//     });
-//     if (response.data && response.data.occupant_users) {
-//       setGuestUsers(response.data.occupant_users);
-//     }
-//   } catch (error) {
-//     console.error('Error fetching occupant users:', error);
-//     setGuestUsersError(error);
-//     setGuestUsers([]);
-//   } finally {
-//     setGuestUsersLoading(false);
-//   }
-// };
+  //   // Fetch occupant users directly (like guest users)
+  // const fetchOccupantUsersDirect = async () => {
+  //   setGuestUsersLoading(true);
+  //   setGuestUsersError(null);
+  //   try {
+  //     const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
+  //       params: {
+  //         'q[lock_user_permissions_user_type_eq]': 'pms_occupant'
+  //       }
+  //     });
+  //     if (response.data && response.data.occupant_users) {
+  //       setGuestUsers(response.data.occupant_users);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching occupant users:', error);
+  //     setGuestUsersError(error);
+  //     setGuestUsers([]);
+  //   } finally {
+  //     setGuestUsersLoading(false);
+  //   }
+  // };
 
   // Fetch data on component mount
   useEffect(() => {
@@ -265,7 +282,21 @@ console.log("occupant users::::",occupantUsers)
       if (response.data && response.data.facility_setup) {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
-        
+        setSelectedAccessories({}); // Reset selected accessories
+
+        // Extract and set available accessories from facility setup
+        if (response.data.facility_setup.facility_setup_accessories && Array.isArray(response.data.facility_setup.facility_setup_accessories)) {
+          const accessories = response.data.facility_setup.facility_setup_accessories.map((item: any) => ({
+            id: item.facility_setup_accessory?.id || 0,
+            name: item.facility_setup_accessory?.inventory_name || 'Unnamed Accessory',
+            inventoryId: item.facility_setup_accessory?.pms_inventory_id || 0,
+            price: item.facility_setup_accessory?.inventory_cost || 0
+          }));
+          setAvailableAccessories(accessories);
+        } else {
+          setAvailableAccessories([]);
+        }
+
         // Initialize people table based on max_people
         const maxPeople = response.data.facility_setup.max_people || 1;
         const initialTable = Array.from({ length: maxPeople }, (_, index) => ({
@@ -279,6 +310,8 @@ console.log("occupant users::::",occupantUsers)
     } catch (error) {
       console.error('Error fetching facility details:', error);
       setFacilityDetails(null);
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -290,6 +323,8 @@ console.log("occupant users::::",occupantUsers)
     } else {
       setFacilityDetails(null);
       setPaymentMethod('');
+      setAvailableAccessories([]);
+      setSelectedAccessories({});
     }
   };
 
@@ -299,12 +334,12 @@ console.log("occupant users::::",occupantUsers)
       const params: any = {
         on_date: formattedDate
       };
-      
+
       // Only add user_id if it's provided
       if (userId) {
         params.user_id = userId;
       }
-      
+
       const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
         params
       });
@@ -340,7 +375,7 @@ console.log("occupant users::::",occupantUsers)
 
   // Effect to fetch slots when facility and date are selected (user is optional)
   useEffect(() => {
-   
+
     if (selectedFacility && selectedDate) {
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
       fetchSlots(facilityId, selectedDate, selectedUser || undefined);
@@ -358,8 +393,8 @@ console.log("occupant users::::",occupantUsers)
     console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
     console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
     console.log('========================');
-     const token= localStorage.getItem('token') 
-     console.log('Token for Amenity API:', token);
+    const token = localStorage.getItem('token')
+    console.log('Token for Amenity API:', token);
     if (selectedUser && selectedFacility) {
       const fetchAmenityBooking = async () => {
         try {
@@ -405,7 +440,7 @@ console.log("occupant users::::",occupantUsers)
     if (urlSlotTime && slots.length > 0 && selectedSlots.length === 0) {
       // Decode the URL slot time (e.g., "9:00AM - 9:15AM")
       const decodedSlotTime = decodeURIComponent(urlSlotTime);
-      
+
       // Find the slot that matches the clicked time
       // The slot.ampm format is like "09:00 AM to 09:15 AM"
       // The URL format is like "9:00AM - 9:15AM"
@@ -415,14 +450,14 @@ console.log("occupant users::::",occupantUsers)
           .replace(/\s+/g, '') // Remove all spaces
           .replace('to', '-')  // Replace 'to' with '-'
           .toLowerCase();
-        
+
         const urlTimeNormalized = decodedSlotTime
           .replace(/\s+/g, '') // Remove all spaces
           .toLowerCase();
-        
+
         return slotTimeNormalized === urlTimeNormalized;
       });
-      
+
       if (matchingSlot) {
         setSelectedSlots([matchingSlot.id]);
       }
@@ -442,18 +477,31 @@ console.log("occupant users::::",occupantUsers)
     });
   };
 
+  // Handle accessory quantity change
+  const handleAccessoryQuantityChange = (accessoryId: number, quantity: number) => {
+    setSelectedAccessories(prev => {
+      if (quantity <= 0) {
+        const newState = { ...prev };
+        delete newState[accessoryId];
+        return newState;
+      } else {
+        return { ...prev, [accessoryId]: quantity };
+      }
+    });
+  };
+
   // Handle people table changes
   const handlePeopleTableChange = (index: number, field: 'role' | 'user' | 'level', value: string) => {
     setPeopleTable(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
-      
+
       // If role is changed and it matches the pre-selected user, auto-select that user
       if (field === 'role' && selectedUser) {
         // Check if the selected user exists in the users for this role
         const roleUsers = getUsersForRole(value);
         const userExists = roleUsers.some((u: any) => u.id.toString() === selectedUser.toString());
-        
+
         if (userExists) {
           updated[index].user = selectedUser;
         } else {
@@ -465,7 +513,7 @@ console.log("occupant users::::",occupantUsers)
       } else if (field === 'role' && !selectedUser) {
         updated[index].user = ''; // Reset user if no pre-selection
       }
-      
+
       return updated;
     });
   };
@@ -473,7 +521,7 @@ console.log("occupant users::::",occupantUsers)
   // Get users based on role
   const getUsersForRole = (role: string) => {
     if (!role) return [];
-    
+
     switch (role) {
       case 'staff':
         console.log('Staff users:', fmUsers);
@@ -538,7 +586,7 @@ console.log("occupant users::::",occupantUsers)
       }
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
-      
+
       // --- UI-aligned cost calculation (slot-by-slot, with premiums, for all user types) ---
       const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
       const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
@@ -567,7 +615,14 @@ console.log("occupant users::::",occupantUsers)
         totalGuestCharge = numberOfGuests * adultGuestCharge;
       }
       const slotTotal = selectedSlots.length * perSlotCharge;
-      const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+
+      // Calculate accessory total with quantities
+      const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+        const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+        return total + ((accessory?.price || 0) * (quantity || 0));
+      }, 0);
+
+      const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal + accessoryTotal;
       const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
       const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
       const gstPercentage = facilityDetails?.gst || 0;
@@ -575,7 +630,7 @@ console.log("occupant users::::",occupantUsers)
       const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
       const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
       const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
-      
+
       // Build booked_members_attributes array from people table
       const bookedMembersAttributes = peopleTable
         .filter(row => row.role && row.user) // Only include rows with both role and user selected
@@ -587,14 +642,14 @@ console.log("occupant users::::",occupantUsers)
           } else if (row.role === 'guest') {
             totalCharge = adultGuestCharge;
           }
-          
+
           return {
             user_id: parseInt(row.user),
             oftype: row.level, // 'primary' or 'secondary'
             total_charge: totalCharge
           };
         });
-      
+
       // Prepare guest premium details for payload (slot-wise breakdown)
       let guestPremiumDetails: Array<{ slotLabel: string; slotPremiumPercent: number; guestPremium: number; total: number }> = [];
       if (selectedSlots.length > 0) {
@@ -650,13 +705,20 @@ console.log("occupant users::::",occupantUsers)
           totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
           totalGuestCharge = numberOfGuests * adultGuestCharge;
         }
+
+        // Calculate accessory total with quantities
+        const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+          const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+          return total + ((accessory?.price || 0) * (quantity || 0));
+        }, 0);
+
         const slotTotal = slotsCount * perSlotCharge;
         // Fix: Only add guest charge for members in subtotal and tax
         let subtotalBeforeDiscount = 0;
         if (userType === 'occupant') {
-          subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+          subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal + accessoryTotal;
         } else {
-          subtotalBeforeDiscount = totalGuestCharge + slotTotal;
+          subtotalBeforeDiscount = totalGuestCharge + slotTotal + accessoryTotal;
         }
         const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
         const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
@@ -670,6 +732,7 @@ console.log("occupant users::::",occupantUsers)
           totalGuestCharge,
           slotPremiumDetails,
           slotTotal,
+          accessoryTotal,
           subtotalBeforeDiscount,
           discountAmount,
           subtotalAfterDiscount,
@@ -694,6 +757,14 @@ console.log("occupant users::::",occupantUsers)
           comment: comment || '',
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
+          accessories: Object.entries(selectedAccessories).map(([accessoryId, quantity]) => {
+            const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+            return {
+              id: parseInt(accessoryId),
+              quantity: quantity,
+              total_price: (accessory?.price || 0) * quantity
+            };
+          }),
           entity_id: selectedCompany,
           member_charges: userType === 'occupant' ? costSummary.totalUserCharge : 0,
           guest_charges: userType === 'occupant' ? costSummary.totalGuestCharge : costSummary.totalUserCharge,
@@ -795,7 +866,7 @@ console.log("occupant users::::",occupantUsers)
         {/* User Type Selection */}
         <div>
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
-            
+
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="occupant" id="occupant" />
               <Label htmlFor="occupant">Members</Label>
@@ -1093,6 +1164,60 @@ console.log("occupant users::::",occupantUsers)
           )}
         </div>
 
+        {/* Select Accessories Section */}
+        {availableAccessories.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Select Accessories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {availableAccessories.map((accessory) => (
+                <div key={accessory.id} className="flex flex-col space-y-2 p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`accessory-${accessory.id}`}
+                      checked={selectedAccessories[accessory.id] ? true : false}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          handleAccessoryQuantityChange(accessory.id, 1);
+                        } else {
+                          handleAccessoryQuantityChange(accessory.id, 0);
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <Label
+                      htmlFor={`accessory-${accessory.id}`}
+                      className="cursor-pointer text-sm font-medium flex-1"
+                    >
+                      <span>{accessory.name}</span>
+                    </Label>
+                    {accessory.price > 0 && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">₹{accessory.price.toFixed(2)}</span>
+                    )}
+                  </div>
+
+                  {/* Quantity Input - Only show if selected */}
+                  {selectedAccessories[accessory.id] && (
+                    <div className="flex items-center gap-2 ml-6">
+                      <Label className="text-xs text-gray-600">Quantity:</Label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={selectedAccessories[accessory.id]}
+                        onChange={(e) => handleAccessoryQuantityChange(accessory.id, Math.max(1, parseInt(e.target.value) || 0))}
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                      />
+                      <span className="text-xs text-gray-600 ml-auto">
+                        Total: ₹{(accessory.price * selectedAccessories[accessory.id]).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Payment Method Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Payment Method<span className="text-red-500"> *</span></h2>
@@ -1127,7 +1252,7 @@ console.log("occupant users::::",occupantUsers)
           {!facilityDetails && selectedFacility && (
             <p className="text-gray-500">Please select a facility to see available payment methods</p>
           )}
-          
+
           {/* Complementary Reason Input */}
           {paymentMethod === 'complementary' && (
             <div className="mt-4">
@@ -1299,7 +1424,7 @@ console.log("occupant users::::",occupantUsers)
          )}  */}
 
         {/* Cost Summary Section */}
-        { selectedUser  && facilityDetails && (
+        {selectedUser && facilityDetails && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
@@ -1329,9 +1454,9 @@ console.log("occupant users::::",occupantUsers)
                     let guestPremium = 0;
                     let slotPremiumPercent = 0;
                     if (slot && slot.is_premium && slot.premium_percentage) {
-                        slotPremiumPercent = slot.premium_percentage;
-                        memberPremium = (memberRate * slot.premium_percentage) / 100;
-                        guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
+                      slotPremiumPercent = slot.premium_percentage;
+                      memberPremium = (memberRate * slot.premium_percentage) / 100;
+                      guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
                     }
                     slotPremiumDetails.push({
                       slotLabel: slot ? slot.ampm : '',
@@ -1350,12 +1475,19 @@ console.log("occupant users::::",occupantUsers)
                 }
 
                 const slotTotal = selectedSlots.length * perSlotCharge;
+
+                // Calculate accessory total with quantities
+                const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+                  const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+                  return total + ((accessory?.price || 0) * (quantity || 0));
+                }, 0);
+
                 // Fix: Only add guest charge for members
                 let subtotalBeforeDiscount = 0;
                 if (userType === 'occupant') {
-                  subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+                  subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal + accessoryTotal;
                 } else {
-                  subtotalBeforeDiscount = totalGuestCharge + slotTotal;
+                  subtotalBeforeDiscount = totalGuestCharge + slotTotal + accessoryTotal;
                 }
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
@@ -1502,6 +1634,24 @@ console.log("occupant users::::",occupantUsers)
                           <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
                         </div>
                         <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Accessories Total - Only show when accessories are selected */}
+                    {Object.keys(selectedAccessories).length > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700 font-medium">Accessories Total</span>
+                            <div className="text-xs text-gray-500">
+                              ({Object.entries(selectedAccessories).map(([id, qty]) => {
+                                const acc = availableAccessories.find(a => a.id === parseInt(id));
+                                return acc ? `${acc.name} x ${qty}` : '';
+                              }).filter(Boolean).join(', ')})
+                            </div>
+                          </div>
+                        </div>
+                        <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
                       </div>
                     )}
 

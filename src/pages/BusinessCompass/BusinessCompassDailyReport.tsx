@@ -1,0 +1,1179 @@
+import React, { useState } from "react";
+import { AdminViewEmulation } from "@/components/AdminViewEmulation";
+import {
+  Lightbulb,
+  X,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Info,
+  ChevronLeft,
+  CheckCircle2,
+  Plus,
+  Upload,
+  CheckSquare,
+  AlertCircle,
+  Clock,
+  Calendar,
+  Target,
+  HelpCircle,
+  Zap,
+  Star,
+  TrendingUp,
+  ListTodo,
+  CalendarCheck,
+  ListChecks,
+  BarChart3,
+  Image as ImageIcon,
+  FileText,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import "./BusinessCompass.css";
+import AddTaskOrIssueModal from "@/components/BusinessCompass/AddTaskOrIssueModal";
+
+const BusinessCompassDailyReport: React.FC = () => {
+  const [selectedDate, setSelectedDate] = useState("27");
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
+  const [isBannerExpanded, setIsBannerExpanded] = useState(false);
+  const [selfRating, setSelfRating] = useState([2]);
+  const [isAbsent, setIsAbsent] = useState(false);
+  const [absenceReason, setAbsenceReason] = useState("");
+  const [isDetailedScoreExpanded, setIsDetailedScoreExpanded] = useState(false);
+  const [isScoreInfoExpanded, setIsScoreInfoExpanded] = useState(false);
+  const selectedMonth = "March";
+  const selectedYear = "2026";
+  const [accomplishments, setAccomplishments] = useState<{ id: string, text: string, completed: boolean, starred: boolean }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<{ id: string; name: string; size: string }[]>([]);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+
+  const addAccomplishment = () => {
+    setAccomplishments([...accomplishments, { id: Date.now().toString(), text: '', completed: true, starred: false }]);
+  };
+
+  const removeAccomplishment = (id: string) => {
+    setAccomplishments(accomplishments.filter(a => a.id !== id));
+  };
+
+  const toggleAccomplishment = (id: string) => {
+    setAccomplishments(accomplishments.map(a => a.id === id ? { ...a, completed: !a.completed } : a));
+  };
+
+  const toggleStar = (id: string) => {
+    setAccomplishments(accomplishments.map(a => a.id === id ? { ...a, starred: !a.starred } : a));
+  };
+
+  const updateAccomplishmentText = (id: string, text: string) => {
+    setAccomplishments(accomplishments.map(a => a.id === id ? { ...a, text } : a));
+  };
+
+  const handleMockUpload = () => {
+    if (uploadedFiles.length < 5) {
+      setUploadedFiles([
+        ...uploadedFiles,
+        {
+          id: Date.now().toString(),
+          name: `Document_${uploadedFiles.length + 1}.pdf`,
+          size: "1.2 MB"
+        }
+      ]);
+    }
+  };
+
+  const days = [
+    { day: "Sun", date: "22", status: "Holiday", type: "holiday" },
+    { day: "Mon", date: "23", status: "Miss", type: "missed" },
+    { day: "Tue", date: "24", status: "Miss", type: "missed" },
+    { day: "Wed", date: "25", status: "Miss", type: "missed" },
+    { day: "Thu", date: "26", status: "Miss", type: "missed" },
+    { day: "Fri", date: "27", status: "+5", type: "missed" },
+    { day: "Sat", date: "28", status: "Holiday", type: "holiday" },
+    { day: "Sun", date: "29", status: "", type: "upcoming" },
+    { day: "Mon", date: "30", status: "", type: "upcoming" },
+  ];
+
+  return (
+    <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins pb-20 text-[#1a1a1a]">
+      <AdminViewEmulation />
+
+      {/* Interactive Info Banner Card */}
+      {isBannerVisible && (
+        <Card
+          className={cn(
+            "bg-[#eff6ff] border-blue-200 rounded-[12px] shadow-sm overflow-hidden border transition-all duration-300",
+            isBannerExpanded ? "max-h-[1000px]" : "max-h-[80px]"
+          )}
+        >
+          <CardContent className="p-0">
+            <div
+              className="p-4 flex items-center gap-4 cursor-pointer hover:bg-blue-100/50 transition-colors"
+              onClick={() => setIsBannerExpanded(!isBannerExpanded)}
+            >
+              <div className="bg-[#2563eb] text-white p-2.5 rounded-[8px] flex items-center justify-center shadow-sm">
+                <Lightbulb size={20} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-[#1e3a8a] text-sm tracking-tight">
+                  How to Fill Your Daily Report
+                </h4>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "text-blue-500 h-8 w-8 hover:bg-blue-100 rounded-full border-none transition-transform duration-200",
+                    isBannerExpanded && "rotate-180"
+                  )}
+                >
+                  <ChevronRight size={18} className="rotate-90" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-400 h-8 w-8 hover:bg-gray-100 rounded-full border-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsBannerVisible(false);
+                  }}
+                >
+                  <X size={18} />
+                </Button>
+              </div>
+            </div>
+
+            {isBannerExpanded && (
+              <div className="px-16 pb-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-2">
+                  <h5 className="text-sm font-bold text-[#1e3a8a]">
+                    How to use:
+                  </h5>
+                  <ul className="space-y-2 text-xs text-[#1e3a8a]/70 font-medium list-disc pl-4">
+                    <li>
+                      Fill your daily report at the end of each workday to track
+                      accomplishments and challenges.
+                    </li>
+                    <li>
+                      Rate your day honestly (1-10) - this helps identify
+                      patterns in your productivity.
+                    </li>
+                    <li>
+                      List 3-5 key accomplishments from today and check off
+                      completed items from yesterday's plan.
+                    </li>
+                    <li>
+                      Mention challenges you faced - your manager can provide
+                      support and remove blockers.
+                    </li>
+                    <li>
+                      Plan tomorrow's priorities - this helps you start the next
+                      day with clarity.
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <h5 className="text-sm font-bold text-[#1e3a8a] flex items-center gap-2">
+                    💡 Best Practices:
+                  </h5>
+                  <ul className="space-y-2 text-xs text-[#1e3a8a]/70 font-medium">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 font-bold">✓</span>
+                      <span>
+                        Be specific in accomplishments - 'Completed X project'
+                        not just 'worked on projects'
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 font-bold">✓</span>
+                      <span>
+                        Tag team members in challenges when you need their help
+                        using @mentions
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 font-bold">✓</span>
+                      <span>
+                        Keep tomorrow's plan realistic - 3-5 key priorities is
+                        better than a long list
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="text-3xl font-black text-[#1a1a1a] tracking-tight">
+            Daily Report
+          </h1>
+        </div>
+
+        <Tabs defaultValue="submit" className="w-full">
+          <TabsList className="bg-gray-100 p-1.5 rounded-[12px] h-auto inline-flex shadow-inner mb-6">
+            <TabsTrigger
+              value="submit"
+              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#1a1a1a] data-[state=active]:shadow-md bg-transparent text-gray-500 transition-all font-bold text-sm"
+            >
+              Submit Report
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#1a1a1a] data-[state=active]:shadow-md bg-transparent text-gray-500 transition-all font-bold text-sm"
+            >
+              Report History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="submit" className="space-y-6 mt-0">
+            {/* Calendar Card */}
+            <Card className="rounded-[16px] border border-gray-200 shadow-sm overflow-hidden bg-white">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-50 p-2 rounded-lg">
+                      <CalendarIcon size={20} className="text-blue-600" />
+                    </div>
+                    <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
+                      Daily Report for {selectedDate}{" "}
+                      {selectedMonth.slice(0, 3)}, {selectedYear}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 hover:text-gray-900 border-none"
+                    >
+                      <ChevronLeft size={20} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 hover:text-gray-900 border-none"
+                    >
+                      <ChevronRight size={20} />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
+                  {days.map((item, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-pointer border-2 transition-all shrink-0 snap-center shadow-sm relative group",
+                        item.type === "missed" &&
+                          "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
+                        item.type === "holiday" &&
+                          "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
+                        item.type === "upcoming" &&
+                          "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
+                        item.type === "filled" &&
+                          "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
+                        selectedDate === item.date
+                          ? "ring-4 ring-blue-500/20 scale-105 z-10 border-blue-500 bg-[#3b82f6] text-white"
+                          : "border-transparent"
+                      )}
+                      onClick={() => setSelectedDate(item.date)}
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
+                        {item.day}
+                      </span>
+                      <span className="text-3xl font-black tracking-tighter">
+                        {item.date}
+                      </span>
+                      {item.status && (
+                        <Badge
+                          className={cn(
+                            "text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter",
+                            item.type === "missed"
+                              ? "bg-white/20 text-white"
+                              : "bg-black/10 text-[#854d0e]",
+                            selectedDate === item.date &&
+                              "bg-white/20 text-white"
+                          )}
+                        >
+                          {item.status}
+                        </Badge>
+                      )}
+                      {selectedDate === item.date && (
+                        <div className="absolute -top-1 -right-1 h-3 w-3 bg-white rounded-full border-2 border-blue-500 shadow-sm" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Legend */}
+                <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#22c55e] shadow-sm" />
+                    <span className="opacity-80">Filled</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#ef4444] shadow-sm" />
+                    <span className="opacity-80">Missed (click to fill)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#facd55] shadow-sm" />
+                    <span className="opacity-80">Holiday</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#f1f5f9] shadow-inner border border-gray-100" />
+                    <span className="opacity-80">Upcoming</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {!isAbsent && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                {/* Today's Accomplishments Card */}
+                <Card className="rounded-[16px] border-2 border-[#10b981] overflow-hidden bg-white shadow-sm">
+                  <div className="bg-[#ecfdf5] p-5 flex items-center justify-between border-b border-[#10b981]/10">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white p-1 rounded-full border border-[#10b981]/30">
+                        <CheckCircle2 size={18} className="text-[#10b981]" />
+                      </div>
+                      <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                        Today's Accomplishments
+                      </h3>
+                    </div>
+                    <Badge className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
+                      {accomplishments.filter(a => a.completed).length * 5}/25 PTS
+                    </Badge>
+                  </div>
+
+                  <CardContent className="p-6 space-y-6">
+                    <div className="space-y-3">
+                      {accomplishments.map((item) => (
+                        <div key={item.id} className="relative group animate-in fade-in duration-300">
+                          <div className={cn(
+                            "flex items-center gap-4 bg-white border rounded-[10px] p-3 transition-all",
+                            item.completed ? "border-[#10b981] bg-green-50/10" : "border-gray-200"
+                          )}>
+                            <div 
+                              className={cn(
+                                "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2",
+                                item.completed ? "bg-[#1a1a1a] border-[#1a1a1a]" : "bg-white border-gray-300"
+                              )}
+                              onClick={() => toggleAccomplishment(item.id)}
+                            >
+                              {item.completed && <CheckCircle2 size={14} className="text-white" />}
+                            </div>
+                            
+                            <Star 
+                              size={18} 
+                              className={cn(
+                                "cursor-pointer transition-all",
+                                item.starred ? "text-[#eab308] fill-[#eab308]" : "text-gray-300 hover:text-gray-400"
+                              )}
+                              onClick={() => toggleStar(item.id)}
+                            />
+
+                            <input 
+                              type="text"
+                              value={item.text}
+                              onChange={(e) => updateAccomplishmentText(item.id, e.target.value)}
+                              placeholder="Describe your accomplishment..."
+                              className={cn(
+                                "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
+                                item.completed ? "text-gray-400 line-through" : "text-gray-700"
+                              )}
+                            />
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeAccomplishment(item.id)}
+                            >
+                              <X size={16} className="text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {accomplishments.length === 0 && (
+                        <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
+                          <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
+                            <CheckCircle2 size={32} className="text-[#10b981]/30" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-base font-bold text-[#065f46]">
+                              What did you get done today?
+                            </p>
+                            <p className="text-xs text-gray-500 font-medium">
+                              Add your accomplishments to celebrate your progress!
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1 h-11 border-[#10b981]/30 text-[#10b981] font-bold text-sm bg-white hover:bg-[#ecfdf5] rounded-[8px] flex items-center justify-center gap-2"
+                          onClick={addAccomplishment}
+                        >
+                          <Plus size={18} />
+                          Add Item
+                        </Button>
+
+                        {accomplishments.some(a => !a.completed) && (
+                          <Button
+                            variant="outline"
+                            className="h-11 border-blue-200 text-blue-600 font-bold text-xs bg-white hover:bg-blue-50 rounded-[8px] px-4"
+                          >
+                            Transfer unchecked to tomorrow
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-[10px] text-[#059669] font-black uppercase tracking-widest bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                        <Info size={14} />
+                        <span>Limits: Images 2MB, Others 5MB</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs font-bold text-gray-400">
+                          {uploadedFiles.length}/5
+                        </span>
+                        <Button 
+                          className="bg-[#10b981] hover:bg-[#059669] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none"
+                          onClick={handleMockUpload}
+                        >
+                          <Upload size={16} />
+                          File Upload
+                        </Button>
+                      </div>
+                    </div>
+
+                    {uploadedFiles.length > 0 && (
+                      <div className="space-y-2">
+                        {uploadedFiles.map((file) => (
+                          <div key={file.id} className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[10px] border border-gray-100 animate-in fade-in duration-300">
+                            <div className="flex items-center gap-3">
+                              <ImageIcon size={16} className="text-blue-500" />
+                              <span className="text-sm font-medium text-blue-600 hover:underline cursor-pointer">
+                                {file.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                {file.size}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none"
+                                onClick={() => setUploadedFiles(uploadedFiles.filter(f => f.id !== file.id))}
+                              >
+                                <X size={14} className="text-red-500" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Tasks & Issues Card */}
+                <Card className="rounded-[8px] border-2 border-[#b91c1c] overflow-hidden bg-white shadow-sm mt-6">
+                  <div className="bg-[#fef2f2] p-4 border-b border-[#b91c1c]/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-white p-1 rounded-md border border-[#b91c1c]/30">
+                            <CheckSquare size={16} className="text-[#b91c1c]" />
+                          </div>
+                          <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                            Tasks & Issues
+                          </h3>
+                        </div>
+                        <p className="text-[11px] text-gray-500 font-medium">
+                          Check the box for completed items to mark them
+                          completed.
+                        </p>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <Badge
+                            variant="outline"
+                            className="bg-[#ecfdf5] text-[#047857] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                          >
+                            <CheckSquare size={10} />
+                            Closed: 0
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-[#eff6ff] text-[#1d4ed8] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                          >
+                            <Info size={10} />
+                            Open: 0
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-[#fef2f2] text-[#b91c1c] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                          >
+                            <Clock size={10} />
+                            Overdue: 0
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="bg-[#ea580c] text-white px-3 py-1 rounded-[4px] text-[9px] font-black tracking-widest shadow-md">
+                          0/20 PTS
+                        </div>
+                        <Button 
+                          className="bg-[#b91c1c] hover:bg-[#991b1b] text-white font-black px-4 h-8 rounded-[4px] flex items-center gap-2 text-[10px] shadow-md transition-all border-none"
+                          onClick={() => setIsAddTaskModalOpen(true)}
+                        >
+                          <Plus size={14} />
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <CardContent className="p-10 flex flex-col items-center justify-center text-center">
+                    <div className="flex flex-col items-center gap-3 opacity-30">
+                      <CheckSquare size={40} className="text-[#b91c1c]/20" />
+                      <p className="text-base font-bold text-gray-400 tracking-tight">
+                        No open tasks or issues
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Bottom Tip Banner */}
+                <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
+                  <div className="bg-white p-1.5 rounded-full shadow-inner border border-[#fef08a]">
+                    <Lightbulb size={18} className="text-[#ca8a04]" />
+                  </div>
+                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                    <span className="font-bold text-[#ca8a04]">
+                      Delegate or Delete:
+                    </span>{" "}
+                    Look at your list. What doesn't actually need doing?
+                  </p>
+                </div>
+
+                {/* Plan Card */}
+                <Card className="rounded-[16px] border-2 border-[#3b82f6] overflow-hidden bg-white shadow-sm mt-6">
+                  <div className="bg-[#eff6ff] p-5 flex items-center justify-between border-b border-[#3b82f6]/10">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white p-1 rounded-full border border-[#3b82f6]/30">
+                        <CheckCircle2 size={18} className="text-[#3b82f6]" />
+                      </div>
+                      <h3 className="text-sm font-bold tracking-tight text-blue-900">
+                        Plan for Mon, 30 Mar
+                      </h3>
+                    </div>
+                    <Badge className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
+                      0/25 PTS
+                    </Badge>
+                  </div>
+
+                  <CardContent className="p-10 flex flex-col items-center">
+                    <div className="flex flex-col items-center gap-4 text-center mb-8">
+                      <div className="h-16 w-16 rounded-full bg-[#eff6ff] border-2 border-[#3b82f6]/20 flex items-center justify-center">
+                        <Calendar size={32} className="text-[#3b82f6]/30" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-base font-bold text-blue-900">
+                          Plan your next working day!
+                        </p>
+                        <p className="text-xs text-gray-500 font-medium">
+                          List 3-5 key tasks for 30 Mar to stay focused.
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 border-[#3b82f6]/30 text-[#3b82f6] font-bold text-sm bg-white hover:bg-[#eff6ff] rounded-[8px] flex items-center justify-center gap-2 border-none"
+                    >
+                      <Plus size={18} />
+                      Add Item
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Submission Section */}
+            <Card className="rounded-[16px] border border-gray-100 shadow-sm bg-white p-6 mt-6">
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex-1 w-full space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-bold text-gray-700">
+                        Self Rating (1-10)
+                      </Label>
+                      <span className="text-sm font-black text-green-700">
+                        {selfRating[0]}/10
+                      </span>
+                    </div>
+                    <Slider
+                      value={selfRating}
+                      onValueChange={setSelfRating}
+                      max={10}
+                      step={1}
+                      className="cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 rounded-[10px] border border-gray-100 min-w-[150px] justify-center">
+                    <Checkbox
+                      id="absent"
+                      checked={isAbsent}
+                      onCheckedChange={(checked) =>
+                        setIsAbsent(checked as boolean)
+                      }
+                      className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
+                    />
+                    <label
+                      htmlFor="absent"
+                      className="text-sm font-bold text-[#1a1a1a] cursor-pointer"
+                    >
+                      Mark as Absent
+                    </label>
+                  </div>
+                </div>
+
+                {isAbsent && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                      Reason for Absence <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      placeholder="Why are you absent today?"
+                      value={absenceReason}
+                      onChange={(e) => setAbsenceReason(e.target.value)}
+                      className="h-12 rounded-[10px] border-gray-200 focus:ring-[#22c55e]/20"
+                    />
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <Button className="w-full h-14 bg-[#22c55e]/50 hover:bg-[#16a34a]/60 text-white font-black text-lg rounded-[14px] shadow-sm transition-all border-none">
+                    Submit Daily Report (for 27 Mar)
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {!isAbsent && (
+              <p className="mt-4 text-xs text-red-500 text-center font-bold animate-in fade-in duration-500">
+                Please complete at least one accomplishment and add next working
+                day's plan before submitting
+              </p>
+            )}
+
+            {/* Live Score Preview Section */}
+            {!isAbsent && (
+              <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <Card className="rounded-[20px] border border-purple-100 shadow-sm overflow-hidden bg-[#fdfaff]">
+                  <CardContent className="p-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-purple-100 p-1.5 rounded-full">
+                          <Target size={18} className="text-[#8b5cf6]" />
+                        </div>
+                        <h3 className="text-sm font-bold text-[#1a1a1a] flex items-center gap-1.5">
+                          Live Score Preview
+                          <HelpCircle
+                            size={14}
+                            className="text-blue-500 cursor-pointer"
+                          />
+                        </h3>
+                      </div>
+                      <span className="text-3xl font-black text-[#8b5cf6] tracking-tighter">
+                        0/100
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        {
+                          label: "Accomplishments",
+                          score: "0/25",
+                          color: "text-purple-600",
+                        },
+                        {
+                          label: "Tasks",
+                          score: "0/25",
+                          color: "text-[#ea580c]",
+                        },
+                        {
+                          label: "Planning",
+                          score: "0/25",
+                          color: "text-blue-600",
+                        },
+                        {
+                          label: "Timing",
+                          score: "0/25",
+                          color: "text-[#ea580c]",
+                        },
+                      ].map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-white p-4 rounded-[14px] border border-purple-50 flex flex-col items-center gap-1 shadow-sm"
+                        >
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            {item.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-xl font-black tracking-tight",
+                              item.color
+                            )}
+                          >
+                            {item.score}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-4 border-t border-purple-50">
+                      <div
+                        className="flex items-center justify-between text-gray-400 group cursor-pointer hover:text-purple-600 transition-colors"
+                        onClick={() =>
+                          setIsDetailedScoreExpanded(!isDetailedScoreExpanded)
+                        }
+                      >
+                        <span className="text-xs font-bold tracking-tight">
+                          Detailed Score Calculation{" "}
+                          <span className="font-medium opacity-60">
+                            (Click here to{" "}
+                            {isDetailedScoreExpanded ? "collapse" : "expand"})
+                          </span>
+                        </span>
+                        <ChevronRight
+                          size={18}
+                          className={cn(
+                            "transition-transform duration-300",
+                            isDetailedScoreExpanded ? "-rotate-90" : "rotate-90"
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {isDetailedScoreExpanded && (
+                      <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                        {/* 1. Accomplishments Detail */}
+                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <ListTodo size={16} className="text-purple-600" />
+                              <span className="text-xs font-black text-purple-900 uppercase tracking-widest">
+                                Accomplishments
+                              </span>
+                            </div>
+                            <span className="text-xs font-black text-purple-600">
+                              0/25 pts
+                            </span>
+                          </div>
+                          <div className="space-y-2.5 pl-6 border-l-2 border-purple-50">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                              <span className="flex items-center gap-2">
+                                • Regular items:
+                              </span>
+                              <span className="text-gray-900">0 × 2.5 pts</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                              <span className="flex items-center gap-2">
+                                •{" "}
+                                <Star
+                                  size={12}
+                                  className="text-[#eab308] fill-[#eab308]"
+                                />{" "}
+                                Starred items:
+                              </span>
+                              <span className="text-gray-900">0 × 5 pts</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-black text-purple-900 pt-1 border-t border-gray-50">
+                              <span>Total earned:</span>
+                              <span>0 pts (max 25)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. Tasks & Issues Detail */}
+                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <CheckSquare
+                                size={16}
+                                className="text-[#ea580c]"
+                              />
+                              <span className="text-xs font-black text-[#ea580c] uppercase tracking-widest">
+                                Tasks & Issues
+                              </span>
+                            </div>
+                            <span className="text-xs font-black text-[#ea580c]">
+                              0/25 pts
+                            </span>
+                          </div>
+                          <div className="bg-slate-50/50 rounded-[12px] border border-slate-100 p-4 space-y-3">
+                            <p className="text-[11px] font-black text-[#1e40af] uppercase tracking-widest mb-2">
+                              Score Calculation:
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                                <span className="flex items-center gap-2">
+                                  <CheckCircle2
+                                    size={12}
+                                    className="text-green-500"
+                                  />{" "}
+                                  Closed Tasks (0 × ~4 pts avg)
+                                </span>
+                                <span className="text-green-600">+0</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                                <span className="flex items-center gap-2">
+                                  <TrendingUp
+                                    size={12}
+                                    className="text-blue-500"
+                                  />{" "}
+                                  New Issues (0 × 2 pts, max 10)
+                                </span>
+                                <span className="text-blue-600">+0</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-100">
+                                <span>Subtotal (Positive)</span>
+                                <span>+0</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] font-bold text-red-500">
+                                <span className="flex items-center gap-2">
+                                  <AlertCircle
+                                    size={12}
+                                    className="text-red-500"
+                                  />{" "}
+                                  Overdue Penalty (0 × 5 pts, max -15)
+                                </span>
+                                <span>-0</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-200">
+                                <span className="text-sm">Final Score</span>
+                                <span className="text-[#ea580c]">0/25 pts</span>
+                              </div>
+                            </div>
+                            <p className="text-[9px] text-gray-400 font-medium italic mt-2 leading-relaxed">
+                              Note: The final score from the backend may differ
+                              slightly as it considers exact target dates for
+                              closed tasks (+5 for on-time, +2 for delayed).
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 3. Planning Detail */}
+                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <CalendarCheck
+                                size={16}
+                                className="text-blue-600"
+                              />
+                              <span className="text-xs font-black text-blue-900 uppercase tracking-widest">
+                                Planning
+                              </span>
+                            </div>
+                            <span className="text-xs font-black text-blue-600">
+                              0/25 pts
+                            </span>
+                          </div>
+                          <div className="space-y-2.5 pl-6 border-l-2 border-blue-50">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                              <span className="flex items-center gap-2">
+                                • Regular items:
+                              </span>
+                              <span className="text-gray-900">0 × 2 pts</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                              <span className="flex items-center gap-2">
+                                •{" "}
+                                <Star
+                                  size={12}
+                                  className="text-[#eab308] fill-[#eab308]"
+                                />{" "}
+                                Starred items:
+                              </span>
+                              <span className="text-gray-900">0 × 4 pts</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-black text-blue-900 pt-1 border-t border-gray-50">
+                              <span>Total earned:</span>
+                              <span>0/25 pts</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 4. Submission Timing Detail */}
+                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Clock size={16} className="text-[#ea580c]" />
+                              <span className="text-xs font-black text-[#ea580c] uppercase tracking-widest">
+                                Submission Timing
+                              </span>
+                            </div>
+                            <span className="text-xs font-black text-[#ea580c]">
+                              0/25 pts
+                            </span>
+                          </div>
+                          <div className="space-y-2.5 pl-6 border-l-2 border-[#ea580c]/30">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                              <span className="flex items-center gap-2">
+                                • Timing:
+                              </span>
+                              <span className="text-red-600 font-bold">
+                                After 9am next day — 0 pts
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                              <span className="flex items-center gap-2">
+                                • Bonus percentage:
+                              </span>
+                              <span className="text-[#ea580c]">0% of 25</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-center">
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-purple-50/50 px-4 py-1.5 rounded-full">
+                        <Zap
+                          size={12}
+                          className="text-orange-700 fill-orange-700"
+                        />
+                        <span>
+                          This is a live preview. Final score calculated after
+                          submission.
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            <div className="mt-8">
+              {/* Automation Info Banner */}
+              <div
+                  className={cn(
+                    "bg-[#eff6ff] border border-blue-100 rounded-[14px] overflow-hidden transition-all duration-300 shadow-sm",
+                    isScoreInfoExpanded ? "max-h-[3000px]" : "max-h-[80px]"
+                  )}
+                >
+                  <div
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-blue-100/50 transition-all border-b border-transparent"
+                    onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white p-1.5 rounded-full shadow-sm">
+                        <HelpCircle size={18} className="text-blue-600" />
+                      </div>
+                      <span className="text-sm font-bold text-[#1e40af] tracking-tight">
+                        How is the Automated Daily Score Calculated?
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!isScoreInfoExpanded && (
+                        <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">
+                          Click to Expand
+                        </span>
+                      )}
+                      <ChevronRight
+                        size={18}
+                        className={cn(
+                          "text-blue-400 transition-transform duration-300",
+                          isScoreInfoExpanded ? "-rotate-90" : "rotate-90"
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {isScoreInfoExpanded && (
+                    <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                      <div className="grid grid-cols-1 gap-6">
+                        {/* 1. Daily KPI */}
+                        <div className="flex gap-4">
+                          <div className="bg-[#eff6ff] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-blue-100">
+                            <TrendingUp size={20} className="text-[#3b82f6]" />
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="text-sm font-bold text-[#1e40af] tracking-tight">
+                                1. Daily KPI Achievement (Max 20 points)
+                              </h4>
+                              <p className="text-xs text-slate-500 font-medium mt-0.5 italic">
+                                Calculated as: <span className="font-bold text-slate-700">Max Points × (Average Achievement % ÷ 100)</span>
+                              </p>
+                            </div>
+                            <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4">
+                              <li>100% achievement: 20 points</li>
+                              <li>90% achievement: 18 points</li>
+                              <li>75% achievement: 15 points</li>
+                              <li>50% achievement: 10 points</li>
+                            </ul>
+                            <p className="text-[11px] text-[#1e40af] font-bold italic opacity-70">
+                              * If a KPI has target 0 but actual is positive, it's counted as 100% achievement.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 2. Checklist */}
+                        <div className="flex gap-4">
+                          <div className="bg-[#ecfdf5] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-green-100">
+                            <CheckCircle2 size={20} className="text-[#10b981]" />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-bold text-[#065f46] tracking-tight">
+                              2. Daily Checklist Achievement (Max 10 points)
+                            </h4>
+                            <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
+                              Points awarded proportionally based on percentage of daily KRA items completed.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 3. Accomplishments */}
+                        <div className="flex gap-4">
+                          <div className="bg-[#f5f3ff] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-purple-100">
+                            <ListTodo size={20} className="text-[#8b5cf6]" />
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-bold text-purple-900 tracking-tight">
+                              3. Accomplishments (Max 10 points)
+                            </h4>
+                            <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
+                              Points awarded proportionally based on percentage of accomplishments marked as completed.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 4. Tasks & Issues */}
+                        <div className="flex gap-4">
+                          <div className="bg-[#fff7ed] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-orange-100">
+                            <CheckSquare size={20} className="text-[#ea580c]" />
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-bold text-[#9a3412] tracking-tight">
+                              4. Tasks & Issues (Max 20 points)
+                            </h4>
+                            <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4 leading-relaxed">
+                              <li>Task/issue closed on report day (within target date or no target): <span className="text-green-600 font-bold">+5 points each</span></li>
+                              <li>Task/issue closed on report day (after target date): <span className="text-blue-600 font-bold">+2 points each</span></li>
+                              <li>New issue reported on report day: <span className="text-blue-600 font-bold">+2 points each (max 10 points)</span></li>
+                              <li>Overdue tasks/issues: <span className="text-red-600 font-bold">-5 points each (max -15 deduction)</span></li>
+                            </ul>
+                            <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed pt-1">
+                              Only tasks closed on the day of the report or new issues reported on that day are counted. For larger numbers of tasks/issues, the total positive score is capped at the maximum available points before penalties are applied.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 5. Items Planned */}
+                        <div className="flex gap-4">
+                          <div className="bg-[#ecfeff] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-cyan-100">
+                            <Calendar size={20} className="text-cyan-600" />
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-bold text-[#164e63] tracking-tight">
+                              5. Items Planned for Coming Day (Max 20 points)
+                            </h4>
+                            <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4 leading-relaxed">
+                              <li>Regular items: <span className="text-slate-900 font-bold">+2 points each</span></li>
+                              <li>
+                                <span className="inline-flex items-center gap-1">
+                                  <Star size={12} className="text-[#eab308] fill-[#eab308]" /> Starred items:
+                                </span> <span className="text-slate-900 font-bold">+4 points each (double points, max 3 stars)</span>
+                              </li>
+                            </ul>
+                            <p className="text-xs text-slate-400 font-medium italic">
+                              Planning ahead shows proactivity and organization.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 6. Report Timing */}
+                        <div className="flex gap-4">
+                          <div className="bg-[#fffbeb] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-yellow-100">
+                            <Clock size={20} className="text-yellow-600" />
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-bold text-yellow-900 tracking-tight">
+                              6. Report Timing (Max 20 points)
+                            </h4>
+                            <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4">
+                              <li>Submitted by 7pm same day: <span className="text-slate-900 font-bold">20 points</span></li>
+                              <li>Submitted by 11:59pm same day: <span className="text-slate-900 font-bold">15 points</span></li>
+                              <li>Submitted 12am-7am next day: <span className="text-slate-900 font-bold">10 points</span></li>
+                              <li>Submitted 7am-9am next day: <span className="text-slate-900 font-bold">5 points</span></li>
+                              <li>Submitted after 9am next day: <span className="text-slate-900 font-bold">0 points</span></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Dynamic Point Allocation Box */}
+                      <div className="bg-[#eff6ff] border border-blue-100 rounded-[14px] p-6 space-y-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="bg-white p-1 rounded-md shadow-sm">
+                            <BarChart3 size={16} className="text-blue-600" />
+                          </div>
+                          <span className="text-sm font-black text-[#1e40af] uppercase tracking-widest">
+                            Dynamic Point Allocation
+                          </span>
+                        </div>
+                        <ul className="space-y-2 text-xs text-[#1e40af] font-medium leading-relaxed">
+                          <li className="flex items-start gap-2">
+                            <span className="font-bold">•</span>
+                            <span><span className="font-black">No Checklist Items:</span> Accomplishments get +10 bonus points (max 20)</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="font-bold">•</span>
+                            <span><span className="font-black">No Daily KPIs:</span> Accomplishments, Tasks, Planning, and Timing each get +5 bonus points</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-0 pt-0">
+            <Card className="p-20 text-center text-gray-400 bg-white border border-gray-100 rounded-[16px] shadow-sm flex flex-col items-center gap-2">
+              <CalendarIcon size={48} className="opacity-10 mb-2" />
+              <p className="text-lg font-bold text-gray-300 tracking-tight">
+                No report history found for this period
+              </p>
+              <p className="text-sm font-medium text-gray-400/80">
+                Try selecting a different month or year
+              </p>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+      <AddTaskOrIssueModal 
+        isOpen={isAddTaskModalOpen} 
+        onClose={() => setIsAddTaskModalOpen(false)} 
+      />
+    </div>
+  );
+};
+
+export default BusinessCompassDailyReport;

@@ -812,7 +812,7 @@ export const ClubGroupMembershipDashboard = () => {
       />
 
       {/* Member Details Modal */}
-      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({...modalData, isOpen: open})}>
+      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({ ...modalData, isOpen: open })}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modalData.title}</DialogTitle>

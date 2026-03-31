@@ -19,6 +19,7 @@ interface SalesOrder {
     total_amount: number;
     status: string;
     payment_term: string | null;
+    delivery_method: string | null;
     reference_number: string;
     sales_person_name: string;
     active: boolean;
@@ -94,6 +95,13 @@ const columns: ColumnConfig[] = [
     {
         key: 'payment_term',
         label: 'Payment Term',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'delivery_method',
+        label: 'Delivery Method',
         sortable: true,
         hideable: true,
         draggable: true
@@ -303,6 +311,9 @@ console.log('Sales Order Data:', salesOrderData);
         ),
         payment_term: (
             <span className="text-sm text-gray-600">{order.payment_term || '-'}</span>
+        ),
+        delivery_method: (
+            <span className="text-sm text-gray-600">{order.delivery_method || '-'}</span>
         ),
         sales_person_name: (
             <span className="text-sm text-gray-600">{order.sales_person_name}</span>

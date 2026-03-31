@@ -280,7 +280,7 @@ export const ClubMembershipDashboard = () => {
   };
 
   // Handle download society QR
-const handleDownloadSocietyQR = async () => {
+  const handleDownloadSocietyQR = async () => {
     const loadingToast = toast.loading('Generating Society QR Code...');
     try {
       // TODO: Replace with actual API call
@@ -678,6 +678,7 @@ const handleDownloadSocietyQR = async () => {
           selectable={true}
           pagination={false}
           enableExport={true}
+          onFilterClick={() => { }}
           exportFileName="club-memberships"
           handleExport={handleExport}
           storageKey="club-memberships-table"
