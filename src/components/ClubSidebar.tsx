@@ -40,6 +40,7 @@ import {
   UserCog,
   Boxes,
   House,
+  TrendingUp,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -368,22 +369,56 @@ const modulesByPackage = {
             },
           ],
         },
-        { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
-        {
-          name: "Cash Flow Statement",
-          href: "/accounting/reports/cash-flow-statement",
-        },
-        {
-          name: "Profit & Loss",
-          href: "/accounting/reports/profit-and-loss",
-        },
         {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
+
         {
-          name: "Business Performance Ratio",
-          href: "/accounting/reports/business-performance",
+          name: "Business Overview",
+          icon: TrendingUp,
+          subItems: [
+            {
+              name: "Profit and Loss",
+              href: "/accounting/reports/profit-and-loss",
+            },
+            {
+              name: "Profit and Loss (Schedule III)",
+              href: "/accounting/reports/profit-and-loss-details",
+            },
+            {
+              name: "Horizontal Profit and Loss",
+              href: "/accounting/reports/profit-and-loss",
+            },
+            {
+              name: "Cash Flow Statement",
+              href: "/accounting/reports/cash-flow-statement",
+            },
+            {
+              name: "Balance Sheet",
+              href: "/accounting/reports/balance-sheet",
+            },
+            {
+              name: "Horizontal Balance Sheet",
+              href: "/accounting/reports/balance-sheet",
+            },
+            {
+              name: "Balance Sheet (Schedule III)",
+              href: "/accounting/reports/balance-sheet-details",
+            },
+            {
+              name: "Business Performance Ratios",
+              href: "/accounting/reports/business-performance",
+            },
+            {
+              name: "Cash Flow Forecasting",
+              href: "/accounting/reports/cash-flow-statement",
+            },
+            {
+              name: "Movement of Equity",
+              href: "/accounting/reports/balance-sheet",
+            },
+          ],
         },
 
 

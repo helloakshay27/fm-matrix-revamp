@@ -17,6 +17,10 @@ import {
   LineChart,
   FileText,
   Brain,
+  TrendingUp,
+  DollarSign,
+  Activity,
+  BarChart3,
 } from "lucide-react";
 
 const adminNavigationStructure = {
