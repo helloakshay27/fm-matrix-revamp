@@ -855,7 +855,7 @@ export const IncidentNewDetails = () => {
                         injuries.push({
                             injury_type: person.injuryType || '',
                             injury_number: person.injuryNumber || '',
-                            who_got_injured_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
+                            who_got_injured_id: investigators[0]?.id ? "" : null,
                             name: person.name,
                             mobile: person.mobile || '',
                             age: parseInt(person.age) || 0,
@@ -1660,38 +1660,44 @@ export const IncidentNewDetails = () => {
 
                         {currentStep === 2 && (
                             <>
+                            <div className="flex justify-center items-center gap-3 p-4">
                                 <Button
                                     variant="outline"
-                                    className="w-full"
+                                    className="w-25 mx-3"
                                     onClick={handleSaveAsDraft}
                                 >
                                     Save as draft
                                 </Button>
                                 <Button
-                                    className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
                                     onClick={handleSubmit}
                                 >
                                     Next
                                 </Button>
+                            </div>
                             </>
                         )}
 
                         {currentStep === 3 && (
+                            <div className="flex justify-center">
                             <Button
-                                className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
                                 onClick={handleSubmit}
                             >
                                 Submit
                             </Button>
+                            </div>
                         )}
 
                         {currentStep === 4 && (
+                            <div className="flex justify-center">
                             <Button
-                                className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
                                 onClick={handleSubmit}
                             >
                                 Submit
                             </Button>
+                            </div>
                         )}
                     </div>
                 </>
