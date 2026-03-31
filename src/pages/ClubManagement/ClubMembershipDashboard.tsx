@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -9,17 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
-import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { ClubMemberFilterModal, ClubMembershipFilters } from '@/components/ClubMemberFilterModal';
 import {
   Pagination,
   PaginationContent,
@@ -74,11 +64,13 @@ export const ClubMembershipDashboard = () => {
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
   const [filters, setFilters] = useState<ClubMembershipFilters>({
-    search: '',
+    email: '',
+    mobile: '',
     clubMemberEnabled: '',
     accessCardEnabled: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    search: ''
   });
 
   const perPage = 20;
@@ -99,6 +91,16 @@ export const ClubMembershipDashboard = () => {
       // Add global search filter
       if (filters.search) {
         url.searchParams.append('global_search_term', filters.search);
+      }
+
+      // Add email filter
+      if (filters.email) {
+        url.searchParams.append('q[user_email_cont]', filters.email);
+      }
+
+      // Add mobile filter
+      if (filters.mobile) {
+        url.searchParams.append('q[user_mobile_cont]', filters.mobile);
       }
 
       // Add club member enabled filter
@@ -218,6 +220,14 @@ export const ClubMembershipDashboard = () => {
         url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
       }
 
+      if (filters.email) {
+        url.searchParams.append('q[user_email_cont]', filters.email);
+      }
+
+      if (filters.mobile) {
+        url.searchParams.append('q[user_mobile_cont]', filters.mobile);
+      }
+
       if (filters.clubMemberEnabled) {
         url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
       }
@@ -302,7 +312,10 @@ export const ClubMembershipDashboard = () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
-    setFilters(newFilters);
+    setFilters(prev => ({
+      ...newFilters,
+      search: prev.search
+    }));
     setCurrentPage(1);
     setIsFilterOpen(false);
   };
@@ -678,7 +691,7 @@ export const ClubMembershipDashboard = () => {
           selectable={true}
           pagination={false}
           enableExport={true}
-          onFilterClick={() => { }}
+          onFilterClick={() => setIsFilterOpen(true)}
           exportFileName="club-memberships"
           handleExport={handleExport}
           storageKey="club-memberships-table"
@@ -692,7 +705,6 @@ export const ClubMembershipDashboard = () => {
               {renderCustomActions()}
             </div>
           }
-          // onFilterClick={() => setIsFilterOpen(true)}
           rightActions={renderRightActions()}
           searchPlaceholder="Search Members"
           onSearchChange={handleSearch}
@@ -733,7 +745,7 @@ export const ClubMembershipDashboard = () => {
       </div>
 
       {/* Filter Dialog */}
-      <ClubMembershipFilterDialog
+      <ClubMemberFilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApply={handleFilterApply}

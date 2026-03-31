@@ -83,6 +83,40 @@ interface LockPayment {
     facility_name: string;
     status: string;
   };
+  facility_booking_details?: {
+    id: number;
+    startdate: string;
+    start_hour: number;
+    start_minute: number;
+    end_hour: number;
+    end_minute: number;
+    book_by: string;
+    fac_type: string;
+    current_status: string;
+    member_charges: number;
+    guest_charges: number;
+    discount: number;
+    amount_full: number;
+    sub_total: number;
+    gst: number;
+    sgst: number;
+    cgst_amount: number;
+    sgst_amount: number;
+    member_count: number;
+    guest_count: number;
+    payment_method: string;
+    facility_name: string;
+    schedule_text: string;
+  };
+  facility_booking_user_details?: {
+    id: number;
+    full_name: string;
+    email: string;
+    mobile: string;
+    gender: string;
+    user_type: string;
+    user_title: string | null;
+  };
 }
 
 export const PaymentDetailPage = () => {
@@ -455,6 +489,105 @@ export const PaymentDetailPage = () => {
                     </span>
                   </div>
                 )}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Facility Booking User Details */}
+        {payment.facility_booking_user_details && (
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <User className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">User Information</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Name</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced font-medium">
+                    {payment.facility_booking_user_details.full_name}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Email</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking_user_details.email}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Mobile</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking_user_details.mobile}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">User Type</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking_user_details.user_type}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Facility Booking Details */}
+        {payment.facility_booking_details && (
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <Calendar className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Facility Details</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Facility Name</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced font-medium">
+                    {payment.facility_booking_details.facility_name}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Date</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking_details.startdate}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Schedule</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking_details.schedule_text}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Status</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking_details.current_status}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Payment Method</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced capitalize">
+                    {payment.facility_booking_details.payment_method}
+                  </span>
+                </div>
               </div>
             </div>
           </Card>

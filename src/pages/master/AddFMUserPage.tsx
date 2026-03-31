@@ -292,7 +292,7 @@ export const AddFMUserPage = () => {
     formDataToSend.append("user[profile_type]", formData.selectProfileType);
 
     if (profileImage) {
-      formDataToSend.append("user[avatar]", profileImage);
+      formDataToSend.append("user[profile_icon]", profileImage);
     }
 
     // Append permissions as a nested structure

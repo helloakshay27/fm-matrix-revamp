@@ -397,6 +397,31 @@ export const InvoiceAdd: React.FC = () => {
             });
             if (res.data) {
                 setCustomerDetail(res.data);
+                // Pre-populate address fields (user can still edit them)
+                const ba = res.data.billing_address;
+                if (ba) {
+                    const formatted = [
+                        ba.address,
+                        ba.address_line_two,
+                        ba.city,
+                        ba.state,
+                        ba.pin_code ? `- ${ba.pin_code}` : '',
+                        ba.country
+                    ].filter(Boolean).join(', ');
+                    setBillingAddress(formatted);
+                }
+                const sa = res.data.shipping_address;
+                if (sa) {
+                    const formatted = [
+                        sa.address,
+                        sa.address_line_two,
+                        sa.city,
+                        sa.state,
+                        sa.pin_code ? `- ${sa.pin_code}` : '',
+                        sa.country
+                    ].filter(Boolean).join(', ');
+                    setShippingAddress(formatted);
+                }
             }
         } catch (error) {
             console.error('Error fetching customer detail:', error);
@@ -1161,16 +1186,13 @@ export const InvoiceAdd: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                                 rows={4}
-                                value={selectedCustomer?.billing_address?.address
-                                    ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
-                                    : billingAddress}
+                                value={billingAddress}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 500) setBillingAddress(e.target.value);
                                 }}
                                 placeholder="Enter billing address (max 500 characters)"
-                                disabled={!!selectedCustomer?.billing_address?.address}
                                 maxLength={500}
                             />
                             <div className="text-xs text-gray-400 text-right mt-1">
@@ -1183,16 +1205,14 @@ export const InvoiceAdd: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
-                                value={selectedCustomer?.shipping_address?.address
-                                    ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
-                                    : shippingAddress}
+                                value={shippingAddress}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 500) setShippingAddress(e.target.value);
                                 }}
                                 placeholder="Enter shipping address (max 500 characters)"
-                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                readOnly={sameAsBilling}
                                 maxLength={500}
                             />
                             <div className="text-xs text-gray-400 text-right mt-1">

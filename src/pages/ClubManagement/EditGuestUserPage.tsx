@@ -40,7 +40,7 @@ export const EditGuestUserPage: React.FC = () => {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [showAdditional, setShowAdditional] = useState(true);
+  const [showAdditional, setShowAdditional] = useState(false);
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -259,7 +259,7 @@ export const EditGuestUserPage: React.FC = () => {
       formDataToSend.append('user[user_category_id]', formData.selectUserCategory);
 
       if (profileImage) {
-        formDataToSend.append('user[avatar]', profileImage);
+        formDataToSend.append('user[profile_icon]', profileImage);
       }
 
       // Permissions nested attributes
@@ -537,7 +537,7 @@ export const EditGuestUserPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="my-6">
+            {/* <div className="my-6">
               <Button
                 type='button'
                 variant="outline"
@@ -546,7 +546,7 @@ export const EditGuestUserPage: React.FC = () => {
               >
                 {showAdditional ? '− Additional Info' : '+ Additional Info'}
               </Button>
-            </div>
+            </div> */}
 
             {showAdditional && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -43,6 +43,11 @@ const adminCompassNavigation: Record<string, any> = {
     icon: FileText,
     href: "/admin-compass/systems-sops",
   },
+  // Added Daily Meeting here
+  "Daily Meeting": {
+    icon: MessageSquare, 
+    href: "/admin-compass/daily-meeting",
+  },
 };
 
 export const AdminCompassSidebar: React.FC = () => {
