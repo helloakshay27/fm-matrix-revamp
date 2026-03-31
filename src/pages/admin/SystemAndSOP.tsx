@@ -1166,6 +1166,38 @@ function FilterSelect({
   label: string;
   className?: string;
 }) {
+  const getStatusOptions = () => [
+    { value: "all", label: "All Status" },
+    { value: "toStart", label: "To Start" },
+    { value: "broken", label: "Broken" },
+    { value: "running", label: "Running" },
+  ];
+
+  const getDepartmentOptions = () => [
+    { value: "all", label: "All Departments" },
+    ...DEPARTMENTS.map((dept) => ({ value: dept, label: dept })),
+  ];
+
+  const getPeopleOptions = () => [
+    { value: "all", label: "All People" },
+    ...MOCK_ASSIGNEES.map((person) => ({ value: person.value, label: person.label })),
+  ];
+
+  const getPriorityOptions = () => [
+    { value: "all", label: "All Priorities" },
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
+  ];
+
+  const getOptions = () => {
+    if (label === "All Status") return getStatusOptions();
+    if (label === "All Departments") return getDepartmentOptions();
+    if (label === "All People") return getPeopleOptions();
+    if (label === "All Priorities") return getPriorityOptions();
+    return [{ value: "all", label }];
+  };
+
   return (
     <Select defaultValue="all">
       <SelectTrigger
@@ -1174,13 +1206,17 @@ function FilterSelect({
           className
         )}
       >
-        <div className="flex w-full min-w-0 items-center gap-2">
-          <Filter className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
-          <SelectValue placeholder={label} />
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-neutral-400 flex-shrink-0" aria-hidden />
+          <SelectValue placeholder={label} className={cn("whitespace-nowrap", label === "All Departments" && "text-xs")} />
         </div>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">{label}</SelectItem>
+        {getOptions().map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -1565,7 +1601,7 @@ const SystemAndSOP = () => {
               <FilterSelect label="All Priorities" />
               <FilterSelect label="All Status" />
             </div>
-            <div className="relative min-w-0 lg:min-w-[220px] lg:max-w-sm lg:flex-1">
+            <div className="relative min-w-0 lg:min-w-[180px] lg:max-w-xs lg:flex-shrink-0">
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
                 aria-hidden
