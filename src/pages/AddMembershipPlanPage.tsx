@@ -151,11 +151,27 @@ export const AddMembershipPlanPage = () => {
     }
   }
 
-  console.log(amenities)
+  const fetchHSN = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/hsns/get_hsns.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      setFormData({
+        ...formData,
+        hsnCode: response.data[0].code || "",
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   useEffect(() => {
     getAmenities()
     getPaymentPlans()
+    fetchHSN()
   }, [])
 
   const validateForm = () => {
@@ -379,6 +395,7 @@ export const AddMembershipPlanPage = () => {
               <TextField
                 label="HSN Code*"
                 value={formData.hsnCode}
+                disabled
                 onChange={(e) => {
                   const value = e.target.value;
                   // Allow only numbers and letters (alphanumeric)
@@ -388,6 +405,12 @@ export const AddMembershipPlanPage = () => {
                 }}
                 variant="outlined"
                 placeholder="Enter HSN Code"
+                sx={{
+                  "& .MuiInputBase-input.Mui-disabled": {
+                    WebkitTextFillColor: "#000",
+                    color: "#000",
+                  },
+                }}
               />
 
               <TextField

@@ -41,6 +41,7 @@ import {
   Boxes,
   House,
   TrendingUp,
+  Code,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -55,16 +56,9 @@ type SidebarItem = {
 const modulesByPackage = {
   "Club Management": [
     {
-      name: "Club Membership",
+      name: "Group Memberships",
       icon: Star,
-      href: "/club-management/membership",
-      subItems: [
-        {
-          name: "Group Memberships",
-          href: "/club-management/membership/groups",
-          color: "text-[#1a1a1a]",
-        },
-      ],
+      href: "/club-management/membership/groups",
     },
     {
       name: "User Management",
@@ -225,6 +219,11 @@ const modulesByPackage = {
       name: "House Setup",
       icon: House,
       href: "/settings/house/setup",
+    },
+    {
+      name: "HSN Code Setup",
+      icon: Code,
+      href: "/settings/hsn-code/setup",
     },
 
     // {
