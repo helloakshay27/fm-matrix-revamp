@@ -257,7 +257,7 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
                                 {correctiveActions.map((action, index) => (
                                     <div key={action.id} className="p-4 rounded-lg border border-gray-200 space-y-3">
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-sm font-semibold">Action #{index + 1}</h4>
+                                            <h4 className="text-sm font-semibold">Action {index + 1}</h4>
                                             {correctiveActions.length > 1 && (
                                                 <Button
                                                     variant="ghost"
@@ -355,7 +355,7 @@ const ProvisionalStep: React.FC<ProvisionalStepProps> = ({
                                 {preventiveActions.map((action, index) => (
                                     <div key={action.id} className="p-4 rounded-lg border border-gray-200 space-y-3">
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-sm font-semibold">Action #{index + 1}</h4>
+                                            <h4 className="text-sm font-semibold">Action {index + 1}</h4>
                                             {preventiveActions.length > 1 && (
                                                 <Button
                                                     variant="ghost"

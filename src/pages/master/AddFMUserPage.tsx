@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Camera, User } from "lucide-react";
 import {
   TextField,
   Select,
@@ -12,6 +12,8 @@ import {
   FormControl,
   InputLabel,
   Box,
+  Avatar,
+  IconButton,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Entity, fetchEntities } from "@/store/slices/entitiesSlice";
@@ -74,6 +76,9 @@ export const AddFMUserPage = () => {
   const [userAccount, setUserAccount] = useState({});
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isClubSite = location.pathname.includes("club-management");
 
   const userId = JSON.parse(localStorage.getItem("user"))?.id;
 
@@ -131,6 +136,10 @@ export const AddFMUserPage = () => {
 
   const [loadingSubmitting, setLoadingSubmitting] = useState(false)
   const [emailError, setEmailError] = useState('')
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -170,6 +179,26 @@ export const AddFMUserPage = () => {
     if (field === 'emailAddress') {
       setEmailError('');
     }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image size must be less than 2MB");
+        return;
+      }
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
   };
 
   const validateEmail = (email: string) => {
@@ -249,40 +278,63 @@ export const AddFMUserPage = () => {
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setLoadingSubmitting(true);
-    const payload = {
-      user: {
-        site_id: formData.baseSite,
-        lock_user_permissions_attributes: [
-          {
-            account_id: userAccount.company_id,
-            employee_id: formData.employeeId,
-            designation: formData.designation,
-            unit_id: formData.selectBaseUnit,
-            department_id: formData.selectDepartment,
-            user_type: formData.selectUserType,
-            lock_role_id: formData.selectRole,
-            access_level: formData.selectAccessLevel,
-            access_to:
-              formData.selectAccessLevel === "Site"
-                ? formData.selectedSites
-                : formData.selectedCompanies,
-            urgency_email_enabled: formData.selectEmailPreference,
-          },
-        ],
-        firstname: formData.firstName,
-        lastname: formData.lastName,
-        mobile: formData.mobileNumber,
-        email: formData.emailAddress,
-        gender: formData.gender,
-        entity_id: formData.selectEntity,
-        supplier_id: formData.supplier,
-        user_category_id: formData.selectUserCategory,
-        profile_type: formData.selectProfileType,
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("user[site_id]", formData.baseSite);
+    formDataToSend.append("user[firstname]", formData.firstName);
+    formDataToSend.append("user[lastname]", formData.lastName);
+    formDataToSend.append("user[mobile]", formData.mobileNumber);
+    formDataToSend.append("user[email]", formData.emailAddress);
+    formDataToSend.append("user[gender]", formData.gender);
+    formDataToSend.append("user[entity_id]", formData.selectEntity);
+    formDataToSend.append("user[supplier_id]", formData.supplier);
+    formDataToSend.append("user[user_category_id]", formData.selectUserCategory);
+    formDataToSend.append("user[profile_type]", formData.selectProfileType);
+
+    if (profileImage) {
+      formDataToSend.append("user[avatar]", profileImage);
+    }
+
+    // Append permissions as a nested structure
+    const permissions = [
+      {
+        account_id: userAccount.company_id,
+        employee_id: formData.employeeId,
+        designation: formData.designation,
+        unit_id: formData.selectBaseUnit,
+        department_id: formData.selectDepartment,
+        user_type: formData.selectUserType,
+        lock_role_id: formData.selectRole,
+        access_level: formData.selectAccessLevel,
+        access_to:
+          formData.selectAccessLevel === "Site"
+            ? formData.selectedSites
+            : formData.selectedCompanies,
+        urgency_email_enabled: formData.selectEmailPreference,
       },
-    };
+    ];
+
+    permissions.forEach((permission, index) => {
+      Object.entries(permission).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((v) => {
+            formDataToSend.append(
+              `user[lock_user_permissions_attributes][${index}][${key}][]`,
+              v
+            );
+          });
+        } else {
+          formDataToSend.append(
+            `user[lock_user_permissions_attributes][${index}][${key}]`,
+            String(value)
+          );
+        }
+      });
+    });
+
     try {
       const response = await dispatch(
-        createFmUser({ data: payload, baseUrl, token })
+        createFmUser({ data: formDataToSend, baseUrl, token })
       ).unwrap();
       if (response.error || (response.errors && response.errors.length > 0)) {
         toast.error(response?.error || response?.errors[0]);
@@ -378,6 +430,29 @@ export const AddFMUserPage = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <Box component="form" noValidate>
+              <div className="flex flex-col items-center mb-8">
+                <div className="relative group cursor-pointer" onClick={handleImageClick}>
+                  <Avatar
+                    src={profileImagePreview || ""}
+                    sx={{ width: 120, height: 120, border: '2px solid #e5e7eb' }}
+                  >
+                    {!profileImagePreview && <User size={60} color="#9ca3af" />}
+                  </Avatar>
+                  <div className="absolute bottom-0 right-0 bg-[#C72030] p-2 rounded-full border-2 border-white text-white group-hover:bg-[#A01020] transition-colors">
+                    <Camera size={20} />
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+                <p className="mt-2 text-sm text-gray-500 font-medium">Profile Photo</p>
+                <p className="text-xs text-gray-400">Recommended: Square image, max 2MB</p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Row 1 */}
                 <div>
@@ -484,28 +559,32 @@ export const AddFMUserPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Entity</InputLabel>
-                    <Select
-                      value={formData.selectEntity}
-                      onChange={(e) =>
-                        handleInputChange("selectEntity", e.target.value)
-                      }
-                      label="Select Entity"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Entity</MenuItem>
-                      {loading && <MenuItem disabled>Loading...</MenuItem>}
-                      {error && <MenuItem disabled>Error: {error}</MenuItem>}
-                      {entitiesData?.entities?.map((entity: Entity) => (
-                        <MenuItem key={entity.id} value={entity.id}>
-                          {entity.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Entity</InputLabel>
+                        <Select
+                          value={formData.selectEntity}
+                          onChange={(e) =>
+                            handleInputChange("selectEntity", e.target.value)
+                          }
+                          label="Select Entity"
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select Entity</MenuItem>
+                          {loading && <MenuItem disabled>Loading...</MenuItem>}
+                          {error && <MenuItem disabled>Error: {error}</MenuItem>}
+                          {entitiesData?.entities?.map((entity: Entity) => (
+                            <MenuItem key={entity.id} value={entity.id}>
+                              {entity.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
 
                 {/* Row 3 */}
                 <div>
@@ -534,6 +613,7 @@ export const AddFMUserPage = () => {
                     </Select>
                   </FormControl>
                 </div>
+
                 <div>
                   <TextField
                     fullWidth
@@ -546,6 +626,7 @@ export const AddFMUserPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
+
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Base Site</InputLabel>
@@ -567,31 +648,35 @@ export const AddFMUserPage = () => {
                   </FormControl>
                 </div>
 
-                {/* Row 4 */}
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Base Unit</InputLabel>
-                    <Select
-                      value={formData.selectBaseUnit}
-                      onChange={(e) =>
-                        handleInputChange("selectBaseUnit", e.target.value)
-                      }
-                      label="Select Base Unit"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Base Unit</MenuItem>
-                      {unitsLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {unitsError && (
-                        <MenuItem disabled>Error: {unitsError}</MenuItem>
-                      )}
-                      {units?.map((unit) => (
-                        <MenuItem key={unit.id} value={unit.id}>
-                          {unit?.building?.name} - {unit.unit_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Base Unit</InputLabel>
+                        <Select
+                          value={formData.selectBaseUnit}
+                          onChange={(e) =>
+                            handleInputChange("selectBaseUnit", e.target.value)
+                          }
+                          label="Select Base Unit"
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select Base Unit</MenuItem>
+                          {unitsLoading && <MenuItem disabled>Loading...</MenuItem>}
+                          {unitsError && (
+                            <MenuItem disabled>Error: {unitsError}</MenuItem>
+                          )}
+                          {units?.map((unit) => (
+                            <MenuItem key={unit.id} value={unit.id}>
+                              {unit?.building?.name} - {unit.unit_name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
+
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Select Department</InputLabel>
@@ -618,27 +703,32 @@ export const AddFMUserPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Email Preference</InputLabel>
-                    <Select
-                      value={formData.selectEmailPreference}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "selectEmailPreference",
-                          e.target.value
-                        )
-                      }
-                      label="Select Email Preference"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Email Preference</MenuItem>
-                      <MenuItem value="0">All Emails</MenuItem>
-                      <MenuItem value="1">Critical Emails Only</MenuItem>
-                      <MenuItem value="2">No Emails</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Email Preference</InputLabel>
+                        <Select
+                          value={formData.selectEmailPreference}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "selectEmailPreference",
+                              e.target.value
+                            )
+                          }
+                          label="Select Email Preference"
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select Email Preference</MenuItem>
+                          <MenuItem value="0">All Emails</MenuItem>
+                          <MenuItem value="1">Critical Emails Only</MenuItem>
+                          <MenuItem value="2">No Emails</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
 
                 {/* Row 5 */}
                 <div>
@@ -691,6 +781,7 @@ export const AddFMUserPage = () => {
                     </Select>
                   </FormControl>
                 </div>
+
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>
@@ -823,27 +914,33 @@ export const AddFMUserPage = () => {
                     </FormControl>
                   </div>
                 )}
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select User Category</InputLabel>
-                    <Select
-                      value={formData.selectUserCategory}
-                      onChange={(e) =>
-                        handleInputChange("selectUserCategory", e.target.value)
-                      }
-                      label="Select User Category"
-                      displayEmpty
-                      required
-                    >
-                      <MenuItem value="">Select User Category</MenuItem>
-                      {userCategories?.map((category) => (
-                        <MenuItem key={category.id} value={category.id}>
-                          {category.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select User Category</InputLabel>
+                        <Select
+                          value={formData.selectUserCategory}
+                          onChange={(e) =>
+                            handleInputChange("selectUserCategory", e.target.value)
+                          }
+                          label="Select User Category"
+                          displayEmpty
+                          required
+                        >
+                          <MenuItem value="">Select User Category</MenuItem>
+                          {userCategories?.map((category) => (
+                            <MenuItem key={category.id} value={category.id}>
+                              {category.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
+
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Select Profile Type</InputLabel>

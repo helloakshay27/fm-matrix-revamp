@@ -1239,6 +1239,7 @@ import DailyMeeting from "./pages/AdminCompass/DailyMeeting";
 import ReportAnalytics from "./pages/ReportAnalytics";
 import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
 import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
+import HouseSetupPage from "./pages/HouseSetupPage";
 
 const queryClient = new QueryClient();
 
@@ -2562,6 +2563,10 @@ function App() {
                           <Route
                             path="/settings/payment-management/:id"
                             element={<PaymentDetailPage />}
+                          />
+                          <Route
+                            path="/settings/house/setup"
+                            element={<HouseSetupPage />}
                           />
                           <Route
                             path="/club-management/membership"
