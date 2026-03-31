@@ -856,6 +856,9 @@ import { UsersManagementDashboard } from "./pages/admin/UsersManagementDashboard
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
 import { AdminUsersDetails } from "./pages/admin/AdminUsersDetails";
+import FeedbackDashboard from "./pages/admin/FeedbackDashboard";
+import SystemAndSOP from "./pages/admin/SystemAndSOP";
+import DiscReport from "./pages/admin/DiscReport";
 import { DocumentManagement } from "./pages/DocumentManagement";
 import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
 import { EditDocumentPage } from "./pages/EditDocumentPage";
@@ -1233,6 +1236,9 @@ import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
 import DailyMeeting from "./pages/AdminCompass/DailyMeeting";
+import ReportAnalytics from "./pages/ReportAnalytics";
+import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
+import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 
 const queryClient = new QueryClient();
 
@@ -1574,6 +1580,18 @@ function App() {
                           <Route
                             path="admin/create-admin-user"
                             element={<CreateAdminUserPage />}
+                          />
+                          <Route
+                            path="admin/feedback-dashboard"
+                            element={<FeedbackDashboard />}
+                          />
+                          <Route
+                            path="admin/systems-sops"
+                            element={<SystemAndSOP />}
+                          />
+                          <Route
+                            path="admin/disc-report"
+                            element={<DiscReport />}
                           />
 
                           <Route
@@ -2081,6 +2099,26 @@ function App() {
                           <Route
                             path="/admin-compass/business-plan-goals"
                             element={<BusinessPlanAndGoles />}
+                          />
+                          <Route
+                            path="/admin-compass/weekly-meetings"
+                            element={<WeeklyMeetings />}
+                          />
+                          <Route
+                            path="/admin-compass/team-dashboard"
+                            element={<TeamDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/feedback-dashboard"
+                            element={<FeedbackDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/systems-sops"
+                            element={<SystemAndSOP />}
+                          />
+                          <Route
+                            path="/admin-compass/disc-report"
+                            element={<DiscReport />}
                           />
 
                              <Route
@@ -4380,6 +4418,11 @@ function App() {
                             path="/vas/projects"
                             element={<ProjectsDashboard />}
                           />
+
+                          <Route
+  path="/report-analytics"
+  element={<ReportAnalytics />}
+/>
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
@@ -4462,11 +4505,13 @@ function App() {
                             path="/vas/project-dashboard"
                             element={<SupersetDashboard />}
                           />
+                           
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
                           <Route
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
+                        
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}
@@ -6266,6 +6311,7 @@ function App() {
                             path="/mobile/channels/groups/:id"
                             element={<MobileGroupConversation />}
                           />
+
                         </Route>
                       </Routes>
                       <Toaster />

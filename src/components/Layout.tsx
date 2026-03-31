@@ -200,6 +200,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return <BusinessCompassSidebar />;
       }
 
+      if (currentSection === "Admin Compass") {
+        return <AdminCompassSidebar />;
+      }
+
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
       return null;
     }
