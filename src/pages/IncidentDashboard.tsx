@@ -337,11 +337,11 @@ const RcaTable = ({
   // phir target Sr. No. se filter karte hain taaki row number kharab na ho.
   const displayData = searchValue.trim()
     ? data
-        .map((row, index) => ({ row, originalIndex: index }))
-        .filter(({ originalIndex }) => {
-          const currentSrNo = (currentPage - 1) * perPage + originalIndex + 1;
-          return currentSrNo.toString().includes(searchValue.trim());
-        })
+      .map((row, index) => ({ row, originalIndex: index }))
+      .filter(({ originalIndex }) => {
+        const currentSrNo = (currentPage - 1) * perPage + originalIndex + 1;
+        return currentSrNo.toString().includes(searchValue.trim());
+      })
     : data.map((row, index) => ({ row, originalIndex: index }));
 
   return (
@@ -1022,6 +1022,7 @@ export const IncidentDashboard = () => {
       open: "q[current_status_eq]=Open",
       closed: "q[current_status_eq]=Closed",
       under_investigation: "q[current_status_eq]=Under%20Investigation",
+
     };
     setActiveFilterQuery(map[type] ?? "");
     setCurrentPage(1);
@@ -1093,6 +1094,26 @@ export const IncidentDashboard = () => {
                 icon={<CheckCircle />}
                 label="Closed"
                 value={countStats?.closed ?? stats.closed}
+              />
+            </div>
+            <div
+              onClick={() => handleCardClick("pending")}
+              className="cursor-pointer"
+            >
+              <StatCard
+                icon={<AlertTriangle />}
+                label="Pending"
+                value={countStats?.pending ?? 0}
+              />
+            </div>
+            <div
+              onClick={() => handleCardClick("support_required")}
+              className="cursor-pointer"
+            >
+              <StatCard
+                icon={<ShieldCheck />}
+                label="Support Required"
+                value={countStats?.support_required ?? 0}
               />
             </div>
           </div>
