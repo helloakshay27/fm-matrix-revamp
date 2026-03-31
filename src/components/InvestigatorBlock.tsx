@@ -257,17 +257,17 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
                 </TabsContent>
             </Tabs>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex justify-center gap-2 pt-2">
                 <Button
                     variant="outline"
-                    className="flex-1"
+                    className=" w-25"
                     onClick={handleSubmit}
                 >
                     Submit
                 </Button>
                 {isLast && (
                     <Button
-                        className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                        className=" w-25 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
                         onClick={onAddBlock}
                     >
                         Add Investigator

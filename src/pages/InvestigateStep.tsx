@@ -555,13 +555,15 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                     )}
 
                     {/* Add Condition Button */}
+                    <div className="flex justify-end">
                     <Button
                         variant="outline"
-                        className="w-full border-gray-800 text-gray-800 bg-white"
+                        className="w-25 border-gray-800 text-gray-800 bg-white"
                         onClick={handleAddCondition}
                     >
                         + Add Condition
                     </Button>
+                    </div>
 
                     {/* Root Cause */}
                     <div className="mt-4 border-t border-gray-300 pt-3">
@@ -617,14 +619,15 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                                     </div>
                                 </div>
                             ))}
-
-                            <Button
+                            <div className="flex justify-end">
+                                <Button
                                 variant="outline"
-                                className="w-full border-[#BF213E] text-[#BF213E]"
+                                className="w-25 border-[#BF213E] text-[#BF213E]"
                                 onClick={handleAddRootCause}
-                            >
-                                + Add Clause
-                            </Button>
+                                >
+                                    + Add Clause
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -873,14 +876,15 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                                         </Tabs>
                                     </div>
                                 ))}
-
+                                <div className="flex justify-end">
                                 <Button
                                     variant="outline"
-                                    className="w-full border-gray-800 text-gray-800"
+                                    className="w-25 border-gray-800 text-gray-800"
                                     onClick={handleAddInjuredPerson}
                                 >
                                     + Add Person
                                 </Button>
+                                </div>
                             </div>
                         )}
                     </div>
