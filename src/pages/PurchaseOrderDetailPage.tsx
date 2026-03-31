@@ -396,6 +396,9 @@ export const PurchaseOrderDetailPage = () => {
             <Badge className={`${getStatusColor(status)} border`}>
               {status.toUpperCase()}
             </Badge>
+            <Button variant="outline" size="sm">
+              Convert to Bill
+            </Button>
           </div>
         </div>
 
@@ -655,7 +658,7 @@ export const PurchaseOrderDetailPage = () => {
                           <div className="flex justify-between items-center px-6 py-3 border-b">
                             <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
                             <span className="font-semibold text-base">
-                              ₹{purchaseOrder.sub_total_amount?.toFixed(2) || purchaseOrder.net_amount_formatted || "0.00"}
+                              ₹{purchaseOrder.sub_total_amount?.toFixed(2) || purchaseOrder.net_amount_formatted }
                             </span>
                           </div>
 
@@ -696,7 +699,7 @@ export const PurchaseOrderDetailPage = () => {
                           {/* Grand Total - Always use backend's total_amount */}
                           <div className="flex justify-between items-center px-6 py-4 bg-primary/5 border-t">
                             <span className="font-bold text-base">Total ( ₹ )</span>
-                            <span className="font-bold text-primary text-2xl">
+                            <span className="font-bold text-black text-2xl">
                               ₹{purchaseOrder.total_amount_formatted ||
                                 purchaseOrder.total_amount?.toFixed(2) || "0.00"}
                             </span>

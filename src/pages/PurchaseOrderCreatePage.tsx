@@ -151,12 +151,14 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [deliveryCustomerId, setDeliveryCustomerId] = useState<string>('');
 
     // Purchase Order Details
-    const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
     const [purchaseOrderDate, setPurchaseOrderDate] = useState('');
     const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
     const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
+    const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
+    const [loadingPONumber, setLoadingPONumber] = useState(false);
+    const [reverseCharge, setReverseCharge] = useState(false);
 
     // Items
     const [items, setItems] = useState<Item[]>([
@@ -245,14 +247,43 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         },
     };
 
-    // Generate auto purchase order number
     useEffect(() => {
-        const generateOrderNumber = () => {
-            const timestamp = Date.now();
-            const random = Math.floor(Math.random() * 1000);
-            setPurchaseOrderNumber(`PO-${timestamp.toString().slice(-5)}${random}`);
+        const fetchPONumber = async () => {
+            setLoadingPONumber(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+
+                const response = await axios.get(
+                    `https://${baseUrl}//pms/purchase_orders/get_po_number.json?lock_account_id=${lockAccountId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                console.log('PO Number API response:', response.data);
+
+                const poNumber =
+                    response.data?.po_number ||
+                    response.data?.next_po_number ||
+                    response.data?.purchase_order_number ||
+                    response.data?.number ||
+                    '';
+
+                setPurchaseOrderNumber(poNumber);
+            } catch (error) {
+                console.error('Error fetching PO number:', error);
+                toast.error('Failed to fetch PO number');
+            } finally {
+                setLoadingPONumber(false);
+            }
         };
-        generateOrderNumber();
+
+        fetchPONumber();
     }, []);
 
     // Fetch vendors on mount
@@ -620,6 +651,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             ? (baseAmount * item.discount) / 100
             : item.discount;
         const afterDiscount = baseAmount - discountAmount;
+        if (reverseCharge) return afterDiscount;
         const taxAmount = (afterDiscount * item.taxRate) / 100;
         return afterDiscount + taxAmount;
     };
@@ -1085,19 +1117,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     vendor_note: vendorNotes,
                     terms_conditions: termsAndConditions,
                     account_id: accountId,
-
                     tax_id: selectedTaxObj?.id,
                     tax_type: taxType,
                     discount: totalDiscount, // Calculated amount
                     adjustment: adjustment,
                     sub_total: subTotal,
                     tax_value: taxAmount, // This currently comes from item reduction? 
-                    // If items don't have tax, this taxAmount should probably be calculated from the global tax?
-                    // Let's assume the tax is calculated based on selectedTaxObj.rate if items don't have it?
-                    // But `taxAmount` variable is used in total calculation.
-                    // I will fix taxAmount calculation in the next step/edit if needed. 
-                    // For now, mapping what's available.
+                    
                     tax_percentage: selectedTaxObj?.rate || 0,
+                    reverse_charge: reverseCharge,
 
                     pms_po_inventories_attributes: inventoriesAttributes,
 
@@ -1314,26 +1342,30 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 {/* Purchase Order Details */}
                 <Section title="Purchase Order Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* <div>
+                        <div>
                             <label className="block text-sm font-medium mb-2">
-                                Purchase Order #<span className="text-red-500">*</span>
+                                Purchase Order #
                             </label>
                             <TextField
                                 fullWidth
-                                value={purchaseOrderNumber}
+                                value={loadingPONumber ? 'Loading...' : purchaseOrderNumber}
                                 disabled
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input.Mui-disabled': {
+                                        WebkitTextFillColor: '#374151',
+                                        fontWeight: 600,
+                                    },
+                                }}
                                 InputProps={{
-                                    endAdornment: (
+                                    endAdornment: loadingPONumber ? (
                                         <InputAdornment position="end">
-                                            <IconButton size="small" title="Refresh">
-                                                <FileText className="w-4 h-4" />
-                                            </IconButton>
+                                            <CircularProgress size={16} />
                                         </InputAdornment>
-                                    )
+                                    ) : null,
                                 }}
                             />
-                        </div> */}
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
@@ -1429,6 +1461,55 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     <MenuItem value="shipping">Shipping</MenuItem>
                                 </Select>
                             </FormControl>
+                        </div>
+
+                        {/* Reverse Charge */}
+                        <div className="col-span-1 md:col-span-3 mt-2">
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={reverseCharge}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setReverseCharge(checked);
+                                  setItems(prev =>
+                                    prev.map(item => {
+                                      const base = item.quantity * item.rate;
+                                      const disc = item.discountType === 'percentage'
+                                        ? (base * item.discount) / 100
+                                        : item.discount;
+                                      const after = base - disc;
+                                      return {
+                                        ...item,
+                                        taxRate: checked ? 0 : item.taxRate,
+                                        tax_group_id: checked ? null : item.tax_group_id,
+                                        item_tax_type: checked ? '' : item.item_tax_type,
+                                        tax_exemption_id: checked ? null : item.tax_exemption_id,
+                                        amount: checked
+                                          ? after
+                                          : after + (after * item.taxRate) / 100,
+                                      };
+                                    })
+                                  );
+                                }}
+                                sx={{
+                                  color: 'primary.main',
+                                  '&.Mui-checked': { color: 'primary.main' },
+                                }}
+                              />
+                            }
+                            label={
+                              <span className="text-sm font-medium">
+                                This transaction is applicable for Reverse Charge
+                              </span>
+                            }
+                          />
+                          {reverseCharge && (
+                            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-1 flex items-center gap-2">
+                              <span>ℹ️</span>
+                              Reverse Charge is applicable
+                            </p>
+                          )}
                         </div>
                     </div>
                 </Section>
@@ -1550,11 +1631,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 200 }}>
+                                                <FormControl size="small" sx={{ width: 200 }} disabled={reverseCharge}>
                                                     <Select
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                                                        value={reverseCharge ? "" : (item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || "")}
                                                         displayEmpty
                                                         onChange={(e) => {
+                                                            if (reverseCharge) return;
                                                             const value = e.target.value;
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1593,6 +1675,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         ))}
                                                     </Select>
                                                 </FormControl>
+                                                {reverseCharge && (
+                                                    <span className="text-xs text-black-400 block mt-1">
+                                                        Tax disabled (RCM)
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-right font-semibold">
                                                 ₹{item.amount.toFixed(2)}
@@ -1768,10 +1855,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                             <Divider sx={{ my: 2 }} />
 
-                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            {/* <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
                                 <span className="font-bold text-primary text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
-                            </div>
+                            </div> */}
+
+                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+    <span className="font-bold text-base text-gray-900">Total ( ₹ )</span>
+    <span className="font-bold text-gray-900 text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
+</div>
                         </div>
                     </div>
                 </Section>
