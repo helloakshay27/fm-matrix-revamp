@@ -39,6 +39,7 @@ import {
   IndianRupee,
   UserCog,
   Boxes,
+  House,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -111,6 +112,11 @@ const modulesByPackage = {
       icon: Wallet,
       href: "/club-management/accounting",
     },
+    {
+      name: "Vendor",
+      icon: Truck,
+      href: "/maintenance/vendor",
+    }
     // {
     //     name: "Accounting",
     //     icon: Calculator,
@@ -205,7 +211,20 @@ const modulesByPackage = {
         },
       ],
     },
-    { name: "FM Groups", icon: Users, href: "/settings/groups" },
+    {
+      name: "Roles (RACI)",
+      icon: UserCheck,
+      href: "/settings/roles",
+      subItems: [
+        { name: "Department", href: "/settings/roles/department" },
+        { name: "Role", href: "/settings/roles/role" },
+      ],
+    },
+    {
+      name: "House Setup",
+      icon: House,
+      href: "/settings/house/setup",
+    },
 
     // {
     //     name: "Accountants",
@@ -1110,8 +1129,8 @@ export const ClubSidebar: React.FC = () => {
             }
           }}
           className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-              ? "bg-[#f0e8dc] shadow-inner"
-              : "hover:bg-[#DBC2A9]"
+            ? "bg-[#f0e8dc] shadow-inner"
+            : "hover:bg-[#DBC2A9]"
             }`}
           title={item.name}
         >

@@ -856,6 +856,9 @@ import { UsersManagementDashboard } from "./pages/admin/UsersManagementDashboard
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
 import { AdminUsersDetails } from "./pages/admin/AdminUsersDetails";
+import FeedbackDashboard from "./pages/admin/FeedbackDashboard";
+import SystemAndSOP from "./pages/admin/SystemAndSOP";
+import DiscReport from "./pages/admin/DiscReport";
 import { DocumentManagement } from "./pages/DocumentManagement";
 import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
 import { EditDocumentPage } from "./pages/EditDocumentPage";
@@ -1232,6 +1235,9 @@ import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompa
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
+import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
+import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
+import HouseSetupPage from "./pages/HouseSetupPage";
 
 const queryClient = new QueryClient();
 
@@ -1553,6 +1559,18 @@ function App() {
                           <Route
                             path="admin/create-admin-user"
                             element={<CreateAdminUserPage />}
+                          />
+                          <Route
+                            path="admin/feedback-dashboard"
+                            element={<FeedbackDashboard />}
+                          />
+                          <Route
+                            path="admin/systems-sops"
+                            element={<SystemAndSOP />}
+                          />
+                          <Route
+                            path="admin/disc-report"
+                            element={<DiscReport />}
                           />
 
                           <Route
@@ -2061,6 +2079,26 @@ function App() {
                             path="/admin-compass/business-plan-goals"
                             element={<BusinessPlanAndGoles />}
                           />
+                          <Route
+                            path="/admin-compass/weekly-meetings"
+                            element={<WeeklyMeetings />}
+                          />
+                          <Route
+                            path="/admin-compass/team-dashboard"
+                            element={<TeamDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/feedback-dashboard"
+                            element={<FeedbackDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/systems-sops"
+                            element={<SystemAndSOP />}
+                          />
+                          <Route
+                            path="/admin-compass/disc-report"
+                            element={<DiscReport />}
+                          />
 
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
@@ -2497,6 +2535,10 @@ function App() {
                           <Route
                             path="/settings/payment-management/:id"
                             element={<PaymentDetailPage />}
+                          />
+                          <Route
+                            path="/settings/house/setup"
+                            element={<HouseSetupPage />}
                           />
                           <Route
                             path="/club-management/membership"

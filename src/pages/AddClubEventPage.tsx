@@ -551,11 +551,11 @@ export const AddClubEventPage = () => {
                                     control={<Radio />}
                                     label="Individuals"
                                 />
-                                <FormControlLabel
+                                {/* <FormControlLabel
                                     value="groups"
                                     control={<Radio />}
                                     label="Groups"
-                                />
+                                /> */}
                             </RadioGroup>
                         </Box>
 
