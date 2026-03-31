@@ -220,7 +220,7 @@ export const ClubMembershipDetailPage = () => {
 
       const data = await response.json();
       const plan = data.plans?.find((p: MembershipPlan) => p.id === planId);
-      
+
       if (plan) {
         setMembershipPlanName(plan.name);
         setMembershipPlanUserLimit(plan.user_limit || null);
@@ -471,7 +471,7 @@ export const ClubMembershipDetailPage = () => {
               Membership #{membershipData.membership_number} • Created on {formatDateTime(membershipData.created_at)}
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <Button
               onClick={handleEdit}
@@ -499,7 +499,7 @@ export const ClubMembershipDetailPage = () => {
               value="membership"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
             >
-              Membership Details  
+              Membership Details
             </TabsTrigger>
             {(membershipData.club_member_allocation_id || membershipData.member_payment_detail) && (
               <TabsTrigger
@@ -523,16 +523,16 @@ export const ClubMembershipDetailPage = () => {
                 Plan & Amenities
               </TabsTrigger>
             )}
-            {((membershipData.attachments && membershipData.attachments.length > 0) || 
-              membershipData.identification_image || 
+            {((membershipData.attachments && membershipData.attachments.length > 0) ||
+              membershipData.identification_image ||
               (avatarUrl && !avatarUrl.includes('profile.png'))) && (
-              <TabsTrigger
-                value="documents"
-                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
-              >
-                Documents & Images
-              </TabsTrigger>
-            )}
+                <TabsTrigger
+                  value="documents"
+                  className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                >
+                  Documents & Images
+                </TabsTrigger>
+              )}
             <TabsTrigger
               value="system"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
@@ -598,17 +598,17 @@ export const ClubMembershipDetailPage = () => {
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">{membershipData.user?.gender || '-'}</span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Current Age</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">{membershipData.current_age || '-'}</span>
-              </div>
+              </div> */}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">User Type</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">{membershipData.user?.user_type || '-'}</span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Face Added</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
@@ -616,7 +616,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.face_added ? 'Yes' : 'No'}
                   </Badge>
                 </span>
-              </div>
+              </div> */}
             </div>
           </TabsContent>
 
@@ -955,84 +955,84 @@ export const ClubMembershipDetailPage = () => {
             </TabsContent>
           )}
 
-          {((membershipData.attachments && membershipData.attachments.length > 0) || 
-            membershipData.identification_image || 
+          {((membershipData.attachments && membershipData.attachments.length > 0) ||
+            membershipData.identification_image ||
             (avatarUrl && !avatarUrl.includes('profile.png'))) && (
-            <TabsContent value="documents" className="p-4 sm:p-6">
-              {/* Documents & Images */}
-              <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                <ImageIcon className="w-5 h-5 text-[#C72030]" />
-                Documents & Images
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* ID Card */}
-                {membershipData.identification_image && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500 font-medium">ID Card</p>
-                    <a
-                      href={membershipData.identification_image}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
-                    >
-                      <img
-                        src={membershipData.identification_image}
-                        alt="ID Card"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                        <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </a>
-                  </div>
-                )}
+              <TabsContent value="documents" className="p-4 sm:p-6">
+                {/* Documents & Images */}
+                <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                  <ImageIcon className="w-5 h-5 text-[#C72030]" />
+                  Documents & Images
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* ID Card */}
+                  {membershipData.identification_image && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-500 font-medium">ID Card</p>
+                      <a
+                        href={membershipData.identification_image}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
+                      >
+                        <img
+                          src={membershipData.identification_image}
+                          alt="ID Card"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                          <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </a>
+                    </div>
+                  )}
 
-                {/* User Photo */}
-                {avatarUrl && !avatarUrl.includes('profile.png') && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500 font-medium">User Photo</p>
-                    <a
-                      href={avatarUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
-                    >
-                      <img
-                        src={avatarUrl}
-                        alt="User Photo"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                        <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </a>
-                  </div>
-                )}
+                  {/* User Photo */}
+                  {avatarUrl && !avatarUrl.includes('profile.png') && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-500 font-medium">User Photo</p>
+                      <a
+                        href={avatarUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
+                      >
+                        <img
+                          src={avatarUrl}
+                          alt="User Photo"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                          <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </a>
+                    </div>
+                  )}
 
-                {/* Other Attachments */}
-                {membershipData.attachments && membershipData.attachments.map((attachment, index) => (
-                  <div key={attachment.id} className="space-y-2">
-                    <p className="text-sm text-gray-500 font-medium">Attachment {index + 1}</p>
-                    <a
-                      href={attachment.document}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
-                    >
-                      <img
-                        src={attachment.document}
-                        alt={`Attachment ${index + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                        <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-          )}
+                  {/* Other Attachments */}
+                  {membershipData.attachments && membershipData.attachments.map((attachment, index) => (
+                    <div key={attachment.id} className="space-y-2">
+                      <p className="text-sm text-gray-500 font-medium">Attachment {index + 1}</p>
+                      <a
+                        href={attachment.document}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
+                      >
+                        <img
+                          src={attachment.document}
+                          alt={`Attachment ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                          <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            )}
 
           <TabsContent value="system" className="p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
@@ -1094,7 +1094,7 @@ export const ClubMembershipDetailPage = () => {
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">{formatDateTime(membershipData.updated_at)}</span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Access Card Check</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
@@ -1102,8 +1102,8 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.access_card_check ? 'Yes' : 'No'}
                   </Badge>
                 </span>
-              </div>
-              <div className="flex items-start">
+              </div> */}
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Club Member Check</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
@@ -1111,7 +1111,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.club_member_check ? 'Yes' : 'No'}
                   </Badge>
                 </span>
-              </div>
+              </div> */}
             </div>
           </TabsContent>
 
@@ -1130,7 +1130,7 @@ export const ClubMembershipDetailPage = () => {
                   return Object.entries(QUESTION_SECTIONS).map(([sectionKey, section]) => {
                     // Filter questions that exist in answers
                     const sectionQuestions = section.questionIds.filter(qId => parsedAnswers[qId]);
-                    
+
                     if (sectionQuestions.length === 0) return null;
 
                     return (

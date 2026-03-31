@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
+import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -42,6 +42,10 @@ interface ItemData {
   description: string;
   rate: number;
   usage_unit: string;
+  icon?: {
+    document_file_name: string | null;
+    attachment_url: string;
+  };
 }
 
 
@@ -506,6 +510,24 @@ const columns = [
         >
           <Edit className="w-4 h-4" />
         </Button>
+      </div>
+    );
+  }
+
+  if (columnKey === "name") {
+    const hasIcon = item.icon?.document_file_name;
+    return (
+      <div className="flex items-center gap-2">
+        {hasIcon ? (
+          <img
+            src={item.icon!.attachment_url}
+            alt={item.name}
+            className="w-7 h-7 rounded object-cover border border-gray-200 flex-shrink-0"
+          />
+        ) : (
+          <div className="w-7 h-7 rounded border border-gray-200 bg-gray-100 flex-shrink-0" />
+        )}
+        <span>{item.name}</span>
       </div>
     );
   }

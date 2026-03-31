@@ -40,6 +40,7 @@ import {
   UserCog,
   Boxes,
   House,
+  TrendingUp,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -54,16 +55,9 @@ type SidebarItem = {
 const modulesByPackage = {
   "Club Management": [
     {
-      name: "Club Membership",
+      name: "Group Memberships",
       icon: Star,
-      href: "/club-management/membership",
-      subItems: [
-        {
-          name: "Group Memberships",
-          href: "/club-management/membership/groups",
-          color: "text-[#1a1a1a]",
-        },
-      ],
+      href: "/club-management/membership/groups",
     },
     {
       name: "User Management",
@@ -271,7 +265,7 @@ const modulesByPackage = {
         // { name: "Delivery Challans", href: "/accounting/delivery-challans" },
         // { name: "Payment Links", href: "/accounting/payment-links" },
         { name: "Payments Received", href: "/accounting/payments-received" },
-        // { name: "Credit Note", href: "/accounting/credit-note" }
+        { name: "Credit Note", href: "/accounting/credit-note" }
       ],
     },
 
@@ -368,22 +362,56 @@ const modulesByPackage = {
             },
           ],
         },
-        { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
-        {
-          name: "Cash Flow Statement",
-          href: "/accounting/reports/cash-flow-statement",
-        },
-        {
-          name: "Profit & Loss",
-          href: "/accounting/reports/profit-and-loss",
-        },
         {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
+
         {
-          name: "Business Performance Ratio",
-          href: "/accounting/reports/business-performance",
+          name: "Business Overview",
+          icon: TrendingUp,
+          subItems: [
+            {
+              name: "Profit and Loss",
+              href: "/accounting/reports/profit-and-loss",
+            },
+            {
+              name: "Profit and Loss (Schedule III)",
+              href: "/accounting/reports/profit-and-loss-details",
+            },
+            {
+              name: "Horizontal Profit and Loss",
+              href: "/accounting/reports/profit-and-loss",
+            },
+            {
+              name: "Cash Flow Statement",
+              href: "/accounting/reports/cash-flow-statement",
+            },
+            {
+              name: "Balance Sheet",
+              href: "/accounting/reports/balance-sheet",
+            },
+            {
+              name: "Horizontal Balance Sheet",
+              href: "/accounting/reports/balance-sheet",
+            },
+            {
+              name: "Balance Sheet (Schedule III)",
+              href: "/accounting/reports/balance-sheet-details",
+            },
+            {
+              name: "Business Performance Ratios",
+              href: "/accounting/reports/business-performance",
+            },
+            {
+              name: "Cash Flow Forecasting",
+              href: "/accounting/reports/cash-flow-statement",
+            },
+            {
+              name: "Movement of Equity",
+              href: "/accounting/reports/balance-sheet",
+            },
+          ],
         },
 
 

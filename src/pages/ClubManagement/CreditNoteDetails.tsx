@@ -217,7 +217,7 @@ export const CreditNoteDetails = () => {
         });
         setSalesOrder(response.data);
       } catch (error) {
-        sonnerToast.error("Failed to fetch sales order details");
+        sonnerToast.error("Failed to fetch credit note details");
       } finally {
         setLoading(false);
       }
@@ -230,7 +230,7 @@ export const CreditNoteDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading credit note...</p>
         </div>
       </div>
     );
@@ -291,7 +291,7 @@ export const CreditNoteDetails = () => {
       sonnerToast.success("Sales order deleted successfully");
       navigate("/accounting/credit-note");
     } catch (error) {
-      sonnerToast.error("Failed to delete sales order");
+      sonnerToast.error("Failed to delete credit note");
     }
   };
 
@@ -300,7 +300,7 @@ export const CreditNoteDetails = () => {
   };
 
   const handleDownload = () => {
-    sonnerToast.success("Downloading sales order PDF...");
+    sonnerToast.success("Downloading credit note PDF...");
   };
 
   const handleSendEmail = () => {
@@ -317,7 +317,7 @@ export const CreditNoteDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading credit note...</p>
         </div>
       </div>
     );
@@ -494,6 +494,41 @@ export const CreditNoteDetails = () => {
                         {salesOrder?.customer_name}
                       </p>
                     </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Place of Supply
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.place_of_supply}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Invoice#
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.invoice_number || "-"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Invoice Type
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.invoice_type}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Reason
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.reason}
+                      </p>
+                    </div>
+
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Credit Note Number
@@ -516,10 +551,13 @@ export const CreditNoteDetails = () => {
                         Credit Note Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.date).toLocaleDateString("en-IN")}
+                        {/* {new Date(salesOrder?.date).toLocaleDateString("en-IN") || "-"} */}
+                        {salesOrder?.date
+                          ? new Date(salesOrder.date).toLocaleDateString("en-IN")
+                          : "-"}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Due Date
                       </p>
@@ -528,7 +566,7 @@ export const CreditNoteDetails = () => {
                           "en-IN"
                         )}
                       </p>
-                    </div>
+                    </div> */}
                     {/* <div>
                                         <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
                                         <p className="text-base font-semibold mt-1">{salesOrder?.payment_term}</p>
@@ -884,7 +922,7 @@ export const CreditNoteDetails = () => {
           <DialogHeader>
             <DialogTitle>Delete Sales Order</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this sales order? This action
+              Are you sure you want to delete this credit note? This action
               cannot be undone.
             </DialogDescription>
           </DialogHeader>
