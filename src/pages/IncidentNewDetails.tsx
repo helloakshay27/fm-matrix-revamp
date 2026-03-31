@@ -1296,7 +1296,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Category</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
                                                 </tr>
@@ -1366,7 +1366,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Property Type</th>
                                                 </tr>
                                             </thead>
@@ -1660,43 +1660,43 @@ export const IncidentNewDetails = () => {
 
                         {currentStep === 2 && (
                             <>
-                            <div className="flex justify-center items-center gap-3 p-4">
-                                <Button
-                                    variant="outline"
-                                    className="w-25 mx-3"
-                                    onClick={handleSaveAsDraft}
-                                >
-                                    Save as draft
-                                </Button>
-                                <Button
-                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                                    onClick={handleSubmit}
-                                >
-                                    Next
-                                </Button>
-                            </div>
+                                <div className="flex justify-center items-center gap-3 p-4">
+                                    <Button
+                                        variant="outline"
+                                        className="w-25 mx-3"
+                                        onClick={handleSaveAsDraft}
+                                    >
+                                        Save as draft
+                                    </Button>
+                                    <Button
+                                        className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                        onClick={handleSubmit}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
                             </>
                         )}
 
                         {currentStep === 3 && (
                             <div className="flex justify-center">
-                            <Button
-                                className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                                onClick={handleSubmit}
-                            >
-                                Submit
-                            </Button>
+                                <Button
+                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
                             </div>
                         )}
 
                         {currentStep === 4 && (
                             <div className="flex justify-center">
-                            <Button
-                                className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                                onClick={handleSubmit}
-                            >
-                                Submit
-                            </Button>
+                                <Button
+                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
                             </div>
                         )}
                     </div>
