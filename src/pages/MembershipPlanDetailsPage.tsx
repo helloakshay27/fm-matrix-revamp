@@ -284,7 +284,7 @@ export const MembershipPlanDetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">HSN Code</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.hsnCode|| "-"}
+                  {formData.hsnCode || "-"}
                 </span>
               </div>
               {/* <div className="flex items-start">
