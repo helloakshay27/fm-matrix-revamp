@@ -272,7 +272,7 @@ const modulesByPackage = {
         // { name: "Delivery Challans", href: "/accounting/delivery-challans" },
         // { name: "Payment Links", href: "/accounting/payment-links" },
         { name: "Payments Received", href: "/accounting/payments-received" },
-        // { name: "Credit Note", href: "/accounting/credit-note" }
+        { name: "Credit Note", href: "/accounting/credit-note" }
       ],
     },
 

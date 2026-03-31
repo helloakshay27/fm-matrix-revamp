@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, ArrowLeft } from 'lucide-react';
 import {
     Dialog,
     DialogTitle,
@@ -497,6 +497,16 @@ const ItemsAdd = () => {
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="p-6 bg-white min-h-screen">
+                <div className="mb-6">
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate("/accounting/items")}
+                        className="p-0"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Items List
+                    </Button>
+                </div>
                 <h1 className="text-2xl font-semibold mb-6">New Item</h1>
 
                 {/* TYPE */}
