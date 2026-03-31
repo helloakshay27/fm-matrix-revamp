@@ -2552,7 +2552,7 @@ export const AddGroupMembershipPage = () => {
                                 </div>
 
                                 {/* Card 10: Add-on Amenities */}
-                                {selectedPlanId && (
+                                {/* {selectedPlanId && (
                                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                         <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">Additional Amenities (Add-ons)</h2>
                                         <p className="text-sm text-gray-500 mb-6">Select additional amenities not included in your plan</p>
@@ -2595,7 +2595,7 @@ export const AddGroupMembershipPage = () => {
                                             </div>
                                         )}
                                     </div>
-                                )}
+                                )} */}
 
                                 {/* Shared Membership Details */}
                                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -2748,9 +2748,9 @@ export const AddGroupMembershipPage = () => {
                                             </div>
 
                                             {/* Tax Section */}
-                                            {/* <div className="space-y-3 pb-3 border-b border-gray-200"> */}
-                                            {/* CGST */}
-                                            {/* <div className="flex items-center justify-between">
+                                            <div className="space-y-3 pb-3 border-b border-gray-200">
+                                                {/* CGST */}
+                                                <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2 flex-1">
                                                         <label className="text-sm text-gray-600">CGST (%):</label>
                                                         <TextField
@@ -2779,10 +2779,10 @@ export const AddGroupMembershipPage = () => {
                                                         />
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{cgstAmount.toFixed(2)}</p>
-                                                </div> */}
+                                                </div>
 
-                                            {/* SGST */}
-                                            {/* <div className="flex items-center justify-between">
+                                                {/* SGST */}
+                                                <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2 flex-1">
                                                         <label className="text-sm text-gray-600">SGST (%):</label>
                                                         <TextField
@@ -2811,8 +2811,8 @@ export const AddGroupMembershipPage = () => {
                                                         />
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{sgstAmount.toFixed(2)}</p>
-                                                </div> */}
-                                            {/* </div> */}
+                                                </div>
+                                            </div>
 
                                             {/* Total */}
                                             <div className="flex items-center justify-between pt-2">

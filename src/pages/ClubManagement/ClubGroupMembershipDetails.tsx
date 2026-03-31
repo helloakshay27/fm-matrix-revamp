@@ -716,11 +716,11 @@ export const ClubGroupMembershipDetails = () => {
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-500 font-medium">{formatDate(membershipData.preferred_start_date)}</span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Referred By</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-500 font-medium">{membershipData.referred_by || '-'}</span>
-              </div>
+              </div> */}
             </div>
           </TabsContent>
 
