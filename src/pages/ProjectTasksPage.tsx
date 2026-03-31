@@ -1777,7 +1777,7 @@ const ProjectTasksPage = () => {
                 return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
             }
             case "efforts_duration": {
-                return `${formatHours(taskDetails.total_allocated_hours || 0)}`
+                return `${formatHours(item?.total_allocated_hours || 0)}`
             }
             case "priority": {
                 return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";
