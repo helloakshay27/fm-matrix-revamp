@@ -184,7 +184,7 @@ export const AddGuestUserPage: React.FC = () => {
       formDataToSend.append('user[user_category_id]', formData.selectUserCategory);
 
       if (profileImage) {
-        formDataToSend.append('user[avatar]', profileImage);
+        formDataToSend.append('user[profile_icon]', profileImage);
       }
 
       // Permissions nested attributes
