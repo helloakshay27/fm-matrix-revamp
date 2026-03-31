@@ -41,6 +41,7 @@ import {
   Boxes,
   House,
   TrendingUp,
+  Code,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -218,6 +219,11 @@ const modulesByPackage = {
       name: "House Setup",
       icon: House,
       href: "/settings/house/setup",
+    },
+    {
+      name: "HSN Code Setup",
+      icon: Code,
+      href: "/settings/hsn-code/setup",
     },
 
     // {

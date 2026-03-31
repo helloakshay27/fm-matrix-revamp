@@ -2,10 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import axios from 'axios';
 
 interface Attachment {
   id: number;
@@ -177,8 +185,6 @@ export const ClubMembershipDetailPage = () => {
   const [allocationPaymentDetail, setAllocationPaymentDetail] = useState<any>(null);
   const [loadingAllocationPayment, setLoadingAllocationPayment] = useState(false);
 
-  console.log(membershipData)
-
   // Fetch membership details
   useEffect(() => {
     fetchMembershipDetails();
@@ -309,6 +315,31 @@ export const ClubMembershipDetailPage = () => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-GB');
+  };
+
+  const [statusUpdating, setStatusUpdating] = useState(false);
+
+  const handleStatusChange = async (newStatus: string) => {
+    setStatusUpdating(true);
+    try {
+      const baseUrl = localStorage.getItem(`baseUrl`);
+      const token = localStorage.getItem('token');
+      const url = `https://${baseUrl}/club_members/${id}/update_status.json`;
+
+      await axios.patch(url, { status: newStatus }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      toast.success('Status updated successfully');
+      fetchMembershipDetails();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+    } finally {
+      setStatusUpdating(false);
+    }
   };
 
   const formatDateTime = (dateString: string) => {
@@ -472,7 +503,25 @@ export const ClubMembershipDetailPage = () => {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <Select
+              disabled={statusUpdating}
+              onValueChange={handleStatusChange}
+              value={membershipData.status}
+            >
+              <SelectTrigger className="w-[120px]">
+                {statusUpdating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               onClick={handleEdit}
               variant="outline"

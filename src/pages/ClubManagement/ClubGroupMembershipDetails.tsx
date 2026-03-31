@@ -8,6 +8,7 @@ import { API_CONFIG } from '@/config/apiConfig';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import axios from 'axios';
 
@@ -218,7 +219,7 @@ export const ClubGroupMembershipDetails = () => {
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [paymentMode, setPaymentMode] = useState('online');
-  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [transactionId, setTransactionId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Payment API handler
@@ -230,11 +231,12 @@ export const ClubGroupMembershipDetails = () => {
       const token = API_CONFIG.TOKEN;
 
       const response = await axios.post(
-        `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/lock_account_bills/${selectedBill.id}/payment`,
+        `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}/payment.json`,
         {
-          lock_payment: {
+          bill_id: selectedBill.id,
+          payment: {
             payment_mode: paymentMode,
-            payment_method: paymentMethod
+            pg_transaction_id: transactionId
           }
         },
         {
@@ -1442,22 +1444,15 @@ export const ClubGroupMembershipDetails = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="payment_method">Payment Method</Label>
-              <Select
-                value={paymentMethod}
-                onValueChange={setPaymentMethod}
+              <Label htmlFor="transaction_id">Transaction ID</Label>
+              <Input
+                id="transaction_id"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="Enter Transaction ID"
+                className="mt-1"
                 disabled={paymentLoading}
-              >
-                <SelectTrigger className="w-full mt-1" id="payment_method">
-                  <SelectValue placeholder="Select Payment Method" />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="upi">UPI</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="netbanking">Net Banking</SelectItem>
-                </SelectContent>
-              </Select>
+              />
             </div>
           </div>
           <DialogFooter>

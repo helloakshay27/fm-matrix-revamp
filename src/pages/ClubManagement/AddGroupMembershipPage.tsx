@@ -22,6 +22,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
+import axios from 'axios';
 
 // Interfaces
 interface OccupantUserResponse {
@@ -78,6 +79,8 @@ interface MembershipPlan {
     price: string;
     user_limit: string;
     renewal_terms: string;
+    cgst?: string;
+    sgst?: string;
     plan_amenities?: PlanAmenity[];
 }
 
@@ -1332,10 +1335,12 @@ export const AddGroupMembershipPage = () => {
     // Get user limit from selected plan (parse as number since API returns string)
     const userLimit = parseInt(selectedPlan?.user_limit || '1');
 
-    // Update editable cost when plan is selected
+    // Update editable cost and GST when plan is selected
     React.useEffect(() => {
         if (selectedPlan) {
             setEditablePlanCost(selectedPlan.price);
+            setCgstPercentage(selectedPlan.cgst || '0');
+            setSgstPercentage(selectedPlan.sgst || '0');
         }
     }, [selectedPlan]);
 
@@ -1553,7 +1558,7 @@ export const AddGroupMembershipPage = () => {
     }, [isEditMode, selectedPlanId, membershipPlans]);
 
     // State for house/flat options
-    const [flatOptions, setFlatOptions] = useState<{ id: number; flat_no: string }[]>([]);
+    const [flatOptions, setFlatOptions] = useState<{ id: number; name: string }[]>([]);
     const [flatsLoading, setFlatsLoading] = useState(false);
 
     // Fetch flats on mount
@@ -1561,10 +1566,13 @@ export const AddGroupMembershipPage = () => {
         const fetchFlats = async () => {
             setFlatsLoading(true);
             try {
-                const response = await fetch("https://club-uat-api.lockated.com/society_flats/society_flats_list.json?token=z0Vz7MWHrLM59gu-ureFRdkqq1x8L0nSiKOcaM1pumE");
-                if (!response.ok) throw new Error("Failed to fetch flats");
-                const data = await response.json();
-                setFlatOptions(Array.isArray(data.flats) ? data.flats : []);
+                const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/houses.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+                    }
+                });
+                const data = response.data;
+                setFlatOptions(Array.isArray(data) ? data : []);
             } catch (err) {
                 setFlatOptions([]);
             } finally {
@@ -1901,7 +1909,7 @@ export const AddGroupMembershipPage = () => {
                                                                     <MenuItem value="" disabled>No flats found</MenuItem>
                                                                 ) : (
                                                                     flatOptions.map(flat => (
-                                                                        <MenuItem key={flat.id} value={flat.id}>{flat.flat_no}</MenuItem>
+                                                                        <MenuItem key={flat.id} value={flat.id}>{flat.name}</MenuItem>
                                                                     ))
                                                                 )}
                                                             </Select>
@@ -2751,64 +2759,16 @@ export const AddGroupMembershipPage = () => {
                                             <div className="space-y-3 pb-3 border-b border-gray-200">
                                                 {/* CGST */}
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2 flex-1">
-                                                        <label className="text-sm text-gray-600">CGST (%):</label>
-                                                        <TextField
-                                                            value={cgstPercentage}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                // Only allow non-negative numbers between 0 and 100
-                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
-                                                                    setCgstPercentage(value);
-                                                                }
-                                                            }}
-                                                            type="number"
-                                                            size="small"
-                                                            inputProps={{
-                                                                min: 0,
-                                                                max: 100,
-                                                                step: 0.01
-                                                            }}
-                                                            sx={{
-                                                                ...fieldStyles,
-                                                                width: '80px',
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    height: '36px',
-                                                                }
-                                                            }}
-                                                        />
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm text-gray-600">CGST ({cgstPercentage}%):</label>
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{cgstAmount.toFixed(2)}</p>
                                                 </div>
 
                                                 {/* SGST */}
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2 flex-1">
-                                                        <label className="text-sm text-gray-600">SGST (%):</label>
-                                                        <TextField
-                                                            value={sgstPercentage}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                // Only allow non-negative numbers between 0 and 100
-                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
-                                                                    setSgstPercentage(value);
-                                                                }
-                                                            }}
-                                                            type="number"
-                                                            size="small"
-                                                            inputProps={{
-                                                                min: 0,
-                                                                max: 100,
-                                                                step: 0.01
-                                                            }}
-                                                            sx={{
-                                                                ...fieldStyles,
-                                                                width: '80px',
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    height: '36px',
-                                                                }
-                                                            }}
-                                                        />
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm text-gray-600">SGST ({sgstPercentage}%):</label>
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{sgstAmount.toFixed(2)}</p>
                                                 </div>
