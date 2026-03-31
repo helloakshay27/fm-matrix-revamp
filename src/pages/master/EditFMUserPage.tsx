@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Camera, User } from "lucide-react";
 import {
   TextField,
   Select,
@@ -14,6 +14,8 @@ import {
   Box,
   Autocomplete,
   Chip,
+  Avatar,
+  IconButton,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Entity, fetchEntities } from "@/store/slices/entitiesSlice";
@@ -223,6 +225,9 @@ export const EditFMUserPage = () => {
   const [userAccount, setUserAccount] = useState<UserAccount>({});
   const [lockId, setLockId] = useState<number | undefined>();
   const [loadingSubmitting, setLoadingSubmitting] = useState<boolean>(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -321,6 +326,11 @@ export const EditFMUserPage = () => {
   useEffect(() => {
     if (userData && Object.keys(userData).length > 0) {
       setLockId(userData.lock_user_permission?.id);
+      // @ts-ignore - Assuming avatar or similar exists in userData
+      const avatarUrl = userData.avatar || userData.profile_image_url || userData.profile_image;
+      if (avatarUrl) {
+        setProfileImagePreview(avatarUrl);
+      }
       setFormData({
         firstName: userData.firstname || "",
         lastName: userData.lastname || "",
@@ -367,6 +377,26 @@ export const EditFMUserPage = () => {
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image size must be less than 2MB");
+        return;
+      }
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const validateForm = (): boolean => {
     if (!formData.firstName) {
       toast.error("Please enter first name");
@@ -408,45 +438,71 @@ export const EditFMUserPage = () => {
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setLoadingSubmitting(true);
-    const payload: Payload = {
-      user: {
-        site_id: formData.baseSite,
-        lock_user_permissions_attributes: [
-          {
-            id: lockId,
-            account_id: userAccount.company_id,
-            employee_id: formData.employeeId,
-            designation: formData.designation,
-            unit_id: formData.selectBaseUnit,
-            department_id: formData.selectDepartment,
-            user_type: formData.selectUserType,
-            lock_role_id: formData.selectRole,
-            access_level: formData.selectAccessLevel,
-            access_to:
-              formData.selectAccessLevel === "Site"
-                ? formData.selectedSites
-                : formData.selectedCompanies,
-            urgency_email_enabled: formData.selectEmailPreference,
-            last_working_date: formData.lastWorkingDate,
-          },
-        ],
-        firstname: formData.firstName,
-        lastname: formData.lastName,
-        mobile: formData.mobileNumber,
-        email: formData.emailAddress,
-        gender: formData.gender,
-        entity_id: formData.selectEntity,
-        supplier_id: formData.supplier,
-        employee_type: formData.employeeType,
-        user_category_id: formData.selectUserCategory,
-        profile_type: formData.selectProfileType,
-        access_card_number: formData.accessCardNumber,
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("user[site_id]", String(formData.baseSite));
+    formDataToSend.append("user[firstname]", formData.firstName);
+    formDataToSend.append("user[lastname]", formData.lastName);
+    formDataToSend.append("user[mobile]", formData.mobileNumber);
+    formDataToSend.append("user[email]", formData.emailAddress);
+    formDataToSend.append("user[gender]", formData.gender);
+    formDataToSend.append("user[entity_id]", String(formData.selectEntity));
+    formDataToSend.append("user[supplier_id]", String(formData.supplier));
+    formDataToSend.append("user[employee_type]", formData.employeeType);
+    formDataToSend.append(
+      "user[user_category_id]",
+      String(formData.selectUserCategory)
+    );
+    formDataToSend.append("user[profile_type]", formData.selectProfileType);
+    formDataToSend.append("user[access_card_number]", formData.accessCardNumber);
+
+    if (profileImage) {
+      formDataToSend.append("user[avatar]", profileImage);
+    }
+
+    const permissions = [
+      {
+        id: lockId,
+        account_id: userAccount.company_id,
+        employee_id: formData.employeeId,
+        designation: formData.designation,
+        unit_id: formData.selectBaseUnit,
+        department_id: formData.selectDepartment,
+        user_type: formData.selectUserType,
+        lock_role_id: formData.selectRole,
+        access_level: formData.selectAccessLevel,
+        access_to:
+          formData.selectAccessLevel === "Site"
+            ? formData.selectedSites
+            : formData.selectedCompanies,
+        urgency_email_enabled: formData.selectEmailPreference,
+        last_working_date: formData.lastWorkingDate,
       },
-      lock_user_permission: lockId,
-    };
+    ];
+
+    permissions.forEach((permission, index) => {
+      Object.entries(permission).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              formDataToSend.append(
+                `user[lock_user_permissions_attributes][${index}][${key}][]`,
+                v
+              );
+            });
+          } else {
+            formDataToSend.append(
+              `user[lock_user_permissions_attributes][${index}][${key}]`,
+              String(value)
+            );
+          }
+        }
+      });
+    });
+
     try {
       await dispatch(
-        editFMUser({ data: payload, baseUrl, token, id: Number(id) })
+        editFMUser({ data: formDataToSend, baseUrl, token, id: Number(id) })
       ).unwrap();
       toast.success("User updated successfully");
       navigate("/master/user/fm-users");
@@ -490,6 +546,29 @@ export const EditFMUserPage = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <Box component="form" noValidate>
+              <div className="flex flex-col items-center mb-8">
+                <div className="relative group cursor-pointer" onClick={handleImageClick}>
+                  <Avatar
+                    src={profileImagePreview || ""}
+                    sx={{ width: 120, height: 120, border: '2px solid #e5e7eb' }}
+                  >
+                    {!profileImagePreview && <User size={60} color="#9ca3af" />}
+                  </Avatar>
+                  <div className="absolute bottom-0 right-0 bg-[#C72030] p-2 rounded-full border-2 border-white text-white group-hover:bg-[#A01020] transition-colors">
+                    <Camera size={20} />
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+                <p className="mt-2 text-sm text-gray-500 font-medium">Profile Photo</p>
+                <p className="text-xs text-gray-400">Recommended: Square image, max 2MB</p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Row 1 */}
                 <div>

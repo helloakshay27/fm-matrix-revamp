@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,9 @@ import {
   Building2,
   RefreshCcw,
   Clock,
+  User,
+  Calendar,
+  Hash,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +67,22 @@ interface LockPayment {
   resource_id: number;
   resource_type: string;
   sgst: string | null;
+  user?: {
+    id: number;
+    firstname: string;
+    lastname: string;
+    email: string;
+    mobile: string;
+  };
+  facility_booking?: {
+    id: number;
+    booking_number: string;
+    startdate: string;
+    enddate: string;
+    comment: string;
+    facility_name: string;
+    status: string;
+  };
 }
 
 export const PaymentDetailPage = () => {
@@ -104,7 +123,7 @@ export const PaymentDetailPage = () => {
 
       const data = await response.json();
 
-      setPayment(data);
+      setPayment(data.lock_payment || data);
       toast.success("Payment details loaded");
     } catch (error) {
       toast.error("Failed to load payment details");
@@ -336,6 +355,111 @@ export const PaymentDetailPage = () => {
           </div>
         </Card>
 
+        {/* User Details */}
+        {payment.user && (
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <User className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">User Details</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Name</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced font-medium">
+                    {payment.user.firstname} {payment.user.lastname}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Email</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.user.email}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Mobile</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.user.mobile}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Booking Details */}
+        {payment.facility_booking && (
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <Calendar className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Booking Details</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">
+                    Booking Number
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced font-medium">
+                    {payment.facility_booking.booking_number}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Facility</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking.facility_name}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Start Date</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {formatDate(payment.facility_booking.startdate)}
+                  </span>
+                </div>
+                {payment.facility_booking.enddate && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">End Date</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {formatDate(payment.facility_booking.enddate)}
+                    </span>
+                  </div>
+                )}
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Status</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.facility_booking.status}
+                  </span>
+                </div>
+                {payment.facility_booking.comment && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">Comment</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.facility_booking.comment}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Amount Details */}
         <Card className="w-full bg-transparent shadow-none border-none">
           <div className="figma-card-header">
@@ -491,67 +615,67 @@ export const PaymentDetailPage = () => {
         {(payment.cheque_number ||
           payment.bank_name ||
           payment.neft_reference) && (
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <Building2 className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Bank Details</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Bank Name</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
-                    {payment.bank_name || "-"}
-                  </span>
-                </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">IFSC Code</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
-                    {payment.ifsc || "-"}
-                  </span>
-                </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Branch</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
-                    {payment.branch || "-"}
-                  </span>
-                </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">
-                    Cheque Number
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
-                    {payment.cheque_number || "-"}
-                  </span>
-                </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Cheque Date</span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
-                    {formatDate(payment.cheque_date)}
-                  </span>
-                </div>
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced">
-                    NEFT Reference
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
-                    {payment.neft_reference || "-"}
-                  </span>
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <Building2 className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">Bank Details</h3>
                 </div>
               </div>
-            </div>
-          </Card>
-        )}
+              <div className="figma-card-content">
+                <div className="task-info-enhanced">
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">Bank Name</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.bank_name || "-"}
+                    </span>
+                  </div>
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">IFSC Code</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.ifsc || "-"}
+                    </span>
+                  </div>
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">Branch</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.branch || "-"}
+                    </span>
+                  </div>
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">
+                      Cheque Number
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.cheque_number || "-"}
+                    </span>
+                  </div>
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">Cheque Date</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {formatDate(payment.cheque_date)}
+                    </span>
+                  </div>
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">
+                      NEFT Reference
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.neft_reference || "-"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
 
         {/* Refund Details (if applicable) */}
         {payment.refunded_amount && (
