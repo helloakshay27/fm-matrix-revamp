@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Download } from 'lucide-react';
+import { ChevronLeft, Download, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
@@ -1729,16 +1729,30 @@ export const IncidentNewDetails = () => {
                     </button>
                     <h1 className="text-lg font-semibold">Incident Details</h1>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadIncidentReport}
-                    disabled={reportDownloadLoading}
-                    className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
-                >
-                    <Download className="w-4 h-4" />
-                    {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
-                </Button>
+
+                {/* ✅ Buttons wrapper */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadIncidentReport}
+                        disabled={reportDownloadLoading}
+                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                    >
+                        <Download className="w-4 h-4" />
+                        {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/safety/incident/edit/${id}`)}
+                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        Edit
+                    </Button>
+                </div>
             </div>
 
             {/* Check if incident is closed or in final closure */}
