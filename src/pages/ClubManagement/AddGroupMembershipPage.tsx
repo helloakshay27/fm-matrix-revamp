@@ -393,6 +393,7 @@ export const AddGroupMembershipPage = () => {
 
             const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/membership_plans.json`);
             url.searchParams.append('access_token', token || '');
+            url.searchParams.append('q[active_eq]', 'true');
 
             const response = await fetch(url.toString(), {
                 method: 'GET',
@@ -570,6 +571,7 @@ export const AddGroupMembershipPage = () => {
                             address_type: userData.addresses?.[0]?.address_type || 'residential',
                             residentType: '',
                             relationWithOwner: '',
+                            houseId: memberData.house_id?.toString() || '',
                             membershipNumber: memberData.membership_number || '',
                             accessCardId: memberData.access_card_id?.toString() || '',
                             membershipType: '',
@@ -584,7 +586,9 @@ export const AddGroupMembershipPage = () => {
                         hasInjuries: '',
                         injuryDetails: '',
                         hasPhysicalRestrictions: '',
+                        physicalRestrictionsDetails: '',
                         hasCurrentMedication: '',
+                        medicationDetails: '',
                         pilatesExperience: '',
                         fitnessGoals: [],
                         fitnessGoalsOther: '',
