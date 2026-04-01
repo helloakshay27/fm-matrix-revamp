@@ -480,27 +480,36 @@ const ReportAnalytics: React.FC = () => {
                 );
               }
 
-              if (key === 'milestoneActivityProgress') {
-                return (
-                  <SortableChartItem key={key} id={key} className={colSpanClass}>
-                    <ChartCard title="Milestone Activity Wise Progress">
-                      {/* STRICT CSS applied to fix the table layout widths */}
-                      <div className="w-full overflow-hidden [&_table]:table-auto [&_table]:w-full [&_th:first-child]:w-full [&_th:nth-child(2)]:w-[80px] [&_th:nth-child(2)]:whitespace-nowrap [&_th:nth-child(3)]:w-[100px] [&_th:nth-child(3)]:whitespace-nowrap [&_th:nth-child(4)]:w-[90px] [&_th:nth-child(4)]:whitespace-nowrap [&_td:nth-child(2)]:text-center [&_td:nth-child(3)]:text-center [&_td:nth-child(4)]:text-center">
-                        <EnhancedTable
-                          data={milestoneActivityData}
-                          columns={MILESTONE_ACTIVITY_COLUMNS}
-                          renderCell={(item, columnKey) => (
-                            <div className="text-xs text-gray-600 whitespace-normal break-words">
-                              {item[columnKey]}
-                            </div>
-                          )}
-                          hideTableSearch hideTableExport hideColumnsButton
-                          storageKey="milestone-activity-progress-table"
-                        />
-                      </div>
-                    </ChartCard>
-                  </SortableChartItem>
-                );
+             if (key === 'milestoneActivityProgress') {
+  return (
+    <SortableChartItem key={key} id={key} className={colSpanClass}>
+      <ChartCard title="Milestone Activity Wise Progress">
+        <div className="w-full overflow-hidden
+          [&_table]:table-fixed [&_table]:w-full
+  [&_th:first-child]:w-[20%] [&_td:first-child]:w-[20%]
+  [&_th:nth-child(2)]:w-[15%] [&_td:nth-child(2)]:w-[15%]
+  [&_th:nth-child(3)]:w-[18%] [&_td:nth-child(3)]:w-[18%]
+  [&_th:nth-child(4)]:w-[17%] [&_td:nth-child(4)]:w-[17%]
+  [&_th]:whitespace-nowrap
+  [&_td:nth-child(2)]:text-center
+  [&_td:nth-child(3)]:text-center
+  [&_td:nth-child(4)]:text-center">
+          <EnhancedTable
+            data={milestoneActivityData}
+            columns={MILESTONE_ACTIVITY_COLUMNS}
+            renderCell={(item, columnKey) => (
+              <div className="text-xs text-gray-600 whitespace-normal break-words">
+                {item[columnKey]}
+              </div>
+            )}
+            hideTableSearch hideTableExport hideColumnsButton
+            storageKey="milestone-activity-progress-table"
+          />
+        </div>
+      </ChartCard>
+    </SortableChartItem>
+  );
+
               }
 
               if (key === 'activityCompletion') {

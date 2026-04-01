@@ -1240,6 +1240,7 @@ import ReportAnalytics from "./pages/ReportAnalytics";
 import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
 import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
+import DashboardUI from "./pages/DashboardUI";
 
 const queryClient = new QueryClient();
 
@@ -4426,8 +4427,11 @@ function App() {
 
                           <Route
   path="/report-analytics"
-  element={<ReportAnalytics />}
-/>
+  element={<ReportAnalytics />}/>
+
+  <Route
+  path="/dashboard-UI"
+  element={<DashboardUI/>}/>
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
