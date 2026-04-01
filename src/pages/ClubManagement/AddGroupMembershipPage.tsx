@@ -393,6 +393,7 @@ export const AddGroupMembershipPage = () => {
 
             const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/membership_plans.json`);
             url.searchParams.append('access_token', token || '');
+            url.searchParams.append('q[active_eq]', 'true');
 
             const response = await fetch(url.toString(), {
                 method: 'GET',
@@ -550,7 +551,7 @@ export const AddGroupMembershipPage = () => {
                     // Build member object
                     const newMember: MemberData = {
                         id: memberId,
-                        userSelectionMode: hasUserId ? 'select' : 'manual',
+                        userSelectionMode: 'manual',
                         selectedUser: hasUserId ? memberData.user_id?.toString() : '',
                         selectedUserId: hasUserId ? memberData.user_id : null,
                         formData: {
@@ -570,6 +571,7 @@ export const AddGroupMembershipPage = () => {
                             address_type: userData.addresses?.[0]?.address_type || 'residential',
                             residentType: '',
                             relationWithOwner: '',
+                            houseId: memberData.house_id?.toString() || '',
                             membershipNumber: memberData.membership_number || '',
                             accessCardId: memberData.access_card_id?.toString() || '',
                             membershipType: '',
@@ -584,7 +586,9 @@ export const AddGroupMembershipPage = () => {
                         hasInjuries: '',
                         injuryDetails: '',
                         hasPhysicalRestrictions: '',
+                        physicalRestrictionsDetails: '',
                         hasCurrentMedication: '',
+                        medicationDetails: '',
                         pilatesExperience: '',
                         fitnessGoals: [],
                         fitnessGoalsOther: '',
@@ -1141,8 +1145,8 @@ export const AddGroupMembershipPage = () => {
                     memberObj.attachments = attachmentsBase64;
                 }
 
-                // If user was selected, add user_id
-                if (member.userSelectionMode === 'select' && member.selectedUserId) {
+                // If user was selected or we have a selectedUserId (e.g. from edit mode), add user_id
+                if (member.selectedUserId) {
                     memberObj.user_id = member.selectedUserId;
                 }
 
@@ -1355,7 +1359,7 @@ export const AddGroupMembershipPage = () => {
     // Create new member template
     const createNewMember = (): MemberData => ({
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        userSelectionMode: 'select',
+        userSelectionMode: 'manual',
         selectedUser: '',
         selectedUserId: null,
         formData: {

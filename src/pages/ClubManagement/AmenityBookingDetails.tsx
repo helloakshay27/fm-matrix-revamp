@@ -21,10 +21,11 @@ export const AmenityBookingDetailsClubPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-   const baseUrl = localStorage.getItem("baseUrl");
+  const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);
+  console.log(bookings)
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [logs, setLogs] = useState([
@@ -34,7 +35,7 @@ export const AmenityBookingDetailsClubPage = () => {
       timestamp: "",
     }
   ]);
-   // Cancel modal state
+  // Cancel modal state
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   // Payment modal state
@@ -105,7 +106,7 @@ export const AmenityBookingDetailsClubPage = () => {
     }
   };
 
- 
+
 
   const fetchDetails = async () => {
     try {
@@ -175,24 +176,24 @@ export const AmenityBookingDetailsClubPage = () => {
 
       // Create a blob from the response
       const blob = new Blob([response.data], { type: 'application/pdf' });
-      
+
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Generate filename with current date
       const date = new Date().toISOString().split('T')[0];
       link.download = `facility_booking_invoice_${id}_${date}.pdf`;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Cleanup
       window.URL.revokeObjectURL(downloadUrl);
-      
+
       toast.success('Invoice downloaded successfully', { id: loadingToast });
     } catch (error) {
       console.error('Error downloading invoice:', error);
@@ -308,9 +309,9 @@ export const AmenityBookingDetailsClubPage = () => {
                   {bookings?.payment_method === "NA"
                     ? "Complimentory"
                     : bookings?.payment_method
-                        ?.split('_')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ')}
+                      ?.split('_')
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ')}
                 </span>
               </div>
             </div>
@@ -336,10 +337,10 @@ export const AmenityBookingDetailsClubPage = () => {
                 <span className="text-gray-900 font-medium">
                   {bookings?.startdate
                     ? (() => {
-                        const d = bookings.startdate.split(" ")[0];
-                        const [year, month, day] = d.split("-");
-                        return `${day}/${month}/${year.slice(-2)}`;
-                      })()
+                      const d = bookings.startdate.split(" ")[0];
+                      const [year, month, day] = d.split("-");
+                      return `${day}/${month}/${year.slice(-2)}`;
+                    })()
                     : "-"}
                 </span>
               </div>
@@ -367,9 +368,9 @@ export const AmenityBookingDetailsClubPage = () => {
                 <span className="text-gray-900 font-medium">
                   {bookings?.created_at
                     ? new Date(bookings.created_at.replace(' +0530', '').replace(/-/g, '/')).toLocaleString('en-GB', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                      })
+                      day: '2-digit', month: '2-digit', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    })
                     : "-"}
                 </span>
               </div>
@@ -398,12 +399,12 @@ export const AmenityBookingDetailsClubPage = () => {
               Download Invoice
             </Button>
           </div>
-          
+
           <div className="space-y-6">
             {/* Payment Summary */}
             <div className="bg-gray-50 p-4 rounded-lg space-y-3">
               <h4 className="font-semibold text-gray-900 mb-3">Payment Summary</h4>
-              
+
               {/* Number of Slots Selected */}
               {bookings?.selected_slots && bookings.selected_slots.length > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
@@ -445,10 +446,36 @@ export const AmenityBookingDetailsClubPage = () => {
                 </div>
               )}
 
+              {/* Accessories Charges */}
+              {bookings?.facility_booking_accessories && bookings.facility_booking_accessories.length > 0 && (
+                <div className="space-y-2 py-2 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700 font-medium">Accessories Charges</span>
+                    <span className="text-sm text-gray-500">({bookings.facility_booking_accessories.length} item{bookings.facility_booking_accessories.length > 1 ? 's' : ''})</span>
+                  </div>
+                  {bookings.facility_booking_accessories.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center pl-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">{item.facility_booking_accessory.name}</span>
+                        <span className="text-xs text-gray-400">({item.facility_booking_accessory.quantity} x ₹{item.facility_booking_accessory.price.toFixed(2)})</span>
+                      </div>
+                      <span className="text-sm font-medium">₹{item.facility_booking_accessory.total.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Subtotal */}
               <div className="flex justify-between items-center py-2 border-b border-gray-200">
                 <span className="text-gray-700 font-medium">Subtotal</span>
-                <span className="text-gray-900 font-medium">₹{(((bookings?.member_charges || 0) + (bookings?.guest_charges || 0)).toFixed(2))}</span>
+                <span className="text-gray-900 font-medium">
+                  ₹{(
+                    (bookings?.member_charges || 0) +
+                    (bookings?.guest_charges || 0) +
+                    (bookings?.slot_charges || 0) +
+                    (bookings?.facility_booking_accessories?.reduce((acc, curr) => acc + curr.facility_booking_accessory.total, 0) || 0)
+                  ).toFixed(2)}
+                </span>
               </div>
 
               {/* Discount */}
@@ -463,7 +490,7 @@ export const AmenityBookingDetailsClubPage = () => {
               {bookings?.discount != null && bookings.discount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-700 font-medium">Subtotal After Discount</span>
-                  <span className="font-medium">₹{((bookings.sub_total || 0) )}</span>
+                  <span className="font-medium">₹{((bookings.sub_total || 0))}</span>
                 </div>
               )}
 
@@ -609,11 +636,10 @@ export const AmenityBookingDetailsClubPage = () => {
                             {member.booked_member?.mobile || '-'}
                           </td>
                           <td className="border border-gray-300 px-4 py-3">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              member.booked_member?.oftype === 'primary' 
-                                ? 'bg-blue-100 text-blue-800' 
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${member.booked_member?.oftype === 'primary'
+                                ? 'bg-blue-100 text-blue-800'
                                 : 'bg-gray-100 text-gray-800'
-                            }`}>
+                              }`}>
                               {member.booked_member?.oftype || '-'}
                             </span>
                           </td>
@@ -690,15 +716,15 @@ export const AmenityBookingDetailsClubPage = () => {
           </div>
         )}
 
-      
- 
 
-{console.log(",,,,",bookings)}
+
+
+        {console.log(",,,,", bookings)}
         <div className="bg-white rounded-lg border-2 border-gray-200">
           <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
         </div>
 
-       
+
         {/* Payment Modal */}
         <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
           <DialogContent className="sm:max-w-[400px]">
@@ -750,7 +776,7 @@ export const AmenityBookingDetailsClubPage = () => {
         </Dialog>
 
 
-          {/* Cancel Booking Modal */}
+        {/* Cancel Booking Modal */}
         <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
           <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
@@ -763,7 +789,7 @@ export const AmenityBookingDetailsClubPage = () => {
               {bookings?.can_cancel && (
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
                   <span className="text-gray-800 text-sm">
-                    You will get a refund of <b>₹{bookings.can_cancel.amount}.</b> 
+                    You will get a refund of <b>₹{bookings.can_cancel.amount}.</b>
                     {/* ({bookings.can_cancel.return_percentage}% of total amount). */}
                   </span>
                 </div>

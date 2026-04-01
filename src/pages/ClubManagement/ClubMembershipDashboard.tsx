@@ -216,7 +216,7 @@ export const ClubMembershipDashboard = () => {
       }
 
       toast.success('Status updated successfully', { id: loadingToast });
-      
+
       // Update local state to reflect change immediately
       setMemberships(prev => prev.map(m => m.id === item.id ? { ...m, club_member_enabled: checked } : m));
 
@@ -756,13 +756,13 @@ export const ClubMembershipDashboard = () => {
       const active = !!item.club_member_enabled;
       return (
         <div className="flex items-center gap-3">
-          <div 
+          <div
             onClick={() => handleToggleStatus(item, !active)}
             className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${active ? 'bg-green-500' : 'bg-gray-300'}`}
           >
             <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
           </div>
-         
+
         </div>
       );
     }

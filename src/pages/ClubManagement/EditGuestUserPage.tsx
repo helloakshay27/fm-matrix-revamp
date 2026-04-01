@@ -123,8 +123,8 @@ export const EditGuestUserPage: React.FC = () => {
         const accessLevel = lup.access_level || '';
         const accessTo: string[] = Array.isArray(lup.access_to) ? lup.access_to.map((v: any) => String(v)) : [];
 
-        if (u.avatar || u.profile_image_url || u.profile_image) {
-          setProfileImagePreview(u.avatar || u.profile_image_url || u.profile_image);
+        if (u.profile_icon_url || u.avatar || u.profile_image_url || u.profile_image) {
+          setProfileImagePreview(u.profile_icon_url || u.avatar || u.profile_image_url || u.profile_image);
         }
 
         setFormData((prev) => ({

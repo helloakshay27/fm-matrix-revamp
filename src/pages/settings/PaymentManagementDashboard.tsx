@@ -231,6 +231,7 @@ export const PaymentManagementDashboard = () => {
       'LockAccountBill': 'bg-lightgrey-100 text-black-800',
       'Maintenance': 'bg-lightgrey-100 text-black-800',
       'Pms::Supplier': 'bg-lightgrey-100 text-black-800',
+      'ClubMemberAllocation': 'bg-lightgrey-100 text-black-800',
     };
 
     const color = colors[paymentOf] || colors['Other'];

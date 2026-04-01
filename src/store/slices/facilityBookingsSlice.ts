@@ -26,6 +26,41 @@ export interface FacilityBookingDetails {
   facility_name: string;
   created_by_name: string;
   fac_type: string;
+  user_id?: number;
+  selected_slots?: any[];
+  member_count?: number;
+  member_charges?: number;
+  guest_count?: number;
+  guest_charges?: number;
+  slot_charges?: number;
+  sub_total?: number;
+  discount?: number;
+  cgst_amount?: number;
+  sgst_amount?: number;
+  conv_charge?: number;
+  amount_full?: number;
+  payment_status?: string;
+  payment_mode?: string;
+  amount_paid?: number;
+  pg_state?: string;
+  pg_transaction_id?: string;
+  pg_response_code?: string;
+  deposit_amount?: number;
+  can_cancel_bool?: boolean;
+  can_cancel?: {
+    amount: number;
+    return_percentage: number;
+  };
+  booked_members?: any[];
+  facility_booking_accessories?: {
+    facility_booking_accessory: {
+      id: number;
+      quantity: number;
+      price: number;
+      total: number;
+      name: string;
+    };
+  }[];
 }
 
 export interface FacilityBookingResponse {

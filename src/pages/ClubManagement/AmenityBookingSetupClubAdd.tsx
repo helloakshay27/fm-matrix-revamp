@@ -260,7 +260,7 @@ export const AddBookingSetupClubPage = () => {
     setLoadingInventories(true);
     try {
       const response = await fetch(
-        `https://${baseUrl}/pms/inventories.json`,
+        `https://${baseUrl}/pms/inventories.json?q[active_eq]=true`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

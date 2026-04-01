@@ -162,8 +162,8 @@ export const MembershipPlanDashboard = () => {
     try {
       const newStatus = !plan.active;
       
-      const response = await axios.patch(`https://${baseUrl}/membership_plans/${plan.id}.json`, 
-        { plan: { active: newStatus } },
+      const response = await axios.put(`https://${baseUrl}/membership_plans/${plan.id}.json`, 
+        { membership_plan: { active: newStatus } },
         {
           headers: {
             "Authorization": `Bearer ${token}`,
