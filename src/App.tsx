@@ -1240,6 +1240,7 @@ import ReportAnalytics from "./pages/ReportAnalytics";
 import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
 import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
+import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
 
 const queryClient = new QueryClient();
@@ -2123,9 +2124,9 @@ function App() {
                             element={<DiscReport />}
                           />
 
-                             <Route
+                          <Route
                             path="/admin-compass/daily-meeting"
-                            element={<DailyMeeting/>}
+                            element={<DailyMeeting />}
                           />
 
 
@@ -2568,6 +2569,10 @@ function App() {
                           <Route
                             path="/settings/house/setup"
                             element={<HouseSetupPage />}
+                          />
+                          <Route
+                            path="/settings/hsn-code/setup"
+                            element={<HSNCodeSetup />}
                           />
                           <Route
                             path="/club-management/membership"
@@ -4514,13 +4519,13 @@ function App() {
                             path="/vas/project-dashboard"
                             element={<SupersetDashboard />}
                           />
-                           
+
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
                           <Route
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
-                        
+
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}

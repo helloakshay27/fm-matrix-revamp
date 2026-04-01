@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Download } from 'lucide-react';
+import { ChevronLeft, Download, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
@@ -1228,21 +1228,65 @@ export const IncidentNewDetails = () => {
                 }
 
                 // ==================== INJURIES - FIXED VERSION ====================
+
+                // if (hasInjury && injuredPersons && injuredPersons.length > 0) {
+                //     for (const person of injuredPersons) {
+                //         // Convert bodyParts object to array (this was the main issue)
+                //         const bodyPartsArray: string[] = [];
+                //         if (person.bodyParts?.head) bodyPartsArray.push('head');
+                //         if (person.bodyParts?.neck) bodyPartsArray.push('neck');
+                //         if (person.bodyParts?.arms) bodyPartsArray.push('arms');
+                //         if (person.bodyParts?.eyes) bodyPartsArray.push('eyes');
+                //         if (person.bodyParts?.legs) bodyPartsArray.push('legs');
+                //         if (person.bodyParts?.skin) bodyPartsArray.push('skin');
+                //         if (person.bodyParts?.mouth) bodyPartsArray.push('mouth');
+                //         if (person.bodyParts?.ears) bodyPartsArray.push('ears');
+
+                //         let attachmentsBase64: string[] = [];
+                //         if (person.attachments?.length > 0) {
+                //             attachmentsBase64 = await Promise.all(
+                //                 person.attachments.map((file: File) =>
+                //                     new Promise<string>((resolve, reject) => {
+                //                         const reader = new FileReader();
+                //                         reader.onload = () => resolve(reader.result as string);
+                //                         reader.onerror = reject;
+                //                         reader.readAsDataURL(file);
+                //                     })
+                //                 )
+                //             );
+                //         }
+
+                //         injuries.push({
+                //             name: person.name?.trim() || '',
+                //             age: parseInt(person.age || '0'),
+                //             mobile: person.mobile?.trim() || '',
+                //             company_name: person.company?.trim() || '',
+                //             role: person.role?.trim() || '',
+                //             injured_user_type: person.type || 'external',
+
+                //             // Key fixes for injuries
+                //             body_parts: bodyPartsArray,           // ← Important: array, not object
+                //             injury_type: person.injuryType || '',
+                //             injury_number: person.injuryNumber || '',
+
+                //             types: Array.isArray(person.injuryTypes) ? person.injuryTypes : [],
+                //             injury_types: Array.isArray(person.injuryTypes) ? person.injuryTypes : [],
+
+                //             // Remove or set to null - usually not needed when sending full details
+                //             who_got_injured_id: null,
+
+                //             attachments: attachmentsBase64
+                //         });
+                //     }
+                // }
+
+                // ==================== INJURIES - FINAL FIX ====================
+
+                // ==================== INJURIES - FINAL FIXED VERSION ====================
                 const injuries: any[] = [];
 
                 if (hasInjury && injuredPersons && injuredPersons.length > 0) {
                     for (const person of injuredPersons) {
-                        // Convert bodyParts object to array (this was the main issue)
-                        const bodyPartsArray: string[] = [];
-                        if (person.bodyParts?.head) bodyPartsArray.push('head');
-                        if (person.bodyParts?.neck) bodyPartsArray.push('neck');
-                        if (person.bodyParts?.arms) bodyPartsArray.push('arms');
-                        if (person.bodyParts?.eyes) bodyPartsArray.push('eyes');
-                        if (person.bodyParts?.legs) bodyPartsArray.push('legs');
-                        if (person.bodyParts?.skin) bodyPartsArray.push('skin');
-                        if (person.bodyParts?.mouth) bodyPartsArray.push('mouth');
-                        if (person.bodyParts?.ears) bodyPartsArray.push('ears');
-
                         let attachmentsBase64: string[] = [];
                         if (person.attachments?.length > 0) {
                             attachmentsBase64 = await Promise.all(
@@ -1257,27 +1301,47 @@ export const IncidentNewDetails = () => {
                             );
                         }
 
-                        injuries.push({
+                        const bodyPartsArray: string[] = [];
+                        if (person.bodyParts?.head) bodyPartsArray.push('head');
+                        if (person.bodyParts?.neck) bodyPartsArray.push('neck');
+                        if (person.bodyParts?.arms) bodyPartsArray.push('arms');
+                        if (person.bodyParts?.eyes) bodyPartsArray.push('eyes');
+                        if (person.bodyParts?.legs) bodyPartsArray.push('legs');
+                        if (person.bodyParts?.skin) bodyPartsArray.push('skin');
+                        if (person.bodyParts?.mouth) bodyPartsArray.push('mouth');
+                        if (person.bodyParts?.ears) bodyPartsArray.push('ears');
+
+                        const injuryObj: any = {
                             name: person.name?.trim() || '',
-                            age: parseInt(person.age || '0'),
+                            age: parseInt(person.age || '0') || 0,
                             mobile: person.mobile?.trim() || '',
                             company_name: person.company?.trim() || '',
                             role: person.role?.trim() || '',
                             injured_user_type: person.type || 'external',
 
-                            // Key fixes for injuries
-                            body_parts: bodyPartsArray,           // ← Important: array, not object
                             injury_type: person.injuryType || '',
                             injury_number: person.injuryNumber || '',
 
                             types: Array.isArray(person.injuryTypes) ? person.injuryTypes : [],
-                            injury_types: Array.isArray(person.injuryTypes) ? person.injuryTypes : [],
+                            injury_types: Array.isArray(person.injuryTypes)
+                                ? person.injuryTypes.join(', ')
+                                : (person.injuryType || ''),
 
-                            // Remove or set to null - usually not needed when sending full details
-                            who_got_injured_id: null,
-
+                            body_parts: bodyPartsArray,
                             attachments: attachmentsBase64
-                        });
+                        };
+
+                        // === IMPORTANT: Add who_got_injured_id for internal users ===
+                        if (person.type === 'internal' && person.id) {
+                            const userId = Number(person.id);
+                            if (!isNaN(userId) && userId > 0 && userId <= 2147483647) {
+                                injuryObj.who_got_injured_id = userId;
+                            } else {
+                                console.warn('Invalid who_got_injured_id skipped:', person.id);
+                            }
+                        }
+
+                        injuries.push(injuryObj);
                     }
                 }
 
@@ -1321,9 +1385,167 @@ export const IncidentNewDetails = () => {
                 toast.success('Investigation details submitted successfully!');
                 setCurrentStep(3);   // Move to Provisional step
 
-            } else if (currentStep === 3 || currentStep === 4) {
-                // You can keep or expand provisional/final closure logic here later
-                toast.info('Provisional/Final closure logic coming soon...');
+            } else if (currentStep === 3) {
+
+                let baseUrl = localStorage.getItem('baseUrl') || '';
+                const token = localStorage.getItem('token') || '';
+
+                if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                    baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+                }
+
+                const corrective_fields: any[] = [];
+                const preventive_fields: any[] = [];
+
+                // ✅ Corrective
+                correctiveActions?.forEach(action => {
+                    if (action.action && action.description) {
+                        corrective_fields.push({
+                            tag_type_id: parseInt(action.action),
+                            tag_type: 'corrective',
+                            description: action.description,
+                            responsible_person_id: action.responsiblePerson
+                                ? parseInt(action.responsiblePerson)
+                                : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+                            date: action.targetDate || new Date().toISOString().split('T')[0]
+                        });
+                    }
+                });
+
+                // ✅ Preventive
+                preventiveActions?.forEach(action => {
+                    if (action.action && action.description) {
+                        preventive_fields.push({
+                            tag_type_id: parseInt(action.action),
+                            tag_type: 'preventive',
+                            description: action.description,
+                            responsible_person_id: action.responsiblePerson
+                                ? parseInt(action.responsiblePerson)
+                                : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+                            date: action.targetDate || new Date().toISOString().split('T')[0]
+                        });
+                    }
+                });
+
+                if (corrective_fields.length === 0) {
+                    toast.error('Add at least one corrective action');
+                    return;
+                }
+
+                if (preventive_fields.length === 0) {
+                    toast.error('Add at least one preventive action');
+                    return;
+                }
+
+                const payload = {
+                    about: 'Pms::Incident',
+                    about_id: parseInt(id),
+                    comment: 'Provisional closure update',
+                    priority: 'medium',
+                    current_status: 'provisional_closure',
+                    osr_staff_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
+                    corrective_fields,
+                    preventive_fields,
+                    assigned_to: investigators[0]?.id ? parseInt(investigators[0].id) : null
+                };
+
+                console.log('🚀 STEP 3 PAYLOAD:', payload);
+
+                const response = await fetch(`${baseUrl}/pms/incidents/inc_clousure_details.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    console.error(err);
+                    throw new Error('Step 3 failed');
+                }
+
+                toast.success('Provisional closure submitted!');
+                setCurrentStep(4);
+
+            } else if (currentStep === 4) {
+
+                let baseUrl = localStorage.getItem('baseUrl') || '';
+                const token = localStorage.getItem('token') || '';
+
+                if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                    baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+                }
+
+                const corrective_fields: any[] = [];
+                const preventive_fields: any[] = [];
+
+                correctiveActions?.forEach(action => {
+                    if (action.action && action.description) {
+                        corrective_fields.push({
+                            tag_type_id: parseInt(action.action),
+                            tag_type: 'corrective',
+                            description: action.description,
+                            responsible_person_id: action.responsiblePerson
+                                ? parseInt(action.responsiblePerson)
+                                : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+                            date: action.targetDate || new Date().toISOString().split('T')[0]
+                        });
+                    }
+                });
+
+                preventiveActions?.forEach(action => {
+                    if (action.action && action.description) {
+                        preventive_fields.push({
+                            tag_type_id: parseInt(action.action),
+                            tag_type: 'preventive',
+                            description: action.description,
+                            responsible_person_id: action.responsiblePerson
+                                ? parseInt(action.responsiblePerson)
+                                : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+                            date: action.targetDate || new Date().toISOString().split('T')[0]
+                        });
+                    }
+                });
+
+                const payload = {
+                    about: 'Pms::Incident',
+                    about_id: parseInt(id),
+                    comment: finalClosureCorrectiveDescription || 'Final closure update',
+                    priority: 'high',
+                    current_status: 'final_closure',
+                    osr_staff_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
+                    corrective_fields,
+                    preventive_fields,
+                    corrective_summary: finalClosureCorrectiveDescription || '',
+                    preventive_summary: finalClosurePreventiveDescription || '',
+                    next_review_date: nextReviewDate || null,
+                    next_review_responsible_person_id: nextReviewResponsible ? parseInt(nextReviewResponsible) : null,
+                    assigned_to: nextReviewResponsible
+                        ? parseInt(nextReviewResponsible)
+                        : (investigators[0]?.id ? parseInt(investigators[0].id) : null)
+                };
+
+                console.log('🚀 STEP 4 PAYLOAD:', payload);
+
+                const response = await fetch(`${baseUrl}/pms/incidents/inc_clousure_details.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    console.error(err);
+                    throw new Error('Step 4 failed');
+                }
+
+                toast.success('Final closure submitted!');
+                navigate('/safety/incident');
             }
 
         } catch (error: any) {
@@ -1729,16 +1951,30 @@ export const IncidentNewDetails = () => {
                     </button>
                     <h1 className="text-lg font-semibold">Incident Details</h1>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadIncidentReport}
-                    disabled={reportDownloadLoading}
-                    className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
-                >
-                    <Download className="w-4 h-4" />
-                    {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
-                </Button>
+
+                {/* ✅ Buttons wrapper */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadIncidentReport}
+                        disabled={reportDownloadLoading}
+                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                    >
+                        <Download className="w-4 h-4" />
+                        {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/safety/incident/edit/${id}`)}
+                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        Edit
+                    </Button>
+                </div>
             </div>
 
             {/* Check if incident is closed or in final closure */}

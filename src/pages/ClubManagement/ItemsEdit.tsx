@@ -472,16 +472,9 @@ const ItemsEdit = () => {
         }
 
         if (image) {
-            formData.append(
-                "lock_account_item[icon_attributes][document]",
-                image
-            );
+            formData.append("lock_account_item[icon_attributes][document]", image);
+            formData.append("lock_account_item[icon_attributes][active]", "true");
         }
-
-        formData.append(
-            "lock_account_item[icon_attributes][active]",
-            "true"
-        );
         formData.append("lock_account_id", lock_account_id);
 
         try {
@@ -500,9 +493,17 @@ const ItemsEdit = () => {
             );
             toast.success("Item updated successfully!");
             navigate("/accounting/items");
-        } catch (err) {
-            toast.error("Failed to update item");
+        } catch (err: any) {
             console.error("Item update error:", err);
+            const errors = err?.response?.data;
+            if (errors && typeof errors === 'object') {
+                const messages = Object.entries(errors)
+                    .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(', ')}`)
+                    .join('\n');
+                toast.error(messages);
+            } else {
+                toast.error("Failed to update item");
+            }
         }
     };
     const [image, setImage] = useState<File | null>(null);
