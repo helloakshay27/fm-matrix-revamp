@@ -11,6 +11,7 @@ import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
 import { ClubMemberFilterModal, ClubMembershipFilters } from '@/components/ClubMemberFilterModal';
 import { StatsCard } from "@/components/StatsCard";
+import { Switch } from "@/components/ui/switch";
 import {
   Pagination,
   PaginationContent,
@@ -189,6 +190,42 @@ export const ClubMembershipDashboard = () => {
     }
   }, [filters, perPage]);
 
+  // Handle status toggle
+  const handleToggleStatus = async (item: MembershipData, checked: boolean) => {
+    const loadingToast = toast.loading(`Updating status for ${item.user_name}...`);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members/${item.id}.json`);
+      url.searchParams.append('access_token', token || '');
+
+      const response = await fetch(url.toString(), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          club_member: {
+            club_member_enabled: checked
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      toast.success('Status updated successfully', { id: loadingToast });
+      
+      // Update local state to reflect change immediately
+      setMemberships(prev => prev.map(m => m.id === item.id ? { ...m, club_member_enabled: checked } : m));
+
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status', { id: loadingToast });
+    }
+  };
+
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -261,7 +298,7 @@ export const ClubMembershipDashboard = () => {
       url.searchParams.append('pms_site_id', siteId);
 
       // Add columns from the visible table columns, excluding non-exportable ones
-      const nonExportableColumns = ['actions', 'avatar', 'identification_image', 'attachments'];
+      const nonExportableColumns = ['actions', 'avatar', 'identification_image', 'attachments', 'status_toggle'];
       const columnMapping: Record<string, string> = {
         'user_name': 'first_name',
         'user_email': 'email',
@@ -612,10 +649,11 @@ export const ClubMembershipDashboard = () => {
     { key: 'membershipStatus', label: 'Membership Status', sortable: true },
     { key: 'access_card_enabled', label: 'Card Allocated', sortable: true },
     { key: 'access_card_id', label: 'Access Card ID', sortable: true },
-    { key: 'identification_image', label: 'ID Card', sortable: false },
-    { key: 'avatar', label: "User Photo", sortable: false },
-    { key: 'attachments', label: 'Attachments', sortable: false },
-    { key: 'created_at', label: 'Created On', sortable: true }
+    // { key: 'identification_image', label: 'ID Card', sortable: false },
+    // { key: 'avatar', label: "User Photo", sortable: false },
+    // { key: 'attachments', label: 'Attachments', sortable: false },
+    { key: 'created_at', label: 'Created On', sortable: true },
+    { key: 'status_toggle', label: 'Status', sortable: false }
   ];
 
   // Render cell content
@@ -714,11 +752,26 @@ export const ClubMembershipDashboard = () => {
       return item.access_card_id || <span className="text-gray-400">-</span>;
     }
 
-    if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
+    if (columnKey === 'status_toggle') {
+      const active = !!item.club_member_enabled;
+      return (
+        <div className="flex items-center gap-3">
+          <div 
+            onClick={() => handleToggleStatus(item, !active)}
+            className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${active ? 'bg-green-500' : 'bg-gray-300'}`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
+          </div>
+         
+        </div>
+      );
+    }
+
+    if (!item[columnKey as keyof MembershipData] || item[columnKey as keyof MembershipData] === null || item[columnKey as keyof MembershipData] === '') {
       return <span className="text-gray-400">--</span>;
     }
 
-    return item[columnKey];
+    return item[columnKey as keyof MembershipData] as any;
   };
 
   // Custom left actions
