@@ -30,27 +30,37 @@ export interface ClubMembershipFilters {
   clubMemberEnabled: string;
   accessCardEnabled: string;
   search?: string;
+  status?: string;
 }
 
 interface ClubMemberFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: ClubMembershipFilters) => void;
+  initialFilters?: ClubMembershipFilters;
 }
 
 export const ClubMemberFilterModal: React.FC<ClubMemberFilterModalProps> = ({
   isOpen,
   onClose,
   onApply,
+  initialFilters
 }) => {
-  const [filters, setFilters] = useState<ClubMembershipFilters>({
+  const [filters, setFilters] = useState<ClubMembershipFilters>(initialFilters || {
     email: '',
     mobile: '',
     startDate: '',
     endDate: '',
     clubMemberEnabled: '',
     accessCardEnabled: '',
+    status: '',
   });
+
+  React.useEffect(() => {
+    if (isOpen && initialFilters) {
+      setFilters(initialFilters);
+    }
+  }, [isOpen, initialFilters]);
 
   const handleInputChange = (field: keyof ClubMembershipFilters, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
@@ -73,6 +83,7 @@ export const ClubMemberFilterModal: React.FC<ClubMemberFilterModalProps> = ({
       endDate: '',
       clubMemberEnabled: '',
       accessCardEnabled: '',
+      status: '',
     });
   };
 
@@ -155,20 +166,39 @@ export const ClubMemberFilterModal: React.FC<ClubMemberFilterModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <FormControl fullWidth variant="outlined">
-              <InputLabel shrink>Membership Status</InputLabel>
+              <InputLabel shrink>Club Member Enabled</InputLabel>
               <MuiSelect
-                label="Membership Status"
+                label="Club Member Enabled"
                 value={filters.clubMemberEnabled}
                 onChange={(e) => handleSelectChange('clubMemberEnabled', e.target.value as string)}
                 displayEmpty
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Status</em></MenuItem>
+                <MenuItem value=""><em>Select Option</em></MenuItem>
                 <MenuItem value="true">Enabled</MenuItem>
                 <MenuItem value="false">Disabled</MenuItem>
               </MuiSelect>
             </FormControl>
 
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>Membership Status</InputLabel>
+              <MuiSelect
+                label="Membership Status"
+                value={filters.status}
+                onChange={(e) => handleSelectChange('status', e.target.value as string)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Status</em></MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="expired">Expired</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <FormControl fullWidth variant="outlined">
               <InputLabel shrink>Card Allocated</InputLabel>
               <MuiSelect

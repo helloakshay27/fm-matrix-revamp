@@ -475,8 +475,16 @@ const ItemsAdd = () => {
                 navigate("/accounting/items");
             })
             .catch(err => {
-                toast.error("Failed to save item");
                 console.error("Item save error:", err);
+                const errors = err?.response?.data;
+                if (errors && typeof errors === 'object') {
+                    const messages = Object.entries(errors)
+                        .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(', ')}`)
+                        .join('\n');
+                    toast.error(messages);
+                } else {
+                    toast.error("Failed to save item");
+                }
             });
     };
     const [image, setImage] = useState<File | null>(null);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
 import { ClubMemberFilterModal, ClubMembershipFilters } from '@/components/ClubMemberFilterModal';
+import { StatsCard } from "@/components/StatsCard";
 import {
   Pagination,
   PaginationContent,
@@ -63,6 +64,12 @@ export const ClubMembershipDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
+  const [statusCounts, setStatusCounts] = useState<{ active: number; inactive: number; expired: number, pending: number }>({
+    active: 0,
+    inactive: 0,
+    expired: 0,
+    pending: 0
+  });
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     email: '',
     mobile: '',
@@ -70,7 +77,8 @@ export const ClubMembershipDashboard = () => {
     accessCardEnabled: '',
     startDate: '',
     endDate: '',
-    search: ''
+    search: '',
+    status: ''
   });
 
   const perPage = 20;
@@ -111,6 +119,11 @@ export const ClubMembershipDashboard = () => {
       // Add access card enabled filter
       if (filters.accessCardEnabled) {
         url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+      }
+
+      // Add status filter
+      if (filters.status) {
+        url.searchParams.append('q[status_eq]', filters.status);
       }
 
       // Add start date filter
@@ -155,6 +168,9 @@ export const ClubMembershipDashboard = () => {
         setMemberships(data.club_members);
         setTotalMembers(data.pagination?.total_count || 0);
         setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
+        if (data.status_counts) {
+          setStatusCounts(data.status_counts);
+        }
         // toast.success(`Loaded ${data.length} members`);
       } else {
         setMemberships([]);
@@ -204,16 +220,74 @@ export const ClubMembershipDashboard = () => {
     fetchMemberships(currentPage);
   }, [currentPage, filters, fetchMemberships]);
 
+  // Handle card click
+  const handleCardClick = (title: string) => {
+    let status = '';
+    switch (title) {
+      case 'Pending Members':
+        status = 'pending';
+        break;
+      case 'Active Members':
+        status = 'active';
+        break;
+      case 'Inactive Members':
+        status = 'inactive';
+        break;
+      case 'Expired Members':
+        status = 'expired';
+        break;
+      default:
+        status = '';
+    }
+
+    setFilters(prev => ({
+      ...prev,
+      status: status
+    }));
+    setCurrentPage(1);
+  };
+
   // Handle export
-  const handleExport = async () => {
+  const handleExport = async (columnVisibility?: Record<string, boolean>) => {
     const loadingToast = toast.loading('Preparing Excel export...');
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
+      const siteId = localStorage.getItem('selected_site_id') || '1';
 
       // Build the export URL
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`);
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members/export_members.xlsx`);
       url.searchParams.append('access_token', token || '');
+      url.searchParams.append('pms_site_id', siteId);
+
+      // Add columns from the visible table columns, excluding non-exportable ones
+      const nonExportableColumns = ['actions', 'avatar', 'identification_image', 'attachments'];
+      const columnMapping: Record<string, string> = {
+        'user_name': 'first_name',
+        'user_email': 'email',
+        'user_mobile': 'mobile',
+        'membershipStatus': 'status'
+      };
+
+      const columnsToExport = columns
+        .filter(col => {
+          // Exclude non-exportable columns
+          if (nonExportableColumns.includes(col.key)) return false;
+          // If columnVisibility is provided, only include visible columns
+          if (columnVisibility && columnVisibility[col.key] === false) return false;
+          return true;
+        })
+        .map(col => columnMapping[col.key] || col.key);
+
+      columnsToExport.forEach(col => url.searchParams.append('columns[]', col));
+
+      // Add start/end dates from filters if they exist
+      if (filters.startDate) {
+        url.searchParams.append('start_date', filters.startDate);
+      }
+      if (filters.endDate) {
+        url.searchParams.append('end_date', filters.endDate);
+      }
 
       // Add the same filters that are applied to the table
       if (filters.search) {
@@ -234,6 +308,10 @@ export const ClubMembershipDashboard = () => {
 
       if (filters.accessCardEnabled) {
         url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+      }
+
+      if (filters.status) {
+        url.searchParams.append('q[status_eq]', filters.status);
       }
 
       if (filters.startDate) {
@@ -672,7 +750,53 @@ export const ClubMembershipDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {/* Header Section */}
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <StatsCard
+          title="Total Members"
+          value={
+            (statusCounts?.active ?? 0) +
+            (statusCounts?.inactive ?? 0) +
+            (statusCounts?.expired ?? 0) +
+            (statusCounts?.pending ?? 0)
+          }
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === ''}
+        />
+        <StatsCard
+          title="Pending Members"
+          value={statusCounts?.pending ?? 0}
+          icon={<Users className="w-6 h-6 text-yellow-400" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'pending'}
+        />
+        <StatsCard
+          title="Active Members"
+          value={statusCounts?.active ?? 0}
+          icon={<Users className="w-6 h-6 text-green-600" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'active'}
+        />
+        <StatsCard
+          title="Inactive Members"
+          value={statusCounts?.inactive ?? 0}
+          icon={<Users className="w-6 h-6 text-yellow-600" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'inactive'}
+        />
+        <StatsCard
+          title="Expired Members"
+          value={statusCounts?.expired ?? 0}
+          icon={<Users className="w-6 h-6 text-red-600" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'expired'}
+        />
+      </div>
 
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">
@@ -749,6 +873,7 @@ export const ClubMembershipDashboard = () => {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApply={handleFilterApply}
+        initialFilters={filters}
       />
     </div>
   );
