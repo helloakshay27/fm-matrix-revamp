@@ -10,16 +10,19 @@ import SWOTAnalysis from './AdminCompassComponent/SWOTAnalysis';
 import { GoalsView } from './AdminCompassComponent/GoalsView';
 import { AdminViewEmulation } from '@/components/AdminViewEmulation';
 
-// ── Design Tokens ──
+// ── Design Tokens (matching DailyMeeting exactly) ──
 const C = {
   primary:     '#DA7756',
   primaryHov:  '#c9674a',
   primaryBg:   '#fef6f4',
   primaryTint: 'rgba(218,119,86,0.10)',
   primaryBord: 'rgba(218,119,86,0.22)',
-  textMain:    '#171717',
-  textMuted:   '#737373',
-  borderLgt:   '#ede8e5'
+  primaryBordStrong: 'rgba(218,119,86,0.35)',
+  pageBg:      '#ffffff',
+  textMain:    '#1a1a1a',
+  textMuted:   '#6b7280',
+  borderLgt:   '#e5e7eb',
+  cardBg:      '#fff',
 };
 
 // ── Icons ──
@@ -30,14 +33,14 @@ const InfoIcon = () => (
 );
 
 const EyeIcon = () => (
-  <svg className="w-5 h-5" style={{ color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className="w-4 h-4" style={{ color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
   </svg>
 );
 
 const EditIcon = () => (
-  <svg className="w-4 h-4 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
@@ -62,7 +65,7 @@ const PlusIcon = () => (
 
 const ChevronIcon = ({ isExpanded }) => (
   <svg
-    className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+    className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
     style={{ color: C.textMuted }}
     fill="none" viewBox="0 0 24 24" stroke="currentColor"
   >
@@ -95,91 +98,125 @@ const ScriptIcon = () => (
   </svg>
 );
 
+// ── Shared Button Components (matching DailyMeeting) ──
+const BtnPrimary = ({ children, onClick, className = '', icon: Icon }) => (
+  <button
+    onClick={onClick}
+    className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-sm transition-all duration-150 active:scale-[0.97] ${className}`}
+    style={{ background: C.primary }}
+    onMouseEnter={e => e.currentTarget.style.background = C.primaryHov}
+    onMouseLeave={e => e.currentTarget.style.background = C.primary}
+  >
+    {Icon && <Icon className="w-4 h-4" />}{children}
+  </button>
+);
+
+const BtnOutline = ({ children, onClick, className = '' }) => (
+  <button
+    onClick={onClick}
+    className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border ${className}`}
+    style={{ borderColor: C.primaryBord, color: C.textMain }}
+    onMouseEnter={e => { e.currentTarget.style.background = C.primaryBg; e.currentTarget.style.borderColor = C.primaryBordStrong; }}
+    onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = C.primaryBord; }}
+  >
+    {children}
+  </button>
+);
+
+const BtnIcon = ({ children, onClick, title = '' }) => (
+  <button
+    onClick={onClick}
+    title={title}
+    className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white shadow-sm transition-all duration-150 active:scale-[0.95] border"
+    style={{ borderColor: C.primaryBord, color: '#6b7280' }}
+    onMouseEnter={e => { e.currentTarget.style.background = C.primaryBg; e.currentTarget.style.color = C.primary; }}
+    onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#6b7280'; }}
+  >
+    {children}
+  </button>
+);
+
+// ── SectionCard (matching DailyMeeting) ──
+const SectionCard = ({ children, className = '' }) => (
+  <div
+    className={`rounded-2xl border p-5 shadow-sm ${className}`}
+    style={{ background: 'rgba(218,119,86,0.05)', borderColor: 'rgba(218,119,86,0.18)' }}
+  >
+    {children}
+  </div>
+);
+
 // ── Theme Styles ──
 const ThemeStyle = () => (
   <style>{`
-    .st-modal-portal {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .bp-modal-portal {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
       padding: 16px;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0,0,0,0.42);
       backdrop-filter: blur(3px);
       -webkit-backdrop-filter: blur(3px);
     }
-    .st-modal-box {
-      background: ${C.primaryBg};
+    .bp-modal-box {
+      background: #fef6f4;
       border-radius: 20px;
-      border: 1px solid ${C.primaryBord};
-      box-shadow: 0 30px 80px rgba(0,0,0,0.25);
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      max-height: 90vh;
-      position: relative;
-      overflow: hidden;
+      border: 1px solid rgba(218,119,86,0.22);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.22);
+      width: 100%; max-width: 540px;
+      display: flex; flex-direction: column;
+      max-height: 90vh; overflow: hidden;
     }
-    .st-input {
+    .bp-input {
       width: 100%;
-      border: 1px solid ${C.borderLgt};
+      border: 1px solid #e5e7eb;
       border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 13px;
-      color: ${C.textMain};
-      background: #ffffff;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      padding: 9px 12px;
+      font-size: 13px; font-weight: 600;
+      color: #1a1a1a;
+      background: #fef6f4;
+      transition: border-color .15s, box-shadow .15s;
       outline: none;
       box-sizing: border-box;
+      font-family: inherit;
     }
-    .st-input:focus {
-      border-color: ${C.primary};
-      box-shadow: 0 0 0 3px rgba(218, 119, 86, 0.15);
+    .bp-input:focus {
+      border-color: #DA7756;
+      box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
     }
-    .st-input::placeholder { color: #a3a3a3; }
-
-    .st-select {
+    .bp-input::placeholder { color: #a3a3a3; font-weight: 500; }
+    .bp-select {
       width: 100%;
-      border: 1px solid ${C.borderLgt};
+      border: 1px solid #e5e7eb;
       border-radius: 12px;
-      padding: 10px 36px 10px 12px;
-      font-size: 13px;
-      color: ${C.textMain};
-      background: #ffffff;
-      appearance: none;
-      -webkit-appearance: none;
+      padding: 9px 36px 9px 12px;
+      font-size: 13px; font-weight: 600;
+      color: #1a1a1a;
+      background: #fef6f4;
+      appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 10px center;
       background-size: 16px;
       cursor: pointer;
-      transition: border-color 0.15s, box-shadow 0.15s;
       outline: none;
       box-sizing: border-box;
     }
-    .st-select:focus {
-      border-color: ${C.primary};
-      box-shadow: 0 0 0 3px rgba(218, 119, 86, 0.15);
-    }
-    
-    .st-scroll::-webkit-scrollbar { width: 6px; }
-    .st-scroll::-webkit-scrollbar-track { background: transparent; }
-    .st-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-    .st-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    .bp-select:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
+    .bp-scroll::-webkit-scrollbar { width: 6px; }
+    .bp-scroll::-webkit-scrollbar-track { background: transparent; }
+    .bp-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    .bp-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
   `}</style>
 );
 
 // ── Portal Modal ──
 const Modal = ({ children, onClose }) => {
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
   }, []);
-
   return ReactDOM.createPortal(
-    <div className="st-modal-portal" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="bp-modal-portal" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       {children}
     </div>,
     document.body
@@ -187,48 +224,37 @@ const Modal = ({ children, onClose }) => {
 };
 
 // ==========================================
-// MAIN PARENT COMPONENT
+// MAIN COMPONENT
 // ==========================================
 const BusinessPlanAndGoles = () => {
   const [activeMainTab, setActiveMainTab] = useState('strategic');
-  
-  // State for the Add Content Dropdown
   const [showAddContent, setShowAddContent] = useState(false);
-  const [addContentTab, setAddContentTab] = useState('images'); 
+  const [addContentTab, setAddContentTab] = useState('images');
   const [showImageInput, setShowImageInput] = useState(false);
   const [showVideoInput, setShowVideoInput] = useState(false);
-
-  // Modals for Top 3 Cards
   const [activeTopModal, setActiveTopModal] = useState(null);
-  
-  // Purpose State
+
   const [purposeText, setPurposeText] = useState(
-    "We are building the digital backbone of real estate, enhancing trust, transparency, and efficiency in the customer journey, turning every promise into a proud home while fostering innovation in the industry."
+    'We are building the digital backbone of real estate, enhancing trust, transparency, and efficiency in the customer journey, turning every promise into a proud home while fostering innovation in the industry.'
   );
-  const [purposeVideoUrl, setPurposeVideoUrl] = useState("");
-  
+  const [purposeVideoUrl, setPurposeVideoUrl] = useState('');
   const [tempPurposeText, setTempPurposeText] = useState('');
   const [tempPurposeVideoUrl, setTempPurposeVideoUrl] = useState('');
-  
-  // Core Values State
-  const [coreValues, setCoreValues] = useState([
-    'Innovation', 'Mindfulness', 'Performance', 'Accountability', 'Communication', 'Trust'
-  ]);
-  const [tempCoreValues, setTempCoreValues] = useState([]);
-  const [coreVideoUrl, setCoreVideoUrl] = useState("");
-  const [tempCoreVideoUrl, setTempCoreVideoUrl] = useState("");
 
-  // Brand Promises State
+  const [coreValues, setCoreValues] = useState(['Innovation','Mindfulness','Performance','Accountability','Communication','Trust']);
+  const [tempCoreValues, setTempCoreValues] = useState([]);
+  const [coreVideoUrl, setCoreVideoUrl] = useState('');
+  const [tempCoreVideoUrl, setTempCoreVideoUrl] = useState('');
+
   const [brandPromises, setBrandPromises] = useState([
     { id: 1, text: 'Trustworthy Transactions - 95% customer satisfaction', kpis: [] },
     { id: 2, text: 'Efficient Processes - 30% reduction in turnaround time', kpis: [] },
     { id: 3, text: 'Innovative Solutions - 3 new product features every quarter', kpis: [] },
   ]);
   const [tempBrandPromises, setTempBrandPromises] = useState([]);
-  const [brandVideoUrl, setBrandVideoUrl] = useState("");
-  const [tempBrandVideoUrl, setTempBrandVideoUrl] = useState("");
+  const [brandVideoUrl, setBrandVideoUrl] = useState('');
+  const [tempBrandVideoUrl, setTempBrandVideoUrl] = useState('');
 
-  // Open Modal Logic
   const openTopModal = (modalName) => {
     if (modalName === 'purpose') {
       setTempPurposeText(purposeText);
@@ -237,353 +263,321 @@ const BusinessPlanAndGoles = () => {
       setTempCoreValues([...coreValues]);
       setTempCoreVideoUrl(coreVideoUrl);
     } else if (modalName === 'brand') {
-      // Deep copy brand promises for temporary editing
       setTempBrandPromises(brandPromises.map(p => ({ ...p })));
       setTempBrandVideoUrl(brandVideoUrl);
     }
     setActiveTopModal(modalName);
   };
 
-  // Save Purpose
   const saveTopPurpose = () => {
     setPurposeText(tempPurposeText);
     setPurposeVideoUrl(tempPurposeVideoUrl);
     setActiveTopModal(null);
   };
 
-  // Save Core Values
   const saveCoreValues = () => {
-    setCoreValues(tempCoreValues.filter(val => val.trim() !== ""));
+    setCoreValues(tempCoreValues.filter(v => v.trim() !== ''));
     setCoreVideoUrl(tempCoreVideoUrl);
     setActiveTopModal(null);
   };
 
-  // Save Brand Promises
   const saveBrandPromises = () => {
-    setBrandPromises(tempBrandPromises.filter(val => val.text.trim() !== ""));
+    setBrandPromises(tempBrandPromises.filter(v => v.text.trim() !== ''));
     setBrandVideoUrl(tempBrandVideoUrl);
     setActiveTopModal(null);
   };
 
-  // Handlers for Core Values List
   const handleCoreValueChange = (index, value) => {
     const updated = [...tempCoreValues];
     updated[index] = value;
     setTempCoreValues(updated);
   };
-  const handleDeleteCoreValue = (index) => {
-    setTempCoreValues(tempCoreValues.filter((_, i) => i !== index));
-  };
-  const handleAddCoreValue = () => {
-    setTempCoreValues([...tempCoreValues, ""]);
-  };
+  const handleDeleteCoreValue = (index) => setTempCoreValues(tempCoreValues.filter((_, i) => i !== index));
+  const handleAddCoreValue = () => setTempCoreValues([...tempCoreValues, '']);
 
-  // Handlers for Brand Promises List
   const handleBrandPromiseChange = (index, value) => {
     const updated = [...tempBrandPromises];
     updated[index].text = value;
     setTempBrandPromises(updated);
   };
-  const handleDeleteBrandPromise = (index) => {
-    setTempBrandPromises(tempBrandPromises.filter((_, i) => i !== index));
-  };
-  const handleAddBrandPromise = () => {
-    setTempBrandPromises([...tempBrandPromises, { id: Date.now(), text: '', kpis: [] }]);
-  };
+  const handleDeleteBrandPromise = (index) => setTempBrandPromises(tempBrandPromises.filter((_, i) => i !== index));
+  const handleAddBrandPromise = () => setTempBrandPromises([...tempBrandPromises, { id: Date.now(), text: '', kpis: [] }]);
+
+  const tabs = [
+    { key: 'strategic', label: 'Strategic Plan' },
+    { key: 'goals',     label: 'Goals' },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#fafafa] p-4 md:p-8 font-sans text-gray-800 max-w-[1400px] mx-auto">
+    <div className="min-h-screen p-4 md:p-8 font-sans max-w-[1400px] mx-auto" style={{ background: '#fafafa', color: C.textMain }}>
       <ThemeStyle />
-      <AdminViewEmulation/>
+      <AdminViewEmulation />
 
       {/* ── Page Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <div className="text-[13px] font-bold uppercase tracking-wide mb-1" style={{ color: C.textMuted }}>Strategic overview and goals alignment</div>
-          <h1 className="text-2xl font-black text-gray-900">Business plan for HAVEN INFOLINE PRIVATE LIMITED</h1>
+          <div className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: C.textMuted }}>
+            Strategic overview and goals alignment
+          </div>
+          <h1 className="text-2xl font-black" style={{ color: '#111' }}>
+            Business plan for HAVEN INFOLINE PRIVATE LIMITED
+          </h1>
         </div>
-        <div className="flex gap-3 mt-4 md:mt-0">
-          <button 
-            className="px-5 py-2.5 bg-white border rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm"
-            style={{ borderColor: C.borderLgt, color: C.textMain }}
-          >
-            Copy Plan
-          </button>
-          <button 
-            className="px-5 py-2.5 text-white rounded-xl text-[13px] font-bold shadow-sm transition-colors"
-            style={{ background: C.primary }}
-            onMouseEnter={(e) => e.currentTarget.style.background = C.primaryHov}
-            onMouseLeave={(e) => e.currentTarget.style.background = C.primary}
-          >
-            ✨ Create with AI
-          </button>
+        <div className="flex gap-3">
+          <BtnOutline>Copy Plan</BtnOutline>
+          <BtnPrimary>✨ Create with AI</BtnPrimary>
         </div>
       </div>
 
-      {/* ── Main Navigation Tabs ── */}
-      <div className="border-b mb-8 flex gap-6" style={{ borderColor: C.borderLgt }}>
-        <button
-          onClick={() => setActiveMainTab('strategic')}
-          className="py-3 px-1 border-b-[3px] font-bold text-[14px] transition-colors"
-          style={{
-            borderColor: activeMainTab === 'strategic' ? C.primary : 'transparent',
-            color: activeMainTab === 'strategic' ? C.primary : C.textMuted
-          }}
-        >
-          Strategic Plan
-        </button>
-        <button
-          onClick={() => setActiveMainTab('goals')}
-          className="py-3 px-1 border-b-[3px] font-bold text-[14px] transition-colors"
-          style={{
-            borderColor: activeMainTab === 'goals' ? C.primary : 'transparent',
-            color: activeMainTab === 'goals' ? C.primary : C.textMuted
-          }}
-        >
-          Goals
-        </button>
+      {/* ── Tab Bar (pill style matching DailyMeeting) ── */}
+      <div
+        className="flex rounded-2xl p-1 gap-1 mb-8 overflow-x-auto"
+        style={{ background: C.primary }}
+      >
+        {tabs.map(tab => {
+          const isActive = activeMainTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveMainTab(tab.key)}
+              className="flex-1 py-2 px-4 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap"
+              style={{
+                background: isActive ? '#fff' : 'transparent',
+                color: isActive ? C.primary : 'rgba(255,255,255,0.8)',
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── STRATEGIC PLAN VIEW ── */}
       {activeMainTab === 'strategic' && (
-        <div className="space-y-8">
-          <section>
-            
-            {/* Header row with Add Content Button and Chevron */}
-            <div className="flex items-center justify-between mb-5 bg-white p-4 border rounded-2xl shadow-sm transition-all" style={{ borderColor: C.borderLgt }}>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 font-bold text-[16px]" style={{ color: C.textMain }}>
-                  <EyeIcon /> Our Business Plan
-                </div>
-                <button
-                  onClick={() => setShowAddContent(!showAddContent)}
-                  className="px-4 py-2 text-[12px] font-bold rounded-lg border transition-colors shadow-sm"
-                  style={{
-                    background: showAddContent ? C.primaryBg : '#fff',
-                    borderColor: showAddContent ? C.primaryBord : C.borderLgt,
-                    color: C.primary
-                  }}
-                  onMouseEnter={(e) => { if(!showAddContent) e.currentTarget.style.background = C.primaryBg; }}
-                  onMouseLeave={(e) => { if(!showAddContent) e.currentTarget.style.background = '#fff'; }}
-                >
-                  Add Content
-                </button>
+        <div className="space-y-6">
+
+          {/* Business Plan header row */}
+          <div
+            className="flex items-center justify-between p-4 rounded-2xl border shadow-sm bg-white"
+            style={{ borderColor: C.borderLgt }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 font-bold text-[14px]" style={{ color: C.textMain }}>
+                <EyeIcon /> Our Business Plan
               </div>
-              <div className="flex items-center gap-2">
-                <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"><InfoIcon /></button>
-                <button
-                  onClick={() => setShowAddContent(!showAddContent)}
-                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ChevronIcon isExpanded={showAddContent} />
-                </button>
-              </div>
+              <button
+                onClick={() => setShowAddContent(!showAddContent)}
+                className="px-4 py-1.5 text-[12px] font-bold rounded-xl border transition-all shadow-sm active:scale-[0.97]"
+                style={{
+                  background: showAddContent ? C.primaryBg : '#fff',
+                  borderColor: showAddContent ? C.primaryBordStrong : C.primaryBord,
+                  color: C.primary,
+                }}
+              >
+                Add Content
+              </button>
             </div>
+            <div className="flex items-center gap-2">
+              <BtnIcon title="Info">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </BtnIcon>
+              <BtnIcon onClick={() => setShowAddContent(!showAddContent)}>
+                <ChevronIcon isExpanded={showAddContent} />
+              </BtnIcon>
+            </div>
+          </div>
 
-            {/* --- ADD CONTENT DROPDOWN SECTION --- */}
-            {showAddContent && (
-              <div className="mb-8 border border-dashed rounded-2xl overflow-hidden transition-all" style={{ borderColor: C.primaryBord, background: C.primaryBg }}>
-                <div className="flex border-b bg-white/60" style={{ borderColor: C.primaryBord }}>
+          {/* Add Content Dropdown */}
+          {showAddContent && (
+            <div
+              className="rounded-2xl overflow-hidden border border-dashed"
+              style={{ borderColor: C.primaryBordStrong, background: C.primaryBg }}
+            >
+              {/* Tabs */}
+              <div className="flex border-b" style={{ borderColor: C.primaryBord, background: 'rgba(255,255,255,0.6)' }}>
+                {['images', 'video'].map(t => (
                   <button
-                    onClick={() => setAddContentTab('images')}
-                    className="flex-1 py-3.5 text-[13px] font-bold transition-colors"
+                    key={t}
+                    onClick={() => setAddContentTab(t)}
+                    className="flex-1 py-3 text-[13px] font-bold transition-colors capitalize"
                     style={{
-                      background: addContentTab === 'images' ? C.primary : 'transparent',
-                      color: addContentTab === 'images' ? '#fff' : C.textMain
+                      background: addContentTab === t ? C.primary : 'transparent',
+                      color: addContentTab === t ? '#fff' : C.textMain,
                     }}
                   >
-                    Images
+                    {t === 'images' ? 'Images' : 'Explainer Video'}
                   </button>
-                  <button
-                    onClick={() => setAddContentTab('video')}
-                    className="flex-1 py-3.5 text-[13px] font-bold transition-colors"
-                    style={{
-                      background: addContentTab === 'video' ? C.primary : 'transparent',
-                      color: addContentTab === 'video' ? '#fff' : C.textMain
-                    }}
-                  >
-                    Explainer Video
-                  </button>
-                </div>
-
-                <div className="p-8 flex flex-col items-center justify-center text-center">
-                  
-                  {/* IMAGES TAB CONTENT */}
-                  {addContentTab === 'images' && (
-                    <>
-                      {!showImageInput ? (
-                        <div className="flex flex-col items-center">
-                          <ImagePlaceholder />
-                          <p className="text-[13px] font-bold mb-5" style={{ color: C.textMuted }}>No images added yet</p>
-                          <button 
-                            onClick={() => setShowImageInput(true)}
-                            className="flex items-center px-5 py-2.5 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm"
-                            style={{ background: C.primary }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = C.primaryHov}
-                            onMouseLeave={(e) => e.currentTarget.style.background = C.primary}
-                          >
-                            <GearIcon /> Add Images
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="w-full max-w-2xl mx-auto">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="font-bold text-[15px]" style={{ color: C.textMain }}>Add Images</span>
-                            <button onClick={() => setShowImageInput(false)} className="text-gray-400 hover:text-gray-700 font-bold text-lg transition-colors">✕</button>
-                          </div>
-                          <div className="flex gap-2 mb-3">
-                            <input 
-                              type="text" 
-                              placeholder="Paste image URL or Google Drive link..." 
-                              className="st-input flex-1" 
-                            />
-                            <button className="px-5 py-2.5 rounded-xl text-[13px] font-bold transition-colors border" style={{ background: C.primaryTint, color: C.primaryHov, borderColor: C.primaryBord }}>
-                              + Add
-                            </button>
-                            <button className="px-5 py-2.5 rounded-xl text-[13px] font-bold text-white transition-colors flex items-center gap-2 shadow-sm" style={{ background: C.primary }}>
-                              <span>↑</span> Upload
-                            </button>
-                          </div>
-                          <div className="flex justify-between text-[12px] mb-5 text-left font-bold" style={{ color: C.textMuted }}>
-                            <span>0/12 images • Max 1 MB per image. <a href="#" style={{ color: C.primary }} className="hover:underline">Compress images here</a></span>
-                          </div>
-                          <div className="text-[12px] mb-2 font-bold text-left" style={{ color: C.textMuted }}>Generate with AI:</div>
-                          <div className="flex gap-3">
-                            <button className="flex-1 py-2.5 bg-white border rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold hover:bg-gray-50 transition-colors" style={{ borderColor: C.borderLgt, color: C.textMain }}>
-                              ✨ Create Image (overview)
-                            </button>
-                            <button className="flex-1 py-2.5 bg-white border rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold hover:bg-gray-50 transition-colors" style={{ borderColor: C.borderLgt, color: C.textMain }}>
-                              ✨ Create Image (detailed)
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* VIDEO TAB CONTENT */}
-                  {addContentTab === 'video' && (
-                    <>
-                      {!showVideoInput ? (
-                        <div className="flex flex-col items-center">
-                          <VideoPlaceholder />
-                          <p className="text-[13px] font-bold mb-5" style={{ color: C.textMuted }}>No explainer videos added yet</p>
-                          <button 
-                            onClick={() => setShowVideoInput(true)}
-                            className="flex items-center px-5 py-2.5 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm"
-                            style={{ background: C.primary }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = C.primaryHov}
-                            onMouseLeave={(e) => e.currentTarget.style.background = C.primary}
-                          >
-                            <GearIcon /> Add Videos
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="w-full max-w-2xl mx-auto">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="font-bold text-[15px]" style={{ color: C.textMain }}>Add Videos</span>
-                            <button onClick={() => setShowVideoInput(false)} className="text-gray-400 hover:text-gray-700 font-bold text-lg transition-colors">✕</button>
-                          </div>
-                          <div className="flex gap-2 mb-3">
-                            <input 
-                              type="text" 
-                              placeholder="Paste YouTube, Vimeo, or direct video URL..." 
-                              className="st-input flex-1" 
-                            />
-                            <button className="px-5 py-2.5 rounded-xl text-[13px] font-bold transition-colors border" style={{ background: C.primaryTint, color: C.primaryHov, borderColor: C.primaryBord }}>
-                              + Add
-                            </button>
-                          </div>
-                          <div className="text-[12px] font-bold mb-5 text-left" style={{ color: C.textMuted }}>
-                            0/12 videos added
-                          </div>
-                          <div className="text-[12px] mb-2 font-bold text-left" style={{ color: C.textMuted }}>Generate with AI:</div>
-                          <button className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm" style={{ borderColor: C.borderLgt, color: C.textMain }}>
-                            <ScriptIcon /> Create Video Script
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                </div>
-              </div>
-            )}
-
-            {/* ── 3 CARDS SECTION ── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              {/* Core Values */}
-              <div className="bg-white rounded-2xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-all" style={{ borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
-                <div className="flex justify-between items-start mb-5 relative group">
-                  <h3 className="font-bold text-[16px] flex items-center gap-1.5" style={{ color: C.textMain }}>
-                    Core Values <InfoIcon />
-                  </h3>
-                  <div onClick={() => openTopModal('core')} className="p-1.5 hover:bg-gray-100 rounded-md cursor-pointer transition-colors"><EditIcon /></div>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {coreValues.map((val, idx) => (
-                    <span key={idx} className="px-3 py-1.5 text-[12px] font-bold rounded-lg shadow-sm text-white" style={{ background: C.primary }}>
-                      {val}
-                    </span>
-                  ))}
-                  {coreValues.length === 0 && (
-                    <span className="text-[13px] italic text-gray-400 font-medium">No core values added.</span>
-                  )}
-                </div>
-                <p className="text-[13px] leading-relaxed" style={{ color: C.textMuted }}>
-                  <strong className="font-black" style={{ color: C.primary }}>I</strong> - Innovation: We embrace innovative solutions to redefine real estate.{' '}
-                  <strong className="font-black" style={{ color: C.primary }}>N</strong> - Nurturing: We foster a supportive...
-                </p>
+                ))}
               </div>
 
-              {/* Purpose */}
-              <div className="bg-white rounded-2xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-all" style={{ borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
-                <div className="flex justify-between items-start mb-5 relative group">
-                  <h3 className="font-bold text-[16px] flex items-center gap-1.5" style={{ color: C.textMain }}>
-                    Purpose <InfoIcon />
-                  </h3>
-                  <div onClick={() => openTopModal('purpose')} className="p-1.5 hover:bg-gray-100 rounded-md cursor-pointer transition-colors"><EditIcon /></div>
-                </div>
-                <p className="text-[14px] font-bold leading-relaxed" style={{ color: C.primary }}>
-                  {purposeText}
-                </p>
-              </div>
-
-              {/* Brand Promises */}
-              <div className="bg-white rounded-2xl shadow-sm border p-6 flex flex-col h-full hover:shadow-md transition-all" style={{ borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
-                <div className="flex justify-between items-start mb-5 relative group">
-                  <h3 className="font-bold text-[16px] flex items-center gap-1.5" style={{ color: C.textMain }}>
-                    Brand Promises <InfoIcon />
-                  </h3>
-                  <div onClick={() => openTopModal('brand')} className="p-1.5 hover:bg-gray-100 rounded-md cursor-pointer transition-colors"><EditIcon /></div>
-                </div>
-                <ul className="space-y-4 text-[13px]" style={{ color: C.textMuted }}>
-                  {brandPromises.map((p) => (
-                    <li key={p.id} className="flex items-start">
-                      <span className="mr-2 mt-0.5 shrink-0 font-black" style={{ color: C.primary }}>•</span>
-                      <div>
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: p.text.replace(
-                              /([^-]+)/,
-                              `<strong style="color: ${C.textMain}; font-weight: 800;">$1</strong>`
-                            ),
-                          }}
-                        />
-                        <p className="text-[11px] text-gray-400 italic mt-0.5">No KPIs linked</p>
+              <div className="p-10 flex flex-col items-center text-center">
+                {addContentTab === 'images' && (
+                  !showImageInput ? (
+                    <div className="flex flex-col items-center">
+                      <ImagePlaceholder />
+                      <p className="text-[13px] font-bold mb-5" style={{ color: C.textMuted }}>No images added yet</p>
+                      <BtnPrimary onClick={() => setShowImageInput(true)}>
+                        <GearIcon /> Add Images
+                      </BtnPrimary>
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-2xl mx-auto">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-bold text-[15px]" style={{ color: C.textMain }}>Add Images</span>
+                        <button onClick={() => setShowImageInput(false)} className="text-gray-400 hover:text-gray-700 font-bold text-lg transition-colors">✕</button>
                       </div>
-                    </li>
-                  ))}
-                  {brandPromises.length === 0 && (
-                     <li className="text-[13px] italic text-gray-400 font-medium">No brand promises added.</li>
-                  )}
-                </ul>
+                      <div className="flex gap-2 mb-3">
+                        <input type="text" placeholder="Paste image URL or Google Drive link..." className="bp-input flex-1" />
+                        <button className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97]"
+                          style={{ background: C.primaryTint, color: C.primaryHov, borderColor: C.primaryBord }}>+ Add</button>
+                        <button className="px-4 py-2 rounded-xl text-[13px] font-bold text-white shadow-sm transition-all active:scale-[0.97]"
+                          style={{ background: C.primary }}>↑ Upload</button>
+                      </div>
+                      <div className="text-[11px] mb-5 text-left font-semibold" style={{ color: C.textMuted }}>
+                        0/12 images • Max 1 MB per image.{' '}
+                        <a href="#" style={{ color: C.primary }} className="hover:underline">Compress images here</a>
+                      </div>
+                      <div className="text-[11px] mb-2 font-bold text-left" style={{ color: C.textMuted }}>Generate with AI:</div>
+                      <div className="flex gap-3">
+                        <button className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                          style={{ borderColor: C.borderLgt, color: C.textMain }}>✨ Create Image (overview)</button>
+                        <button className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                          style={{ borderColor: C.borderLgt, color: C.textMain }}>✨ Create Image (detailed)</button>
+                      </div>
+                    </div>
+                  )
+                )}
+                {addContentTab === 'video' && (
+                  !showVideoInput ? (
+                    <div className="flex flex-col items-center">
+                      <VideoPlaceholder />
+                      <p className="text-[13px] font-bold mb-5" style={{ color: C.textMuted }}>No explainer videos added yet</p>
+                      <BtnPrimary onClick={() => setShowVideoInput(true)}>
+                        <GearIcon /> Add Videos
+                      </BtnPrimary>
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-2xl mx-auto">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-bold text-[15px]" style={{ color: C.textMain }}>Add Videos</span>
+                        <button onClick={() => setShowVideoInput(false)} className="text-gray-400 hover:text-gray-700 font-bold text-lg transition-colors">✕</button>
+                      </div>
+                      <div className="flex gap-2 mb-3">
+                        <input type="text" placeholder="Paste YouTube, Vimeo, or direct video URL..." className="bp-input flex-1" />
+                        <button className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97]"
+                          style={{ background: C.primaryTint, color: C.primaryHov, borderColor: C.primaryBord }}>+ Add</button>
+                      </div>
+                      <div className="text-[11px] font-bold mb-5 text-left" style={{ color: C.textMuted }}>0/12 videos added</div>
+                      <div className="text-[11px] mb-2 font-bold text-left" style={{ color: C.textMuted }}>Generate with AI:</div>
+                      <button className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                        style={{ borderColor: C.borderLgt, color: C.textMain }}><ScriptIcon /> Create Video Script</button>
+                    </div>
+                  )
+                )}
               </div>
             </div>
-          </section>
+          )}
 
-          {/* ── Sub-sections ── */}
+          {/* ── 3 Cards ── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            {/* Core Values */}
+            <div
+              className="bg-white rounded-2xl shadow-sm border p-5 flex flex-col hover:shadow-md transition-all"
+              style={{ borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="font-bold text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>
+                  Core Values <InfoIcon />
+                </h3>
+                <button
+                  onClick={() => openTopModal('core')}
+                  className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
+                  style={{ color: '#9ca3af' }}
+                  onMouseEnter={e => e.currentTarget.style.color = C.primary}
+                  onMouseLeave={e => e.currentTarget.style.color = '#9ca3af'}
+                >
+                  <EditIcon />
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {coreValues.map((val, idx) => (
+                  <span key={idx} className="px-3 py-1.5 text-[11px] font-bold rounded-xl shadow-sm text-white" style={{ background: C.primary }}>
+                    {val}
+                  </span>
+                ))}
+                {coreValues.length === 0 && <span className="text-[13px] italic text-gray-400">No core values added.</span>}
+              </div>
+              <p className="text-[12px] leading-relaxed" style={{ color: C.textMuted }}>
+                <strong className="font-black" style={{ color: C.primary }}>I</strong> - Innovation: We embrace innovative solutions to redefine real estate.{' '}
+                <strong className="font-black" style={{ color: C.primary }}>N</strong> - Nurturing: We foster a supportive...
+              </p>
+            </div>
+
+            {/* Purpose */}
+            <div
+              className="bg-white rounded-2xl shadow-sm border p-5 flex flex-col hover:shadow-md transition-all"
+              style={{ borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="font-bold text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>
+                  Purpose <InfoIcon />
+                </h3>
+                <button
+                  onClick={() => openTopModal('purpose')}
+                  className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
+                  style={{ color: '#9ca3af' }}
+                  onMouseEnter={e => e.currentTarget.style.color = C.primary}
+                  onMouseLeave={e => e.currentTarget.style.color = '#9ca3af'}
+                >
+                  <EditIcon />
+                </button>
+              </div>
+              <p className="text-[13px] font-bold leading-relaxed" style={{ color: C.primary }}>
+                {purposeText}
+              </p>
+            </div>
+
+            {/* Brand Promises */}
+            <div
+              className="bg-white rounded-2xl shadow-sm border p-5 flex flex-col hover:shadow-md transition-all"
+              style={{ borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="font-bold text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>
+                  Brand Promises <InfoIcon />
+                </h3>
+                <button
+                  onClick={() => openTopModal('brand')}
+                  className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
+                  style={{ color: '#9ca3af' }}
+                  onMouseEnter={e => e.currentTarget.style.color = C.primary}
+                  onMouseLeave={e => e.currentTarget.style.color = '#9ca3af'}
+                >
+                  <EditIcon />
+                </button>
+              </div>
+              <ul className="space-y-3 text-[12px]" style={{ color: C.textMuted }}>
+                {brandPromises.map(p => (
+                  <li key={p.id} className="flex items-start">
+                    <span className="mr-2 mt-0.5 shrink-0 font-black" style={{ color: C.primary }}>•</span>
+                    <div>
+                      <div dangerouslySetInnerHTML={{
+                        __html: p.text.replace(/([^-]+)/, `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`),
+                      }} />
+                      <p className="text-[11px] text-gray-400 italic mt-0.5">No KPIs linked</p>
+                    </div>
+                  </li>
+                ))}
+                {brandPromises.length === 0 && <li className="text-[13px] italic text-gray-400">No brand promises added.</li>}
+              </ul>
+            </div>
+          </div>
+
+          {/* Sub-sections */}
           <BhagSection />
           <MediumTermSection />
           <ShortTermSection />
@@ -594,144 +588,151 @@ const BusinessPlanAndGoles = () => {
         </div>
       )}
 
-      {/* ── GOALS VIEW PLACEHOLDER ── */}
+      {/* Goals View */}
       {activeMainTab === 'goals' && <GoalsView />}
 
-      {/* ── MODALS FOR TOP 3 CARDS ── */}
+      {/* ── MODALS ── */}
       {activeTopModal && (
         <Modal onClose={() => setActiveTopModal(null)}>
-          <div className="st-modal-box" style={{ maxWidth: '580px' }}>
-            
-            {/* Header */}
+          <div className="bp-modal-box">
+
+            {/* Modal Header */}
             <div className="flex justify-between items-center px-6 py-5 border-b bg-white" style={{ borderColor: C.primaryBord }}>
               <div className="flex items-center gap-3">
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: C.primary, flexShrink: 0 }} />
-                <h2 className="font-bold text-[18px] m-0" style={{ color: C.textMain }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: C.primary, flexShrink: 0, display: 'inline-block' }} />
+                <h2 className="font-bold text-[17px] m-0" style={{ color: C.textMain }}>
                   Edit {activeTopModal === 'core' ? 'Core Values' : activeTopModal === 'purpose' ? 'Purpose' : 'Brand Promises'}
                 </h2>
               </div>
-              <button onClick={() => setActiveTopModal(null)} className="p-1 rounded-md hover:bg-black/5 text-gray-400 transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <BtnIcon onClick={() => setActiveTopModal(null)}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </BtnIcon>
             </div>
-            
-            {/* Body */}
-            <div className="p-6 flex-1 overflow-y-auto st-scroll bg-transparent">
-              
-              {/* EDIT PURPOSE */}
+
+            {/* Modal Body */}
+            <div className="p-6 flex-1 overflow-y-auto bp-scroll">
+
+              {/* Purpose */}
               {activeTopModal === 'purpose' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div>
-                    <label className="block text-[13px] font-bold mb-1.5" style={{ color: C.textMain }}>Explanation / Text</label>
+                    <label className="block text-[12px] font-bold mb-1.5" style={{ color: C.textMain }}>Explanation / Text</label>
                     <textarea
                       value={tempPurposeText}
-                      onChange={(e) => setTempPurposeText(e.target.value)}
-                      className="st-input min-h-[140px] font-bold resize-y"
+                      onChange={e => setTempPurposeText(e.target.value)}
+                      className="bp-input font-bold resize-y"
+                      style={{ minHeight: 140 }}
                     />
                   </div>
                   <div>
-                    <label className="block text-[13px] font-bold mb-2" style={{ color: C.textMain }}>Video URL (Optional)</label>
+                    <label className="block text-[12px] font-bold mb-1.5" style={{ color: C.textMain }}>Video URL (Optional)</label>
                     <input
                       type="text"
                       value={tempPurposeVideoUrl}
-                      onChange={(e) => setTempPurposeVideoUrl(e.target.value)}
+                      onChange={e => setTempPurposeVideoUrl(e.target.value)}
                       placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
-                      className="st-input font-medium"
+                      className="bp-input"
                     />
-                    <p className="text-[11px] mt-1.5 font-medium" style={{ color: C.textMuted }}>Supports YouTube, Vimeo, and direct video files (.mp4, etc.)</p>
+                    <p className="text-[11px] mt-1.5 font-medium" style={{ color: C.textMuted }}>
+                      Supports YouTube, Vimeo, and direct video files (.mp4, etc.)
+                    </p>
                   </div>
                 </div>
               )}
 
-              {/* EDIT CORE VALUES */}
+              {/* Core Values */}
               {activeTopModal === 'core' && (
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div>
-                    <label className="block text-[13px] font-bold mb-3" style={{ color: C.textMain }}>Core Values</label>
-                    
-                    <div className="space-y-3 mb-4">
+                    <label className="block text-[12px] font-bold mb-3" style={{ color: C.textMain }}>Core Values</label>
+                    <div className="space-y-2.5 mb-3">
                       {tempCoreValues.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-3 border rounded-xl p-2.5 bg-white focus-within:border-[#DA7756] transition-all shadow-sm" style={{ borderColor: C.borderLgt }}>
-                          <div className="shrink-0 cursor-grab hover:bg-gray-50 p-1 rounded transition-colors text-gray-300">
-                            <GripIcon />
-                          </div>
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 border rounded-xl p-2.5 bg-white shadow-sm transition-all"
+                          style={{ borderColor: C.borderLgt }}
+                          onFocus={e => e.currentTarget.style.borderColor = C.primary}
+                          onBlur={e => e.currentTarget.style.borderColor = C.borderLgt}
+                        >
+                          <div className="shrink-0 p-1 rounded cursor-grab text-gray-300"><GripIcon /></div>
                           <input
                             type="text"
                             value={item}
-                            onChange={(e) => handleCoreValueChange(idx, e.target.value)}
-                            className="flex-1 outline-none text-[13px] font-bold text-gray-800 bg-transparent placeholder-gray-400"
+                            onChange={e => handleCoreValueChange(idx, e.target.value)}
+                            className="flex-1 outline-none text-[13px] font-bold bg-transparent"
+                            style={{ color: C.textMain }}
                             placeholder="Add core value"
-                            autoFocus={idx === tempCoreValues.length - 1 && item === ""}
+                            autoFocus={idx === tempCoreValues.length - 1 && item === ''}
                           />
                           <button
                             onClick={() => handleDeleteCoreValue(idx)}
-                            className="shrink-0 p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                            className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50"
                           >
                             <TrashIcon />
                           </button>
                         </div>
                       ))}
                     </div>
-
                     <button
                       onClick={handleAddCoreValue}
-                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-bold rounded-xl transition-colors border-2 border-dashed mb-6"
+                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-bold rounded-xl transition-colors border-2 border-dashed mb-5"
                       style={{ borderColor: C.borderLgt, color: C.textMain }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <PlusIcon /> Add Item
                     </button>
                   </div>
-
                   <div>
-                    <label className="block text-[13px] font-bold mb-2" style={{ color: C.textMain }}>Video URL (Optional)</label>
+                    <label className="block text-[12px] font-bold mb-1.5" style={{ color: C.textMain }}>Video URL (Optional)</label>
                     <input
                       type="text"
-                      value={tempVideoUrl}
-                      onChange={(e) => setTempVideoUrl(e.target.value)}
+                      value={tempCoreVideoUrl}
+                      onChange={e => setTempCoreVideoUrl(e.target.value)}
                       placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
-                      className="st-input font-medium"
+                      className="bp-input"
                     />
                   </div>
                 </div>
               )}
 
-              {/* EDIT BRAND PROMISES */}
+              {/* Brand Promises */}
               {activeTopModal === 'brand' && (
-                <div className="space-y-6">
-                  {/* Video URL */}
+                <div className="space-y-5">
                   <div>
-                    <label className="block text-[13px] font-bold mb-2" style={{ color: C.textMain }}>Video URL (Optional)</label>
+                    <label className="block text-[12px] font-bold mb-1.5" style={{ color: C.textMain }}>Video URL (Optional)</label>
                     <input
                       type="text"
                       value={tempBrandVideoUrl}
-                      onChange={(e) => setTempBrandVideoUrl(e.target.value)}
+                      onChange={e => setTempBrandVideoUrl(e.target.value)}
                       placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
-                      className="st-input font-medium"
+                      className="bp-input"
                     />
                   </div>
-
-                  {/* Promises List */}
                   <div>
-                    <label className="block text-[13px] font-bold mb-3" style={{ color: C.textMain }}>Promises</label>
-                    <div className="space-y-3 mb-4">
+                    <label className="block text-[12px] font-bold mb-3" style={{ color: C.textMain }}>Promises</label>
+                    <div className="space-y-2.5 mb-3">
                       {tempBrandPromises.map((item, idx) => (
-                        <div key={item.id} className="flex items-center gap-3 border rounded-xl p-2.5 bg-white focus-within:border-[#DA7756] transition-all shadow-sm" style={{ borderColor: C.borderLgt }}>
-                          <div className="shrink-0 cursor-grab hover:bg-gray-50 p-1 rounded transition-colors text-gray-300">
-                            <GripIcon />
-                          </div>
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 border rounded-xl p-2.5 bg-white shadow-sm transition-all"
+                          style={{ borderColor: C.borderLgt }}
+                        >
+                          <div className="shrink-0 p-1 rounded cursor-grab text-gray-300"><GripIcon /></div>
                           <input
                             type="text"
                             value={item.text}
-                            onChange={(e) => handleBrandPromiseChange(idx, e.target.value)}
-                            className="flex-1 outline-none text-[13px] font-bold text-gray-800 bg-transparent placeholder-gray-400"
+                            onChange={e => handleBrandPromiseChange(idx, e.target.value)}
+                            className="flex-1 outline-none text-[13px] font-bold bg-transparent"
+                            style={{ color: C.textMain }}
                             placeholder="Add promise"
-                            autoFocus={idx === tempBrandPromises.length - 1 && item.text === ""}
+                            autoFocus={idx === tempBrandPromises.length - 1 && item.text === ''}
                           />
                           <button
                             onClick={() => handleDeleteBrandPromise(idx)}
-                            className="shrink-0 p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                            className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50"
                           >
                             <TrashIcon />
                           </button>
@@ -740,33 +741,29 @@ const BusinessPlanAndGoles = () => {
                     </div>
                     <button
                       onClick={handleAddBrandPromise}
-                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-bold rounded-xl transition-colors border-2 border-dashed mb-6"
+                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-bold rounded-xl transition-colors border-2 border-dashed mb-5"
                       style={{ borderColor: C.borderLgt, color: C.textMain }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <PlusIcon /> Add Item
                     </button>
                   </div>
-
-                  {/* Link KPIs */}
                   <div>
-                    <label className="block text-[13px] font-bold mb-3" style={{ color: C.textMain }}>
+                    <label className="block text-[12px] font-bold mb-3" style={{ color: C.textMain }}>
                       Link KPIs to Promises (Max 3 per promise)
                     </label>
-                    <div className="max-h-[300px] overflow-y-auto st-scroll space-y-4 pr-2">
-                      {tempBrandPromises.filter(p => p.text.trim() !== '').map((item) => (
+                    <div className="max-h-[280px] overflow-y-auto bp-scroll space-y-3 pr-1">
+                      {tempBrandPromises.filter(p => p.text.trim() !== '').map(item => (
                         <div key={item.id} className="border p-4 rounded-xl bg-white shadow-sm" style={{ borderColor: C.borderLgt }}>
-                          <div className="text-[13px] font-bold mb-3 text-gray-800 leading-snug">{item.text}</div>
-                          <select className="st-select text-gray-500 mb-2">
+                          <div className="text-[13px] font-bold mb-3 leading-snug" style={{ color: C.textMain }}>{item.text}</div>
+                          <select className="bp-select text-gray-500 mb-2">
                             <option>Link a KPI...</option>
                             <option>Customer Satisfaction Score</option>
                             <option>Revenue Growth</option>
                             <option>Project Completion Rate</option>
                           </select>
-                          <div className="text-[11px] italic font-medium mt-1.5" style={{ color: C.textMuted }}>
-                            No KPIs linked. Add up to 3.
-                          </div>
+                          <div className="text-[11px] italic font-medium mt-1" style={{ color: C.textMuted }}>No KPIs linked. Add up to 3.</div>
                         </div>
                       ))}
                       {tempBrandPromises.filter(p => p.text.trim() !== '').length === 0 && (
@@ -778,15 +775,9 @@ const BusinessPlanAndGoles = () => {
               )}
             </div>
 
-            {/* Footer */}
+            {/* Modal Footer */}
             <div className="p-5 flex justify-end gap-3 border-t bg-white" style={{ borderColor: C.primaryBord }}>
-              <button
-                onClick={() => setActiveTopModal(null)}
-                className="px-5 py-2.5 text-[13px] font-bold text-gray-700 bg-white border rounded-xl hover:bg-gray-50 transition-colors"
-                style={{ borderColor: C.borderLgt }}
-              >
-                Cancel
-              </button>
+              <BtnOutline onClick={() => setActiveTopModal(null)}>Cancel</BtnOutline>
               <button
                 onClick={() => {
                   if (activeTopModal === 'purpose') saveTopPurpose();
@@ -794,10 +785,10 @@ const BusinessPlanAndGoles = () => {
                   else if (activeTopModal === 'brand') saveBrandPromises();
                   else setActiveTopModal(null);
                 }}
-                className="px-6 py-2.5 text-[13px] font-bold text-white rounded-xl transition-colors shadow-sm"
-                style={{ background: '#171717' }} 
-                onMouseEnter={(e) => e.currentTarget.style.background = '#000000'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#171717'}
+                className="px-6 py-2 text-[13px] font-bold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                style={{ background: '#1a1a1a' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#000'}
+                onMouseLeave={e => e.currentTarget.style.background = '#1a1a1a'}
               >
                 Save Changes
               </button>
