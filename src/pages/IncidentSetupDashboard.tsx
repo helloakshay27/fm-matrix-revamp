@@ -297,20 +297,11 @@ export const IncidentSetupDashboard = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const filteredCategories = result.data
-          .filter(item => item.tag_type === 'IncidenceCategory' && item.parent_id === null)
-          .map(({ id, name }) => ({ id, name }));
-        setCategories(filteredCategories);
-      } else {
-        console.error('Failed to fetch categories');
-      }
+      const data = await fetchByTagType('IncidenceCategory');
+      const filteredCategories = data
+        .filter(item => item.parent_id === null)
+        .map(({ id, name }) => ({ id, name }));
+      setCategories(filteredCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
