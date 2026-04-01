@@ -47,7 +47,7 @@ export const fetchFacilitySetup = createAsyncThunk("fetchFacilitySetup", async (
 
 export const fetchActiveFacilities = createAsyncThunk("fetchActiveFacilities", async ({ baseUrl, token }: { baseUrl: string; token: string }, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?&q[active_eq]=true`, {
+    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[active_eq]=1`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

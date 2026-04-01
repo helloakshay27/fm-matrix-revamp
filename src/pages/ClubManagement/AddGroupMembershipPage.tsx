@@ -551,7 +551,7 @@ export const AddGroupMembershipPage = () => {
                     // Build member object
                     const newMember: MemberData = {
                         id: memberId,
-                        userSelectionMode: hasUserId ? 'select' : 'manual',
+                        userSelectionMode: 'manual',
                         selectedUser: hasUserId ? memberData.user_id?.toString() : '',
                         selectedUserId: hasUserId ? memberData.user_id : null,
                         formData: {
@@ -1145,8 +1145,8 @@ export const AddGroupMembershipPage = () => {
                     memberObj.attachments = attachmentsBase64;
                 }
 
-                // If user was selected, add user_id
-                if (member.userSelectionMode === 'select' && member.selectedUserId) {
+                // If user was selected or we have a selectedUserId (e.g. from edit mode), add user_id
+                if (member.selectedUserId) {
                     memberObj.user_id = member.selectedUserId;
                 }
 
@@ -1359,7 +1359,7 @@ export const AddGroupMembershipPage = () => {
     // Create new member template
     const createNewMember = (): MemberData => ({
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        userSelectionMode: 'select',
+        userSelectionMode: 'manual',
         selectedUser: '',
         selectedUserId: null,
         formData: {

@@ -101,6 +101,7 @@ interface UserData {
   user_category_id?: number;
   lock_user_permission?: LockUserPermission;
   profile_type?: string;
+  profile_icon_url?: string;
 }
 
 interface FormData {
@@ -330,8 +331,7 @@ export const EditFMUserPage = () => {
   useEffect(() => {
     if (userData && Object.keys(userData).length > 0) {
       setLockId(userData.lock_user_permission?.id);
-      // @ts-ignore - Assuming avatar or similar exists in userData
-      const avatarUrl = userData.avatar || userData.profile_image_url || userData.profile_image;
+      const avatarUrl = userData.profile_icon_url || userData.profile_image_url || userData.profile_image;
       if (avatarUrl) {
         setProfileImagePreview(avatarUrl);
       }

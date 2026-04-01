@@ -117,6 +117,37 @@ interface LockPayment {
     user_type: string;
     user_title: string | null;
   };
+  club_member_allocation_details?: {
+    id: number;
+    status: string;
+    start_date: string;
+    end_date: string;
+    preferred_start_date: string;
+    referred_by: string;
+    emergency_contact_name: string;
+    membership_plan_name: string;
+    membership_plan_id: number;
+    pms_site_id: number;
+    payment_detail: {
+      base_amount: string;
+      discount: string;
+      cgst: string;
+      sgst: string;
+      cgst_per: number;
+      sgst_per: number;
+      landed_amount: string;
+    };
+  };
+  club_member_payee_details?: {
+    member_id: number;
+    full_name: string;
+    email: string;
+    mobile: string;
+    gender: string;
+    user_type: string;
+    user_title: string | null;
+    flat: string | null;
+  };
 }
 
 export const PaymentDetailPage = () => {
@@ -593,6 +624,139 @@ export const PaymentDetailPage = () => {
           </Card>
         )}
 
+        {/* Club Member Payee Details */}
+        {payment.club_member_payee_details && (
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <User className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Member Payee Information</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Name</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced font-medium">
+                    {payment.club_member_payee_details.full_name}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Email</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.club_member_payee_details.email}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Mobile</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.club_member_payee_details.mobile}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Gender</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced capitalize">
+                    {payment.club_member_payee_details.gender}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">User Type</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced capitalize">
+                    {payment.club_member_payee_details.user_type.replace(/_/g, " ")}
+                  </span>
+                </div>
+                {payment.club_member_payee_details.flat && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">Flat</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.club_member_payee_details.flat}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Club Member Allocation Details */}
+        {payment.club_member_allocation_details && (
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <Calendar className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Membership Allocation Details</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Membership Plan</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced font-medium">
+                    {payment.club_member_allocation_details.membership_plan_name}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Status</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced capitalize">
+                    {payment.club_member_allocation_details.status}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Start Date</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.club_member_allocation_details.start_date}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">End Date</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.club_member_allocation_details.end_date}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced">Preferred Start Date</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced">
+                    {payment.club_member_allocation_details.preferred_start_date}
+                  </span>
+                </div>
+                {payment.club_member_allocation_details.emergency_contact_name && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">Emergency Contact</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.club_member_allocation_details.emergency_contact_name}
+                    </span>
+                  </div>
+                )}
+                {payment.club_member_allocation_details.referred_by && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced">Referred By</span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced">
+                      {payment.club_member_allocation_details.referred_by}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Amount Details */}
         <Card className="w-full bg-transparent shadow-none border-none">
           <div className="figma-card-header">
@@ -630,7 +794,9 @@ export const PaymentDetailPage = () => {
                 <span className="task-info-label-enhanced">Discount</span>
                 <span className="task-info-separator-enhanced">:</span>
                 <span className="task-info-value-enhanced">
-                  {formatAmount(payment.discount)}
+                  {payment.club_member_allocation_details?.payment_detail?.discount
+                    ? `₹${parseFloat(payment.club_member_allocation_details.payment_detail.discount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                    : formatAmount(payment.discount)}
                 </span>
               </div>
               <div className="task-info-row">
@@ -648,7 +814,9 @@ export const PaymentDetailPage = () => {
                 </span>
                 <span className="task-info-separator-enhanced">:</span>
                 <span className="task-info-value-enhanced font-bold text-lg">
-                  {formatAmount(payment.total_amount)}
+                  {payment.club_member_allocation_details?.payment_detail?.landed_amount
+                    ? `₹${parseFloat(payment.club_member_allocation_details.payment_detail.landed_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                    : formatAmount(payment.total_amount)}
                 </span>
               </div>
               <div className="task-info-row">

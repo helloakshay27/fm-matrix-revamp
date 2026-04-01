@@ -209,6 +209,7 @@ export const ViewFMUserPage = () => {
     department_id: '',
     supplier_id: '',
     profile_type: '',
+    profile_icon_url: '',
     access_to_array: [],
     urgency_email_enabled: false
   })
@@ -452,15 +453,23 @@ export const ViewFMUserPage = () => {
               {/* Profile Picture */}
               <div className="text-center">
                 <div className="w-40 h-40 mx-auto mb-4 relative">
-                  <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                    <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
-                      <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
-                        <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                        </svg>
+                  {userData.profile_icon_url ? (
+                    <img
+                      src={userData.profile_icon_url}
+                      alt="Profile"
+                      className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                      <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
+                        <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
+                          <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
