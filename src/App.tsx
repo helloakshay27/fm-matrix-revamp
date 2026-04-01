@@ -3734,7 +3734,10 @@ function App() {
                             path="/safety/permit/safety-check-form"
                             element={<PermitSafetyCheckForm />}
                           />
-                          <Route path="/safety/permit/vendor-form/:id?" />
+                          <Route
+                            path="/safety/permit/vendor-form/:id?"
+                            element={<VendorPermitForm />}
+                          />
                           <Route
                             path="/safety/permit/fill-form/:id?"
                             element={<FillForm />}
