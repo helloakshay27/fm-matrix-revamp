@@ -416,7 +416,7 @@ export const ClubGroupMembershipDetails = () => {
 
     if (!start_date && !end_date) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-red-100 text-red-800 border-red-200">
           Pending Dates
         </Badge>
       );
@@ -424,14 +424,14 @@ export const ClubGroupMembershipDetails = () => {
 
     if (!end_date && start_date) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-red-100 text-red-800 border-red-200">
           Pending EndDate
         </Badge>
       );
     }
 
     return (
-      <Badge className="bg-green-100 text-green-800 border-0">
+      <Badge className="bg-green-100 text-green-800 border-green-200">
         Approved
       </Badge>
     );
@@ -755,7 +755,10 @@ export const ClubGroupMembershipDetails = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 items-end">
-                      <Badge variant={member.club_member_enabled ? "default" : "secondary"}>
+                      <Badge 
+                        variant={member.club_member_enabled ? "default" : "secondary"}
+                        className={member.club_member_enabled ? "bg-green-100 text-green-800 hover:bg-green-100/90" : "bg-gray-100 text-gray-600 hover:bg-gray-100/90"}
+                      >
                         {member.club_member_enabled ? 'Active' : 'Inactive'}
                       </Badge>
                       {/* <Button
@@ -824,11 +827,11 @@ export const ClubGroupMembershipDetails = () => {
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.landed_amount}</span>
                 </div>
-                <div className="flex items-start">
+                {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Payment Mode</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium capitalize">{membershipData.allocation_payment_detail.payment_mode}</span>
-                </div>
+                </div> */}
                 {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Payment Status</span>
                   <span className="text-gray-500 mx-2">:</span>
@@ -837,7 +840,7 @@ export const ClubGroupMembershipDetails = () => {
                   </Badge>
                 </div> */}
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Payment Created</span>
+                  <span className="text-gray-500 min-w-[140px]">Invoice Created</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">{formatDateTime(membershipData.allocation_payment_detail.created_at)}</span>
                 </div>
@@ -846,11 +849,11 @@ export const ClubGroupMembershipDetails = () => {
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail?.payment_plan?.name}</span>
                 </div>
-                <div className="flex items-start">
+                {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Plan Duration</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail?.payment_plan?.duration_in_months}</span>
-                </div>
+                </div> */}
               </div>
             </TabsContent>
           )}
@@ -872,15 +875,15 @@ export const ClubGroupMembershipDetails = () => {
                     Back to Bill List
                   </button>
                   <div className="flex gap-2 mb-4">
-                    {/* {selectedBill.status === 'generated' && ( */}
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => setOpenPaymentModal(true)}
-                    >
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Payment
-                    </Button>
-                    {/* )} */}
+                    {selectedBill.status?.toLowerCase() !== 'paid' && (
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => setOpenPaymentModal(true)}
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Payment
+                      </Button>
+                    )}
                     <Button
                       onClick={handleDownloadPDF}
                       disabled={downloadingPDF}
@@ -917,7 +920,16 @@ export const ClubGroupMembershipDetails = () => {
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Status</span>
                       <span className="text-gray-500 mx-2">:</span>
-                      <Badge variant={selectedBill.status === 'generated' ? "default" : "secondary"} className="capitalize">
+                      <Badge
+                        variant={
+                          selectedBill.status?.toLowerCase() === 'paid'
+                            ? 'default'
+                            : selectedBill.status === 'generated'
+                              ? 'outline'
+                              : 'secondary'
+                        }
+                        className={`capitalize ${selectedBill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                      >
                         {selectedBill.status}
                       </Badge>
                     </div>
@@ -1091,7 +1103,16 @@ export const ClubGroupMembershipDetails = () => {
                           <p className="font-semibold text-gray-900">
                             ₹ {(bill.after_roundoff_amount || bill.total_amount).toFixed(2)}
                           </p>
-                          <Badge variant={bill.status === 'generated' ? "default" : "secondary"} className="capitalize mt-1">
+                          <Badge
+                            variant={
+                              bill.status?.toLowerCase() === 'paid'
+                                ? 'default'
+                                : bill.status === 'generated'
+                                  ? 'outline'
+                                  : 'secondary'
+                            }
+                            className={`capitalize mt-1 ${bill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                          >
                             {bill.status}
                           </Badge>
                         </div>
@@ -1196,7 +1217,10 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Face Added</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.face_added ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.face_added ? "default" : "secondary"}
+                          className={selectedMember.face_added ? "bg-green-100 text-green-800 " : "bg-red-100 text-red-800"}
+                        >
                           {selectedMember.face_added ? 'Yes' : 'No'}
                         </Badge>
                       </div>
@@ -1223,14 +1247,20 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Club Member</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.club_member_enabled ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.club_member_enabled ? "default" : "secondary"}
+                          className={selectedMember.club_member_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                        >
                           {selectedMember.club_member_enabled ? 'Enabled' : 'Disabled'}
                         </Badge>
                       </div>
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Access Card</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.access_card_enabled ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.access_card_enabled ? "default" : "secondary"}
+                          className={selectedMember.access_card_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                        >
                           {selectedMember.access_card_enabled ? 'Enabled' : 'Disabled'}
                         </Badge>
                       </div>
@@ -1244,11 +1274,11 @@ export const ClubGroupMembershipDetails = () => {
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{selectedMember.emergency_contact_name || '-'}</span>
                       </div>
-                      <div className="flex items-start">
+                      {/* <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Referred By</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{selectedMember.referred_by || '-'}</span>
-                      </div>
+                      </div> */}
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">House</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -1385,7 +1415,10 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Active</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.active ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.active ? "default" : "secondary"}
+                          className={selectedMember.active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                        >
                           {selectedMember.active ? 'Yes' : 'No'}
                         </Badge>
                       </div>

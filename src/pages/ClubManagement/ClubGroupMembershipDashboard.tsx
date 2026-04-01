@@ -91,6 +91,10 @@ interface GroupMembershipData {
     created_at: string;
     updated_at: string;
   } | null;
+  membership_plan?: {
+    id: number;
+    name: string;
+  };
 }
 
 export const ClubGroupMembershipDashboard = () => {
@@ -242,22 +246,24 @@ export const ClubGroupMembershipDashboard = () => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
+      const siteId = localStorage.getItem('selected_site_id') || '1';
 
-      // Build the export URL
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`);
+      // Build the export URL for group memberships (allocations)
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/export.xlsx`);
       url.searchParams.append('access_token', token || '');
+      url.searchParams.append('pms_site_id', siteId);
 
       // Add the same filters that are applied to the table
       if (filters.search) {
-        url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
+        url.searchParams.append('global_search_term', filters.search);
       }
 
       if (filters.clubMemberEnabled) {
-        url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
+        url.searchParams.append('q[club_members_club_member_enabled_eq]', filters.clubMemberEnabled);
       }
 
       if (filters.accessCardEnabled) {
-        url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+        url.searchParams.append('q[club_members_access_card_enabled_eq]', filters.accessCardEnabled);
       }
 
       if (filters.startDate) {
@@ -277,12 +283,20 @@ export const ClubGroupMembershipDashboard = () => {
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
       });
 
       if (!response.ok) {
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Export failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Check if we actually got an Excel file or an error response
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Export failed: Received JSON instead of Excel');
       }
 
       // Get the blob from response
@@ -295,7 +309,7 @@ export const ClubGroupMembershipDashboard = () => {
 
       // Generate filename with current date
       const date = new Date().toISOString().split('T')[0];
-      link.download = `club_memberships_${date}.xlsx`;
+      link.download = `club_group_memberships_${date}.xlsx`;
 
       // Trigger download
       document.body.appendChild(link);
@@ -307,9 +321,9 @@ export const ClubGroupMembershipDashboard = () => {
 
       toast.success('Excel file downloaded successfully', { id: loadingToast });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting data:', error);
-      toast.error('Failed to export data', { id: loadingToast });
+      toast.error(error.message || 'Failed to export data', { id: loadingToast });
     }
   };
 

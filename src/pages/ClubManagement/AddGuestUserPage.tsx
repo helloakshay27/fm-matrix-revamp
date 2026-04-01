@@ -114,6 +114,12 @@ export const AddGuestUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
+    if ((field === 'mobileNumber' || field === 'altMobileNumber') && typeof value === 'string') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length > 10) return;
+      setFormData((prev) => ({ ...prev, [field]: numericValue }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -140,11 +146,20 @@ export const AddGuestUserPage: React.FC = () => {
   const handleCancel = () => navigate('/club-management/users/guest');
 
   const validateForm = () => {
-    if (!formData.firstName) {
+    const newErrors = {
+      firstName: !formData.firstName,
+      lastName: !formData.lastName,
+      email: !formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
+      mobileNumber: !formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber),
+    };
+
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+
+    if (newErrors.firstName) {
       toast.error("First Name is required.");
       return false;
     }
-    if (!formData.lastName) {
+    if (newErrors.lastName) {
       toast.error("Last Name is required.");
       return false;
     }
@@ -152,9 +167,15 @@ export const AddGuestUserPage: React.FC = () => {
       toast.error("Email is required.");
       return false;
     }
-
-    // Optional validation: if mobile is provided, validate format
-    if (formData.mobileNumber && !/^[0-9]{10}$/.test(formData.mobileNumber)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid Email Address.");
+      return false;
+    }
+    if (!formData.mobileNumber) {
+      toast.error("Mobile Number is required.");
+      return false;
+    }
+    if (!/^[0-9]{10}$/.test(formData.mobileNumber)) {
       toast.error("Mobile Number must be 10 digits.");
       return false;
     }
@@ -311,12 +332,14 @@ export const AddGuestUserPage: React.FC = () => {
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label="Mobile Number"
+                label={<>Mobile Number <span className="text-red-500">*</span></>}
                 placeholder="Enter Mobile Number"
                 value={formData.mobileNumber}
                 onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={errors.mobileNumber}
+                helperText={errors.mobileNumber ? (formData.mobileNumber ? 'Mobile Number must be 10 digits' : 'Mobile Number is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -330,7 +353,7 @@ export const AddGuestUserPage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.email}
-                helperText={errors.email ? 'E-mail ID is required' : ''}
+                helperText={errors.email ? (formData.email ? 'Invalid Email ID' : 'E-mail ID is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
