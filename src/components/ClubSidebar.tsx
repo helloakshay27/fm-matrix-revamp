@@ -262,7 +262,7 @@ const modulesByPackage = {
       subItems: [
         { name: "Customers", href: "/accounting/customers" },
         { name: "Quotes", href: "/accounting/quotes" },
-        // { name: "Retainer Invoice", href: "/accounting/retainer-invoices" },
+        // { name: "Retainer Invoices", href: "/accounting/retainer-invoices" },
         { name: "Sales Order", href: "/accounting/sales-order" },
         { name: "Invoices ", href: "/accounting/invoices/list" },
 
