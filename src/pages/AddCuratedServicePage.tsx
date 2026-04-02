@@ -22,24 +22,24 @@ interface ServiceCategory {
 }
 
 const fieldStyles = {
-  height: '45px',
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    height: '45px',
-    '& fieldset': {
-      borderColor: '#ddd',
+  height: "45px",
+  backgroundColor: "#fff",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    height: "45px",
+    "& fieldset": {
+      borderColor: "#ddd",
     },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
+    "&:hover fieldset": {
+      borderColor: "#C72030",
     },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
     },
   },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: '#C72030',
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": {
+      color: "#C72030",
     },
   },
 };
@@ -48,7 +48,9 @@ export const AddCuratedServicePage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(
+    []
+  );
   const [showTooltip, setShowTooltip] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -108,9 +110,9 @@ export const AddCuratedServicePage = () => {
 
   const handleMobileChange = (value: string) => {
     // Allow only digits and limit to 10 characters
-    const numbersOnly = value.replace(/\D/g, '');
+    const numbersOnly = value.replace(/\D/g, "");
     if (numbersOnly.length <= 10) {
-      handleInputChange('mobile', numbersOnly);
+      handleInputChange("mobile", numbersOnly);
     }
   };
 
@@ -151,7 +153,9 @@ export const AddCuratedServicePage = () => {
   const removeImage = () => {
     setAttachment(null);
     setImagePreview("");
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
 
@@ -173,7 +177,9 @@ export const AddCuratedServicePage = () => {
       return false;
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error("Please enter a valid email address (e.g., user@example.com)");
+      toast.error(
+        "Please enter a valid email address (e.g., user@example.com)"
+      );
       return false;
     }
     return true;
@@ -207,7 +213,6 @@ export const AddCuratedServicePage = () => {
         formDataToSend.append("email", formData.email);
       }
 
-
       if (formData.address) {
         formDataToSend.append("address", formData.address);
       }
@@ -233,7 +238,9 @@ export const AddCuratedServicePage = () => {
       navigate("/pulse/curated-services/service");
     } catch (error: any) {
       console.error("Error creating plus service:", error);
-      toast.error(error.message || "Failed to create service. Please try again.");
+      toast.error(
+        error.message || "Failed to create service. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -257,21 +264,35 @@ export const AddCuratedServicePage = () => {
           </button>
           <span> Curated Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Create New Curated Service</span>
+          <span className="text-gray-900 font-medium">
+            Create New Curated Service
+          </span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW CURATED SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          NEW CURATED SERVICE
+        </h1>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Service Details Card */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 2L10 6L14 6.5L11 9.5L11.5 14L8 12L4.5 14L5 9.5L2 6.5L6 6L8 2Z" fill="#C72030" />
+              <span
+                className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                style={{ backgroundColor: "#E5E0D3" }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 2L10 6L14 6.5L11 9.5L11.5 14L8 12L4.5 14L5 9.5L2 6.5L6 6L8 2Z"
+                    fill="#C72030"
+                  />
                 </svg>
               </span>
               Service Details
@@ -308,7 +329,7 @@ export const AddCuratedServicePage = () => {
                 fullWidth
                 required
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={{ "& .MuiInputBase-root": fieldStyles }}
               >
                 <InputLabel shrink
                   sx={{
@@ -319,14 +340,18 @@ export const AddCuratedServicePage = () => {
                 >Service Category</InputLabel>
                 <MuiSelect
                   value={formData.service_category_id}
-                  onChange={(e) => handleInputChange("service_category_id", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("service_category_id", e.target.value)
+                  }
                   label="Service Category"
                   notched
                   displayEmpty
                   disabled={loadingCategories}
                 >
                   <MenuItem value="">
-                    {loadingCategories ? "Loading..." : "Select Service Category"}
+                    {loadingCategories
+                      ? "Loading..."
+                      : "Select Service Category"}
                   </MenuItem>
                   {serviceCategories.map((category) => (
                     <MenuItem key={category.id} value={category.id.toString()}>
@@ -374,10 +399,12 @@ export const AddCuratedServicePage = () => {
                 }}
                 inputProps={{
                   maxLength: 10,
-                  pattern: '[0-9]*',
+                  pattern: "[0-9]*",
                 }}
-                helperText={formData.mobile && formData.mobile.length !== 10 ? '' : ''}
-                error={formData.mobile !== '' && formData.mobile.length !== 10}
+                helperText={
+                  formData.mobile && formData.mobile.length !== 10 ? "" : ""
+                }
+                error={formData.mobile !== "" && formData.mobile.length !== 10}
               />
             </div>
 
@@ -424,7 +451,11 @@ export const AddCuratedServicePage = () => {
             {/* Description - Full width */}
             <Box sx={{ position: "relative" }}>
               <TextField
-                label={<span>Description<span className="text-red-500">*</span></span>}
+                label={
+                  <span>
+                    Description<span className="text-red-500">*</span>
+                  </span>
+                }
                 placeholder="Enter Description"
                 fullWidth
                 multiline
@@ -477,10 +508,25 @@ export const AddCuratedServicePage = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030" />
-                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3" />
+              <span
+                className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                style={{ backgroundColor: "#E5E0D3" }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z"
+                    fill="#C72030"
+                  />
+                  <path
+                    d="M10 2V5C10 5.55228 10.4477 6 11 6H14"
+                    fill="#E5E0D3"
+                  />
                 </svg>
               </span>
               Add Attachments
@@ -497,7 +543,7 @@ export const AddCuratedServicePage = () => {
               />
               <Button
                 type="button"
-                onClick={() => document.getElementById('file-upload')?.click()}
+                onClick={() => document.getElementById("file-upload")?.click()}
                 variant="outline"
                 className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
               >
@@ -542,7 +588,7 @@ export const AddCuratedServicePage = () => {
             disabled={loading}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
           >
-            {loading ? 'Creating...' : 'Create Service'}
+            {loading ? "Creating..." : "Create Service"}
           </Button>
           <Button
             type="button"
