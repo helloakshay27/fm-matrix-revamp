@@ -94,7 +94,7 @@ const stuckUsers: StuckUser[] = [
 
 const IssueCard = ({ issue }: { issue: StuckIssueData }) => {
     return (
-        <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-start gap-4 group hover:shadow-md transition-all">
+        <div className="flex items-start gap-4 rounded-xl border border-[#DA7756]/15 bg-[#fef6f4] p-4 shadow-sm transition-all group hover:border-[#DA7756]/25 hover:shadow-md">
             <Checkbox className="mt-1.5 border-gray-300 rounded-[4px] shrink-0" />
 
             <div className="flex-1 min-w-0">
@@ -124,11 +124,12 @@ const IssueCard = ({ issue }: { issue: StuckIssueData }) => {
 
 const StuckIssues = () => {
     return (
-        <div className="space-y-6 mt-6">
-            {/* Statistics Section */}
+        <div className="space-y-6">
+            {/* One framed surface: stats + filters (no stacked white cards) */}
+            <div className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] shadow-sm">
             <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="stats" className="border border-gray-100 rounded-xl bg-white shadow-sm overflow-hidden">
-                    <AccordionTrigger className="hover:no-underline px-4 py-4 [&>svg]:text-gray-400">
+                <AccordionItem value="stats" className="border-0 shadow-none">
+                    <AccordionTrigger className="border-b border-[#DA7756]/15 bg-[#f6f4ee]/80 px-4 py-4 hover:no-underline [&>svg]:text-gray-400">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 text-[#EA580C] font-bold">
                                 <AlertTriangle className="w-5 h-5" />
@@ -147,15 +148,15 @@ const StuckIssues = () => {
                             </div>
                         </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-6 pt-2 border-t border-gray-50">
+                    <AccordionContent className="border-t border-[#DA7756]/10 bg-[#f6f4ee]/70 px-4 pb-6 pt-4">
                         <div className="space-y-4">
                             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">By Department:</h4>
                             <div className="flex flex-wrap gap-4">
-                                <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 min-w-[180px] space-y-1">
+                                <div className="min-w-[180px] space-y-1 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
                                     <div className="text-2xl font-bold text-[#1a1a1a]">1</div>
                                     <div className="text-xs font-medium text-gray-500">Engineering</div>
                                 </div>
-                                <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 min-w-[180px] space-y-1">
+                                <div className="min-w-[180px] space-y-1 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
                                     <div className="text-2xl font-bold text-[#1a1a1a]">1</div>
                                     <div className="text-xs font-medium text-gray-500">Business Excellance</div>
                                 </div>
@@ -165,13 +166,12 @@ const StuckIssues = () => {
                 </AccordionItem>
             </Accordion>
 
-            {/* Filter Section */}
-            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm space-y-5">
+            <div className="space-y-5 border-t border-[#DA7756]/15 bg-[#f6f4ee]/70 p-5">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-[13px] font-medium text-gray-500">Filter by User</label>
                         <Select defaultValue="all-users">
-                            <SelectTrigger className="h-10 bg-white border-gray-200 rounded-[8px]">
+                            <SelectTrigger className="h-10 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] shadow-sm">
                                 <SelectValue placeholder="All Users" />
                             </SelectTrigger>
                             <SelectContent>
@@ -183,7 +183,7 @@ const StuckIssues = () => {
                     <div className="space-y-1.5">
                         <label className="text-[13px] font-medium text-gray-500">Filter by Days Stuck</label>
                         <Select defaultValue="all-days">
-                            <SelectTrigger className="h-10 bg-white border-gray-200 rounded-[8px]">
+                            <SelectTrigger className="h-10 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] shadow-sm">
                                 <SelectValue placeholder="All Days" />
                             </SelectTrigger>
                             <SelectContent>
@@ -195,7 +195,7 @@ const StuckIssues = () => {
                     <div className="space-y-1.5">
                         <label className="text-[13px] font-medium text-gray-500">Sort By</label>
                         <Select defaultValue="days-stuck">
-                            <SelectTrigger className="h-10 bg-white border-gray-200 rounded-[8px]">
+                            <SelectTrigger className="h-10 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] shadow-sm">
                                 <SelectValue placeholder="Days Stuck" />
                             </SelectTrigger>
                             <SelectContent>
@@ -208,7 +208,7 @@ const StuckIssues = () => {
                         <label className="text-[13px] font-medium text-gray-500">Search Keywords</label>
                         <Input
                             placeholder="Search..."
-                            className="h-10 pl-4 bg-white border-gray-200 rounded-[8px] placeholder:text-gray-400"
+                            className="h-10 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] pl-4 shadow-sm placeholder:text-gray-400"
                         />
                     </div>
                 </div>
@@ -220,17 +220,18 @@ const StuckIssues = () => {
                     </label>
                 </div>
 
-                <Separator className="bg-gray-100" />
+                <Separator className="bg-[#DA7756]/15" />
 
                 <div className="flex items-center justify-end gap-3">
-                    <Button variant="outline" className="h-9 px-4 rounded-[8px] border-gray-200 text-gray-700 gap-2 font-medium shadow-sm hover:bg-gray-50">
+                    <Button variant="outline" className="h-9 gap-2 rounded-xl border-[#DA7756]/25 px-4 font-medium text-gray-700 shadow-sm hover:bg-[#fef6f4]">
                         <RefreshCw className="w-3.5 h-3.5" />
                         Refresh
                     </Button>
-                    <Button variant="outline" className="h-9 px-4 rounded-[8px] border-gray-200 text-gray-700 font-medium shadow-sm hover:bg-gray-50">
+                    <Button variant="outline" className="h-9 rounded-xl border-[#DA7756]/25 px-4 font-medium text-gray-700 shadow-sm hover:bg-[#fef6f4]">
                         Show Resolved
                     </Button>
                 </div>
+            </div>
             </div>
 
             {/* Stuck Users List */}
