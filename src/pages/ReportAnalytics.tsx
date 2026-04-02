@@ -5,7 +5,7 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   Calendar, Filter, BarChart3, FileText,
-  CheckCircle, Clock, XCircle, Download, Loader2, ChevronDown,
+  CheckCircle, Clock, XCircle, Download, Loader2, ChevronDown, FolderOpen,
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -43,7 +43,6 @@ const CHART_OPTIONS = [
 ];
 const CHART_KEYS = CHART_OPTIONS.map((o) => o.id);
 
-// Light brown (#AF8260) for graphs
 const MILESTONE_COLORS = ['#AF8260', '#E5E7EB'];
 const TASK_COLORS      = ['#AF8260', '#E5E7EB'];
 
@@ -96,7 +95,6 @@ const PRIORITY_STYLES: Record<string, string> = {
   'Urgent': 'bg-red-100 text-red-700',
 };
 
-// Progress bar cell renderer
 const renderProgressCell = (value: number | null) => {
   if (value === null || value === undefined) return <span className="text-gray-300 text-xs">—</span>;
   return (
@@ -142,13 +140,10 @@ const renderOutsideLabel = ({
 
   const sx = cx + (outerRadius + 6) * cos;
   const sy = cy + (outerRadius + 6) * sin;
-
   const mx = cx + (outerRadius + 20) * cos;
   const my = cy + (outerRadius + 20) * sin;
-
   const ex = mx + (cos >= 0 ? 12 : -12);
   const ey = my;
-
   const textAnchor = cos >= 0 ? 'start' : 'end';
 
   return (
@@ -196,9 +191,7 @@ const SortableChartItem: React.FC<{ id: string; className?: string; children: Re
 };
 
 // ── Chart card wrapper ────────────────────────────────────────────────────────
-const ChartCard: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title, children,
-}) => (
+const ChartCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="bg-white rounded-lg border border-gray-100 transition-shadow duration-300 hover:shadow-lg p-5 h-full flex flex-col">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
@@ -271,7 +264,7 @@ const DonutChartCard: React.FC<{
   </ChartCard>
 );
 
-// ── Interfaces for API data ───────────────────────────────────────────────────
+// ── Interfaces ────────────────────────────────────────────────────────────────
 interface ProjectDropdownItem {
   id: number;
   title: string;
@@ -339,7 +332,6 @@ const ReportAnalytics: React.FC = () => {
   const [searchParams] = useSearchParams();
   const queryProjectId = searchParams.get('project_id');
 
-  // Project dropdown state
   const [projectsList, setProjectsList] = useState<ProjectDropdownItem[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(queryProjectId || '269');
@@ -351,22 +343,18 @@ const ReportAnalytics: React.FC = () => {
   const [selectedCharts, setSelectedCharts] = useState<string[]>(CHART_KEYS);
   const [chartOrder, setChartOrder]         = useState<string[]>(CHART_KEYS);
 
-  // API data states
-  const [loading, setLoading] = useState(false);
-  const [project, setProject] = useState<ProjectInfo | null>(null);
-  const [milestoneSummary, setMilestoneSummary] = useState<MilestoneSummary | null>(null);
-  const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
-  const [taskSummary, setTaskSummary] = useState<TaskSummary | null>(null);
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [issues, setIssues] = useState<IssueItem[]>([]);
-  const [priorities, setPriorities] = useState<PriorityBreakdown[]>([]);
+  const [loading, setLoading]                     = useState(false);
+  const [project, setProject]                     = useState<ProjectInfo | null>(null);
+  const [milestoneSummary, setMilestoneSummary]   = useState<MilestoneSummary | null>(null);
+  const [milestones, setMilestones]               = useState<MilestoneItem[]>([]);
+  const [taskSummary, setTaskSummary]             = useState<TaskSummary | null>(null);
+  const [tasks, setTasks]                         = useState<TaskItem[]>([]);
+  const [issues, setIssues]                       = useState<IssueItem[]>([]);
+  const [priorities, setPriorities]               = useState<PriorityBreakdown[]>([]);
 
-  // Force chart order to reset correctly on mount
-  useEffect(() => {
-    setChartOrder(CHART_KEYS);
-  }, []);
+  useEffect(() => { setChartOrder(CHART_KEYS); }, []);
 
-  // ── Fetch projects list for dropdown ─────────────────────────────────────
+  // ── Fetch projects list ───────────────────────────────────────────────────
   useEffect(() => {
     const fetchProjects = async () => {
       setProjectsLoading(true);
@@ -388,14 +376,12 @@ const ReportAnalytics: React.FC = () => {
     fetchProjects();
   }, []);
 
-  // ── Fetch all data ────────────────────────────────────────────────────────
+  // ── Fetch data ────────────────────────────────────────────────────────────
   const fetchMilestoneSummary = useCallback(async () => {
     if (!projectId) return;
     try {
       const url = getFullUrl(`/patm_report/project_milestones_summary.json?project_id=${projectId}`);
-      const res = await fetch(url, {
-        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
-      });
+      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.success && json.data?.[0]) {
@@ -404,18 +390,14 @@ const ReportAnalytics: React.FC = () => {
         setMilestoneSummary(d.milestone_summary || null);
         setMilestones(d.milestones || []);
       }
-    } catch (err) {
-      console.error('Error fetching milestone summary:', err);
-    }
+    } catch (err) { console.error('Error fetching milestone summary:', err); }
   }, [projectId]);
 
   const fetchTaskSummary = useCallback(async () => {
     if (!projectId) return;
     try {
       const url = getFullUrl(`/patm_report/project_task_summary.json?project_id=${projectId}`);
-      const res = await fetch(url, {
-        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
-      });
+      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.success && json.data?.[0]) {
@@ -423,43 +405,29 @@ const ReportAnalytics: React.FC = () => {
         setTaskSummary(d.task_summary || null);
         setTasks(d.tasks || []);
       }
-    } catch (err) {
-      console.error('Error fetching task summary:', err);
-    }
+    } catch (err) { console.error('Error fetching task summary:', err); }
   }, [projectId]);
 
   const fetchIssueSummary = useCallback(async () => {
     if (!projectId) return;
     try {
       const url = getFullUrl(`/patm_report/project_issue_summary.json?project_id=${projectId}`);
-      const res = await fetch(url, {
-        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
-      });
+      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      if (json.success && json.data?.[0]) {
-        setIssues(json.data[0].issues || []);
-      }
-    } catch (err) {
-      console.error('Error fetching issue summary:', err);
-    }
+      if (json.success && json.data?.[0]) setIssues(json.data[0].issues || []);
+    } catch (err) { console.error('Error fetching issue summary:', err); }
   }, [projectId]);
 
   const fetchPriorityBreakdown = useCallback(async () => {
     if (!projectId) return;
     try {
       const url = getFullUrl(`/patm_report/project_priority_breakdown.json?project_id=${projectId}`);
-      const res = await fetch(url, {
-        headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
-      });
+      const res = await fetch(url, { headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      if (json.success && json.data?.[0]) {
-        setPriorities(json.data[0].priorities || []);
-      }
-    } catch (err) {
-      console.error('Error fetching priority breakdown:', err);
-    }
+      if (json.success && json.data?.[0]) setPriorities(json.data[0].priorities || []);
+    } catch (err) { console.error('Error fetching priority breakdown:', err); }
   }, [projectId]);
 
   useEffect(() => {
@@ -523,7 +491,10 @@ const ReportAnalytics: React.FC = () => {
     responsible_person: iss.responsible_person,
   }));
 
-  // ── DnD ─────────────────────────────────────────────────────────────────
+  // Selected project label
+  const selectedProjectLabel = projectsList.find((p) => String(p.id) === selectedProjectId)?.title || 'Select Project';
+
+  // ── DnD ──────────────────────────────────────────────────────────────────
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -543,22 +514,17 @@ const ReportAnalytics: React.FC = () => {
     setDateRange({ startDate: conv(startStr), endDate: conv(endStr) });
   };
 
-  const handleDownloadAll = () => {
-    window.print();
-  };
+  const handleDownloadAll = () => { window.print(); };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
     try {
       return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    } catch {
-      return dateStr;
-    }
+    } catch { return dateStr; }
   };
 
   const orderedVisible = chartOrder.filter((k) => selectedCharts.includes(k));
 
-  // ── No project_id state ─────────────────────────────────────────────────
   if (!projectId) {
     return (
       <div className="p-4 sm:p-6 min-h-screen">
@@ -582,37 +548,37 @@ const ReportAnalytics: React.FC = () => {
         </h1>
       </div>
 
-      {/* Project Selector */}
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <select
-            title="Select Project"
-            value={selectedProjectId}
-            onChange={(e) => setSelectedProjectId(e.target.value)}
-            disabled={projectsLoading}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent min-w-[220px] cursor-pointer disabled:opacity-50"
-          >
-            {projectsLoading ? (
-              <option value="">Loading projects...</option>
-            ) : (
-              <>
-                <option value="" disabled>Select a project</option>
-                {projectsList.map((p) => (
-                  <option key={p.id} value={String(p.id)}>{p.title}</option>
-                ))}
-              </>
-            )}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-            {projectsLoading
-              ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-              : <ChevronDown className="w-4 h-4 text-gray-500" />}
-          </div>
-        </div>
-      </div>
-
-      {/* Filter row */}
+      {/* ── Filter row: Project Selector | Date Filter | Charts Selector ── */}
       <div className="flex flex-col sm:flex-row justify-end items-center gap-3 mb-6">
+
+       {/* ── Project Selector styled like date filter button ── */}
+<div className="relative w-full sm:w-[280px]">
+  <div className="flex items-center justify-between w-full px-4 py-2 bg-white border border-[#C72030] rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+      <FolderOpen className="w-4 h-4 text-[#C72030] shrink-0" />
+      <span className="truncate">
+        {projectsLoading ? 'Loading...' : selectedProjectLabel}
+      </span>
+    </div>
+    {projectsLoading
+      ? <Loader2 className="w-4 h-4 animate-spin text-[#C72030] shrink-0" />
+      : <ChevronDown className="w-4 h-4 text-[#C72030] shrink-0" />}
+  </div>
+  <select
+    title="Select Project"
+    value={selectedProjectId}
+    onChange={(e) => setSelectedProjectId(e.target.value)}
+    disabled={projectsLoading}
+    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+  >
+    <option value="" disabled>Select a project</option>
+    {projectsList.map((p) => (
+      <option key={p.id} value={String(p.id)}>{p.title}</option>
+    ))}
+  </select>
+</div>
+
+        {/* ── Date Filter ── */}
         <Button
           variant="outline"
           onClick={() => setFilterOpen(true)}
@@ -627,6 +593,7 @@ const ReportAnalytics: React.FC = () => {
           <Filter className="w-4 h-4 text-gray-600" />
         </Button>
 
+        {/* ── Charts Selector ── */}
         <div className="w-full sm:w-auto flex items-center gap-3">
           <AssetAnalyticsSelector
             options={CHART_OPTIONS}
@@ -639,18 +606,10 @@ const ReportAnalytics: React.FC = () => {
               endDate:   parseDD(dateRange.endDate),
             }}
           />
-          <Button
-            variant="outline"
-            onClick={handleDownloadAll}
-            className="flex items-center gap-2 bg-white hover:bg-gray-50 border-gray-300 px-4 py-2"
-          >
-            <Download className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Download PDF</span>
-          </Button>
         </div>
       </div>
 
-      {/* ── Project Info Section ─────────────────────────────────────────── */}
+      {/* ── Project Info Section ──────────────────────────────────────────── */}
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
@@ -682,7 +641,6 @@ const ReportAnalytics: React.FC = () => {
 
           {/* 4 KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Start Date */}
             <div className="relative bg-[#F6F4EE] border border-gray-100 p-6 rounded-lg transition-shadow duration-300 hover:shadow-lg flex items-center gap-4 min-h-[88px]">
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
                 <Calendar className="w-6 h-6 text-[#C72030]" />
@@ -693,7 +651,6 @@ const ReportAnalytics: React.FC = () => {
               </div>
             </div>
 
-            {/* End Date */}
             <div className="relative bg-[#F6F4EE] border border-gray-100 p-6 rounded-lg transition-shadow duration-300 hover:shadow-lg flex items-center gap-4 min-h-[88px]">
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
                 <Clock className="w-6 h-6 text-[#C72030]" />
@@ -704,7 +661,6 @@ const ReportAnalytics: React.FC = () => {
               </div>
             </div>
 
-            {/* Completion Percentage */}
             <div className="relative bg-[#F6F4EE] border border-gray-100 p-6 rounded-lg transition-shadow duration-300 hover:shadow-lg flex items-center gap-4 min-h-[88px]">
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
                 <CheckCircle className="w-6 h-6 text-[#C72030]" />
@@ -715,7 +671,6 @@ const ReportAnalytics: React.FC = () => {
               </div>
             </div>
 
-            {/* Balance */}
             <div className="relative bg-[#F6F4EE] border border-gray-100 p-6 rounded-lg transition-shadow duration-300 hover:shadow-lg flex items-center gap-4 min-h-[88px]">
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded">
                 <XCircle className="w-6 h-6 text-[#C72030]" />
@@ -729,7 +684,7 @@ const ReportAnalytics: React.FC = () => {
         </div>
       ) : null}
 
-      {/* ── Priority Breakdown Cards (like AMC Assets with two sections) ── */}
+      {/* ── Priority Breakdown Cards ──────────────────────────────────────── */}
       {priorities.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {priorities.map((p) => (
@@ -747,12 +702,10 @@ const ReportAnalytics: React.FC = () => {
                 <Download className="w-4 h-4 text-gray-400" />
               </div>
               <div className="flex">
-                {/* Tasks section */}
                 <div className="flex-1 pr-3 border-r border-gray-300">
                   <div className="text-xs text-gray-500">Tasks</div>
                   <div className="text-2xl font-bold text-[#1A1A1A]">{p.task_count}</div>
                 </div>
-                {/* Issues section */}
                 <div className="flex-1 pl-3">
                   <div className="text-xs text-gray-500">Issues</div>
                   <div className="text-2xl font-bold text-[#1A1A1A]">{p.issue_count}</div>
@@ -763,170 +716,134 @@ const ReportAnalytics: React.FC = () => {
         </div>
       )}
 
-      {/* ── Charts with DndContext ───────────────────────────────────────── */}
+      {/* ── Charts ───────────────────────────────────────────────────────── */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
 
             {orderedVisible.map((key) => {
-              const isDonut = key === 'milestoneProgress' || key === 'taskWiseProgress';
-              const isFullWidth = key === 'taskDetails' || key === 'issueDetails';
-              const colSpanClass = isFullWidth ? 'col-span-1 lg:col-span-2 xl:col-span-4' : isDonut ? 'col-span-1' : 'col-span-1 lg:col-span-2';
+              const isDonut     = key === 'milestoneProgress' || key === 'taskWiseProgress';
+const isFullWidth = key === 'taskDetails' || key === 'issueDetails' || key === 'activityCompletion';
+              const colSpanClass = isFullWidth
+                ? 'col-span-1 lg:col-span-2 xl:col-span-4'
+                : isDonut
+                  ? 'col-span-1'
+                  : 'col-span-1 lg:col-span-2';
 
-              if (key === 'milestoneProgress') {
-                return (
-                  <SortableChartItem key={key} id={key} className={colSpanClass}>
-                    <DonutChartCard
-                      title="Milestone Progress"
-                      data={milestoneChartData}
-                      colors={MILESTONE_COLORS}
-                      loading={loading}
+              if (key === 'milestoneProgress') return (
+                <SortableChartItem key={key} id={key} className={colSpanClass}>
+                  <DonutChartCard title="Milestone Progress" data={milestoneChartData} colors={MILESTONE_COLORS} loading={loading} />
+                </SortableChartItem>
+              );
+
+              if (key === 'taskWiseProgress') return (
+                <SortableChartItem key={key} id={key} className={colSpanClass}>
+                  <DonutChartCard title="Task Wise Progress" data={taskChartData} colors={TASK_COLORS} loading={loading} />
+                </SortableChartItem>
+              );
+
+              if (key === 'milestoneActivityProgress') return (
+                <SortableChartItem key={key} id={key} className={colSpanClass}>
+                  <ChartCard title="Milestone Activity Wise Progress">
+                    <EnhancedTable
+                      data={milestoneTableData}
+                      columns={MILESTONE_ACTIVITY_COLUMNS}
+                      renderCell={(item, columnKey) => {
+                        if (columnKey === 'status') {
+                          const normalized = (item.status as string)?.replace(/_/g, ' ');
+                          return (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[item.status as string] ?? 'bg-gray-100 text-gray-600'}`}>
+                              {normalized}
+                            </span>
+                          );
+                        }
+                        return <div className="text-xs text-gray-600 whitespace-normal break-words">{item[columnKey] as string}</div>;
+                      }}
+                      hideTableSearch hideTableExport hideColumnsButton
+                      storageKey="milestone-activity-progress-table"
                     />
-                  </SortableChartItem>
-                );
-              }
+                  </ChartCard>
+                </SortableChartItem>
+              );
 
-              if (key === 'taskWiseProgress') {
-                return (
-                  <SortableChartItem key={key} id={key} className={colSpanClass}>
-                    <DonutChartCard
-                      title="Task Wise Progress"
-                      data={taskChartData}
-                      colors={TASK_COLORS}
-                      loading={loading}
+              if (key === 'activityCompletion') return (
+                <SortableChartItem key={key} id={key} className={colSpanClass}>
+                  <ChartCard title="Activity % Completion - Graphical">
+                    <EnhancedTable
+                      data={activityCompletionTableData}
+                      columns={ACTIVITY_COMPLETION_COLUMNS}
+                      renderCell={(item, columnKey) => {
+                        if (columnKey === 'title') return <span className="text-sm font-medium text-gray-800">{item.title as string}</span>;
+                        return renderProgressCell(item.progress as number);
+                      }}
+                      hideTableSearch hideTableExport hideColumnsButton
+                      storageKey="activity-completion-graphical-table"
                     />
-                  </SortableChartItem>
-                );
-              }
+                  </ChartCard>
+                </SortableChartItem>
+              );
 
-              if (key === 'milestoneActivityProgress') {
-                return (
-                  <SortableChartItem key={key} id={key} className={colSpanClass}>
-                    <ChartCard title="Milestone Activity Wise Progress">
-                      <EnhancedTable
-                        data={milestoneTableData}
-                        columns={MILESTONE_ACTIVITY_COLUMNS}
-                        renderCell={(item, columnKey) => {
-                          if (columnKey === 'status') {
-                            const normalized = (item.status as string)?.replace(/_/g, ' ');
-                            return (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[item.status as string] ?? 'bg-gray-100 text-gray-600'}`}>
-                                {normalized}
-                              </span>
-                            );
-                          }
+              if (key === 'taskDetails') return (
+                <SortableChartItem key={key} id={key} className={colSpanClass}>
+                  <ChartCard title="Task Details">
+                    <EnhancedTable
+                      data={taskDetailsTableData}
+                      columns={TASK_DETAILS_COLUMNS}
+                      renderCell={(item, columnKey) => {
+                        if (columnKey === 'status') {
+                          const normalized = (item.status as string)?.replace(/_/g, ' ');
                           return (
-                            <div className="text-xs text-gray-600 whitespace-normal break-words">
-                              {item[columnKey] as string}
-                            </div>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[item.status as string] ?? 'bg-gray-100 text-gray-600'}`}>
+                              {normalized}
+                            </span>
                           );
-                        }}
-                        hideTableSearch hideTableExport hideColumnsButton
-                        storageKey="milestone-activity-progress-table"
-                      />
-                    </ChartCard>
-                  </SortableChartItem>
-                );
-              }
+                        }
+                        if (columnKey === 'priority') return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${PRIORITY_STYLES[item.priority as string] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {item.priority as string}
+                          </span>
+                        );
+                        return <div className="text-sm text-gray-700 whitespace-normal break-words">{item[columnKey] as string}</div>;
+                      }}
+                      hideTableSearch={false} hideTableExport={false} hideColumnsButton
+                      storageKey="task-details-table"
+                      pagination
+                    />
+                  </ChartCard>
+                </SortableChartItem>
+              );
 
-              if (key === 'activityCompletion') {
-                return (
-                  <SortableChartItem key={key} id={key} className={colSpanClass}>
-                    <ChartCard title="Activity % Completion - Graphical">
-                      <EnhancedTable
-                        data={activityCompletionTableData}
-                        columns={ACTIVITY_COMPLETION_COLUMNS}
-                        renderCell={(item, columnKey) => {
-                          if (columnKey === 'title') return <span className="text-sm font-medium text-gray-800">{item.title as string}</span>;
-                          return renderProgressCell(item.progress as number);
-                        }}
-                        hideTableSearch hideTableExport hideColumnsButton
-                        storageKey="activity-completion-graphical-table"
-                      />
-                    </ChartCard>
-                  </SortableChartItem>
-                );
-              }
-
-              if (key === 'taskDetails') {
-                return (
-                  <SortableChartItem key={key} id={key} className={colSpanClass}>
-                    <ChartCard title="Task Details">
-                      <EnhancedTable
-                        data={taskDetailsTableData}
-                        columns={TASK_DETAILS_COLUMNS}
-                        renderCell={(item, columnKey) => {
-                          if (columnKey === 'status') {
-                            const normalized = (item.status as string)?.replace(/_/g, ' ');
-                            return (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[item.status as string] ?? 'bg-gray-100 text-gray-600'}`}>
-                                {normalized}
-                              </span>
-                            );
-                          }
-                          if (columnKey === 'priority') {
-                            return (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${PRIORITY_STYLES[item.priority as string] ?? 'bg-gray-100 text-gray-600'}`}>
-                                {item.priority as string}
-                              </span>
-                            );
-                          }
-                          return (
-                            <div className="text-sm text-gray-700 whitespace-normal break-words">
-                              {item[columnKey] as string}
-                            </div>
-                          );
-                        }}
-                        hideTableSearch={false} hideTableExport={false} hideColumnsButton
-                        storageKey="task-details-table"
-                        pagination
-                      />
-                    </ChartCard>
-                  </SortableChartItem>
-                );
-              }
-
-              if (key === 'issueDetails') {
-                return (
-                  <SortableChartItem key={key} id={key} className={colSpanClass}>
-                    <ChartCard title="Issue Details">
-                      <EnhancedTable
-                        data={issueDetailsTableData}
-                        columns={ISSUE_DETAILS_COLUMNS}
-                        renderCell={(item, columnKey) => {
-                          if (columnKey === 'priority') {
-                            return (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${PRIORITY_STYLES[item.priority as string] ?? 'bg-gray-100 text-gray-600'}`}>
-                                {item.priority as string}
-                              </span>
-                            );
-                          }
-                          return (
-                            <div className="text-sm text-gray-700 whitespace-normal break-words">
-                              {item[columnKey] as string}
-                            </div>
-                          );
-                        }}
-                        hideTableSearch={false} hideTableExport={false} hideColumnsButton
-                        storageKey="issue-details-table"
-                        pagination
-                      />
-                    </ChartCard>
-                  </SortableChartItem>
-                );
-              }
+              if (key === 'issueDetails') return (
+                <SortableChartItem key={key} id={key} className={colSpanClass}>
+                  <ChartCard title="Issue Details">
+                    <EnhancedTable
+                      data={issueDetailsTableData}
+                      columns={ISSUE_DETAILS_COLUMNS}
+                      renderCell={(item, columnKey) => {
+                        if (columnKey === 'priority') return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${PRIORITY_STYLES[item.priority as string] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {item.priority as string}
+                          </span>
+                        );
+                        return <div className="text-sm text-gray-700 whitespace-normal break-words">{item[columnKey] as string}</div>;
+                      }}
+                      hideTableSearch={false} hideTableExport={false} hideColumnsButton
+                      storageKey="issue-details-table"
+                      pagination
+                    />
+                  </ChartCard>
+                </SortableChartItem>
+              );
 
               return null;
             })}
 
-            {/* Empty state */}
             {orderedVisible.length === 0 && (
               <div className="col-span-full py-12 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                 <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-20" />
                 <p>No charts selected. Please select a chart from the dropdown above.</p>
               </div>
             )}
-
           </div>
         </SortableContext>
       </DndContext>
