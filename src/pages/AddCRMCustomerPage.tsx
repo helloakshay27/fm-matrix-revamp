@@ -270,7 +270,7 @@ export const AddCRMCustomerPage = () => {
                   value={formData.customerName}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (/^[A-Za-z\s]*$/.test(value)) {
+                    if (/^[A-Za-z0-9\s]*$/.test(value)) {
                       handleInputChange("customerName", value);
                     }
                   }}
