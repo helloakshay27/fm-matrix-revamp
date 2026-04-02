@@ -135,6 +135,7 @@ export const ViewGuestUserPage = () => {
         unit_id: '',
         department_id: '',
         supplier_id: '',
+        profile_icon_url: '',
         access_to_array: [],
         urgency_email_enabled: false,
         club_member: [] as any[],
@@ -165,7 +166,7 @@ export const ViewGuestUserPage = () => {
     useEffect(() => {
         if (userData) {
             const clubMemberData = userData.club_member && userData.club_member.length > 0 ? userData.club_member[0] : null;
-            
+
             setFormData({
                 firstname: userData.firstname || '',
                 lastname: userData.lastname || '',
@@ -273,13 +274,21 @@ export const ViewGuestUserPage = () => {
                     <div className="flex items-start gap-4">
                         {/* Avatar */}
                         <div className="flex-shrink-0">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center border-2 border-gray-200">
-                                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
-                                    <svg className="w-10 h-10 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                    </svg>
+                            {(userData as any).profile_icon_url ? (
+                                <img
+                                    src={(userData as any).profile_icon_url}
+                                    alt="Profile"
+                                    className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                                />
+                            ) : (
+                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center border-2 border-gray-200">
+                                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                                        <svg className="w-10 h-10 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                        </svg>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* User Info */}
@@ -334,7 +343,7 @@ export const ViewGuestUserPage = () => {
                                         {formData.firstname || '-'}
                                     </span>
                                 </div>
-                                
+
                                 <div className="task-info-row">
                                     <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                         Last Name
@@ -344,7 +353,7 @@ export const ViewGuestUserPage = () => {
                                         {formData.lastname || '-'}
                                     </span>
                                 </div>
-                                
+
                                 <div className="task-info-row">
                                     <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                         Gender
@@ -354,7 +363,7 @@ export const ViewGuestUserPage = () => {
                                         {formData.gender || '-'}
                                     </span>
                                 </div>
-                                
+
                                 <div className="task-info-row">
                                     <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                         Mobile
@@ -364,7 +373,7 @@ export const ViewGuestUserPage = () => {
                                         {formData.mobile || '-'}
                                     </span>
                                 </div>
-                                
+
                                 <div className="task-info-row">
                                     <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                         Email
@@ -385,7 +394,7 @@ export const ViewGuestUserPage = () => {
                                 <div className="flex items-center gap-3">
                                     <div className="figma-card-icon-wrapper">
                                         <svg className="figma-card-icon" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                                            <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
                                         </svg>
                                     </div>
                                     <h3 className="figma-card-title">Club Member Details</h3>
@@ -404,7 +413,7 @@ export const ViewGuestUserPage = () => {
                                             </Badge>
                                         </span>
                                     </div>
-                                    
+
                                     <div className="task-info-row">
                                         <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                             Access Card
@@ -416,7 +425,7 @@ export const ViewGuestUserPage = () => {
                                             </Badge>
                                         </span>
                                     </div>
-                                    
+
                                     <div className="task-info-row">
                                         <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                             Start Date
@@ -426,7 +435,7 @@ export const ViewGuestUserPage = () => {
                                             {formData.start_date ? new Date(formData.start_date).toLocaleDateString('en-GB') : '-'}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="task-info-row">
                                         <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                             End Date
@@ -436,7 +445,7 @@ export const ViewGuestUserPage = () => {
                                             {formData.end_date ? new Date(formData.end_date).toLocaleDateString('en-GB') : '-'}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="task-info-row">
                                         <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                             Membership Number
@@ -446,7 +455,7 @@ export const ViewGuestUserPage = () => {
                                             {formData.membership_number || '-'}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="task-info-row">
                                         <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                                             Access Card ID

@@ -40,7 +40,7 @@ export const EditGuestUserPage: React.FC = () => {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [showAdditional, setShowAdditional] = useState(true);
+  const [showAdditional, setShowAdditional] = useState(false);
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -123,8 +123,8 @@ export const EditGuestUserPage: React.FC = () => {
         const accessLevel = lup.access_level || '';
         const accessTo: string[] = Array.isArray(lup.access_to) ? lup.access_to.map((v: any) => String(v)) : [];
 
-        if (u.avatar || u.profile_image_url || u.profile_image) {
-          setProfileImagePreview(u.avatar || u.profile_image_url || u.profile_image);
+        if (u.profile_icon_url || u.avatar || u.profile_image_url || u.profile_image) {
+          setProfileImagePreview(u.profile_icon_url || u.avatar || u.profile_image_url || u.profile_image);
         }
 
         setFormData((prev) => ({
@@ -169,6 +169,12 @@ export const EditGuestUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
+    if ((field === 'mobileNumber' || field === 'altMobileNumber') && typeof value === 'string') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length > 10) return;
+      setFormData((prev) => ({ ...prev, [field]: numericValue }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -195,39 +201,51 @@ export const EditGuestUserPage: React.FC = () => {
   const handleCancel = () => navigate(`/club-management/users/guest/view/${id}`);
 
   const validateForm = () => {
-    const mobileRegex = /^[0-9]{10}$/;
+    const newErrors = {
+      firstName: !formData.firstName,
+      lastName: !formData.lastName,
+      email: !formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
+      mobileNumber: !formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber),
+      accessLevel: !formData.accessLevel,
+      selectedCompanies: formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0,
+      selectedSites: formData.accessLevel === 'Site' && formData.selectedSites.length === 0,
+    };
 
-    if (!formData.firstName) {
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+
+    if (newErrors.firstName) {
       toast.error("First Name is required.");
       return false;
     }
-    if (!formData.lastName) {
+    if (newErrors.lastName) {
       toast.error("Last Name is required.");
-      return false;
-    }
-    if (!formData.mobileNumber) {
-      toast.error("Mobile Number is required.");
-      return false;
-    } else if (!mobileRegex.test(formData.mobileNumber)) {
-      toast.error("Mobile Number must be 10 digits.");
       return false;
     }
     if (!formData.email) {
       toast.error("Email is required.");
       return false;
     }
-
-    if (!formData.accessLevel) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid Email Address.");
+      return false;
+    }
+    if (!formData.mobileNumber) {
+      toast.error("Mobile Number is required.");
+      return false;
+    }
+    if (!/^[0-9]{10}$/.test(formData.mobileNumber)) {
+      toast.error("Mobile Number must be 10 digits.");
+      return false;
+    }
+    if (newErrors.accessLevel) {
       toast.error("Access Level is required.");
       return false;
     }
-
-    if (formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0) {
+    if (newErrors.selectedCompanies) {
       toast.error("Select at least one company.");
       return false;
     }
-
-    if (formData.accessLevel === 'Site' && formData.selectedSites.length === 0) {
+    if (newErrors.selectedSites) {
       toast.error("Select at least one site.");
       return false;
     }
@@ -259,7 +277,7 @@ export const EditGuestUserPage: React.FC = () => {
       formDataToSend.append('user[user_category_id]', formData.selectUserCategory);
 
       if (profileImage) {
-        formDataToSend.append('user[avatar]', profileImage);
+        formDataToSend.append('user[profile_icon]', profileImage);
       }
 
       // Permissions nested attributes
@@ -390,7 +408,7 @@ export const EditGuestUserPage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.mobileNumber}
-                helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
+                helperText={errors.mobileNumber ? (formData.mobileNumber ? 'Mobile Number must be 10 digits' : 'Mobile Number is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -404,7 +422,7 @@ export const EditGuestUserPage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.email}
-                helperText={errors.email ? 'E-mail ID is required' : ''}
+                helperText={errors.email ? (formData.email ? 'Invalid Email ID' : 'E-mail ID is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -514,7 +532,7 @@ export const EditGuestUserPage: React.FC = () => {
                   )}
                 </FormControl>
               )}
-              <div>
+              {/* <div>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Select User Category</InputLabel>
                   <Select
@@ -534,10 +552,10 @@ export const EditGuestUserPage: React.FC = () => {
                     }
                   </Select>
                 </FormControl>
-              </div>
+              </div> */}
             </div>
 
-            <div className="my-6">
+            {/* <div className="my-6">
               <Button
                 type='button'
                 variant="outline"
@@ -546,7 +564,7 @@ export const EditGuestUserPage: React.FC = () => {
               >
                 {showAdditional ? '− Additional Info' : '+ Additional Info'}
               </Button>
-            </div>
+            </div> */}
 
             {showAdditional && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

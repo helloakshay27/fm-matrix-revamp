@@ -15,7 +15,8 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { InputAdornment, TextField } from "@mui/material";
+import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, ArrowLeft } from 'lucide-react';
 
 // const muiTheme = createTheme({
 //   components: {
@@ -251,6 +252,9 @@ const ItemsEdit = () => {
                     tax_preference: data.tax_preference || "",
                     exemption_reason: data.tax_exemption_id?.toString() || "",
                 });
+                if (data.icon?.document_file_name && data.icon?.attachment_url) {
+                    setPreview(data.icon.attachment_url);
+                }
             } catch (error) {
                 toast.error("Failed to fetch item details");
             } finally {
@@ -468,16 +472,9 @@ const ItemsEdit = () => {
         }
 
         if (image) {
-            formData.append(
-                "lock_account_item[icon_attributes][document]",
-                image
-            );
+            formData.append("lock_account_item[icon_attributes][document]", image);
+            formData.append("lock_account_item[icon_attributes][active]", "true");
         }
-
-        formData.append(
-            "lock_account_item[icon_attributes][active]",
-            "true"
-        );
         formData.append("lock_account_id", lock_account_id);
 
         try {
@@ -496,13 +493,22 @@ const ItemsEdit = () => {
             );
             toast.success("Item updated successfully!");
             navigate("/accounting/items");
-        } catch (err) {
-            toast.error("Failed to update item");
+        } catch (err: any) {
             console.error("Item update error:", err);
+            const errors = err?.response?.data;
+            if (errors && typeof errors === 'object') {
+                const messages = Object.entries(errors)
+                    .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(', ')}`)
+                    .join('\n');
+                toast.error(messages);
+            } else {
+                toast.error("Failed to update item");
+            }
         }
     };
     const [image, setImage] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -513,11 +519,22 @@ const ItemsEdit = () => {
     const handleRemoveImage = () => {
         setImage(null);
         setPreview(null);
+        setOpenDeleteDialog(false);
     };
 
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="p-6 bg-white min-h-screen">
+                <div className="mb-6">
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate("/accounting/items")}
+                        className="p-0"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Items List
+                    </Button>
+                </div>
                 <h1 className="text-2xl font-semibold mb-6">Edit Item</h1>
 
                 {/* TYPE */}
@@ -717,10 +734,10 @@ const ItemsEdit = () => {
 
                                     <button
                                         type="button"
-                                        onClick={handleRemoveImage}
+                                        onClick={() => setOpenDeleteDialog(true)}
                                         className="text-gray-500 hover:text-red-600"
                                     >
-                                        🗑
+                                         <Trash2 className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
@@ -1379,6 +1396,27 @@ const ItemsEdit = () => {
                     </Button>
                 </div>
             </div>
+
+            <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+                <DialogTitle>Delete Image</DialogTitle>
+                <DialogContent>
+                    Are you sure about deleting this image?
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        onClick={handleRemoveImage}
+                    >
+                        Delete
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setOpenDeleteDialog(false)}
+                    >
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </ThemeProvider>
     );
 };

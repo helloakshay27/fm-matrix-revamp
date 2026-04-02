@@ -101,6 +101,7 @@ interface UserData {
   user_category_id?: number;
   lock_user_permission?: LockUserPermission;
   profile_type?: string;
+  profile_icon_url?: string;
 }
 
 interface FormData {
@@ -221,6 +222,10 @@ export const EditFMUserPage = () => {
     (state: RootState) => state.project
   );
 
+  const location = useLocation();
+
+  const isClubSite = location.pathname.includes("club-management");
+
   const [userCategories, setUserCategories] = useState([]);
   const [userAccount, setUserAccount] = useState<UserAccount>({});
   const [lockId, setLockId] = useState<number | undefined>();
@@ -326,8 +331,7 @@ export const EditFMUserPage = () => {
   useEffect(() => {
     if (userData && Object.keys(userData).length > 0) {
       setLockId(userData.lock_user_permission?.id);
-      // @ts-ignore - Assuming avatar or similar exists in userData
-      const avatarUrl = userData.avatar || userData.profile_image_url || userData.profile_image;
+      const avatarUrl = userData.profile_icon_url || userData.profile_image_url || userData.profile_image;
       if (avatarUrl) {
         setProfileImagePreview(avatarUrl);
       }
@@ -457,7 +461,7 @@ export const EditFMUserPage = () => {
     formDataToSend.append("user[access_card_number]", formData.accessCardNumber);
 
     if (profileImage) {
-      formDataToSend.append("user[avatar]", profileImage);
+      formDataToSend.append("user[profile_icon]", profileImage);
     }
 
     const permissions = [
@@ -663,51 +667,61 @@ export const EditFMUserPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Employee Type</InputLabel>
-                    <Select
-                      value={formData.employeeType}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "employeeType",
-                          e.target.value as string
-                        )
-                      }
-                      label="Gender"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Type</MenuItem>
-                      <MenuItem value="internal">Internal</MenuItem>
-                      <MenuItem value="external">External</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Entity</InputLabel>
-                    <Select
-                      value={formData.selectEntity}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "selectEntity",
-                          e.target.value as string
-                        )
-                      }
-                      label="Select Entity"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Entity</MenuItem>
-                      {loading && <MenuItem disabled>Loading...</MenuItem>}
-                      {error && <MenuItem disabled>Error: {error}</MenuItem>}
-                      {entitiesData?.entities?.map((entity: Entity) => (
-                        <MenuItem key={entity.id} value={entity.id}>
-                          {entity.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Employee Type</InputLabel>
+                        <Select
+                          value={formData.employeeType}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "employeeType",
+                              e.target.value as string
+                            )
+                          }
+                          label="Gender"
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select Type</MenuItem>
+                          <MenuItem value="internal">Internal</MenuItem>
+                          <MenuItem value="external">External</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Entity</InputLabel>
+                        <Select
+                          value={formData.selectEntity}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "selectEntity",
+                              e.target.value as string
+                            )
+                          }
+                          label="Select Entity"
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select Entity</MenuItem>
+                          {loading && <MenuItem disabled>Loading...</MenuItem>}
+                          {error && <MenuItem disabled>Error: {error}</MenuItem>}
+                          {entitiesData?.entities?.map((entity: Entity) => (
+                            <MenuItem key={entity.id} value={entity.id}>
+                              {entity.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
 
                 {/* Row 3 */}
                 <div>
@@ -748,18 +762,24 @@ export const EditFMUserPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
-                <div>
-                  <TextField
-                    fullWidth
-                    label="Access Card Number"
-                    variant="outlined"
-                    value={formData.accessCardNumber}
-                    onChange={(e) =>
-                      handleInputChange("accessCardNumber", e.target.value)
-                    }
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </div>
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <TextField
+                        fullWidth
+                        label="Access Card Number"
+                        variant="outlined"
+                        value={formData.accessCardNumber}
+                        onChange={(e) =>
+                          handleInputChange("accessCardNumber", e.target.value)
+                        }
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                  )
+                }
+
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Base Site</InputLabel>
@@ -781,34 +801,38 @@ export const EditFMUserPage = () => {
                   </FormControl>
                 </div>
 
-                {/* Row 4 */}
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Base Unit</InputLabel>
-                    <Select
-                      value={formData.selectBaseUnit}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "selectBaseUnit",
-                          e.target.value as string
-                        )
-                      }
-                      label="Select Base Unit"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Base Unit</MenuItem>
-                      {unitsLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {unitsError && (
-                        <MenuItem disabled>Error: {unitsError}</MenuItem>
-                      )}
-                      {units?.map((unit: Unit) => (
-                        <MenuItem key={unit.id} value={unit.id}>
-                          {unit?.building?.name} - {unit.unit_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Base Unit</InputLabel>
+                        <Select
+                          value={formData.selectBaseUnit}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "selectBaseUnit",
+                              e.target.value as string
+                            )
+                          }
+                          label="Select Base Unit"
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select Base Unit</MenuItem>
+                          {unitsLoading && <MenuItem disabled>Loading...</MenuItem>}
+                          {unitsError && (
+                            <MenuItem disabled>Error: {unitsError}</MenuItem>
+                          )}
+                          {units?.map((unit: Unit) => (
+                            <MenuItem key={unit.id} value={unit.id}>
+                              {unit?.building?.name} - {unit.unit_name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
+
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Select Department</InputLabel>
@@ -838,27 +862,32 @@ export const EditFMUserPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Email Preference</InputLabel>
-                    <Select
-                      value={formData.selectEmailPreference}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "selectEmailPreference",
-                          e.target.value as string
-                        )
-                      }
-                      label="Select Email Preference"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Email Preference</MenuItem>
-                      <MenuItem value="0">All Emails</MenuItem>
-                      <MenuItem value="1">Critical Emails Only</MenuItem>
-                      <MenuItem value="2">No Emails</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Email Preference</InputLabel>
+                        <Select
+                          value={formData.selectEmailPreference}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "selectEmailPreference",
+                              e.target.value as string
+                            )
+                          }
+                          label="Select Email Preference"
+                          displayEmpty
+                        >
+                          <MenuItem value="">Select Email Preference</MenuItem>
+                          <MenuItem value="0">All Emails</MenuItem>
+                          <MenuItem value="1">Critical Emails Only</MenuItem>
+                          <MenuItem value="2">No Emails</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
 
                 {/* Row 5 */}
                 <div>
@@ -1063,72 +1092,86 @@ export const EditFMUserPage = () => {
                     </FormControl>
                   </div>
                 )}
-                <div>
-                  <TextField
-                    fullWidth
-                    label="Last Working Date"
-                    variant="outlined"
-                    type="date"
-                    value={formData.lastWorkingDate}
-                    onChange={(e) =>
-                      handleInputChange("lastWorkingDate", e.target.value)
-                    }
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true,
-                    }}
-                  />
-                </div>
 
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select User Category</InputLabel>
-                    <Select
-                      value={formData.selectUserCategory}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "selectUserCategory",
-                          e.target.value.toString()
-                        )
-                      }
-                      label="Select User Category"
-                      displayEmpty
-                      required
-                    >
-                      <MenuItem value="">Select User Category</MenuItem>
-                      {userCategories?.map((category) => (
-                        <MenuItem
-                          key={category.id}
-                          value={category.id.toString()}
+                {
+                  !isClubSite && (
+                    <div>
+                      <TextField
+                        fullWidth
+                        label="Last Working Date"
+                        variant="outlined"
+                        type="date"
+                        value={formData.lastWorkingDate}
+                        onChange={(e) =>
+                          handleInputChange("lastWorkingDate", e.target.value)
+                        }
+                        required
+                        InputLabelProps={{
+                          classes: {
+                            asterisk: "text-red-500", // Tailwind class for red color
+                          },
+                          shrink: true,
+                        }}
+                      />
+                    </div>
+                  )
+                }
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select User Category</InputLabel>
+                        <Select
+                          value={formData.selectUserCategory}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "selectUserCategory",
+                              e.target.value.toString()
+                            )
+                          }
+                          label="Select User Category"
+                          displayEmpty
+                          required
                         >
-                          {category.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
+                          <MenuItem value="">Select User Category</MenuItem>
+                          {userCategories?.map((category) => (
+                            <MenuItem
+                              key={category.id}
+                              value={category.id.toString()}
+                            >
+                              {category.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
 
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Profile Type</InputLabel>
-                    <Select
-                      value={formData.selectProfileType}
-                      onChange={(e) =>
-                        handleInputChange("selectProfileType", e.target.value)
-                      }
-                      label="Select Profile Type"
-                      displayEmpty
-                      required
-                    >
-                      <MenuItem value="">Select Profile Type</MenuItem>
-                      <MenuItem value="Technical">Technical</MenuItem>
-                      <MenuItem value="NonTechnical">NonTechnical</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Profile Type</InputLabel>
+                        <Select
+                          value={formData.selectProfileType}
+                          onChange={(e) =>
+                            handleInputChange("selectProfileType", e.target.value)
+                          }
+                          label="Select Profile Type"
+                          displayEmpty
+                          required
+                        >
+                          <MenuItem value="">Select Profile Type</MenuItem>
+                          <MenuItem value="Technical">Technical</MenuItem>
+                          <MenuItem value="NonTechnical">NonTechnical</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
+
               </div>
             </Box>
             {/* Action Buttons */}

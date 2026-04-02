@@ -1235,9 +1235,13 @@ import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompa
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
+import DailyMeeting from "./pages/AdminCompass/DailyMeeting";
+import ReportAnalytics from "./pages/ReportAnalytics";
 import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
 import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
+import HSNCodeSetup from "./pages/HSNCodeSetup";
+import DashboardUI from "./pages/DashboardUI";
 
 const queryClient = new QueryClient();
 
@@ -2120,6 +2124,12 @@ function App() {
                             element={<DiscReport />}
                           />
 
+                          <Route
+                            path="/admin-compass/daily-meeting"
+                            element={<DailyMeeting />}
+                          />
+
+
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route
@@ -2559,6 +2569,10 @@ function App() {
                           <Route
                             path="/settings/house/setup"
                             element={<HouseSetupPage />}
+                          />
+                          <Route
+                            path="/settings/hsn-code/setup"
+                            element={<HSNCodeSetup />}
                           />
                           <Route
                             path="/club-management/membership"
@@ -3720,7 +3734,10 @@ function App() {
                             path="/safety/permit/safety-check-form"
                             element={<PermitSafetyCheckForm />}
                           />
-                          <Route path="/safety/permit/vendor-form/:id?" />
+                          <Route
+                            path="/safety/permit/vendor-form/:id?"
+                            element={<VendorPermitForm />}
+                          />
                           <Route
                             path="/safety/permit/fill-form/:id?"
                             element={<FillForm />}
@@ -4415,6 +4432,14 @@ function App() {
                             path="/vas/projects"
                             element={<ProjectsDashboard />}
                           />
+
+                          <Route
+  path="/report-analytics"
+  element={<ReportAnalytics />}/>
+
+  <Route
+  path="/dashboard-UI"
+  element={<DashboardUI/>}/>
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
@@ -4497,11 +4522,13 @@ function App() {
                             path="/vas/project-dashboard"
                             element={<SupersetDashboard />}
                           />
+
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
                           <Route
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
+
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}
@@ -6301,6 +6328,7 @@ function App() {
                             path="/mobile/channels/groups/:id"
                             element={<MobileGroupConversation />}
                           />
+
                         </Route>
                       </Routes>
                       <Toaster />

@@ -5,6 +5,7 @@ import createApiSlice from "../api/apiSlice";
 
 export interface OccupantUserApiResponse {
   id: number;
+  profile_icon_url?: string;
   company: string;
   vendor_name?: string;
   firstname: string;
@@ -24,6 +25,7 @@ export interface OccupantUserApiResponse {
   access_level?: string;
   face_added: boolean;
   app_downloaded: string;
+  profile_icon_url?: string;
   lock_user_permission: {
     id: string;
     status: string;
@@ -47,6 +49,7 @@ export interface OccupantUsersResponse {
 // Shape after transforming for frontend
 export interface OccupantUser {
   id: number;
+  profile_icon_url?: string;
   company: string;
   name: string;
   mobile: string;
@@ -147,6 +150,7 @@ export const fetchOccupantUsers = createAsyncThunk(
     const transformedUsers: OccupantUser[] = response.data.occupant_users.map(
       (user) => ({
         id: user?.id,
+        profile_icon_url: user.profile_icon_url,
         company: user.vendor_name,
         // name: `${user.firstname} ${user.lastname}`,
         name: `${user.firstname ?? ""} ${user.lastname ?? ""}`.trim(),

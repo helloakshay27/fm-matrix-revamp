@@ -292,7 +292,7 @@ export const AddFMUserPage = () => {
     formDataToSend.append("user[profile_type]", formData.selectProfileType);
 
     if (profileImage) {
-      formDataToSend.append("user[avatar]", profileImage);
+      formDataToSend.append("user[profile_icon]", profileImage);
     }
 
     // Append permissions as a nested structure
@@ -941,24 +941,29 @@ export const AddFMUserPage = () => {
                   )
                 }
 
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Profile Type</InputLabel>
-                    <Select
-                      value={formData.selectProfileType}
-                      onChange={(e) =>
-                        handleInputChange("selectProfileType", e.target.value)
-                      }
-                      label="Select Profile Type"
-                      displayEmpty
-                      required
-                    >
-                      <MenuItem value="">Select Profile Type</MenuItem>
-                      <MenuItem value="Technical">Technical</MenuItem>
-                      <MenuItem value="NonTechnical">NonTechnical</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>Select Profile Type</InputLabel>
+                        <Select
+                          value={formData.selectProfileType}
+                          onChange={(e) =>
+                            handleInputChange("selectProfileType", e.target.value)
+                          }
+                          label="Select Profile Type"
+                          displayEmpty
+                          required
+                        >
+                          <MenuItem value="">Select Profile Type</MenuItem>
+                          <MenuItem value="Technical">Technical</MenuItem>
+                          <MenuItem value="NonTechnical">NonTechnical</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
+
               </div>
             </Box>
             {/* Action Buttons */}

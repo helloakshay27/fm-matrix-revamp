@@ -628,22 +628,105 @@ const AmenityBookingListClubDashboard = () => {
     }));
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (columnVisibility?: Record<string, boolean>) => {
     setExportLoading(true);
+    const loadingToast = toast.loading('Preparing Excel export...');
     try {
-      const response = await dispatch(exportReport({ baseUrl, token })).unwrap();
-      const url = window.URL.createObjectURL(new Blob([response]));
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+
+      // Build the export URL
+      const url = new URL(`https://${baseUrl}/pms/facility_bookings/export.xlsx`);
+      url.searchParams.append('access_token', token || '');
+
+      // Exportable columns provided by user
+      const exportableColumnKeys = [
+        'id', 'facility_name', 'site_name', 'booked_by_name', 'created_by_name',
+        'startdate', 'enddate', 'show_schedule', 'fac_type', 'current_status',
+        'book_purpose', 'book_by', 'person_no', 'member_count', 'guest_count',
+        'member_charges', 'guest_charges', 'sub_total', 'discount',
+        'sgst', 'cgst_amount', 'amount_full', 'amount_paid',
+        'payment_status', 'payment_method', 'payment_mode', 'pg_transaction_id', 'pg_state',
+        'conv_charge', 'deposit_amount', 'tentative_price',
+        'can_cancel', 'cancelled_on', 'cancel_by', 'comment',
+        'created_at'
+      ];
+
+      // Mapping from table keys to export API keys if they differ
+      const columnMapping: Record<string, string> = {
+        'bookedBy': 'booked_by_name',
+        'facility': 'facility_name',
+        'facilityType': 'fac_type',
+        'scheduledDate': 'startdate',
+        'bookingStatus': 'current_status',
+        'createdOn': 'created_at'
+      };
+
+      // If columnVisibility is provided, use it to filter. Otherwise use all exportable columns.
+      let columnsToExport: string[] = [];
+      if (columnVisibility) {
+        columnsToExport = enhancedTableColumns
+          .filter(col => {
+            if (col.key === 'actions') return false;
+            return columnVisibility[col.key] !== false;
+          })
+          .map(col => columnMapping[col.key] || col.key)
+          .filter(key => exportableColumnKeys.includes(key));
+      } else {
+        // Default to the specified set if no visibility state (though EnhancedTable should provide it)
+        columnsToExport = ['id', 'facility_name', 'booked_by_name', 'show_schedule', 'current_status', 'amount_full', 'payment_status', 'payment_mode'];
+      }
+
+      // Add columns to URL
+      columnsToExport.forEach(col => url.searchParams.append('columns[]', col));
+
+      // Add filters to URL
+      if (filters.facilityName) {
+        url.searchParams.append('q[facility_id_in]', filters.facilityName);
+      }
+      if (filters.status) {
+        url.searchParams.append('q[current_status_cont]', filters.status);
+      }
+
+      // Add date ranges
+      if (scheduledDateFrom) url.searchParams.append('start_date', scheduledDateFrom);
+      if (scheduledDateTo) url.searchParams.append('end_date', scheduledDateTo);
+
+      // Handle created_at range if needed by API (though curl only showed start/end_date)
+      if (createdOnDateFrom && createdOnDateTo) {
+        const fromDate = format(parse(createdOnDateFrom, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
+        const toDate = format(parse(createdOnDateTo, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
+        url.searchParams.append('q[date_range]', `${fromDate} - ${toDate}`);
+      }
+
+      console.log('Amenity Export URL:', url.toString());
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'facility_bookings.xlsx');
+      link.href = downloadUrl;
+      link.setAttribute('download', `amenity_bookings_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success('File downloaded successfully');
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success('Excel file downloaded successfully', { id: loadingToast });
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Error downloading file');
+      toast.error('Error downloading file', { id: loadingToast });
     } finally {
       setExportLoading(false);
     }
@@ -693,6 +776,8 @@ const AmenityBookingListClubDashboard = () => {
         loading={loading || isPageLoading}
         onFilterClick={() => setIsFilterModalOpen(true)}
         emptyMessage={loading || isPageLoading ? 'Loading bookings...' : 'No bookings found'}
+        handleExport={handleDownload}
+        enableExport={true}
         leftActions={
           <div className="flex flex-wrap gap-2">
             <Button

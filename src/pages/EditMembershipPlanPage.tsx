@@ -112,6 +112,8 @@ export const EditMembershipPlanPage = () => {
     renewalTerms: "",
     payment_plan_id: "",
     hsnCode: "",
+    cgst: "",
+    sgst: "",
     amenities: [] as any[],
     amenityDetails: {} as Record<string, {
       frequency: string;
@@ -193,6 +195,8 @@ export const EditMembershipPlanPage = () => {
         amenities: data.plan_amenities,
         amenityDetails: amenityDetailsMap,
         hsnCode: data.hsn_code || "",
+        cgst: data.cgst?.toString() || "",
+        sgst: data.sgst?.toString() || "",
       })
     } catch (error) {
       console.error("Error fetching membership plan details:", error);
@@ -229,6 +233,14 @@ export const EditMembershipPlanPage = () => {
       toast.error("Please enter HSN Code");
       return false;
     }
+    if (!formData.cgst) {
+      toast.error("Please enter CGST");
+      return false;
+    }
+    if (!formData.sgst) {
+      toast.error("Please enter SGST");
+      return false;
+    }
     // Validate frequency for each selected amenity
     for (const amenity of formData.amenities) {
       const amenityId = amenity.facility_setup_id || amenity.value || amenity.id;
@@ -254,6 +266,8 @@ export const EditMembershipPlanPage = () => {
           renewal_terms: formData.renewalTerms,
           payment_plan_id: formData.payment_plan_id ? parseInt(formData.payment_plan_id) : null,
           hsn_code: formData.hsnCode,
+          cgst: formData.cgst ? parseFloat(formData.cgst) : 0,
+          sgst: formData.sgst ? parseFloat(formData.sgst) : 0,
           active: true,
           plan_amenities_attributes: [
             ...formData.amenities.map(amenity => {
@@ -458,6 +472,36 @@ export const EditMembershipPlanPage = () => {
                 }}
                 variant="outlined"
                 placeholder="Enter HSN Code"
+              />
+
+              <TextField
+                label="CGST*"
+                type="text"
+                value={formData.cgst}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only positive numbers with max 2 decimal places
+                  if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                    setFormData({ ...formData, cgst: value });
+                  }
+                }}
+                variant="outlined"
+                placeholder="0.00"
+              />
+
+              <TextField
+                label="SGST*"
+                type="text"
+                value={formData.sgst}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only positive numbers with max 2 decimal places
+                  if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                    setFormData({ ...formData, sgst: value });
+                  }
+                }}
+                variant="outlined"
+                placeholder="0.00"
               />
             </div>
           </div>

@@ -543,7 +543,13 @@ export const PatrollingDashboard = () => {
 
       <BulkUploadDialog
         open={showImportModal}
-        onOpenChange={setShowImportModal}
+        onOpenChange={(open) => {
+          setShowImportModal(open);
+          // Refresh data when dialog closes (after successful upload)
+          if (!open) {
+            fetchPatrollingData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          }
+        }}
         title="Bulk Upload Patrolling Checkpoints"
         context="patrolling"
       />

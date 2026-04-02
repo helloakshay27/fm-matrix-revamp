@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
+import * as XLSX from 'xlsx';
 import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
 import {
   Dialog,
@@ -91,6 +92,10 @@ interface GroupMembershipData {
     created_at: string;
     updated_at: string;
   } | null;
+  membership_plan?: {
+    id: number;
+    name: string;
+  };
 }
 
 export const ClubGroupMembershipDashboard = () => {
@@ -110,7 +115,7 @@ export const ClubGroupMembershipDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
-  const [modalData, setModalData] = useState<{isOpen: boolean, title: string, items: string[]}>({isOpen: false, title: '', items: []});
+  const [modalData, setModalData] = useState<{ isOpen: boolean, title: string, items: string[] }>({ isOpen: false, title: '', items: [] });
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: '',
     clubMemberEnabled: '',
@@ -240,76 +245,76 @@ export const ClubGroupMembershipDashboard = () => {
   const handleExport = async () => {
     const loadingToast = toast.loading('Preparing Excel export...');
     try {
-      const baseUrl = API_CONFIG.BASE_URL;
-      const token = API_CONFIG.TOKEN;
-
-      // Build the export URL
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`);
-      url.searchParams.append('access_token', token || '');
-
-      // Add the same filters that are applied to the table
-      if (filters.search) {
-        url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
+      if (!memberships || memberships.length === 0) {
+        toast.error('No data available to export', { id: loadingToast });
+        return;
       }
 
-      if (filters.clubMemberEnabled) {
-        url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
-      }
+      // Prepare data for export
+      const exportData = memberships.map(item => {
+        const memberNames = item.club_members?.map(cm => cm.user_name || '').join(', ') || '';
+        const memberEmails = item.club_members?.map(cm => cm.user_email || '').join(', ') || '';
+        const memberMobiles = item.club_members?.map(cm => cm.user_mobile || '').join(', ') || '';
+        const siteNames = item.club_members?.map(cm => cm.site_name || '').join(', ') || '';
 
-      if (filters.accessCardEnabled) {
-        url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
-      }
+        // Determine status
+        let status = 'Approved';
+        if (!item.start_date && !item.end_date) {
+          status = 'Pending Dates';
+        } else if (!item.end_date && item.start_date) {
+          status = 'Pending EndDate';
+        }
 
-      if (filters.startDate) {
-        const [year, month, day] = filters.startDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[start_date_eq]', formattedDate);
-      }
-
-      if (filters.endDate) {
-        const [year, month, day] = filters.endDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
-        url.searchParams.append('q[end_date_eq]', formattedDate);
-      }
-
-      console.log('Export URL:', url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        },
+        return {
+          'Group ID': item.id,
+          'Plan Name': item.membership_plan?.name || 'N/A',
+          'Members': item.club_members?.length || 0,
+          'Member Names': memberNames,
+          'Emails': memberEmails,
+          'Mobiles': memberMobiles,
+          'Site Name': siteNames,
+          'Start Date': item.start_date ? new Date(item.start_date).toLocaleDateString() : 'N/A',
+          'End Date': item.end_date ? new Date(item.end_date).toLocaleDateString() : 'N/A',
+          'Status': status,
+          'Created On': item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'
+        };
       });
 
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
-      }
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
 
-      // Get the blob from response
-      const blob = await response.blob();
+      // Set column widths
+      const wscols = [
+        { wch: 10 }, // Group ID
+        { wch: 25 }, // Plan Name
+        { wch: 10 }, // Members
+        { wch: 30 }, // Member Names
+        { wch: 30 }, // Emails
+        { wch: 30 }, // Mobiles
+        { wch: 25 }, // Site Name
+        { wch: 15 }, // Start Date
+        { wch: 15 }, // End Date
+        { wch: 15 }, // Status
+        { wch: 15 }, // Created On
+      ];
+      worksheet['!cols'] = wscols;
 
-      // Create download link
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Club Group Memberships');
 
       // Generate filename with current date
       const date = new Date().toISOString().split('T')[0];
-      link.download = `club_memberships_${date}.xlsx`;
+      const filename = `club_group_memberships_${date}.xlsx`;
 
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Cleanup
-      window.URL.revokeObjectURL(downloadUrl);
+      // Export file
+      XLSX.writeFile(workbook, filename);
 
       toast.success('Excel file downloaded successfully', { id: loadingToast });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error exporting data:', error);
-      toast.error('Failed to export data', { id: loadingToast });
+      toast.error(error.message || 'Failed to export data', { id: loadingToast });
     }
   };
 
@@ -598,15 +603,15 @@ export const ClubGroupMembershipDashboard = () => {
     if (columnKey === 'member_names') {
       const names = item.club_members?.map(m => m.user_name).filter(Boolean);
       if (!names || names.length === 0) return <span className="text-gray-400">-</span>;
-      
+
       return (
         <div className="flex flex-col gap-1">
           {names.slice(0, 2).map((name, idx) => (
             <span key={idx} className="text-sm">{name}</span>
           ))}
           {names.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+            <span
+              className="text-xs text-blue-600 cursor-pointer hover:underline"
               onClick={() => {
                 setModalData({
                   isOpen: true,
@@ -625,15 +630,15 @@ export const ClubGroupMembershipDashboard = () => {
     if (columnKey === 'member_emails') {
       const emails = item.club_members?.map(m => m.user_email).filter(Boolean);
       if (!emails || emails.length === 0) return <span className="text-gray-400">-</span>;
-      
+
       return (
         <div className="flex flex-col gap-1">
           {emails.slice(0, 2).map((email, idx) => (
             <span key={idx} className="text-sm">{email}</span>
           ))}
           {emails.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+            <span
+              className="text-xs text-blue-600 cursor-pointer hover:underline"
               onClick={() => {
                 setModalData({
                   isOpen: true,
@@ -652,15 +657,15 @@ export const ClubGroupMembershipDashboard = () => {
     if (columnKey === 'member_mobiles') {
       const mobiles = item.club_members?.map(m => m.user_mobile).filter(Boolean);
       if (!mobiles || mobiles.length === 0) return <span className="text-gray-400">-</span>;
-      
+
       return (
         <div className="flex flex-col gap-1">
           {mobiles.slice(0, 2).map((mobile, idx) => (
             <span key={idx} className="text-sm">{mobile}</span>
           ))}
           {mobiles.length > 2 && (
-            <span 
-              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+            <span
+              className="text-xs text-blue-600 cursor-pointer hover:underline"
               onClick={() => {
                 setModalData({
                   isOpen: true,
@@ -828,7 +833,7 @@ export const ClubGroupMembershipDashboard = () => {
             ))}
           </div>
           <DialogFooter>
-            <Button onClick={() => setModalData({isOpen: false, title: '', items: []})} variant="outline">
+            <Button onClick={() => setModalData({ isOpen: false, title: '', items: [] })} variant="outline">
               Close
             </Button>
           </DialogFooter>

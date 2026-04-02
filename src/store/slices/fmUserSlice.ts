@@ -36,6 +36,7 @@ export interface FMUser {
   lock_user_permission_status?: string;
   face_added?: boolean;
   app_downloaded?: string;
+  profile_icon_url?: string;
   department?: {
     id: number;
     department_name: string;
