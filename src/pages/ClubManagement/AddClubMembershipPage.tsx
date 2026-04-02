@@ -254,7 +254,9 @@ export const AddClubMembershipPage = () => {
   const [hasInjuries, setHasInjuries] = useState<'yes' | 'no' | ''>('');
   const [injuryDetails, setInjuryDetails] = useState('');
   const [hasPhysicalRestrictions, setHasPhysicalRestrictions] = useState<'yes' | 'no' | ''>('');
+  const [physicalRestrictionDetails, setPhysicalRestrictionDetails] = useState('');
   const [hasCurrentMedication, setHasCurrentMedication] = useState<'yes' | 'no' | ''>('');
+  const [medicationDetails, setMedicationDetails] = useState('');
   const [pilatesExperience, setPilatesExperience] = useState('');
 
   // Activity Interests
@@ -797,7 +799,7 @@ export const AddClubMembershipPage = () => {
     answersObj['2'] = [
       {
         answer: hasPhysicalRestrictions.toUpperCase() || '',
-        comments: ''
+        comments: hasPhysicalRestrictions === 'yes' ? physicalRestrictionDetails : ''
       }
     ];
 
@@ -805,7 +807,7 @@ export const AddClubMembershipPage = () => {
     answersObj['3'] = [
       {
         answer: hasCurrentMedication.toUpperCase() || '',
-        comments: ''
+        comments: hasCurrentMedication === 'yes' ? medicationDetails : ''
       }
     ];
 
@@ -2278,6 +2280,38 @@ export const AddClubMembershipPage = () => {
                       </RadioGroup>
                     </div>
 
+                    {/* If yes, specify physical restrictions */}
+                    {hasPhysicalRestrictions === 'yes' && (
+                      <div className="mb-6">
+                        <div className="relative w-full">
+                          <textarea
+                            id="physical-restriction-details"
+                            value={physicalRestrictionDetails}
+                            onChange={(e) => setPhysicalRestrictionDetails(e.target.value)}
+                            rows={3}
+                            placeholder=" "
+                            className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                              focus:outline-none 
+                              focus:border-[2px] 
+                              focus:border-[rgb(25,118,210)] 
+                              resize-vertical"
+                          />
+                          <label
+                            htmlFor="physical-restriction-details"
+                            className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                              peer-placeholder-shown:top-4
+                              peer-placeholder-shown:text-base
+                              peer-placeholder-shown:text-gray-400
+                              peer-focus:-top-[10px]
+                              peer-focus:text-sm
+                              peer-focus:text-[rgb(25,118,210)]"
+                          >
+                            If yes, please specify
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Question 3: Current medication */}
                     <div className="mb-6">
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
@@ -2301,8 +2335,40 @@ export const AddClubMembershipPage = () => {
                       </RadioGroup>
                     </div>
 
+                    {/* If yes, specify current medication */}
+                    {hasCurrentMedication === 'yes' && (
+                      <div className="mb-6">
+                        <div className="relative w-full">
+                          <textarea
+                            id="medication-details"
+                            value={medicationDetails}
+                            onChange={(e) => setMedicationDetails(e.target.value)}
+                            rows={3}
+                            placeholder=" "
+                            className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                              focus:outline-none 
+                              focus:border-[2px] 
+                              focus:border-[rgb(25,118,210)] 
+                              resize-vertical"
+                          />
+                          <label
+                            htmlFor="medication-details"
+                            className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                              peer-placeholder-shown:top-4
+                              peer-placeholder-shown:text-base
+                              peer-placeholder-shown:text-gray-400
+                              peer-focus:-top-[10px]
+                              peer-focus:text-sm
+                              peer-focus:text-[rgb(25,118,210)]"
+                          >
+                            If yes, please specify
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Question 4: Pilates experience */}
-                    <div className="mb-6">
+                    {/* <div className="mb-6">
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Pilates Experience
                       </FormLabel>
@@ -2340,7 +2406,7 @@ export const AddClubMembershipPage = () => {
                           <MenuItem value="Advanced">Advanced</MenuItem>
                         </Select>
                       </FormControl>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Card 6: Activity Interests */}
@@ -2505,12 +2571,11 @@ export const AddClubMembershipPage = () => {
                       </div>
                     </div>
 
-                    <div>
+                    {/* <div>
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Have you practiced Pilates before?
                       </FormLabel>
                       <FormControl fullWidth sx={fieldStyles}>
-                        {/* <InputLabel>Have you practiced Pilates before?</InputLabel> */}
                         <Select
                           value={pilatesExperience}
                           onChange={(e) => setPilatesExperience(e.target.value)}
@@ -2520,7 +2585,6 @@ export const AddClubMembershipPage = () => {
                             border: "1px solid #000",
                             borderRadius: "4px",
 
-                            // Remove blue outline
                             "& .MuiOutlinedInput-notchedOutline": {
                               border: "none",
                             },
@@ -2528,7 +2592,6 @@ export const AddClubMembershipPage = () => {
                               border: "none",
                             },
 
-                            // Remove box shadow
                             "&.Mui-focused": {
                               outline: "none",
                               boxShadow: "none",
@@ -2544,7 +2607,7 @@ export const AddClubMembershipPage = () => {
                           <MenuItem value="Advanced">Advanced</MenuItem>
                         </Select>
                       </FormControl>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Card 7: Lifestyle & Communication Insights */}
@@ -2745,7 +2808,7 @@ export const AddClubMembershipPage = () => {
                     </div>
 
                     {/* Corporate Interest */}
-                    <div>
+                    {/* <div>
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Are you interested in corporate/group plans for your workplace?
                       </FormLabel>
@@ -2765,7 +2828,7 @@ export const AddClubMembershipPage = () => {
                           label="No"
                         />
                       </RadioGroup>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
