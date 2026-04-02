@@ -83,13 +83,13 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
     const yAxisDomain = viewType === 'self' ? [0, 4] : [0, 24];
 
     return (
-        <div className="space-y-6 mt-6">
-            {/* Filters Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary rounded-[10px] p-4 shadow-md">
+        <div className="space-y-6">
+            {/* Filters Row — Business Compass theme */}
+            <div className="grid grid-cols-1 gap-4 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm md:grid-cols-3">
                 <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Time Range</label>
+                    <label className="text-xs font-medium text-neutral-600">Time Range</label>
                     <Select defaultValue="this-month">
-                        <SelectTrigger className="bg-white border-gray-200 rounded-[8px] h-10">
+                        <SelectTrigger className="h-10 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] shadow-sm">
                             <SelectValue placeholder="Select range" />
                         </SelectTrigger>
                         <SelectContent>
@@ -103,7 +103,7 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
                 <div className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-500">User</label>
                     <Select defaultValue="all-users">
-                        <SelectTrigger className="bg-white border-gray-200 rounded-[8px] h-10">
+                        <SelectTrigger className="h-10 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] shadow-sm">
                             <SelectValue placeholder="Select user" />
                         </SelectTrigger>
                         <SelectContent>
@@ -113,9 +113,9 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Department</label>
+                    <label className="text-xs font-medium text-neutral-600">Department</label>
                     <Select defaultValue="all-departments">
-                        <SelectTrigger className="bg-white border-gray-200 rounded-[8px] h-10">
+                        <SelectTrigger className="h-10 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] shadow-sm">
                             <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                         <SelectContent>
@@ -198,45 +198,45 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
                 </Card>
             </div>
 
-            {/* Distribution Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-gray-100 shadow-sm rounded-xl min-h-[280px] flex flex-col">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center gap-2 text-[#1a1a1a]">
-                            <TrendingUp className="w-4 h-4 text-gray-500" />
+            {/* Distribution Row — Business Compass theme (not stark white) */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Card className="flex min-h-[280px] flex-col overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+                    <CardHeader className="border-b border-[#DA7756]/15 bg-[#fef6f4]/60 pb-3">
+                        <div className="flex items-center gap-2 text-neutral-900">
+                            <TrendingUp className="h-4 w-4 text-[#DA7756]" />
                             <CardTitle className="text-base font-bold">Status Distribution</CardTitle>
                         </div>
                     </CardHeader>
-                    <CardContent className="flex-1 flex items-center justify-center text-gray-400 text-sm font-medium">
+                    <CardContent className="flex flex-1 items-center justify-center bg-[#f6f4ee]/40 text-sm font-medium text-neutral-500">
                         No data available
                     </CardContent>
                 </Card>
 
-                <Card className="border-gray-100 shadow-sm rounded-xl min-h-[280px] flex flex-col">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center gap-2 text-[#1a1a1a]">
-                            <Target className="w-4 h-4 text-gray-500" />
+                <Card className="flex min-h-[280px] flex-col overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+                    <CardHeader className="border-b border-[#DA7756]/15 bg-[#fef6f4]/60 pb-3">
+                        <div className="flex items-center gap-2 text-neutral-900">
+                            <Target className="h-4 w-4 text-[#DA7756]" />
                             <CardTitle className="text-base font-bold">Priority Breakdown</CardTitle>
                         </div>
                     </CardHeader>
-                    <CardContent className="flex-1 flex items-center justify-center text-gray-400 text-sm font-medium">
+                    <CardContent className="flex flex-1 items-center justify-center bg-[#f6f4ee]/40 text-sm font-medium text-neutral-500">
                         No data available
                     </CardContent>
                 </Card>
             </div>
 
             {/* Trend Row */}
-            <Card className="border-gray-100 shadow-sm rounded-xl">
-                <CardHeader className="pb-2">
-                    <div className="flex items-center gap-2 text-[#1a1a1a]">
-                        <Calendar className="w-4 h-4 text-gray-500" />
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+                <CardHeader className="border-b border-[#DA7756]/15 bg-[#fef6f4]/60 pb-3">
+                    <div className="flex items-center gap-2 text-neutral-900">
+                        <Calendar className="h-4 w-4 text-[#DA7756]" />
                         <CardTitle className="text-base font-bold">Completion Trend (Last 4 Weeks)</CardTitle>
                     </div>
                 </CardHeader>
-                <CardContent className="pt-4 h-[300px]">
+                <CardContent className="h-[300px] bg-[#f6f4ee]/40 pt-4">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={false} stroke="#E5E7EB" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={false} stroke="rgba(218, 119, 86, 0.18)" />
                             <XAxis
                                 dataKey="name"
                                 axisLine={true}
@@ -255,15 +255,20 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
                                 stroke="#E5E7EB"
                             />
                             <Tooltip
-                                contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+                                contentStyle={{
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(218, 119, 86, 0.35)',
+                                    background: '#fef6f4',
+                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.08)',
+                                }}
+                                labelStyle={{ fontWeight: 'bold', marginBottom: '4px', color: '#1a1a1a' }}
                             />
                             <Line
                                 type="monotone"
                                 dataKey="value"
-                                stroke="#10B981"
+                                stroke="#DA7756"
                                 strokeWidth={2}
-                                dot={{ fill: '#10B981', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                                dot={{ fill: '#DA7756', strokeWidth: 2, r: 4, stroke: '#fef6f4' }}
                                 activeDot={{ r: 6 }}
                                 name="closed"
                             />
@@ -274,18 +279,18 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
 
             {/* Department Breakdown Row - Only for 'all' view */}
             {viewType === 'all' && (
-                <Card className="border-gray-100 shadow-sm rounded-xl overflow-hidden">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center gap-2 text-[#1a1a1a]">
-                            <TrendingUp className="w-4 h-4 text-gray-500" />
+                <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+                    <CardHeader className="border-b border-[#DA7756]/15 bg-[#fef6f4]/60 pb-3">
+                        <div className="flex items-center gap-2 text-neutral-900">
+                            <TrendingUp className="h-4 w-4 text-[#DA7756]" />
                             <CardTitle className="text-base font-bold">Department Breakdown</CardTitle>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-0">
+                    <CardContent className="bg-[#f6f4ee]/40 p-0">
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+                                    <TableRow className="bg-[#fef6f4]/80 hover:bg-[#fef6f4]/80">
                                         <TableHead className="text-xs font-bold text-gray-600 h-11">Department</TableHead>
                                         <TableHead className="text-xs font-bold text-gray-600 h-11 text-center">Total</TableHead>
                                         <TableHead className="text-xs font-bold text-[#2563EB] h-11 text-center">Open</TableHead>
@@ -296,7 +301,7 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
                                 </TableHeader>
                                 <TableBody>
                                     {departmentBreakdown.map((dept) => (
-                                        <TableRow key={dept.name} className="hover:bg-gray-50/30">
+                                        <TableRow key={dept.name} className="hover:bg-[#fef6f4]/70">
                                             <TableCell className="text-sm font-medium text-gray-700 py-3">{dept.name}</TableCell>
                                             <TableCell className="text-sm text-center font-medium text-gray-900">{dept.total}</TableCell>
                                             <TableCell className="text-center py-3">
@@ -337,7 +342,7 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
                         </CardHeader>
                         <CardContent className="p-4 space-y-3">
                             {topPerformers.map((performer) => (
-                                <div key={performer.rank} className="bg-white border border-[#FFEDD5] rounded-xl p-3 flex items-center justify-between group hover:shadow-sm transition-all">
+                                <div key={performer.rank} className="flex items-center justify-between rounded-xl border border-[#FFEDD5] bg-[#fef6f4] p-3 transition-all group hover:shadow-sm">
                                     <div className="flex items-center gap-4">
                                         <div className={cn(
                                             "w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-sm",
@@ -379,7 +384,7 @@ const TasksDashboard: React.FC<TasksDashboardProps> = ({ viewType }) => {
                             <ScrollArea className="h-[450px] pr-4">
                                 <div className="space-y-3">
                                     {overdueItems.map((item, idx) => (
-                                        <div key={idx} className="bg-white border border-[#FEE2E2] rounded-xl p-4 space-y-3 group hover:shadow-sm transition-all relative">
+                                        <div key={idx} className="relative space-y-3 rounded-xl border border-[#FEE2E2] bg-[#fef6f4] p-4 transition-all group hover:shadow-sm">
                                             <div className="flex justify-between items-start gap-4">
                                                 <h4 className="text-sm font-bold text-gray-800 flex-1 leading-snug">{item.title}</h4>
                                                 <span className="text-[11px] text-gray-400 font-medium whitespace-nowrap">Due: {item.due}</span>
