@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Shield, ChevronDown } from 'lucide-react';
+import { Eye, Shield } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import { setSelectedUserType, setSelectedUser } from '@/store/slices/adminViewEmulationSlice';
@@ -11,22 +11,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
-export const AdminViewEmulation: React.FC = () => {
+export const AdminViewEmulation: React.FC<{ className?: string }> = ({ className }) => {
   const dispatch = useDispatch();
   const { selectedUserType, selectedUser } = useSelector(
     (state: RootState) => state.adminViewEmulation
   );
 
   return (
-    <Card className="p-4 mb-6 bg-primary border-border shadow-md rounded-[8px]">
+    <Card
+      className={cn(
+        'mb-6 rounded-2xl border border-[#DA7756]/20 bg-white p-4 shadow-sm',
+        className
+      )}
+    >
       <div className="flex items-start gap-3 mb-4">
         <div className="p-2">
-          <Eye className="w-5 h-5 text-[#2C2C2C]" />
+          <Eye className="w-5 h-5 text-neutral-700" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-[#2C2C2C]">Admin View Emulation</h3>
-          <p className="text-xs text-[#2C2C2C] opacity-80">
+          <h3 className="text-sm font-semibold text-neutral-900">Admin View Emulation</h3>
+          <p className="text-xs text-neutral-500">
             Experience the app as different user types
           </p>
         </div>
@@ -38,9 +44,9 @@ export const AdminViewEmulation: React.FC = () => {
             value={selectedUserType}
             onValueChange={(value) => dispatch(setSelectedUserType(value))}
           >
-            <SelectTrigger className="w-full bg-white border-[#E9D5FF] text-sm text-[#581C87] h-10">
+            <SelectTrigger className="h-10 w-full rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#2C2C2C]" />
+                <Shield className="h-4 w-4 text-neutral-600" />
                 <SelectValue placeholder="Select role" />
               </div>
             </SelectTrigger>
@@ -58,7 +64,7 @@ export const AdminViewEmulation: React.FC = () => {
             value={selectedUser}
             onValueChange={(value) => dispatch(setSelectedUser(value))}
           >
-            <SelectTrigger className="w-full bg-white border-[#E9D5FF] text-sm text-[#581C87] h-10">
+            <SelectTrigger className="h-10 w-full rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25">
               <SelectValue placeholder="Select specific user" />
             </SelectTrigger>
             <SelectContent>

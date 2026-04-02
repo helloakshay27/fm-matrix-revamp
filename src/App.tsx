@@ -1230,7 +1230,7 @@ import Leaderboard from "./pages/BusinessCompass/Leaderboard";
 import DiscPersonalityAssessment from "./pages/BusinessCompass/DiscPersonalityAssessment";
 import HelpCenter from "./pages/BusinessCompass/HelpCenter";
 import BugReports from "./pages/BusinessCompass/BugReports";
-import BusinessWeeklyReport from "./pages/BusinessCompass/BusinessWeeklyReport";
+import WeeklyReports from "./pages/BusinessCompass/WeeklyReports";
 import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompassTasksAndIssues";
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
@@ -2064,7 +2064,7 @@ function App() {
                           />
                           <Route
                             path="/business-compass/weekly-report"
-                            element={<BusinessWeeklyReport />}
+                            element={<WeeklyReports />}
                           />
                           <Route
                             path="/business-compass/tasks-and-issues"
