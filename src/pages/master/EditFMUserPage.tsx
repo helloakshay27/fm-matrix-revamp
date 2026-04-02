@@ -902,46 +902,52 @@ export const EditFMUserPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>
-                      Select User Type<span className="text-red-500">*</span>
-                    </InputLabel>
-                    <Select
-                      value={formData.selectUserType}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "selectUserType",
-                          e.target.value as string
-                        )
-                      }
-                      label="Select User Type"
-                      displayEmpty
-                      required
-                    >
-                      <MenuItem value="">Select User Type</MenuItem>
-                      <MenuItem value="pms_admin">Admin (Web & App)</MenuItem>
-                      <MenuItem value="pms_technician">
-                        Technician (App)
-                      </MenuItem>
-                      <MenuItem value="pms_hse">Head Site Engineer</MenuItem>
-                      <MenuItem value="pms_se">Site Engineer</MenuItem>
-                      <MenuItem value="pms_occupant_admin">
-                        Customer Admin
-                      </MenuItem>
-                      <MenuItem value="pms_accounts">Accounts</MenuItem>
-                      <MenuItem value="pms_po">Purchase Officer</MenuItem>
-                      <MenuItem value="pms_qc">Quality Control</MenuItem>
-                      <MenuItem value="pms_security">Security</MenuItem>
-                      <MenuItem value="pms_security_supervisor">
-                        Security Supervisor
-                      </MenuItem>
-                      <MenuItem value="pms_occupant">
-                        User (Customer User)
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
+
+                {
+                  !isClubSite && (
+                    <div>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel shrink>
+                          Select User Type<span className="text-red-500">*</span>
+                        </InputLabel>
+                        <Select
+                          value={formData.selectUserType}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "selectUserType",
+                              e.target.value as string
+                            )
+                          }
+                          label="Select User Type"
+                          displayEmpty
+                          required
+                        >
+                          <MenuItem value="">Select User Type</MenuItem>
+                          <MenuItem value="pms_admin">Admin (Web & App)</MenuItem>
+                          <MenuItem value="pms_technician">
+                            Technician (App)
+                          </MenuItem>
+                          <MenuItem value="pms_hse">Head Site Engineer</MenuItem>
+                          <MenuItem value="pms_se">Site Engineer</MenuItem>
+                          <MenuItem value="pms_occupant_admin">
+                            Customer Admin
+                          </MenuItem>
+                          <MenuItem value="pms_accounts">Accounts</MenuItem>
+                          <MenuItem value="pms_po">Purchase Officer</MenuItem>
+                          <MenuItem value="pms_qc">Quality Control</MenuItem>
+                          <MenuItem value="pms_security">Security</MenuItem>
+                          <MenuItem value="pms_security_supervisor">
+                            Security Supervisor
+                          </MenuItem>
+                          <MenuItem value="pms_occupant">
+                            User (Customer User)
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                  )
+                }
+
                 <div>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>

@@ -56,7 +56,7 @@ type SidebarItem = {
 const modulesByPackage = {
   "Club Management": [
     {
-      name: "Group Memberships",
+      name: "Memberships",
       icon: Star,
       href: "/club-management/membership/groups",
     },
