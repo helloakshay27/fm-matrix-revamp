@@ -255,7 +255,7 @@ export const PaymentDetailPage = () => {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
 
-      const url = `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/pms_facility_bookings/payment_details_pdf?lock_payment_id=${id}`;
+      const url = `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/pms/admin/facility_bookings/${id}/payment_invoice`;
 
       toast.loading("Downloading receipt...");
 
