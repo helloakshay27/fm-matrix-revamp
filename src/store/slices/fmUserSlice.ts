@@ -268,7 +268,7 @@ export const editFMUser = createAsyncThunk(
       return response.data;
     } catch (error) {
       const message =
-        error.response?.data?.error || error.error || "Failed to edit FM user";
+        error || "Failed to edit FM user";
       return rejectWithValue(message);
     }
   }
