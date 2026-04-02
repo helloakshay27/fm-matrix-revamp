@@ -111,7 +111,12 @@ const modulesByPackage = {
       name: "Vendor",
       icon: Truck,
       href: "/maintenance/vendor",
-    }
+    },
+    {
+      name: "Invoices",
+      icon: FileText,
+      href: "/accounting/invoices/list",
+    },
     // {
     //     name: "Accounting",
     //     icon: Calculator,
