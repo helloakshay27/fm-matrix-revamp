@@ -7,7 +7,6 @@ import {
   Copy,
   FileText,
   Filter,
-  GripVertical,
   Lightbulb,
   Pencil,
   Plus,
@@ -969,18 +968,16 @@ function SopKanbanCard({
         : "bg-rose-500";
 
   return (
-    <div className="rounded-xl border border-neutral-200/90 bg-white p-3 shadow-sm">
-      <div className="flex gap-2">
-        {dragHandleProps && (
-          <div
-            {...dragHandleProps}
-            className="mt-0.5 flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-500 hover:bg-neutral-100 active:cursor-grabbing"
-            aria-label="Drag to move"
-          >
-            <GripVertical className="h-4 w-4" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
+    <div
+      {...(dragHandleProps ?? {})}
+      className={cn(
+        "rounded-xl border border-neutral-200/90 bg-white p-3 shadow-sm",
+        dragHandleProps &&
+          "cursor-grab touch-manipulation select-none active:cursor-grabbing"
+      )}
+      aria-label={dragHandleProps ? "Drag to move between columns" : undefined}
+    >
+      <div className="min-w-0 flex-1">
           <p className="font-semibold leading-snug text-neutral-900">
             {item.title}
           </p>
@@ -1015,6 +1012,7 @@ function SopKanbanCard({
           <div className="mt-3 flex items-center gap-2">
             <button
               type="button"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
                 onEditClick?.();
@@ -1026,6 +1024,7 @@ function SopKanbanCard({
             </button>
             <button
               type="button"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
                 onDuplicateClick?.();
@@ -1037,6 +1036,7 @@ function SopKanbanCard({
             </button>
             <button
               type="button"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
                 onDeleteClick?.();
@@ -1047,7 +1047,6 @@ function SopKanbanCard({
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
-        </div>
       </div>
     </div>
   );
@@ -1084,7 +1083,7 @@ function DraggableSopCard({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="touch-none">
+    <div ref={setNodeRef} style={style}>
       <SopKanbanCard
         item={item}
         column={column}
