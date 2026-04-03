@@ -39,6 +39,9 @@ import {
   IndianRupee,
   UserCog,
   Boxes,
+  House,
+  TrendingUp,
+  Code,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -53,16 +56,9 @@ type SidebarItem = {
 const modulesByPackage = {
   "Club Management": [
     {
-      name: "Club Membership",
+      name: "Memberships",
       icon: Star,
-      href: "/club-management/membership",
-      subItems: [
-        {
-          name: "Group Memberships",
-          href: "/club-management/membership/groups",
-          color: "text-[#1a1a1a]",
-        },
-      ],
+      href: "/club-management/membership/groups",
     },
     {
       name: "User Management",
@@ -110,6 +106,16 @@ const modulesByPackage = {
       name: "Payments",
       icon: Wallet,
       href: "/club-management/accounting",
+    },
+    {
+      name: "Vendor",
+      icon: Truck,
+      href: "/maintenance/vendor",
+    },
+    {
+      name: "Invoices",
+      icon: FileText,
+      href: "/accounting/invoices/list",
     },
     // {
     //     name: "Accounting",
@@ -205,7 +211,25 @@ const modulesByPackage = {
         },
       ],
     },
-    { name: "FM Groups", icon: Users, href: "/settings/groups" },
+    {
+      name: "Roles (RACI)",
+      icon: UserCheck,
+      href: "/settings/roles",
+      subItems: [
+        { name: "Department", href: "/settings/roles/department" },
+        { name: "Role", href: "/settings/roles/role" },
+      ],
+    },
+    {
+      name: "House Setup",
+      icon: House,
+      href: "/settings/house/setup",
+    },
+    {
+      name: "HSN Code Setup",
+      icon: Code,
+      href: "/settings/hsn-code/setup",
+    },
 
     // {
     //     name: "Accountants",
@@ -252,7 +276,7 @@ const modulesByPackage = {
         // { name: "Delivery Challans", href: "/accounting/delivery-challans" },
         // { name: "Payment Links", href: "/accounting/payment-links" },
         { name: "Payments Received", href: "/accounting/payments-received" },
-        // { name: "Credit Note", href: "/accounting/credit-note" }
+        { name: "Credit Note", href: "/accounting/credit-note" }
       ],
     },
 
@@ -349,23 +373,56 @@ const modulesByPackage = {
             },
           ],
         },
-        { name: "Balance Sheet", href: "/accounting/reports/balance-sheet" },
-        { name: "Trial Balance", href: "/accounting/reports/trial-balance" },
-        {
-          name: "Cash Flow Statement",
-          href: "/accounting/reports/cash-flow-statement",
-        },
-        {
-          name: "Profit & Loss",
-          href: "/accounting/reports/profit-and-loss",
-        },
         {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
+
         {
-          name: "Business Performance Ratio",
-          href: "/accounting/reports/business-performance",
+          name: "Business Overview",
+          icon: TrendingUp,
+          subItems: [
+            {
+              name: "Profit and Loss",
+              href: "/accounting/reports/profit-and-loss",
+            },
+            {
+              name: "Profit and Loss (Schedule III)",
+              href: "/accounting/reports/profit-and-loss-details",
+            },
+            {
+              name: "Horizontal Profit and Loss",
+              href: "/accounting/reports/profit-and-loss",
+            },
+            {
+              name: "Cash Flow Statement",
+              href: "/accounting/reports/cash-flow-statement",
+            },
+            {
+              name: "Balance Sheet",
+              href: "/accounting/reports/balance-sheet",
+            },
+            {
+              name: "Horizontal Balance Sheet",
+              href: "/accounting/reports/balance-sheet",
+            },
+            {
+              name: "Balance Sheet (Schedule III)",
+              href: "/accounting/reports/balance-sheet-details",
+            },
+            {
+              name: "Business Performance Ratios",
+              href: "/accounting/reports/business-performance",
+            },
+            {
+              name: "Cash Flow Forecasting",
+              href: "/accounting/reports/cash-flow-statement",
+            },
+            {
+              name: "Movement of Equity",
+              href: "/accounting/reports/balance-sheet",
+            },
+          ],
         },
 
 
@@ -663,6 +720,113 @@ const modulesByPackage = {
             {
               name: "TDS Receivables Summary",
               href: "/accounting/reports/tds-receivables-summary",
+            },
+          ],
+        },
+
+        {
+          name: "Activity",
+          subItems: [
+            {
+              name: "System Mails",
+              href: "/accounting/reports/system-mails",
+            },
+            {
+              name: "Activity Logs & Audit Trail",
+              href: "/accounting/reports/activity-logs-audit-trail",
+            },
+            {
+              name: "Exception Report",
+              href: "/accounting/reports/exception-report",
+            },
+            {
+              name: "Portal Activities",
+              href: "/accounting/reports/portal-activities",
+            },
+            {
+              name: "Customer Reviews",
+              href: "/accounting/reports/customer-reviews",
+            },
+            {
+              name: "API Usage",
+              href: "/accounting/reports/api-usage",
+            },
+          ],
+        },
+
+        {
+          name: "Account",
+          subItems: [
+            {
+              name: "Account Transactions",
+              href: "/accounting/reports/account-transactions",
+            },
+            {
+              name: "Day Book",
+              href: "/accounting/reports/day-book",
+            },
+            {
+              name: "Journal Report",
+              href: "/accounting/reports/journal-report",
+            },
+            {
+              name: "General Ledger",
+              href: "/accounting/reports/general-ledger",
+            },
+            {
+              name: "Detailed General Ledger",
+              href: "/accounting/reports/detailed-general-ledger",
+            },
+            {
+              name: "Trial Balance",
+              href: "/accounting/reports/trial-balance",
+            },
+          ],
+        },
+
+        {
+          name: "Fixed Asset",
+          subItems: [
+            {
+              name: "Fixed Asset Register",
+              href: "/accounting/reports/fixed-asset-register",
+            },
+          ],
+        },
+        {
+          name: "Project",
+          subItems: [
+            {
+              name: "Name of Project",
+              href: "/accounting/reports/name-of-project",
+            },
+            {
+              name: "Timesheet Details",
+              href: "/accounting/reports/timesheet-details",
+            },
+            {
+              name: "Timesheet Profitability Summary",
+              href: "/accounting/reports/timesheet-profitability-summary",
+            },
+            {
+              name: "Project Summary",
+              href: "/accounting/reports/project-summary",
+            },
+            {
+              name: "Project Details",
+              href: "/accounting/reports/project-details",
+            },
+            {
+              name: "Projects Cost Summary",
+              href: "/accounting/reports/projects-cost-summary",
+            },
+            {
+              name: "Projects Revenue Summary",
+              href: "/accounting/reports/projects-revenue-summary",
+            },
+            {
+              name: "Projects Performance Summary",
+              href: "/accounting/reports/projects-performance-summary",
             },
           ],
         },
@@ -1004,8 +1168,8 @@ export const ClubSidebar: React.FC = () => {
             }
           }}
           className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-              ? "bg-[#f0e8dc] shadow-inner"
-              : "hover:bg-[#DBC2A9]"
+            ? "bg-[#f0e8dc] shadow-inner"
+            : "hover:bg-[#DBC2A9]"
             }`}
           title={item.name}
         >

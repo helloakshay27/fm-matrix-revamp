@@ -370,9 +370,53 @@ export const AddAssetAuditPage = () => {
   }, [formData.assetGroup]);
 
   const handleSubmit = async (type: 'create' | 'saveAndCreate') => {
-    // Validate required fields
-    if (!formData.auditName || !formData.startDate || !formData.endDate || !formData.conductedBy) {
-      toast.error('Please fill all required fields');
+    // Basic required
+    if (!formData.auditName.trim()) {
+      toast.error('Audit Name is required');
+      return;
+    }
+
+    if (!formData.startDate) {
+      toast.error('Start Date is required');
+      return;
+    }
+
+    if (!formData.endDate) {
+      toast.error('End Date is required');
+      return;
+    }
+
+    if (!formData.conductedBy) {
+      toast.error('Conducted By is required');
+      return;
+    }
+
+    // Optional business validations
+    if (formData.basedOn === 'Location') {
+      if (!formData.site) {
+        toast.error('Site is required');
+        return;
+      }
+    }
+
+    if (formData.basedOn === 'Asset') {
+      if (!formData.assetGroup) {
+        toast.error('Asset Group is required');
+        return;
+      }
+    }
+
+    // Prevent empty audit
+    if (
+      !formData.site &&
+      !formData.assetGroup &&
+      !formData.building &&
+      !formData.wing &&
+      !formData.area &&
+      !formData.floor &&
+      !formData.department
+    ) {
+      toast.error('Please select at least one filter (Site / Asset Group / etc.)');
       return;
     }
 
@@ -496,21 +540,21 @@ export const AddAssetAuditPage = () => {
     { name: 'assetSubGroup', label: 'Subgroup', values: assetSubGroups },
     { name: 'site', label: 'Site*', values: sites },
     { name: 'building', label: 'Building*', values: buildings },
-    { name: 'wing', label: 'Wing*', values: wings },
-    { name: 'area', label: 'Area*', values: areas },
-    { name: 'floor', label: 'Floor*', values: floors },
-    { name: 'department', label: 'Department*', values: departments },
+    { name: 'wing', label: 'Wing', values: wings },
+    { name: 'area', label: 'Area', values: areas },
+    { name: 'floor', label: 'Floor', values: floors },
+    { name: 'department', label: 'Department', values: departments },
   ];
 
   const locationModeFields = [
     { name: 'site', label: 'Site*', values: sites },
     { name: 'building', label: 'Building*', values: buildings },
-    { name: 'wing', label: 'Wing*', values: wings },
-    { name: 'area', label: 'Area*', values: areas },
-    { name: 'floor', label: 'Floor*', values: floors },
-    { name: 'department', label: 'Department*', values: departments },
+    { name: 'wing', label: 'Wing', values: wings },
+    { name: 'area', label: 'Area', values: areas },
+    { name: 'floor', label: 'Floor', values: floors },
+    { name: 'department', label: 'Department', values: departments },
     { name: 'assetGroup', label: 'Asset Group*', values: assetGroups },
-    { name: 'assetSubGroup', label: 'Asset Subgroup*', values: assetSubGroups },
+    { name: 'assetSubGroup', label: 'Asset Subgroup', values: assetSubGroups },
   ];
 
   const fieldsToRender =
@@ -521,19 +565,19 @@ export const AddAssetAuditPage = () => {
       {/* Title */}
       {/* <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6">NEW AUDIT</h1> */}
       <div className="flex items-center gap-3 mb-4">
-  <Button
-    variant="ghost"
-    size="icon"
-    onClick={() => navigate(-1)}
-    className="hover:bg-gray-200"
-  >
-    <ArrowLeft className="h-5 w-5" />
-  </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="hover:bg-gray-200"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
 
-  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
-    NEW AUDIT
-  </h1>
-</div>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+          NEW AUDIT
+        </h1>
+      </div>
 
 
       <div className="space-y-6">

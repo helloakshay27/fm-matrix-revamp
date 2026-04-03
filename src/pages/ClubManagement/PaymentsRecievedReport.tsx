@@ -24,6 +24,7 @@ interface PaymentReceived {
   amount_bcy: number;
   unused_amount_bcy: number;
   place_of_supply: string;
+  destination_of_supply: string ;
   status: "Paid" | "Draft" | "Void";
 }
 
@@ -48,6 +49,7 @@ interface LockPaymentAPI {
   payment_amount?: string | number;
   excess_amount?: string | number;
   place_of_supply?: string;
+  destination_of_supply:string;
   neft_reference?: string;
   resident_name?: string;
   notes?: string;
@@ -94,7 +96,7 @@ const mapLockPayment = (payment: LockPaymentAPI): PaymentReceived => {
     unused_amount_fcy: unusedAmount,
     amount_bcy: amount,
     unused_amount_bcy: unusedAmount,
-    place_of_supply: payment.place_of_supply || "",
+    destination_of_supply: payment.destination_of_supply || "",
     status,
   };
 };
@@ -157,7 +159,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
-    key: "place_of_supply",
+    key: "destination_of_supply",
     label: "PLACE OF SUPPLY",
     sortable: true,
     hideable: false,
@@ -169,10 +171,9 @@ const getCurrentMonthRange = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return {
-    fromDate: firstDay.toISOString().split("T")[0],
-    toDate: lastDay.toISOString().split("T")[0],
-  };
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
 };
 
 const toApiDate = (iso: string) => {
@@ -189,7 +190,8 @@ const PaymentsRecievedReport: React.FC = () => {
   const [paymentData, setPaymentData] = useState<PaymentReceived[]>([]);
   const [loading, setLoading] = useState(false);
   const [ledgerNameMap, setLedgerNameMap] = useState<Record<string, string>>({});
-  const [filters, setFilters] = useState(getCurrentMonthRange());
+  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
+  const [filters, setFilters] = useState(defaultRange);
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -337,7 +339,7 @@ const PaymentsRecievedReport: React.FC = () => {
         unused_amount_fcy: totals.unused_amount_fcy,
         amount_bcy: totals.amount_bcy,
         unused_amount_bcy: totals.unused_amount_bcy,
-        place_of_supply: "",
+        destination_of_supply: "",
         status: "__total__" as PaymentReceived["status"],
       },
     ];
@@ -386,7 +388,7 @@ const PaymentsRecievedReport: React.FC = () => {
           {formatCurrency(payment.unused_amount_bcy)}
         </span>
       ),
-      place_of_supply: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.place_of_supply}</span>,
+      destination_of_supply : <span className="text-[13px] text-[#111827]">{ payment?.destination_of_supply || "--"}</span>,
     };
   };
 
@@ -434,7 +436,7 @@ const PaymentsRecievedReport: React.FC = () => {
 
       <div className="overflow-hidden rounded-lg border border-[#EAECF0] bg-white">
         <div className="border-b border-[#EAECF0] bg-[#F8F9FC] px-6 py-5 text-center">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Payments Received</h1>
           <p className="mt-1 text-sm text-[#475467]">
             From {new Date(`${filters.fromDate}T00:00:00`).toLocaleDateString("en-GB")} To {new Date(`${filters.toDate}T00:00:00`).toLocaleDateString("en-GB")}
@@ -449,13 +451,14 @@ const PaymentsRecievedReport: React.FC = () => {
             storageKey="payments-recieved-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
             loading={loading}
             emptyMessage="No payments received found"
             tableWrapperClassName="border-0 rounded-none"
             headerCellClassName="bg-[#F7F7FB] text-[#5F6293] text-[12px] font-semibold uppercase tracking-[0.02em] hover:bg-[#F7F7FB]"
             rowClassName="hover:bg-transparent shadow-none"
             cellClassName="px-8 py-3 border-b border-[#EAECF0] hover:bg-transparent align-top"
+            hideColumnsButton={true}
           />
 
           {pagination.total_count > 0 && (

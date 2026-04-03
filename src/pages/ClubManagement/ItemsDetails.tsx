@@ -123,6 +123,9 @@ const lock_account_id = localStorage.getItem("lock_account_id");
     //     createdBy: "",
     // });
 
+    const [itemName, setItemName] = useState("");
+    const [itemIconUrl, setItemIconUrl] = useState<string | null>(null);
+
     const [formData, setFormData] = useState({
         itemType: "",
         unit: "",
@@ -179,6 +182,8 @@ const lock_account_id = localStorage.getItem("lock_account_id");
                     },
                 });
                 const data = response.data || [];
+                setItemName(data.name || "");
+                setItemIconUrl(data.icon?.document_file_name ? data.icon.attachment_url : null);
                 setFormData({
                     itemType: data.product_type || "",
                     unit: data.unit || "",
@@ -368,13 +373,20 @@ const lock_account_id = localStorage.getItem("lock_account_id");
                 <div className="space-y-6">
                     <div className="bg-white rounded-lg border-2 p-6 space-y-8">
                         {/* Header */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                                <FileCog className="w-4 h-4" />
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center bg-[#E5E0D3] flex-shrink-0">
+                                {itemIconUrl ? (
+                                    <img src={itemIconUrl} alt={itemName} className="w-full h-full object-cover" />
+                                ) : (
+                                    <FileCog className="w-6 h-6 text-[#C72030]" />
+                                )}
                             </div>
-                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                                Item Details
-                            </h3>
+                            <div>
+                                <h3 className="text-xl font-bold text-[#1A1A1A]">
+                                    {itemName || "Item Details"}
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-0.5 uppercase tracking-wide">Item Details</p>
+                            </div>
                         </div>
 
                         {/* Overview */}

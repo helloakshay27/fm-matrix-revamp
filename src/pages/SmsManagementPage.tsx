@@ -144,8 +144,8 @@ const SmsManagementPage: React.FC = () => {
   const getAxiosConfig = () => ({
     headers: {
       "Content-Type": "application/json",
-      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
-    },
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {})
+    }
   });
 
   const fetchSmsTemplates = async (
@@ -182,20 +182,18 @@ const SmsManagementPage: React.FC = () => {
       });
 
       const url = `${BASE_URL}/sms_templates.json?${params.toString()}`;
-
+      
       console.log("Fetching SMS Templates from:", url);
       const response = await axios.get(url, getAxiosConfig());
       console.log("SMS Templates Response:", response.data);
-
+      
       const payload = response.data;
       const data: SmsTemplate[] = payload?.data || payload?.sms_templates || [];
-
+      
       setSmsTemplates(data);
     } catch (error: any) {
       console.error("Error fetching SMS templates:", error);
-      toast.error(
-        `Failed to fetch SMS templates: ${error?.response?.status || ""} ${error?.message || ""}`
-      );
+      toast.error(`Failed to fetch SMS templates: ${error?.response?.status || ""} ${error?.message || ""}`);
     } finally {
       setIsSearching(false);
       setIsLoading(false);
@@ -256,7 +254,7 @@ const SmsManagementPage: React.FC = () => {
   ) => {
     const name = e.target.name;
     let value = e.target.value;
-
+    
     // Disallow spaces in module_name and function_name
     if (name === "module_name" || name === "function_name") {
       value = value.replace(/\s+/g, "");
@@ -1181,112 +1179,78 @@ const SmsManagementPage: React.FC = () => {
             <div className="p-8 space-y-6">
               <div className="flex items-center gap-12 pb-4 border-b border-slate-50">
                 <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Is Default
-                  </span>
-                  <span
-                    className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.is_default ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"}`}
-                  >
-                    {viewData.is_default ? "Yes" : "No"}
-                  </span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Is Default</span>
+                  <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.is_default ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"}`}>{viewData.is_default ? "Yes" : "No"}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Active Status
-                  </span>
-                  <span
-                    className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.active ? "bg-[#ecfdf5] text-[#10b981]" : "bg-[#fef2f2] text-[#ef4444]"}`}
-                  >
-                    {viewData.active ? "Active" : "Inactive"}
-                  </span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Active Status</span>
+                  <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.active ? "bg-[#ecfdf5] text-[#10b981]" : "bg-[#fef2f2] text-[#ef4444]"}`}>{viewData.active ? "Active" : "Inactive"}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-x-6 gap-y-5">
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Organization
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Organization</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.organization_name || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Module Name
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Module Name</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.module_name || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Function Name
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Function Name</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.function_name || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Priority
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center capitalize">
                     {viewData.priority || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Service Provider
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Service Provider</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.service_provider || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Template Name
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Template Name</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.template_name || "—"}
                   </p>
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    DLT Template ID
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">DLT Template ID</p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.dlt_template_id || "—"}
                   </p>
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Template URL
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Template URL</p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[60px] break-all whitespace-pre-wrap">
                     {viewData.template_url || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Created At
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Created At</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.created_at || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Updated At
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Updated At</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.updated_at || "—"}
                   </p>
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Created By
-                  </p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Created By</p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.created_by || "—"}
                   </p>
@@ -1295,16 +1259,16 @@ const SmsManagementPage: React.FC = () => {
             </div>
           )}
           <DialogFooter className="p-6 border-t border-slate-100 bg-white sticky bottom-0">
-            <div className="flex w-full justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsViewOpen(false)}
-                className="px-8 h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-all"
-              >
-                Close
-              </Button>
-            </div>
+             <div className="flex w-full justify-end">
+               <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsViewOpen(false)}
+                  className="px-8 h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-all"
+                >
+                  Close
+                </Button>
+             </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

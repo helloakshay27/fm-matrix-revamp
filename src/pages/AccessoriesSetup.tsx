@@ -6,7 +6,7 @@ import axios from 'axios';
 import { Eye, Pencil, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fa } from 'zod/v4/locales';
+import { toast } from 'sonner';
 
 import { Radio, RadioGroup, FormControlLabel } from '@mui/material';
 
@@ -93,23 +93,43 @@ const AccessoriesSetup = () => {
         fetchAccessories();
     }, []);
 
-    const handleStatusToggle = async (id) => {
-        setAccessories(prev => prev.map(acc =>
-            acc.id === id ? { ...acc, active: !acc.active } : acc
-        ));
-        // Optionally, call API to persist status change here
+    const handleStatusToggle = async (accessory) => {
+        const loadingToast = toast.loading(`${accessory.active ? 'Deactivating' : 'Activating'} ${accessory.name}...`);
+        try {
+            const newStatus = !accessory.active;
+            const response = await axios.put(`https://${baseUrl}/pms/inventories/${accessory.id}.json`, 
+                { pms_inventory: { active: newStatus } },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.status === 200 || response.status === 204) {
+                toast.success('Status updated successfully', { id: loadingToast });
+                fetchAccessories();
+            } else {
+                throw new Error('Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error toggling accessory status:', error);
+            toast.error('Failed to update status', { id: loadingToast });
+        }
     };
 
     const renderCell = (item, columnKey: string) => {
         if (columnKey === 'status') {
+            const active = item.active;
             return (
                 <div className="flex items-center justify-center">
                     <div
-                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'}`}
-                        onClick={() => handleStatusToggle(item.id)}
+                        className={`relative inline-flex items-center h-5 rounded-full w-10 cursor-pointer transition-colors ${active ? 'bg-green-500' : 'bg-gray-300'}`}
+                        onClick={() => handleStatusToggle(item)}
                     >
                         <span
-                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`}
+                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all absolute top-0.5 ${active ? 'right-0.5' : 'left-0.5'}`}
                         />
                     </div>
                 </div>

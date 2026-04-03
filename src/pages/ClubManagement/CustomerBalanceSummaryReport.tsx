@@ -1,13 +1,15 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import TextField from "@mui/material/TextField";
 import { NotepadText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 type CustomerBalanceRow = {
   id: string;
+  customerId: string | number;
   customerName: string;
   invoicedAmount: number;
   amountReceived: number;
@@ -18,10 +20,9 @@ const getCurrentMonthRange = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  return {
-    fromDate: firstDay.toISOString().split("T")[0],
-    toDate: lastDay.toISOString().split("T")[0],
-  };
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
 };
 
 const toApiDate = (iso: string) => {
@@ -44,13 +45,14 @@ const formatAmount = (value: number) =>
   })}`;
 
 const columns: ColumnConfig[] = [
-  { key: "customerName", label: "Customer Name", sortable: true, hideable: true, draggable: true },
-  { key: "invoicedAmount", label: "Invoiced Amount", sortable: true, hideable: true, draggable: true },
-  { key: "amountReceived", label: "Amount Received", sortable: true, hideable: true, draggable: true },
-  { key: "closingBalance", label: "Closing Balance", sortable: true, hideable: true, draggable: true },
+  { key: "customerName", label: "Customer Name", sortable: true, hideable: false, draggable: true },
+  { key: "invoicedAmount", label: "Invoiced Amount", sortable: true, hideable: false, draggable: true },
+  { key: "amountReceived", label: "Amount Received", sortable: true, hideable: false, draggable: true },
+  { key: "closingBalance", label: "Closing Balance", sortable: true, hideable: false, draggable: true },
 ];
 
 const CustomerBalanceSummaryReport: React.FC = () => {
+  const navigate = useNavigate();
   const defaultRange = useMemo(() => getCurrentMonthRange(), []);
   const [filters, setFilters] = useState(defaultRange);
   const [reportRows, setReportRows] = useState<CustomerBalanceRow[]>([]);
@@ -60,7 +62,7 @@ const CustomerBalanceSummaryReport: React.FC = () => {
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (fromDate: string, toDate: string) => {
     try {
       setLoading(true);
       const res = await axios.get(
@@ -68,8 +70,8 @@ const CustomerBalanceSummaryReport: React.FC = () => {
         {
           params: {
             lock_account_id,
-            "q[date_gteq]": toApiDate(filters.fromDate),
-            "q[date_lteq]": toApiDate(filters.toDate),
+            "q[date_gteq]": toApiDate(fromDate),
+            "q[date_lteq]": toApiDate(toDate),
           },
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -78,6 +80,7 @@ const CustomerBalanceSummaryReport: React.FC = () => {
       const apiData = res?.data || [];
       const mapped: CustomerBalanceRow[] = apiData.map((item: any, i: number) => ({
         id: String(item.id || i),
+        customerId: item.id || "",
         customerName: item.name || item.customer_name || "--",
         invoicedAmount: item.invoiced_amount ?? item.total_invoiced ?? 0,
         amountReceived: item.amount_received ?? item.total_received ?? 0,
@@ -90,11 +93,11 @@ const CustomerBalanceSummaryReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [baseUrl, token, lock_account_id]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(defaultRange.fromDate, defaultRange.toDate);
+  }, [defaultRange.fromDate, defaultRange.toDate, fetchData]);
 
   const totals = useMemo(
     () =>
@@ -114,14 +117,14 @@ const CustomerBalanceSummaryReport: React.FC = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Append totals as last row in the same table
   const tableData = useMemo(() => {
     if (reportRows.length === 0) return reportRows;
     return [
       ...reportRows,
       {
         id: "__total__",
-        customerName: "Total",
+        customerId: "",
+        customerName: "__total__",
         invoicedAmount: totals.invoicedAmount,
         amountReceived: totals.amountReceived,
         closingBalance: totals.closingBalance,
@@ -131,35 +134,26 @@ const CustomerBalanceSummaryReport: React.FC = () => {
 
   const renderRow = (row: CustomerBalanceRow) => {
     const isTotal = row.id === "__total__";
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
     return {
-      customerName: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+      customerName: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+      ) : (
+        <button
+          onClick={() => navigate(`/accounting/customers/details/${row.customerId}`)}
+          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+        >
           {row.customerName}
-        </span>
+        </button>
       ),
-      invoicedAmount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
-          {formatAmount(row.invoicedAmount)}
-        </span>
-      ),
-      amountReceived: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
-          {formatAmount(row.amountReceived)}
-        </span>
-      ),
-      closingBalance: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>
-          {formatAmount(row.closingBalance)}
-        </span>
-      ),
+      invoicedAmount: <span className={amtClass}>{formatAmount(row.invoicedAmount)}</span>,
+      amountReceived: <span className={amtClass}>{formatAmount(row.amountReceived)}</span>,
+      closingBalance: <span className={amtClass}>{formatAmount(row.closingBalance)}</span>,
     };
   };
 
   return (
-    <div
-      className="w-full bg-[#f9f7f2] p-6"
-      style={{ minHeight: "100vh", boxSizing: "border-box" }}
-    >
+    <div className="w-full bg-[#f9f7f2] p-6" style={{ minHeight: "100vh", boxSizing: "border-box" }}>
       {/* Filter */}
       <div className="mb-6 rounded-lg border-2 bg-white p-6">
         <div className="mb-4 flex items-center gap-3">
@@ -195,7 +189,7 @@ const CustomerBalanceSummaryReport: React.FC = () => {
           <Button
             type="button"
             className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
-            onClick={fetchData}
+            onClick={() => fetchData(filters.fromDate, filters.toDate)}
           >
             View
           </Button>
@@ -205,7 +199,7 @@ const CustomerBalanceSummaryReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
             Customer Balance Summary
           </h1>
@@ -222,8 +216,8 @@ const CustomerBalanceSummaryReport: React.FC = () => {
             storageKey="customer-balance-summary-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
             loading={loading}
+            hideColumnsButton={true}
             emptyMessage="There are no transactions during the selected date range."
           />
         </div>

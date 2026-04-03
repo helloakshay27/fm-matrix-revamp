@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users } from 'lucide-react';
+import { Eye, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -9,17 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
-import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { ClubMemberFilterModal, ClubMembershipFilters } from '@/components/ClubMemberFilterModal';
+import { StatsCard } from "@/components/StatsCard";
+import { Switch } from "@/components/ui/switch";
 import {
   Pagination,
   PaginationContent,
@@ -73,12 +65,21 @@ export const ClubMembershipDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
+  const [statusCounts, setStatusCounts] = useState<{ active: number; inactive: number; expired: number, pending: number }>({
+    active: 0,
+    inactive: 0,
+    expired: 0,
+    pending: 0
+  });
   const [filters, setFilters] = useState<ClubMembershipFilters>({
-    search: '',
+    email: '',
+    mobile: '',
     clubMemberEnabled: '',
     accessCardEnabled: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    search: '',
+    status: ''
   });
 
   const perPage = 20;
@@ -101,6 +102,16 @@ export const ClubMembershipDashboard = () => {
         url.searchParams.append('global_search_term', filters.search);
       }
 
+      // Add email filter
+      if (filters.email) {
+        url.searchParams.append('q[user_email_cont]', filters.email);
+      }
+
+      // Add mobile filter
+      if (filters.mobile) {
+        url.searchParams.append('q[user_mobile_cont]', filters.mobile);
+      }
+
       // Add club member enabled filter
       if (filters.clubMemberEnabled) {
         url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
@@ -109,6 +120,11 @@ export const ClubMembershipDashboard = () => {
       // Add access card enabled filter
       if (filters.accessCardEnabled) {
         url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+      }
+
+      // Add status filter
+      if (filters.status) {
+        url.searchParams.append('q[status_eq]', filters.status);
       }
 
       // Add start date filter
@@ -153,6 +169,9 @@ export const ClubMembershipDashboard = () => {
         setMemberships(data.club_members);
         setTotalMembers(data.pagination?.total_count || 0);
         setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
+        if (data.status_counts) {
+          setStatusCounts(data.status_counts);
+        }
         // toast.success(`Loaded ${data.length} members`);
       } else {
         setMemberships([]);
@@ -170,6 +189,42 @@ export const ClubMembershipDashboard = () => {
       setLoading(false);
     }
   }, [filters, perPage]);
+
+  // Handle status toggle
+  const handleToggleStatus = async (item: MembershipData, checked: boolean) => {
+    const loadingToast = toast.loading(`Updating status for ${item.user_name}...`);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members/${item.id}.json`);
+      url.searchParams.append('access_token', token || '');
+
+      const response = await fetch(url.toString(), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          club_member: {
+            club_member_enabled: checked
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      toast.success('Status updated successfully', { id: loadingToast });
+
+      // Update local state to reflect change immediately
+      setMemberships(prev => prev.map(m => m.id === item.id ? { ...m, club_member_enabled: checked } : m));
+
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status', { id: loadingToast });
+    }
+  };
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -202,20 +257,86 @@ export const ClubMembershipDashboard = () => {
     fetchMemberships(currentPage);
   }, [currentPage, filters, fetchMemberships]);
 
+  // Handle card click
+  const handleCardClick = (title: string) => {
+    let status = '';
+    switch (title) {
+      case 'Pending Members':
+        status = 'pending';
+        break;
+      case 'Active Members':
+        status = 'active';
+        break;
+      case 'Inactive Members':
+        status = 'inactive';
+        break;
+      case 'Expired Members':
+        status = 'expired';
+        break;
+      default:
+        status = '';
+    }
+
+    setFilters(prev => ({
+      ...prev,
+      status: status
+    }));
+    setCurrentPage(1);
+  };
+
   // Handle export
-  const handleExport = async () => {
+  const handleExport = async (columnVisibility?: Record<string, boolean>) => {
     const loadingToast = toast.loading('Preparing Excel export...');
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
+      const siteId = localStorage.getItem('selected_site_id') || '1';
 
       // Build the export URL
-      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`);
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members/export_members.xlsx`);
       url.searchParams.append('access_token', token || '');
+      url.searchParams.append('pms_site_id', siteId);
+
+      // Add columns from the visible table columns, excluding non-exportable ones
+      const nonExportableColumns = ['actions', 'avatar', 'identification_image', 'attachments', 'status_toggle'];
+      const columnMapping: Record<string, string> = {
+        'user_name': 'first_name',
+        'user_email': 'email',
+        'user_mobile': 'mobile',
+        'membershipStatus': 'status'
+      };
+
+      const columnsToExport = columns
+        .filter(col => {
+          // Exclude non-exportable columns
+          if (nonExportableColumns.includes(col.key)) return false;
+          // If columnVisibility is provided, only include visible columns
+          if (columnVisibility && columnVisibility[col.key] === false) return false;
+          return true;
+        })
+        .map(col => columnMapping[col.key] || col.key);
+
+      columnsToExport.forEach(col => url.searchParams.append('columns[]', col));
+
+      // Add start/end dates from filters if they exist
+      if (filters.startDate) {
+        url.searchParams.append('start_date', filters.startDate);
+      }
+      if (filters.endDate) {
+        url.searchParams.append('end_date', filters.endDate);
+      }
 
       // Add the same filters that are applied to the table
       if (filters.search) {
         url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
+      }
+
+      if (filters.email) {
+        url.searchParams.append('q[user_email_cont]', filters.email);
+      }
+
+      if (filters.mobile) {
+        url.searchParams.append('q[user_mobile_cont]', filters.mobile);
       }
 
       if (filters.clubMemberEnabled) {
@@ -224,6 +345,10 @@ export const ClubMembershipDashboard = () => {
 
       if (filters.accessCardEnabled) {
         url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+      }
+
+      if (filters.status) {
+        url.searchParams.append('q[status_eq]', filters.status);
       }
 
       if (filters.startDate) {
@@ -280,7 +405,7 @@ export const ClubMembershipDashboard = () => {
   };
 
   // Handle download society QR
-const handleDownloadSocietyQR = async () => {
+  const handleDownloadSocietyQR = async () => {
     const loadingToast = toast.loading('Generating Society QR Code...');
     try {
       // TODO: Replace with actual API call
@@ -302,7 +427,10 @@ const handleDownloadSocietyQR = async () => {
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
-    setFilters(newFilters);
+    setFilters(prev => ({
+      ...newFilters,
+      search: prev.search
+    }));
     setCurrentPage(1);
     setIsFilterOpen(false);
   };
@@ -521,10 +649,11 @@ const handleDownloadSocietyQR = async () => {
     { key: 'membershipStatus', label: 'Membership Status', sortable: true },
     { key: 'access_card_enabled', label: 'Card Allocated', sortable: true },
     { key: 'access_card_id', label: 'Access Card ID', sortable: true },
-    { key: 'identification_image', label: 'ID Card', sortable: false },
-    { key: 'avatar', label: "User Photo", sortable: false },
-    { key: 'attachments', label: 'Attachments', sortable: false },
-    { key: 'created_at', label: 'Created On', sortable: true }
+    // { key: 'identification_image', label: 'ID Card', sortable: false },
+    // { key: 'avatar', label: "User Photo", sortable: false },
+    // { key: 'attachments', label: 'Attachments', sortable: false },
+    { key: 'created_at', label: 'Created On', sortable: true },
+    { key: 'status_toggle', label: 'Status', sortable: false }
   ];
 
   // Render cell content
@@ -623,11 +752,26 @@ const handleDownloadSocietyQR = async () => {
       return item.access_card_id || <span className="text-gray-400">-</span>;
     }
 
-    if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
+    if (columnKey === 'status_toggle') {
+      const active = !!item.club_member_enabled;
+      return (
+        <div className="flex items-center gap-3">
+          <div
+            onClick={() => handleToggleStatus(item, !active)}
+            className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${active ? 'bg-green-500' : 'bg-gray-300'}`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
+          </div>
+
+        </div>
+      );
+    }
+
+    if (!item[columnKey as keyof MembershipData] || item[columnKey as keyof MembershipData] === null || item[columnKey as keyof MembershipData] === '') {
       return <span className="text-gray-400">--</span>;
     }
 
-    return item[columnKey];
+    return item[columnKey as keyof MembershipData] as any;
   };
 
   // Custom left actions
@@ -659,7 +803,53 @@ const handleDownloadSocietyQR = async () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {/* Header Section */}
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <StatsCard
+          title="Total Members"
+          value={
+            (statusCounts?.active ?? 0) +
+            (statusCounts?.inactive ?? 0) +
+            (statusCounts?.expired ?? 0) +
+            (statusCounts?.pending ?? 0)
+          }
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === ''}
+        />
+        <StatsCard
+          title="Pending Members"
+          value={statusCounts?.pending ?? 0}
+          icon={<Users className="w-6 h-6 text-yellow-400" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'pending'}
+        />
+        <StatsCard
+          title="Active Members"
+          value={statusCounts?.active ?? 0}
+          icon={<Users className="w-6 h-6 text-green-600" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'active'}
+        />
+        <StatsCard
+          title="Inactive Members"
+          value={statusCounts?.inactive ?? 0}
+          icon={<Users className="w-6 h-6 text-yellow-600" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'inactive'}
+        />
+        <StatsCard
+          title="Expired Members"
+          value={statusCounts?.expired ?? 0}
+          icon={<Users className="w-6 h-6 text-red-600" />}
+          className="cursor-pointer"
+          onClick={handleCardClick}
+          selected={filters.status === 'expired'}
+        />
+      </div>
 
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">
@@ -678,6 +868,7 @@ const handleDownloadSocietyQR = async () => {
           selectable={true}
           pagination={false}
           enableExport={true}
+          onFilterClick={() => setIsFilterOpen(true)}
           exportFileName="club-memberships"
           handleExport={handleExport}
           storageKey="club-memberships-table"
@@ -691,7 +882,6 @@ const handleDownloadSocietyQR = async () => {
               {renderCustomActions()}
             </div>
           }
-          // onFilterClick={() => setIsFilterOpen(true)}
           rightActions={renderRightActions()}
           searchPlaceholder="Search Members"
           onSearchChange={handleSearch}
@@ -732,10 +922,11 @@ const handleDownloadSocietyQR = async () => {
       </div>
 
       {/* Filter Dialog */}
-      <ClubMembershipFilterDialog
+      <ClubMemberFilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApply={handleFilterApply}
+        initialFilters={filters}
       />
     </div>
   );

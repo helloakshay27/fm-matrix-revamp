@@ -52,6 +52,8 @@ export const AdminLayout: React.FC = () => {
     if (path.includes("/lock-module")) return "Lock Module";
     if (path.includes("/lock-function")) return "Lock Function";
     if (path.includes("/lock-sub-function")) return "Lock Sub Function";
+    if (path.includes("/feedback-dashboard")) return "Feedback Dashboard";
+    if (path.includes("/systems-sops")) return "Systems & SOPs";
     return "Admin Console";
   };
 

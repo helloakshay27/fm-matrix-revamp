@@ -8,6 +8,14 @@ import {
   saveBaseUrl,
 } from "@/utils/auth";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  getEmbeddedConfig,
+  isEmbeddedMode,
+  storeEmbeddedData,
+  resolveBaseUrlByOrgId,
+  hasEmbeddedSession,
+  initializeEmbeddedNavigation,
+} from "@/utils/embeddedMode";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,42 +33,93 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const { toast } = useToast();
 
-  // useEffect(() => {
-  //   // Check if token exists and is valid
-  //   const authenticated = isAuthenticated();
-  //   const token = getToken();
-
-  //   if (!authenticated || !token) {
-  //     toast({
-  //       variant: "destructive",
-  //       title: "Access Denied",
-  //       description: "Please login to access this page",
-  //       duration: 3000,
-  //     });
-  //     setIsAuthorized(false);
-  //   } else {
-  //     setIsAuthorized(true);
-  //   }
-  // }, [location.pathname, toast]);
-
   useEffect(() => {
-    const checkAuthentication = () => {
-      // First, check for token in URL parameters
+    const checkAuthentication = async () => {
+      // First, check for embedded mode (org_id + access_token in URL)
+      const embeddedConfig = getEmbeddedConfig();
+
+      console.warn("ProtectedRoute Auth Check:", {
+        isEmbedded: embeddedConfig.isEmbedded,
+        hasOrgId: !!embeddedConfig.orgId,
+        hasAccessToken: !!embeddedConfig.accessToken,
+        hasUserId: !!embeddedConfig.userId,
+        currentPath: location.pathname,
+      });
+
+      // Handle embedded mode (e.g., /vas/tasks?embedded=true&org_id=13&access_token=xxx)
+      if (embeddedConfig.orgId && embeddedConfig.accessToken) {
+        console.warn(
+          "🔌 ProtectedRoute: Embedded mode detected, initializing..."
+        );
+
+        // Store embedded data
+        storeEmbeddedData(embeddedConfig);
+
+        // Initialize embedded navigation interceptor to auto-add embedded=true to all routes
+        initializeEmbeddedNavigation();
+
+        // Save token using auth utility
+        saveToken(embeddedConfig.accessToken);
+
+        // Resolve and save base URL based on org_id
+        try {
+          const resolvedBaseUrl = await resolveBaseUrlByOrgId(
+            embeddedConfig.orgId
+          );
+          saveBaseUrl(resolvedBaseUrl);
+          console.warn(
+            "✅ ProtectedRoute: Base URL resolved for embedded mode:",
+            resolvedBaseUrl
+          );
+        } catch (error) {
+          console.error(
+            "❌ ProtectedRoute: Failed to resolve base URL:",
+            error
+          );
+        }
+
+        // Store user data if available
+        if (embeddedConfig.userId) {
+          localStorage.setItem("user_id", embeddedConfig.userId);
+
+          // Create a user object for embedded access
+          const embeddedUser = {
+            id: parseInt(embeddedConfig.userId),
+            email: "",
+            firstname: "Embedded",
+            lastname: "User",
+            access_token: embeddedConfig.accessToken,
+            user_type: "embedded_user",
+          };
+          saveUser(embeddedUser);
+          console.warn("✅ ProtectedRoute: Embedded user created and stored");
+        }
+
+        // Embedded mode is authorized
+        setIsAuthorized(true);
+        return;
+      }
+
+      // Check for existing embedded session
+      if (hasEmbeddedSession()) {
+        console.warn("🔌 ProtectedRoute: Existing embedded session found");
+        // Re-initialize navigation interceptor for existing session
+        initializeEmbeddedNavigation();
+        setIsAuthorized(true);
+        return;
+      }
+
+      // Legacy: Check for token in URL parameters (VI integration)
       const urlParams = new URLSearchParams(location.search);
       const access_token = urlParams.get("access_token");
       const company_id = urlParams.get("company_id");
       const user_id = urlParams.get("user_id");
 
-      console.log("ProtectedRoute Auth Check:", {
-        access_token: access_token ? "Present" : "Missing",
-        company_id,
-        user_id,
-        currentPath: location.pathname,
-      });
-
-      // If token is in URL, store it first
-      if (access_token) {
-        console.log("ProtectedRoute: Storing token from URL parameters");
+      // If token is in URL (legacy VI flow), store it first
+      if (access_token && !embeddedConfig.orgId) {
+        console.warn(
+          "ProtectedRoute: Storing token from URL parameters (legacy VI flow)"
+        );
 
         // Save token using auth utility
         saveToken(access_token);
@@ -92,7 +151,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           };
           saveUser(viUser);
 
-          console.log("ProtectedRoute: VI User created and stored");
+          console.warn("ProtectedRoute: VI User created and stored");
         }
 
         // Token is valid, user is authorized
@@ -105,12 +164,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       const token = getToken();
 
       if (!authenticated || !token) {
-        console.log(
+        console.warn(
           "ProtectedRoute: No authentication found, redirecting to login"
         );
         setIsAuthorized(false);
       } else {
-        console.log("ProtectedRoute: User is authenticated");
+        console.warn("ProtectedRoute: User is authenticated");
         setIsAuthorized(true);
       }
     };

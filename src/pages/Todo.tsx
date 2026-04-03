@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter, GripVertical } from "lucide-react";
+import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter, GripVertical, Eye } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AddToDoModal from "@/components/AddToDoModal";
 import TodoConvertModal from "@/components/TodoConvertModal";
 import TodoFilterModal, { TodoFilters } from "@/components/TodoFilterModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { Button } from "@/components/ui/button";
 import { useLayout } from "@/contexts/LayoutContext";
 import { toast } from "sonner";
@@ -149,6 +150,8 @@ export default function Todo() {
     selectedAssignedTo: [],
     assignedToSearch: '',
   });
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
 
   // Use React Query hook for infinite pagination
   const userIds = selectedUsers.map(u => u.value);
@@ -180,6 +183,7 @@ export default function Todo() {
   } = usePriorityTodos({
     priority: selectedPriority || '',
     taskType,
+    userIds,
     fromDate: appliedFilters.fromDate,
     toDate: appliedFilters.toDate,
     selectedAssignedTo: assignedToIds,
@@ -626,6 +630,10 @@ export default function Todo() {
                 isLoading={isPriorityLoading}
                 onTodoToggle={toggleTodo}
                 onEditTodo={handleEditTodo}
+                onViewTodo={(todo) => {
+                  setSelectedTodo(todo);
+                  setIsDetailsModalOpen(true);
+                }}
                 onConvertTodo={handleConvertTodo}
                 onFlagTodo={(todo) => handleFlagTodo(todo)}
                 hasNextPage={priorityHasNextPage}
@@ -650,6 +658,8 @@ export default function Todo() {
               hasNextPage={hasNextPage}
               fetchNextPage={fetchNextPage}
               {...{ toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId, setIsPauseModalOpen, handleEditTodo, handleConvertTodo, handleFlagTodo, refetch }}
+              setIsDetailsModalOpen={setIsDetailsModalOpen}
+              setSelectedTodo={setSelectedTodo}
             />
 
             {/* ------------------------------------
@@ -662,6 +672,8 @@ export default function Todo() {
               getCompletionDateLabel={getCompletionDateLabel}
               isLoading={isLoading}
               toggleTodo={toggleTodo}
+              setIsDetailsModalOpen={setIsDetailsModalOpen}
+              setSelectedTodo={setSelectedTodo}
             />
           </div>
         </div>
@@ -719,6 +731,14 @@ export default function Todo() {
           setIsModalOpen={setIsFilterModalOpen}
           onApplyFilters={handleApplyFilters}
           users={users}
+        />
+
+        {/* Todo Details Modal */}
+        <TodoDetailsModal
+          isModalOpen={isDetailsModalOpen}
+          setIsModalOpen={setIsDetailsModalOpen}
+          todo={selectedTodo}
+          onEditClick={() => handleEditTodo(selectedTodo)}
         />
 
         {/* Drag Overlay - shows preview of dragged item */}
@@ -884,6 +904,8 @@ const PendingTasksCard = ({
   handleConvertTodo,
   handleFlagTodo,
   refetch,
+  setIsDetailsModalOpen,
+  setSelectedTodo,
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: "pending-section" });
 
@@ -920,6 +942,8 @@ const PendingTasksCard = ({
                     handleConvertTodo={handleConvertTodo}
                     handleFlagTodo={handleFlagTodo}
                     refetch={refetch}
+                    setIsDetailsModalOpen={setIsDetailsModalOpen}
+                    setSelectedTodo={setSelectedTodo}
                   />
                 ))}
               </div>
@@ -941,6 +965,8 @@ const PendingTasksCard = ({
                     handleConvertTodo={handleConvertTodo}
                     handleFlagTodo={handleFlagTodo}
                     refetch={refetch}
+                    setIsDetailsModalOpen={setIsDetailsModalOpen}
+                    setSelectedTodo={setSelectedTodo}
                   />
                 ))}
               </div>
@@ -962,6 +988,8 @@ const PendingTasksCard = ({
                     handleConvertTodo={handleConvertTodo}
                     handleFlagTodo={handleFlagTodo}
                     refetch={refetch}
+                    setIsDetailsModalOpen={setIsDetailsModalOpen}
+                    setSelectedTodo={setSelectedTodo}
                   />
                 ))}
               </div>
@@ -983,6 +1011,8 @@ const PendingTasksCard = ({
                     handleConvertTodo={handleConvertTodo}
                     handleFlagTodo={handleFlagTodo}
                     refetch={refetch}
+                    setIsDetailsModalOpen={setIsDetailsModalOpen}
+                    setSelectedTodo={setSelectedTodo}
                   />
                 ))}
               </div>
@@ -1022,6 +1052,8 @@ const CompletedTasksCard = ({
   getCompletionDateLabel,
   isLoading,
   toggleTodo,
+  setIsDetailsModalOpen,
+  setSelectedTodo,
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: "completed-section" });
 
@@ -1057,6 +1089,8 @@ const CompletedTasksCard = ({
                   key={todo.id}
                   todo={todo}
                   toggleTodo={toggleTodo}
+                  setIsDetailsModalOpen={setIsDetailsModalOpen}
+                  setSelectedTodo={setSelectedTodo}
                 />
               ))}
             </div>
@@ -1078,6 +1112,8 @@ const TodoItem = ({
   handleConvertTodo,
   handleFlagTodo,
   refetch,
+  setIsDetailsModalOpen,
+  setSelectedTodo,
 }) => {
   const navigate = useNavigate();
   const baseUrl = localStorage.getItem("baseUrl");
@@ -1094,6 +1130,11 @@ const TodoItem = ({
       // Navigate to task details page
       navigate(`/vas/tasks/${todo.task_management_id}`);
     }
+  };
+
+  const handleOpenDetails = () => {
+    setSelectedTodo(todo);
+    setIsDetailsModalOpen(true);
   };
 
   // Check if task is started from the nested task_management object
@@ -1171,7 +1212,9 @@ const TodoItem = ({
       }
       <div className="flex items-center ">
         <button
-          className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors cursor-grab"
+          {...listeners}
+          {...attributes}
+          className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors cursor-grab active:cursor-grabbing"
           title="Drag todo"
         >
           <GripVertical size={14} />
@@ -1182,9 +1225,19 @@ const TodoItem = ({
             handleEditTodo(todo);
           }}
           className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-          title="Edit todo"
+          title="View todo"
         >
           <Pencil size={14} />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOpenDetails();
+          }}
+          className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+          title="View todo"
+        >
+          <Eye size={14} />
         </button>
         <button
           onClick={(e) => {
@@ -1215,13 +1268,11 @@ const TodoItem = ({
         </button>
       </div>
 
-      <div
-        {...listeners}
-        {...attributes}
-        className="flex flex-col flex-1 cursor-grab active:cursor-grabbing"
-      >
+      <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-foreground">
+          <span
+            className="text-sm text-foreground cursor-pointer"
+          >
             {todo.task_management_id && (
               <span
                 onClick={(e) => {
@@ -1342,7 +1393,7 @@ const TodoItem = ({
 // ----------------------------------------------
 // Completed Todo Item Component
 // ----------------------------------------------
-const CompletedTodoItem = ({ todo, toggleTodo }) => {
+const CompletedTodoItem = ({ todo, toggleTodo, setIsDetailsModalOpen, setSelectedTodo }) => {
   const navigate = useNavigate();
 
   const getPriorityBgColor = () => {
@@ -1405,6 +1456,11 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
     }
   };
 
+  const handleOpenDetails = () => {
+    setSelectedTodo(todo);
+    setIsDetailsModalOpen(true);
+  };
+
   // Check if task is started from the nested task_management object
   const isTaskStarted = todo.task_management?.is_started || false;
 
@@ -1421,10 +1477,15 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
       }
       <div className="flex flex-col flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-foreground">
+          <span
+            className="text-sm text-foreground cursor-pointer"
+          >
             {todo.task_management_id && (
               <span
-                onClick={handleTaskClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTaskClick();
+                }}
                 className="text-sm font-semibold text-[#c72030] cursor-pointer hover:underline"
               >
                 T-{todo.task_management_id}

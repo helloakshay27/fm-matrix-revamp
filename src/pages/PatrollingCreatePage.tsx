@@ -815,7 +815,7 @@ export const PatrollingCreatePage: React.FC = () => {
       });
 
       const errorFields = [];
-      if (hasPatrolNameError) errorFields.push('Patrol Name');
+      // if (hasPatrolNameError) errorFields.push('Patrol Name');
       if (hasEstimatedDurationError) errorFields.push('Estimated Duration');
       if (hasStartDateError) errorFields.push('Start Date');
       if (hasEndDateError) errorFields.push('End Date');
@@ -1246,7 +1246,8 @@ export const PatrollingCreatePage: React.FC = () => {
               <TextField
                 label={
                   <>
-                    Name<span className="text-red-500">*</span>
+                    Name
+                    {/* <span className="text-red-500">*</span> */}
                   </>
                 }
                 placeholder="Enter Patrol Name"
@@ -1255,7 +1256,7 @@ export const PatrollingCreatePage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.patrolName}
-                helperText={errors.patrolName ? 'Patrol Name is required' : ''}
+                // helperText={errors.patrolName ? 'Patrol Name is required' : ''}
                 slotProps={{
                   inputLabel: {
                     shrink: true,

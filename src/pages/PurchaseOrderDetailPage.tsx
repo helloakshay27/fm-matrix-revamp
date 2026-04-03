@@ -356,7 +356,6 @@ export const PurchaseOrderDetailPage = () => {
   const status = purchaseOrder.all_level_approved ? "approved" : "pending"; // Dynamic status based on all_level_approved
   const paymentTermsDisplay =
     purchaseOrder.payment_term ||
-    purchaseOrder.payment_terms ||
     purchaseOrder.payment_tern ||
     "N/A";
   const deliveryAddressDisplay =
@@ -397,6 +396,9 @@ export const PurchaseOrderDetailPage = () => {
             <Badge className={`${getStatusColor(status)} border`}>
               {status.toUpperCase()}
             </Badge>
+            <Button variant="outline" size="sm">
+              Convert to Bill
+            </Button>
           </div>
         </div>
 
@@ -555,7 +557,8 @@ export const PurchaseOrderDetailPage = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-primary" />
-                        Line Items
+                        Item Table
+
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -611,28 +614,28 @@ export const PurchaseOrderDetailPage = () => {
                       </div>
 
                       {/* Pricing Summary */}
-                      <div className="mt-6 flex justify-end">
+                      {/* <div className="mt-6 flex justify-end">
                         <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              Net Amount
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Sub Total
                             </span>
-                            <span className="font-semibold">
-                              ₹{purchaseOrder.net_amount_formatted || "0.00"}
+                            <span className="font-semibold text-base">
+                              ₹{purchaseOrder.net_amount_formatted || purchaseOrder.pms_po_inventories?.reduce((sum, item) => sum + item.total_value, 0).toFixed(2) || "0.00"}
                             </span>
                           </div>
-                          {purchaseOrder.total_tax_amount && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Tax</span>
-                              <span className="font-semibold">
-                                ₹{purchaseOrder.total_tax_amount.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-                          <div className="border-t pt-3 flex justify-between text-lg">
-                            <span className="font-bold">Total Amount</span>
-                            <span className="font-bold text-primary">
-                              ₹{purchaseOrder.total_amount_formatted || "0.00"}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Tax
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{(purchaseOrder.total_tax_amount || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-primary text-2xl">
+                              ₹{purchaseOrder.total_amount_formatted || purchaseOrder.amount?.toFixed(2) || "0.00"}
                             </span>
                           </div>
                           {purchaseOrder.amount_in_words && (
@@ -646,12 +649,77 @@ export const PurchaseOrderDetailPage = () => {
                             </div>
                           )}
                         </div>
+                      </div> */}
+                      {/* FIXED Pricing Summary - Matches Bill Style + Correct Logic for PO */}
+                      <div className="mt-6 flex justify-end">
+                        <div className="w-full max-w-md bg-white border border-border rounded-lg overflow-hidden">
+
+                          {/* Sub Total */}
+                          <div className="flex justify-between items-center px-6 py-3 border-b">
+                            <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                            <span className="font-semibold text-base">
+                              ₹{purchaseOrder.sub_total_amount?.toFixed(2) || purchaseOrder.net_amount_formatted }
+                            </span>
+                          </div>
+
+                          {/* Discount */}
+                          {purchaseOrder.tax?.discount && purchaseOrder.tax.discount > 0 && (
+                            <div className="flex justify-between items-center px-6 py-3 border-b">
+                              <span className="text-sm font-medium text-muted-foreground">
+                                Discount ({purchaseOrder.tax.tax_percentage || 0}%)
+                              </span>
+                              <span className="font-semibold text-base text-red-600">
+                                -₹{purchaseOrder.tax.discount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* TDS / Lock Account Tax - Shown as positive (not subtracted) */}
+                          {purchaseOrder.lock_account_tax_amount && purchaseOrder.lock_account_tax_amount > 0 && (
+                            <div className="flex justify-between items-center px-6 py-3 border-b">
+                              <span className="text-sm font-medium text-muted-foreground">
+                                {purchaseOrder.tax?.tax_type?.toUpperCase() || "TDS"}
+                              </span>
+                              <span className="font-semibold text-base">
+                                ₹{purchaseOrder.lock_account_tax_amount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Adjustment */}
+                          {purchaseOrder.tax?.adjustment && purchaseOrder.tax.adjustment !== 0 && (
+                            <div className="flex justify-between items-center px-6 py-3 border-b">
+                              <span className="text-sm font-medium text-muted-foreground">Adjustment</span>
+                              <span className="font-semibold text-base">
+                                ₹{purchaseOrder.tax.adjustment.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Grand Total - Always use backend's total_amount */}
+                          <div className="flex justify-between items-center px-6 py-4 bg-primary/5 border-t">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-black text-2xl">
+                              ₹{purchaseOrder.total_amount_formatted ||
+                                purchaseOrder.total_amount?.toFixed(2) || "0.00"}
+                            </span>
+                          </div>
+
+                          {/* Amount in Words */}
+                          {purchaseOrder.amount_in_words && (
+                            <div className="px-6 py-3 border-t bg-muted/30">
+                              <p className="text-xs text-muted-foreground">Amount in Words:</p>
+                              <p className="text-sm font-medium">{purchaseOrder.amount_in_words}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
+
                     </CardContent>
                   </Card>
                 )}
 
-              {/* Terms & Conditions */}
+
               {purchaseOrder.terms_conditions && (
                 <Card>
                   <CardHeader>

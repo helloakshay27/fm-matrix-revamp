@@ -290,23 +290,50 @@ export const SurveyMappingDetailsPage = () => {
   };
 
   const handleMoveAssets = () => {
-    // Implement move assets logic
-    console.log("Moving assets for:", selectedLocations);
+    // Move assets logic not implemented
   };
 
-  const handlePrintQR = () => {
-    // Implement print QR logic
-    console.log("Printing QR codes for:", selectedLocations);
+  const handlePrintQR = async () => {
+    if (selectedLocations.length === 0) return;
+    try {
+      const surveyMappingIds = selectedLocations.join(",");
+      const apiUrl = getFullUrl(
+        `/survey_mappings/print_qr_codes?survey_mapping_ids=${surveyMappingIds}`
+      );
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to print QR codes: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `qr_codes_${surveyMappingIds}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success(
+        `QR codes downloaded for ${selectedLocations.length} location(s).`
+      );
+    } catch (error) {
+      console.error("Error printing QR codes:", error);
+      toast.error("Failed to download QR codes. Please try again.");
+    }
   };
 
   const handleDownload = () => {
-    // Implement download logic
-    console.log("Downloading for:", selectedLocations);
+    // Download logic not implemented
   };
 
   const handleDispose = () => {
-    // Implement dispose logic
-    console.log("Disposing:", selectedLocations);
+    // Dispose logic not implemented
   };
 
   const locationTableColumns: ColumnConfig[] = [
@@ -643,9 +670,34 @@ export const SurveyMappingDetailsPage = () => {
               title="Click to view full size"
             />
             <span
-              onClick={() =>
-                handleDownloadQRCode(item.qr_code!, item.mapping_id)
-              }
+              onClick={async () => {
+                try {
+                  const apiUrl = getFullUrl(
+                    `/survey_mappings/print_qr_codes?survey_mapping_ids=${item.mapping_id}`
+                  );
+                  const response = await fetch(apiUrl, {
+                    method: "GET",
+                    headers: {
+                      Authorization: getAuthHeader(),
+                      "Content-Type": "application/json",
+                    },
+                  });
+                  if (!response.ok) throw new Error(`Failed: ${response.status}`);
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = `qr_code_${item.mapping_id}.pdf`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  window.URL.revokeObjectURL(url);
+                  toast.success("QR code downloaded successfully.");
+                } catch (error) {
+                  console.error("Error downloading QR code:", error);
+                  toast.error("Failed to download QR code. Please try again.");
+                }
+              }}
               className="text-xs px-2 py-1 text-black cursor-pointer hover:underline"
               title="Download QR Code"
             >

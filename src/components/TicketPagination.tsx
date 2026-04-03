@@ -128,7 +128,7 @@ export const TicketPagination: React.FC<TicketPaginationProps> = ({
     return pages;
   };
 
-  if (totalPages <= 1) return null;
+  if (totalRecords === 0) return null;
 
   return (
     <div className="flex items-center justify-between mt-6 gap-4">

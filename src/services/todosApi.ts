@@ -74,10 +74,17 @@ export const fetchTodos = async (
         if (userId) {
             queryParts.push(`q[user_id_eq]=${userId}`);
         }
+    } else if (taskType === "all" && userIds.length === 0) {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const userId = user?.id;
+        queryParts.push(`q[user_id_or_created_by_id_eq]=${userId}`);
     } else if (taskType === "all" && userIds.length > 0) {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const userId = user?.id;
         userIds.forEach((id) => {
             queryParts.push(`q[user_id_in][]=${id}`);
         });
+        queryParts.push(`q[created_by_id_eq]=${userId}`);
     }
 
     // Add "assigned to" filter if provided
@@ -210,6 +217,7 @@ export const fetchPriorityTodos = async (
     page = 1,
     priority: string,
     taskType: "my" | "all" = "my",
+    userIds: string[] = [],
     excludeCompleted = true,
     fromDate?: string,
     toDate?: string,
@@ -246,6 +254,17 @@ export const fetchPriorityTodos = async (
         if (userId) {
             queryParts.push(`q[user_id_eq]=${userId}`);
         }
+    } else if (taskType === "all" && userIds.length === 0) {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const userId = user?.id;
+        queryParts.push(`q[user_id_or_created_by_id_eq]=${userId}`);
+    } else if (taskType === "all" && userIds.length > 0) {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const userId = user?.id;
+        userIds.forEach((id) => {
+            queryParts.push(`q[user_id_in][]=${id}`);
+        });
+        queryParts.push(`q[created_by_id_eq]=${userId}`);
     }
 
     // Add "assigned to" filter if provided

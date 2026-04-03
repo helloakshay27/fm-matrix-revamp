@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import TextField from "@mui/material/TextField";
@@ -8,7 +9,8 @@ import { Button } from "@/components/ui/button";
 
 interface InvoiceDetailRow {
   id: string;
-  status: "Overdue" | "Sent";
+  invoiceId?: string | number;
+  status: "Overdue" | "Sent" | "";
   invoiceDate: string;
   dueDate: string;
   invoiceNo: string;
@@ -42,14 +44,19 @@ const formatCurrency = (value: number): string => {
 };
 
 const InvoiceDetailsReport: React.FC = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<InvoiceDetailRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Date filters
-  const [filters, setFilters] = useState({
-    fromDate: "01/03/2026",
-    toDate: "12/03/2026",
-  });
+  const defaultRange = useMemo(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const fmt = (d: Date) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
+  }, []);
+  const [filters, setFilters] = useState(defaultRange);
 
    const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -99,9 +106,10 @@ const InvoiceDetailsReport: React.FC = () => {
 
       const mapped: InvoiceDetailRow[] = apiData.map(
         (item: any, index: number) => ({
-          id: item.id ? String(item.id) : `row-${index}`, // ✅ unique key fix
+          id: item.id ? String(item.id) : `row-${index}`,
+          invoiceId: item.id || "",
           status: item.status === "overdue" ? "Overdue" : "Sent",
-          invoiceDate: formatDate(item.date)|| "--",
+          invoiceDate: formatDate(item.date) || "--",
           dueDate: formatDate(item.due_date) || "--",
           invoiceNo: item.invoice_number || "--",
           orderNumber: item.order_number || "--",
@@ -215,10 +223,17 @@ const renderRow = (row: InvoiceDetailRow) => {
       </span>
     ),
 
-    invoiceDate: <span>{isTotalRow ? "" : row.invoiceDate}</span>,
-    dueDate: <span>{isTotalRow ? "" : row.dueDate}</span>,
-    invoiceNo: <span>{isTotalRow ? "" : row.invoiceNo}</span>,
-    orderNumber: <span>{isTotalRow ? "" : row.orderNumber}</span>,
+    invoiceDate: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.invoiceDate}</span>,
+    dueDate: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.dueDate}</span>,
+    invoiceNo: isTotalRow ? <span /> : (
+      <button
+        onClick={() => navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)}
+        className="text-sm font-medium !text-blue-600 hover:underline text-left"
+      >
+        {row.invoiceNo}
+      </button>
+    ),
+    orderNumber: <span className="text-sm text-gray-600">{isTotalRow ? "" : row.orderNumber}</span>,
 
     customerName: (
       <span className={isTotalRow ? "font-semibold text-black" : "text-blue-600"}>

@@ -1835,6 +1835,82 @@ const modulesByPackage = {
             },
           ],
         },
+        {
+          name: "Activity",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "System Mails",
+              href: "/accounting/reports/system-mails",
+            },
+            {
+              name: "Activity Logs & Audit Trail",
+              href: "/accounting/reports/activity-logs-audit-trail",
+            },
+            {
+              name: "Exception Report",
+              href: "/accounting/reports/exception-report",
+            },
+            {
+              name: "Portal Activities",
+              href: "/accounting/reports/portal-activities",
+            },
+            {
+              name: "Customer Reviews",
+              href: "/accounting/reports/customer-reviews",
+            },
+            {
+              name: "API Usage",
+              href: "/accounting/reports/api-usage",
+            },
+          ],
+        },
+        {
+          name: "Fixed Asset",
+          subItems: [
+            {
+              name: "Fixed Asset Register",
+              href: "/accounting/reports/fixed-asset-register",
+            },
+          ],
+        },
+        {
+          name: "Project",
+          subItems: [
+            {
+              name: "Name of Project",
+              href: "/accounting/reports/name-of-project",
+            },
+            {
+              name: "Timesheet Details",
+              href: "/accounting/reports/timesheet-details",
+            },
+            {
+              name: "Timesheet Profitability Summary",
+              href: "/accounting/reports/timesheet-profitability-summary",
+            },
+            {
+              name: "Project Summary",
+              href: "/accounting/reports/project-summary",
+            },
+            {
+              name: "Project Details",
+              href: "/accounting/reports/project-details",
+            },
+            {
+              name: "Projects Cost Summary",
+              href: "/accounting/reports/projects-cost-summary",
+            },
+            {
+              name: "Projects Revenue Summary",
+              href: "/accounting/reports/projects-revenue-summary",
+            },
+            {
+              name: "Projects Performance Summary",
+              href: "/accounting/reports/projects-performance-summary",
+            },
+          ],
+        },
       ],
     },
   ],

@@ -259,7 +259,7 @@ const PaymentsMadeReport: React.FC = () => {
       {/* Table */}
       <div className="rounded-lg border bg-white overflow-hidden">
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">Payments Made</h1>
           <p className="mt-1 text-sm text-[#475467]">
             From {formatDisplayDate(filters.fromDate)} To {formatDisplayDate(filters.toDate)}
@@ -274,7 +274,8 @@ const PaymentsMadeReport: React.FC = () => {
             storageKey="payments-made-report-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            hideColumnsButton={true}
+            // enableSearch={true}
             loading={loading}
             emptyMessage="There are no payments made during the selected date range."
           />

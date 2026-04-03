@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import { NotepadText, ArrowLeft } from "lucide-react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ interface ARAgingRow {
 
 interface DetailRow {
   id: string;
+  invoiceId?: string | number;
+  customerId?: string | number;
   date: string;
   dueDate: string;
   transactionNo: string;
@@ -82,6 +85,7 @@ const BUCKET_LABEL_MAP: Record<string, string> = {
   "16-30": "16 - 30 Days",
   "31-45": "31 - 45 Days",
   "45+": "> 45 Days",
+  all: "Total (All Buckets)",
 };
 
 const statusColorMap: Record<string, string> = {
@@ -94,6 +98,7 @@ const statusColorMap: Record<string, string> = {
 // ─── COMPONENT ─────────────────────────────────────
 
 const ARAgingSummaryReport: React.FC = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<ARAgingRow[]>([]);
   const [rawData, setRawData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -103,10 +108,16 @@ const ARAgingSummaryReport: React.FC = () => {
     customer: string;
   } | null>(null);
 
-  const [filters, setFilters] = useState({
-    fromDate: "01/03/2026",
-    toDate: "12/03/2026",
-  });
+  const defaultRange = useMemo(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const fmt = (d: Date) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    return { fromDate: fmt(firstDay), toDate: fmt(lastDay) };
+  }, []);
+
+  const [filters, setFilters] = useState(defaultRange);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -171,7 +182,7 @@ const ARAgingSummaryReport: React.FC = () => {
 
   useEffect(() => {
     fetchARAging();
-  }, []);
+  }, [defaultRange.fromDate, defaultRange.toDate]);
 
   // ─── TOTALS ─────────────────────────────────────
   const totals = useMemo(
@@ -213,96 +224,179 @@ const ARAgingSummaryReport: React.FC = () => {
     if (!customerData) return [];
 
     const agingDetails = customerData.aging_details || {};
-    const key = BUCKET_KEY_MAP[bucket];
-    const data = agingDetails[key]?.data || [];
 
-    return data.map((d: any, i: number) => ({
+    const mapRow = (d: any, i: number): DetailRow => ({
       id: `${i}`,
+      invoiceId: d.id || d.invoice_id || "",
+      customerId: customerData.id || "",
       date: formatDate(d.date),
-      dueDate: formatDate(d.due_date),
+      dueDate: d.due_date ? formatDate(d.due_date) : "--",
       transactionNo: d.number || "--",
       type: d.type || "--",
-      status: d.days_overdue > 0 ? "Overdue" : "Sent",
+      status: d.days_overdue > 0 ? "Overdue" : "Open",
       customerName: customerData.name,
       age: d.days_overdue > 0 ? `${d.days_overdue} Days` : "--",
-      amount: d.balance_due ?? 0,
-      balanceDue: d.balance_due ?? 0,
-    }));
+      amount: d.balance ?? d.balance_due ?? 0,
+      balanceDue: d.balance ?? d.balance_due ?? 0,
+    });
+
+    if (bucket === "all") {
+      const allKeys = ["current", "1_15", "16_30", "31_45", "gt_45"];
+      return allKeys.flatMap((key, ki) =>
+        (agingDetails[key]?.data || []).map((d: any, i: number) => mapRow(d, ki * 1000 + i))
+      );
+    }
+
+    const key = BUCKET_KEY_MAP[bucket];
+    const data = agingDetails[key]?.data || [];
+    return data.map(mapRow);
   };
 
   const allDetailRows = useMemo(() => {
     if (!detailView) return [];
+
+    const makeSection = (id: string, label: string, amount: number, balanceDue: number) => ({
+      id, date: "", dueDate: "", transactionNo: "", type: "",
+      status: "__section__", customerName: label,
+      age: "", amount, balanceDue,
+    });
+
+    if (detailView.bucket === "all") {
+      const buckets = [
+        { bucket: "current", label: "Current" },
+        { bucket: "1-15",    label: "1 - 15 Days" },
+        { bucket: "16-30",   label: "16 - 30 Days" },
+        { bucket: "31-45",   label: "31 - 45 Days" },
+        { bucket: "45+",     label: "> 45 Days" },
+      ];
+
+      const result: any[] = [];
+      let grandAmount = 0;
+      let grandBalance = 0;
+
+      buckets.forEach(({ bucket, label }) => {
+        const data = getDetailRows(bucket, detailView.customer);
+        if (data.length === 0) return;
+        const secAmount  = data.reduce((s, r) => s + r.amount, 0);
+        const secBalance = data.reduce((s, r) => s + r.balanceDue, 0);
+        grandAmount  += secAmount;
+        grandBalance += secBalance;
+        result.push(makeSection(`__section__${bucket}`, label, secAmount, secBalance));
+        result.push(...data);
+      });
+
+      result.push({ id: "__total__", date: "", dueDate: "", transactionNo: "", type: "", status: "__total__", customerName: "Total", age: "", amount: grandAmount, balanceDue: grandBalance });
+      return result;
+    }
+
     const data = getDetailRows(detailView.bucket, detailView.customer);
     const bucketLabel = BUCKET_LABEL_MAP[detailView.bucket] || detailView.bucket;
+    const totalAmount    = data.reduce((sum, r) => sum + r.amount, 0);
     const totalBalanceDue = data.reduce((sum, r) => sum + r.balanceDue, 0);
-    const totalAmount = data.reduce((sum, r) => sum + r.amount, 0);
 
     return [
-      // Section header row
-      {
-        id: "__section__",
-        date: "", dueDate: "", transactionNo: "", type: "",
-        status: "__section__",
-        customerName: bucketLabel,
-        age: "", amount: 0, balanceDue: 0,
-      },
+      makeSection("__section__", bucketLabel, totalAmount, totalBalanceDue),
       ...data,
-      // Total row
-      {
-        id: "__total__",
-        date: "", dueDate: "", transactionNo: "", type: "",
-        status: "__total__",
-        customerName: "Total",
-        age: "", amount: totalAmount, balanceDue: totalBalanceDue,
-      },
+      { id: "__total__", date: "", dueDate: "", transactionNo: "", type: "", status: "__total__", customerName: "Total", age: "", amount: totalAmount, balanceDue: totalBalanceDue },
     ];
   }, [detailView, rawData]);
 
+  // ─── TABLE DATA WITH TOTAL ROW ──────────────────
+  const tableData = useMemo(() => {
+    if (rows.length === 0) return rows;
+    return [
+      ...rows,
+      {
+        id: "__total__",
+        customerName: "__total__",
+        current: totals.current,
+        day1to15: totals.day1to15,
+        day16to30: totals.day16to30,
+        day31to45: totals.day31to45,
+        dayAbove45: totals.dayAbove45,
+        total: totals.total,
+        totalFCY: totals.totalFCY,
+      },
+    ];
+  }, [rows, totals]);
+
   // ─── RENDER SUMMARY ROW ─────────────────────────
-  const makeBucketCell = (value: number, bucket: string, customerName: string) =>
-    value > 0 ? (
+  const makeBucketCell = (value: number, bucket: string, customerName: string, isTotal: boolean) =>
+    isTotal ? (
+      <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(value)}</span>
+    ) : value !== 0 ? (
       <span
-        className="text-blue-600 cursor-pointer hover:underline font-medium"
+        className="text-blue-600 cursor-pointer hover:underline font-medium text-sm"
         onClick={() => setDetailView({ bucket, customer: customerName })}
       >
         {formatCurrency(value)}
       </span>
     ) : (
-      <span className="text-gray-500">{formatCurrency(value)}</span>
+      <span className="text-sm text-gray-500">{formatCurrency(value)}</span>
     );
 
-  const renderSummaryRow = (row: ARAgingRow) => ({
-    customerName: (
-      <span className="text-sm font-medium text-gray-800">{row.customerName}</span>
-    ),
-    current: makeBucketCell(row.current, "current", row.customerName),
-    day1to15: makeBucketCell(row.day1to15, "1-15", row.customerName),
-    day16to30: makeBucketCell(row.day16to30, "16-30", row.customerName),
-    day31to45: makeBucketCell(row.day31to45, "31-45", row.customerName),
-    dayAbove45: makeBucketCell(row.dayAbove45, "45+", row.customerName),
-    total: <span className="font-semibold">{formatCurrency(row.total)}</span>,
-    totalFCY: <span>{formatCurrency(row.totalFCY)}</span>,
-  });
+  const renderSummaryRow = (row: ARAgingRow) => {
+    const isTotal = row.id === "__total__";
+    const customerId = rawData.find((d) => d.name === row.customerName)?.id;
+    return {
+      customerName: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
+      ) : (
+        <button
+          onClick={() => navigate(`/accounting/customers/details/${customerId || ""}`)}
+          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+        >
+          {row.customerName}
+        </button>
+      ),
+      current: makeBucketCell(row.current, "current", row.customerName, isTotal),
+      day1to15: makeBucketCell(row.day1to15, "1-15", row.customerName, isTotal),
+      day16to30: makeBucketCell(row.day16to30, "16-30", row.customerName, isTotal),
+      day31to45: makeBucketCell(row.day31to45, "31-45", row.customerName, isTotal),
+      dayAbove45: makeBucketCell(row.dayAbove45, "45+", row.customerName, isTotal),
+      total: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(row.total)}</span>
+      ) : row.total !== 0 ? (
+        <span
+          className="text-blue-600 cursor-pointer hover:underline font-semibold text-sm"
+          onClick={() => setDetailView({ bucket: "all", customer: row.customerName })}
+        >
+          {formatCurrency(row.total)}
+        </span>
+      ) : (
+        <span className="text-sm text-gray-500">{formatCurrency(row.total)}</span>
+      ),
+      totalFCY: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(row.totalFCY)}</span>
+      ) : row.totalFCY !== 0 ? (
+        <span
+          className="text-blue-600 cursor-pointer hover:underline text-sm"
+          onClick={() => setDetailView({ bucket: "all", customer: row.customerName })}
+        >
+          {formatCurrency(row.totalFCY)}
+        </span>
+      ) : (
+        <span className="text-sm text-gray-500">{formatCurrency(row.totalFCY)}</span>
+      ),
+    };
+  };
 
   const renderDetailRow = (row: DetailRow) => {
     if (row.status === "__section__") {
-      const sectionCell = (
-        <span className="font-semibold text-sm text-[#1A1A1A] bg-[#f9f7f2]">
-          {row.customerName}
-        </span>
-      );
       return {
-        date: sectionCell, dueDate: <span />, transactionNo: <span />,
-        type: <span />, status: <span />, customerName: <span />,
-        age: <span />, amount: <span />, balanceDue: <span />,
+        date: <span className="font-semibold text-sm text-[#1A1A1A]">{row.customerName}</span>,
+        dueDate: <span />, transactionNo: <span />,
+        type: <span />, status: <span />, customerName: <span />, age: <span />,
+        amount:     <span className="font-semibold text-sm text-[#1A1A1A]">{formatCurrency(row.amount)}</span>,
+        balanceDue: <span className="font-semibold text-sm text-[#1A1A1A]">{formatCurrency(row.balanceDue)}</span>,
       };
     }
 
     if (row.status === "__total__") {
       return {
-        date: <span />, dueDate: <span />, transactionNo: <span />,
-        type: <span />, status: <span />,
-        customerName: <span className="font-bold text-sm text-[#1A1A1A]">Total</span>,
+        date: <span className="font-bold text-sm text-[#1A1A1A]">Total</span>,
+        dueDate: <span />, transactionNo: <span />,
+        type: <span />, status: <span />, customerName: <span />,
         age: <span />,
         amount: <span className="font-bold text-sm text-[#1A1A1A]">{formatCurrency(row.amount)}</span>,
         balanceDue: <span className="font-bold text-sm text-[#1A1A1A]">{formatCurrency(row.balanceDue)}</span>,
@@ -312,14 +406,28 @@ const ARAgingSummaryReport: React.FC = () => {
     return {
       date: <span className="text-sm text-gray-600">{row.date}</span>,
       dueDate: <span className="text-sm text-gray-600">{row.dueDate}</span>,
-      transactionNo: <span className="text-sm font-medium text-blue-600">{row.transactionNo}</span>,
+      transactionNo: (
+        <button
+          onClick={() => navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)}
+          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+        >
+          {row.transactionNo}
+        </button>
+      ),
       type: <span className="text-sm text-gray-600">{row.type}</span>,
       status: (
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status] || "bg-gray-100 text-gray-800"}`}>
           {row.status}
         </span>
       ),
-      customerName: <span className="text-sm text-gray-700">{row.customerName}</span>,
+      customerName: (
+        <button
+          onClick={() => navigate(`/accounting/customers/details/${row.customerId || ""}`)}
+          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+        >
+          {row.customerName}
+        </button>
+      ),
       age: <span className="text-sm text-gray-600">{row.age}</span>,
       amount: <span className="text-sm font-medium text-blue-600">{formatCurrency(row.amount)}</span>,
       balanceDue: <span className="text-sm font-medium text-gray-900">{formatCurrency(row.balanceDue)}</span>,
@@ -331,29 +439,28 @@ const ARAgingSummaryReport: React.FC = () => {
     const bucketLabel = BUCKET_LABEL_MAP[detailView.bucket] || detailView.bucket;
     return (
       <div className="p-6 bg-[#f9f7f2] min-h-screen">
+        {/* Back button */}
+        <button
+          onClick={() => setDetailView(null)}
+          className="mb-4 flex items-center gap-2 text-sm font-medium text-[#1A1A1A]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to AR Aging Summary
+        </button>
+
         <div className="bg-white rounded-lg border overflow-hidden">
           {/* Page Header */}
           <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-            <p className="text-sm font-medium text-[#667085]">Lockated</p>
             <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
-              AR Aging Summary 
-              {/* By Invoice Due Date */}
+              AR Aging Summary Details
             </h1>
             <p className="mt-1 text-sm text-[#475467]">
-              As of {new Date().toLocaleDateString("en-GB")}
+              {detailView.customer} — {bucketLabel}
             </p>
           </div>
 
-          <div className="p-4 border-b flex items-center gap-3">
-            <ArrowLeft onClick={() => setDetailView(null)} className="cursor-pointer text-gray-600 hover:text-gray-900" />
-            <div>
-              <h2 className="text-lg font-semibold text-[#101828]">
-                {detailView.customer} — {bucketLabel}
-              </h2>
-              <p className="text-sm text-[#475467]">
-                {filters.fromDate} to {filters.toDate}
-              </p>
-            </div>
+          <div className="px-6 py-3 border-b text-sm text-[#475467]">
+            {filters.fromDate} to {filters.toDate}
           </div>
 
           <EnhancedTaskTable
@@ -362,6 +469,7 @@ const ARAgingSummaryReport: React.FC = () => {
             renderRow={renderDetailRow}
             loading={loading}
             emptyMessage="No transactions in this date range."
+            // hideColumnsButton={true}
             hideColumnsButton={true}
           />
         </div>
@@ -374,26 +482,41 @@ const ARAgingSummaryReport: React.FC = () => {
     <div className="p-6 bg-[#f9f7f2] min-h-screen">
       
       {/* FILTER */}
-      <div className="bg-white p-6 rounded-lg border mb-6">
-        <div className="flex gap-4 mb-4">
-          <NotepadText color="#C72030" />
-          <h3 className="font-semibold">AR Aging Summary</h3>
+      <div className="mb-6 rounded-lg border-2 bg-white p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E5E0D3] text-[#C72030]">
+            <NotepadText className="h-6 w-6" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">AR Aging Summary</h3>
         </div>
-
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-3">
           <TextField
+            label="From Date"
             type="date"
             name="fromDate"
             value={filters.fromDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            fullWidth
           />
           <TextField
+            label="To Date"
             type="date"
             name="toDate"
             value={filters.toDate.split("/").reverse().join("-")}
             onChange={handleDateChange}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            fullWidth
           />
-          <Button onClick={fetchARAging}>View</Button>
+          <Button
+            type="button"
+            className="h-[40px] bg-[#C72030] text-white hover:bg-[#A01020]"
+            onClick={fetchARAging}
+          >
+            View
+          </Button>
         </div>
       </div>
 
@@ -401,9 +524,10 @@ const ARAgingSummaryReport: React.FC = () => {
       <div className="bg-white rounded-lg border overflow-hidden">
         {/* Page Header */}
         <div className="px-6 py-5 text-center border-b border-[#EAECF0] bg-[#F8F9FC]">
-          <p className="text-sm font-medium text-[#667085]">Lockated</p>
+          {/* <p className="text-sm font-medium text-[#667085]">Lockated</p> */}
           <h1 className="mt-1 text-2xl font-semibold text-[#101828]">
-            AR Aging Summary By Invoice Due Date
+            AR Aging Summary 
+            {/* By Invoice Due Date */}
           </h1>
           <p className="mt-1 text-sm text-[#475467]">
             As of {new Date().toLocaleDateString("en-GB")}
@@ -411,16 +535,12 @@ const ARAgingSummaryReport: React.FC = () => {
         </div>
 
         <EnhancedTaskTable
-          data={rows}
+          data={tableData}
           columns={summaryColumns}
           renderRow={renderSummaryRow}
           loading={loading}
+          hideColumnsButton={true}
         />
-
-        {/* TOTAL */}
-        <div className="p-4 font-semibold bg-[#E5E0D3]">
-          Total: {formatCurrency(totals.total)}
-        </div>
       </div>
     </div>
   );

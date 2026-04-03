@@ -6,6 +6,11 @@ import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Bui
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
+import axios from 'axios';
 
 interface Attachment {
   id: number;
@@ -96,6 +101,11 @@ interface GroupMembershipDetail {
     payment_status: string;
     created_at: string;
     updated_at: string;
+    payment_plan: {
+      id: number;
+      name: string;
+      duration_in_months: number;
+    }
   } | null;
 }
 
@@ -202,9 +212,53 @@ export const ClubGroupMembershipDetails = () => {
   const [membershipPlanUserLimit, setMembershipPlanUserLimit] = useState<number | null>(null);
   const [loadingPlanName, setLoadingPlanName] = useState(false);
   const [billDetails, setBillDetails] = useState<BillDetail[]>([]);
-  const [selectedBillIndex, setSelectedBillIndex] = useState(0);
+  const [selectedBill, setSelectedBill] = useState<BillDetail | null>(null);
   const [loadingBill, setLoadingBill] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+
+  // Payment modal state
+  const [openPaymentModal, setOpenPaymentModal] = useState(false);
+  const [paymentMode, setPaymentMode] = useState('online');
+  const [transactionId, setTransactionId] = useState('');
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  // Payment API handler
+  const handlePayment = async () => {
+    if (!selectedBill?.id) return;
+    setPaymentLoading(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      const response = await axios.post(
+        `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}/payment.json`,
+        {
+          bill_id: selectedBill.id,
+          payment: {
+            payment_mode: paymentMode,
+            pg_transaction_id: transactionId
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      toast.success('Payment request sent successfully!');
+      setOpenPaymentModal(false);
+      // Refresh bill details
+      if (id) {
+        fetchBillDetails(Number(id));
+      }
+    } catch (error) {
+      toast.error('Failed to send payment request');
+      console.error('Payment error:', error);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   // Fetch membership details
   useEffect(() => {
@@ -320,7 +374,7 @@ export const ClubGroupMembershipDetails = () => {
       // Store all bills as an array
       const billsArray = Array.isArray(data) ? data : [data];
       setBillDetails(billsArray);
-      setSelectedBillIndex(0); // Reset to first bill
+      setSelectedBill(null); // Reset selected bill
     } catch (error) {
       console.error('Error fetching bill details:', error);
       toast.error('Failed to fetch bill details');
@@ -362,7 +416,7 @@ export const ClubGroupMembershipDetails = () => {
 
     if (!start_date && !end_date) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-red-100 text-red-800 border-red-200">
           Pending Dates
         </Badge>
       );
@@ -370,14 +424,14 @@ export const ClubGroupMembershipDetails = () => {
 
     if (!end_date && start_date) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-red-100 text-red-800 border-red-200">
           Pending EndDate
         </Badge>
       );
     }
 
     return (
-      <Badge className="bg-green-100 text-green-800 border-0">
+      <Badge className="bg-green-100 text-green-800 border-green-200">
         Approved
       </Badge>
     );
@@ -453,8 +507,7 @@ export const ClubGroupMembershipDetails = () => {
   };
 
   const handleDownloadPDF = async () => {
-    const billDetail = billDetails[selectedBillIndex];
-    if (!billDetail?.id) {
+    if (!selectedBill?.id) {
       toast.error('Bill ID not found');
       return;
     }
@@ -465,7 +518,7 @@ export const ClubGroupMembershipDetails = () => {
       const token = API_CONFIG.TOKEN;
 
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/show_pdf`);
-      url.searchParams.append('lock_account_bill_id', billDetail.id.toString());
+      url.searchParams.append('lock_account_bill_id', selectedBill.id.toString());
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -485,7 +538,7 @@ export const ClubGroupMembershipDetails = () => {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `Bill_${billDetail.bill_number || billDetail.id}.pdf`;
+      link.download = `Bill_${selectedBill.bill_number || selectedBill.id}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -526,7 +579,6 @@ export const ClubGroupMembershipDetails = () => {
 
   const selectedMember = membershipData.club_members?.[selectedMemberIndex];
   const avatarUrl = selectedMember ? getAvatarUrl(selectedMember.avatar) : null;
-  const selectedBill = billDetails[selectedBillIndex];
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
@@ -587,7 +639,7 @@ export const ClubGroupMembershipDetails = () => {
                 value="payment"
                 className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
               >
-                Payment Details
+                Payment Plan Details
               </TabsTrigger>
             )}
             <TabsTrigger
@@ -666,11 +718,11 @@ export const ClubGroupMembershipDetails = () => {
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-500 font-medium">{formatDate(membershipData.preferred_start_date)}</span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Referred By</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-500 font-medium">{membershipData.referred_by || '-'}</span>
-              </div>
+              </div> */}
             </div>
           </TabsContent>
 
@@ -703,7 +755,10 @@ export const ClubGroupMembershipDetails = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 items-end">
-                      <Badge variant={member.club_member_enabled ? "default" : "secondary"}>
+                      <Badge 
+                        variant={member.club_member_enabled ? "default" : "secondary"}
+                        className={member.club_member_enabled ? "bg-green-100 text-green-800 hover:bg-green-100/90" : "bg-gray-100 text-gray-600 hover:bg-gray-100/90"}
+                      >
                         {member.club_member_enabled ? 'Active' : 'Inactive'}
                       </Badge>
                       {/* <Button
@@ -772,77 +827,82 @@ export const ClubGroupMembershipDetails = () => {
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.landed_amount}</span>
                 </div>
-                <div className="flex items-start">
+                {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Payment Mode</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium capitalize">{membershipData.allocation_payment_detail.payment_mode}</span>
-                </div>
-                <div className="flex items-start">
+                </div> */}
+                {/* <div className="flex items-start">
                   <span className="text-gray-500 min-w-[140px]">Payment Status</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <Badge variant={membershipData.allocation_payment_detail.payment_status === 'success' ? "default" : "secondary"} className="capitalize">
                     {membershipData.allocation_payment_detail.payment_status}
                   </Badge>
-                </div>
+                </div> */}
                 <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Payment Created</span>
+                  <span className="text-gray-500 min-w-[140px]">Invoice Created</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">{formatDateTime(membershipData.allocation_payment_detail.created_at)}</span>
                 </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Payment Plan</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail?.payment_plan?.name}</span>
+                </div>
+                {/* <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Plan Duration</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail?.payment_plan?.duration_in_months}</span>
+                </div> */}
               </div>
             </TabsContent>
           )}
 
           <TabsContent value="bill" className="p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-[#1a1a1a] flex items-center gap-3">
-                <FileText className="w-5 h-5 text-[#C72030]" />
-                Bill Details
-              </h2>
-              {selectedBill && (
-                <Button
-                  onClick={handleDownloadPDF}
-                  disabled={downloadingPDF}
-                  className="bg-[#C72030] hover:bg-[#A01828] text-white"
-                >
-                  {downloadingPDF ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download PDF
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-
             {loadingBill ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
               </div>
-            ) : billDetails.length > 0 ? (
-              <div className="space-y-6">
-                {/* Bill Selector Dropdown */}
-                {/* {billDetails.length > 1 && ( */}
-                  <div className="mb-6">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Select Bill</label>
-                    <select
-                      value={selectedBillIndex}
-                      onChange={(e) => setSelectedBillIndex(Number(e.target.value))}
-                      className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+            ) : selectedBill ? (
+              // Detailed view for a selected bill
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={() => setSelectedBill(null)} // Go back to the list
+                    className="flex items-center gap-1 hover:text-gray-800 mb-4"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Bill List
+                  </button>
+                  <div className="flex gap-2 mb-4">
+                    {selectedBill.status?.toLowerCase() !== 'paid' && (
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => setOpenPaymentModal(true)}
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Payment
+                      </Button>
+                    )}
+                    <Button
+                      onClick={handleDownloadPDF}
+                      disabled={downloadingPDF}
+                      className="bg-[#C72030] hover:bg-[#A01828] text-white"
                     >
-                      {billDetails.map((bill, index) => (
-                        <option key={bill.id} value={index}>
-                          Bill #{bill.bill_number || bill.id} - {formatDate(bill.due_date)} - ₹{(bill.after_roundoff_amount || bill.total_amount).toFixed(2)}
-                        </option>
-                      ))}
-                    </select>
+                      {downloadingPDF ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </>
+                      )}
+                    </Button>
                   </div>
-                {/* )} */}
+                </div>
 
                 {/* Bill Header Information */}
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -860,7 +920,16 @@ export const ClubGroupMembershipDetails = () => {
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Status</span>
                       <span className="text-gray-500 mx-2">:</span>
-                      <Badge variant={selectedBill.status === 'generated' ? "default" : "secondary"} className="capitalize">
+                      <Badge
+                        variant={
+                          selectedBill.status?.toLowerCase() === 'paid'
+                            ? 'default'
+                            : selectedBill.status === 'generated'
+                              ? 'outline'
+                              : 'secondary'
+                        }
+                        className={`capitalize ${selectedBill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                      >
                         {selectedBill.status}
                       </Badge>
                     </div>
@@ -921,7 +990,7 @@ export const ClubGroupMembershipDetails = () => {
 
                 {/* Bill Charges */}
                 {selectedBill.lock_account_bill_charges && selectedBill.lock_account_bill_charges.length > 0 && (
-                  <div>
+                  <div className="mt-6">
                     <h3 className="text-md font-semibold text-gray-900 mb-3">Bill Charges</h3>
                     <div className="overflow-x-auto">
                       <table className="w-full border border-gray-200 rounded-lg">
@@ -936,21 +1005,6 @@ export const ClubGroupMembershipDetails = () => {
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               Discount
                             </th>
-                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              GST Rate
-                            </th> */}
-                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              CGST
-                            </th> */}
-                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              SGST
-                            </th> */}
-                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              IGST
-                            </th> */}
-                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              GST Amount
-                            </th> */}
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               Total
                             </th>
@@ -966,31 +1020,6 @@ export const ClubGroupMembershipDetails = () => {
                               <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.discount ? `₹ ${Number(charge.discount).toFixed(2)}` : '-'}
                               </td>
-                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                {charge.gst_rate !== null && charge.gst_rate !== undefined
-                                  ? `${charge.gst_rate.toFixed(2)}%`
-                                  : '-'}
-                              </td> */}
-                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                {charge.cgst_amount !== null && charge.cgst_amount !== undefined
-                                  ? `₹ ${charge.cgst_amount.toFixed(2)}`
-                                  : '-'}
-                              </td> */}
-                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                {charge.sgst_amount !== null && charge.sgst_amount !== undefined
-                                  ? `₹ ${charge.sgst_amount.toFixed(2)}`
-                                  : '-'}
-                              </td> */}
-                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                {charge.igst_amount !== null && charge.igst_amount !== undefined
-                                  ? `₹ ${charge.igst_amount.toFixed(2)}`
-                                  : '-'}
-                              </td> */}
-                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                {charge.gst_amount !== null && charge.gst_amount !== undefined
-                                  ? `₹ ${charge.gst_amount.toFixed(2)}`
-                                  : '-'}
-                              </td> */}
                               <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
                                 ₹ {charge.total_amount.toFixed(2)}
                               </td>
@@ -1003,7 +1032,7 @@ export const ClubGroupMembershipDetails = () => {
                 )}
 
                 {/* Bill Summary */}
-                <div>
+                <div className="mt-6">
                   <h3 className="text-md font-semibold text-gray-900 mb-3">Bill Summary</h3>
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="space-y-3">
@@ -1049,6 +1078,47 @@ export const ClubGroupMembershipDetails = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            ) : billDetails.length > 0 ? (
+              // List view of all bills
+              <div>
+                <h2 className="text-lg font-semibold text-[#1a1a1a] flex items-center gap-3 mb-4">
+                  <FileText className="w-5 h-5 text-[#C72030]" />
+                  Bill Details
+                </h2>
+                <div className="space-y-3">
+                  {billDetails.map((bill) => (
+                    <div
+                      key={bill.id}
+                      onClick={() => setSelectedBill(bill)} // Set the selected bill
+                      className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">Bill #{bill.bill_number || bill.id}</h3>
+                          <p className="text-sm text-gray-500">Due: {formatDate(bill.due_date)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">
+                            ₹ {(bill.after_roundoff_amount || bill.total_amount).toFixed(2)}
+                          </p>
+                          <Badge
+                            variant={
+                              bill.status?.toLowerCase() === 'paid'
+                                ? 'default'
+                                : bill.status === 'generated'
+                                  ? 'outline'
+                                  : 'secondary'
+                            }
+                            className={`capitalize mt-1 ${bill.status?.toLowerCase() === 'paid' ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                          >
+                            {bill.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (
@@ -1147,7 +1217,10 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Face Added</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.face_added ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.face_added ? "default" : "secondary"}
+                          className={selectedMember.face_added ? "bg-green-100 text-green-800 " : "bg-red-100 text-red-800"}
+                        >
                           {selectedMember.face_added ? 'Yes' : 'No'}
                         </Badge>
                       </div>
@@ -1174,14 +1247,20 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Club Member</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.club_member_enabled ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.club_member_enabled ? "default" : "secondary"}
+                          className={selectedMember.club_member_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                        >
                           {selectedMember.club_member_enabled ? 'Enabled' : 'Disabled'}
                         </Badge>
                       </div>
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Access Card</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.access_card_enabled ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.access_card_enabled ? "default" : "secondary"}
+                          className={selectedMember.access_card_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                        >
                           {selectedMember.access_card_enabled ? 'Enabled' : 'Disabled'}
                         </Badge>
                       </div>
@@ -1195,15 +1274,15 @@ export const ClubGroupMembershipDetails = () => {
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{selectedMember.emergency_contact_name || '-'}</span>
                       </div>
-                      <div className="flex items-start">
+                      {/* <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Referred By</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">{selectedMember.referred_by || '-'}</span>
-                      </div>
+                      </div> */}
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">House</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.flat_no|| '-'}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.flat_no || '-'}</span>
                       </div>
                     </div>
                   </TabsContent>
@@ -1321,7 +1400,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created By</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.created_by|| '-'}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.created_by || '-'}</span>
                       </div>
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created At</span>
@@ -1336,7 +1415,10 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Active</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge variant={selectedMember.active ? "default" : "secondary"}>
+                        <Badge 
+                          variant={selectedMember.active ? "default" : "secondary"}
+                          className={selectedMember.active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
+                        >
                           {selectedMember.active ? 'Yes' : 'No'}
                         </Badge>
                       </div>
@@ -1370,6 +1452,49 @@ export const ClubGroupMembershipDetails = () => {
           </div>
         </div>
       )}
+
+      {/* Payment Modal */}
+      <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
+        <DialogContent className="sm:max-w-[400px] bg-white">
+          <DialogHeader>
+            <DialogTitle>Make Payment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="payment_mode">Payment Mode</Label>
+              <Select
+                value={paymentMode}
+                onValueChange={setPaymentMode}
+                disabled={paymentLoading}
+              >
+                <SelectTrigger className="w-full mt-1" id="payment_mode">
+                  <SelectValue placeholder="Select Payment Mode" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="offline">Offline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="transaction_id">Transaction ID</Label>
+              <Input
+                id="transaction_id"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="Enter Transaction ID"
+                className="mt-1"
+                disabled={paymentLoading}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handlePayment} disabled={paymentLoading} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+              {paymentLoading ? 'Processing...' : 'Submit Payment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

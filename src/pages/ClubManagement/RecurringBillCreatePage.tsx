@@ -34,8 +34,11 @@ import {
   PersonAdd,
   ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'sonner';
+import { Button as ShadButton } from '@/components/ui/button';
+
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -582,18 +585,97 @@ export const RecurringBillCreatePage: React.FC = () => {
 
   // Validation
   const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    // const newErrors: Record<string, string> = {};
 
-    if (!selectedCustomer) newErrors.customer = 'Customer is required';
-    if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
-    if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
-    if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+    // if (!selectedCustomer) newErrors.customer = 'Vendor is required';
+    // if (!salesOrderDate) newErrors.salesOrderDate = 'Start date is required';
+    // if (!neverExpires) {
+    //   if (!expectedShipmentDate) {
+    //     newErrors.expectedShipmentDate = 'End date is required';
+    //   } else {
+    //     const minDate = new Date('2026-02-12');
+    //     const enteredDate = new Date(expectedShipmentDate);
+    //     if (isNaN(enteredDate.getTime())) {
+    //       newErrors.expectedShipmentDate = 'Please enter a valid end date';
+    //     } else if (enteredDate < minDate) {
+    //       newErrors.expectedShipmentDate = 'End date must be after 11-02-2026';
+    //     }
+    //   }
+    // }
+    // if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
 
-    const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-    if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+    // const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
+    // if (!hasValidItems) newErrors.items = 'At least one valid item is required';
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // setErrors(newErrors);
+    // if (Object.keys(newErrors).length > 0) {
+    //   toast.error('Please fill all mandatory fields before saving.');
+    // }
+    // return Object.keys(newErrors).length === 0;
+
+
+    
+
+     if (!selectedCustomer) {
+        toast.error("Vendor is required");
+        return false;
+    }
+
+    if (!sourceOfSupply) {
+        toast.error("Source of Supply is required");
+        return false;
+    }
+
+    if (!destinationOfSupply) {
+        toast.error("Destination of Supply is required");
+        return false;
+    }
+if (!profileName || profileName.trim() === "") {
+        toast.error("Profile name is required");
+        return false;
+    }
+
+    if (!salesOrderDate) {
+        toast.error("Start On date is required");
+        return false;
+    }
+
+    if (!neverExpires) {
+
+        if (!expectedShipmentDate) {
+            toast.error("Ends On date is required");
+            return false;
+        }
+
+        const startDate = new Date(salesOrderDate);
+        const endDate = new Date(expectedShipmentDate);
+
+        if (isNaN(endDate.getTime())) {
+            toast.error("Please enter valid Ends On date");
+            return false;
+        }
+
+        if (endDate < startDate) {
+            toast.error("Ends On date cannot be earlier than Start On date");
+            return false;
+        }
+    }
+
+    if (!selectedTerm) {
+        toast.error("Payment terms is required");
+        return false;
+    }
+
+    const hasValidItems = items.some(
+        item => item.name && item.quantity > 0 && item.rate > 0
+    );
+
+    if (!hasValidItems) {
+        toast.error("Please add at least one valid item");
+        return false;
+    }
+
+    return true;
   };
 
 
@@ -641,7 +723,7 @@ export const RecurringBillCreatePage: React.FC = () => {
 
   // Handle submit
   const handleSubmit = async (saveAsDraft: boolean = false) => {
-    if (!saveAsDraft && !validate()) {
+    if (!validate()) {
       return;
     }
 
@@ -744,15 +826,15 @@ export const RecurringBillCreatePage: React.FC = () => {
       );
       // Invoice items
       items.forEach((item, idx) => {
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][description]`, item.description || '');
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][rate]`, String(item.rate));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][quantity]`, String(item.quantity));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][total_amount]`, String(item.amount));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][description]`, item.description || '');
 
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
-        formData.append(`lock_account_bill[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_type]`, String(item.item_tax_type));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
+        formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
       });
 
       // Email contact persons
@@ -883,8 +965,28 @@ export const RecurringBillCreatePage: React.FC = () => {
         </div>
       )}
 
-      <header className="flex items-center justify-between">
+      {/* <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">New Recurring Bill</h1>
+      </header> */}
+
+
+      <header className="mb-4">
+
+        {/* Back Button - Top */}
+        <button
+          type="button"
+          onClick={() => navigate('/accounting/recurring-bills')}
+          className="flex items-center gap-2 text-black font-medium mb-2"
+        >
+          <ArrowLeft className="h-4 w-4 text-black" />
+          Back to Recurring Bill List
+        </button>
+
+        {/* Title - Below */}
+        <h1 className="text-2xl font-bold text-black">
+          New Recurring Bill
+        </h1>
+
       </header>
 
       <div className="space-y-6">
@@ -906,7 +1008,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                     displayEmpty
                     sx={fieldStyles}
                   >
-                    <MenuItem value="" disabled>Select a customer</MenuItem>
+                    <MenuItem value="">Select a  Vendor </MenuItem>
                     {customers.map((customer) => (
                       <MenuItem key={customer.id} value={customer.id}>
                         {customer?.company_name}
@@ -963,7 +1065,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                 {/* Source of Supply */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Source of Supply
+                    Source of Supply<span className="text-red-500">*</span>
                   </label>
 
                   <FormControl fullWidth>
@@ -973,7 +1075,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                       displayEmpty
                       sx={fieldStyles}
                     >
-                      <MenuItem value="">Select State</MenuItem>
+                      <MenuItem value="">Select Source of Supply</MenuItem>
 
                       {indianStates.map((state) => (
                         <MenuItem key={state} value={state}>
@@ -987,7 +1089,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                 {/* Destination of Supply */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Destination of Supply
+                    Destination of Supply<span className="text-red-500">*</span>
                   </label>
 
                   <FormControl fullWidth>
@@ -997,7 +1099,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                       displayEmpty
                       sx={fieldStyles}
                     >
-                      <MenuItem value="">Select State</MenuItem>
+                      <MenuItem value="">Select Destination of Supply</MenuItem>
 
                       {indianStates.map((state) => (
                         <MenuItem key={state} value={state}>
@@ -1031,34 +1133,40 @@ export const RecurringBillCreatePage: React.FC = () => {
               <label className="block text-sm font-medium mb-2">
                 Billing Address
               </label>
-              <TextField
-                fullWidth
-                multiline
+              <textarea
+                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                 rows={4}
+                maxLength={500}
                 value={selectedCustomer?.billing_address?.address
                   ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
                   : billingAddress}
-                onChange={(e) => setBillingAddress(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value.length <= 500) setBillingAddress(e.target.value);
+                }}
                 placeholder="Enter billing address"
-                disabled={!!selectedCustomer?.billing_address?.address}
+                disabled={!!selectedCustomer}
               />
+              <p className="text-xs text-gray-400 text-right mt-1">{billingAddress.length}/500</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
                 Shipping Address
               </label>
-              <TextField
-                fullWidth
-                multiline
+              <textarea
+                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                 rows={4}
+                maxLength={500}
                 value={selectedCustomer?.shipping_address?.address
                   ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
                   : shippingAddress}
-                onChange={(e) => setShippingAddress(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value.length <= 500) setShippingAddress(e.target.value);
+                }}
                 placeholder="Enter shipping address"
-                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                disabled={!!selectedCustomer || sameAsBilling}
               />
+              <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p>
               {/* <FormControlLabel
                                 control={
                                     <Checkbox
@@ -1116,9 +1224,15 @@ export const RecurringBillCreatePage: React.FC = () => {
 
                 <TextField
                   type="number"
+                  placeholder="Enter"
                   size="small"
                   value={repeatCount}
-                  onChange={(e) => setRepeatCount(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) > 0) setRepeatCount(val);
+                  }}
+                  onKeyDown={(e) => (e.key === '-' || e.key === '+' || e.key === 'e') && e.preventDefault()}
+                  inputProps={{ min: 1, step: 1 }}
                   sx={{ width: "90px" }}
                 />
 
@@ -1154,6 +1268,7 @@ export const RecurringBillCreatePage: React.FC = () => {
                 helperText={errors.salesOrderDate}
                 sx={fieldStyles}
                 InputLabelProps={{ shrink: true }}
+                inputProps={{ min: "2026-02-12" }}
               />
             </div>
 
@@ -1171,12 +1286,34 @@ export const RecurringBillCreatePage: React.FC = () => {
                   fullWidth
                   type="date"
                   value={neverExpires ? "" : expectedShipmentDate}
-                  onChange={(e) => setExpectedShipmentDate(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const entered = new Date(val);
+                      const minDate = salesOrderDate
+                        ? new Date(new Date(salesOrderDate).getTime() + 86400000)
+                        : new Date('2026-02-12');
+                      if (isNaN(entered.getTime())) {
+                        toast.error('Please enter a valid end date.');
+                        return;
+                      }
+                      if (entered <= new Date(salesOrderDate)) {
+                        toast.error('End date must be after the Start On date.');
+                        return;
+                      }
+                    }
+                    setExpectedShipmentDate(val);
+                  }}
                   disabled={neverExpires}
                   error={!neverExpires && !!errors.expectedShipmentDate}
                   helperText={!neverExpires ? errors.expectedShipmentDate : ""}
                   sx={fieldStyles}
                   InputLabelProps={{ shrink: true }}
+                  inputProps={{
+                    min: salesOrderDate
+                      ? new Date(new Date(salesOrderDate).getTime() + 86400000).toISOString().split('T')[0]
+                      : "2026-02-12"
+                  }}
                 />
               </div>
 
@@ -1202,13 +1339,13 @@ export const RecurringBillCreatePage: React.FC = () => {
 
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium mb-2">
                 Payment Terms<span className="text-red-500">*</span>
               </label>
               <FormControl fullWidth error={!!errors.paymentTerms}>
                 {/* <InputLabel>Payment Terms</InputLabel> */}
-                <Select
+                {/* <Select
                   value={selectedTerm}
                   label="Payment Terms"
                   onChange={e => setSelectedTerm(e.target.value)}
@@ -1224,9 +1361,9 @@ export const RecurringBillCreatePage: React.FC = () => {
                   ))}
 
                 </Select>
-              </FormControl>
+              </FormControl> */}
               {/* Configure Payment Terms Modal */}
-              {showConfig && (
+              {/* {showConfig && (
                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
                   <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
                     <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
@@ -1299,7 +1436,233 @@ export const RecurringBillCreatePage: React.FC = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </div> */} 
+
+
+            <div>
+
+  {/* Label */}
+  <label className="block text-sm font-medium mb-2">
+    Payment Terms<span className="text-red-500">*</span>
+  </label>
+
+  {/* Select */}
+  <FormControl fullWidth>
+
+    <Select
+      value={selectedTerm || ""}
+      onChange={(e) => setSelectedTerm(e.target.value)}
+      displayEmpty
+      sx={fieldStyles}
+
+      renderValue={(val) => {
+
+        if (!val) {
+          return (
+            <span className="text-gray-400">
+              Select payment term
+            </span>
+          );
+        }
+
+        const found = filteredTerms.find(
+          term => term.id === val
+        );
+
+        return found ? found.name : val;
+
+      }}
+    >
+
+      {/* Placeholder */}
+      <MenuItem value="">
+        Select payment term
+      </MenuItem>
+
+      {/* Payment term list */}
+      {filteredTerms.map(term => (
+
+        <MenuItem
+          key={term.id || term.name}
+          value={term.id}
+        >
+          {term.name}
+        </MenuItem>
+
+      ))}
+
+    </Select>
+
+  </FormControl>
+
+
+  {/* Configure Payment Terms Modal */}
+  {showConfig && (
+
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+
+      <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
+
+        <h2 className="text-lg font-semibold mb-4">
+          Configure Payment Terms
+        </h2>
+
+        <table className="w-full mb-4 text-sm">
+
+          <thead>
+
+            <tr className="bg-gray-100">
+
+              <th className="p-2 border">
+                Term Name
+              </th>
+
+              <th className="p-2 border">
+                Number of Days
+              </th>
+
+              <th className="p-2 border">
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            {editTerms.map((row, idx) => (
+
+              <tr key={idx}>
+
+                <td className="border p-2">
+
+                  <input
+                    className="border rounded px-2 py-1 w-full"
+                    placeholder="Term Name"
+                    value={row.name}
+
+                    onChange={(e) =>
+                      handleNewRowChange(
+                        idx,
+                        "name",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </td>
+
+
+                <td className="border p-2">
+
+                  <input
+                    className="border rounded px-2 py-1 w-full"
+                    placeholder="Days"
+                    type="number"
+                    value={row.days}
+
+                    onChange={(e) =>
+                      handleNewRowChange(
+                        idx,
+                        "days",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </td>
+
+
+                <td className="border p-2">
+
+                  <button
+                    className="text-red-600 text-xs"
+
+                    onClick={async () => {
+
+                      if (row.id) {
+
+                        await handleRemovePaymentTerm(
+                          row.id,
+                          idx
+                        );
+
+                      } else {
+
+                        handleRemoveNewRow(idx);
+
+                      }
+
+                    }}
+                  >
+                    Remove
+                  </button>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+
+        {/* Add new term button */}
+        <div className="flex gap-2 mb-3">
+
+          <button
+            className="text-blue-600 text-sm"
+
+            onClick={handleAddNewTerm}
+          >
+            + Add New
+          </button>
+
+        </div>
+
+
+        {/* Save / Cancel */}
+        <div className="flex gap-2">
+
+          <button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+
+            onClick={handleSaveTerms}
+          >
+            Save
+          </button>
+
+
+          <button
+            className="bg-gray-200 px-4 py-2 rounded"
+
+            onClick={() => {
+
+              setEditTerms(
+                paymentTerms.map(term => ({
+                  ...term
+                }))
+              );
+
+              setShowConfig(false);
+
+            }}
+          >
+            Cancel
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )}
+
+</div>
 
             {/* <div>
               <label className="block text-sm font-medium ">
@@ -1348,8 +1711,8 @@ export const RecurringBillCreatePage: React.FC = () => {
               <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
             )}
 
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full">
+            <div className="border border-border rounded-lg overflow-x-auto">
+              <table className="w-full min-w-[700px]">
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
@@ -1377,18 +1740,18 @@ export const RecurringBillCreatePage: React.FC = () => {
                                 updateItem(index, 'description', selectedItem.description);
                                 // TAX HANDLING
                                 if (selectedItem.tax_preference === 'non_taxable') {
-                                    updateItem(index, 'item_tax_type', 'non_taxable');
-                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                  updateItem(index, 'item_tax_type', 'non_taxable');
+                                  updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
                                 }
                                 if (selectedItem.tax_preference === 'taxable') {
-                                    updateItem(index, 'item_tax_type', 'tax_group');
-                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                  updateItem(index, 'item_tax_type', 'tax_group');
+                                  updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
                                 }
                                 if (selectedItem.tax_preference === 'out_of_scope') {
-                                    updateItem(index, 'item_tax_type', 'out_of_scope');
+                                  updateItem(index, 'item_tax_type', 'out_of_scope');
                                 }
                                 if (selectedItem.tax_preference === 'non_gst_supply') {
-                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                  updateItem(index, 'item_tax_type', 'non_gst_supply');
                                 }
                               }
                             }}
@@ -1403,13 +1766,24 @@ export const RecurringBillCreatePage: React.FC = () => {
                             ))}
                           </Select>
                         </FormControl>
-                        <TextField
+                        {/* <TextField
                           fullWidth
                           size="small"
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => updateItem(index, 'description', e.target.value)}
                           sx={{ mt: 1 }}
+                        /> */}
+
+                        <TextField
+                          fullWidth
+                          label="Description"
+                          size="small"
+                          placeholder="Description"
+                          value={item.description}
+                          onChange={(e) => updateItem(index, 'description', e.target.value)}
+                          sx={{ mt: 2 }}
+                          InputLabelProps={{ shrink: true }}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1427,7 +1801,13 @@ export const RecurringBillCreatePage: React.FC = () => {
                           type="number"
                           size="small"
                           value={item.rate}
-                          onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (e.target.value === '' || val >= 0) {
+                              updateItem(index, 'rate', e.target.value === '' ? '' : val);
+                            }
+                          }}
+                          onKeyDown={(e) => (e.key === '-' || e.key === '+' || e.key === 'e') && e.preventDefault()}
                           inputProps={{ min: 0, step: 0.01 }}
                           sx={{ width: 100 }}
                         />
@@ -1522,14 +1902,13 @@ export const RecurringBillCreatePage: React.FC = () => {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button
-                startIcon={<Add />}
+              <ShadButton
+                variant="outline"
                 onClick={addItem}
-                variant="outlined"
-                sx={{ textTransform: 'none' }}
               >
+                <Add className="w-4 h-4 mr-1" />
                 Add New Row
-              </Button>
+              </ShadButton>
               {/* <Button
                                 variant="outlined"
                                 sx={{ textTransform: 'none' }}
@@ -1552,14 +1931,6 @@ export const RecurringBillCreatePage: React.FC = () => {
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                 <div className="flex items-center gap-2">
-                  <TextField
-                    type="number"
-                    size="small"
-                    value={discountOnTotal}
-                    onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    sx={{ width: 80 }}
-                  />
                   <Select
                     size="small"
                     value={discountTypeOnTotal}
@@ -1569,6 +1940,15 @@ export const RecurringBillCreatePage: React.FC = () => {
                     <MenuItem value="percentage">%</MenuItem>
                     <MenuItem value="amount">Amount</MenuItem>
                   </Select>
+                  <TextField
+                    type="number"
+                    size="small"
+                    value={discountOnTotal}
+                    onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value) || '')}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    sx={{ width: 80 }}
+                  />
+
                   <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                 </div>
               </div>
@@ -1662,14 +2042,17 @@ export const RecurringBillCreatePage: React.FC = () => {
 
         {/* Customer Notes */}
         <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
-          <TextField
-            fullWidth
-            multiline
+          <textarea
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
             rows={3}
+            maxLength={500}
             value={customerNotes}
-            onChange={(e) => setCustomerNotes(e.target.value)}
-            placeholder="Enter any notes for the customer"
+            onChange={(e) => {
+              if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
+            }}
+            placeholder="Enter any notes for the bill"
           />
+          <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
         </Section>
 
         {/* Terms & Conditions */}
@@ -1823,58 +2206,16 @@ export const RecurringBillCreatePage: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          variant="outlined"
-          onClick={() => navigate('/accounting/recurring-bills')}
-          disabled={isSubmitting}
-          sx={{
-            textTransform: 'none',
-            px: 4,
-            borderColor: 'divider',
-            color: 'text.secondary',
-            '&:hover': {
-              borderColor: 'primary.main',
-              bgcolor: 'primary.main',
-              color: 'white'
-            }
-          }}
-        >
+       
+        <ShadButton className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : 'Save '}
+        </ShadButton>
+         <ShadButton variant="outline" onClick={() => navigate('/accounting/recurring-bills')} disabled={isSubmitting}>
           Cancel
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => handleSubmit(true)}
-          disabled={isSubmitting}
-          sx={{
-            textTransform: 'none',
-            px: 4,
-            borderColor: 'primary.main',
-            color: 'primary.main',
-            '&:hover': {
-              borderColor: 'primary.dark',
-              bgcolor: 'primary.main',
-              color: 'white'
-            }
-          }}
-        >
-          Save as Draft
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => handleSubmit(false)}
-          disabled={isSubmitting}
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            px: 4,
-            '&:hover': {
-              bgcolor: 'primary.dark'
-            },
-            textTransform: 'none'
-          }}
-        >
-          {isSubmitting ? 'Submitting...' : 'Save and Send'}
-        </Button>
+        </ShadButton>
+        {/* <ShadButton className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : 'Save as Open'}
+        </ShadButton> */}
       </div>
 
       {/* Customer Details Drawer */}

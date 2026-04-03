@@ -22,6 +22,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
+import axios from 'axios';
 
 // Interfaces
 interface OccupantUserResponse {
@@ -78,6 +79,8 @@ interface MembershipPlan {
     price: string;
     user_limit: string;
     renewal_terms: string;
+    cgst?: string;
+    sgst?: string;
     plan_amenities?: PlanAmenity[];
 }
 
@@ -202,7 +205,9 @@ interface MemberData {
     hasInjuries: 'yes' | 'no' | '';
     injuryDetails: string;
     hasPhysicalRestrictions: 'yes' | 'no' | '';
+    physicalRestrictionsDetails: string;
     hasCurrentMedication: 'yes' | 'no' | '';
+    medicationDetails: string;
     pilatesExperience: string;
     fitnessGoals: string[];
     fitnessGoalsOther: string;
@@ -268,7 +273,9 @@ export const AddGroupMembershipPage = () => {
             hasInjuries: '',
             injuryDetails: '',
             hasPhysicalRestrictions: '',
+            physicalRestrictionsDetails: '',
             hasCurrentMedication: '',
+            medicationDetails: '',
             pilatesExperience: '',
             fitnessGoals: [],
             fitnessGoalsOther: '',
@@ -386,6 +393,7 @@ export const AddGroupMembershipPage = () => {
 
             const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/membership_plans.json`);
             url.searchParams.append('access_token', token || '');
+            url.searchParams.append('q[active_eq]', 'true');
 
             const response = await fetch(url.toString(), {
                 method: 'GET',
@@ -543,7 +551,7 @@ export const AddGroupMembershipPage = () => {
                     // Build member object
                     const newMember: MemberData = {
                         id: memberId,
-                        userSelectionMode: hasUserId ? 'select' : 'manual',
+                        userSelectionMode: 'manual',
                         selectedUser: hasUserId ? memberData.user_id?.toString() : '',
                         selectedUserId: hasUserId ? memberData.user_id : null,
                         formData: {
@@ -563,6 +571,7 @@ export const AddGroupMembershipPage = () => {
                             address_type: userData.addresses?.[0]?.address_type || 'residential',
                             residentType: '',
                             relationWithOwner: '',
+                            houseId: memberData.house_id?.toString() || '',
                             membershipNumber: memberData.membership_number || '',
                             accessCardId: memberData.access_card_id?.toString() || '',
                             membershipType: '',
@@ -577,7 +586,9 @@ export const AddGroupMembershipPage = () => {
                         hasInjuries: '',
                         injuryDetails: '',
                         hasPhysicalRestrictions: '',
+                        physicalRestrictionsDetails: '',
                         hasCurrentMedication: '',
+                        medicationDetails: '',
                         pilatesExperience: '',
                         fitnessGoals: [],
                         fitnessGoalsOther: '',
@@ -659,10 +670,14 @@ export const AddGroupMembershipPage = () => {
                             if (answer1.comments) newMember.injuryDetails = answer1.comments;
                         }
                         if (answersObj['2']) {
-                            newMember.hasPhysicalRestrictions = answersObj['2'][0]?.answer?.toLowerCase() === 'yes' ? 'yes' : answersObj['2'][0]?.answer?.toLowerCase() === 'no' ? 'no' : '';
+                            const answer2 = answersObj['2'][0];
+                            newMember.hasPhysicalRestrictions = answer2.answer?.toLowerCase() === 'yes' ? 'yes' : answer2.answer?.toLowerCase() === 'no' ? 'no' : '';
+                            if (answer2.comments) newMember.physicalRestrictionsDetails = answer2.comments;
                         }
                         if (answersObj['3']) {
-                            newMember.hasCurrentMedication = answersObj['3'][0]?.answer?.toLowerCase() === 'yes' ? 'yes' : answersObj['3'][0]?.answer?.toLowerCase() === 'no' ? 'no' : '';
+                            const answer3 = answersObj['3'][0];
+                            newMember.hasCurrentMedication = answer3.answer?.toLowerCase() === 'yes' ? 'yes' : answer3.answer?.toLowerCase() === 'no' ? 'no' : '';
+                            if (answer3.comments) newMember.medicationDetails = answer3.comments;
                         }
                         if (answersObj['4']) {
                             newMember.pilatesExperience = answersObj['4'][0]?.answer || '';
@@ -878,7 +893,7 @@ export const AddGroupMembershipPage = () => {
         answersObj['2'] = [
             {
                 answer: member.hasPhysicalRestrictions.toUpperCase() || '',
-                comments: ''
+                comments: member.hasPhysicalRestrictions === 'yes' ? member.physicalRestrictionsDetails : ''
             }
         ];
 
@@ -886,7 +901,7 @@ export const AddGroupMembershipPage = () => {
         answersObj['3'] = [
             {
                 answer: member.hasCurrentMedication.toUpperCase() || '',
-                comments: ''
+                comments: member.hasCurrentMedication === 'yes' ? member.medicationDetails : ''
             }
         ];
 
@@ -977,11 +992,10 @@ export const AddGroupMembershipPage = () => {
             }
 
             if (member.userSelectionMode === 'manual') {
-                if (!member.formData.firstName 
+                if (!member.formData.firstName
                     // || 
                     // !member.formData.lastName
-                ) 
-                    {
+                ) {
                     toast.error(`${memberLabel}: Please enter first name `);
                     return;
                 }
@@ -1040,10 +1054,10 @@ export const AddGroupMembershipPage = () => {
             return;
         }
 
-        if (emergencyContactName && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)) {
-            toast.error('Please enter a valid 10-digit emergency contact number');
-            return;
-        }
+        // if (emergencyContactName && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)) {
+        //     toast.error('Please enter a valid 10-digit emergency contact number');
+        //     return;
+        // }
 
         setIsSubmitting(true);
         try {
@@ -1131,8 +1145,8 @@ export const AddGroupMembershipPage = () => {
                     memberObj.attachments = attachmentsBase64;
                 }
 
-                // If user was selected, add user_id
-                if (member.userSelectionMode === 'select' && member.selectedUserId) {
+                // If user was selected or we have a selectedUserId (e.g. from edit mode), add user_id
+                if (member.selectedUserId) {
                     memberObj.user_id = member.selectedUserId;
                 }
 
@@ -1325,10 +1339,12 @@ export const AddGroupMembershipPage = () => {
     // Get user limit from selected plan (parse as number since API returns string)
     const userLimit = parseInt(selectedPlan?.user_limit || '1');
 
-    // Update editable cost when plan is selected
+    // Update editable cost and GST when plan is selected
     React.useEffect(() => {
         if (selectedPlan) {
             setEditablePlanCost(selectedPlan.price);
+            setCgstPercentage(selectedPlan.cgst || '0');
+            setSgstPercentage(selectedPlan.sgst || '0');
         }
     }, [selectedPlan]);
 
@@ -1343,7 +1359,7 @@ export const AddGroupMembershipPage = () => {
     // Create new member template
     const createNewMember = (): MemberData => ({
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        userSelectionMode: 'select',
+        userSelectionMode: 'manual',
         selectedUser: '',
         selectedUserId: null,
         formData: {
@@ -1534,7 +1550,7 @@ export const AddGroupMembershipPage = () => {
                     end = now.add(1, 'month');
                 } else if (term === 'quarter' || term === 'quaterly') {
                     end = now.add(3, 'month');
-                } else if (term === 'half-year' || term === 'half year' || term === 'half yearly') {
+                } else if (term === 'half-year' || term === 'half year' || term === 'half_yearly') {
                     end = now.add(6, 'month');
                 } else if (term === 'year' || term === 'yearly') {
                     end = now.add(1, 'year');
@@ -1546,7 +1562,7 @@ export const AddGroupMembershipPage = () => {
     }, [isEditMode, selectedPlanId, membershipPlans]);
 
     // State for house/flat options
-    const [flatOptions, setFlatOptions] = useState<{ id: number; flat_no: string }[]>([]);
+    const [flatOptions, setFlatOptions] = useState<{ id: number; name: string }[]>([]);
     const [flatsLoading, setFlatsLoading] = useState(false);
 
     // Fetch flats on mount
@@ -1554,10 +1570,13 @@ export const AddGroupMembershipPage = () => {
         const fetchFlats = async () => {
             setFlatsLoading(true);
             try {
-                const response = await fetch("https://club-uat-api.lockated.com/society_flats/society_flats_list.json?token=z0Vz7MWHrLM59gu-ureFRdkqq1x8L0nSiKOcaM1pumE");
-                if (!response.ok) throw new Error("Failed to fetch flats");
-                const data = await response.json();
-                setFlatOptions(Array.isArray(data.flats) ? data.flats : []);
+                const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/houses.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+                    }
+                });
+                const data = response.data;
+                setFlatOptions(Array.isArray(data) ? data : []);
             } catch (err) {
                 setFlatOptions([]);
             } finally {
@@ -1778,7 +1797,7 @@ export const AddGroupMembershipPage = () => {
                                                                 // Only allow alphabets and spaces
                                                                 if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
                                                                     updateMember(member.id, { formData: { ...member.formData, lastName: value } });
-                                                                } 
+                                                                }
                                                                 // else {
                                                                 //     toast.error('Last name should contain only alphabets');
                                                                 // }
@@ -1894,7 +1913,7 @@ export const AddGroupMembershipPage = () => {
                                                                     <MenuItem value="" disabled>No flats found</MenuItem>
                                                                 ) : (
                                                                     flatOptions.map(flat => (
-                                                                        <MenuItem key={flat.id} value={flat.id}>{flat.flat_no}</MenuItem>
+                                                                        <MenuItem key={flat.id} value={flat.id}>{flat.name}</MenuItem>
                                                                     ))
                                                                 )}
                                                             </Select>
@@ -2154,7 +2173,24 @@ export const AddGroupMembershipPage = () => {
                                                             multiline
                                                             rows={3}
                                                             fullWidth
-                                                            sx={{ mt: 2 }}
+                                                            sx={{
+                                                                "& .MuiOutlinedInput-root": {
+                                                                    height: "auto !important",
+                                                                    padding: "2px !important",
+                                                                    display: "flex",
+                                                                },
+                                                                "& .MuiInputBase-input[aria-hidden='true']": {
+                                                                    flex: 0,
+                                                                    width: 0,
+                                                                    height: 0,
+                                                                    padding: "0 !important",
+                                                                    margin: 0,
+                                                                    display: "none",
+                                                                },
+                                                                "& .MuiInputBase-input": {
+                                                                    resize: "none !important",
+                                                                },
+                                                            }}
                                                         />
                                                     )}
                                                 </div>
@@ -2167,6 +2203,34 @@ export const AddGroupMembershipPage = () => {
                                                         <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
                                                         <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
                                                     </RadioGroup>
+                                                    {member.hasPhysicalRestrictions === 'yes' && (
+                                                        <TextField
+                                                            label="Please justify"
+                                                            value={member.physicalRestrictionsDetails}
+                                                            onChange={(e) => updateMember(member.id, { physicalRestrictionsDetails: e.target.value })}
+                                                            multiline
+                                                            rows={3}
+                                                            fullWidth
+                                                            sx={{
+                                                                "& .MuiOutlinedInput-root": {
+                                                                    height: "auto !important",
+                                                                    padding: "2px !important",
+                                                                    display: "flex",
+                                                                },
+                                                                "& .MuiInputBase-input[aria-hidden='true']": {
+                                                                    flex: 0,
+                                                                    width: 0,
+                                                                    height: 0,
+                                                                    padding: "0 !important",
+                                                                    margin: 0,
+                                                                    display: "none",
+                                                                },
+                                                                "& .MuiInputBase-input": {
+                                                                    resize: "none !important",
+                                                                },
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
 
                                                 <div>
@@ -2177,6 +2241,34 @@ export const AddGroupMembershipPage = () => {
                                                         <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
                                                         <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
                                                     </RadioGroup>
+                                                    {member.hasCurrentMedication === 'yes' && (
+                                                        <TextField
+                                                            label="Please justify"
+                                                            value={member.medicationDetails}
+                                                            onChange={(e) => updateMember(member.id, { medicationDetails: e.target.value })}
+                                                            multiline
+                                                            rows={3}
+                                                            fullWidth
+                                                            sx={{
+                                                                "& .MuiOutlinedInput-root": {
+                                                                    height: "auto !important",
+                                                                    padding: "2px !important",
+                                                                    display: "flex",
+                                                                },
+                                                                "& .MuiInputBase-input[aria-hidden='true']": {
+                                                                    flex: 0,
+                                                                    width: 0,
+                                                                    height: 0,
+                                                                    padding: "0 !important",
+                                                                    margin: 0,
+                                                                    display: "none",
+                                                                },
+                                                                "& .MuiInputBase-input": {
+                                                                    resize: "none !important",
+                                                                },
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -2217,7 +2309,7 @@ export const AddGroupMembershipPage = () => {
                                                     </div>
                                                 </div>
 
-                                                <div>
+                                                {/* <div>
                                                     <FormLabel component="legend" className="text-sm font-medium mb-3">
                                                         Have you practiced Pilates before?
                                                     </FormLabel>
@@ -2234,7 +2326,7 @@ export const AddGroupMembershipPage = () => {
                                                             <MenuItem value="Advanced">Advanced</MenuItem>
                                                         </Select>
                                                     </FormControl>
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </div>
 
@@ -2325,7 +2417,7 @@ export const AddGroupMembershipPage = () => {
                                                     sx={fieldStyles}
                                                     fullWidth
                                                 />
-                                                <div>
+                                                {/* <div>
                                                     <FormLabel component="legend" className="text-sm font-medium mb-2">
                                                         Interested in corporate/group plans?
                                                     </FormLabel>
@@ -2333,7 +2425,7 @@ export const AddGroupMembershipPage = () => {
                                                         <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
                                                         <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
                                                     </RadioGroup>
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </div>
                                     </div>
@@ -2472,7 +2564,7 @@ export const AddGroupMembershipPage = () => {
                                 </div>
 
                                 {/* Card 10: Add-on Amenities */}
-                                {selectedPlanId && (
+                                {/* {selectedPlanId && (
                                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                         <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">Additional Amenities (Add-ons)</h2>
                                         <p className="text-sm text-gray-500 mb-6">Select additional amenities not included in your plan</p>
@@ -2515,13 +2607,29 @@ export const AddGroupMembershipPage = () => {
                                             </div>
                                         )}
                                     </div>
-                                )}
+                                )} */}
 
                                 {/* Shared Membership Details */}
                                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                     <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Shared Membership Details</h2>
 
                                     <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                                            <DatePicker
+                                                label="Start Date *"
+                                                value={startDate}
+                                                onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
+                                                format="DD/MM/YYYY"
+                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                            />
+                                            <DatePicker
+                                                label="End Date *"
+                                                value={endDate}
+                                                onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
+                                                format="DD/MM/YYYY"
+                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                            />
+                                        </div>
 
                                         <TextField
                                             label="Emergency Contact (Optional)"
@@ -2554,23 +2662,6 @@ export const AddGroupMembershipPage = () => {
                                                     : ''
                                             }
                                         />
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
-                                            <DatePicker
-                                                label="Start Date *"
-                                                value={startDate}
-                                                onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
-                                                format="DD/MM/YYYY"
-                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
-                                            />
-                                            <DatePicker
-                                                label="End Date *"
-                                                value={endDate}
-                                                onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
-                                                format="DD/MM/YYYY"
-                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
-                                            />
-                                        </div>
 
                                         <FormControlLabel
                                             control={
@@ -2669,71 +2760,23 @@ export const AddGroupMembershipPage = () => {
                                             </div>
 
                                             {/* Tax Section */}
-                                            {/* <div className="space-y-3 pb-3 border-b border-gray-200"> */}
+                                            <div className="space-y-3 pb-3 border-b border-gray-200">
                                                 {/* CGST */}
-                                                {/* <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2 flex-1">
-                                                        <label className="text-sm text-gray-600">CGST (%):</label>
-                                                        <TextField
-                                                            value={cgstPercentage}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                // Only allow non-negative numbers between 0 and 100
-                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
-                                                                    setCgstPercentage(value);
-                                                                }
-                                                            }}
-                                                            type="number"
-                                                            size="small"
-                                                            inputProps={{
-                                                                min: 0,
-                                                                max: 100,
-                                                                step: 0.01
-                                                            }}
-                                                            sx={{
-                                                                ...fieldStyles,
-                                                                width: '80px',
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    height: '36px',
-                                                                }
-                                                            }}
-                                                        />
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm text-gray-600">CGST ({cgstPercentage}%):</label>
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{cgstAmount.toFixed(2)}</p>
-                                                </div> */}
+                                                </div>
 
                                                 {/* SGST */}
-                                                {/* <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2 flex-1">
-                                                        <label className="text-sm text-gray-600">SGST (%):</label>
-                                                        <TextField
-                                                            value={sgstPercentage}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                // Only allow non-negative numbers between 0 and 100
-                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
-                                                                    setSgstPercentage(value);
-                                                                }
-                                                            }}
-                                                            type="number"
-                                                            size="small"
-                                                            inputProps={{
-                                                                min: 0,
-                                                                max: 100,
-                                                                step: 0.01
-                                                            }}
-                                                            sx={{
-                                                                ...fieldStyles,
-                                                                width: '80px',
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    height: '36px',
-                                                                }
-                                                            }}
-                                                        />
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-sm text-gray-600">SGST ({sgstPercentage}%):</label>
                                                     </div>
                                                     <p className="text-sm font-medium text-gray-700">₹{sgstAmount.toFixed(2)}</p>
-                                                </div> */}
-                                            {/* </div> */}
+                                                </div>
+                                            </div>
 
                                             {/* Total */}
                                             <div className="flex items-center justify-between pt-2">

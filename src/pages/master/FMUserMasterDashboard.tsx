@@ -144,12 +144,12 @@ const columns: ColumnConfig[] = [
   },
   { key: "type", label: "Type", sortable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, draggable: true },
-  {
-    key: "faceRecognition",
-    label: "Face Recognition",
-    sortable: true,
-    draggable: true,
-  },
+  // {
+  //   key: "faceRecognition",
+  //   label: "Face Recognition",
+  //   sortable: true,
+  //   draggable: true,
+  // },
   {
     key: "appDownloaded",
     label: "App Downloaded",
@@ -751,11 +751,11 @@ export const FMUserMasterDashboard = () => {
   };
 
   const selectedActions = [
-    {
-      label: "Clone Role",
-      icon: Users,
-      onClick: handleOpenRoleDialog,
-    },
+    // {
+    //   label: "Clone Role",
+    //   icon: Users,
+    //   onClick: handleOpenRoleDialog,
+    // },
   ];
 
   if (error) {

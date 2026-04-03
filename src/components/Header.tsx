@@ -78,7 +78,7 @@ export const Header = () => {
     setIsNotificationOpen,
     markAsRead,
     markAllAsRead,
-    handleNotificationClick,
+    handleNotificationClick: handleNotificationClickContext,
   } = useNotification();
 
   const currentPath = window.location.pathname;
@@ -207,7 +207,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       /* no-op */
     }
@@ -258,6 +258,25 @@ export const Header = () => {
       window.location.reload();
     } catch (error) {
       console.error("Failed to change company:", error);
+    }
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    await handleNotificationClickContext(notification);
+
+    // Navigate based on notification type
+    if (notification.ntype === "conversation") {
+      navigate(
+        `/vas/channels/messages/${notification.payload.conversation_id}`
+      );
+    }
+    if (notification.ntype === "projectspace") {
+      navigate(
+        `/vas/channels/groups/${notification.payload.project_space_id}`
+      );
+    }
+    if (notification.payload.ntype === "newtaskmanagement") {
+      navigate(`/vas/tasks/${notification.payload.task_management_id}`);
     }
   };
 
@@ -683,17 +702,15 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                          !notification.read ? "bg-blue-50/30" : ""
-                        }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              !notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
-                            }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -779,7 +796,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                      "User"
+                    "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">

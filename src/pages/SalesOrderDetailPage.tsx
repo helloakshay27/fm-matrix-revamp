@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -350,7 +351,7 @@ export const SalesOrderDetailPage = () => {
                                 {/* Created on {new Date(salesOrder.created_at).toLocaleDateString()} */}
                             </h1>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Created on {new Date(salesOrder.created_at).toLocaleDateString()}
+                                Created on {salesOrder?.created_at ? format(new Date(salesOrder.created_at), 'dd/MM/yyyy') : "N/A"}
                             </p>
                         </div>
                     </div>
@@ -429,13 +430,13 @@ export const SalesOrderDetailPage = () => {
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Order Date</p>
                                         <p className="text-base font-semibold mt-1">
-                                            {new Date(salesOrder?.date).toLocaleDateString()}
+                                            {salesOrder?.date ? format(new Date(salesOrder.date), 'dd/MM/yyyy') : "N/A"}
                                         </p>
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Expected Shipment Date</p>
                                         <p className="text-base font-semibold mt-1">
-                                            {new Date(salesOrder?.shipment_date).toLocaleDateString()}
+                                            {salesOrder?.shipment_date ? format(new Date(salesOrder.shipment_date), 'dd/MM/yyyy') : "N/A"}
                                         </p>
                                     </div>
                                      <div>
@@ -697,7 +698,7 @@ export const SalesOrderDetailPage = () => {
                                         <div className="flex-grow">
                                             <p className="font-medium">Order Created</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {new Date(salesOrder?.created_at).toLocaleString()}
+                                                {salesOrder?.created_at ? format(new Date(salesOrder.created_at), 'dd/MM/yyyy hh:mm a') : "N/A"}
                                             </p>
                                         </div>
                                     </div>
@@ -706,9 +707,9 @@ export const SalesOrderDetailPage = () => {
                                             <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
                                         </div>
                                         <div className="flex-grow">
-                                            <p className="font-medium">Order Confirmed</p>
+                                            <p className="font-medium">Order Updated</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {new Date(salesOrder?.updated_at).toLocaleString()}
+                                                {salesOrder?.updated_at ? format(new Date(salesOrder.updated_at), 'dd/MM/yyyy hh:mm a') : "N/A"}
                                             </p>
                                         </div>
                                     </div>

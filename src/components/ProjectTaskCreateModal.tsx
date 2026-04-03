@@ -21,6 +21,7 @@ import {
   fetchProjectTasks,
   fetchTargetDateTasks,
   fetchUserAvailability,
+  resetUserAvailability,
 } from "@/store/slices/projectTasksSlice";
 import {
   Checkbox,
@@ -1206,6 +1207,9 @@ const ProjectTaskCreateModal = ({
   };
 
   const handleCancel = () => {
+    // Reset user availability data when modal closes
+    dispatch(resetUserAvailability());
+
     if (savedTasks.length === 0) {
       if (onCloseModal) {
         onCloseModal();

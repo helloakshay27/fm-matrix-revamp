@@ -31,7 +31,35 @@ interface Payment {
   bank_reference_number: string;
   paid_through_account: string;
   currency_symbol: string;
+  tds_percentage?: number;
+  tds_amount?: number;
+  net_amount?: number;
+  bill_numbers?: string;
+  deposit_to_ledger_name?: string;
 }
+
+const numberToWords = (num: number): string => {
+  const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  const convert = (n: number): string => {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convert(n % 100) : '');
+    if (n < 100000) return convert(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + convert(n % 1000) : '');
+    if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 !== 0 ? ' ' + convert(n % 100000) : '');
+    return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + convert(n % 10000000) : '');
+  };
+
+  const fractional = Math.round((num % 1) * 100);
+  let words = convert(Math.floor(num)) + ' Rupee';
+  if (Math.floor(num) !== 1) words += 's';
+  if (fractional > 0) {
+    words += ' and ' + convert(fractional) + ' Paisa';
+    if (fractional !== 1) words += 's';
+  }
+  return words + ' Only';
+};
 
 interface PaymentDetailViewProps {
   payments: Payment[];
@@ -370,7 +398,7 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
                       <div className="text-red-600 font-bold text-sm cursor-pointer hover:underline mb-1">
                         {selectedPayment.vendor_name}
                       </div>
-                      <div className="text-gray-500 text-sm">Aland Islands</div>
+                      <div className="text-gray-500 text-sm">India</div>
                     </div>
                   </div>
                   {/* Row 5 */}
@@ -391,6 +419,44 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
                       {selectedPayment.paid_through_account}
                     </span>
                   </div>
+                  {/* Row 7 — TDS (only shown if tds_amount > 0) */}
+                  {(selectedPayment.tds_amount ?? 0) > 0 && (
+                    <div className="grid grid-cols-[160px_1fr] items-center border-b border-gray-100 py-3">
+                      <span className="text-gray-600 font-medium text-sm">
+                        TDS Deducted
+                      </span>
+                      <span className="text-red-500 font-semibold text-sm">
+                        &minus; {selectedPayment.currency_symbol}
+                        {(selectedPayment.tds_amount ?? 0).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                        {(selectedPayment.tds_percentage ?? 0) > 0 && (
+                          <span className="ml-1 text-gray-400 font-normal text-xs">
+                            ({selectedPayment.tds_percentage}%)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  {/* Row 8 — Net Amount after TDS */}
+                  {(selectedPayment.tds_amount ?? 0) > 0 && (
+                    <div className="grid grid-cols-[160px_1fr] items-center py-3">
+                      <span className="text-gray-600 font-medium text-sm">
+                        Amount After TDS
+                      </span>
+                      <span className="text-gray-900 font-bold text-sm">
+                        {selectedPayment.currency_symbol}
+                        {((selectedPayment.net_amount ?? 0) > 0
+                          ? selectedPayment.net_amount ?? 0
+                          : selectedPayment.amount - (selectedPayment.tds_amount ?? 0)
+                        ).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Amount Box */}
@@ -414,7 +480,7 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
                     Amount Paid In Words
                   </span>
                   <span className="text-gray-900 font-medium text-sm italic">
-                    Indian Rupee One Thousand Two Hundred Thirty Four Only
+                    {numberToWords(selectedPayment.amount)}
                   </span>
                 </div>
               </div>
@@ -473,7 +539,7 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
                       </div>
                       <div className="grid grid-cols-[1fr_150px_150px] border-b border-gray-100 py-3 text-sm text-gray-700 items-center hover:bg-gray-50">
                         <div className="text-gray-900 hover:text-blue-600 cursor-pointer">
-                          Prepaid Expenses
+                          {selectedPayment.deposit_to_ledger_name || "Prepaid Expenses"}
                         </div>
                         <div className="text-right">
                           {selectedPayment.amount.toLocaleString("en-IN", {
@@ -485,7 +551,7 @@ export const PaymentDetailView: React.FC<PaymentDetailViewProps> = ({
                       </div>
                       <div className="grid grid-cols-[1fr_150px_150px] border-b-2 border-gray-200 py-3 text-sm text-gray-700 items-center hover:bg-gray-50">
                         <div className="text-gray-900 hover:text-blue-600 cursor-pointer">
-                          Petty Cash
+                          {selectedPayment.paid_through_account || "Petty Cash"}
                         </div>
                         <div className="text-right">0.00</div>
                         <div className="text-right">

@@ -1169,6 +1169,7 @@ interface TaskDetails {
   created_at?: string;
   status?: string;
   parent_task_title?: string;
+  total_allocated_hours?: number;
   responsible_person?: {
     name?: string;
   };
@@ -1518,6 +1519,23 @@ export const ProjectTaskDetails = () => {
     }
   };
 
+  function formatHours(hours: number): string {
+    console.log(hours)
+    if (hours < 1) {
+      const minutes = Math.round(hours * 60);
+      return `${minutes} min${minutes !== 1 ? 's' : ''}`;
+    }
+
+    const wholeHours = Math.floor(hours);
+    const remainingMinutes = Math.round((hours - wholeHours) * 60);
+
+    if (remainingMinutes === 0) {
+      return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''}`;
+    }
+
+    return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''} ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+  }
+
   const fetchProjectAndMilestoneNames = async () => {
     try {
       // Fetch project name
@@ -1649,7 +1667,17 @@ export const ProjectTaskDetails = () => {
           </>
         ) : (
           <>
-            <h2 className="text-[15px] p-3 px-0">
+            <h2
+              className="cursor-pointer hover:underline text-[15px] p-3 px-0"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied to clipboard!");
+                } catch (err) {
+                  console.error("Failed to copy:", err);
+                }
+              }}
+            >
               <span className="mr-3 text-[#C72030]">Task-{taskDetails.id}</span>
               <span>{taskDetails.title}</span>
             </h2>
@@ -1825,7 +1853,7 @@ export const ProjectTaskDetails = () => {
                   <div className="flex items-center justify-start gap-3">
                     <div className="text-right font-[500]">Efforts Duration:</div>
                     <div className="text-left">
-                      {taskDetails.estimated_hour || 0} hours
+                      {formatHours(taskDetails.total_allocated_hours)}
                     </div>
                   </div>
                 </div>
@@ -1932,7 +1960,7 @@ export const ProjectTaskDetails = () => {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
-                          {taskDetails.estimated_hour || 0} hours
+                          {formatHours(taskDetails.total_allocated_hours || 0)}
                         </p>
                       </div>
                     </div>

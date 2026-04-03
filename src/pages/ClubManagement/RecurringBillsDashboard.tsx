@@ -302,22 +302,30 @@ export const RecurringBillsDashboard: React.FC = () => {
     );
   };
 
-  const totalRecords = pagination.total_count;
-  const totalPages = pagination.total_pages;
-  const displayedData = billData;
+  const filteredBillData = searchTerm.trim()
+    ? billData.filter(bill =>
+        bill.bill_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.reference_number?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : billData;
+
+  const totalRecords = searchTerm.trim() ? filteredBillData.length : pagination.total_count;
+  const totalPages = searchTerm.trim() ? Math.ceil(filteredBillData.length / perPage) || 1 : pagination.total_pages;
+  const displayedData = filteredBillData;
 
   // Render row function for enhanced table
   const renderRow = (bill: Bill) => ({
     actions: (
       <div className="flex items-center gap-2">
-        {/* <button
+        <button
           onClick={() => handleView(bill.id)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="View"
         >
           <Eye className="w-4 h-4" />
         </button>
-        <button
+        {/* <button
           onClick={() => handleEdit(bill.id)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="Edit"
@@ -396,7 +404,7 @@ export const RecurringBillsDashboard: React.FC = () => {
   });
 
   const handleView = (id: number) => {
-    navigate(`/accounting/bills/${id}`);
+    navigate(`/accounting/recurring-bills/details/${id}`);
   };
 
   const handleEdit = (id: number) => {

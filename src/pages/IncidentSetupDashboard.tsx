@@ -11,6 +11,17 @@ export const IncidentSetupDashboard = () => {
   // Get baseUrl and token from localStorage, ensure baseUrl starts with https://
   let baseUrl = localStorage.getItem('baseUrl') || '';
   const token = localStorage.getItem('token') || '';
+
+  const fetchByTagType = async (tagType) => {
+    const url = `${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=${tagType}`;
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error(`Failed to fetch ${tagType}`);
+    const result = await response.json();
+    return result.data || [];
+  };
+
   if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
     baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
   }
@@ -18,37 +29,15 @@ export const IncidentSetupDashboard = () => {
   // Fetch SubSubSubCategories from API and map with category, subcategory, and subsubcategory names
   const fetchSubSubSubCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const allCategories = result.data.filter(item => item.tag_type === 'IncidenceCategory');
-        const allSubCategories = result.data.filter(item => item.tag_type === 'IncidenceSubCategory');
-        const allSubSubCategories = result.data.filter(item => item.tag_type === 'IncidenceSubSubCategory');
-        const subSubSubCats = result.data
-          .filter(item => item.tag_type === 'IncidenceSubSubSubCategory')
-          .map(item => {
-            const parentSubSub = allSubSubCategories.find(subsub => subsub.id === item.parent_id);
-            const parentSub = parentSubSub ? allSubCategories.find(sub => sub.id === parentSubSub.parent_id) : null;
-            const parentCat = parentSub ? allCategories.find(cat => cat.id === parentSub.parent_id) : null;
-            return {
-              id: item.id,
-              category: parentCat ? parentCat.name : '',
-              subCategory: parentSub ? parentSub.name : '',
-              subSubCategory: parentSubSub ? parentSubSub.name : '',
-              subSubSubCategory: item.name
-            };
-          });
-        setSubSubSubCategories(subSubSubCats);
-      } else {
-        console.error('Failed to fetch sub sub sub categories');
-      }
-    } catch (error) {
-      console.error('Error fetching sub sub sub categories:', error);
-    }
+      const data = await fetchByTagType('IncidenceSubSubSubCategory');
+      setSubSubSubCategories(data.map(item => ({
+        id: item.id,
+        category: item.category_name || '',
+        subCategory: item.sub_category_name || '',
+        subSubCategory: item.sub_sub_category_name || '',
+        subSubSubCategory: item.name
+      })));
+    } catch (e) { console.error(e); }
   };
   const [categoryName, setCategoryName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Category');
@@ -87,27 +76,14 @@ export const IncidentSetupDashboard = () => {
   // Only use /pms/incidence_tags.json?q[tag_type_eq]=EscaltionMatrix for escalations GET
   const fetchEscalations = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        // Map API data to local escalation format
-        const mapped = (result.data || []).map(item => ({
-          id: item.id,
-          level: item.name,
-          escalateInDays: item.after_days ? String(item.after_days) : '',
-          users: Array.isArray(item.escalate_to_users) ? item.escalate_to_users.join(', ') : ''
-        }));
-        setEscalations(mapped);
-      } else {
-        setEscalations([]);
-      }
-    } catch (error) {
-      setEscalations([]);
-    }
+      const data = await fetchByTagType('EscaltionMatrix');
+      setEscalations(data.map(item => ({
+        id: item.id,
+        level: item.name,
+        escalateInDays: item.after_days ? String(item.after_days) : '',
+        users: Array.isArray(item.escalate_to_users) ? item.escalate_to_users.join(', ') : ''
+      })));
+    } catch (e) { setEscalations([]); }
   };
 
   // Fetch Escalation Matrix from API
@@ -155,37 +131,14 @@ export const IncidentSetupDashboard = () => {
   // Fetch Secondary Sub Sub Categories from API
   const fetchSecondarySubSubCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        // Use API data for parent lookups
-        const allSecondaryCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondaryCategory');
-        const allSecondarySubCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondarySubCategory');
-        const subSubCats = (result.data || [])
-          .filter(item => item.tag_type === 'IncidenceSecondarySubSubCategory')
-          .map(item => {
-            const subCat = allSecondarySubCategories.find(sub => sub.id === item.parent_id);
-            const cat = subCat ? allSecondaryCategories.find(cat => cat.id === subCat.parent_id) : null;
-            return {
-              id: item.id,
-              secondaryCategory: cat?.name || '',
-              secondarySubCategory: subCat?.name || '',
-              secondarySubSubCategory: item.name
-            };
-          });
-        setSecondarySubSubCategories(subSubCats);
-      } else {
-        setSecondarySubSubCategories([]);
-        console.error('Failed to fetch secondary sub sub categories');
-      }
-    } catch (error) {
-      setSecondarySubSubCategories([]);
-      console.error('Error fetching secondary sub sub categories:', error);
-    }
+      const data = await fetchByTagType('IncidenceSecondarySubSubCategory');
+      setSecondarySubSubCategories(data.map(item => ({
+        id: item.id,
+        secondaryCategory: item.sub_category_name || '',
+        secondarySubCategory: item.parent_name || '',
+        secondarySubSubCategory: item.name
+      })));
+    } catch (e) { console.error(e); }
   };
   const [secondarySubSubSubCategories, setSecondarySubSubSubCategories] = useState([{
     id: 1,
@@ -198,40 +151,15 @@ export const IncidentSetupDashboard = () => {
   // Fetch Secondary Sub Sub Sub Categories from API (Secondary hierarchy)
   const fetchSecondarySubSubSubCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        // Use API data for parent lookups in the Secondary hierarchy
-        const allSecondaryCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondaryCategory');
-        const allSecondarySubCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondarySubCategory');
-        const allSecondarySubSubCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondarySubSubCategory');
-        const subSubSubCats = (result.data || [])
-          .filter(item => item.tag_type === 'IncidenceSecondarySubSubSubCategory')
-          .map(item => {
-            const subSubCat = allSecondarySubSubCategories.find(subsub => subsub.id === item.parent_id);
-            const subCat = subSubCat ? allSecondarySubCategories.find(sub => sub.id === subSubCat.parent_id) : null;
-            const cat = subCat ? allSecondaryCategories.find(cat => cat.id === subCat.parent_id) : null;
-            return {
-              id: item.id,
-              secondaryCategory: cat?.name || '',
-              secondarySubCategory: subCat?.name || '',
-              secondarySubSubCategory: subSubCat?.name || '',
-              secondarySubSubSubCategory: item.name
-            };
-          });
-        setSecondarySubSubSubCategories(subSubSubCats);
-      } else {
-        setSecondarySubSubSubCategories([]);
-        console.error('Failed to fetch secondary sub sub sub categories');
-      }
-    } catch (error) {
-      setSecondarySubSubSubCategories([]);
-      console.error('Error fetching secondary sub sub sub categories:', error);
-    }
+      const data = await fetchByTagType('IncidenceSecondarySubSubSubCategory');
+      setSecondarySubSubSubCategories(data.map(item => ({
+        id: item.id,
+        secondaryCategory: item.category_name || '',
+        secondarySubCategory: item.sub_category_name || '',
+        secondarySubSubCategory: item.sub_sub_category_name || '',
+        secondarySubSubSubCategory: item.name
+      })));
+    } catch (e) { console.error(e); }
   };
   const [selectedSecondarySubSubCategory, setSelectedSecondarySubSubCategory] = useState('');
   const [whoGotInjured, setWhoGotInjured] = useState([]);
@@ -251,315 +179,120 @@ export const IncidentSetupDashboard = () => {
   // Fetch SubCategories from API and map with parent category name
   const fetchSubCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        // Get all categories for mapping parent name
-        const allCategories = result.data.filter(item => item.tag_type === 'IncidenceCategory');
-        const subCats = result.data
-          .filter(item => item.tag_type === 'IncidenceSubCategory')
-          .map(item => {
-            const parent = allCategories.find(cat => cat.id === item.parent_id);
-            return {
-              id: item.id,
-              category: parent ? parent.name : '',
-              categoryId: parent ? parent.id : '',
-              subCategory: item.name
-            };
-          });
-        setSubCategories(subCats);
-      } else {
-        console.error('Failed to fetch sub categories');
-      }
-    } catch (error) {
-      console.error('Error fetching sub categories:', error);
-    }
+      const data = await fetchByTagType('IncidenceSubCategory');
+      setSubCategories(data.map(item => ({
+        id: item.id,
+        category: item.parent_name || '',
+        categoryId: item.parent_id || '',
+        subCategory: item.name
+      })));
+    } catch (e) { console.error(e); }
   };
 
   // Fetch SubSubCategories from API and map with category and subcategory names
   const fetchSubSubCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const allCategories = result.data.filter(item => item.tag_type === 'IncidenceCategory');
-        const allSubCategories = result.data.filter(item => item.tag_type === 'IncidenceSubCategory');
-        const subSubCats = result.data
-          .filter(item => item.tag_type === 'IncidenceSubSubCategory')
-          .map(item => {
-            const parentSub = allSubCategories.find(sub => sub.id === item.parent_id);
-            const parentCat = parentSub ? allCategories.find(cat => cat.id === parentSub.parent_id) : null;
-            return {
-              id: item.id,
-              category: parentCat ? parentCat.name : '',
-              categoryId: parentCat ? parentCat.id : '',
-              subCategory: parentSub ? parentSub.name : '',
-              subCategoryId: parentSub ? parentSub.id : '',
-              subSubCategory: item.name
-            };
-          });
-        setSubSubCategories(subSubCats);
-      } else {
-        console.error('Failed to fetch sub sub categories');
-      }
-    } catch (error) {
-      console.error('Error fetching sub sub categories:', error);
-    }
+      const data = await fetchByTagType('IncidenceSubSubCategory');
+      setSubSubCategories(data.map(item => ({
+        id: item.id,
+        category: item.sub_category_name || '',
+        subCategory: item.parent_name || '',
+        subCategoryId: item.parent_id || '',
+        subSubCategory: item.name
+      })));
+    } catch (e) { console.error(e); }
   };
 
   const fetchIncidenceStatuses = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const statuses = result.data
-          .filter(item => item.tag_type === 'IncidenceStatus')
-          .map(({ id, name }) => ({ id, name }));
-        setIncidenceStatuses(statuses);
-      } else {
-        console.error('Failed to fetch incidence statuses');
-      }
-    } catch (error) {
-      console.error('Error fetching incidence statuses:', error);
-    }
+      const data = await fetchByTagType('IncidenceStatus');
+      setIncidenceStatuses(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   const fetchIncidenceLevels = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const rawLevels = result.data.filter(item => item.tag_type === 'IncidenceLevel');
-        console.log('Raw Incidence Levels from API:', rawLevels);
-        const levels = rawLevels.map(({ id, name, color_code }) => ({ id, name, color_code: color_code || '#000000' }));
-        console.log('Mapped Incidence Levels:', levels);
-        setIncidenceLevels(levels);
-      } else {
-        console.error('Failed to fetch incidence levels');
-      }
-    } catch (error) {
-      console.error('Error fetching incidence levels:', error);
-    }
+      const data = await fetchByTagType('IncidenceLevel');
+      setIncidenceLevels(data.map(({ id, name, color_code }) => ({
+        id,
+        name,
+        color_code: color_code || '#000000'
+      })));
+    } catch (e) { console.error(e); }
   };
 
   const fetchSecondaryCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const filtered = result.data
-          .filter(item => item.tag_type === 'IncidenceSecondaryCategory' && item.parent_id === null)
-          .map(({ id, name }) => ({ id, name }));
-        setSecondaryCategories(filtered);
-      } else {
-        console.error('Failed to fetch secondary categories');
-      }
-    } catch (error) {
-      console.error('Error fetching secondary categories:', error);
-    }
+      const data = await fetchByTagType('IncidenceSecondaryCategory');
+      setSecondaryCategories(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   const fetchSecondarySubCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const allSecondaryCategories = result.data.filter(item => item.tag_type === 'IncidenceSecondaryCategory');
-        const secondarySubCats = result.data
-          .filter(item => item.tag_type === 'IncidenceSecondarySubCategory')
-          .map(item => {
-            const parent = allSecondaryCategories.find(cat => cat.id === item.parent_id);
-            return {
-              id: item.id,
-              secondaryCategory: parent ? parent.name : '',
-              secondarySubCategory: item.name
-            };
-          });
-        setSecondarySubCategories(secondarySubCats);
-      } else {
-        console.error('Failed to fetch secondary sub categories');
-      }
-    } catch (error) {
-      console.error('Error fetching secondary sub categories:', error);
-    }
+      const data = await fetchByTagType('IncidenceSecondarySubCategory');
+      setSecondarySubCategories(data.map(item => ({
+        id: item.id,
+        secondaryCategory: item.parent_name || item.sub_sub_category_name || '',
+        secondaryCategoryId: item.parent_id || '',
+        secondarySubCategory: item.name
+      })));
+    } catch (e) { console.error(e); }
   };
 
   // Fetch RCACategory data from API
   const fetchRCACategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        // Map the API response correctly for RCA categories
-        const rcaTypes = (result.data || [])
-          .filter(item => item.tag_type === 'RCACategory')
-          .map(item => ({ id: item.id, name: item.name }));
-        setRcaCategories(rcaTypes);
-      } else {
-        console.error('Failed to fetch RCA categories');
-      }
-    } catch (error) {
-      console.error('Error fetching RCA categories:', error);
-    }
+      const data = await fetchByTagType('RCACategory');
+      setRcaCategories(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   // Fetch SubstandardAct data from API
   const fetchSubstandardActCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const substandardActTypes = (result.data || [])
-          .filter(item => item.tag_type === 'SubstandardAct')
-          .map(item => ({ id: item.id, name: item.name }));
-        setSubstandardActCategories(substandardActTypes);
-      } else {
-        console.error('Failed to fetch Substandard Act categories');
-      }
-    } catch (error) {
-      console.error('Error fetching Substandard Act categories:', error);
-    }
+      const data = await fetchByTagType('SubstandardAct');
+      setSubstandardActCategories(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   // Fetch SubstandardCondition data from API
   const fetchSubstandardConditionCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const substandardConditionTypes = (result.data || [])
-          .filter(item => item.tag_type === 'SubstandardCondition')
-          .map(item => ({ id: item.id, name: item.name }));
-        setSubstandardConditionCategories(substandardConditionTypes);
-      } else {
-        console.error('Failed to fetch Substandard Condition categories');
-      }
-    } catch (error) {
-      console.error('Error fetching Substandard Condition categories:', error);
-    }
+      const data = await fetchByTagType('SubstandardCondition');
+      setSubstandardConditionCategories(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   // Fetch PreventiveAction data from API
   const fetchPreventiveActions = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const preventiveActionTypes = (result.data || [])
-          .filter(item => item.tag_type === 'PreventiveAction')
-          .map(item => ({ id: item.id, name: item.name }));
-        setPreventiveActions(preventiveActionTypes);
-      } else {
-        console.error('Failed to fetch Preventive Action categories');
-      }
-    } catch (error) {
-      console.error('Error fetching Preventive Action categories:', error);
-    }
+      const data = await fetchByTagType('PreventiveAction');
+      setPreventiveActions(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   // Fetch CorrectiveAction data from API
   const fetchCorrectiveActions = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const correctiveActionTypes = (result.data || [])
-          .filter(item => item.tag_type === 'CorrectiveAction')
-          .map(item => ({ id: item.id, name: item.name }));
-        setCorrectiveActions(correctiveActionTypes);
-      } else {
-        console.error('Failed to fetch Corrective Action categories');
-      }
-    } catch (error) {
-      console.error('Error fetching Corrective Action categories:', error);
-    }
+      const data = await fetchByTagType('CorrectiveAction');
+      setCorrectiveActions(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   // Fetch PropertyDamageCategory data from API
   const fetchPropertyDamageCategories = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const propertyDamageTypes = result.data
-          .filter(item => item.tag_type === 'PropertyDamageCategory')
-          .map(({ id, name }) => ({ id, name }));
-        setPropertyDamageCategories(propertyDamageTypes);
-      } else {
-        console.error('Failed to fetch property damage categories');
-      }
-    } catch (error) {
-      console.error('Error fetching property damage categories:', error);
-    }
+      const data = await fetchByTagType('PropertyDamageCategory');
+      setPropertyDamageCategories(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
   // Fetch InjuredType data from API
   const fetchWhoGotInjured = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const injuredTypes = result.data
-          .filter(item => item.tag_type === 'InjuredType')
-          .map(({ id, name }) => ({ id, name }));
-        setWhoGotInjured(injuredTypes);
-      } else {
-        console.error('Failed to fetch injured types');
-      }
-    } catch (error) {
-      console.error('Error fetching injured types:', error);
-    }
+      const data = await fetchByTagType('InjuredType');
+      setWhoGotInjured(data.map(({ id, name }) => ({ id, name })));
+    } catch (e) { console.error(e); }
   };
 
   const fetchCategories = async () => {
@@ -593,46 +326,25 @@ export const IncidentSetupDashboard = () => {
 
   const fetchApprovalSetups = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json?tag_type=ApprovalSetup`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        // Since we're filtering by tag_type in the URL, all data should be ApprovalSetup
-        const approvalSetupData = result.data || [];
-
-        // Extract user IDs from the name field (comma-separated string) of the most recent ApprovalSetup entry
-        if (approvalSetupData.length > 0) {
-          const latestApprovalSetup = approvalSetupData[approvalSetupData.length - 1];
-          const nameString = latestApprovalSetup.name || '';
-          // Split comma-separated string into array and convert to string array for dropdown
-          const userIds = nameString ? nameString.split(',').map(id => id.trim()) : [];
-          setSelectedApprovalUsers(userIds);
-          setExistingApprovalSetupId(latestApprovalSetup.id);
-        } else {
-          // If no existing approval setup, clear the selection
-          setSelectedApprovalUsers([]);
-          setExistingApprovalSetupId(null);
-        }
-
-        // Also update the approvalSetups state for the table display
-        const approvalSetupsForTable = approvalSetupData.map(setup => ({
-          id: setup.id,
-          users: setup.name ? setup.name.split(',').map(userId => {
-            // Find user in escalateToUsersList
-            const user = escalateToUsersList.find(u => String(u.id) === userId.trim());
-            return user ? user.full_name : `User ID: ${userId.trim()}`;
-          }).join(', ') : 'No users selected'
-        }));
-        setApprovalSetups(approvalSetupsForTable);
+      const data = await fetchByTagType('ApprovalSetup');
+      if (data.length > 0) {
+        const latest = data[data.length - 1];
+        const userIds = latest.name ? latest.name.split(',').map(id => id.trim()) : [];
+        setSelectedApprovalUsers(userIds);
+        setExistingApprovalSetupId(latest.id);
       } else {
-        console.error('Failed to fetch approval setups');
+        setSelectedApprovalUsers([]);
+        setExistingApprovalSetupId(null);
       }
-    } catch (error) {
-      console.error('Error fetching approval setups:', error);
-    }
+      const approvalSetupsForTable = data.map(setup => ({
+        id: setup.id,
+        users: setup.name ? setup.name.split(',').map(userId => {
+          const user = escalateToUsersList.find(u => String(u.id) === userId.trim());
+          return user ? user.full_name : `User ID: ${userId.trim()}`;
+        }).join(', ') : 'No users selected'
+      }));
+      setApprovalSetups(approvalSetupsForTable);
+    } catch (e) { console.error(e); }
   };
   useEffect(() => {
     if (selectedCategory === 'Category') {
@@ -2375,10 +2087,10 @@ export const IncidentSetupDashboard = () => {
                         value={escalateToUsers}
                         onChange={(e) => {
                           // Handle value - ensure it's always an array of strings (user IDs)
-                          const value = typeof e.target.value === 'string' 
-                            ? e.target.value.split(',') 
+                          const value = typeof e.target.value === 'string'
+                            ? e.target.value.split(',')
                             : e.target.value;
-                          
+
                           // Update both states with the array of IDs
                           setEscalateToUsers(value);
                           setEditFormData({ ...editFormData, users: value });

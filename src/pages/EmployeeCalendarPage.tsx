@@ -30,7 +30,7 @@ export const EmployeeCalendarPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <EmployeeHeaderStatic />
+      {/* <EmployeeHeaderStatic /> */}
 
       <main className="pt-6 pb-8 px-6 max-w-[1600px] mx-auto">
         {/* Page Header */}

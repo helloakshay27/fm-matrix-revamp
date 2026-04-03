@@ -830,9 +830,11 @@ export const AMCDetailsPage = () => {
                   <Table>
                     <TableHeader style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
                       <TableRow className="bg-[#F6F4EE]">
-                        <TableHead className="font-semibold text-[#1a1a1a]">Asset Period</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Schedule Date</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Visit No.</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Attendant Name</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">No. of Assets Covered</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                       </TableRow>
@@ -851,9 +853,11 @@ export const AMCDetailsPage = () => {
                           else if (isWord) icon = <FileText className="w-6 h-6 text-blue-600" />;
                           return (
                             <TableRow key={visit.id || index} className="border-b border-gray-200">
-                              <TableCell className="text-gray-600">{visit.asset_period || '—'}</TableCell>
+                              <TableCell className="text-gray-600">{visit.scheduled_date || visit.asset_period || '—'}</TableCell>
+                              <TableCell className="text-gray-600">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '—'}</TableCell>
                               <TableCell className="text-gray-600">{visit.visit_number || '—'}</TableCell>
-                              <TableCell className="text-gray-600">{visit.technician ? visit.technician.name : '—'}</TableCell>
+                              <TableCell className="text-gray-600">{visit.attendant_name || (visit.technician ? visit.technician.name : '—')}</TableCell>
+                              <TableCell className="text-gray-600 text-center">{visit.no_of_assets ?? visit.assets_covered ?? '—'}</TableCell>
                               <TableCell className="text-gray-600">{visit.remarks || '—'}</TableCell>
                               <TableCell>
                                 {fileUrl ? (
@@ -919,7 +923,7 @@ export const AMCDetailsPage = () => {
                         })
                       ) : (
                         <TableRow className="border-b border-gray-200">
-                          <TableCell colSpan={5} className="text-center text-gray-600">
+                          <TableCell colSpan={7} className="text-center text-gray-600">
                             No AMC visit logs available.
                           </TableCell>
                         </TableRow>
@@ -1265,17 +1269,19 @@ export const AMCDetailsPage = () => {
                             <TableHead className="font-semibold text-[#1a1a1a]">Action</TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">Service ID</TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">Name</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Group</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Sub Group</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Group & Sub Group</TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
                           </>
                         ) : (
                           <>
                             <TableHead className="font-semibold text-[#1a1a1a]">Action</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">ID</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Name</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Under Warranty</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Equipment ID</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Asset Name</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Model No.</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Group & Sub Group</TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Criticality</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Location</TableHead>
                           </>
                         )}
                       </TableRow>
@@ -1296,59 +1302,16 @@ export const AMCDetailsPage = () => {
                               </TableCell>
                               <TableCell className="text-gray-900">{service.service_id || '—'}</TableCell>
                               <TableCell className="text-gray-900">{service.service_name || '—'}</TableCell>
-                              <TableCell className="text-gray-900">{service.group_name || '—'}</TableCell>
-                              <TableCell className="text-gray-900">{service.sub_group_name || '—'}</TableCell>
-                              <TableCell>
-                                <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    service.status === 'Active'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}
-                                >
-                                  {service.status || '—'}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow className="border-b border-gray-200">
-                            <TableCell colSpan={6} className="text-center text-sm text-gray-500">
-                              No services found
-                            </TableCell>
-                          </TableRow>
-                        )
-                      ) : (
-                        amcDetails.amc_assets?.length > 0 ? (
-                          amcDetails.amc_assets.map((asset) => (
-                            <TableRow key={asset.id} className="border-b border-gray-200">
-                              <TableCell>
-                                <a
-                                  href={`/maintenance/asset/details/${asset.asset_id}`}
-                                  className="text-gray-600 hover:text-black"
-                                  title="View Details"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </a>
-                              </TableCell>
-                              <TableCell className="text-gray-900">{asset.asset_id || '—'}</TableCell>
-                              <TableCell className="text-gray-900">{asset.asset_name || '—'}</TableCell>
                               <TableCell className="text-gray-900">
-                                {asset.warranty === true
-                                  ? 'Yes'
-                                  : asset.warranty === false
-                                    ? 'No'
-                                    : '—'}
+                                {[service.group_name, service.sub_group_name].filter(Boolean).join(' / ') || '—'}
                               </TableCell>
                               <TableCell>
-                                <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === 'active'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}
-                                >
-                                  {asset.asset_status?.replace('_', ' ') || '—'}
+                                <span className={`px-2 py-1 text-xs rounded ${
+                                  (service as any).status === 'Active'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {(service as any).status || '—'}
                                 </span>
                               </TableCell>
                             </TableRow>
@@ -1356,6 +1319,54 @@ export const AMCDetailsPage = () => {
                         ) : (
                           <TableRow className="border-b border-gray-200">
                             <TableCell colSpan={5} className="text-center text-sm text-gray-500">
+                              No services found
+                            </TableCell>
+                          </TableRow>
+                        )
+                      ) : (
+                        amcDetails.amc_assets?.length > 0 ? (
+                          amcDetails.amc_assets.map((asset: any) => {
+                            const locationParts = [
+                              asset.building_name || asset.building,
+                              asset.wing_name || asset.wing,
+                              asset.area_name || asset.area,
+                              asset.floor_name || asset.floor,
+                              asset.room_name || asset.room,
+                            ].filter(Boolean);
+                            const location = locationParts.length > 0 ? locationParts.join(', ') : '—';
+                            const groupSubGroup = [asset.group_name, asset.sub_group_name].filter(Boolean).join(' / ') || '—';
+                            return (
+                              <TableRow key={asset.id} className="border-b border-gray-200">
+                                <TableCell>
+                                  <a
+                                    href={`/maintenance/asset/details/${asset.asset_id}`}
+                                    className="text-gray-600 hover:text-black"
+                                    title="View Details"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </a>
+                                </TableCell>
+                                <TableCell className="text-gray-900">{asset.equipment_id || asset.asset_code || asset.asset_id || '—'}</TableCell>
+                                <TableCell className="text-gray-900">{asset.asset_name || '—'}</TableCell>
+                                <TableCell className="text-gray-900">{asset.model_no || asset.model_number || '—'}</TableCell>
+                                <TableCell className="text-gray-900">{groupSubGroup}</TableCell>
+                                <TableCell>
+                                  <span className={`px-2 py-1 text-xs rounded ${
+                                    asset.asset_status === 'active'
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {asset.asset_status?.replace('_', ' ') || '—'}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-gray-900">{asset.criticality || '—'}</TableCell>
+                                <TableCell className="text-gray-900 text-sm">{location}</TableCell>
+                              </TableRow>
+                            );
+                          })
+                        ) : (
+                          <TableRow className="border-b border-gray-200">
+                            <TableCell colSpan={8} className="text-center text-sm text-gray-500">
                               No assets found
                             </TableCell>
                           </TableRow>

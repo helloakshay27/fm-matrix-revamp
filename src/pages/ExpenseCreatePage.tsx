@@ -18,6 +18,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Checkbox,
 } from '@mui/material';
 import { Close, CloudUpload, Search } from '@mui/icons-material';
 import { Receipt, FileText } from 'lucide-react';
@@ -140,6 +141,7 @@ export const ExpenseCreatePage: React.FC = () => {
   const [paidThrough, setPaidThrough] = useState('');
   const [vendor, setVendor] = useState('');
   const [customer, setCustomer] = useState('');
+  const [billedOn, setBilledOn] = useState(false);
   const [gstTreatment, setGstTreatment] = useState('');
   const [sourceOfSupply, setSourceOfSupply] = useState('');
   const [destinationOfSupply, setDestinationOfSupply] = useState('Maharashtra'); // ✅ full name default
@@ -355,6 +357,13 @@ export const ExpenseCreatePage: React.FC = () => {
     return defaults;
   };
 
+  const handleCustomerChange = (value: string) => {
+    setCustomer(value);
+    if (!value) {
+      setBilledOn(false);
+    }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files).slice(0, 10 - receipts.length);
@@ -404,8 +413,18 @@ export const ExpenseCreatePage: React.FC = () => {
         if (!line.amount || parseFloat(line.amount) <= 0) e[`line_${i}_amount`] = 'Amount required';
       });
     }
+
     setErrors(e);
-    return Object.keys(e).length === 0;
+
+    // Show toasts one by one with delay
+    const errorMessages = Object.values(e);
+    errorMessages.forEach((message, index) => {
+      setTimeout(() => {
+        sonnerToast.error(message);
+      }, index * 800); // 800ms gap between each toast
+    });
+
+    return errorMessages.length === 0;
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -472,6 +491,7 @@ export const ExpenseCreatePage: React.FC = () => {
           source_of_supply: sourceOfSupply,
           destination_of_supply: destinationOfSupply,
           reverse_charge: reverseCharge,
+          billable: billedOn,
           total_tax_amount: totalTaxAmount,
           expense_accounts_attributes: expenseAccountsAttributes,
         },
@@ -880,7 +900,7 @@ export const ExpenseCreatePage: React.FC = () => {
                   <label className="block text-sm font-medium mb-2">Customer Name</label>
                   <FormControl fullWidth>
                     <Select
-                      value={customer} onChange={e => setCustomer(e.target.value)}
+                      value={customer} onChange={e => handleCustomerChange(e.target.value)}
                       displayEmpty sx={fieldStyles} disabled={loadingCustomers}
                       endAdornment={
                         <InputAdornment position="end">
@@ -896,6 +916,19 @@ export const ExpenseCreatePage: React.FC = () => {
                       ))}
                     </Select>
                   </FormControl>
+                  {customer && (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={billedOn}
+                          onChange={e => setBilledOn(e.target.checked)}
+                          size="small"
+                        />
+                      }
+                      label="billed"
+                      className="mt-2"
+                    />
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium mb-2">Reporting Tags</label>
@@ -1020,7 +1053,7 @@ export const ExpenseCreatePage: React.FC = () => {
                             - Goods / Services dropdown below it
                             - HSN Code / SAC inline "Update" link (Zoho-style)
                         */}
-                        <td className="px-3 py-3 align-middle"> 
+                        <td className="px-3 py-3 align-middle">
                           <div className="flex flex-col gap-1">
                             {/* Account selector */}
                             <FormControl fullWidth size="small" error={!!errors[`line_${idx}_account`]}>
@@ -1275,7 +1308,7 @@ export const ExpenseCreatePage: React.FC = () => {
                   <label className="block text-sm font-medium mb-2">Customer Name</label>
                   <FormControl fullWidth>
                     <Select
-                      value={customer} onChange={e => setCustomer(e.target.value)}
+                      value={customer} onChange={e => handleCustomerChange(e.target.value)}
                       displayEmpty sx={fieldStyles} disabled={loadingCustomers}
                       endAdornment={
                         <InputAdornment position="end">
@@ -1291,6 +1324,19 @@ export const ExpenseCreatePage: React.FC = () => {
                       ))}
                     </Select>
                   </FormControl>
+                  {customer && (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={billedOn}
+                          onChange={e => setBilledOn(e.target.checked)}
+                          size="small"
+                        />
+                      }
+                      label="billed"
+                      className="mt-2"
+                    />
+                  )}
                 </div>
 
                 {/* <div className="flex flex-col">

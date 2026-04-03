@@ -85,23 +85,23 @@ const RetainerInvoiceDetailsReport: React.FC = () => {
   const fetchRetainerInvoiceDetails = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_invoices/retainer_invoice_details.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          params: {
-            from_date: filters.fromDate,
-            to_date: filters.toDate,
-          },
-        }
-      );
+      // const response = await axios.get(
+      //   `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_invoices/retainer_invoice_details.json`,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${token}`,
+      //       "Content-Type": "application/json",
+      //     },
+      //     params: {
+      //       from_date: filters.fromDate,
+      //       to_date: filters.toDate,
+      //     },
+      //   }
+      // );
 
-      const data = response.data || [];
+      const data =  [];
       const mapped: RetainerInvoiceRow[] = (
-        Array.isArray(data) ? data : (data.retainer_invoices ?? [])
+        Array.isArray(data) ? data : ( [])
       ).map((item: RawRetainerItem, idx: number) => ({
         id: String(idx),
         status: item.status || "",
@@ -266,9 +266,10 @@ const RetainerInvoiceDetailsReport: React.FC = () => {
             storageKey="retainer-invoice-details-v1"
             hideTableExport={true}
             hideTableSearch={false}
-            enableSearch={true}
+            // enableSearch={true}
             loading={loading}
             emptyMessage="No data to display"
+            hideColumnsButton={true}
           />
 
           {/* Totals row */}
