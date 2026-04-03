@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { useSelector } from "react-redux";
 import {
   useQuery,
@@ -73,6 +73,7 @@ import {
   Search,
   Send,
   Star,
+  Trash2,
   TrendingUp,
   X,
   Loader2,
@@ -100,12 +101,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
-import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
-import {
-  getEmbeddedOrgId,
-  getEmbeddedToken,
-  resolveBaseUrlByOrgId,
-} from "@/utils/embeddedMode";
+import apiClient from "@/utils/apiClient";
 import { getUser } from "@/utils/auth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -121,6 +117,7 @@ type SummaryStat = {
 export type FeedbackItem = {
   id: string;
   recipientName: string;
+  ratingFromName?: string;
   date: string;
   rating: number;
   status: "unread" | "read";
@@ -171,59 +168,6 @@ const queryClient = new QueryClient({
     mutations: { retry: false },
   },
 });
-
-// ─── Token / Auth Service ──────────────────────────────────────────────────────
-
-/**
- * In-memory token store. Credentials are never persisted beyond what
- * the host app already puts in storage for bootstrap.
- * After initial load the token lives only in module-scope memory.
- */
-let _accessToken: string | null = null;
-let _refreshPromise: Promise<string> | null = null;
-
-function getAccessToken(): string {
-  if (_accessToken) return _accessToken;
-  const embedded = getEmbeddedToken();
-  if (embedded) {
-    _accessToken = embedded;
-    return embedded;
-  }
-  return getAuthHeader(); // returns "Bearer ..." string from host
-}
-
-function setAccessToken(token: string): void {
-  _accessToken = token;
-}
-
-function clearAccessToken(): void {
-  _accessToken = null;
-}
-
-/**
- * Refresh the access token.
- * Multiple concurrent callers coalesce onto a single Promise — only
- * one HTTP request ever goes out, preventing token-refresh races.
- */
-async function refreshAccessToken(): Promise<string> {
-  if (_refreshPromise) return _refreshPromise;
-
-  _refreshPromise = apiClient
-    .post<{ access_token: string }>(
-      "/auth/refresh",
-      {},
-      { headers: { "x-skip-auth-retry": "1" } }
-    )
-    .then(({ data }) => {
-      setAccessToken(data.access_token);
-      return data.access_token;
-    })
-    .finally(() => {
-      _refreshPromise = null;
-    });
-
-  return _refreshPromise;
-}
 
 // ─── Error Normalization ───────────────────────────────────────────────────────
 
@@ -285,116 +229,10 @@ function normalizeError(error: unknown): AppError {
   return { message: "An unexpected error occurred.", kind: "unknown" };
 }
 
-// ─── Axios Instance ────────────────────────────────────────────────────────────
-
-/**
- * Centralized Axios instance. Every request goes through here so auth
- * injection, token refresh, and error normalization are always applied.
- */
-const apiClient = axios.create({
-  timeout: 30_000,
-  headers: { Accept: "application/json" },
-});
-
-async function resolveBaseUrl(): Promise<string> {
-  const embeddedOrgId = getEmbeddedOrgId();
-  if (embeddedOrgId) {
-    try {
-      const resolved = await resolveBaseUrlByOrgId(embeddedOrgId);
-      return resolved.replace(/\/+$/, "");
-    } catch {
-      /* fall through */
-    }
-  }
-  const base = API_CONFIG.BASE_URL;
-  if (!base)
-    throw {
-      message: "API base URL not configured. Please log in again.",
-      kind: "unknown",
-    } as AppError;
-  return base.replace(/\/+$/, "");
-}
-
-// Request interceptor — attach base URL, Authorization header, and access_token query param
-apiClient.interceptors.request.use(async (config) => {
-  if (!config.baseURL) {
-    config.baseURL = await resolveBaseUrl();
-  }
-  const token = getAccessToken();
-  // Extract raw token value (strip "Bearer " prefix if present)
-  const rawToken = token?.startsWith("Bearer ") ? token.slice(7) : token;
-  if (rawToken) {
-    // Set both Authorization header and access_token query param
-    // The lockated API accepts both; some routes require the query param
-    config.headers.Authorization = `Bearer ${rawToken}`;
-    config.params = { ...config.params, access_token: rawToken };
-  }
-  return config;
-});
-
-// Response interceptor — refresh token on 401, normalize all errors
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    const original = error.config as typeof error.config & {
-      _retried?: boolean;
-      headers: Record<string, string>;
-    };
-
-    // Attempt one token refresh on 401, skip refresh endpoint itself
-    if (
-      error.response?.status === 401 &&
-      !original._retried &&
-      !original.headers["x-skip-auth-retry"]
-    ) {
-      original._retried = true;
-      try {
-        const newToken = await refreshAccessToken();
-        original.headers.Authorization = `Bearer ${newToken}`;
-        return apiClient(original);
-      } catch {
-        clearAccessToken();
-        // Signal app-level logout (the app can listen for this)
-        window.dispatchEvent(new CustomEvent("auth:expired"));
-      }
-    }
-
-    return Promise.reject(normalizeError(error));
-  }
-);
-
 async function fetchFeedbackDetail(
   feedbackId: string
 ): Promise<FeedbackItem | null> {
-  const showEndpoints = _confirmedFeedbackEndpoint
-    ? [
-        _confirmedFeedbackEndpoint.replace(/\.json$/, `/${feedbackId}.json`),
-        ...[
-          `/pms/team_feedbacks/${feedbackId}.json`,
-          `/api/pms/team_feedbacks/${feedbackId}.json`,
-          `/pms/feedbacks/${feedbackId}.json`,
-          `/api/pms/feedbacks/${feedbackId}.json`,
-          `/feedbacks/${feedbackId}.json`,
-          `/feedbacks/${feedbackId}`,
-        ].filter(
-          (e) =>
-            e !==
-            _confirmedFeedbackEndpoint?.replace(
-              /\.json$/,
-              `/${feedbackId}.json`
-            )
-        ),
-      ]
-    : [
-        `/pms/team_feedbacks/${feedbackId}.json`,
-        `/api/pms/team_feedbacks/${feedbackId}.json`,
-        `/pms/feedbacks/${feedbackId}.json`,
-        `/api/pms/feedbacks/${feedbackId}.json`,
-        `/feedbacks/${feedbackId}.json`,
-        `/feedbacks/${feedbackId}`,
-      ];
-
-  for (const endpoint of showEndpoints) {
+  for (const endpoint of getRatingsDetailEndpoints(feedbackId)) {
     try {
       const { data } = await apiClient.get(endpoint);
       const rawItem = data?.rating ?? data?.feedback ?? data?.data ?? data;
@@ -418,6 +256,7 @@ const FeedbackSchema = z.object({
   id: z.coerce.string(),
   score: z.number().min(1).max(5).catch(1),
   recipient_name: z.string().optional().catch(undefined),
+  rating_from_name: z.string().optional().catch(undefined),
   recipient: z
     .object({
       name: z.string().optional(),
@@ -459,6 +298,10 @@ const FeedbackSchema = z.object({
       id: z.coerce.number().optional(),
       user_id: z.coerce.number().optional(),
       type: z.string().optional(),
+      name: z.string().optional(),
+      full_name: z.string().optional(),
+      firstname: z.string().optional(),
+      lastname: z.string().optional(),
     })
     .optional()
     .catch(undefined),
@@ -498,6 +341,8 @@ const TeamMemberSchema = z.object({
   name: z.string().optional(),
   full_name: z.string().optional(),
   fullName: z.string().optional(),
+  username: z.string().optional(),
+  email: z.string().optional(),
   firstname: z.string().optional(),
   first_name: z.string().optional(),
   firstName: z.string().optional(),
@@ -567,9 +412,18 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
     .filter(Boolean)
     .join(" ");
 
+  const ratingFromName =
+    raw.rating_from_name ||
+    ratingFrom?.name ||
+    ratingFrom?.full_name ||
+    (ratingFrom?.firstname && ratingFrom?.lastname
+      ? [ratingFrom.firstname, ratingFrom.lastname].filter(Boolean).join(" ")
+      : undefined);
+
   return {
     id: raw.id,
     recipientName: (recipientName as string) || "Team Member",
+    ratingFromName: ratingFromName || undefined,
     date: formatApiDate(raw.created_at ?? raw.createdAt ?? raw.date),
     rating: score,
     status: raw.read ? "read" : "unread",
@@ -589,18 +443,116 @@ function mapTeamMember(
   raw: z.infer<typeof TeamMemberSchema>
 ): TeamMemberOption | null {
   if (!raw.id) return null;
+
+  const clean = (value?: string) => {
+    const trimmed = value?.trim();
+    return trimmed ? trimmed : undefined;
+  };
+
+  const fullName = [
+    clean(raw.firstname ?? raw.first_name ?? raw.firstName),
+    clean(raw.lastname ?? raw.last_name ?? raw.lastName),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const label =
-    raw.name ||
-    raw.full_name ||
-    raw.fullName ||
-    [
-      raw.firstname ?? raw.first_name ?? raw.firstName,
-      raw.lastname ?? raw.last_name ?? raw.lastName,
-    ]
-      .filter(Boolean)
-      .join(" ") ||
+    clean(raw.name) ||
+    clean(raw.full_name) ||
+    clean(raw.fullName) ||
+    clean(fullName) ||
+    clean(raw.username) ||
+    clean(raw.email) ||
     `User ${raw.id}`;
+
   return { value: String(raw.id), label, id: raw.id };
+}
+
+function buildFeedbackItemFromPayload(
+  payload: FeedbackPayload,
+  fallbackId: string,
+  recipientName?: string
+): FeedbackItem {
+  const preview = [
+    payload.positive_opening,
+    payload.constructive_feedback,
+    payload.positive_closing,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return {
+    id: fallbackId,
+    recipientName: recipientName || "Team Member",
+    date: formatApiDate(payload.created_at),
+    rating: Math.min(5, Math.max(1, Math.round(payload.score || 1))),
+    status: "read",
+    detailPreview: preview || undefined,
+    resourceId: payload.resource_id,
+    ratingFromType: payload.rating_from_type || "User",
+    ratingFromId: payload.rating_from_id,
+    positiveOpening: payload.positive_opening,
+    constructiveFeedback: payload.constructive_feedback,
+    positiveClosing: payload.positive_closing,
+    createdAt: payload.created_at || new Date().toISOString(),
+  };
+}
+
+function normalizeMutationFeedbackItem(
+  result: unknown,
+  payload: FeedbackPayload,
+  recipientName?: string,
+  fallbackId?: string
+): FeedbackItem {
+  const rawItem =
+    (result as Record<string, unknown> | null | undefined)?.rating ||
+    (result as Record<string, unknown> | null | undefined)?.feedback ||
+    (result as Record<string, unknown> | null | undefined)?.data ||
+    result;
+
+  const parsed = FeedbackSchema.safeParse(rawItem);
+  if (parsed.success) {
+    const mapped = mapRawFeedback(parsed.data);
+    if (recipientName && mapped.recipientName === "Team Member") {
+      return { ...mapped, recipientName };
+    }
+    return mapped;
+  }
+
+  return buildFeedbackItemFromPayload(
+    payload,
+    fallbackId || String(Date.now()),
+    recipientName
+  );
+}
+
+function upsertFeedbackItem(
+  items: FeedbackItem[] | undefined,
+  nextItem: FeedbackItem
+): FeedbackItem[] {
+  const current = items ?? [];
+  const withoutCurrent = current.filter((item) => item.id !== nextItem.id);
+
+  return [nextItem, ...withoutCurrent].sort((a, b) => {
+    const at = new Date(a.createdAt || 0).getTime();
+    const bt = new Date(b.createdAt || 0).getTime();
+    return bt - at;
+  });
+}
+
+function mergeFeedbackItems(...groups: FeedbackItem[][]): FeedbackItem[] {
+  const merged = groups.flat();
+  const byId = new Map<string, FeedbackItem>();
+
+  for (const item of merged) {
+    byId.set(item.id, item);
+  }
+
+  return Array.from(byId.values()).sort((a, b) => {
+    const at = new Date(a.createdAt || 0).getTime();
+    const bt = new Date(b.createdAt || 0).getTime();
+    return bt - at;
+  });
 }
 
 // ─── Current User Helper ───────────────────────────────────────────────────────
@@ -630,24 +582,46 @@ function getCurrentUserId(): number | null {
 // ─── API Constants ─────────────────────────────────────────────────────────────
 
 const TEAM_MEMBERS_ENDPOINT = "/pms/users/get_escalate_to_users.json";
+const RATINGS_COLLECTION_ENDPOINTS = ["/ratings.json", "/ratings"];
+const LAST_SUCCESSFUL_FEEDBACK: Record<string, FeedbackItem[]> = {};
+const FEEDBACK_CACHE_PREFIX = "feedback-cache-v1";
 
-const FEEDBACK_ENDPOINTS = [
-  "/pms/team_feedbacks.json",
-  "/api/pms/team_feedbacks.json",
-  "/pms/admin/team_feedbacks.json",
-  "/pms/pms_team_feedbacks.json",
-  "/pms/admin/pms_team_feedbacks.json",
-  "/pms/ratings.json",
-  "/pms/admin/ratings.json",
-  "/pms/feedbacks.json",
-  "/api/pms/feedbacks.json",
-  "/feedbacks.json",
-  "/api/feedbacks.json",
-];
+function getFeedbackCacheKey(
+  direction: "given" | "received",
+  userId: number | null
+): string {
+  return `${FEEDBACK_CACHE_PREFIX}:${direction}:${userId ?? "anon"}`;
+}
 
-// Remembers whichever endpoint returned HTTP 200 during the GET list fetch.
-// That same path is tried first on POST, eliminating endpoint guesswork.
-let _confirmedFeedbackEndpoint: string | null = null;
+function readFeedbackCache(
+  direction: "given" | "received",
+  userId: number | null
+): FeedbackItem[] {
+  try {
+    const raw = localStorage.getItem(getFeedbackCacheKey(direction, userId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as FeedbackItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeFeedbackCache(
+  direction: "given" | "received",
+  userId: number | null,
+  items: FeedbackItem[]
+): void {
+  try {
+    localStorage.setItem(getFeedbackCacheKey(direction, userId), JSON.stringify(items));
+  } catch {
+    // Ignore storage write failures (quota/privacy mode)
+  }
+}
+
+function getRatingsDetailEndpoints(feedbackId: string): string[] {
+  return [`/ratings/${feedbackId}.json`, `/ratings/${feedbackId}`];
+}
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
 
@@ -660,6 +634,7 @@ async function fetchFeedbackList(
   direction: "given" | "received",
   userId: number | null
 ): Promise<FeedbackItem[]> {
+  const memoryKey = getFeedbackCacheKey(direction, userId);
   const params: Record<string, string | number> = { _t: Date.now() };
   if (userId) {
     if (direction === "given") params.rating_from_id = userId;
@@ -668,7 +643,7 @@ async function fetchFeedbackList(
 
   let lastError: AppError | null = null;
 
-  for (const endpoint of FEEDBACK_ENDPOINTS) {
+  for (const endpoint of RATINGS_COLLECTION_ENDPOINTS) {
     try {
       const { data } = await apiClient.get(endpoint, {
         params,
@@ -676,21 +651,34 @@ async function fetchFeedbackList(
       });
 
       const raw = FeedbackListSchema.parse(data);
+      const mapped = raw.map(mapRawFeedback);
+      const filtered = mapped.filter((item) => {
+        if (!userId) return true;
+        return direction === "given"
+          ? item.ratingFromId === userId
+          : item.resourceId === userId;
+      });
 
-      // Only confirm this endpoint if the response looks like actual feedback
-      // data (object or array) — not an HTML redirect or error page.
-      if (data && (Array.isArray(data) || typeof data === "object")) {
-        _confirmedFeedbackEndpoint = endpoint;
+      const visibleItems = userId && mapped.length > 0 && filtered.length === 0
+        ? mapped
+        : filtered;
+
+      if (visibleItems.length > 0) {
+        LAST_SUCCESSFUL_FEEDBACK[memoryKey] = visibleItems;
+        writeFeedbackCache(direction, userId, visibleItems);
       }
 
-      return raw
-        .map(mapRawFeedback)
-        .filter((item) => {
-          if (!userId) return true;
-          return direction === "given"
-            ? item.ratingFromId === userId
-            : item.resourceId === userId;
-        })
+      if (visibleItems.length === 0 && (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) > 0) {
+        return LAST_SUCCESSFUL_FEEDBACK[memoryKey];
+      }
+
+      const cachedItems = readFeedbackCache(direction, userId);
+      if (visibleItems.length === 0 && cachedItems.length > 0) {
+        LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
+        return cachedItems;
+      }
+
+      return visibleItems
         .sort((a, b) => {
           const at = new Date(a.createdAt || 0).getTime();
           const bt = new Date(b.createdAt || 0).getTime();
@@ -699,7 +687,19 @@ async function fetchFeedbackList(
     } catch (err) {
       lastError = normalizeError(err);
       if (lastError.kind === "auth" || lastError.kind === "forbidden") break;
+
+      const cachedItems = readFeedbackCache(direction, userId);
+      if (cachedItems.length > 0) {
+        LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
+        return cachedItems;
+      }
     }
+  }
+
+  const cachedItems = readFeedbackCache(direction, userId);
+  if (cachedItems.length > 0) {
+    LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
+    return cachedItems;
   }
 
   throw (
@@ -721,61 +721,39 @@ async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
 }
 
 interface FeedbackPayload {
-  id?: number;
   resource_type?: string;
   resource_id?: number;
   score: number;
-  reviewer?: string;
+  created_at?: string;
   positive_opening?: string;
   constructive_feedback?: string;
   positive_closing?: string;
   rating_from_type?: string;
   rating_from_id?: number;
-  fields?: {
-    positive_opening?: string;
-    constructive_feedback?: string;
-    positive_closing?: string;
-  };
 }
 
+type FeedbackMutationVariables = {
+  payload: FeedbackPayload;
+  recipientName?: string;
+};
+
+type FeedbackUpdateMutationVariables = FeedbackMutationVariables & {
+  id: string;
+};
+
 async function createFeedback(payload: FeedbackPayload): Promise<unknown> {
-  // Rails wraps POST bodies in the singular model name.
-  // The GET response uses "pms_team_feedbacks" so the model is PmsTeamFeedback.
-  const bodyVariants = [
-    { pms_team_feedback: payload },
-    { team_feedback: payload },
-    payload,
-    { feedback: payload },
-    { rating: payload },
-  ];
   let lastError: AppError | null = null;
 
-  // Build endpoint list: put the confirmed working GET endpoint first so we
-  // don't waste attempts on paths the server has already proven don't exist.
-  const endpointsToTry = _confirmedFeedbackEndpoint
-    ? [
-        _confirmedFeedbackEndpoint,
-        ...FEEDBACK_ENDPOINTS.filter((e) => e !== _confirmedFeedbackEndpoint),
-      ]
-    : FEEDBACK_ENDPOINTS;
-
-  for (const endpoint of endpointsToTry) {
-    for (const body of bodyVariants) {
-      try {
-        const { data } = await apiClient.post(endpoint, body);
-        console.warn(`[Feedback] POST succeeded on ${endpoint}`);
-        return data;
-      } catch (err) {
-        lastError = normalizeError(err);
-        console.warn(
-          `[Feedback] POST ${endpoint} → HTTP ${lastError.status ?? "ERR"} (${lastError.kind})`,
-          body
-        );
-        if (lastError.kind === "auth" || lastError.kind === "forbidden")
-          throw lastError;
-        // 404 means the route doesn't exist — no point trying other body
-        // shapes on the same URL, skip straight to the next endpoint.
-        if (lastError.kind === "notFound") break;
+  for (const endpoint of RATINGS_COLLECTION_ENDPOINTS) {
+    try {
+      const { data } = await apiClient.post(endpoint, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return data;
+    } catch (err) {
+      lastError = normalizeError(err);
+      if (lastError.kind === "auth" || lastError.kind === "forbidden") {
+        throw lastError;
       }
     }
   }
@@ -784,8 +762,7 @@ async function createFeedback(payload: FeedbackPayload): Promise<unknown> {
     throw {
       ...lastError,
       message:
-        "Feedback could not be submitted — the server route is not available for your account. " +
-        "Please contact your administrator to enable the feedback module.",
+        "Feedback could not be submitted because the ratings API route is not available.",
     } as AppError;
   }
 
@@ -796,57 +773,21 @@ async function updateFeedback(
   id: string,
   payload: FeedbackPayload
 ): Promise<unknown> {
-  // Derive the update path from the confirmed working GET endpoint base path
-  const baseEndpoints = _confirmedFeedbackEndpoint
-    ? [
-        // e.g. "/pms/team_feedbacks.json" → "/pms/team_feedbacks/{id}.json"
-        _confirmedFeedbackEndpoint.replace(/\.json$/, `/${id}.json`),
-        ...[
-          `/pms/team_feedbacks/${id}.json`,
-          `/api/pms/team_feedbacks/${id}.json`,
-          `/pms/pms_team_feedbacks/${id}.json`,
-          `/pms/ratings/${id}.json`,
-          `/pms/feedbacks/${id}.json`,
-          `/api/pms/feedbacks/${id}.json`,
-          `/feedbacks/${id}.json`,
-          `/feedbacks/${id}`,
-        ].filter(
-          (e) =>
-            e !== _confirmedFeedbackEndpoint?.replace(/\.json$/, `/${id}.json`)
-        ),
-      ]
-    : [
-        `/pms/team_feedbacks/${id}.json`,
-        `/api/pms/team_feedbacks/${id}.json`,
-        `/pms/pms_team_feedbacks/${id}.json`,
-        `/pms/ratings/${id}.json`,
-        `/pms/feedbacks/${id}.json`,
-        `/api/pms/feedbacks/${id}.json`,
-        `/feedbacks/${id}.json`,
-        `/feedbacks/${id}`,
-      ];
-  const endpoints = baseEndpoints;
-  const bodyVariants = [
-    { pms_team_feedback: payload },
-    { team_feedback: payload },
-    payload,
-    { feedback: payload },
-    { rating: payload },
-  ];
   let lastError: AppError | null = null;
 
-  for (const endpoint of endpoints) {
-    for (const method of ["patch", "put"] as const) {
-      for (const body of bodyVariants) {
-        try {
-          const { data } = await apiClient[method](endpoint, body);
-          return data;
-        } catch (err) {
-          lastError = normalizeError(err);
-          if (lastError.kind === "auth" || lastError.kind === "forbidden")
-            throw lastError;
-          if (lastError.kind === "notFound") break;
-        }
+  for (const endpoint of getRatingsDetailEndpoints(id)) {
+    try {
+      const { data } = await apiClient.put(endpoint, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return data;
+    } catch (err) {
+      lastError = normalizeError(err);
+      if (lastError.kind === "auth" || lastError.kind === "forbidden") {
+        throw lastError;
+      }
+      if (lastError.kind === "notFound") {
+        continue;
       }
     }
   }
@@ -855,22 +796,59 @@ async function updateFeedback(
     throw {
       ...lastError,
       message:
-        "Feedback could not be updated — the server route is not available for your account. " +
-        "Please contact your administrator to enable the feedback module.",
+        "Feedback could not be updated because the ratings API route is not available.",
     } as AppError;
   }
 
   throw lastError ?? { message: "Failed to update feedback.", kind: "unknown" };
 }
 
+async function deleteFeedback(id: string): Promise<void> {
+  let lastError: AppError | null = null;
+
+  for (const endpoint of getRatingsDetailEndpoints(id)) {
+    try {
+      await apiClient.delete(endpoint, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return;
+    } catch (err) {
+      lastError = normalizeError(err);
+      if (lastError.kind === "auth" || lastError.kind === "forbidden") {
+        throw lastError;
+      }
+      if (lastError.kind === "notFound") {
+        continue;
+      }
+    }
+  }
+
+  if (lastError?.kind === "notFound") {
+    return;
+  }
+
+  throw lastError ?? { message: "Failed to delete feedback.", kind: "unknown" };
+}
+
 // ─── React Query Hooks ─────────────────────────────────────────────────────────
 
-function useFeedbackList(direction: "given" | "received") {
-  const userId = getCurrentUserId();
+function useFeedbackList(
+  direction: "given" | "received",
+  explicitUserId?: number | null
+) {
+  const defaultUserId = getCurrentUserId();
+  const userId = explicitUserId === undefined ? defaultUserId : explicitUserId;
+  const cached = readFeedbackCache(direction, userId);
+  const memoryKey = getFeedbackCacheKey(direction, userId);
+
+  if (cached.length > 0 && (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) === 0) {
+    LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cached;
+  }
+
   return useQuery<FeedbackItem[], AppError>({
     queryKey: ["feedback", direction, userId],
     queryFn: () => fetchFeedbackList(direction, userId),
-    placeholderData: [],
+    placeholderData: cached.length > 0 ? cached : [],
   });
 }
 
@@ -885,26 +863,108 @@ function useTeamMembers() {
 
 function useCreateFeedback() {
   const qc = useQueryClient();
-  return useMutation<unknown, AppError, FeedbackPayload>({
-    mutationFn: createFeedback,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["feedback", "given"] });
-      qc.invalidateQueries({ queryKey: ["feedback", "received"] });
+  return useMutation<unknown, AppError, FeedbackMutationVariables>({
+    mutationFn: ({ payload }) => createFeedback(payload),
+    onSuccess: (result, variables) => {
+      const currentUserId = getCurrentUserId();
+      const item = normalizeMutationFeedbackItem(
+        result,
+        variables.payload,
+        variables.recipientName
+      );
+
+      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "given"] }, (old) =>
+        upsertFeedbackItem(old, item)
+      );
+      qc.setQueryData<FeedbackItem[]>(["feedback", "given", currentUserId], (old) =>
+        upsertFeedbackItem(old, item)
+      );
+      const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
+      LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
+        LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey],
+        item
+      );
+      writeFeedbackCache("given", currentUserId, LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]);
     },
   });
 }
 
 function useUpdateFeedback() {
   const qc = useQueryClient();
-  return useMutation<
-    unknown,
-    AppError,
-    { id: string; payload: FeedbackPayload }
-  >({
+  return useMutation<unknown, AppError, FeedbackUpdateMutationVariables>({
     mutationFn: ({ id, payload }) => updateFeedback(id, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["feedback", "given"] });
-      qc.invalidateQueries({ queryKey: ["feedback", "received"] });
+    onSuccess: (result, variables) => {
+      const currentUserId = getCurrentUserId();
+      const item = normalizeMutationFeedbackItem(
+        result,
+        variables.payload,
+        variables.recipientName,
+        variables.id
+      );
+
+      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "given"] }, (old) =>
+        upsertFeedbackItem(old, item)
+      );
+      qc.setQueryData<FeedbackItem[]>(["feedback", "given", currentUserId], (old) =>
+        upsertFeedbackItem(old, item)
+      );
+      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "received"] }, (old) =>
+        old?.some((existing) => existing.id === item.id)
+          ? upsertFeedbackItem(old, item)
+          : old ?? []
+      );
+      qc.setQueryData<FeedbackItem[]>(["feedback", "received", currentUserId], (old) =>
+        old?.some((existing) => existing.id === item.id)
+          ? upsertFeedbackItem(old, item)
+          : old ?? []
+      );
+      const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
+      LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
+        LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey],
+        item
+      );
+      writeFeedbackCache("given", currentUserId, LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]);
+
+      const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
+      if ((LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] ?? []).some((existing) => existing.id === item.id)) {
+        LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = upsertFeedbackItem(
+          LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey],
+          item
+        );
+        writeFeedbackCache("received", currentUserId, LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]);
+      }
+    },
+  });
+}
+
+function useDeleteFeedback() {
+  const qc = useQueryClient();
+  return useMutation<void, AppError, { id: string }>({
+    mutationFn: ({ id }) => deleteFeedback(id),
+    onSuccess: (_, variables) => {
+      const currentUserId = getCurrentUserId();
+      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "given"] }, (old) =>
+        (old ?? []).filter((item) => item.id !== variables.id)
+      );
+      qc.setQueryData<FeedbackItem[]>(["feedback", "given", currentUserId], (old) =>
+        (old ?? []).filter((item) => item.id !== variables.id)
+      );
+      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "received"] }, (old) =>
+        (old ?? []).filter((item) => item.id !== variables.id)
+      );
+      qc.setQueryData<FeedbackItem[]>(["feedback", "received", currentUserId], (old) =>
+        (old ?? []).filter((item) => item.id !== variables.id)
+      );
+      const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
+      const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
+      LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = (LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] ?? []).filter(
+        (item) => item.id !== variables.id
+      );
+      LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = (LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] ?? []).filter(
+        (item) => item.id !== variables.id
+      );
+      writeFeedbackCache("given", currentUserId, LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]);
+      writeFeedbackCache("received", currentUserId, LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]);
     },
   });
 }
@@ -1057,27 +1117,49 @@ function GivenFeedbackList({
   onGiveFeedbackClick,
   onEditFeedback,
   direction,
+  filterUserId,
+  itemsOverride,
 }: {
   onGiveFeedbackClick: () => void;
   onEditFeedback: (item: FeedbackItem) => void;
   direction: "to" | "from";
+  filterUserId?: number | null;
+  itemsOverride?: FeedbackItem[];
 }) {
   const fetchDirection = direction === "to" ? "given" : "received";
   const {
-    data: items = [],
+    data: queriedItems = [],
     isLoading,
     isError,
     error,
     refetch,
-  } = useFeedbackList(fetchDirection);
+  } = useFeedbackList(fetchDirection, filterUserId);
+  const items = itemsOverride ?? queriedItems;
+  const deleteMutation = useDeleteFeedback();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState("all");
   const [detailCache, setDetailCache] = useState<
-    Record<string, GivenFeedbackItem>
+    Record<string, FeedbackItem>
   >({});
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+  const [lastStableItems, setLastStableItems] = useState<FeedbackItem[]>([]);
+
+  useEffect(() => {
+    if (!isError && items.length > 0) {
+      setLastStableItems(items);
+    }
+  }, [items, isError]);
+
+  const sourceItems =
+    itemsOverride !== undefined
+      ? items
+      : items.length > 0
+        ? items
+        : lastStableItems.length > 0
+          ? lastStableItems
+          : items;
 
   const handleExpand = async (itemId: string) => {
     const isCollapsing = expandedId === itemId;
@@ -1094,19 +1176,43 @@ function GivenFeedbackList({
     }
   };
 
+  const handleDelete = (item: FeedbackItem) => {
+    if (!window.confirm("Are you sure you want to delete this feedback?")) {
+      return;
+    }
+
+    deleteMutation.mutate(
+      { id: item.id },
+      {
+        onSuccess: () => {
+          setLastStableItems((prev) => prev.filter((f) => f.id !== item.id));
+          setDetailCache((prev) => {
+            const next = { ...prev };
+            delete next[item.id];
+            return next;
+          });
+        },
+      }
+    );
+  };
+
   const filtered = useMemo(
     () =>
-      items.filter((item) => {
+      sourceItems.filter((item) => {
         const q = searchQuery.trim().toLowerCase();
+        const searchTargets =
+          direction === "to"
+            ? [item.recipientName]
+            : [item.ratingFromName, item.recipientName].filter(Boolean);
         const matchesSearch =
           !q ||
-          item.recipientName.toLowerCase().includes(q) ||
+          searchTargets.some((name) => name!.toLowerCase().includes(q)) ||
           (item.detailPreview?.toLowerCase().includes(q) ?? false);
         const matchesRating =
           ratingFilter === "all" || String(item.rating) === ratingFilter;
         return matchesSearch && matchesRating;
       }),
-    [items, searchQuery, ratingFilter]
+    [sourceItems, searchQuery, ratingFilter, direction]
   );
 
   return (
@@ -1153,12 +1259,12 @@ function GivenFeedbackList({
 
       {/* List content */}
       <div className="space-y-3">
-        {isLoading ? (
+        {isLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
             <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
             Loading feedback…
           </div>
-        ) : isError ? (
+        ) : isError && filtered.length === 0 && direction === "to" ? (
           <InlineError
             error={normalizeError(error)}
             onRetry={() => refetch()}
@@ -1166,135 +1272,152 @@ function GivenFeedbackList({
         ) : filtered.length === 0 ? (
           <FeedbackEmptyState />
         ) : (
-          filtered.map((item) => {
-            const expanded = expandedId === item.id;
-            const detail = detailCache[item.id] ?? item;
-            const isLoadingDetail = loadingDetailId === item.id;
-            return (
-              <div
-                key={item.id}
-                className={cn(
-                  "rounded-xl border border-neutral-200/90 bg-[#FFFDF0] p-4 shadow-sm",
-                  "transition-shadow hover:shadow-md"
-                )}
-              >
-                <div className="flex gap-3 sm:gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2E7D32] sm:h-12 sm:w-12">
-                    <Send className="h-5 w-5 text-white" strokeWidth={2} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <button
-                      type="button"
-                      className="w-full text-left"
-                      onClick={() => handleExpand(item.id)}
-                    >
-                      <p className="font-semibold text-neutral-900">
-                        {direction === "to" ? "To" : "From"}:{" "}
-                        {item.recipientName}
-                      </p>
-                      <p className="text-sm text-neutral-600">{item.date}</p>
-                      {!expanded && (
-                        <p className="mt-1 text-xs text-neutral-400">
-                          Click to expand feedback details
+          <>
+            {filtered.map((item) => {
+              const expanded = expandedId === item.id;
+              const detail = detailCache[item.id] ?? item;
+              const isLoadingDetail = loadingDetailId === item.id;
+              const counterpartName =
+                direction === "to"
+                  ? item.recipientName
+                  : item.recipientName;
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "rounded-xl border border-neutral-200/90 bg-[#FFFDF0] p-4 shadow-sm",
+                    "transition-shadow hover:shadow-md"
+                  )}
+                >
+                  <div className="flex gap-3 sm:gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2E7D32] sm:h-12 sm:w-12">
+                      <Send className="h-5 w-5 text-white" strokeWidth={2} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <button
+                        type="button"
+                        className="w-full text-left"
+                        onClick={() => handleExpand(item.id)}
+                      >
+                        <p className="font-semibold text-neutral-900">
+                            {direction === "to" ? "To" : "From"}: {counterpartName}
                         </p>
-                      )}
-                    </button>
-
-                    {expanded &&
-                      (isLoadingDetail ? (
-                        <div className="mt-3 flex items-center gap-2 text-xs text-neutral-400">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          Loading details...
-                        </div>
-                      ) : (
-                        <div className="mt-3 space-y-2">
-                          {detail.positiveOpening && (
-                            <div className="border-l-2 border-[#2E7D32]/50 pl-3">
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2E7D32]/70">
-                                Positive Opening
-                              </p>
-                              <p className="text-sm leading-relaxed text-neutral-700">
-                                {detail.positiveOpening}
-                              </p>
-                            </div>
-                          )}
-                          {detail.constructiveFeedback && (
-                            <div className="border-l-2 border-orange-400/60 pl-3">
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500/80">
-                                Constructive Feedback
-                              </p>
-                              <p className="text-sm leading-relaxed text-neutral-700">
-                                {detail.constructiveFeedback}
-                              </p>
-                            </div>
-                          )}
-                          {detail.positiveClosing && (
-                            <div className="border-l-2 border-sky-400/60 pl-3">
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500/80">
-                                Positive Closing
-                              </p>
-                              <p className="text-sm leading-relaxed text-neutral-700">
-                                {detail.positiveClosing}
-                              </p>
-                            </div>
-                          )}
-                          {!detail.positiveOpening &&
-                            !detail.constructiveFeedback &&
-                            !detail.positiveClosing &&
-                            detail.detailPreview && (
-                              <p className="border-l-2 border-[#2E7D32]/40 pl-3 text-sm leading-relaxed text-neutral-700">
-                                {detail.detailPreview}
-                              </p>
-                            )}
-                        </div>
-                      ))}
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-2">
-                    <StarRatingRow value={item.rating} />
-                    <span
-                      className={cn(
-                        "rounded-md px-2 py-0.5 text-xs font-medium",
-                        item.status === "unread"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-neutral-200/80 text-neutral-600"
-                      )}
-                    >
-                      {item.status === "unread" ? "Unread" : "Read"}
-                    </span>
-                    {direction === "to" && (
-                      <div className="mt-1 flex flex-wrap justify-end gap-2">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm hover:bg-neutral-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditFeedback(item);
-                          }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          Edit
-                        </button>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      className="mt-1 rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
-                      aria-expanded={expanded}
-                      aria-label={expanded ? "Collapse" : "Expand"}
-                      onClick={() => handleExpand(item.id)}
-                    >
-                      <ChevronDown
-                        className={cn(
-                          "h-5 w-5 transition-transform",
-                          expanded && "rotate-180"
+                        <p className="text-sm text-neutral-600">{item.date}</p>
+                        {!expanded && (
+                          <p className="mt-1 text-xs text-neutral-400">
+                            Click to expand feedback details
+                          </p>
                         )}
-                      />
-                    </button>
+                      </button>
+
+                      {expanded &&
+                        (isLoadingDetail ? (
+                          <div className="mt-3 flex items-center gap-2 text-xs text-neutral-400">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Loading details...
+                          </div>
+                        ) : (
+                          <div className="mt-3 space-y-2">
+                            {detail.positiveOpening && (
+                              <div className="border-l-2 border-[#2E7D32]/50 pl-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2E7D32]/70">
+                                  Positive Opening
+                                </p>
+                                <p className="text-sm leading-relaxed text-neutral-700">
+                                  {detail.positiveOpening}
+                                </p>
+                              </div>
+                            )}
+                            {detail.constructiveFeedback && (
+                              <div className="border-l-2 border-orange-400/60 pl-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500/80">
+                                  Constructive Feedback
+                                </p>
+                                <p className="text-sm leading-relaxed text-neutral-700">
+                                  {detail.constructiveFeedback}
+                                </p>
+                              </div>
+                            )}
+                            {detail.positiveClosing && (
+                              <div className="border-l-2 border-sky-400/60 pl-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500/80">
+                                  Positive Closing
+                                </p>
+                                <p className="text-sm leading-relaxed text-neutral-700">
+                                  {detail.positiveClosing}
+                                </p>
+                              </div>
+                            )}
+                            {!detail.positiveOpening &&
+                              !detail.constructiveFeedback &&
+                              !detail.positiveClosing &&
+                              detail.detailPreview && (
+                                <p className="border-l-2 border-[#2E7D32]/40 pl-3 text-sm leading-relaxed text-neutral-700">
+                                  {detail.detailPreview}
+                                </p>
+                              )}
+                          </div>
+                        ))}
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <StarRatingRow value={item.rating} />
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-0.5 text-xs font-medium",
+                          item.status === "unread"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-neutral-200/80 text-neutral-600"
+                        )}
+                      >
+                        {item.status === "unread" ? "Unread" : "Read"}
+                      </span>
+                      {direction === "to" && (
+                        <div className="mt-1 flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm hover:bg-neutral-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditFeedback(item);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            disabled={deleteMutation.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(item);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="mt-1 rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
+                        aria-expanded={expanded}
+                        aria-label={expanded ? "Collapse" : "Expand"}
+                        onClick={() => handleExpand(item.id)}
+                      >
+                        <ChevronDown
+                          className={cn(
+                            "h-5 w-5 transition-transform",
+                            expanded && "rotate-180"
+                          )}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </>
         )}
       </div>
     </div>
@@ -1399,36 +1522,37 @@ function GiveFeedbackForm({
     setLocalError("");
     const currentUser = getUser();
     const currentUserId = currentUser?.id || getCurrentUserId();
-    const reviewerName = currentUser
-      ? `${currentUser.firstname} ${currentUser.lastname}`.trim()
-      : "Reviewer";
     const ratingFromId = initialFeedback?.ratingFromId ?? currentUserId;
 
     const payload: FeedbackPayload = {
-      id: selectedMember.id,
       resource_type: "User",
       resource_id: selectedMember.id,
       score: rating,
-      reviewer: reviewerName,
       rating_from_type: initialFeedback?.ratingFromType ?? "User",
       rating_from_id: ratingFromId || undefined,
       positive_opening: positiveOpen || undefined,
       constructive_feedback: constructive || undefined,
       positive_closing: positiveClose || undefined,
-      fields: {
-        positive_opening: positiveOpen || undefined,
-        constructive_feedback: constructive || undefined,
-        positive_closing: positiveClose || undefined,
-      },
     };
+
+    if (!isEditMode) {
+      payload.created_at = feedbackDate.toISOString();
+    }
 
     if (isEditMode && initialFeedback?.id) {
       updateMutation.mutate(
-        { id: initialFeedback.id, payload },
+        {
+          id: initialFeedback.id,
+          payload,
+          recipientName: selectedMember.label,
+        },
         { onSuccess: onSubmitted }
       );
     } else {
-      createMutation.mutate(payload, { onSuccess: onSubmitted });
+      createMutation.mutate(
+        { payload, recipientName: selectedMember.label },
+        { onSuccess: onSubmitted }
+      );
     }
   };
 
@@ -1782,6 +1906,19 @@ function FeedbackPage() {
   const [editingFeedback, setEditingFeedback] = useState<FeedbackItem | null>(
     null
   );
+  const [receivedView, setReceivedView] = useState("myself");
+  const currentUser = getUser();
+  const currentUserId = currentUser?.id || getCurrentUserId();
+  const currentUserName =
+    `${currentUser?.firstname || ""} ${currentUser?.lastname || ""}`.trim() ||
+    "Myself";
+  const myselfLabel =
+    currentUserName === "Myself" ? "Myself" : `Myself (${currentUserName})`;
+  const { data: teamMembers = [], isLoading: teamMembersLoading } =
+    useTeamMembers();
+
+  const selectedReceivedUserId =
+    receivedView === "myself" ? currentUserId : Number(receivedView) || null;
 
   const selectedCompany = useSelector(
     (state: RootState) => state.project.selectedCompany
@@ -1789,8 +1926,57 @@ function FeedbackPage() {
   const orgLine = selectedCompany?.name?.toUpperCase() ?? "YOUR ORGANIZATION";
 
   // Both queries are already cached from the list components; no extra requests made
-  const { data: givenFeedback = [] } = useFeedbackList("given");
-  const { data: receivedFeedback = [] } = useFeedbackList("received");
+  const { data: givenFeedback = [] } = useFeedbackList("given", currentUserId);
+  const { data: selectedReceivedFeedback = [] } = useFeedbackList(
+    "received",
+    selectedReceivedUserId
+  );
+  const { data: allReceivedFeedback = [] } = useFeedbackList("received", null);
+  const selectedReceivedMember =
+    selectedReceivedUserId == null
+      ? null
+      : teamMembers.find((member) => member.id === selectedReceivedUserId);
+  const selectedReceivedName =
+    receivedView === "myself" ? currentUserName : selectedReceivedMember?.label;
+
+  const receivedFeedback = useMemo(() => {
+    const merged = mergeFeedbackItems(
+      selectedReceivedFeedback,
+      allReceivedFeedback,
+      givenFeedback
+    );
+    const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
+
+    if (selectedReceivedUserId == null && !normalizedSelectedName) {
+      return merged;
+    }
+
+    const exactMatches = merged.filter((item) => {
+      if (selectedReceivedUserId != null && item.resourceId === selectedReceivedUserId) {
+        return true;
+      }
+
+      return normalizedSelectedName
+        ? item.recipientName.toLowerCase() === normalizedSelectedName
+        : false;
+    });
+
+    if (exactMatches.length > 0) {
+      return exactMatches;
+    }
+
+    return normalizedSelectedName
+      ? merged.filter((item) =>
+          item.recipientName.toLowerCase().includes(normalizedSelectedName)
+        )
+      : merged;
+  }, [
+    selectedReceivedFeedback,
+    allReceivedFeedback,
+    givenFeedback,
+    selectedReceivedUserId,
+    selectedReceivedName,
+  ]);
 
   const feedbackSummary = useMemo(() => {
     const all = [...givenFeedback, ...receivedFeedback];
@@ -2009,13 +2195,25 @@ function FeedbackPage() {
                   <span className="text-sm text-neutral-600">
                     View feedback for:
                   </span>
-                  <Select defaultValue="myself">
+                  <Select value={receivedView} onValueChange={setReceivedView}>
                     <SelectTrigger className="h-10 w-full max-w-[220px] rounded-lg border-neutral-200 bg-white">
-                      <SelectValue placeholder="Myself" />
+                      <SelectValue placeholder={myselfLabel} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="myself">Myself</SelectItem>
-                      <SelectItem value="team">My team</SelectItem>
+                      <SelectItem value="myself">{myselfLabel}</SelectItem>
+                      {teamMembersLoading ? (
+                        <div className="px-3 py-2 text-sm text-neutral-400">
+                          Loading team members...
+                        </div>
+                      ) : (
+                        teamMembers
+                          .filter((member) => member.id !== currentUserId)
+                          .map((member) => (
+                            <SelectItem key={member.value} value={member.value}>
+                              {member.label}
+                            </SelectItem>
+                          ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -2028,6 +2226,7 @@ function FeedbackPage() {
             >
               <AsyncBoundary>
                 <GivenFeedbackList
+                  key={`received-${receivedView}`}
                   onGiveFeedbackClick={() => {
                     setEditingFeedback(null);
                     setFeedbackTab("give");
@@ -2037,6 +2236,8 @@ function FeedbackPage() {
                     setFeedbackTab("give");
                   }}
                   direction="from"
+                  filterUserId={null}
+                  itemsOverride={receivedFeedback}
                 />
               </AsyncBoundary>
             </TabsContent>
