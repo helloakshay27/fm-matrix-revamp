@@ -1254,6 +1254,8 @@ const ProjectTasksPage = () => {
             navigate(`${id}`);
         } else if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
+        } else if (location.pathname.startsWith("/business-compass/tasks")) {
+            navigate(`/business-compass/tasks/${id}`);
         } else {
             navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
         }

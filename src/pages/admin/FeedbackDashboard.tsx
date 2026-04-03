@@ -21,8 +21,7 @@ import {
 } from "@/utils/embeddedMode";
 
 // ─── API Endpoints ───────────────────────────────────────────────────────────
-const CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT =
-  "/api/pms/reports/customer_experience_feedback";
+const RATINGS_FEEDBACK_DASHBOARD_ENDPOINT = "/ratings/feedback_dashboard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface RatingBreakdown {
@@ -40,10 +39,22 @@ interface RecentFeedback {
   createdAt: string;
 }
 
+interface DepartmentFeedback {
+  id: string;
+  rank: number;
+  name: string;
+  count: number;
+  rating: number;
+}
+
 interface DashboardData {
   totalFeedbacks: number;
   averageRating: number;
+  activeTeam: number;
+  readRate: number | null;
+  readTrackingAvailable: boolean;
   ratingBreakdown: RatingBreakdown;
+  departments: DepartmentFeedback[];
   recentFeedbacks: RecentFeedback[];
 }
 
@@ -60,41 +71,26 @@ interface ApiDashboardData {
   total_feedbacks?: number;
   averageRating?: number;
   average_rating?: number;
+  activeTeam?: number;
+  active_team?: number;
+  readRate?: number | null;
+  read_rate?: number | null;
+  readTrackingAvailable?: boolean;
+  read_tracking_available?: boolean;
   ratingBreakdown?: Partial<RatingBreakdown>;
   rating_breakdown?: Partial<RatingBreakdown>;
+  feedbackByDepartment?: unknown[];
+  feedback_by_department?: unknown[];
   recentFeedbacks?: ApiRecentFeedback[];
   recent_feedbacks?: ApiRecentFeedback[];
 }
 
-interface AnalyticsBucket {
-  count?: number | string;
-  percentage?: number | string;
-}
-
-interface CustomerExperienceFeedbackAnalytics {
-  overall_summary?: Record<string, AnalyticsBucket>;
-  data?: {
-    overall_summary?: Record<string, AnalyticsBucket>;
-  };
+interface RatingsFeedbackDashboardResponse {
+  success?: boolean;
+  data?: ApiDashboardData;
 }
 
 type ApiRecord = Record<string, unknown>;
-
-const DEPARTMENTS = [
-  { rank: 1, name: "Engineering", count: 24, rating: 2.7 },
-  { rank: 2, name: "Front End", count: 18, rating: 2.7 },
-  { rank: 3, name: "Business Excellence", count: 12, rating: 2.7 },
-  { rank: 4, name: "Design", count: 11, rating: 2.7 },
-  { rank: 5, name: "QA", count: 9, rating: 2.7 },
-  { rank: 6, name: "Client Servicing", count: 8, rating: 2.7 },
-  { rank: 7, name: "Accounts", count: 7, rating: 2.7 },
-  { rank: 8, name: "Human Resources", count: 6, rating: 2.7 },
-  { rank: 9, name: "Marketing", count: 5, rating: 2.7 },
-  { rank: 10, name: "Management", count: 5, rating: 2.7 },
-  { rank: 11, name: "Sales", count: 4, rating: 2.7 },
-  { rank: 12, name: "HR", count: 3, rating: 2.7 },
-  { rank: 13, name: "Product", count: 3, rating: 2.7 },
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function StarRow({ value }: { value: number }) {
@@ -209,7 +205,11 @@ function buildDashboardDataFromFeedbacks(items: RecentFeedback[]): DashboardData
   return {
     totalFeedbacks,
     averageRating,
+    activeTeam: 0,
+    readRate: null,
+    readTrackingAvailable: false,
     ratingBreakdown,
+    departments: [],
     recentFeedbacks: [...items]
       .sort(
         (a, b) =>
@@ -224,78 +224,89 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     return null;
   }
 
-  const source = raw as ApiDashboardData;
+  const wrapper = raw as RatingsFeedbackDashboardResponse;
+  const source = (wrapper.data ?? raw) as ApiDashboardData;
   const breakdown = source.ratingBreakdown ?? source.rating_breakdown ?? {};
-  const recent = source.recentFeedbacks ?? source.recent_feedbacks ?? [];
+  const recent =
+    source.recentFeedbacks ??
+    source.recent_feedbacks ??
+    pickList(source, ["recent_feedback_activity"]);
+  const departmentsRaw =
+    source.feedbackByDepartment ??
+    source.feedback_by_department ??
+    pickList(source, ["feedback_by_department"]);
+  const departments = departmentsRaw
+    .map((item, index) => {
+      const department = toApiRecord(item);
+
+      return {
+        id: String(department.department_id ?? department.id ?? `department-${index}`),
+        rank: toNumber(department.rank, index + 1),
+        name: getString(department.department_name) || getString(department.name) || "Unknown Department",
+        count: toNumber(
+          department.feedback_received ?? department.total_feedback ?? department.count
+        ),
+        rating: toNumber(department.avg_rating ?? department.average_rating, 0),
+      };
+    })
+    .sort((left, right) => left.rank - right.rank);
+
+  const recentFeedbacks = recent.map((item, index) => {
+    const recentItem = toApiRecord(item);
+
+    return {
+      id: String(
+        recentItem.id ??
+          (recentItem.feedback_id as string | number | undefined) ??
+          `feedback-${index}`
+      ),
+      rating: Math.min(
+        5,
+        Math.max(
+          1,
+          Math.round(toNumber(recentItem.rating ?? recentItem.avg_rating, 0)) || 1
+        )
+      ),
+      comment:
+        getString(recentItem.comment) ||
+        getString(recentItem.feedback_comment) ||
+        getString(recentItem.department_name) ||
+        "No comment provided",
+      createdAt:
+        getString(recentItem.createdAt) ||
+        getString(recentItem.created_at) ||
+        getString(recentItem.feedback_date) ||
+        new Date().toISOString(),
+    };
+  });
+
+  const hasBreakdownValues = Object.values(breakdown).some(
+    (value) => toNumber(value) > 0
+  );
+  const derivedRatingBreakdown = hasBreakdownValues
+    ? {
+        "1": toNumber(breakdown["1"]),
+        "2": toNumber(breakdown["2"]),
+        "3": toNumber(breakdown["3"]),
+        "4": toNumber(breakdown["4"]),
+        "5": toNumber(breakdown["5"]),
+      }
+    : buildDashboardDataFromFeedbacks(recentFeedbacks).ratingBreakdown;
 
   return {
     totalFeedbacks: toNumber(source.totalFeedbacks ?? source.total_feedbacks),
     averageRating: toNumber(source.averageRating ?? source.average_rating),
-    ratingBreakdown: {
-      "1": toNumber(breakdown["1"]),
-      "2": toNumber(breakdown["2"]),
-      "3": toNumber(breakdown["3"]),
-      "4": toNumber(breakdown["4"]),
-      "5": toNumber(breakdown["5"]),
-    },
-    recentFeedbacks: recent.map((item, index) => ({
-      id: String(item.id ?? `feedback-${index}`),
-      rating: toNumber(item.rating),
-      comment: item.comment ?? "No comment provided",
-      createdAt: item.createdAt ?? item.created_at ?? new Date().toISOString(),
-    })),
-  };
-}
-
-function formatApiDateParam(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getFeedbackDateRange() {
-  const endDate = new Date();
-  const startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
-
-  return {
-    startDate,
-    endDate,
-    start: formatApiDateParam(startDate),
-    end: formatApiDateParam(endDate),
-  };
-}
-
-function buildDashboardDataFromAnalytics(
-  raw: CustomerExperienceFeedbackAnalytics
-): DashboardData | null {
-  const summary = raw.data?.overall_summary ?? raw.overall_summary;
-  if (!summary || typeof summary !== "object") {
-    return null;
-  }
-
-  const excellent = toNumber(summary.excellent?.count);
-  const good = toNumber(summary.good?.count);
-  const average = toNumber(summary.average?.count);
-  const bad = toNumber(summary.bad?.count);
-  const poor = toNumber(summary.poor?.count);
-
-  const ratingBreakdown: RatingBreakdown = {
-    "5": excellent,
-    "4": good,
-    "3": average,
-    "2": bad,
-    "1": poor,
-  };
-
-  const totalFeedbacks = excellent + good + average + bad + poor;
-  const weightedScore = excellent * 5 + good * 4 + average * 3 + bad * 2 + poor;
-
-  return {
-    totalFeedbacks,
-    averageRating: totalFeedbacks > 0 ? weightedScore / totalFeedbacks : 0,
-    ratingBreakdown,
-    recentFeedbacks: [],
+    activeTeam: toNumber(source.activeTeam ?? source.active_team),
+    readRate:
+      source.readRate === null || source.read_rate === null
+        ? null
+        : toNumber(source.readRate ?? source.read_rate, 0),
+    readTrackingAvailable: Boolean(
+      source.readTrackingAvailable ?? source.read_tracking_available
+    ),
+    ratingBreakdown: derivedRatingBreakdown,
+    departments,
+    recentFeedbacks,
   };
 }
 
@@ -330,16 +341,6 @@ async function safeApiRequest<T>(endpoint: string): Promise<T> {
   const baseURL = await resolveFeedbackApiBaseUrl();
   const embeddedToken = getEmbeddedToken();
   const token = embeddedToken || API_CONFIG.TOKEN;
-  const { start, end } = getFeedbackDateRange();
-  const baseParams: Record<string, string | number> = {
-    _t: Date.now(),
-    start_date: start,
-    end_date: end,
-  };
-
-  if (token) {
-    baseParams.access_token = token;
-  }
 
   let requestError: unknown = null;
 
@@ -348,35 +349,16 @@ async function safeApiRequest<T>(endpoint: string): Promise<T> {
       method: "get",
       baseURL,
       url: path,
-      params: baseParams,
       timeout: 20000,
       headers: {
         Accept: "application/json",
+        ...(token ? { Authorization: getFeedbackAuthHeader() } : {}),
       },
     });
 
     return response.data;
   } catch (error) {
     requestError = error;
-    if (token) {
-      try {
-        const fallbackResponse = await axios.request<T>({
-          method: "get",
-          baseURL,
-          url: path,
-          params: { _t: Date.now() },
-          timeout: 20000,
-          headers: {
-            Accept: "application/json",
-            Authorization: getFeedbackAuthHeader(),
-          },
-        });
-
-        return fallbackResponse.data;
-      } catch (fallbackError) {
-        requestError = fallbackError;
-      }
-    }
 
     if (axios.isAxiosError(requestError)) {
       const responseData = toApiRecord(requestError.response?.data);
@@ -434,16 +416,15 @@ const FeedbackDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await safeApiRequest<CustomerExperienceFeedbackAnalytics>(
-        CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT
+      const response = await safeApiRequest<RatingsFeedbackDashboardResponse>(
+        RATINGS_FEEDBACK_DASHBOARD_ENDPOINT
       );
 
-      const payload =
-        buildDashboardDataFromAnalytics(response) ?? normalizeDashboardData(response);
+      const payload = normalizeDashboardData(response);
 
       if (!payload) {
         throw new Error(
-          `${CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT}: Dashboard payload is empty or invalid.`
+          `${RATINGS_FEEDBACK_DASHBOARD_ENDPOINT}: Dashboard payload is empty or invalid.`
         );
       }
 
@@ -497,8 +478,16 @@ const FeedbackDashboard = () => {
   }
 
   // ── Real data from API ─────────────────────────────────────────────────────
-  const { totalFeedbacks, averageRating, ratingBreakdown, recentFeedbacks } =
-    data;
+  const {
+    totalFeedbacks,
+    averageRating,
+    activeTeam,
+    readRate,
+    readTrackingAvailable,
+    ratingBreakdown,
+    departments,
+    recentFeedbacks,
+  } = data;
 
   const totalRatings = Object.values(ratingBreakdown).reduce(
     (a, b) => a + b,
@@ -556,15 +545,15 @@ const FeedbackDashboard = () => {
             </div>
           </Card>
 
-          {/* Total Ratings — derived from ratingBreakdown */}
+          {/* Active Team — from API */}
           <Card className="rounded-2xl border-0 bg-orange-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
             <div className="flex flex-col items-center text-center">
               <Users className="mb-3 h-7 w-7 text-orange-600" />
               <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                {totalRatings}
+                {activeTeam}
               </p>
               <p className="mt-1 text-xs font-medium text-neutral-600">
-                Total Ratings
+                Active Team
               </p>
             </div>
           </Card>
@@ -574,10 +563,11 @@ const FeedbackDashboard = () => {
           <h2 className="mb-4 text-lg font-semibold text-neutral-900">
             Feedback by Department
           </h2>
-          <ul className="space-y-3">
-            {DEPARTMENTS.map((department) => (
+          {departments.length > 0 ? (
+            <ul className="space-y-3">
+              {departments.map((department) => (
               <li
-                key={department.name}
+                key={department.id}
                 className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4]/90 px-3 py-3 sm:gap-4 sm:px-4"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
@@ -590,35 +580,71 @@ const FeedbackDashboard = () => {
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
-                  {department.rating}
+                  {department.rating > 0 ? department.rating.toFixed(1) : "N/A"}
                 </span>
               </li>
-            ))}
-          </ul>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+              Department-wise feedback is not available in the current dashboard API response.
+            </div>
+          )}
         </Card>
 
-        {/* Rating Breakdown — from API ratingBreakdown */}
+        {/* Read Tracking / Rating Breakdown */}
         <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 text-lg font-semibold text-neutral-900">
-            Rating Breakdown
+            {totalRatings > 0 ? "Rating Breakdown" : "Read Tracking"}
           </h2>
-          <div className="space-y-3">
-            {(["5", "4", "3", "2", "1"] as const).map((star) => (
-              <RatingBar
-                key={star}
-                label={star}
-                count={ratingBreakdown[star]}
-                total={totalRatings}
-              />
-            ))}
-          </div>
-          <div className="mt-5 flex items-center gap-2">
-            <StarRow value={Math.round(averageRating)} />
-            <span className="text-sm text-neutral-500">
-              {averageRating.toFixed(1)} out of 5 &nbsp;·&nbsp;{totalRatings}{" "}
-              ratings
-            </span>
-          </div>
+          {totalRatings > 0 ? (
+            <>
+              <div className="space-y-3">
+                {(["5", "4", "3", "2", "1"] as const).map((star) => (
+                  <RatingBar
+                    key={star}
+                    label={star}
+                    count={ratingBreakdown[star]}
+                    total={totalRatings}
+                  />
+                ))}
+              </div>
+              <div className="mt-5 flex items-center gap-2">
+                <StarRow value={Math.round(averageRating)} />
+                <span className="text-sm text-neutral-500">
+                  {averageRating.toFixed(1)} out of 5 &nbsp;·&nbsp;{totalRatings}{" "}
+                  ratings
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                  Read Tracking
+                </p>
+                <p className="mt-2 text-2xl font-bold text-neutral-900">
+                  {readTrackingAvailable ? `${readRate ?? 0}%` : "N/A"}
+                </p>
+                <p className="mt-1 text-sm text-neutral-600">
+                  {readTrackingAvailable
+                    ? "Percentage of feedback that has been read."
+                    : "Read tracking is not available for this dataset."}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                  Average Rating
+                </p>
+                <p className="mt-2 text-2xl font-bold text-neutral-900">
+                  {averageRating > 0 ? averageRating.toFixed(1) : "N/A"}
+                </p>
+                <p className="mt-1 text-sm text-neutral-600">
+                  Rating breakdown is not included in the current dashboard response.
+                </p>
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* AI Summary */}

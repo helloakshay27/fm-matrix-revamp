@@ -36,9 +36,9 @@ import jsPDF from 'jspdf';
 
 // ── Chart config ──────────────────────────────────────────────────────────────
 const CHART_OPTIONS = [
+  { id: 'milestoneActivityProgress', label: 'Milestone Activity Wise Progress', description: 'Milestone-wise completion and balance' },
   { id: 'milestoneProgress',         label: 'Milestone Progress',               description: 'Completed vs balance milestones' },
   { id: 'taskWiseProgress',          label: 'Task Wise Progress',               description: 'Completed vs balance tasks' },
-  { id: 'milestoneActivityProgress', label: 'Milestone Activity Wise Progress', description: 'Milestone-wise completion and balance' },
   { id: 'activityCompletion',        label: 'Activity % Completion',            description: 'Task-wise completion across periods' },
   { id: 'taskDetails',              label: 'Task Details',                     description: 'Detailed task information table' },
   { id: 'issueDetails',             label: 'Issue Details',                    description: 'Project issues table' },
@@ -566,18 +566,6 @@ const ReportAnalytics: React.FC = () => {
           </div>
         )}
 
-        {/* Donut charts side by side */}
-        {(orderedVisible.includes('milestoneProgress') || orderedVisible.includes('taskWiseProgress')) && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-            {orderedVisible.includes('milestoneProgress') && (
-              <PdfDonut title="Milestone Progress" data={milestoneChartData} colors={MILESTONE_COLORS} />
-            )}
-            {orderedVisible.includes('taskWiseProgress') && (
-              <PdfDonut title="Task Wise Progress" data={taskChartData} colors={TASK_COLORS} />
-            )}
-          </div>
-        )}
-
         {/* Milestone Activity — all rows */}
         {orderedVisible.includes('milestoneActivityProgress') && (
           <PdfTable
@@ -589,6 +577,18 @@ const ReportAnalytics: React.FC = () => {
               return <span style={{ fontSize: 12, color: '#374151' }}>{String(row[key] ?? '—')}</span>;
             }}
           />
+        )}
+
+        {/* Donut charts side by side */}
+        {(orderedVisible.includes('milestoneProgress') || orderedVisible.includes('taskWiseProgress')) && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+            {orderedVisible.includes('milestoneProgress') && (
+              <PdfDonut title="Milestone Progress" data={milestoneChartData} colors={MILESTONE_COLORS} />
+            )}
+            {orderedVisible.includes('taskWiseProgress') && (
+              <PdfDonut title="Task Wise Progress" data={taskChartData} colors={TASK_COLORS} />
+            )}
+          </div>
         )}
 
         {/* Activity Completion — all rows */}

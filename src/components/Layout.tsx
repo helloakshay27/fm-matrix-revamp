@@ -160,9 +160,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ClubSidebar />;
     }
 
-    if (location.pathname.startsWith("/admin-compass")) {
-      console.log("✅ Rendering AdminCompassSidebar");
+    if (location.pathname.startsWith("/admin-compass") ||
+      currentSection === "Admin Compass") {
       return <AdminCompassSidebar />;
+    }
+
+    if (
+      currentSection === "Business Compass" ||
+      location.pathname.startsWith("/business-compass")
+    ) {
+      return <BusinessCompassSidebar />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -192,17 +199,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           return <EmployeeSidebar />;
         }
         return <EmployeeSidebarStatic />;
-      }
-
-      if (
-        currentSection === "Business Compass" ||
-        location.pathname.startsWith("/business-compass")
-      ) {
-        return <BusinessCompassSidebar />;
-      }
-
-      if (currentSection === "Admin Compass") {
-        return <AdminCompassSidebar />;
       }
 
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
@@ -458,17 +454,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
           userEmail === "jevosak839@cimario.com" ? (
+          <EmployeeHeader />
+          // isNewEmpHubRoute ? (
+          //   <TopNavigation
+          //     activeNavMenu={activeNavMenu}
+          //     setActiveNavMenu={setActiveNavMenu}
+          //   /> // 👈 your new header
+          // ) : (
           // <EmployeeHeader />
-          isNewEmpHubRoute ? (
-            <TopNavigation
-              activeNavMenu={activeNavMenu}
-              setActiveNavMenu={setActiveNavMenu}
-            /> // 👈 your new header
-          ) : (
-            <EmployeeHeader />
-          )
+          // )
         ) : (
-          <EmployeeHeaderStatic />
+          // <EmployeeHeaderStatic />
+          <TopNavigation
+            activeNavMenu={activeNavMenu}
+            setActiveNavMenu={setActiveNavMenu}
+          />
         )
       ) : (
         <Header />

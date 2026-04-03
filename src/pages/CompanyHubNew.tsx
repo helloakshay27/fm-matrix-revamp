@@ -415,7 +415,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] pb-24 overflow-x-hidden font-poppins">
+    <div className="min-h-screen bg-[#FAF9F6] pb-24 overflow-x-hidden font-poppins pt-6">
       <div className="pb-10">
         {/* --- TOP NAV TABS --- */}
         <div className="flex justify-center pb-2">
