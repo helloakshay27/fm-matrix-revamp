@@ -118,6 +118,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isLocalhost =
     hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
+    hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
     userEmail === "besis69240@azeriom.com" ||
     userEmail === "megipow156@aixind.com" ||
