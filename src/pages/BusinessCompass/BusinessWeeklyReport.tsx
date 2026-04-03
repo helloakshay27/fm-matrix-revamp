@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Info, TrendingUp, AlertCircle, Trophy, Plus, Upload, CheckSquare, Lightbulb, AlertTriangle, X, Star, Target, MessageSquare, Activity, Send, Zap, Flag, Smile, Users, User, ChevronUp, ChevronDown } from 'lucide-react';
+import { Calendar, Info, TrendingUp, AlertCircle, Trophy, Plus, Upload, CheckSquare, Lightbulb, AlertTriangle, X, Star, Target, MessageSquare, Activity, Send, Zap, Flag, Smile, Users, User, ChevronUp, ChevronDown, Loader2, CheckCircle2 } from 'lucide-react';
 import { AdminViewEmulation } from '@/components/AdminViewEmulation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,34 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
+import { getBaseUrl, getToken } from '@/utils/auth';
+
+interface WeeklyReport {
+  id: number;
+  user_id: number;
+  journal_type: string;
+  start_date: string;
+  end_date: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  report_data?: {
+    kpi?: string;
+    tasks?: string[];
+    total_score?: number;
+    achievements?: string[];
+    sections?: {
+      bonus?: number;
+      daily_scores?: number[];
+    };
+    details?: {
+      notes?: string | null;
+    };
+  };
+  url: string;
+  attachments: unknown[];
+}
 
 const BusinessWeeklyReport = () => {
     const [wins, setWins] = React.useState<string[]>([]);
@@ -53,6 +81,166 @@ const BusinessWeeklyReport = () => {
             ...prev,
             [day]: newPlans
         }));
+    };
+
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [submitSuccess, setSubmitSuccess] = React.useState(false);
+    const [submitError, setSubmitError] = React.useState<string | null>(null);
+    const [currentReportId, setCurrentReportId] = React.useState<number | null>(null);
+    const [reportsList, setReportsList] = React.useState<WeeklyReport[]>([]);
+    const [isHistoryLoading, setIsHistoryLoading] = React.useState(false);
+
+    React.useEffect(() => {
+        const fetchExistingReport = async () => {
+            try {
+                const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
+                const token = getToken();
+                if (!token) return;
+
+                const queryParams = new URLSearchParams();
+                queryParams.append("q[:journal_type]", "weekly");
+                queryParams.append("q[start_date_eq]", "2026-03-23"); // Mocked dates
+                if (token) queryParams.append("token", token);
+
+                const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
+                const response = await fetch(url, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const journals = Array.isArray(data) ? data : data.user_journals || [];
+                    const existingReport = journals.find((j: { id: number; start_date: string; report_data?: Record<string, unknown> }) => j.start_date === "2026-03-23");
+
+                    if (existingReport && existingReport.id) {
+                        setCurrentReportId(existingReport.id);
+                        if (existingReport.report_data) {
+                            const rData = existingReport.report_data as { achievements?: string[] };
+                            if (rData.achievements && Array.isArray(rData.achievements)) {
+                                setWins(rData.achievements);
+                            }
+                        }
+                    } else {
+                        setCurrentReportId(null);
+                        setWins([]);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch existing report:", err);
+            }
+        };
+
+        fetchExistingReport();
+    }, []);
+
+    const fetchReportsList = async () => {
+        try {
+            setIsHistoryLoading(true);
+            const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
+            const token = getToken();
+            if (!token) return;
+
+            const queryParams = new URLSearchParams();
+            queryParams.append("q[:journal_type]", "weekly");
+            if (token) queryParams.append("token", token);
+
+            const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
+            const response = await fetch(url, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setReportsList(Array.isArray(data) ? data : data.user_journals || []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch reports history:", err);
+        } finally {
+            setIsHistoryLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchReportsList();
+    }, []);
+
+    const handleSubmit = async () => {
+        try {
+            setIsSubmitting(true);
+            setSubmitError(null);
+            setSubmitSuccess(false);
+
+            const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
+            const token = getToken();
+
+            const payload = {
+                user_journal: {
+                    journal_type: "weekly",
+                    start_date: "2026-03-23", // Mocked dates to match UI
+                    end_date: "2026-03-29",
+                    description: "Weekly report for Mar 23 - Mar 29",
+                    report_data: {
+                        kpi: "weekly value",
+                        tasks: ["Weekly Task 1", "Weekly Task 2"],
+                        details: {
+                            notes: null
+                        },
+                        sections: {
+                            bonus: 10,
+                            daily_scores: [15, 20, 18, 22, 25]
+                        },
+                        total_score: 110,
+                        achievements: wins.filter(w => w.trim() !== "")
+                    }
+                }
+            };
+
+            const queryParams = new URLSearchParams();
+            queryParams.append("q[:journal_type]", "weekly");
+            if (token) queryParams.append("token", token);
+
+            const endpoint = currentReportId ? `/user_journals/${currentReportId}.json` : "/user_journals.json";
+            const method = currentReportId ? "PUT" : "POST";
+
+            const url = `${baseUrl.replace(/\/+$/, "")}${endpoint}?${queryParams.toString()}`;
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (!currentReportId && data.id) {
+                setCurrentReportId(data.id);
+            }
+
+            setSubmitSuccess(true);
+            fetchReportsList();
+            setTimeout(() => setSubmitSuccess(false), 5000);
+        } catch (err: unknown) {
+            console.error("Submission failed:", err);
+            setSubmitError(err instanceof Error ? err.message : "An unexpected error occurred.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -411,8 +599,33 @@ const BusinessWeeklyReport = () => {
                             </div>
                         </div>
 
-                        <Button className="w-full bg-[#3182CE] hover:bg-[#2B6CB0] text-white h-12 rounded-[8px] font-bold text-sm shadow-lg">
-                            <Send className="w-4 h-4 mr-2" /> Submit for 23 Mar - 29 Mar
+                        {submitError && (
+                            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-red-100">
+                                <AlertCircle className="w-4 h-4" />
+                                {submitError}
+                            </div>
+                        )}
+                        {submitSuccess && (
+                            <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-green-100">
+                                <CheckCircle2 className="w-4 h-4" />
+                                {currentReportId ? "Weekly report updated successfully!" : "Weekly report submitted successfully!"}
+                            </div>
+                        )}
+
+                        <Button 
+                            onClick={handleSubmit} 
+                            disabled={isSubmitting} 
+                            className="w-full bg-[#3182CE] hover:bg-[#2B6CB0] text-white h-12 rounded-[8px] font-bold text-sm shadow-lg disabled:opacity-50 transition-all"
+                        >
+                            {isSubmitting ? (
+                                <span className="flex items-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" /> {currentReportId ? "Updating..." : "Submitting..."}
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    <Send className="w-4 h-4" /> {currentReportId ? "Update for 23 Mar - 29 Mar" : "Submit for 23 Mar - 29 Mar"}
+                                </span>
+                            )}
                         </Button>
                     </Card>
 
@@ -435,9 +648,79 @@ const BusinessWeeklyReport = () => {
                 </TabsContent>
 
                 <TabsContent value="history" className="mt-4">
-                    <Card className="p-12 text-center text-gray-500 bg-white border rounded-[12px] shadow-sm">
-                        No review history found.
-                    </Card>
+                    {isHistoryLoading ? (
+                        <Card className="p-20 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-[12px]">
+                            <Loader2 size={40} className="text-blue-500 animate-spin mb-4" />
+                            <p className="text-gray-500 font-bold">Loading your weekly reviews...</p>
+                        </Card>
+                    ) : reportsList.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {reportsList.map((report) => (
+                                <Card key={report.id} className="bg-white border border-gray-100 rounded-[12px] shadow-sm overflow-hidden hover:shadow-md transition-all group p-5 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-blue-50 p-2 rounded-lg">
+                                                <Calendar size={18} className="text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-gray-900">
+                                                    {new Date(report.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(report.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </p>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    Weekly Review
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge className={cn(
+                                            "px-2 py-0.5 rounded-full text-[10px] font-black tracking-tighter border-none",
+                                            (report.report_data?.total_score || 0) >= 100 ? "bg-green-100 text-green-700" :
+                                            (report.report_data?.total_score || 0) >= 50 ? "bg-blue-100 text-blue-700" :
+                                            "bg-orange-100 text-orange-700"
+                                        )}>
+                                            Score: {report.report_data?.total_score || 0}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-bold text-gray-500 line-clamp-2 min-h-[32px]">
+                                            {report.description || "Weekly report overview"}
+                                        </p>
+                                        
+                                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
+                                            <div className="text-center p-2 rounded-lg bg-gray-50/50">
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tasks</p>
+                                                <p className="text-xs font-black text-gray-700">{report.report_data?.tasks?.length || 0}</p>
+                                            </div>
+                                            <div className="text-center p-2 rounded-lg bg-gray-50/50">
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Wins</p>
+                                                <p className="text-xs font-black text-gray-700">{report.report_data?.achievements?.length || 0}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="w-full h-9 border-blue-100 text-blue-600 font-bold text-xs hover:bg-blue-600 hover:text-white transition-all"
+                                        onClick={() => {
+                                            // Logical navigation can be added here if dates were not hardcoded
+                                            const submitTab = document.querySelector('[data-value="submit"]') as HTMLElement;
+                                            if (submitTab) submitTab.click();
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }}
+                                    >
+                                        View Details
+                                    </Button>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <Card className="p-12 text-center text-gray-400 bg-white border border-gray-100 rounded-[12px] shadow-sm flex flex-col items-center gap-2">
+                            <Calendar size={48} className="opacity-10 mb-2" />
+                            <p className="text-lg font-bold text-gray-300 tracking-tight">No review history found</p>
+                            <p className="text-sm font-medium text-gray-400/80">Submit your first weekly review to see it here</p>
+                        </Card>
+                    )}
                 </TabsContent>
             </Tabs>
         </div>

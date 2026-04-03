@@ -408,7 +408,13 @@ const IssuesListPage = ({
                     size="sm"
                     variant="ghost"
                     className="p-1"
-                    onClick={() => navigate(`/vas/issues/${item.id}`)}
+                    onClick={() => {
+                        if (location.pathname.startsWith("/business-compass/issues")) {
+                            navigate(`/business-compass/issues/${item.id}`);
+                        } else {
+                            navigate(`/vas/issues/${item.id}`)
+                        }
+                    }}
                     title="View Issue Details"
                 >
                     <Eye className="w-4 h-4" />

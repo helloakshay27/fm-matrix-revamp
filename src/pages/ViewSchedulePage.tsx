@@ -28,7 +28,7 @@ const muiFieldStyles = {
     },
     '&:hover fieldset': {
       borderColor: '#1A1A1A',
-    },  
+    },
     '&.Mui-focused fieldset': {
       borderColor: '#C72030',
       borderWidth: 2,
@@ -87,7 +87,7 @@ export const ViewSchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Tab state
   const [activeTab, setActiveTab] = useState("basic");
 
@@ -295,7 +295,7 @@ export const ViewSchedulePage = () => {
   console.log("Selected Group ID:", selectedGroupId);
   console.log("Selected Sub Group ID:", selectedSubGroupId);
   console.log("groupOptions:", groupOptions);
-  
+
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
@@ -320,7 +320,7 @@ export const ViewSchedulePage = () => {
               Schedule #{assetTask?.id || id} • Created by {assetTask?.created_by || 'Unknown'} • Last updated {formatDate(assetTask?.start_date || assetTask?.services?.[0]?.created_at)}
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             {/* Create Ticket Toggle */}
             <div className="flex items-center space-x-2">
@@ -342,9 +342,9 @@ export const ViewSchedulePage = () => {
               </RadioGroup>
             </div>
 
-            <Button 
+            <Button
               onClick={handleViewPerformance}
-              variant="outline" 
+              variant="outline"
               className="border-[#C72030] text-[#C72030]"
             >
               View Performance
@@ -635,12 +635,12 @@ export const ViewSchedulePage = () => {
                               <span className="text-gray-500 min-w-[140px]">Input Type</span>
                               <span className="text-gray-500 mx-2">:</span>
                               <span className="text-gray-900 font-medium">
-                                {task.type === 'text' ? 'Text' : 
-                                 task.type === 'radio-group' ? 'Radio' : 
-                                 task.type === 'numeric' ? 'Numeric' :
-                                 task.type === 'select' ? 'Dropdown' : 
-                                 task.type === 'checkbox' ? 'Checkbox' :
-                                 task.type}
+                                {task.type === 'text' ? 'Text' :
+                                  task.type === 'radio-group' ? 'Radio' :
+                                    task.type === 'numeric' ? 'Numeric' :
+                                      task.type === 'select' ? 'Dropdown' :
+                                        task.type === 'checkbox' ? 'Checkbox' :
+                                          task.type}
                               </span>
                             </div>
                             <div className="flex items-start">
@@ -818,14 +818,15 @@ export const ViewSchedulePage = () => {
                   let minutes: string[] = [], hours: string[] = [], dayOfMonth: string[] = [], months: string[] = [], weekdays: string[] = [];
                   let isDayOfMonth = false;
                   if (cron) {
-                    const parts = cron.split(' ');
+                    // Trim and split by one or more whitespace characters to handle extra spaces
+                    const parts = cron.trim().split(/\s+/);
                     if (parts.length >= 5) {
                       minutes = parts[0].split(',');
                       hours = parts[1].split(',');
                       dayOfMonth = parts[2] === '*' ? [] : parts[2].split(',');
                       months = parts[3] === '*' ? ['All'] : parts[3].split(',');
                       weekdays = parts[4] === '*' ? [] : parts[4].split(',');
-                      
+
                       // Check if we have specific days of month (dates like 14, 20)
                       isDayOfMonth = parts[2] !== '*' && dayOfMonth.length > 0;
                     }
@@ -833,11 +834,11 @@ export const ViewSchedulePage = () => {
                   if (!hours.length || (hours.length === 1 && hours[0] === '*')) hours = ['All'];
                   if (!minutes.length || (minutes.length === 1 && minutes[0] === '*')) minutes = ['All'];
                   if (!months.length) months = ['All'];
-                  
+
                   // Determine what to show in the day column
                   let dayColumnHeader = '';
                   let dayColumnValue = '';
-                  
+
                   if (isDayOfMonth) {
                     dayColumnHeader = 'Date of Month';
                     dayColumnValue = dayOfMonth.join(', ');
@@ -846,9 +847,9 @@ export const ViewSchedulePage = () => {
                     if (weekdays.length === 0) {
                       dayColumnValue = 'All';
                     } else {
-                      const weekdayMap: Record<string, string> = { 
-                        '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', 
-                        '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday' 
+                      const weekdayMap: Record<string, string> = {
+                        '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
+                        '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'
                       };
                       // Sort weekdays numerically so Sunday (0) comes first
                       const sortedWeekdays = weekdays
@@ -860,7 +861,7 @@ export const ViewSchedulePage = () => {
                         .join(', ');
                     }
                   }
-                  
+
                   return (
                     <div className="rounded-lg border border-gray-200 overflow-hidden">
                       <Table className="border-separate">
@@ -957,9 +958,9 @@ export const ViewSchedulePage = () => {
                       <span className="text-gray-900 font-medium">
                         {customForm?.supervisors && Array.isArray(customForm.supervisors) && customForm.supervisors.length > 0
                           ? customForm.supervisors.map(supervisorId => {
-                              const supervisor = users.find(user => user.id === parseInt(supervisorId));
-                              return supervisor ? supervisor.full_name : `ID: ${supervisorId}`;
-                            }).join(', ')
+                            const supervisor = users.find(user => user.id === parseInt(supervisorId));
+                            return supervisor ? supervisor.full_name : `ID: ${supervisorId}`;
+                          }).join(', ')
                           : 'No supervisors assigned'}
                       </span>
                     </div>
@@ -969,9 +970,9 @@ export const ViewSchedulePage = () => {
                       <span className="text-gray-900 font-medium">
                         {customForm?.supplier_id && suppliers.length > 0
                           ? (() => {
-                              const supplier = suppliers.find(sup => sup.id === customForm.supplier_id);
-                              return supplier ? supplier.name : `ID: ${customForm.supplier_id}`;
-                            })()
+                            const supplier = suppliers.find(sup => sup.id === customForm.supplier_id);
+                            return supplier ? supplier.name : `ID: ${customForm.supplier_id}`;
+                          })()
                           : 'No supplier assigned'}
                       </span>
                     </div>
