@@ -461,8 +461,7 @@ export const EditOccupantUserPage: React.FC = () => {
       toast.success('Occupant user updated successfully');
       navigate(`/master/user/occupant-users/view/${id}`);
     } catch (error: any) {
-      const msg = error?.response?.data?.error || error?.message || 'Failed to update occupant user';
-      toast.error(msg);
+      toast.error(error.response?.data?.errors?.[0] || "Failed to update occupant user");
     }
   };
 

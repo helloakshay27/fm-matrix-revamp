@@ -512,7 +512,7 @@ export const EditFMUserPage = () => {
       navigate("/master/user/fm-users");
     } catch (error) {
       console.error("Error updating user:", error);
-      toast.error(String(error));
+      toast.error(error.response?.data?.errors?.[0] || "Failed to edit FM user");
     } finally {
       setLoadingSubmitting(false);
     }

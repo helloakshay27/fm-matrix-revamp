@@ -333,6 +333,15 @@ export const CreditNoteDetails = () => {
         }
         taxBreakdown[tax.name].amount += taxAmount;
       });
+    }else if (item.tax_type === "tax_rate" && item.tax_group) {
+      // Non-Maharashtra: tax_group is actually a single tax rate object
+      const rate = item.tax_group.rate ?? 0;
+      const name = item.tax_group.name ?? "Tax";
+      const taxAmount = (item.total_amount * rate) / 100;
+      if (!taxBreakdown[name]) {
+        taxBreakdown[name] = { rate, amount: 0 };
+      }
+      taxBreakdown[name].amount += taxAmount;
     }
   });
   const taxRows = Object.entries(taxBreakdown);
@@ -636,7 +645,9 @@ export const CreditNoteDetails = () => {
                               ₹{Number(item.rate).toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right">
-                              {item.tax_type === "tax_group"
+                              {(item.tax_type === "tax_group" || item.tax_type === "tax_rate")
+                              
+                              // item.tax_type === "tax_group" 
                                 ? item.tax_group?.name
                                 : item.tax_type === "non_taxable"
                                   ? "Non Taxable"

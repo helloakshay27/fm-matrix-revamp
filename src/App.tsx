@@ -1978,16 +1978,16 @@ function App() {
                               </ProtectedRoute>
                             }
                           />
-                          <Route
+                          {/* <Route
                             path="/employee/company-hub"
                             element={
                               <ProtectedRoute>
                                 <CompanyHub />
                               </ProtectedRoute>
                             }
-                          />
+                          /> */}
                           <Route
-                            path="/employee/company-hub-new"
+                            path="/employee/company-hub"
                             element={
                               <ProtectedRoute>
                                 <CompanyHubNew />
@@ -2046,10 +2046,49 @@ function App() {
                             path="/business-compass/weekly-report"
                             element={<WeeklyReports />}
                           />
-                          <Route
+                          {/* <Route
                             path="/business-compass/tasks-and-issues"
                             element={<BusinessCompassTasksAndIssues />}
+                          /> */}
+                          <Route
+                            path="/business-compass/tasks"
+                            element={<ProjectTasksPage />}
                           />
+                          <Route
+                            path="/business-compass/tasks/:taskId"
+                            element={<ProjectTaskDetails />}
+                          />
+                          <Route
+                            path="/business-compass/issues"
+                            element={<IssuesListPage />}
+                          />
+                          <Route
+                            path="/business-compass/issues/:id"
+                            element={<IssueDetailsPage />}
+                          />
+                          <Route
+                            path="/business-compass/channels"
+                            element={<ChannelsLayout />}
+                          >
+                            <Route
+                              index
+                              element={
+                                <div
+                                  className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                                >
+                                  Select a Chat/Group to view messages
+                                </div>
+                              }
+                            />
+                            <Route
+                              path="/business-compass/channels/messages/:id"
+                              element={<DMConversation />}
+                            />
+                            <Route
+                              path="/business-compass/channels/groups/:id"
+                              element={<GroupConversation />}
+                            />
+                          </Route>
                           <Route
                             path="/business-compass/directory-and-chat"
                             element={<DirectoryAndChat />}
@@ -4414,12 +4453,12 @@ function App() {
                           />
 
                           <Route
-  path="/report-analytics"
-  element={<ReportAnalytics />}/>
+                            path="/report-analytics"
+                            element={<ReportAnalytics />} />
 
-  <Route
-  path="/dashboard-UI"
-  element={<DashboardUI/>}/>
+                          <Route
+                            path="/dashboard-UI"
+                            element={<DashboardUI />} />
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
