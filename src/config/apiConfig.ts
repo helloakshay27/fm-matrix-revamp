@@ -294,6 +294,8 @@ export const API_CONFIG = {
     FLIP_CARD_HISTORY: "/api/flip_cards/history.json",
     // Purchase Order endpoints
     PURCHASE_ORDER_SUPPLIERS: "/pms/purchase_orders/get_suppliers.json",
+    RATINGS: "/ratings",
+    RATINGS_SHOW: "/ratings", // Base path, will append /:id.json
   },
 } as const;
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   User,
   Mail,
@@ -32,6 +32,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format, parse, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
+import { getBaseUrl, getToken, getUser } from "@/utils/auth";
+import { userService, ProfileAccountResponse, ProfileUpdateResponse } from "@/services/userService";
+import { toast } from "sonner";
 import "./BusinessCompass.css";
 
 const AdvancedDatePicker = ({ 
@@ -207,14 +210,40 @@ const InfoField = ({
 };
 
 const BusinessCompassProfile = () => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(() => {
-    const savedData = localStorage.getItem('bc-profile-data');
-    return savedData ? JSON.parse(savedData) : {
-      displayName: "Common Admin Id",
-      email: "operational@lockated.com",
-      phone: "9673565064",
-      jobTitle: "Common Admin Id",
+  type ProfileFormData = {
+    displayName: string;
+    email: string;
+    phone: string;
+    jobTitle: string;
+    address: string;
+    city: string;
+    state: string;
+    pinCode: string;
+    dob: string;
+    anniversaryDate: string;
+    doj: string;
+    emergencyContactName: string;
+    emergencyContactNumber: string;
+    cv?: string;
+  };
+
+  const getInitialProfileData = (): ProfileFormData => {
+    const savedData = localStorage.getItem("bc-profile-data");
+    if (savedData) {
+      return JSON.parse(savedData) as ProfileFormData;
+    }
+
+    const authUser = getUser();
+    const fullName = [authUser?.firstname, authUser?.lastname]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return {
+      displayName: fullName || authUser?.firstname || "Common Admin Id",
+      email: authUser?.email || "operational@lockated.com",
+      phone: authUser?.mobile || authUser?.phone || "9673565064",
+      jobTitle: authUser?.firstname || "Common Admin Id",
       address: "",
       city: "",
       state: "",
@@ -225,26 +254,229 @@ const BusinessCompassProfile = () => {
       emergencyContactName: "",
       emergencyContactNumber: "",
     };
-  });
+  };
+
+  const formatApiDateToUi = (dateString?: string | null): string => {
+    if (!dateString) return "";
+    const parsedDate = parse(dateString, "yyyy-MM-dd", new Date());
+    return isValid(parsedDate) ? format(parsedDate, "dd/MM/yyyy") : "";
+  };
+
+  const formatUiDateToApi = (dateString?: string | null): string | null => {
+    if (!dateString) return null;
+    const parsedDate = parse(dateString, "dd/MM/yyyy", new Date());
+    if (!isValid(parsedDate)) return null;
+    return format(parsedDate, "yyyy-MM-dd");
+  };
+
+  const mergeApiProfileIntoForm = (
+    currentData: ProfileFormData,
+    apiData: ProfileUpdateResponse
+  ): ProfileFormData => {
+    const userData = apiData.user || {};
+    const firstname = userData.firstname ?? apiData.firstname ?? "";
+    const lastname = userData.lastname ?? apiData.lastname ?? "";
+    const displayName = [firstname, lastname].filter(Boolean).join(" ").trim();
+
+    return {
+      ...currentData,
+      displayName: displayName || currentData.displayName,
+      email: userData.email ?? apiData.email ?? currentData.email,
+      phone: userData.mobile ?? apiData.mobile ?? currentData.phone,
+      jobTitle: userData.user_title ?? currentData.jobTitle,
+      address: userData.alternate_address ?? currentData.address,
+      dob: formatApiDateToUi(userData.birth_date) || currentData.dob,
+      emergencyContactNumber:
+        userData.alternate_mobile ?? currentData.emergencyContactNumber,
+    };
+  };
+
+  const mapAccountProfileToForm = (
+    currentData: ProfileFormData,
+    accountData: ProfileAccountResponse
+  ): ProfileFormData => {
+    const firstname = accountData.firstname || "";
+    const lastname = accountData.lastname || "";
+    const displayName = [firstname, lastname].filter(Boolean).join(" ").trim();
+    const extra = accountData.extra_fields || {};
+
+    return {
+      ...currentData,
+      displayName: displayName || currentData.displayName,
+      email: accountData.email || currentData.email,
+      phone: accountData.mobile || currentData.phone,
+      jobTitle:
+        accountData.designation || accountData.profile_type || currentData.jobTitle,
+      address: accountData.alternate_address || currentData.address,
+      city: extra.city || currentData.city,
+      state: extra.state || currentData.state,
+      pinCode: extra.pin_code || extra.pincode || extra.zip_code || currentData.pinCode,
+      dob: formatApiDateToUi(accountData.birth_date) || currentData.dob,
+      anniversaryDate:
+        formatApiDateToUi(extra.anniversary_date) || currentData.anniversaryDate,
+      doj: formatApiDateToUi(extra.date_of_joining) || currentData.doj,
+      emergencyContactName:
+        extra.emergency_contact_name || currentData.emergencyContactName,
+      emergencyContactNumber:
+        extra.emergency_contact_number || currentData.emergencyContactNumber,
+    };
+  };
+
+  const persistProfileDataLocally = (data: ProfileFormData) => {
+    localStorage.setItem("bc-profile-data", JSON.stringify(data));
+    const essentialFields = [
+      "address",
+      "city",
+      "state",
+      "pinCode",
+      "dob",
+      "doj",
+      "emergencyContactName",
+      "emergencyContactNumber",
+    ];
+    const isComplete = essentialFields.every(
+      (field) => data[field as keyof ProfileFormData]?.trim() !== ""
+    );
+    if (isComplete) {
+      localStorage.setItem("bc-profile-completed", "true");
+    } else {
+      localStorage.removeItem("bc-profile-completed");
+    }
+  };
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [formData, setFormData] = useState<ProfileFormData>(getInitialProfileData);
+  const [profileImage, setProfileImage] = useState<string>(() => localStorage.getItem("bc-profile-avatar") || "");
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    localStorage.setItem('bc-profile-data', JSON.stringify(formData));
-    
-    const essentialFields = [
-      'address', 'city', 'state', 'pinCode', 'dob', 'doj', 
-      'emergencyContactName', 'emergencyContactNumber'
-    ];
-    const isComplete = essentialFields.every(field => formData[field as keyof typeof formData]?.trim() !== "");
-    
-    if (isComplete) {
-      localStorage.setItem('bc-profile-completed', 'true');
-    } else {
-      localStorage.removeItem('bc-profile-completed');
+  useEffect(() => {
+    const fetchProfileDetails = async () => {
+      try {
+        setIsProfileLoading(true);
+        const profileData = await userService.getAccountDetails();
+        
+        const mappedData = mapAccountProfileToForm(formData, profileData);
+        setFormData(mappedData);
+        persistProfileDataLocally(mappedData);
+
+        const accountImage =
+          profileData.profile_icon_url ||
+          profileData.profile_photo ||
+          profileData.avatar ||
+          profileData.image ||
+          "";
+
+        if (accountImage) {
+          setProfileImage(accountImage);
+          localStorage.setItem("bc-profile-avatar", accountImage);
+        }
+      } catch (error) {
+        if (!localStorage.getItem("bc-profile-data")) {
+          const message = error instanceof Error ? error.message : "Unable to load profile details";
+          toast.error(message);
+        }
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchProfileDetails();
+  }, []);
+
+  const triggerProfileUpload = () => {
+    if (!isEditing || isSaving) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleProfileImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (result) {
+        setProfileImage(result);
+      }
+    };
+    reader.readAsDataURL(file);
+    setProfileImageFile(file);
+    event.target.value = "";
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      const firstName = formData.displayName.trim();
+      const birthDate = formatUiDateToApi(formData.dob) || "";
+      const useFormData = !!profileImageFile;
+      let updatedProfile: ProfileUpdateResponse;
+
+      if (useFormData) {
+        const multipartPayload = new FormData();
+        multipartPayload.append("firstname", firstName);
+        multipartPayload.append("lastname", "");
+        multipartPayload.append("email", formData.email.trim());
+        multipartPayload.append("mobile", formData.phone.trim());
+        multipartPayload.append("user[firstname]", firstName);
+        multipartPayload.append("user[lastname]", "");
+        multipartPayload.append("user[email]", formData.email.trim());
+        multipartPayload.append("user[mobile]", formData.phone.trim());
+        multipartPayload.append("user[alternate_address]", formData.address.trim());
+        multipartPayload.append("user[user_title]", formData.jobTitle.trim());
+        multipartPayload.append("user[birth_date]", birthDate);
+        multipartPayload.append("user[alternate_mobile]", formData.emergencyContactNumber.trim());
+        multipartPayload.append("user[avatar]", profileImageFile);
+
+        updatedProfile = await userService.updateProfile(multipartPayload);
+      } else {
+        const payload = {
+          firstname: firstName,
+          lastname: "",
+          email: formData.email.trim(),
+          mobile: formData.phone.trim(),
+          user: {
+            firstname: firstName,
+            lastname: "",
+            email: formData.email.trim(),
+            mobile: formData.phone.trim(),
+            alternate_address: formData.address.trim(),
+            user_title: formData.jobTitle.trim(),
+            birth_date: birthDate || null,
+            alternate_mobile: formData.emergencyContactNumber.trim(),
+          },
+        };
+
+        updatedProfile = await userService.updateProfile(payload);
+      }
+
+      const mergedData = mergeApiProfileIntoForm(formData, updatedProfile);
+      setFormData(mergedData);
+      persistProfileDataLocally(mergedData);
+      if (profileImage) {
+        localStorage.setItem("bc-profile-avatar", profileImage);
+      } else {
+        localStorage.removeItem("bc-profile-avatar");
+      }
+      setProfileImageFile(null);
+      setIsEditing(false);
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update profile";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -252,7 +484,16 @@ const BusinessCompassProfile = () => {
     setIsEditing(false);
     const savedData = localStorage.getItem('bc-profile-data');
     if (savedData) setFormData(JSON.parse(savedData));
+    setProfileImage(localStorage.getItem("bc-profile-avatar") || "");
+    setProfileImageFile(null);
   };
+
+  const profileInitials = formData.displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("") || "U";
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins bg-[#F6F4EE]/30 min-h-screen">
@@ -277,6 +518,7 @@ const BusinessCompassProfile = () => {
               <Button
                 variant="outline"
                 onClick={handleCancel}
+                disabled={isSaving || isProfileLoading}
                 className="h-9 px-4 text-gray-600 border-gray-200 font-bold hover:bg-gray-50"
               >
                 <X size={16} className="mr-2" strokeWidth={2.5} />
@@ -284,15 +526,17 @@ const BusinessCompassProfile = () => {
               </Button>
               <Button
                 onClick={handleSave}
+                disabled={isSaving || isProfileLoading}
                 className="bg-[#108C72] hover:bg-[#0d735e] text-white font-bold h-9 px-6 shadow-sm"
               >
                 <Save size={16} className="mr-2" strokeWidth={2.5} />
-                Save Changes
+                {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </>
           ) : (
             <Button
               onClick={() => setIsEditing(true)}
+                disabled={isProfileLoading}
               className="bg-[#334155] hover:bg-[#1e293b] text-white font-bold h-8 px-4 rounded-md text-[10px] tracking-wider shadow-sm uppercase"
             >
               <Edit2 size={13} className="mr-1.5" strokeWidth={3} />
@@ -306,17 +550,37 @@ const BusinessCompassProfile = () => {
             {/* Left Column: Profile Pic */}
             <div className="flex flex-col items-center gap-6 w-full lg:w-48 pt-4">
               <div className="relative group">
-                <div className="w-40 h-40 rounded-full bg-[#B91C1C] flex items-center justify-center text-white text-[48px] font-black shadow-xl border-4 border-white">
-                  CA
-                </div>
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt="Profile"
+                    className="w-40 h-40 rounded-full object-cover shadow-xl border-4 border-white"
+                  />
+                ) : (
+                  <div className="w-40 h-40 rounded-full bg-[#B91C1C] flex items-center justify-center text-white text-[48px] font-black shadow-xl border-4 border-white">
+                    {profileInitials}
+                  </div>
+                )}
                 {isEditing && (
-                  <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <div
+                    onClick={triggerProfileUpload}
+                    className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
                     <Upload size={24} className="text-white" />
                   </div>
                 )}
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleProfileImageSelect}
+              />
               <Button
                 variant="outline"
+                onClick={triggerProfileUpload}
+                disabled={!isEditing || isSaving || isProfileLoading}
                 className="w-full text-gray-500 font-bold h-10 border-gray-200 hover:bg-gray-50 hover:text-[#DA7756]"
               >
                 <Upload size={14} className="mr-2" />
