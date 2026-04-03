@@ -1,6 +1,7 @@
 import React from "react";
 import { X, CheckSquare, AlertCircle, ListTodo, PenTool } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 interface QuickActionsDialogProps {
   isQuickActionsOpen: boolean;
@@ -11,6 +12,7 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
   isQuickActionsOpen,
   setIsQuickActionsOpen,
 }) => {
+  const navigate = useNavigate();
   return (
     <Dialog open={isQuickActionsOpen} onOpenChange={setIsQuickActionsOpen}>
       <DialogContent className="max-w-3xl p-0 h-[250px] rounded-[12px] bg-white border-none shadow-xl">
@@ -37,6 +39,7 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
                     strokeWidth={1.5}
                   />
                 ),
+                href: "/vas/tasks?type=create",
               },
               {
                 name: "Raise Ticket",
@@ -55,6 +58,7 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
                     strokeWidth={1.5}
                   />
                 ),
+                href: "/vas/todo?type=create",
               },
               {
                 name: "Create Post",
@@ -68,7 +72,10 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
             ].map((action, i) => (
               <div
                 key={i}
-                onClick={() => setIsQuickActionsOpen(false)}
+                onClick={() => {
+                  navigate(action.href);
+                  setIsQuickActionsOpen(false)
+                }}
                 className="flex flex-col items-center justify-center w-[140px] h-[120px] bg-[#FCFBF8] rounded-xl cursor-pointer hover:bg-[#F4F2EC] transition-all group"
               >
                 <div className="w-[52px] h-[52px] bg-white rounded-xl flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-[#F0ECE1] group-hover:scale-105 transition-transform duration-300 mb-4">
