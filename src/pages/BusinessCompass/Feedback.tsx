@@ -1187,7 +1187,13 @@ function GivenFeedbackList({
   };
 
   const handleDelete = (item: FeedbackItem) => {
-    if (!currentUserId || item.ratingFromId !== currentUserId) {
+    if (!currentUserId) {
+      window.alert("Unable to verify your account. Please log in again.");
+      return;
+    }
+
+    const hasKnownCreator = item.ratingFromId != null;
+    if (hasKnownCreator && Number(item.ratingFromId) !== Number(currentUserId)) {
       window.alert("You can only delete feedback created by your account.");
       return;
     }
@@ -1407,13 +1413,13 @@ function GivenFeedbackList({
                             className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                             disabled={
                               deleteMutation.isPending ||
-                              !currentUserId ||
-                              item.ratingFromId !== currentUserId
+                              !currentUserId
                             }
                             title={
                               !currentUserId
                                 ? "Unable to verify current user for delete"
-                                : item.ratingFromId !== currentUserId
+                                : item.ratingFromId != null &&
+                                    Number(item.ratingFromId) !== Number(currentUserId)
                                   ? "You can only delete feedback created by you"
                                   : undefined
                             }
