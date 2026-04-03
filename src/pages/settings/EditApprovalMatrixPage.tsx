@@ -16,6 +16,7 @@ interface ApprovalLevel {
   sendEmails: boolean;
   // Optional fallback names from API like approval_user_name (for display when user list doesn't resolve IDs)
   userNames?: string[] | string;
+  _destroy?: boolean; // mark for deletion on submit
 }
 
 interface User {
@@ -128,9 +129,20 @@ const EditApprovalMatrixPage = () => {
   };
 
   const removeApprovalLevel = (index: number) => {
-    if (approvalLevels.length > 1) {
-      setApprovalLevels((prev) => prev.filter((_, i) => i !== index));
-      setLevelErrors((prev) => prev.filter((_, i) => i !== index));
+    // Count only visible (non-destroyed) levels to enforce minimum of 1
+    const visibleCount = approvalLevels.filter((lvl) => !lvl._destroy).length;
+    if (visibleCount > 1) {
+      const level = approvalLevels[index];
+      if (level.levelId) {
+        // Existing backend record — mark for deletion so backend destroys it
+        setApprovalLevels((prev) =>
+          prev.map((lvl, i) => (i === index ? { ...lvl, _destroy: true } : lvl))
+        );
+      } else {
+        // New (unsaved) level — just remove from state
+        setApprovalLevels((prev) => prev.filter((_, i) => i !== index));
+        setLevelErrors((prev) => prev.filter((_, i) => i !== index));
+      }
     }
   };
 
@@ -158,6 +170,8 @@ const EditApprovalMatrixPage = () => {
 
     const newErrors = approvalLevels.map(() => ({} as { order?: string; name?: string; users?: string }));
     approvalLevels.forEach((lvl, idx) => {
+      // Skip levels marked for destruction — they won't be saved
+      if (lvl._destroy) return;
       const orderNum = Number(lvl.order);
       if (!Number.isInteger(orderNum) || orderNum < 1) {
         newErrors[idx].order = 'Order must be a positive integer.';
@@ -189,14 +203,20 @@ const EditApprovalMatrixPage = () => {
       const payload = {
         invoice_approval: {
           approval_type: selectedFunction,
-          invoice_approval_levels_attributes: approvalLevels.map((level) => ({
-            ...(level.levelId ? { id: level.levelId } : {}),
-            name: level.name,
-            order: level.order,
-            active: true,
-            send_email: level.sendEmails,
-            escalate_to_users: level.users,
-          })),
+          invoice_approval_levels_attributes: approvalLevels.map((level) => {
+            // Levels marked for destruction — send only id + _destroy: true
+            if (level._destroy && level.levelId) {
+              return { id: level.levelId, _destroy: 1 };
+            }
+            return {
+              ...(level.levelId ? { id: level.levelId } : {}),
+              name: level.name,
+              order: level.order,
+              active: true,
+              send_email: level.sendEmails,
+              escalate_to_users: level.users,
+            };
+          }),
         },
       };
       await apiClient.put(`/pms/admin/invoice_approvals/${id}.json`, payload);
@@ -298,7 +318,7 @@ const EditApprovalMatrixPage = () => {
             <h2 className="text-xl font-semibold text-[#C72030]">Approval Levels</h2>
           </div>
 
-          {approvalLevels.map((level, index) => (
+          {approvalLevels.map((level, index) => level._destroy ? null : (
             <div key={index} className="border border-gray-200 rounded-lg p-4 mb-4">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
                 {/* Order */}
@@ -416,7 +436,7 @@ const EditApprovalMatrixPage = () => {
                     sx={{ color: '#1a1a1a' }}
                   />
 
-                  {approvalLevels.length > 1 && (
+                  {approvalLevels.filter((lvl) => !lvl._destroy).length > 1 && (
                     <Button
                       variant="ghost"
                       size="sm"
