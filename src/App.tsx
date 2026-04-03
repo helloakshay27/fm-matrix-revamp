@@ -1998,16 +1998,16 @@ function App() {
                               </ProtectedRoute>
                             }
                           />
-                          <Route
+                          {/* <Route
                             path="/employee/company-hub"
                             element={
                               <ProtectedRoute>
                                 <CompanyHub />
                               </ProtectedRoute>
                             }
-                          />
+                          /> */}
                           <Route
-                            path="/employee/company-hub-new"
+                            path="/employee/company-hub"
                             element={
                               <ProtectedRoute>
                                 <CompanyHubNew />
@@ -4434,12 +4434,12 @@ function App() {
                           />
 
                           <Route
-  path="/report-analytics"
-  element={<ReportAnalytics />}/>
+                            path="/report-analytics"
+                            element={<ReportAnalytics />} />
 
-  <Route
-  path="/dashboard-UI"
-  element={<DashboardUI/>}/>
+                          <Route
+                            path="/dashboard-UI"
+                            element={<DashboardUI />} />
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
