@@ -617,7 +617,10 @@ function writeFeedbackCache(
   items: FeedbackItem[]
 ): void {
   try {
-    localStorage.setItem(getFeedbackCacheKey(direction, userId), JSON.stringify(items));
+    localStorage.setItem(
+      getFeedbackCacheKey(direction, userId),
+      JSON.stringify(items)
+    );
   } catch {
     // Ignore storage write failures (quota/privacy mode)
   }
@@ -652,7 +655,8 @@ async function fetchFeedbackList(
     try {
       const { data } = await apiClient.get(endpoint, {
         params,
-        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+        // Note: Cache-Control header removed to avoid CORS issues with oig-api
+        // The _t timestamp parameter already prevents caching
       });
 
       const raw = FeedbackListSchema.parse(data);
@@ -671,7 +675,10 @@ async function fetchFeedbackList(
         writeFeedbackCache(direction, userId, visibleItems);
       }
 
-      if (visibleItems.length === 0 && (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) > 0) {
+      if (
+        visibleItems.length === 0 &&
+        (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) > 0
+      ) {
         return LAST_SUCCESSFUL_FEEDBACK[memoryKey];
       }
 
@@ -681,12 +688,11 @@ async function fetchFeedbackList(
         return cachedItems;
       }
 
-      return visibleItems
-        .sort((a, b) => {
-          const at = new Date(a.createdAt || 0).getTime();
-          const bt = new Date(b.createdAt || 0).getTime();
-          return bt - at;
-        });
+      return visibleItems.sort((a, b) => {
+        const at = new Date(a.createdAt || 0).getTime();
+        const bt = new Date(b.createdAt || 0).getTime();
+        return bt - at;
+      });
     } catch (err) {
       lastError = normalizeError(err);
       if (lastError.kind === "auth" || lastError.kind === "forbidden") break;
@@ -842,7 +848,10 @@ function useFeedbackList(
   const cached = readFeedbackCache(direction, userId);
   const memoryKey = getFeedbackCacheKey(direction, userId);
 
-  if (cached.length > 0 && (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) === 0) {
+  if (
+    cached.length > 0 &&
+    (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) === 0
+  ) {
     LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cached;
   }
 
@@ -874,18 +883,24 @@ function useCreateFeedback() {
         variables.recipientName
       );
 
-      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "given"] }, (old) =>
-        upsertFeedbackItem(old, item)
+      qc.setQueriesData<FeedbackItem[]>(
+        { queryKey: ["feedback", "given"] },
+        (old) => upsertFeedbackItem(old, item)
       );
-      qc.setQueryData<FeedbackItem[]>(["feedback", "given", currentUserId], (old) =>
-        upsertFeedbackItem(old, item)
+      qc.setQueryData<FeedbackItem[]>(
+        ["feedback", "given", currentUserId],
+        (old) => upsertFeedbackItem(old, item)
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
         LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey],
         item
       );
-      writeFeedbackCache("given", currentUserId, LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]);
+      writeFeedbackCache(
+        "given",
+        currentUserId,
+        LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]
+      );
 
       // Sync with canonical server payload (create responses can omit full record fields).
       qc.invalidateQueries({ queryKey: ["feedback", "given"] });
@@ -907,36 +922,54 @@ function useUpdateFeedback() {
         variables.id
       );
 
-      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "given"] }, (old) =>
-        upsertFeedbackItem(old, item)
+      qc.setQueriesData<FeedbackItem[]>(
+        { queryKey: ["feedback", "given"] },
+        (old) => upsertFeedbackItem(old, item)
       );
-      qc.setQueryData<FeedbackItem[]>(["feedback", "given", currentUserId], (old) =>
-        upsertFeedbackItem(old, item)
+      qc.setQueryData<FeedbackItem[]>(
+        ["feedback", "given", currentUserId],
+        (old) => upsertFeedbackItem(old, item)
       );
-      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "received"] }, (old) =>
-        old?.some((existing) => existing.id === item.id)
-          ? upsertFeedbackItem(old, item)
-          : old ?? []
+      qc.setQueriesData<FeedbackItem[]>(
+        { queryKey: ["feedback", "received"] },
+        (old) =>
+          old?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old, item)
+            : (old ?? [])
       );
-      qc.setQueryData<FeedbackItem[]>(["feedback", "received", currentUserId], (old) =>
-        old?.some((existing) => existing.id === item.id)
-          ? upsertFeedbackItem(old, item)
-          : old ?? []
+      qc.setQueryData<FeedbackItem[]>(
+        ["feedback", "received", currentUserId],
+        (old) =>
+          old?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old, item)
+            : (old ?? [])
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
         LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey],
         item
       );
-      writeFeedbackCache("given", currentUserId, LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]);
+      writeFeedbackCache(
+        "given",
+        currentUserId,
+        LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]
+      );
 
       const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
-      if ((LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] ?? []).some((existing) => existing.id === item.id)) {
+      if (
+        (LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] ?? []).some(
+          (existing) => existing.id === item.id
+        )
+      ) {
         LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = upsertFeedbackItem(
           LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey],
           item
         );
-        writeFeedbackCache("received", currentUserId, LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]);
+        writeFeedbackCache(
+          "received",
+          currentUserId,
+          LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
+        );
       }
 
       // Ensure edited feedback rehydrates from source of truth.
@@ -952,28 +985,40 @@ function useDeleteFeedback() {
     mutationFn: ({ id }) => deleteFeedback(id),
     onSuccess: (_, variables) => {
       const currentUserId = getCurrentUserId();
-      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "given"] }, (old) =>
-        (old ?? []).filter((item) => item.id !== variables.id)
+      qc.setQueriesData<FeedbackItem[]>(
+        { queryKey: ["feedback", "given"] },
+        (old) => (old ?? []).filter((item) => item.id !== variables.id)
       );
-      qc.setQueryData<FeedbackItem[]>(["feedback", "given", currentUserId], (old) =>
-        (old ?? []).filter((item) => item.id !== variables.id)
+      qc.setQueryData<FeedbackItem[]>(
+        ["feedback", "given", currentUserId],
+        (old) => (old ?? []).filter((item) => item.id !== variables.id)
       );
-      qc.setQueriesData<FeedbackItem[]>({ queryKey: ["feedback", "received"] }, (old) =>
-        (old ?? []).filter((item) => item.id !== variables.id)
+      qc.setQueriesData<FeedbackItem[]>(
+        { queryKey: ["feedback", "received"] },
+        (old) => (old ?? []).filter((item) => item.id !== variables.id)
       );
-      qc.setQueryData<FeedbackItem[]>(["feedback", "received", currentUserId], (old) =>
-        (old ?? []).filter((item) => item.id !== variables.id)
+      qc.setQueryData<FeedbackItem[]>(
+        ["feedback", "received", currentUserId],
+        (old) => (old ?? []).filter((item) => item.id !== variables.id)
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
-      LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = (LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] ?? []).filter(
-        (item) => item.id !== variables.id
+      LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = (
+        LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] ?? []
+      ).filter((item) => item.id !== variables.id);
+      LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = (
+        LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] ?? []
+      ).filter((item) => item.id !== variables.id);
+      writeFeedbackCache(
+        "given",
+        currentUserId,
+        LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]
       );
-      LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = (LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] ?? []).filter(
-        (item) => item.id !== variables.id
+      writeFeedbackCache(
+        "received",
+        currentUserId,
+        LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
       );
-      writeFeedbackCache("given", currentUserId, LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]);
-      writeFeedbackCache("received", currentUserId, LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]);
     },
   });
 }
@@ -1150,9 +1195,9 @@ function GivenFeedbackList({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState("all");
-  const [detailCache, setDetailCache] = useState<
-    Record<string, FeedbackItem>
-  >({});
+  const [detailCache, setDetailCache] = useState<Record<string, FeedbackItem>>(
+    {}
+  );
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const [lastStableItems, setLastStableItems] = useState<FeedbackItem[]>([]);
 
@@ -1193,7 +1238,10 @@ function GivenFeedbackList({
     }
 
     const hasKnownCreator = item.ratingFromId != null;
-    if (hasKnownCreator && Number(item.ratingFromId) !== Number(currentUserId)) {
+    if (
+      hasKnownCreator &&
+      Number(item.ratingFromId) !== Number(currentUserId)
+    ) {
       window.alert("You can only delete feedback created by your account.");
       return;
     }
@@ -1302,9 +1350,7 @@ function GivenFeedbackList({
               const detail = detailCache[item.id] ?? item;
               const isLoadingDetail = loadingDetailId === item.id;
               const counterpartName =
-                direction === "to"
-                  ? item.recipientName
-                  : item.recipientName;
+                direction === "to" ? item.recipientName : item.recipientName;
               return (
                 <div
                   key={item.id}
@@ -1324,7 +1370,8 @@ function GivenFeedbackList({
                         onClick={() => handleExpand(item.id)}
                       >
                         <p className="font-semibold text-neutral-900">
-                            {direction === "to" ? "To" : "From"}: {counterpartName}
+                          {direction === "to" ? "To" : "From"}:{" "}
+                          {counterpartName}
                         </p>
                         <p className="text-sm text-neutral-600">{item.date}</p>
                         {!expanded && (
@@ -1412,14 +1459,14 @@ function GivenFeedbackList({
                             type="button"
                             className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                             disabled={
-                              deleteMutation.isPending ||
-                              !currentUserId
+                              deleteMutation.isPending || !currentUserId
                             }
                             title={
                               !currentUserId
                                 ? "Unable to verify current user for delete"
                                 : item.ratingFromId != null &&
-                                    Number(item.ratingFromId) !== Number(currentUserId)
+                                    Number(item.ratingFromId) !==
+                                      Number(currentUserId)
                                   ? "You can only delete feedback created by you"
                                   : undefined
                             }
@@ -1429,7 +1476,9 @@ function GivenFeedbackList({
                             }}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
-                            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                            {deleteMutation.isPending
+                              ? "Deleting..."
+                              : "Delete"}
                           </button>
                         </div>
                       )}
@@ -1987,7 +2036,10 @@ function FeedbackPage() {
     }
 
     const exactMatches = merged.filter((item) => {
-      if (selectedReceivedUserId != null && item.resourceId === selectedReceivedUserId) {
+      if (
+        selectedReceivedUserId != null &&
+        item.resourceId === selectedReceivedUserId
+      ) {
         return true;
       }
 
