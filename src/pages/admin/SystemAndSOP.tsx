@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Pencil,
   Plus,
+  RefreshCw,
   Save,
   Search,
   Sparkles,
@@ -17,6 +18,7 @@ import {
   User,
   X,
   XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -42,7 +44,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -52,153 +53,174 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-type SopTab = "my" | "all";
+// ─────────────────────────────────────────────
+// API CONFIG
+// ─────────────────────────────────────────────
+const BASE_URL = "https://fm-uat-api.lockated.com";
 
+const getToken = () => localStorage.getItem("auth_token") || "";
+
+// Apna current logged in user id yahan se get karein
+const getUserId = () => localStorage.getItem("user_id") || "1";
+
+const apiHeaders = () => ({
+  Accept: "application/json",
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+});
+
+const STATUS_TO_COL: Record<string, ColumnKey> = {
+  "To Start": "toStart",
+  to_start: "toStart",
+  "to start": "toStart",
+  Broken: "broken",
+  broken: "broken",
+  Running: "running",
+  running: "running",
+};
+
+const COL_TO_STATUS: Record<ColumnKey, string> = {
+  toStart: "To Start",
+  broken: "Broken",
+  running: "Running",
+};
+
+const PRIORITY_MAP: Record<string, SopCardData["priority"]> = {
+  Low: "low",
+  low: "low",
+  Medium: "medium",
+  medium: "medium",
+  High: "high",
+  high: "high",
+};
+
+const normalizeSopFromAPI = (raw: any): SopCardData => ({
+  id: String(raw.id ?? Math.random()),
+  title: raw.system_name ?? raw.title ?? "Untitled",
+  department: raw.department ?? raw.department_name ?? raw.dept ?? "General",
+  departmentId: raw.department_id ?? null,
+  priority: PRIORITY_MAP[raw.priority] ?? "medium",
+  healthPercent: coerceHealthPercent(
+    raw.health_score ?? raw.healthPercent ?? 0
+  ),
+  description: raw.description ?? undefined,
+  docUrl: raw.documentation_url ?? raw.doc_url ?? raw.docUrl ?? undefined,
+  assigneeId: raw.assignee_id ?? raw.assigned_to_id ?? null,
+  assigneeName: raw.assignee_name ?? raw.assigned_to ?? null,
+  status: raw.status ?? "Broken",
+  kpis: Array.isArray(raw.kpis) ? raw.kpis : [],
+  createdById: raw.created_by_id ?? null,
+  _raw: raw,
+});
+
+const fetchAllSops = async (): Promise<SopCardData[]> => {
+  const res = await fetch(`${BASE_URL}/system_sops`, { headers: apiHeaders() });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const arr = Array.isArray(json)
+    ? json
+    : (json.data ?? json.system_sops ?? []);
+  return arr.map(normalizeSopFromAPI);
+};
+
+const fetchMySops = async (): Promise<SopCardData[]> => {
+  const userId = getUserId();
+  // Changed to assignee_id_eq so it fetches SOPs assigned to the user
+  const res = await fetch(
+    `${BASE_URL}/system_sops?q[assignee_id_eq]=${userId}`,
+    { headers: apiHeaders() }
+  );
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const arr = Array.isArray(json)
+    ? json
+    : (json.data ?? json.system_sops ?? []);
+  return arr.map(normalizeSopFromAPI);
+};
+
+const createSop = async (payload: any) => {
+  const res = await fetch(`${BASE_URL}/system_sops`, {
+    method: "POST",
+    headers: apiHeaders(),
+    body: JSON.stringify({ system_sop: payload }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status}: ${txt}`);
+  }
+  const json = await res.json();
+  return normalizeSopFromAPI(json.data ?? json.system_sop ?? json);
+};
+
+const updateSop = async (id: string, payload: any) => {
+  const res = await fetch(`${BASE_URL}/system_sops/${id}`, {
+    method: "PUT",
+    headers: apiHeaders(),
+    body: JSON.stringify({ system_sop: payload }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status}: ${txt}`);
+  }
+  const json = await res.json();
+  return normalizeSopFromAPI(json.data ?? json.system_sop ?? json);
+};
+
+const patchSopStatus = async (id: string, status: string) => {
+  const res = await fetch(`${BASE_URL}/system_sops/${id}`, {
+    method: "PATCH",
+    headers: apiHeaders(),
+    body: JSON.stringify({ system_sop: { status } }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return true;
+};
+
+const deleteSop = async (id: string) => {
+  const res = await fetch(`${BASE_URL}/system_sops/${id}`, {
+    method: "DELETE",
+    headers: apiHeaders(),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return true;
+};
+
+// ─────────────────────────────────────────────
+// TYPES & UTILS
+// ─────────────────────────────────────────────
+type SopTab = "my" | "all";
 type ColumnKey = "toStart" | "broken" | "running";
+
+type KpiItem = {
+  kpi_id: number;
+  kpi_name: string;
+  kpi_category: string;
+  kpi_frequency: string;
+  position: number;
+};
 
 type SopCardData = {
   id: string;
   title: string;
   department: string;
+  departmentId?: number | null;
   priority: "low" | "medium" | "high";
   healthPercent: number;
   description?: string;
   docUrl?: string;
+  assigneeId?: number | null;
+  assigneeName?: string | null;
+  status?: string;
+  kpis?: KpiItem[];
+  createdById?: number | null;
+  _raw?: any;
 };
-
-const ALL_SOPS_BROKEN_MOCK: SopCardData[] = [
-  {
-    id: "1",
-    title: "Accounts Operational Tracker",
-    department: "Front End",
-    priority: "medium",
-    healthPercent: 0,
-  },
-  {
-    id: "2",
-    title: "Onboarding Process",
-    department: "Front End",
-    priority: "medium",
-    healthPercent: 0,
-  },
-  {
-    id: "3",
-    title: "Client Escalation Workflow",
-    department: "Client Servicing",
-    priority: "high",
-    healthPercent: 0,
-  },
-  {
-    id: "4",
-    title: "Monthly Close Checklist",
-    department: "Accounts",
-    priority: "medium",
-    healthPercent: 0,
-  },
-  {
-    id: "5",
-    title: "Release Deployment Runbook",
-    department: "Engineering",
-    priority: "high",
-    healthPercent: 0,
-  },
-  {
-    id: "6",
-    title: "Incident Response Playbook",
-    department: "QA",
-    priority: "low",
-    healthPercent: 0,
-  },
-  {
-    id: "7",
-    title: "Vendor Onboarding SOP",
-    department: "Human Resources",
-    priority: "medium",
-    healthPercent: 0,
-  },
-];
 
 const PRIORITY_STYLES: Record<SopCardData["priority"], string> = {
   low: "bg-sky-100 text-sky-900",
   medium: "bg-orange-100 text-orange-900",
   high: "bg-rose-100 text-rose-900",
 };
-
-const initialColumns = (): Record<ColumnKey, SopCardData[]> => ({
-  toStart: [],
-  broken: ALL_SOPS_BROKEN_MOCK.map((c) => ({ ...c })),
-  running: [],
-});
-
-const SOP_KANBAN_STORAGE_KEY = "fm-system-sops-kanban-v1";
-
-function coerceHealthPercent(n: unknown): number {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return 0;
-  return Math.max(0, Math.min(100, v));
-}
-
-function normalizeSopCard(c: SopCardData): SopCardData {
-  return {
-    ...c,
-    healthPercent: coerceHealthPercent(c.healthPercent),
-  };
-}
-
-function buildHealthMapFromColumns(
-  cols: Record<ColumnKey, SopCardData[]>
-): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const key of Object.keys(cols) as ColumnKey[]) {
-    for (const c of cols[key]) {
-      out[c.id] = coerceHealthPercent(c.healthPercent);
-    }
-  }
-  return out;
-}
-
-function mergeHealthIntoColumns(
-  cols: Record<ColumnKey, SopCardData[]>,
-  healthByCardId: Record<string, number>
-): Record<ColumnKey, SopCardData[]> {
-  const apply = (cards: SopCardData[]): SopCardData[] =>
-    cards.map((c) => ({
-      ...c,
-      healthPercent:
-        healthByCardId[c.id] !== undefined
-          ? healthByCardId[c.id]
-          : coerceHealthPercent(c.healthPercent),
-    }));
-  return {
-    toStart: apply(cols.toStart),
-    broken: apply(cols.broken),
-    running: apply(cols.running),
-  };
-}
-
-function loadColumnsFromStorage(): Record<ColumnKey, SopCardData[]> {
-  try {
-    const raw = localStorage.getItem(SOP_KANBAN_STORAGE_KEY);
-    if (!raw) return initialColumns();
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    if (
-      !Array.isArray(parsed.toStart) ||
-      !Array.isArray(parsed.broken) ||
-      !Array.isArray(parsed.running)
-    ) {
-      return initialColumns();
-    }
-    const mapCol = (arr: unknown[]) =>
-      (arr as SopCardData[]).map((c) => normalizeSopCard(c));
-    return {
-      toStart: mapCol(parsed.toStart),
-      broken: mapCol(parsed.broken),
-      running: mapCol(parsed.running),
-    };
-  } catch {
-    return initialColumns();
-  }
-}
 
 const DEPARTMENTS = [
   "Front End",
@@ -212,367 +234,75 @@ const DEPARTMENTS = [
 ] as const;
 
 const MOCK_ASSIGNEES = [
-  { value: "u1", label: "Jane Smith" },
-  { value: "u2", label: "Ravi Kumar" },
-  { value: "u3", label: "Priya Sharma" },
-  { value: "u4", label: "Adhip Shetty" },
+  { value: "1", label: "Jane Smith" },
+  { value: "2", label: "Ravi Kumar" },
+  { value: "3", label: "Priya Sharma" },
+  { value: "123", label: "Adhip Shetty" },
 ];
 
-function EditSystemSopDialog({
+const DEPT_ID_MAP: Record<string, number> = {
+  "Front End": 1,
+  "Client Servicing": 2,
+  Accounts: 3,
+  Engineering: 4,
+  QA: 5,
+  "Human Resources": 6,
+  Design: 7,
+  Marketing: 8,
+};
+
+function coerceHealthPercent(n: unknown): number {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, v));
+}
+
+function buildColumnsFromList(
+  list: SopCardData[]
+): Record<ColumnKey, SopCardData[]> {
+  const cols: Record<ColumnKey, SopCardData[]> = {
+    toStart: [],
+    broken: [],
+    running: [],
+  };
+  for (const item of list) {
+    const col = STATUS_TO_COL[item.status ?? ""] ?? "broken";
+    cols[col].push(item);
+  }
+  return cols;
+}
+
+function findColumnForCard(
+  cols: Record<ColumnKey, SopCardData[]>,
+  cardId: string
+): ColumnKey | null {
+  for (const k of Object.keys(cols) as ColumnKey[]) {
+    if (cols[k].some((c) => c.id === cardId)) return k;
+  }
+  return null;
+}
+
+function parseCardId(id: string | number): string | null {
+  const s = String(id);
+  if (!s.startsWith("sop-card-")) return null;
+  return s.slice("sop-card-".length);
+}
+
+// ─────────────────────────────────────────────
+// DIALOGS
+// ─────────────────────────────────────────────
+function SopFormDialog({
   open,
   onOpenChange,
-  item,
-  column,
+  isEdit,
+  initialData,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: SopCardData | null;
-  column: ColumnKey | null;
-  onSave: (next: SopCardData, targetColumn: ColumnKey) => void;
-}) {
-  const [systemName, setSystemName] = useState("");
-  const [description, setDescription] = useState("");
-  const [department, setDepartment] = useState("");
-  const [statusColumn, setStatusColumn] = useState<ColumnKey>("broken");
-  const [priority, setPriority] = useState<SopCardData["priority"]>("medium");
-  const [assignUser, setAssignUser] = useState<string>("");
-  const [healthScore, setHealthScore] = useState<number[]>([0]);
-  const [docUrl, setDocUrl] = useState("");
-  const [kpiInvoice, setKpiInvoice] = useState(false);
-
-  useEffect(() => {
-    if (!open || !item || !column) return;
-    setSystemName(item.title);
-    setDescription(item.description ?? "");
-    setDepartment(item.department);
-    setStatusColumn(column);
-    setPriority(item.priority);
-    setAssignUser("");
-    setHealthScore([item.healthPercent]);
-    setDocUrl(item.docUrl ?? "");
-    setKpiInvoice(false);
-  }, [open, item, column]);
-
-  const handleSubmit = () => {
-    if (!item) return;
-    const next: SopCardData = {
-      ...item,
-      title: systemName.trim() || item.title,
-      department,
-      priority,
-      healthPercent: healthScore[0] ?? 0,
-      description: description.trim() || undefined,
-      docUrl: docUrl.trim() || undefined,
-    };
-    onSave(next, statusColumn);
-  };
-
-  const fieldWrap = (borderClass: string, bgClass: string, children: React.ReactNode) => (
-    <div
-      className={cn(
-        "rounded-xl border-2 px-3 py-2.5 sm:px-4 sm:py-3",
-        borderClass,
-        bgClass
-      )}
-    >
-      {children}
-    </div>
-  );
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-0 shadow-xl sm:max-w-2xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
-          <DialogHeader className="m-0 flex-1 space-y-0 p-0 text-left">
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[#DA7756]">
-              <Pencil className="h-5 w-5 shrink-0 text-[#C72030]" strokeWidth={2} />
-              Edit System/SOP
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#DA7756] px-3 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85"
-            >
-              <Save className="h-4 w-4" />
-              Update
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
-          {fieldWrap(
-            "border-neutral-200",
-            "bg-white",
-            <>
-              <Label htmlFor="sop-system-name" className="font-semibold text-neutral-900">
-                System Name <span className="text-[#DA7756]">*</span>
-              </Label>
-              <input
-                id="sop-system-name"
-                value={systemName}
-                onChange={(e) => setSystemName(e.target.value)}
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-              />
-            </>
-          )}
-
-          {fieldWrap(
-            "border-neutral-200",
-            "bg-neutral-50/30",
-            <>
-              <Label htmlFor="sop-desc" className="font-semibold text-neutral-900">
-                Description
-              </Label>
-              <Textarea
-                id="sop-desc"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What does this system do?"
-                className="mt-2 min-h-[88px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
-              />
-            </>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {fieldWrap(
-              "border-neutral-200",
-              "bg-white",
-              <>
-                <Label className="font-semibold text-neutral-900">
-                  Department <span className="text-[#DA7756]">*</span>
-                </Label>
-                <Select value={department} onValueChange={setDepartment}>
-                  <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DEPARTMENTS.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-            {fieldWrap(
-              "border-sky-200/90",
-              "bg-sky-50/40",
-              <>
-                <Label className="font-semibold text-neutral-900">
-                  Status <span className="text-[#DA7756]">*</span>
-                </Label>
-                <Select
-                  value={statusColumn}
-                  onValueChange={(v) => setStatusColumn(v as ColumnKey)}
-                >
-                  <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="toStart">
-                      <span className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-sky-600" />
-                        To Start
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="broken">
-                      <span className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-rose-600" />
-                        Broken
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="running">
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        Running
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-          </div>
-
-          {fieldWrap(
-            "border-orange-200/90",
-            "bg-orange-50/40",
-            <>
-              <Label className="font-semibold text-neutral-900">Priority</Label>
-              <Select
-                value={priority}
-                onValueChange={(v) => setPriority(v as SopCardData["priority"])}
-              >
-                <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">
-                    <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 text-sky-500" />
-                      Low
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="medium">
-                    <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      Medium
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="high">
-                    <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 text-rose-500" />
-                      High
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </>
-          )}
-
-          {fieldWrap(
-            "border-neutral-200",
-            "bg-white",
-            <>
-              <Label className="font-semibold text-neutral-900">
-                Assign to User <span className="text-[#DA7756]">*</span>
-              </Label>
-              <Select value={assignUser} onValueChange={setAssignUser}>
-                <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-violet-500" />
-                    <SelectValue placeholder="Select user" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {MOCK_ASSIGNEES.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>
-                      {u.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </>
-          )}
-
-          {fieldWrap(
-            "border-emerald-200/90",
-            "bg-emerald-50/40",
-            <>
-              <div className="flex items-center justify-between gap-2">
-                <Label className="font-semibold text-neutral-900">Health Score</Label>
-                <span className="text-sm font-semibold tabular-nums text-emerald-600">
-                  {healthScore[0] ?? 0}%
-                </span>
-              </div>
-              <Slider
-                value={healthScore}
-                onValueChange={setHealthScore}
-                min={0}
-                max={100}
-                step={1}
-                className="mt-4 [&_[class*=range]]:bg-emerald-500"
-              />
-            </>
-          )}
-
-          {fieldWrap(
-            "border-cyan-200/90",
-            "bg-cyan-50/40",
-            <>
-              <Label htmlFor="sop-doc-url" className="font-semibold text-neutral-900">
-                Documentation URL
-              </Label>
-              <input
-                id="sop-doc-url"
-                type="url"
-                value={docUrl}
-                onChange={(e) => setDocUrl(e.target.value)}
-                placeholder="https://..."
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-              />
-            </>
-          )}
-
-          {fieldWrap(
-            "border-amber-200/90",
-            "bg-amber-50/40",
-            <>
-              <Label className="font-semibold text-neutral-900">Link KPIs</Label>
-              <p className="mt-1 text-xs text-neutral-500">
-                Select KPIs that this system impacts
-              </p>
-              <div className="mt-3 rounded-xl border border-neutral-200/80 bg-white p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="kpi-invoices"
-                      checked={kpiInvoice}
-                      onCheckedChange={(c) => setKpiInvoice(c === true)}
-                    />
-                    <label
-                      htmlFor="kpi-invoices"
-                      className="text-sm font-medium text-neutral-800"
-                    >
-                      Invoices Raised
-                    </label>
-                  </div>
-                  <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                    Invoices
-                  </span>
-                  <span className="rounded-md bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                    monthly
-                  </span>
-                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
-                    Accounts
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 border-t border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#DA7756] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85"
-          >
-            <Save className="h-4 w-4" />
-            Update
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AddNewSystemSopDialog({
-  open,
-  onOpenChange,
-  onCreate,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreate: (item: SopCardData, targetColumn: ColumnKey) => void;
+  isEdit: boolean;
+  initialData?: SopCardData | null;
+  onSave: (data: any, column: ColumnKey) => Promise<void>;
 }) {
   const [systemName, setSystemName] = useState("");
   const [description, setDescription] = useState("");
@@ -583,128 +313,153 @@ function AddNewSystemSopDialog({
   const [healthScore, setHealthScore] = useState<number[]>([0]);
   const [docUrl, setDocUrl] = useState("");
   const [kpiInvoice, setKpiInvoice] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
-    setSystemName("");
-    setDescription("");
-    setDepartment("");
-    setStatusColumn("toStart");
-    setPriority("medium");
-    setAssignUser("");
-    setHealthScore([0]);
-    setDocUrl("");
-    setKpiInvoice(false);
-  }, [open]);
+    if (open) {
+      if (isEdit && initialData) {
+        setSystemName(initialData.title);
+        setDescription(initialData.description ?? "");
+        setDepartment(initialData.department);
+        setStatusColumn(
+          (STATUS_TO_COL[initialData.status ?? ""] ?? "broken") as ColumnKey
+        );
+        setPriority(initialData.priority);
+        setAssignUser(String(initialData.assigneeId ?? ""));
+        setHealthScore([initialData.healthPercent]);
+        setDocUrl(initialData.docUrl ?? "");
+        setKpiInvoice((initialData.kpis ?? []).some((k) => k.kpi_id === 10));
+      } else {
+        setSystemName("");
+        setDescription("");
+        setDepartment("");
+        setStatusColumn("toStart");
+        setPriority("medium");
+        setAssignUser("");
+        setHealthScore([0]);
+        setDocUrl("");
+        setKpiInvoice(false);
+      }
+    }
+  }, [open, isEdit, initialData]);
 
-  const fieldWrap = (
-    borderClass: string,
-    bgClass: string,
-    children: React.ReactNode
-  ) => (
+  const handleSubmit = async () => {
+    const name = systemName.trim();
+    if (!name) return toast.error("Please enter a system name");
+    if (!department) return toast.error("Please select a department");
+    if (!assignUser) return toast.error("Please assign a user");
+
+    setIsSaving(true);
+    try {
+      const kpis = kpiInvoice
+        ? [
+            {
+              kpi_id: 10,
+              kpi_name: "Invoices Raised",
+              kpi_category: "Accounts",
+              kpi_frequency: "monthly",
+              position: 1,
+            },
+          ]
+        : [];
+      const payload = {
+        system_name: name,
+        description: description.trim() || undefined,
+        department_id: DEPT_ID_MAP[department] ?? 1,
+        status: COL_TO_STATUS[statusColumn],
+        priority: priority.charAt(0).toUpperCase() + priority.slice(1),
+        assignee_id: parseInt(assignUser, 10),
+        health_score: healthScore[0] ?? 0,
+        documentation_url: docUrl.trim() || undefined,
+        kpis: isEdit ? initialData?.kpis : kpis, // Only modify KPIs if new, simplify for demo
+      };
+      await onSave(payload, statusColumn);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const fw = (bc: string, bg: string, children: React.ReactNode) => (
     <div
-      className={cn(
-        "rounded-xl border-2 px-3 py-2.5 sm:px-4 sm:py-3",
-        borderClass,
-        bgClass
-      )}
+      className={cn("rounded-xl border-2 px-3 py-2.5 sm:px-4 sm:py-3", bc, bg)}
     >
       {children}
     </div>
   );
 
-  const createBtnClass =
-    "inline-flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#DA7756] to-[#c55a42] px-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 sm:h-10 sm:px-4";
-
-  const handleSubmit = () => {
-    const name = systemName.trim();
-    if (!name) {
-      toast.error("Please enter a system name");
-      return;
-    }
-    if (!department) {
-      toast.error("Please select a department");
-      return;
-    }
-    if (!assignUser) {
-      toast.error("Please assign a user");
-      return;
-    }
-    const newItem: SopCardData = {
-      id: `sop-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      title: name,
-      department,
-      priority,
-      healthPercent: healthScore[0] ?? 0,
-      description: description.trim() || undefined,
-      docUrl: docUrl.trim() || undefined,
-    };
-    onCreate(newItem, statusColumn);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-0 shadow-xl sm:max-w-2xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-0 shadow-xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-[#fef6f4] px-5 py-4">
           <DialogHeader className="m-0 flex-1 space-y-0 p-0 text-left">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[#DA7756]">
-              <Plus className="h-5 w-5 shrink-0 text-[#C72030]" strokeWidth={2} />
-              Add New System/SOP
+              {isEdit ? (
+                <Pencil className="h-5 w-5 shrink-0 text-[#C72030]" />
+              ) : (
+                <Plus className="h-5 w-5 shrink-0 text-[#C72030]" />
+              )}
+              {isEdit ? "Edit System/SOP" : "Add New System/SOP"}
             </DialogTitle>
           </DialogHeader>
           <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={handleSubmit} className={createBtnClass}>
-              <Sparkles className="h-4 w-4" />
-              Create
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSaving}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#DA7756] px-3 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
+            >
+              {isSaving ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : isEdit ? (
+                <Save className="h-4 w-4" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {isSaving ? "Saving…" : isEdit ? "Update" : "Create"}
             </button>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
-              aria-label="Close"
+              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        <div className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
-          {fieldWrap(
+        <div className="space-y-4 px-5 py-5 sm:px-6">
+          {fw(
             "border-neutral-200",
             "bg-white",
             <>
-              <Label htmlFor="add-sop-name" className="font-semibold text-neutral-900">
+              <Label className="font-semibold text-neutral-900">
                 System Name <span className="text-[#DA7756]">*</span>
               </Label>
               <input
-                id="add-sop-name"
                 value={systemName}
                 onChange={(e) => setSystemName(e.target.value)}
-                placeholder="e.g., Customer Onboarding Process"
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
               />
             </>
           )}
 
-          {fieldWrap(
+          {fw(
             "border-neutral-200",
             "bg-neutral-50/30",
             <>
-              <Label htmlFor="add-sop-desc" className="font-semibold text-neutral-900">
+              <Label className="font-semibold text-neutral-900">
                 Description
               </Label>
               <Textarea
-                id="add-sop-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What does this system do?"
                 className="mt-2 min-h-[88px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
               />
             </>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {fieldWrap(
+            {fw(
               "border-neutral-200",
               "bg-white",
               <>
@@ -728,7 +483,7 @@ function AddNewSystemSopDialog({
                 </Select>
               </>
             )}
-            {fieldWrap(
+            {fw(
               "border-sky-200/90",
               "bg-sky-50/40",
               <>
@@ -745,19 +500,17 @@ function AddNewSystemSopDialog({
                   <SelectContent>
                     <SelectItem value="toStart">
                       <span className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-sky-600" />
-                        To Start
+                        <Clock className="h-4 w-4 text-sky-600" /> To Start
                       </span>
                     </SelectItem>
                     <SelectItem value="broken">
                       <span className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-rose-600" />
-                        Broken
+                        <XCircle className="h-4 w-4 text-rose-600" /> Broken
                       </span>
                     </SelectItem>
                     <SelectItem value="running">
                       <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />{" "}
                         Running
                       </span>
                     </SelectItem>
@@ -767,7 +520,7 @@ function AddNewSystemSopDialog({
             )}
           </div>
 
-          {fieldWrap(
+          {fw(
             "border-orange-200/90",
             "bg-orange-50/40",
             <>
@@ -782,20 +535,18 @@ function AddNewSystemSopDialog({
                 <SelectContent>
                   <SelectItem value="low">
                     <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 text-sky-500" />
-                      Low
+                      <Circle className="h-3.5 w-3.5 text-sky-500" /> Low
                     </span>
                   </SelectItem>
                   <SelectItem value="medium">
                     <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                      <Circle className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />{" "}
                       Medium
                     </span>
                   </SelectItem>
                   <SelectItem value="high">
                     <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 text-rose-500" />
-                      High
+                      <Circle className="h-3.5 w-3.5 text-rose-500" /> High
                     </span>
                   </SelectItem>
                 </SelectContent>
@@ -803,7 +554,7 @@ function AddNewSystemSopDialog({
             </>
           )}
 
-          {fieldWrap(
+          {fw(
             "border-neutral-200",
             "bg-white",
             <>
@@ -816,7 +567,7 @@ function AddNewSystemSopDialog({
               >
                 <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-sky-500" />
+                    <User className="h-4 w-4 text-violet-500" />
                     <SelectValue placeholder="Select user" />
                   </div>
                 </SelectTrigger>
@@ -831,101 +582,92 @@ function AddNewSystemSopDialog({
             </>
           )}
 
-          {fieldWrap(
+          {/* DYNAMIC FILL SLIDER */}
+          {fw(
             "border-emerald-200/90",
             "bg-emerald-50/40",
             <>
               <div className="flex items-center justify-between gap-2">
-                <Label className="font-semibold text-neutral-900">Health Score</Label>
+                <Label className="font-semibold text-neutral-900">
+                  Health Score
+                </Label>
                 <span className="text-sm font-semibold tabular-nums text-emerald-600">
                   {healthScore[0] ?? 0}%
                 </span>
               </div>
-              <Slider
-                value={healthScore}
-                onValueChange={setHealthScore}
+              <input
+                type="range"
                 min={0}
                 max={100}
                 step={1}
-                className="mt-4 [&_[class*=range]]:bg-emerald-500"
+                value={healthScore[0] ?? 0}
+                onChange={(e) =>
+                  setHealthScore([parseInt(e.target.value, 10) || 0])
+                }
+                className="mt-4 w-full h-2.5 appearance-none rounded-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-emerald-500 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-emerald-500 [&::-moz-range-thumb]:shadow-md"
+                style={{
+                  background: `linear-gradient(to right, #10b981 0%, #10b981 ${healthScore[0] ?? 0}%, #e5e7eb ${healthScore[0] ?? 0}%, #e5e7eb 100%)`,
+                }}
               />
             </>
           )}
 
-          {fieldWrap(
+          {fw(
             "border-cyan-200/90",
             "bg-cyan-50/40",
             <>
-              <Label htmlFor="add-sop-url" className="font-semibold text-neutral-900">
+              <Label className="font-semibold text-neutral-900">
                 Documentation URL
               </Label>
               <input
-                id="add-sop-url"
                 type="url"
                 value={docUrl}
                 onChange={(e) => setDocUrl(e.target.value)}
                 placeholder="https://..."
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
               />
             </>
           )}
 
-          {fieldWrap(
-            "border-amber-200/90",
-            "bg-amber-50/40",
-            <>
-              <Label className="font-semibold text-neutral-900">Link KPIs</Label>
-              <p className="mt-1 text-xs text-neutral-500">
-                Select KPIs that this system impacts
-              </p>
-              <div className="mt-3 rounded-xl border border-neutral-200/80 bg-white p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="add-kpi-invoices"
-                      checked={kpiInvoice}
-                      onCheckedChange={(c) => setKpiInvoice(c === true)}
-                    />
-                    <label
-                      htmlFor="add-kpi-invoices"
-                      className="text-sm font-medium text-neutral-800"
-                    >
-                      Invoices Raised
-                    </label>
+          {!isEdit &&
+            fw(
+              "border-amber-200/90",
+              "bg-amber-50/40",
+              <>
+                <Label className="font-semibold text-neutral-900">
+                  Link KPIs
+                </Label>
+                <div className="mt-3 rounded-xl border border-neutral-200/80 bg-white p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="add-kpi-invoices"
+                        checked={kpiInvoice}
+                        onCheckedChange={(c) => setKpiInvoice(c === true)}
+                      />
+                      <label
+                        htmlFor="add-kpi-invoices"
+                        className="text-sm font-medium text-neutral-800"
+                      >
+                        Invoices Raised
+                      </label>
+                    </div>
+                    <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                      Invoices
+                    </span>
                   </div>
-                  <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                    Invoices
-                  </span>
-                  <span className="rounded-md bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                    monthly
-                  </span>
-                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
-                    Accounts
-                  </span>
                 </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 border-t border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50"
-          >
-            Cancel
-          </button>
-          <button type="button" onClick={handleSubmit} className={createBtnClass}>
-            <Sparkles className="h-4 w-4" />
-            Create
-          </button>
+              </>
+            )}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
+// ─────────────────────────────────────────────
+// KANBAN CARD
+// ─────────────────────────────────────────────
 function SopKanbanCard({
   item,
   column,
@@ -937,7 +679,6 @@ function SopKanbanCard({
 }: {
   item: SopCardData;
   column: ColumnKey;
-  /** User-controlled health; not derived from drag. */
   displayHealthPercent: number;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
   onEditClick?: () => void;
@@ -959,7 +700,6 @@ function SopKanbanCard({
         Broken
       </span>
     );
-
   const barClass =
     column === "running"
       ? "bg-emerald-500"
@@ -975,78 +715,77 @@ function SopKanbanCard({
         dragHandleProps &&
           "cursor-grab touch-manipulation select-none active:cursor-grabbing"
       )}
-      aria-label={dragHandleProps ? "Drag to move between columns" : undefined}
     >
-      <div className="min-w-0 flex-1">
-          <p className="font-semibold leading-snug text-neutral-900">
-            {item.title}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
-              {item.department}
-            </span>
-            <span
-              className={cn(
-                "rounded-md px-2 py-0.5 text-xs font-medium capitalize",
-                PRIORITY_STYLES[item.priority]
-              )}
-            >
-              {item.priority}
-            </span>
-          </div>
-          <div className="mt-3 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-neutral-600">Health</span>
-              {statusBadge}
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
-              <div
-                className={cn("h-full rounded-full transition-colors", barClass)}
-                style={{ width: `${health}%` }}
-              />
-            </div>
-            <p className="text-right text-[11px] font-medium tabular-nums text-neutral-500">
-              {health}%
-            </p>
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditClick?.();
-              }}
-              className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#DA7756] px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit
-            </button>
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDuplicateClick?.();
-              }}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-300 bg-white text-neutral-600 shadow-sm transition-colors hover:bg-neutral-50"
-              aria-label="Duplicate"
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteClick?.();
-              }}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-200 bg-white text-rose-600 shadow-sm transition-colors hover:bg-rose-50"
-              aria-label="Delete"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
+      <p className="font-semibold leading-snug text-neutral-900">
+        {item.title}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
+          {item.department}
+        </span>
+        <span
+          className={cn(
+            "rounded-md px-2 py-0.5 text-xs font-medium capitalize",
+            PRIORITY_STYLES[item.priority]
+          )}
+        >
+          {item.priority}
+        </span>
+        {item.assigneeName && (
+          <span className="rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800">
+            {item.assigneeName}
+          </span>
+        )}
+      </div>
+      <div className="mt-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-neutral-600">Health</span>
+          {statusBadge}
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+          <div
+            className={cn("h-full rounded-full transition-colors", barClass)}
+            style={{ width: `${health}%` }}
+          />
+        </div>
+        <p className="text-right text-[11px] font-medium tabular-nums text-neutral-500">
+          {health}%
+        </p>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditClick?.();
+          }}
+          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#DA7756] px-3 text-xs font-semibold text-white shadow-sm hover:bg-[#DA7756]/85"
+        >
+          <Pencil className="h-3.5 w-3.5" /> Edit
+        </button>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicateClick?.();
+          }}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-300 bg-white text-neutral-600 shadow-sm hover:bg-neutral-50"
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteClick?.();
+          }}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-200 bg-white text-rose-600 shadow-sm hover:bg-rose-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );
@@ -1060,30 +799,21 @@ function DraggableSopCard({
   onEditClick,
   onDuplicateClick,
   onDeleteClick,
-}: {
-  item: SopCardData;
-  column: ColumnKey;
-  displayHealthPercent: number;
-  disabled?: boolean;
-  onEditClick?: () => void;
-  onDuplicateClick?: () => void;
-  onDeleteClick?: () => void;
-}) {
+}: any) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: `sop-card-${item.id}`,
       disabled,
       data: { type: "SOP_CARD", item, column },
     });
-
-  const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.35 : 1,
-    zIndex: isDragging ? 1 : 0,
-  };
-
   return (
-    <div ref={setNodeRef} style={style}>
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.35 : 1,
+      }}
+    >
       <SopKanbanCard
         item={item}
         column={column}
@@ -1097,20 +827,11 @@ function DraggableSopCard({
   );
 }
 
-function SopColumnBody({
-  colKey,
-  children,
-  emptySlot,
-}: {
-  colKey: ColumnKey;
-  children: React.ReactNode;
-  emptySlot: React.ReactNode;
-}) {
+function SopColumnBody({ colKey, children, emptySlot }: any) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${colKey}`,
     data: { type: "SOP_COLUMN", column: colKey },
   });
-
   return (
     <div
       ref={setNodeRef}
@@ -1160,60 +881,52 @@ const COLUMN_META = [
 
 function FilterSelect({
   label,
-  className,
+  value,
+  onChange,
 }: {
   label: string;
-  className?: string;
+  value: string;
+  onChange: (val: string) => void;
 }) {
-  const getStatusOptions = () => [
-    { value: "all", label: "All Status" },
-    { value: "toStart", label: "To Start" },
-    { value: "broken", label: "Broken" },
-    { value: "running", label: "Running" },
-  ];
-
-  const getDepartmentOptions = () => [
-    { value: "all", label: "All Departments" },
-    ...DEPARTMENTS.map((dept) => ({ value: dept, label: dept })),
-  ];
-
-  const getPeopleOptions = () => [
-    { value: "all", label: "All People" },
-    ...MOCK_ASSIGNEES.map((person) => ({ value: person.value, label: person.label })),
-  ];
-
-  const getPriorityOptions = () => [
-    { value: "all", label: "All Priorities" },
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
-  ];
-
   const getOptions = () => {
-    if (label === "All Status") return getStatusOptions();
-    if (label === "All Departments") return getDepartmentOptions();
-    if (label === "All People") return getPeopleOptions();
-    if (label === "All Priorities") return getPriorityOptions();
+    if (label === "All Status")
+      return [
+        { value: "all", label: "All Status" },
+        { value: "toStart", label: "To Start" },
+        { value: "broken", label: "Broken" },
+        { value: "running", label: "Running" },
+      ];
+    if (label === "All Departments")
+      return [
+        { value: "all", label: "All Departments" },
+        ...DEPARTMENTS.map((d) => ({ value: d, label: d })),
+      ];
+    if (label === "All People")
+      return [
+        { value: "all", label: "All People" },
+        ...MOCK_ASSIGNEES.map((p) => ({ value: p.value, label: p.label })),
+      ];
+    if (label === "All Priorities")
+      return [
+        { value: "all", label: "All Priorities" },
+        { value: "low", label: "Low" },
+        { value: "medium", label: "Medium" },
+        { value: "high", label: "High" },
+      ];
     return [{ value: "all", label }];
   };
-
   return (
-    <Select defaultValue="all">
-      <SelectTrigger
-        className={cn(
-          "h-10 w-full min-w-[140px] rounded-xl border-neutral-200 bg-white text-sm",
-          className
-        )}
-      >
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-10 w-full min-w-[140px] rounded-xl border-neutral-200 bg-white text-sm">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-neutral-400 flex-shrink-0" aria-hidden />
-          <SelectValue placeholder={label} className={cn("whitespace-nowrap", label === "All Departments" && "text-xs")} />
+          <Filter className="h-4 w-4 text-neutral-400 flex-shrink-0" />
+          <SelectValue placeholder={label} />
         </div>
       </SelectTrigger>
       <SelectContent>
-        {getOptions().map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
+        {getOptions().map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
           </SelectItem>
         ))}
       </SelectContent>
@@ -1221,34 +934,28 @@ function FilterSelect({
   );
 }
 
-function parseCardId(id: string | number): string | null {
-  const s = String(id);
-  if (!s.startsWith("sop-card-")) return null;
-  return s.slice("sop-card-".length);
-}
-
-function findColumnForCard(
-  cols: Record<ColumnKey, SopCardData[]>,
-  cardId: string
-): ColumnKey | null {
-  for (const k of Object.keys(cols) as ColumnKey[]) {
-    if (cols[k].some((c) => c.id === cardId)) return k;
-  }
-  return null;
-}
-
+// ─────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────
 const SystemAndSOP = () => {
   const [bannerVisible, setBannerVisible] = useState(true);
   const [sopTab, setSopTab] = useState<SopTab>("my");
   const [search, setSearch] = useState("");
-  // Fresh read on each mount (e.g. after navigating away and back). Do not cache in module scope.
-  const [columns, setColumns] = useState<Record<ColumnKey, SopCardData[]>>(() =>
-    loadColumnsFromStorage()
-  );
-  const [healthByCardId, setHealthByCardId] = useState<Record<string, number>>(
-    () => buildHealthMapFromColumns(loadColumnsFromStorage())
-  );
+
+  const [filterDept, setFilterDept] = useState("all");
+  const [filterAssignee, setFilterAssignee] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  const [columns, setColumns] = useState<Record<ColumnKey, SopCardData[]>>({
+    toStart: [],
+    broken: [],
+    running: [],
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<{
     item: SopCardData;
@@ -1256,166 +963,204 @@ const SystemAndSOP = () => {
   } | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  useEffect(() => {
+  const loadSops = useCallback(async () => {
+    setIsLoading(true);
+    setApiError(null);
     try {
-      const merged = mergeHealthIntoColumns(columns, healthByCardId);
-      localStorage.setItem(SOP_KANBAN_STORAGE_KEY, JSON.stringify(merged));
-    } catch {
-      /* ignore quota / private mode */
+      const list = sopTab === "my" ? await fetchMySops() : await fetchAllSops();
+      setColumns(buildColumnsFromList(list));
+    } catch (err: any) {
+      setApiError(err.message);
+      toast.error(`Failed to load SOPs: ${err.message}`);
+    } finally {
+      setIsLoading(false);
     }
-  }, [columns, healthByCardId]);
+  }, [sopTab]);
+
+  useEffect(() => {
+    loadSops();
+  }, [loadSops]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const filterBySearch = useCallback(
+  const applyFilters = useCallback(
     (items: SopCardData[]) => {
       const q = search.trim().toLowerCase();
-      if (!q) return items;
-      return items.filter(
-        (s) =>
+      return items.filter((s) => {
+        const matchesSearch =
+          !q ||
           s.title.toLowerCase().includes(q) ||
           s.department.toLowerCase().includes(q) ||
-          s.priority.toLowerCase().includes(q)
-      );
+          s.priority.toLowerCase().includes(q);
+        const matchesDept = filterDept === "all" || s.department === filterDept;
+        const matchesAssignee =
+          filterAssignee === "all" || String(s.assigneeId) === filterAssignee;
+        const matchesPriority =
+          filterPriority === "all" || s.priority === filterPriority;
+        const colKey = STATUS_TO_COL[s.status ?? ""] ?? "broken";
+        const matchesStatus = filterStatus === "all" || colKey === filterStatus;
+        return (
+          matchesSearch &&
+          matchesDept &&
+          matchesAssignee &&
+          matchesPriority &&
+          matchesStatus
+        );
+      });
     },
-    [search]
+    [search, filterDept, filterAssignee, filterPriority, filterStatus]
   );
 
   const displayedByCol = useMemo(
     () => ({
-      toStart: filterBySearch(columns.toStart),
-      broken: filterBySearch(columns.broken),
-      running: filterBySearch(columns.running),
+      toStart: applyFilters(columns.toStart),
+      broken: applyFilters(columns.broken),
+      running: applyFilters(columns.running),
     }),
-    [columns, filterBySearch]
+    [columns, applyFilters]
   );
 
   const counts = useMemo(
     () => ({
-      toStart: columns.toStart.length,
-      broken: columns.broken.length,
-      running: columns.running.length,
+      toStart: displayedByCol.toStart.length,
+      broken: displayedByCol.broken.length,
+      running: displayedByCol.running.length,
     }),
-    [columns]
+    [displayedByCol]
   );
 
-  const showBottomEmpty =
-    sopTab === "my" ||
-    (sopTab === "all" &&
-      columns.toStart.length === 0 &&
-      columns.broken.length === 0 &&
-      columns.running.length === 0);
+  const activeFilters = useMemo(() => {
+    const filters = [];
+    if (filterDept !== "all")
+      filters.push({
+        id: "dept",
+        label: `Dept: ${filterDept}`,
+        onClear: () => setFilterDept("all"),
+      });
+    if (filterAssignee !== "all") {
+      const assigneeName =
+        MOCK_ASSIGNEES.find((a) => a.value === filterAssignee)?.label ||
+        filterAssignee;
+      filters.push({
+        id: "assignee",
+        label: `Person: ${assigneeName}`,
+        onClear: () => setFilterAssignee("all"),
+      });
+    }
+    if (filterPriority !== "all")
+      filters.push({
+        id: "priority",
+        label: `Priority: ${filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)}`,
+        onClear: () => setFilterPriority("all"),
+      });
+    if (filterStatus !== "all")
+      filters.push({
+        id: "status",
+        label: `Status: ${COL_TO_STATUS[filterStatus as ColumnKey] || filterStatus}`,
+        onClear: () => setFilterStatus("all"),
+      });
+    return filters;
+  }, [filterDept, filterAssignee, filterPriority, filterStatus]);
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const id = parseCardId(event.active.id);
-    setActiveDragId(id);
-  }, []);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => setActiveDragId(parseCardId(event.active.id)),
+    []
+  );
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragId(null);
-
-    // Dropped outside any valid column/card — state unchanged (card stays)
     if (!over) return;
-
     const activeCardId = parseCardId(active.id);
     if (!activeCardId) return;
 
     setColumns((prev) => {
       const sourceCol = findColumnForCard(prev, activeCardId);
       if (!sourceCol) return prev;
-
       let targetCol: ColumnKey | null = null;
       let insertBeforeId: string | null = null;
-
       const overStr = String(over.id);
-      if (overStr.startsWith("column-")) {
+      if (overStr.startsWith("column-"))
         targetCol = overStr.replace("column-", "") as ColumnKey;
-      } else {
+      else {
         const overCardId = parseCardId(over.id);
         if (overCardId && overCardId !== activeCardId) {
           targetCol = findColumnForCard(prev, overCardId);
           insertBeforeId = overCardId;
         }
       }
-
       if (!targetCol) return prev;
 
       const fromList = [...prev[sourceCol]];
       const fromIdx = fromList.findIndex((c) => c.id === activeCardId);
       if (fromIdx < 0) return prev;
-
       const [moved] = fromList.splice(fromIdx, 1);
+
+      if (sourceCol !== targetCol)
+        patchSopStatus(activeCardId, COL_TO_STATUS[targetCol])
+          .then(() => toast.success(`Moved to ${COL_TO_STATUS[targetCol]}`))
+          .catch((e) => toast.error(`Status update failed: ${e.message}`));
 
       if (sourceCol === targetCol) {
         const list = fromList;
-        let insertIdx = insertBeforeId
+        let idx = insertBeforeId
           ? list.findIndex((c) => c.id === insertBeforeId)
           : list.length;
-        if (insertIdx < 0) insertIdx = list.length;
-        list.splice(insertIdx, 0, moved);
+        if (idx < 0) idx = list.length;
+        list.splice(idx, 0, moved);
         return { ...prev, [sourceCol]: list };
       }
-
       const toList = [...prev[targetCol]];
-      let insertIdx = insertBeforeId
+      let idx = insertBeforeId
         ? toList.findIndex((c) => c.id === insertBeforeId)
         : toList.length;
-      if (insertIdx < 0) insertIdx = toList.length;
-      toList.splice(insertIdx, 0, moved);
-
-      return {
-        ...prev,
-        [sourceCol]: fromList,
-        [targetCol]: toList,
-      };
+      if (idx < 0) idx = toList.length;
+      toList.splice(idx, 0, moved);
+      return { ...prev, [sourceCol]: fromList, [targetCol]: toList };
     });
   }, []);
 
-  const handleDragCancel = useCallback(() => {
-    setActiveDragId(null);
-  }, []);
+  const handleDragCancel = useCallback(() => setActiveDragId(null), []);
 
-  const handleEditSave = useCallback(
-    (next: SopCardData, targetColumn: ColumnKey) => {
-      const hp = coerceHealthPercent(next.healthPercent);
-      setHealthByCardId((prev) => ({ ...prev, [next.id]: hp }));
+  const handleEditSave = async (payload: any, targetColumn: ColumnKey) => {
+    try {
+      const updated = await updateSop(editTarget!.item.id, payload);
       setColumns((prev) => {
-        const sourceCol = findColumnForCard(prev, next.id);
-        if (!sourceCol) return prev;
-        const cleaned: Record<ColumnKey, SopCardData[]> = {
-          toStart: prev.toStart.filter((c) => c.id !== next.id),
-          broken: prev.broken.filter((c) => c.id !== next.id),
-          running: prev.running.filter((c) => c.id !== next.id),
+        const cleaned = {
+          toStart: prev.toStart.filter((c) => c.id !== updated.id),
+          broken: prev.broken.filter((c) => c.id !== updated.id),
+          running: prev.running.filter((c) => c.id !== updated.id),
         };
-        const withHealth = { ...next, healthPercent: hp };
         return {
           ...cleaned,
-          [targetColumn]: [...cleaned[targetColumn], withHealth],
+          [targetColumn]: [...cleaned[targetColumn], updated],
         };
       });
       setEditOpen(false);
       setEditTarget(null);
-    },
-    []
-  );
+      toast.success("SOP updated");
+    } catch (e: any) {
+      toast.error(e.message);
+      throw e;
+    }
+  };
 
-  const handleAddCreate = useCallback(
-    (item: SopCardData, targetColumn: ColumnKey) => {
-      const hp = coerceHealthPercent(item.healthPercent);
-      setHealthByCardId((prev) => ({ ...prev, [item.id]: hp }));
+  const handleAddCreate = async (payload: any, targetColumn: ColumnKey) => {
+    try {
+      const created = await createSop(payload);
       setColumns((prev) => ({
         ...prev,
-        [targetColumn]: [...prev[targetColumn], { ...item, healthPercent: hp }],
+        [targetColumn]: [...prev[targetColumn], created],
       }));
       setAddOpen(false);
-    },
-    []
-  );
+      toast.success("SOP created");
+    } catch (e: any) {
+      toast.error(e.message);
+      throw e;
+    }
+  };
 
   const handleDuplicateCard = useCallback(
     (item: SopCardData, column: ColumnKey) => {
@@ -1424,98 +1169,144 @@ const SystemAndSOP = () => {
         id: `sop-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         title: `${item.title} (copy)`,
       };
-      setHealthByCardId((prev) => ({
-        ...prev,
-        [copy.id]:
-          prev[item.id] ?? coerceHealthPercent(item.healthPercent),
-      }));
       setColumns((prev) => {
         const list = [...prev[column]];
         const idx = list.findIndex((c) => c.id === item.id);
-        if (idx < 0) {
-          return { ...prev, [column]: [...list, copy] };
-        }
         const next = [...list];
-        next.splice(idx + 1, 0, copy);
+        next.splice(idx < 0 ? next.length : idx + 1, 0, copy);
         return { ...prev, [column]: next };
       });
     },
     []
   );
 
-  const handleDeleteCard = useCallback((itemId: string) => {
-    if (
-      !window.confirm("Delete this system/SOP? This cannot be undone.")
-    ) {
-      return;
-    }
-    setHealthByCardId((prev) => {
-      const next = { ...prev };
-      delete next[itemId];
-      return next;
-    });
-    setColumns((prev) => ({
-      toStart: prev.toStart.filter((c) => c.id !== itemId),
-      broken: prev.broken.filter((c) => c.id !== itemId),
-      running: prev.running.filter((c) => c.id !== itemId),
-    }));
-    let closeModal = false;
-    setEditTarget((t) => {
-      if (t?.item.id === itemId) {
-        closeModal = true;
-        return null;
-      }
-      return t;
-    });
-    if (closeModal) {
-      setEditOpen(false);
+  const handleDeleteCard = useCallback(async (itemId: string) => {
+    if (!window.confirm("Delete this system/SOP?")) return;
+    try {
+      await deleteSop(itemId);
+      setColumns((prev) => ({
+        toStart: prev.toStart.filter((c) => c.id !== itemId),
+        broken: prev.broken.filter((c) => c.id !== itemId),
+        running: prev.running.filter((c) => c.id !== itemId),
+      }));
+      toast.success("SOP deleted");
+    } catch (err: any) {
+      toast.error(`Delete failed: ${err.message}`);
     }
   }, []);
 
   const activeItem = useMemo(() => {
     if (!activeDragId) return null;
     const col = findColumnForCard(columns, activeDragId);
-    if (!col) return null;
-    return columns[col].find((c) => c.id === activeDragId) ?? null;
+    return col
+      ? (columns[col].find((c) => c.id === activeDragId) ?? null)
+      : null;
   }, [activeDragId, columns]);
-
-  const activeDisplayHealth = useMemo(() => {
-    if (!activeItem || !activeDragId) return 0;
-    return (
-      healthByCardId[activeDragId] ??
-      coerceHealthPercent(activeItem.healthPercent)
-    );
-  }, [activeItem, activeDragId, healthByCardId]);
 
   const activeColumn = activeDragId
     ? findColumnForCard(columns, activeDragId)
     : null;
 
-  return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <EditSystemSopDialog
-        open={editOpen}
-        onOpenChange={(open) => {
-          setEditOpen(open);
-          if (!open) setEditTarget(null);
-        }}
-        item={editTarget?.item ?? null}
-        column={editTarget?.column ?? null}
-        onSave={handleEditSave}
-      />
-      <AddNewSystemSopDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        onCreate={handleAddCreate}
-      />
-      <div className="mx-auto max-w-6xl space-y-6">
-        {bannerVisible && (
-          <div
+  const KanbanGrid = () => (
+    <div className="grid gap-4 lg:grid-cols-3">
+      {COLUMN_META.map((col) => {
+        const Icon = col.icon;
+        const EmptyIcon = col.emptyIcon;
+        const list = displayedByCol[col.key];
+        const hasCards = list.length > 0;
+
+        return (
+          <Card
+            key={col.key}
             className={cn(
-              "flex items-center gap-3 rounded-2xl border border-sky-200/60 bg-sky-50/90 px-4 py-3 shadow-sm",
-              "pr-2"
+              "flex min-h-[280px] flex-col rounded-2xl border shadow-sm",
+              col.panelClass
             )}
           >
+            <div className="flex items-center gap-2 border-b border-neutral-200/40 bg-white/60 px-3 py-3 sm:px-4">
+              <Icon className={cn("h-5 w-5 shrink-0", col.headerIconClass)} />
+              <span className="min-w-0 flex-1 text-sm font-semibold text-neutral-900">
+                {col.title}
+              </span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
+                  col.badgeClass
+                )}
+              >
+                {counts[col.key]}
+              </span>
+            </div>
+            <div className="flex flex-1 flex-col p-3 sm:p-4">
+              <SopColumnBody
+                colKey={col.key}
+                emptySlot={
+                  !hasCards ? (
+                    <div className="pointer-events-none flex flex-1 flex-col items-center justify-center py-6">
+                      <div className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300/80 bg-white/50 py-10">
+                        <EmptyIcon
+                          className={cn("mb-2 h-10 w-10", col.emptyIconClass)}
+                          strokeWidth={1.25}
+                        />
+                        <p className="text-sm font-medium text-neutral-500">
+                          No systems here
+                        </p>
+                      </div>
+                    </div>
+                  ) : null
+                }
+              >
+                {hasCards && (
+                  <div className="flex flex-col gap-3">
+                    {list.map((item) => (
+                      <DraggableSopCard
+                        key={item.id}
+                        item={item}
+                        column={col.key}
+                        displayHealthPercent={item.healthPercent}
+                        disabled={false}
+                        onEditClick={() => {
+                          setEditTarget({ item, column: col.key });
+                          setEditOpen(true);
+                        }}
+                        onDuplicateClick={() =>
+                          handleDuplicateCard(item, col.key)
+                        }
+                        onDeleteClick={() => handleDeleteCard(item.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </SopColumnBody>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+      <SopFormDialog
+        open={editOpen}
+        onOpenChange={(o) => {
+          setEditOpen(o);
+          if (!o) setEditTarget(null);
+        }}
+        isEdit={true}
+        initialData={editTarget?.item}
+        onSave={handleEditSave}
+      />
+      <SopFormDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        isEdit={false}
+        onSave={handleAddCreate}
+      />
+
+      <div className="mx-auto max-w-6xl space-y-6">
+        {bannerVisible && (
+          <div className="flex items-center gap-3 rounded-2xl border border-sky-200/60 bg-sky-50/90 px-4 py-3 shadow-sm pr-2">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500">
               <Lightbulb className="h-5 w-5 text-white" strokeWidth={2} />
             </div>
@@ -1529,14 +1320,12 @@ const SystemAndSOP = () => {
               <button
                 type="button"
                 className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-                aria-label="Expand tips"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
               <button
                 type="button"
                 className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-                aria-label="Dismiss banner"
                 onClick={() => setBannerVisible(false)}
               >
                 <X className="h-4 w-4" />
@@ -1583,40 +1372,125 @@ const SystemAndSOP = () => {
             </div>
             <button
               type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85 sm:px-5"
+              onClick={loadSops}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-600 shadow-sm hover:bg-neutral-50"
             >
-              <Plus className="h-4 w-4 text-white" strokeWidth={2} />
-              Add System
+              <RefreshCw
+                className={cn("h-4 w-4", isLoading && "animate-spin")}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 sm:px-5"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2} /> Add System
             </button>
           </div>
         </div>
 
-        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-3 shadow-sm sm:p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
-            <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <FilterSelect label="All Departments" />
-              <FilterSelect label="All People" />
-              <FilterSelect label="All Priorities" />
-              <FilterSelect label="All Status" />
+        <div className="flex flex-col gap-3">
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-3 shadow-sm sm:p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+              <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <FilterSelect
+                  label="All Departments"
+                  value={filterDept}
+                  onChange={setFilterDept}
+                />
+                <FilterSelect
+                  label="All People"
+                  value={filterAssignee}
+                  onChange={setFilterAssignee}
+                />
+                <FilterSelect
+                  label="All Priorities"
+                  value={filterPriority}
+                  onChange={setFilterPriority}
+                />
+                <FilterSelect
+                  label="All Status"
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                />
+              </div>
+              <div className="relative min-w-0 lg:min-w-[180px] lg:max-w-xs lg:flex-shrink-0">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search systems..."
+                  className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm placeholder:text-neutral-400 outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                />
+              </div>
             </div>
-            <div className="relative min-w-0 lg:min-w-[180px] lg:max-w-xs lg:flex-shrink-0">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-                aria-hidden
-              />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search systems..."
-                className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-              />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        {sopTab === "all" ? (
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-neutral-500">
+                Active Filters:
+              </span>
+              {activeFilters.map((f) => (
+                <span
+                  key={f.id}
+                  className="inline-flex items-center gap-1 rounded-full bg-[#DA7756]/10 pl-2.5 pr-1.5 py-1 text-xs font-medium text-[#DA7756] border border-[#DA7756]/20 shadow-sm"
+                >
+                  {f.label}
+                  <button
+                    onClick={f.onClear}
+                    className="hover:bg-[#DA7756]/20 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <button
+                onClick={() => {
+                  setFilterDept("all");
+                  setFilterAssignee("all");
+                  setFilterPriority("all");
+                  setFilterStatus("all");
+                  setSearch("");
+                }}
+                className="text-xs font-semibold text-neutral-500 hover:text-neutral-800 underline underline-offset-2 ml-1 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
+
+        {apiError && (
+          <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 shadow-sm">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="flex-1">Failed to load SOPs: {apiError}</span>
+            <button
+              type="button"
+              onClick={loadSops}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Retry
+            </button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="grid gap-4 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-neutral-200 bg-white p-4 animate-pulse space-y-3"
+              >
+                <div className="h-4 bg-neutral-100 rounded w-1/2" />
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="h-24 bg-neutral-100 rounded-xl" />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
@@ -1624,179 +1498,41 @@ const SystemAndSOP = () => {
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
           >
-            <div className="grid gap-4 lg:grid-cols-3">
-              {COLUMN_META.map((col) => {
-                const Icon = col.icon;
-                const EmptyIcon = col.emptyIcon;
-                const n = counts[col.key];
-                const list = displayedByCol[col.key];
-                const hasCards = list.length > 0;
-
-                return (
-                  <Card
-                    key={col.key}
-                    className={cn(
-                      "flex min-h-[280px] flex-col overflow-hidden rounded-2xl border shadow-sm",
-                      col.panelClass
-                    )}
-                  >
-                    <div className="flex items-center gap-2 border-b border-neutral-200/40 bg-white/60 px-3 py-3 sm:px-4">
-                      <Icon
-                        className={cn("h-5 w-5 shrink-0", col.headerIconClass)}
-                      />
-                      <span className="min-w-0 flex-1 text-sm font-semibold text-neutral-900">
-                        {col.title}
-                      </span>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
-                          col.badgeClass
-                        )}
-                      >
-                        {n}
-                      </span>
-                    </div>
-                    <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
-                      <SopColumnBody
-                        colKey={col.key}
-                        emptySlot={
-                          !hasCards ? (
-                            <div className="pointer-events-none flex flex-1 flex-col items-center justify-center py-6">
-                              <div
-                                className={cn(
-                                  "flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300/80 bg-white/50 py-10"
-                                )}
-                              >
-                                <EmptyIcon
-                                  className={cn(
-                                    "mb-2 h-10 w-10",
-                                    col.emptyIconClass
-                                  )}
-                                  strokeWidth={1.25}
-                                />
-                                <p className="text-sm font-medium text-neutral-500">
-                                  No systems here
-                                </p>
-                              </div>
-                            </div>
-                          ) : null
-                        }
-                      >
-                        {hasCards && (
-                          <div className="flex max-h-[min(70vh,560px)] flex-col gap-3 overflow-y-auto pr-1">
-                            {list.map((item) => (
-                              <DraggableSopCard
-                                key={item.id}
-                                item={item}
-                                column={col.key}
-                                displayHealthPercent={
-                                  healthByCardId[item.id] ??
-                                  coerceHealthPercent(item.healthPercent)
-                                }
-                                onEditClick={() => {
-                                  const hp =
-                                    healthByCardId[item.id] ??
-                                    coerceHealthPercent(item.healthPercent);
-                                  setEditTarget({
-                                    item: { ...item, healthPercent: hp },
-                                    column: col.key,
-                                  });
-                                  setEditOpen(true);
-                                }}
-                                onDuplicateClick={() =>
-                                  handleDuplicateCard(item, col.key)
-                                }
-                                onDeleteClick={() =>
-                                  handleDeleteCard(item.id)
-                                }
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </SopColumnBody>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+            <KanbanGrid />
             <DragOverlay dropAnimation={null}>
               {activeItem && activeColumn ? (
                 <div className="w-[min(100vw-2rem,320px)] cursor-grabbing opacity-95 shadow-xl">
                   <SopKanbanCard
                     item={activeItem}
                     column={activeColumn}
-                    displayHealthPercent={activeDisplayHealth}
+                    displayHealthPercent={activeItem.healthPercent}
                   />
                 </div>
               ) : null}
             </DragOverlay>
           </DndContext>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-3">
-            {COLUMN_META.map((col) => {
-              const Icon = col.icon;
-              const EmptyIcon = col.emptyIcon;
-              return (
-                <Card
-                  key={col.key}
-                  className={cn(
-                    "flex min-h-[280px] flex-col overflow-hidden rounded-2xl border shadow-sm",
-                    col.panelClass
-                  )}
-                >
-                  <div className="flex items-center gap-2 border-b border-neutral-200/40 bg-white/60 px-3 py-3 sm:px-4">
-                    <Icon
-                      className={cn("h-5 w-5 shrink-0", col.headerIconClass)}
-                    />
-                    <span className="min-w-0 flex-1 text-sm font-semibold text-neutral-900">
-                      {col.title}
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
-                        col.badgeClass
-                      )}
-                    >
-                      0
-                    </span>
-                  </div>
-                  <div className="flex flex-1 flex-col items-center justify-center p-3 sm:p-4">
-                    <div
-                      className={cn(
-                        "flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300/80 bg-white/50 py-10"
-                      )}
-                    >
-                      <EmptyIcon
-                        className={cn("mb-2 h-10 w-10", col.emptyIconClass)}
-                        strokeWidth={1.25}
-                      />
-                      <p className="text-sm font-medium text-neutral-500">
-                        No systems here
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
         )}
 
-        {showBottomEmpty && (
-          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 py-16 shadow-sm">
-            <div className="flex flex-col items-center justify-center px-4 text-center">
-              <FileText
-                className="mb-4 h-14 w-14 text-[#DA7756]/40"
-                strokeWidth={1.25}
-              />
-              <p className="text-lg font-semibold text-neutral-900">
-                No systems found
-              </p>
-              <p className="mt-2 max-w-md text-sm text-neutral-500">
-                Add your first system/SOP to get started
-              </p>
-            </div>
-          </Card>
-        )}
+        {!isLoading &&
+          !apiError &&
+          counts.toStart === 0 &&
+          counts.broken === 0 &&
+          counts.running === 0 && (
+            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 py-16 shadow-sm">
+              <div className="flex flex-col items-center justify-center px-4 text-center">
+                <FileText
+                  className="mb-4 h-14 w-14 text-[#DA7756]/40"
+                  strokeWidth={1.25}
+                />
+                <p className="text-lg font-semibold text-neutral-900">
+                  No systems found
+                </p>
+                <p className="mt-2 max-w-md text-sm text-neutral-500">
+                  Add your first system/SOP or clear active filters
+                </p>
+              </div>
+            </Card>
+          )}
       </div>
     </div>
   );
