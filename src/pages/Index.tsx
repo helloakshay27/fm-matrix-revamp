@@ -120,7 +120,6 @@ const Index = () => {
     const userEmail = currentUser?.email || "No email";
     const isLocalhost =
       hostname.includes("lockated.gophygital.work") ||
-      hostname.includes("fm-matrix.lockated.com") ||
       userEmail === "deveshjain928@gmail.com" ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "abdul.g@gophygital.work";
