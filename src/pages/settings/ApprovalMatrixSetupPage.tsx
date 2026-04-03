@@ -18,12 +18,14 @@ const ApprovalMatrixSetupPage = () => {
   const navigate = useNavigate();
   const [approvalData, setApprovalData] = useState<ApprovalData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchApprovalData = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get('/pms/admin/invoice_approvals.json');
+        const params = searchQuery ? { 'q[approval_type_cont]': searchQuery } : {};
+        const response = await apiClient.get('/pms/admin/invoice_approvals.json', { params });
         setApprovalData(response.data);
       } catch (error) {
         console.error('Error fetching approval data:', error);
@@ -33,7 +35,7 @@ const ApprovalMatrixSetupPage = () => {
     };
 
     fetchApprovalData();
-  }, []);
+  }, [searchQuery]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -86,7 +88,13 @@ const ApprovalMatrixSetupPage = () => {
         
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input type="text" placeholder="Search" className="pl-10 pr-4 py-2 border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030] w-64" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030] w-64"
+          />
         </div>
       </div>
 
