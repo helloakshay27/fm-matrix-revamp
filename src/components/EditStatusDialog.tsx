@@ -392,6 +392,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 import ReactSelect from 'react-select';
 import { apiClient } from '@/utils/apiClient';
@@ -431,6 +432,9 @@ interface Complaint {
   rca_template_ids?: number[];
   corrective_action_template_ids?: number[];
   preventive_action_template_ids?: number[];
+  root_cause?: string;
+  corrective_action?: string;
+  preventive_action?: string;
   asset_service?: string;
   asset_or_service_id?: number;
   reopen_status?: boolean;
@@ -451,6 +455,10 @@ export const EditStatusDialog = ({
   const [preventiveActionTemplateIds, setPreventiveActionTemplateIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [ticketData, setTicketData] = useState<Complaint | null>(null);
+  // Text input states for org_id 63
+  const [rcaText, setRcaText] = useState('');
+  const [correctiveActionText, setCorrectiveActionText] = useState('');
+  const [preventiveActionText, setPreventiveActionText] = useState('');
 
   const orgId = Number(localStorage.getItem('org_id')); // ✅ org_id
 
@@ -461,6 +469,9 @@ export const EditStatusDialog = ({
     setRcaTemplateIds([]);
     setCorrectiveActionTemplateIds([]);
     setPreventiveActionTemplateIds([]);
+    setRcaText('');
+    setCorrectiveActionText('');
+    setPreventiveActionText('');
 
     const fetchAll = async () => {
       try {
@@ -484,6 +495,10 @@ export const EditStatusDialog = ({
           setRcaTemplateIds(data.rca_template_ids || []);
           setCorrectiveActionTemplateIds(data.corrective_action_template_ids || []);
           setPreventiveActionTemplateIds(data.preventive_action_template_ids || []);
+          // Pre-populate text fields for org 63
+          setRcaText(data.root_cause || '');
+          setCorrectiveActionText(data.corrective_action || '');
+          setPreventiveActionText(data.preventive_action || '');
         } catch {
           toast.error('Failed to fetch ticket details');
         }
@@ -508,15 +523,16 @@ export const EditStatusDialog = ({
 
     // ✅ Mandatory validation ONLY for org_id 63 + closed
     if (isOrg63 && isClosedStatus) {
-      if (!rcaTemplateIds.length) {
+      // For org 63, validate text inputs (not selectors)
+      if (!rcaText.trim()) {
         toast.error('Root Cause Analysis is mandatory when closing the ticket');
         return;
       }
-      if (!correctiveActionTemplateIds.length) {
+      if (!correctiveActionText.trim()) {
         toast.error('Corrective Action is mandatory when closing the ticket');
         return;
       }
-      if (!preventiveActionTemplateIds.length) {
+      if (!preventiveActionText.trim()) {
         toast.error('Preventive Action is mandatory when closing the ticket');
         return;
       }
@@ -529,17 +545,25 @@ export const EditStatusDialog = ({
       formData.append('complaint_log[complaint_id]', complaintId.toString());
       formData.append('issue_status', selectedStatus);
 
-      rcaTemplateIds.forEach(id =>
-        formData.append('root_cause[template_ids][]', String(id))
-      );
+      if (isOrg63 && isClosedStatus) {
+        // For org 63: send text values
+        formData.append('complaint[root_cause]', rcaText.trim());
+        formData.append('complaint[corrective_action]', correctiveActionText.trim());
+        formData.append('complaint[preventive_action]', preventiveActionText.trim());
+      } else {
+        // For other orgs: send template IDs
+        rcaTemplateIds.forEach(id =>
+          formData.append('root_cause[template_ids][]', String(id))
+        );
 
-      correctiveActionTemplateIds.forEach(id =>
-        formData.append('corrective_action[template_ids][]', String(id))
-      );
+        correctiveActionTemplateIds.forEach(id =>
+          formData.append('corrective_action[template_ids][]', String(id))
+        );
 
-      preventiveActionTemplateIds.forEach(id =>
-        formData.append('preventive_action[template_ids][]', String(id))
-      );
+        preventiveActionTemplateIds.forEach(id =>
+          formData.append('preventive_action[template_ids][]', String(id))
+        );
+      }
 
       if (ticketData?.asset_service === 'Asset') {
         formData.append('asset_id', String(ticketData.asset_or_service_id || ''));
@@ -574,6 +598,12 @@ export const EditStatusDialog = ({
     menu: (provided: any) => ({ ...provided, zIndex: 9999 })
   };
 
+  // Determine if selected status is "closed" for conditional field display
+  const selectedStatusObj = statuses.find(s => s.id.toString() === selectedStatus);
+  const isClosedStatus = selectedStatusObj?.fixed_state === 'closed';
+  const isOrg63 = orgId === 63;
+  const showRcaFields = isOrg63 && isClosedStatus;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -592,7 +622,19 @@ export const EditStatusDialog = ({
         <div className="space-y-4">
           <div>
             <Label>Status</Label>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <Select value={selectedStatus} onValueChange={(val) => {
+              setSelectedStatus(val);
+              // Clear template selections when status changes away from closed
+              const newStatusObj = statuses.find(s => s.id.toString() === val);
+              if (newStatusObj?.fixed_state !== 'closed') {
+                setRcaTemplateIds([]);
+                setCorrectiveActionTemplateIds([]);
+                setPreventiveActionTemplateIds([]);
+                setRcaText('');
+                setCorrectiveActionText('');
+                setPreventiveActionText('');
+              }
+            }}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
@@ -606,44 +648,93 @@ export const EditStatusDialog = ({
             </Select>
           </div>
 
-          <Label>Root Cause Analysis</Label>
-          <ReactSelect
-            isMulti
-            styles={commonSelectStyles}
-            value={communicationTemplates
-              .filter(t => rcaTemplateIds.includes(t.id))
-              .map(t => ({ value: t.id, label: t.identifier_action }))}
-            onChange={s => setRcaTemplateIds(s ? s.map(v => v.value) : [])}
-            options={communicationTemplates
-              .filter(t => t.identifier === 'Root Cause Analysis' && t.active)
-              .map(t => ({ value: t.id, label: t.identifier_action }))}
-          />
+          {/* For org_id 63 + closed: show TEXT INPUT boxes (mandatory) */}
+          {showRcaFields && (
+            <>
+              <div>
+                <Label>Root Cause Analysis <span className="text-red-500">*</span></Label>
+                <Textarea
+                  value={rcaText}
+                  onChange={(e) => setRcaText(e.target.value)}
+                  placeholder="Enter Root Cause Analysis"
+                  className="mt-1 min-h-[80px]"
+                />
+              </div>
 
-          <Label>Corrective Action</Label>
-          <ReactSelect
-            isMulti
-            styles={commonSelectStyles}
-            value={communicationTemplates
-              .filter(t => correctiveActionTemplateIds.includes(t.id))
-              .map(t => ({ value: t.id, label: t.identifier_action }))}
-            onChange={s => setCorrectiveActionTemplateIds(s ? s.map(v => v.value) : [])}
-            options={communicationTemplates
-              .filter(t => t.identifier === 'Corrective Action' && t.active)
-              .map(t => ({ value: t.id, label: t.identifier_action }))}
-          />
+              <div>
+                <Label>Corrective Action <span className="text-red-500">*</span></Label>
+                <Textarea
+                  value={correctiveActionText}
+                  onChange={(e) => setCorrectiveActionText(e.target.value)}
+                  placeholder="Enter Corrective Action"
+                  className="mt-1 min-h-[80px]"
+                />
+              </div>
 
-          <Label>Preventive Action</Label>
-          <ReactSelect
-            isMulti
-            styles={commonSelectStyles}
-            value={communicationTemplates
-              .filter(t => preventiveActionTemplateIds.includes(t.id))
-              .map(t => ({ value: t.id, label: t.identifier_action }))}
-            onChange={s => setPreventiveActionTemplateIds(s ? s.map(v => v.value) : [])}
-            options={communicationTemplates
-              .filter(t => t.identifier === 'Preventive Action' && t.active)
-              .map(t => ({ value: t.id, label: t.identifier_action }))}
-          />
+              <div>
+                <Label>Preventive Action <span className="text-red-500">*</span></Label>
+                <Textarea
+                  value={preventiveActionText}
+                  onChange={(e) => setPreventiveActionText(e.target.value)}
+                  placeholder="Enter Preventive Action"
+                  className="mt-1 min-h-[80px]"
+                />
+              </div>
+            </>
+          )}
+
+          {/* For other orgs: always show SELECTOR dropdowns (non-mandatory) */}
+          {!isOrg63 && (
+            <>
+              <div>
+                <Label>Root Cause Analysis</Label>
+                <ReactSelect
+                  isMulti
+                  styles={commonSelectStyles}
+                  value={communicationTemplates
+                    .filter(t => rcaTemplateIds.includes(t.id))
+                    .map(t => ({ value: t.id, label: t.identifier_action }))}
+                  onChange={s => setRcaTemplateIds(s ? s.map(v => v.value) : [])}
+                  options={communicationTemplates
+                    .filter(t => t.identifier === 'Root Cause Analysis' && t.active)
+                    .map(t => ({ value: t.id, label: t.identifier_action }))}
+                  placeholder="Select Root Cause Analysis"
+                />
+              </div>
+
+              <div>
+                <Label>Corrective Action</Label>
+                <ReactSelect
+                  isMulti
+                  styles={commonSelectStyles}
+                  value={communicationTemplates
+                    .filter(t => correctiveActionTemplateIds.includes(t.id))
+                    .map(t => ({ value: t.id, label: t.identifier_action }))}
+                  onChange={s => setCorrectiveActionTemplateIds(s ? s.map(v => v.value) : [])}
+                  options={communicationTemplates
+                    .filter(t => t.identifier === 'Corrective Action' && t.active)
+                    .map(t => ({ value: t.id, label: t.identifier_action }))}
+                  placeholder="Select Corrective Action"
+                />
+              </div>
+
+              <div>
+                <Label>Preventive Action</Label>
+                <ReactSelect
+                  isMulti
+                  styles={commonSelectStyles}
+                  value={communicationTemplates
+                    .filter(t => preventiveActionTemplateIds.includes(t.id))
+                    .map(t => ({ value: t.id, label: t.identifier_action }))}
+                  onChange={s => setPreventiveActionTemplateIds(s ? s.map(v => v.value) : [])}
+                  options={communicationTemplates
+                    .filter(t => t.identifier === 'Preventive Action' && t.active)
+                    .map(t => ({ value: t.id, label: t.identifier_action }))}
+                  placeholder="Select Preventive Action"
+                />
+              </div>
+            </>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button

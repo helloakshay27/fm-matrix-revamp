@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip, Select } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip, Select, Avatar } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Camera, User } from 'lucide-react';
 
 export const EditGuestUserPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,7 +35,12 @@ export const EditGuestUserPage: React.FC = () => {
     designation: '',
     selectUserCategory: '',
   });
-  const [showAdditional, setShowAdditional] = useState(true);
+
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [showAdditional, setShowAdditional] = useState(false);
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -118,6 +123,10 @@ export const EditGuestUserPage: React.FC = () => {
         const accessLevel = lup.access_level || '';
         const accessTo: string[] = Array.isArray(lup.access_to) ? lup.access_to.map((v: any) => String(v)) : [];
 
+        if (u.profile_icon_url || u.avatar || u.profile_image_url || u.profile_image) {
+          setProfileImagePreview(u.profile_icon_url || u.avatar || u.profile_image_url || u.profile_image);
+        }
+
         setFormData((prev) => ({
           ...prev,
           firstName: u.firstname || '',
@@ -160,45 +169,83 @@ export const EditGuestUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
+    if ((field === 'mobileNumber' || field === 'altMobileNumber') && typeof value === 'string') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length > 10) return;
+      setFormData((prev) => ({ ...prev, [field]: numericValue }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCancel = () => navigate(`/club-management/users/guest/view/${id}`);
-  
-  const validateForm = () => {
-    const mobileRegex = /^[0-9]{10}$/;
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image size must be less than 2MB");
+        return;
+      }
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    if (!formData.firstName) {
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleCancel = () => navigate(`/club-management/users/guest/view/${id}`);
+
+  const validateForm = () => {
+    const newErrors = {
+      firstName: !formData.firstName,
+      lastName: !formData.lastName,
+      email: !formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
+      mobileNumber: !formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber),
+      accessLevel: !formData.accessLevel,
+      selectedCompanies: formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0,
+      selectedSites: formData.accessLevel === 'Site' && formData.selectedSites.length === 0,
+    };
+
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+
+    if (newErrors.firstName) {
       toast.error("First Name is required.");
       return false;
     }
-    if (!formData.lastName) {
+    if (newErrors.lastName) {
       toast.error("Last Name is required.");
-      return false;
-    }
-    if (!formData.mobileNumber) {
-      toast.error("Mobile Number is required.");
-      return false;
-    } else if (!mobileRegex.test(formData.mobileNumber)) {
-      toast.error("Mobile Number must be 10 digits.");
       return false;
     }
     if (!formData.email) {
       toast.error("Email is required.");
       return false;
     }
-   
-    if (!formData.accessLevel) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid Email Address.");
+      return false;
+    }
+    if (!formData.mobileNumber) {
+      toast.error("Mobile Number is required.");
+      return false;
+    }
+    if (!/^[0-9]{10}$/.test(formData.mobileNumber)) {
+      toast.error("Mobile Number must be 10 digits.");
+      return false;
+    }
+    if (newErrors.accessLevel) {
       toast.error("Access Level is required.");
       return false;
     }
-
-    if (formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0) {
+    if (newErrors.selectedCompanies) {
       toast.error("Select at least one company.");
       return false;
     }
-
-    if (formData.accessLevel === 'Site' && formData.selectedSites.length === 0) {
+    if (newErrors.selectedSites) {
       toast.error("Select at least one site.");
       return false;
     }
@@ -215,40 +262,56 @@ export const EditGuestUserPage: React.FC = () => {
       const baseUrl = localStorage.getItem('baseUrl') || 'app.gophygital.work';
       const accountId = (selectedCompany as any)?.id || localStorage.getItem('selectedCompanyId') || undefined;
 
-      const payload = {
-        user: {
-          site_id: siteId,
-          registration_source: 'Web',              lock_user_permissions_attributes: [
-            {
-              account_id: accountId,
-              employee_id: formData.employeeId,
-              designation: formData.designation,
-              department_id: formData.department || undefined,
-              user_type: 'pms_guest',
-              access_level: formData.accessLevel,
-              access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
-            },
-          ],
-          firstname: formData.firstName,
-          lastname: formData.lastName,
-          mobile: formData.mobileNumber,
-          email: formData.email,
-          gender: formData.gender,
-          alternate_address: formData.address,
-          alternate_mobile: formData.altMobileNumber,
-          birth_date: formData.birthDate,
-          entity_id: formData.selectEntity,
-          user_category_id: formData.selectUserCategory,
+      const formDataToSend = new FormData();
+      formDataToSend.append('user[site_id]', siteId);
+      formDataToSend.append('user[registration_source]', 'Web');
+      formDataToSend.append('user[firstname]', formData.firstName);
+      formDataToSend.append('user[lastname]', formData.lastName);
+      formDataToSend.append('user[mobile]', formData.mobileNumber);
+      formDataToSend.append('user[email]', formData.email);
+      formDataToSend.append('user[gender]', formData.gender);
+      formDataToSend.append('user[alternate_address]', formData.address);
+      formDataToSend.append('user[alternate_mobile]', formData.altMobileNumber);
+      formDataToSend.append('user[birth_date]', formData.birthDate);
+      formDataToSend.append('user[entity_id]', formData.selectEntity);
+      formDataToSend.append('user[user_category_id]', formData.selectUserCategory);
+
+      if (profileImage) {
+        formDataToSend.append('user[profile_icon]', profileImage);
+      }
+
+      // Permissions nested attributes
+      const permissions = [
+        {
+          account_id: accountId,
+          employee_id: formData.employeeId,
+          designation: formData.designation,
+          department_id: formData.department || '',
+          user_type: 'pms_guest',
+          access_level: formData.accessLevel,
+          access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
         },
-      };
+      ];
+
+      permissions.forEach((permission, index) => {
+        Object.entries(permission).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              formDataToSend.append(`user[lock_user_permissions_attributes][${index}][${key}][]`, v);
+            });
+          } else {
+            formDataToSend.append(`user[lock_user_permissions_attributes][${index}][${key}]`, String(value));
+          }
+        });
+      });
 
       if (!id) throw new Error('Missing user id');
 
       const url = `https://${baseUrl}/pms/users/${id}.json`;
-      await axios.put(url, payload, {
+      await axios.put(url, formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
       toast.success('Guest updated successfully');
@@ -287,6 +350,29 @@ export const EditGuestUserPage: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <Box component="form" noValidate>
+            <div className="flex flex-col items-center mb-8">
+              <div className="relative group cursor-pointer" onClick={handleImageClick}>
+                <Avatar
+                  src={profileImagePreview || ""}
+                  sx={{ width: 120, height: 120, border: '2px solid #e5e7eb' }}
+                >
+                  {!profileImagePreview && <User size={60} color="#9ca3af" />}
+                </Avatar>
+                <div className="absolute bottom-0 right-0 bg-[#C72030] p-2 rounded-full border-2 border-white text-white group-hover:bg-[#A01020] transition-colors">
+                  <Camera size={20} />
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+              <p className="mt-2 text-sm text-gray-500 font-medium">Profile Photo</p>
+              <p className="text-xs text-gray-400">Recommended: Square image, max 2MB</p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <TextField
                 label={<><span>First Name</span><span className='text-red-600'>*</span></>}
@@ -322,7 +408,7 @@ export const EditGuestUserPage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.mobileNumber}
-                helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
+                helperText={errors.mobileNumber ? (formData.mobileNumber ? 'Mobile Number must be 10 digits' : 'Mobile Number is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -336,7 +422,7 @@ export const EditGuestUserPage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.email}
-                helperText={errors.email ? 'E-mail ID is required' : ''}
+                helperText={errors.email ? (formData.email ? 'Invalid Email ID' : 'E-mail ID is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -356,7 +442,7 @@ export const EditGuestUserPage: React.FC = () => {
                 </MuiSelect>
               </FormControl>
 
-            
+
 
               <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>
@@ -446,7 +532,7 @@ export const EditGuestUserPage: React.FC = () => {
                   )}
                 </FormControl>
               )}
-              <div>
+              {/* <div>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Select User Category</InputLabel>
                   <Select
@@ -466,10 +552,10 @@ export const EditGuestUserPage: React.FC = () => {
                     }
                   </Select>
                 </FormControl>
-              </div>
+              </div> */}
             </div>
 
-            <div className="my-6">
+            {/* <div className="my-6">
               <Button
                 type='button'
                 variant="outline"
@@ -478,7 +564,7 @@ export const EditGuestUserPage: React.FC = () => {
               >
                 {showAdditional ? '− Additional Info' : '+ Additional Info'}
               </Button>
-            </div>
+            </div> */}
 
             {showAdditional && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -512,8 +598,8 @@ export const EditGuestUserPage: React.FC = () => {
                   slotProps={{ inputLabel: { shrink: true } }}
                   InputProps={{ sx: fieldStyles }}
                 />
-               
-             
+
+
               </div>
             )}
           </Box>

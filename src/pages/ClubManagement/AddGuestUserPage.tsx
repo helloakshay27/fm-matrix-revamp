@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
+import { ArrowLeft, Camera, User } from 'lucide-react';
+import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Avatar } from '@mui/material';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
-import { RootState } from '@/store';
+import { RootState } from '@/store/store';
 
 export const AddGuestUserPage: React.FC = () => {
   const navigate = useNavigate();
@@ -34,6 +34,10 @@ export const AddGuestUserPage: React.FC = () => {
     selectUserCategory: '',
   });
 
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [userCategories, setUserCategories] = useState([])
   const [showAdditional, setShowAdditional] = useState(false);
   const dispatch = useAppDispatch();
@@ -44,6 +48,10 @@ export const AddGuestUserPage: React.FC = () => {
   const { selectedCompany } = useAppSelector((state: RootState) => state.project);
   const [departments, setDepartments] = useState<any[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
+
+  const location = useLocation();
+
+  const isClubSite = location.pathname.includes('club-management');
 
   const fetchUserCategories = async () => {
     try {
@@ -106,17 +114,52 @@ export const AddGuestUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
+    if ((field === 'mobileNumber' || field === 'altMobileNumber') && typeof value === 'string') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length > 10) return;
+      setFormData((prev) => ({ ...prev, [field]: numericValue }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image size must be less than 2MB");
+        return;
+      }
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleCancel = () => navigate('/club-management/users/guest');
 
   const validateForm = () => {
-    if (!formData.firstName) {
+    const newErrors = {
+      firstName: !formData.firstName,
+      lastName: !formData.lastName,
+      email: !formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
+      mobileNumber: !formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber),
+    };
+
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+
+    if (newErrors.firstName) {
       toast.error("First Name is required.");
       return false;
     }
-    if (!formData.lastName) {
+    if (newErrors.lastName) {
       toast.error("Last Name is required.");
       return false;
     }
@@ -124,9 +167,15 @@ export const AddGuestUserPage: React.FC = () => {
       toast.error("Email is required.");
       return false;
     }
-
-    // Optional validation: if mobile is provided, validate format
-    if (formData.mobileNumber && !/^[0-9]{10}$/.test(formData.mobileNumber)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error("Please enter a valid Email Address.");
+      return false;
+    }
+    if (!formData.mobileNumber) {
+      toast.error("Mobile Number is required.");
+      return false;
+    }
+    if (!/^[0-9]{10}$/.test(formData.mobileNumber)) {
       toast.error("Mobile Number must be 10 digits.");
       return false;
     }
@@ -141,40 +190,55 @@ export const AddGuestUserPage: React.FC = () => {
       const siteId = localStorage.getItem('selectedSiteId');
       const accountId = (selectedCompany as any)?.id || localStorage.getItem('selectedCompanyId') || undefined;
 
-      const payload = {
-        user: {
-          site_id: siteId,
-          registration_source: 'Web',
-          lock_user_permissions_attributes: [
-            {
-              account_id: accountId,
-              employee_id: formData.employeeId,
-              designation: formData.designation,
-              department_id: formData.department || undefined,
-              user_type: 'pms_guest',
-              access_level: formData.accessLevel,
-              access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
-              status: "pending"
-            },
-          ],
-          firstname: formData.firstName,
-          lastname: formData.lastName,
-          mobile: formData.mobileNumber,
-          email: formData.email,
-          gender: formData.gender,
-          alternate_address: formData.address,
-          alternate_mobile: formData.altMobileNumber,
-          birth_date: formData.birthDate,
-          entity_id: formData.selectEntity,
-          user_category_id: formData.selectUserCategory
+      const formDataToSend = new FormData();
+      formDataToSend.append('user[site_id]', siteId || '');
+      formDataToSend.append('user[registration_source]', 'Web');
+      formDataToSend.append('user[firstname]', formData.firstName);
+      formDataToSend.append('user[lastname]', formData.lastName);
+      formDataToSend.append('user[mobile]', formData.mobileNumber);
+      formDataToSend.append('user[email]', formData.email);
+      formDataToSend.append('user[gender]', formData.gender);
+      formDataToSend.append('user[alternate_address]', formData.address);
+      formDataToSend.append('user[alternate_mobile]', formData.altMobileNumber);
+      formDataToSend.append('user[birth_date]', formData.birthDate);
+      formDataToSend.append('user[entity_id]', formData.selectEntity);
+      formDataToSend.append('user[user_category_id]', formData.selectUserCategory);
+
+      if (profileImage) {
+        formDataToSend.append('user[profile_icon]', profileImage);
+      }
+
+      // Permissions nested attributes
+      const permissions = [
+        {
+          account_id: accountId,
+          employee_id: formData.employeeId,
+          designation: formData.designation,
+          department_id: formData.department || '',
+          user_type: 'pms_guest',
+          access_level: formData.accessLevel,
+          access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
+          status: "pending"
         },
-      };
+      ];
+
+      permissions.forEach((permission, index) => {
+        Object.entries(permission).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              formDataToSend.append(`user[lock_user_permissions_attributes][${index}][${key}][]`, v);
+            });
+          } else {
+            formDataToSend.append(`user[lock_user_permissions_attributes][${index}][${key}]`, String(value));
+          }
+        });
+      });
 
       const url = `https://${baseUrl}/pms/users.json`;
-      const response = await axios.post(url, payload, {
+      const response = await axios.post(url, formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
 
@@ -219,6 +283,29 @@ export const AddGuestUserPage: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <Box component="form" noValidate>
+            <div className="flex flex-col items-center mb-8">
+              <div className="relative group cursor-pointer" onClick={handleImageClick}>
+                <Avatar
+                  src={profileImagePreview || ""}
+                  sx={{ width: 120, height: 120, border: '2px solid #e5e7eb' }}
+                >
+                  {!profileImagePreview && <User size={60} color="#9ca3af" />}
+                </Avatar>
+                <div className="absolute bottom-0 right-0 bg-[#C72030] p-2 rounded-full border-2 border-white text-white group-hover:bg-[#A01020] transition-colors">
+                  <Camera size={20} />
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+              <p className="mt-2 text-sm text-gray-500 font-medium">Profile Photo</p>
+              <p className="text-xs text-gray-400">Recommended: Square image, max 2MB</p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <TextField
                 label={<>First Name <span className="text-red-500">*</span></>}
@@ -245,12 +332,14 @@ export const AddGuestUserPage: React.FC = () => {
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label="Mobile Number"
+                label={<>Mobile Number <span className="text-red-500">*</span></>}
                 placeholder="Enter Mobile Number"
                 value={formData.mobileNumber}
                 onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={errors.mobileNumber}
+                helperText={errors.mobileNumber ? (formData.mobileNumber ? 'Mobile Number must be 10 digits' : 'Mobile Number is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -264,7 +353,7 @@ export const AddGuestUserPage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.email}
-                helperText={errors.email ? 'E-mail ID is required' : ''}
+                helperText={errors.email ? (formData.email ? 'Invalid Email ID' : 'E-mail ID is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -281,7 +370,7 @@ export const AddGuestUserPage: React.FC = () => {
                   <MenuItem value="Other">Other</MenuItem>
                 </Select>
               </FormControl>
-          
+
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>
                   Access Level
@@ -355,38 +444,47 @@ export const AddGuestUserPage: React.FC = () => {
                   </Select>
                 </FormControl>
               )}
-              <div>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Entity</InputLabel>
-                  <Select
-                    value={formData.selectEntity}
-                    onChange={(e) => handleInputChange('selectEntity', e.target.value)}
-                    label="Select Entity"
-                    notched
-                  >
-                    <MenuItem value="">
-                      <em>Select Entity</em>
-                    </MenuItem>
-                    {(entitiesData?.entities || []).map((entity) => (
-                      <MenuItem key={entity.id} value={String(entity.id)}>
-                        {entity.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
+
+              {
+                !isClubSite && (
+                  <div>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Select Entity</InputLabel>
+                      <Select
+                        value={formData.selectEntity}
+                        onChange={(e) => handleInputChange('selectEntity', e.target.value)}
+                        label="Select Entity"
+                        notched
+                      >
+                        <MenuItem value="">
+                          <em>Select Entity</em>
+                        </MenuItem>
+                        {(entitiesData?.entities || []).map((entity) => (
+                          <MenuItem key={entity.id} value={String(entity.id)}>
+                            {entity.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                )
+              }
             </div>
 
-            <div className="my-6">
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030]"
-                onClick={() => setShowAdditional((s) => !s)}
-              >
-                {showAdditional ? 'Hide' : 'Show'} Additional Details
-              </Button>
-            </div>
+            {
+              !isClubSite && (
+                <div className="my-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030]"
+                    onClick={() => setShowAdditional((s) => !s)}
+                  >
+                    {showAdditional ? 'Hide' : 'Show'} Additional Details
+                  </Button>
+                </div>
+              )
+            }
 
             {showAdditional && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">

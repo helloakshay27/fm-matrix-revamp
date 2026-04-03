@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { userService } from '@/services/userService';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import ReactSelect from 'react-select';
@@ -163,27 +164,19 @@ export const CategoryTypeTab: React.FC = () => {
 
   const fetchAccountData = useCallback(async () => {
     try {
-      const response = await fetch(getFullUrl('/api/users/account.json'), {
+      const data = await userService.getAccountDetails();
+      setAccountData(data);
+      
+      // Auto-populate form with company_id as society_id
+      form.setValue('siteId', (data as any).company_id?.toString() || '');
+      
+      // Fetch allowed sites for the user
+      const sitesResponse = await fetch(getFullUrl(`/pms/sites/allowed_sites.json?user_id=${data.id}`), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAccountData(data);
-        
-        // Auto-populate form with company_id as society_id
-        form.setValue('siteId', data.company_id?.toString() || '');
-        
-        // Fetch allowed sites for the user
-        const sitesResponse = await fetch(getFullUrl(`/pms/sites/allowed_sites.json?user_id=${data.id}`), {
-          headers: {
-            'Authorization': getAuthHeader(),
-            'Content-Type': 'application/json',
-          },
-        });
 
         if (sitesResponse.ok) {
           const sitesData = await sitesResponse.json();
@@ -194,7 +187,6 @@ export const CategoryTypeTab: React.FC = () => {
             setSelectedSite(sitesData.selected_site);
           }
         }
-      }
     } catch (error) {
       console.error('Error fetching account data:', error);
       toast.error('Failed to fetch account data');

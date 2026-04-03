@@ -36,6 +36,7 @@ export interface FMUser {
   lock_user_permission_status?: string;
   face_added?: boolean;
   app_downloaded?: string;
+  profile_icon_url?: string;
   department?: {
     id: number;
     department_name: string;
@@ -267,7 +268,7 @@ export const editFMUser = createAsyncThunk(
       return response.data;
     } catch (error) {
       const message =
-        error.response?.data?.error || error.error || "Failed to edit FM user";
+        error || "Failed to edit FM user";
       return rejectWithValue(message);
     }
   }

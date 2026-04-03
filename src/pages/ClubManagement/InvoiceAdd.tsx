@@ -11,7 +11,6 @@ import {
     Select,
     FormControl,
     InputLabel,
-    Drawer,
     Typography,
     Box,
     Divider,
@@ -34,7 +33,7 @@ import {
     PersonAdd,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
 import { format, parseISO } from 'date-fns';
@@ -169,7 +168,12 @@ export const InvoiceAdd: React.FC = () => {
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+                    const terms = res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days }));
+                    setPaymentTermsList(terms);
+                    const dueOnReceipt = terms.find(t => t.name.toLowerCase() === 'due on receipt');
+                    if (dueOnReceipt) {
+                        setSelectedTerm(dueOnReceipt.id);
+                    }
                 }
             } catch (err) {
                 setPaymentTermsList([]);
@@ -199,7 +203,7 @@ export const InvoiceAdd: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.title = 'New Sales Order';
+        document.title = 'New Invoice';
     }, []);
 
     // Customer data
@@ -207,6 +211,12 @@ export const InvoiceAdd: React.FC = () => {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [loadingCustomers, setLoadingCustomers] = useState(false);
     const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
+    const [customerDetail, setCustomerDetail] = useState<any>(null);
+    const [customerDetailLoading, setCustomerDetailLoading] = useState(false);
+    const [drawerActiveTab, setDrawerActiveTab] = useState<'details' | 'activity'>('details');
+    const [addressExpanded, setAddressExpanded] = useState(true);
+    const [contactPersonsExpanded, setContactPersonsExpanded] = useState(true);
+
     // Contact persons selected for email
     const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
 
@@ -218,8 +228,8 @@ export const InvoiceAdd: React.FC = () => {
     // Sales Order Details
     const [salesOrderNumber, setSalesOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
-    const [salesOrderDate, setSalesOrderDate] = useState('');
-    const [expectedShipmentDate, setExpectedShipmentDate] = useState('');
+    const [salesOrderDate, setSalesOrderDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [expectedShipmentDate, setExpectedShipmentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
     const [salesperson, setSalesperson] = useState('');
@@ -373,6 +383,59 @@ export const InvoiceAdd: React.FC = () => {
         generateOrderNumber();
     }, []);
 
+    // Fetch customer detail from API
+    const fetchCustomerDetail = async (customerId: string) => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        setCustomerDetailLoading(true);
+        try {
+            const res = await axios.get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (res.data) {
+                setCustomerDetail(res.data);
+                // Pre-populate address fields (user can still edit them)
+                const ba = res.data.billing_address;
+                if (ba) {
+                    const formatted = [
+                        ba.address,
+                        ba.address_line_two,
+                        ba.city,
+                        ba.state,
+                        ba.pin_code ? `- ${ba.pin_code}` : '',
+                        ba.country
+                    ].filter(Boolean).join(', ');
+                    setBillingAddress(formatted);
+                }
+                const sa = res.data.shipping_address;
+                if (sa) {
+                    const formatted = [
+                        sa.address,
+                        sa.address_line_two,
+                        sa.city,
+                        sa.state,
+                        sa.pin_code ? `- ${sa.pin_code}` : '',
+                        sa.country
+                    ].filter(Boolean).join(', ');
+                    setShippingAddress(formatted);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching customer detail:', error);
+            toast.error('Failed to load customer details');
+        } finally {
+            setCustomerDetailLoading(false);
+        }
+    };
+
+    const openCustomerDrawer = (customerId: string) => {
+        fetchCustomerDetail(customerId);
+        setCustomerDrawerOpen(true);
+    };
+
     // Fetch customers on mount
     useEffect(() => {
         setLoadingCustomers(true);
@@ -388,20 +451,6 @@ export const InvoiceAdd: React.FC = () => {
             })
             .then(res => {
                 setCustomers(res.data || []);
-                // Optionally fetch detail for first customer
-                if (res.data && res.data.length > 0) {
-                    const customerId = res.data[0].id;
-                    axios
-                        .get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
-                            headers: {
-                                Authorization: token ? `Bearer ${token}` : undefined,
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(detailRes => {
-                            // Optionally handle detailRes.data
-                        });
-                }
             })
             .catch(error => {
                 console.error('Error fetching customers:', error);
@@ -945,6 +994,16 @@ export const InvoiceAdd: React.FC = () => {
                 </div>
             )}
 
+            <div className="mb-2">
+                <button
+                    onClick={() => navigate('/accounting/invoices/list')}
+                    className="flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium tracking-wide"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    Back to Invoices List
+                </button>
+            </div>
+
             <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">New Invoice</h1>
             </header>
@@ -962,8 +1021,14 @@ export const InvoiceAdd: React.FC = () => {
                                     <Select
                                         value={selectedCustomer?.id || ''}
                                         onChange={(e) => {
-                                            const customer = customers.find(c => c.id === e.target.value);
+                                            const customerId = e.target.value;
+                                            const customer = customers.find(c => c.id === customerId);
                                             setSelectedCustomer(customer || null);
+                                            if (customerId) {
+                                                fetchCustomerDetail(customerId);
+                                            } else {
+                                                setCustomerDetail(null);
+                                            }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -990,6 +1055,7 @@ export const InvoiceAdd: React.FC = () => {
                                 />
                             </div>
                         </div>
+
                         {selectedCustomer && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div>
@@ -1023,16 +1089,92 @@ export const InvoiceAdd: React.FC = () => {
                             </div>
                         )}
 
-                        {/* {selectedCustomer && (
-                            <Button
-                                variant="outlined"
-                                onClick={() => setCustomerDrawerOpen(true)}
-                                endIcon={<ChevronRight />}
-                                sx={{ textTransform: 'none' }}
-                            >
-                                View Customer Details
-                            </Button>
-                        )} */}
+                        {selectedCustomer && customerDetail && (
+                            <div className="mt-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-100 pt-6">
+                                    {/* Billing Address */}
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                            Billing Address
+                                        </div>
+                                        {customerDetail.billing_address?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                <div className="font-medium">{customerDetail.billing_address.address}</div>
+                                                {customerDetail.billing_address.address_line_two && (
+                                                    <div>{customerDetail.billing_address.address_line_two}</div>
+                                                )}
+                                                <div>
+                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
+                                                        .filter(Boolean)
+                                                        .join(", ")}
+                                                    {customerDetail.billing_address.pin_code ? ` - ${customerDetail.billing_address.pin_code}` : ""}
+                                                </div>
+                                                {customerDetail.billing_address.country && (
+                                                    <div>{customerDetail.billing_address.country}</div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-400 italic">No billing address provided</div>
+                                        )}
+                                    </div>
+
+                                    {/* Shipping Address */}
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                            Shipping Address
+                                        </div>
+                                        {customerDetail.shipping_address?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                <div className="font-medium">{customerDetail.shipping_address.address}</div>
+                                                {customerDetail.shipping_address.address_line_two && (
+                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
+                                                )}
+                                                <div>
+                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
+                                                        .filter(Boolean)
+                                                        .join(", ")}
+                                                    {customerDetail.shipping_address.pin_code ? ` - ${customerDetail.shipping_address.pin_code}` : ""}
+                                                </div>
+                                                {customerDetail.shipping_address.country && (
+                                                    <div>{customerDetail.shipping_address.country}</div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                                New Address
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* GST Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GST Treatment:</span>
+                                        <span className="text-gray-800">{customerDetail.gst_treatment || "Registered Business - Regular"}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GSTIN:</span>
+                                        <span className="text-gray-800 font-medium">{customerDetail.gstin || "—"}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => openCustomerDrawer(selectedCustomer.id.toString())}
+                                        className="text-[#C72030] text-sm font-medium hover:underline flex items-center gap-1"
+                                    >
+                                        View Customer Details <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {!customerDetail && selectedCustomer && customerDetailLoading && (
+                            <div className="py-4 flex justify-center">
+                                <CircularProgress size={24} color="error" />
+                            </div>
+                        )}
                     </div>
                 </Section>
 
@@ -1044,16 +1186,13 @@ export const InvoiceAdd: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                                 rows={4}
-                                value={selectedCustomer?.billing_address?.address
-                                    ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
-                                    : billingAddress}
+                                value={billingAddress}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 500) setBillingAddress(e.target.value);
                                 }}
                                 placeholder="Enter billing address (max 500 characters)"
-                                disabled={!!selectedCustomer?.billing_address?.address}
                                 maxLength={500}
                             />
                             <div className="text-xs text-gray-400 text-right mt-1">
@@ -1066,16 +1205,14 @@ export const InvoiceAdd: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
-                                value={selectedCustomer?.shipping_address?.address
-                                    ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
-                                    : shippingAddress}
+                                value={shippingAddress}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 500) setShippingAddress(e.target.value);
                                 }}
                                 placeholder="Enter shipping address (max 500 characters)"
-                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                readOnly={sameAsBilling}
                                 maxLength={500}
                             />
                             <div className="text-xs text-gray-400 text-right mt-1">
@@ -1899,141 +2036,260 @@ export const InvoiceAdd: React.FC = () => {
             </div>
 
             {/* Customer Details Drawer */}
-            <Drawer
-                anchor="right"
-                open={customerDrawerOpen}
-                onClose={() => setCustomerDrawerOpen(false)}
-                PaperProps={{ sx: { width: { xs: '100%', sm: 500 } } }}
-            >
-                {selectedCustomer && (
-                    <div className="p-6 space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-xl font-bold text-blue-600">
-                                        {selectedCustomer.name.charAt(0)}
-                                    </span>
-                                </div>
-                                <div>
-                                    <Typography variant="h6" className="font-bold">
-                                        {selectedCustomer.name}
-                                    </Typography>
-                                    <Typography variant="body2" className="text-gray-600">
-                                        {selectedCustomer.email}
-                                    </Typography>
-                                </div>
-                            </div>
-                            <IconButton onClick={() => setCustomerDrawerOpen(false)}>
-                                <Close />
-                            </IconButton>
+            {customerDrawerOpen && (
+                <div className="fixed inset-0 z-50 flex justify-end">
+                    <div
+                        className="absolute inset-0 bg-black/20"
+                        onClick={() => setCustomerDrawerOpen(false)}
+                    />
+                    <div className="relative w-full max-w-[450px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                        {/* Header */}
+                        <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
+                            <span className="font-semibold text-gray-800 text-lg">Customer details</span>
+                            <button
+                                onClick={() => setCustomerDrawerOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                            >
+                                ✕
+                            </button>
                         </div>
 
-                        <Divider />
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-orange-50 rounded-lg p-4 text-center">
-                                <Typography variant="h6" className="font-bold">
-                                    {/* ₹{typeof selectedCustomer.outstandingReceivables === 'number' ? selectedCustomer.outstandingReceivables.toLocaleString() : '0'} */}
-                                </Typography>
-                                <Typography variant="body2" className="text-gray-600">
-                                    Outstanding Receivables
-                                </Typography>
+                        {customerDetailLoading ? (
+                            <div className="flex-1 flex items-center justify-center">
+                                <CircularProgress size={36} />
                             </div>
-                            <div className="bg-green-50 rounded-lg p-4 text-center">
-                                <Typography variant="h6" className="font-bold">
-                                    {/* ₹{selectedCustomer.unusedCredits.toLocaleString()} */}
-                                </Typography>
-                                <Typography variant="body2" className="text-gray-600">
-                                    Unused Credits
-                                </Typography>
-                            </div>
-                        </div>
-
-                        <div>
-                            <Typography variant="subtitle1" className="font-semibold mb-3">
-                                Contact Details
-                            </Typography>
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Customer Type</span>
-                                    <span className="font-semibold">{selectedCustomer.customerType}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Currency</span>
-                                    <span className="font-semibold">{selectedCustomer.currency}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Payment Terms</span>
-                                    <span className="font-semibold">{selectedCustomer.paymentTerms}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Portal Status</span>
-                                    <span className="font-semibold">{selectedCustomer.portalStatus}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Customer Language</span>
-                                    <span className="font-semibold">{selectedCustomer.language}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <Divider />
-
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <Typography variant="subtitle1" className="font-semibold">
-                                    Contact Persons
-                                </Typography>
-                                <Button
-                                    size="small"
-                                    startIcon={<Add />}
-                                    onClick={() => setContactPersonDialogOpen(true)}
-                                    variant="outlined"
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    Add
-                                </Button>
-                            </div>
-
-                            {/* {selectedCustomer.contactPersons.length === 0 ? (
-                                <Typography variant="body2" className="text-gray-500">
-                                    No contact persons added
-                                </Typography>
-                            ) : (
-                                <div className="space-y-3">
-                                    {selectedCustomer.contactPersons.map(person => (
-                                        <div key={person.id} className="bg-gray-50 rounded-lg p-4">
-                                            <Typography variant="body1" className="font-semibold">
-                                                {person.salutation} {person.firstName} {person.lastName}
-                                            </Typography>
-                                            <Typography variant="body2" className="text-gray-600">
-                                                {person.email}
-                                            </Typography>
-                                            {person.designation && (
-                                                <Typography variant="body2" className="text-gray-600">
-                                                    {person.designation} {person.department && `- ${person.department}`}
-                                                </Typography>
-                                            )}
-                                            <div className="flex gap-3 mt-2">
-                                                {person.workPhone && (
-                                                    <Typography variant="body2" className="text-gray-600">
-                                                        Work: {person.workPhone}
-                                                    </Typography>
-                                                )}
-                                                {person.mobile && (
-                                                    <Typography variant="body2" className="text-gray-600">
-                                                        Mobile: {person.mobile}
-                                                    </Typography>
-                                                )}
-                                            </div>
+                        ) : customerDetail ? (
+                            <div className="flex-1 overflow-y-auto">
+                                {/* Customer Name + Avatar */}
+                                <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-100">
+                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
+                                        {(customerDetail.company_name || customerDetail.first_name || "?")[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-gray-800 text-base flex items-center gap-1">
+                                            {customerDetail.company_name ||
+                                                [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                                            <span className="text-blue-500 cursor-pointer text-sm">↗</span>
                                         </div>
+                                        {customerDetail.company_name && (
+                                            <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
+                                        )}
+                                        {customerDetail.email && (
+                                            <div className="text-xs text-blue-500">{customerDetail.email}</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Tabs */}
+                                <div className="flex border-b border-gray-200 px-4">
+                                    {(["Details", "Activity Log"] as const).map((t, i) => (
+                                        <button
+                                            key={t}
+                                            onClick={() => setDrawerActiveTab(i === 0 ? 'details' : 'activity')}
+                                            className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === (i === 0 ? 'details' : 'activity')
+                                                    ? "border-[#C72030] text-[#C72030]"
+                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                }`}
+                                        >
+                                            {t}
+                                        </button>
                                     ))}
                                 </div>
-                            )} */}
-                        </div>
+
+                                {drawerActiveTab === 'details' && (
+                                    <div className="p-4 space-y-4">
+                                        {/* Outstanding & Credits */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
+                                                <div className="text-orange-400 text-xl mb-1">⚠</div>
+                                                <div className="text-xs text-gray-500">Outstanding Receivables</div>
+                                                <div className="font-semibold text-gray-800 text-sm mt-1">
+                                                    ₹{Number(customerDetail.outstanding_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
+                                                <div className="text-green-500 text-xl mb-1">●</div>
+                                                <div className="text-xs text-gray-500">Unused Credits</div>
+                                                <div className="font-semibold text-gray-800 text-sm mt-1">
+                                                    ₹{Number(customerDetail.unused_credits_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Contact Details */}
+                                        <div className="border border-gray-200 rounded-lg p-4">
+                                            <div className="font-semibold text-gray-700 mb-3 text-sm">Contact Details</div>
+                                            {[
+                                                ["Customer Type", customerDetail.customer_type || "—"],
+                                                ["Currency", customerDetail.currency || "INR"],
+                                                ["Payment Terms", customerDetail.payment_terms || "—"],
+                                                ["Portal Status", customerDetail.portal_status || "—"],
+                                                ["Customer Language", customerDetail.customer_language || "English"],
+                                                ["GST Treatment", customerDetail.gst_treatment || "—"],
+                                                ["GSTIN", customerDetail.gstin || "—"],
+                                                ["PAN", customerDetail.pan || "—"],
+                                                ["Place of Supply", customerDetail.place_of_supply || "Yet to be updated"],
+                                                ["Tax Preference", customerDetail.tax_preference || "—"],
+                                            ].map(([label, value]) => (
+                                                <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
+                                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                                                    <span className="text-xs text-gray-700 text-right">{value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Contact Persons */}
+                                        {customerDetail.contact_persons && customerDetail.contact_persons.length > 0 && (
+                                            <div className="border border-gray-200 rounded-lg">
+                                                <div
+                                                    className="flex items-center justify-between px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                                                    onClick={() => setContactPersonsExpanded(!contactPersonsExpanded)}
+                                                >
+                                                    <span className="font-semibold text-gray-700 text-sm">
+                                                        Contact Persons
+                                                        <span className="ml-2 bg-gray-200 text-gray-600 text-xs rounded-full px-1.5 py-0.5">
+                                                            {customerDetail.contact_persons.length}
+                                                        </span>
+                                                    </span>
+                                                    {contactPersonsExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                                </div>
+                                                {contactPersonsExpanded && (
+                                                    <div className="divide-y divide-gray-100">
+                                                        {customerDetail.contact_persons.map((cp, idx) => (
+                                                            <div key={cp.id || idx} className="px-4 py-4 flex items-start gap-3">
+                                                                <div className="relative mt-1">
+                                                                    <div className="w-8 h-8 rounded-full bg-[#EAEEF6] flex items-center justify-center text-[#7C8DAC] font-semibold text-sm shrink-0">
+                                                                        {(cp.first_name || "?")[0].toUpperCase()}
+                                                                    </div>
+                                                                    {idx === 0 && (
+                                                                        <div className="absolute -bottom-1 -right-1 w-[14px] h-[14px] bg-[#42C867] rounded-full border-[1.5px] border-white flex justify-center items-center">
+                                                                            <Star className="w-[8px] h-[8px] text-white fill-current" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="flex-1">
+                                                                    <div className="text-sm font-medium text-gray-900 mb-1">
+                                                                        {[cp.salutation, cp.first_name, cp.last_name].filter(Boolean).join(" ")}
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        {cp.email && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Mail className="w-3.5 h-3.5 text-gray-400" /> {cp.email}
+                                                                            </div>
+                                                                        )}
+                                                                        {cp.work_phone && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.work_phone}
+                                                                            </div>
+                                                                        )}
+                                                                        {!cp.work_phone && cp.phone && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.phone}
+                                                                            </div>
+                                                                        )}
+                                                                        {cp.mobile && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Smartphone className="w-3.5 h-3.5 text-gray-400" /> {cp.mobile}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Address */}
+                                        <div className="border border-gray-200 rounded-lg">
+                                            <div
+                                                className="px-4 py-3 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                                                onClick={() => setAddressExpanded(!addressExpanded)}
+                                            >
+                                                <span className="font-semibold text-gray-700 text-sm">Address</span>
+                                                {addressExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                            </div>
+                                            {addressExpanded && (
+                                                <div className="p-4 space-y-3">
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                            <span>📋</span> Billing Address
+                                                        </div>
+                                                        {customerDetail.billing_address?.address ? (
+                                                            <div className="text-xs text-gray-700 leading-relaxed">
+                                                                <div>{customerDetail.billing_address.address}</div>
+                                                                {customerDetail.billing_address.address_line_two && (
+                                                                    <div>{customerDetail.billing_address.address_line_two}</div>
+                                                                )}
+                                                                <div>
+                                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
+                                                                        .filter(Boolean)
+                                                                        .join(", ")}
+                                                                    {customerDetail.billing_address.pin_code
+                                                                        ? " " + customerDetail.billing_address.pin_code
+                                                                        : ""}
+                                                                </div>
+                                                                {customerDetail.billing_address.country && (
+                                                                    <div>{customerDetail.billing_address.country}</div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-xs text-gray-400 italic">No billing address provided</div>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                            <span>🚚</span> Shipping Address
+                                                        </div>
+                                                        {customerDetail.shipping_address?.address ? (
+                                                            <div className="text-xs text-gray-700 leading-relaxed">
+                                                                <div>{customerDetail.shipping_address.address}</div>
+                                                                {customerDetail.shipping_address.address_line_two && (
+                                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
+                                                                )}
+                                                                <div>
+                                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
+                                                                        .filter(Boolean)
+                                                                        .join(", ")}
+                                                                    {customerDetail.shipping_address.pin_code
+                                                                        ? " " + customerDetail.shipping_address.pin_code
+                                                                        : ""}
+                                                                </div>
+                                                                {customerDetail.shipping_address.country && (
+                                                                    <div>{customerDetail.shipping_address.country}</div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-xs text-gray-400 italic">No shipping address provided</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {drawerActiveTab === 'activity' && (
+                                    <div className="p-10 text-center">
+                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <FileText className="w-8 h-8 text-gray-300" />
+                                        </div>
+                                        <div className="text-gray-500 text-sm">No activity logs found</div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-gray-400">
+                                No customer details available
+                            </div>
+                        )}
                     </div>
-                )}
-            </Drawer>
+                </div>
+            )}
 
             {/* Add External User Dialog */}
             <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>

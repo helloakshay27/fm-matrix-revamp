@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../utils/auth";
+import { useLayout } from "../contexts/LayoutContext";
 
 import "swiper/css";
 import "swiper/css/pagination";
@@ -42,6 +43,7 @@ interface CompanyHubNewProps {
 
 const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const navigate = useNavigate();
+  const { setCurrentSection } = useLayout();
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [taskStats, setTaskStats] = useState<TaskStats>({
     task_count: 0,
@@ -61,6 +63,10 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "business" | "admin"
   >("dashboard");
+
+  useEffect(() => {
+    setCurrentSection("Company Hub New");
+  }, [setCurrentSection]);
   const [activeTimeView, setActiveTimeView] = useState<
     "hourly" | "weekly" | "monthly"
   >("hourly");
@@ -423,7 +429,13 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
             ).map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (tab.key === "admin") setCurrentSection("Admin Compass");
+                  else if (tab.key === "business")
+                    setCurrentSection("Business Compass");
+                  else setCurrentSection("Company Hub New");
+                }}
                 className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${activeTab === tab.key
                   ? "bg-white shadow-xl shadow-black/5 text-gray-900"
                   : "text-gray-500 hover:text-gray-700"

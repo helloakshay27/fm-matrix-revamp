@@ -19,7 +19,8 @@ interface MembershipPlan {
   amenities: string[];
   createdOn: string;
   createdBy: string;
-  status: boolean;
+  status: string;
+  active: boolean;
 }
 
 const columns: ColumnConfig[] = [
@@ -82,6 +83,7 @@ const transformData = (data) => {
     renewalTerms: item.renewal_terms ? item.renewal_terms.charAt(0).toUpperCase() + item.renewal_terms.slice(1) : '',
     hsnCode: item.hsn_code || '',
     status: item.active ? 'Active' : 'Inactive',
+    active: item.active,
     createdOn: item.created_at ? (() => {
       // Handles ISO string, 'YYYY-MM-DD', 'YYYY-MM-DD, HH:mm', 'YYYY-MM-DD HH:mm'
       let formattedDate = '';
@@ -155,8 +157,31 @@ export const MembershipPlanDashboard = () => {
     navigate("/settings/vas/membership-plan/setup/add");
   };
 
-  const handleStatusToggle = async (id: string) => {
+  const handleStatusToggle = async (plan: MembershipPlan) => {
+    const loadingToast = toast.loading(`${plan.active ? 'Deactivating' : 'Activating'} ${plan.name}...`);
+    try {
+      const newStatus = !plan.active;
+      
+      const response = await axios.put(`https://${baseUrl}/membership_plans/${plan.id}.json`, 
+        { membership_plan: { active: newStatus } },
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
 
+      if (response.status === 200 || response.status === 204) {
+        toast.success('Status updated successfully', { id: loadingToast });
+        fetchMembershipPlanData();
+      } else {
+        throw new Error('Failed to update status');
+      }
+    } catch (error) {
+      console.error("Error updating membership plan status:", error);
+      toast.error('Failed to update status', { id: loadingToast });
+    }
   };
 
   const handleViewDetails = (id: string) => {
@@ -168,6 +193,23 @@ export const MembershipPlanDashboard = () => {
   };
 
   const renderCell = (item: MembershipPlan, columnKey: string) => {
+    if (columnKey === 'status') {
+      const active = item.active;
+      return (
+        <div className="flex items-center gap-3">
+          <div 
+            onClick={() => handleStatusToggle(item)}
+            className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${active ? 'bg-green-500' : 'bg-gray-300'}`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
+          </div>
+          {/* <span className={`text-xs font-medium ${active ? 'text-green-600' : 'text-red-600'}`}>
+            {active ? 'Active' : 'Inactive'}
+          </span> */}
+        </div>
+      );
+    }
+
     switch (columnKey) {
       default:
         return item[columnKey as keyof MembershipPlan]?.toString() || '--';

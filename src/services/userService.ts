@@ -17,7 +17,72 @@ export interface TaskRescheduleData {
   sms: boolean;
 }
 
+export interface ProfileAccountResponse {
+  id?: number;
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  mobile?: string;
+  role_name?: string;
+  alternate_address?: string;
+  designation?: string;
+  profile_type?: string;
+  birth_date?: string;
+  image?: string;
+  avatar?: string;
+  profile_photo?: string;
+  profile_icon_url?: string;
+  extra_fields?: {
+    anniversary_date?: string;
+    date_of_joining?: string;
+    emergency_contact_name?: string;
+    emergency_contact_number?: string;
+    city?: string;
+    state?: string;
+    pin_code?: string;
+    pincode?: string;
+    zip_code?: string;
+  };
+}
+
+export interface ProfileUpdateResponse {
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  mobile?: string;
+  user?: {
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+    mobile?: string;
+    alternate_address?: string;
+    user_title?: string;
+    birth_date?: string;
+    alternate_mobile?: string;
+  };
+}
+
 export const userService = {
+  async getAccountDetails(): Promise<ProfileAccountResponse> {
+    try {
+      const response = await apiClient.get<ProfileAccountResponse>('/api/users/account.json');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching account details:', error);
+      throw error;
+    }
+  },
+
+  async updateProfile(data: FormData | any): Promise<ProfileUpdateResponse> {
+    try {
+      const response = await apiClient.put<ProfileUpdateResponse>('/users/profile_update', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  },
+
   async getEscalateToUsers(): Promise<User[]> {
     try {
       const response = await apiClient.get<UsersResponse>('/pms/users/get_escalate_to_users.json');

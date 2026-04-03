@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Download } from 'lucide-react';
+import { ChevronLeft, Download, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
@@ -212,7 +212,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=PropertyDamageCategory`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -242,7 +242,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=RCACategory`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -272,7 +272,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=CorrectiveAction`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -302,7 +302,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=PreventiveAction`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -332,7 +332,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/{+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=SubstandardCondition`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -362,7 +362,7 @@ export const IncidentNewDetails = () => {
                 baseUrl = 'https://' + baseUrl.replace(/^\/{+/, '');
             }
 
-            const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=SubstandardAct`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -459,31 +459,43 @@ export const IncidentNewDetails = () => {
                 // Injuries
                 if (incidentData.injuries && Array.isArray(incidentData.injuries) && incidentData.injuries.length > 0) {
                     setHasInjury(true);
-                    const mappedInjuries = incidentData.injuries.map((injury: any) => ({
-                        id: injury.id?.toString() || Date.now().toString(),
-                        type: injury.user_type || 'external',
-                        name: injury.name || '',
-                        age: injury.age?.toString() || '',
-                        company: injury.company || '',
-                        role: injury.role || '',
-                        injuryType: injury.injury_type || '',
-                        injuryNumber: injury.injury_number || '',
-                        mobile: injury.mobile || '',
-                        injuryTypes: injury.injury_types || [],
-                        bodyParts: {
-                            head: injury.body_parts?.includes('head') || false,
-                            neck: injury.body_parts?.includes('neck') || false,
-                            arms: injury.body_parts?.includes('arms') || false,
-                            eyes: injury.body_parts?.includes('eyes') || false,
-                            legs: injury.body_parts?.includes('legs') || false,
-                            skin: injury.body_parts?.includes('skin') || false,
-                            mouth: injury.body_parts?.includes('mouth') || false,
-                            ears: injury.body_parts?.includes('ears') || false,
-                        },
-                        attachments: [],
-                    }));
+                    const mappedInjuries = incidentData.injuries.map((injury: any) => {
+                        const rawInjuryTypes = injury.injury_types ?? injury.types ?? [];
+                        const normalizedInjuryTypes = Array.isArray(rawInjuryTypes)
+                            ? rawInjuryTypes
+                            : typeof rawInjuryTypes === 'string'
+                                ? rawInjuryTypes.split(',').map((item: string) => item.trim()).filter(Boolean)
+                                : [];
+
+                        return {
+                            id: injury.id?.toString() || Date.now().toString(),
+                            type: injury.user_type || injury.injured_user_type || 'external',
+                            name: injury.name || '',
+                            age: injury.age?.toString() || '',
+                            company: injury.company || '',
+                            role: injury.role || '',
+                            injuryType: injury.injury_type || '',
+                            injuryNumber: injury.injury_number || '',
+                            mobile: injury.mobile || '',
+                            injuryTypes: normalizedInjuryTypes,
+                            bodyParts: {
+                                head: injury.body_parts?.includes('head') || false,
+                                neck: injury.body_parts?.includes('neck') || false,
+                                arms: injury.body_parts?.includes('arms') || false,
+                                eyes: injury.body_parts?.includes('eyes') || false,
+                                legs: injury.body_parts?.includes('legs') || false,
+                                skin: injury.body_parts?.includes('skin') || false,
+                                mouth: injury.body_parts?.includes('mouth') || false,
+                                ears: injury.body_parts?.includes('ears') || false,
+                            },
+                            attachments: [],
+                        };
+                    });
                     setInjuredPersons(mappedInjuries);
                 }
+
+                console.log("Corrective Actions:", incidentData.corrective_fields);
+                console.log("Preventive Actions:", incidentData.preventive_fields);
 
                 // Corrective actions from API
                 if (incidentData.corrective_fields && Array.isArray(incidentData.corrective_fields) && incidentData.corrective_fields.length > 0) {
@@ -544,7 +556,30 @@ export const IncidentNewDetails = () => {
                     switch (status) {
                         case 'reported':
                         case 'open':
-                            setCurrentStep(1);
+                            if (incidentData.incident_over_time) {
+                                if (
+                                    incidentData.investigator_details?.length > 0 ||
+                                    incidentData.incident_investigations?.length > 0 ||
+                                    incidentData.root_causes?.length > 0
+                                ) {
+                                    if (
+                                        incidentData.corrective_fields?.length > 0 ||
+                                        incidentData.preventive_fields?.length > 0
+                                    ) {
+                                        // has everything → step 4
+                                        setCurrentStep(4);
+                                    } else {
+                                        // has over_time + investigation but no corrective/preventive → step 3
+                                        setCurrentStep(3);
+                                    }
+                                } else {
+                                    // has over_time but no investigation details → step 2
+                                    setCurrentStep(2);
+                                }
+                            } else {
+                                // nothing filled → step 1
+                                setCurrentStep(1);
+                            }
                             break;
                         case 'investigation':
                         case 'investigating':
@@ -552,7 +587,7 @@ export const IncidentNewDetails = () => {
                             break;
                         case 'provisional_closure':
                         case 'provisional':
-                            setCurrentStep(3);
+                            setCurrentStep(4);
                             break;
                         case 'final_closure':
                         case 'closed':
@@ -575,6 +610,7 @@ export const IncidentNewDetails = () => {
             setLoading(false);
         }
     }, [id]);
+
 
     // Effects
     useEffect(() => {
@@ -607,6 +643,13 @@ export const IncidentNewDetails = () => {
     // Auto-navigate to step 3 if all required investigation fields are present
     useEffect(() => {
         if (incident) {
+            const status = incident.current_status?.toLowerCase().replace(/\s+/g, '_') || '';
+
+            // Don't override step navigation if incident is already in closure stages
+            if (status === 'provisional_closure' || status === 'provisional' ||
+                status === 'final_closure' || status === 'closed') {
+                return;
+            }
             const hasRootCauses = Array.isArray(incident.root_causes) && incident.root_causes.length > 0;
             const hasPropertyDamages = Array.isArray(incident.property_damages) && incident.property_damages.length > 0;
             const hasInjuries = Array.isArray(incident.injuries) && incident.injuries.length > 0;
@@ -615,6 +658,7 @@ export const IncidentNewDetails = () => {
                 setCurrentStep(3);
             }
         }
+
     }, [incident]);
 
     // Memoized handlers
@@ -721,11 +765,28 @@ export const IncidentNewDetails = () => {
         try {
             if (currentStep === 2) {
                 setLoading(true);
+                console.log(investigators)
 
-                if (!id) {
-                    toast.error('Incident ID not found');
+                if (!investigators || investigators.length === 0) {
+                    toast.error('Please add at least one investigator');
+                    setLoading(false);
                     return;
                 }
+
+                const hasValidInvestigation = investigationDescription || subStandardConditionId || subStandardActId;
+                if (!hasValidInvestigation) {
+                    toast.error('Please fill in the investigation details');
+                    setLoading(false);
+                    return;
+                }
+
+                const validRootCauses = rootCauses.filter(rc => rc.causeId && rc.description);
+                if (validRootCauses.length === 0) {
+                    toast.error('Please add at least one root cause with category and description');
+                    setLoading(false);
+                    return;
+                }
+
 
                 let baseUrl = localStorage.getItem('baseUrl') || '';
                 const token = localStorage.getItem('token') || '';
@@ -796,6 +857,62 @@ export const IncidentNewDetails = () => {
                     });
                 }
 
+                // const injuries = [];
+                // if (hasInjury && injuredPersons.length > 0) {
+                //     for (const person of injuredPersons) {
+                //         let attachmentsBase64: string[] = [];
+                //         if (person.attachments && person.attachments.length > 0) {
+                //             attachmentsBase64 = await Promise.all(
+                //                 person.attachments.map(file => {
+                //                     return new Promise<string>((resolve, reject) => {
+                //                         const reader = new FileReader();
+                //                         reader.onload = () => resolve(reader.result as string);
+                //                         reader.onerror = reject;
+                //                         reader.readAsDataURL(file);
+                //                     });
+                //                 })
+                //             );
+                //         }
+
+                //         const bodyPartsArray: string[] = [];
+                //         if (person.bodyParts.head) bodyPartsArray.push('head');
+                //         if (person.bodyParts.neck) bodyPartsArray.push('neck');
+                //         if (person.bodyParts.arms) bodyPartsArray.push('arms');
+                //         if (person.bodyParts.eyes) bodyPartsArray.push('eyes');
+                //         if (person.bodyParts.legs) bodyPartsArray.push('legs');
+                //         if (person.bodyParts.skin) bodyPartsArray.push('skin');
+                //         if (person.bodyParts.mouth) bodyPartsArray.push('mouth');
+                //         if (person.bodyParts.ears) bodyPartsArray.push('ears');
+
+                //         const normalizedInjuryTypes = Array.isArray(person.injuryTypes)
+                //             ? person.injuryTypes
+                //             : typeof person.injuryTypes === 'string'
+                //                 ? person.injuryTypes.split(',').map(item => item.trim()).filter(Boolean)
+                //                 : [];
+
+                //         const typesToSend = bodyPartsArray.length > 0 ? bodyPartsArray : normalizedInjuryTypes;
+
+                //         const whoGotInjuredId = person.id && !isNaN(Number(person.id)) ? Number(person.id) : null;
+
+                //         injuries.push({
+                //             injury_type: person.injuryType || '',
+                //             injury_number: person.injuryNumber || '',
+                //             who_got_injured_id: whoGotInjuredId,
+                //             name: person.name,
+                //             mobile: person.mobile || '',
+                //             age: parseInt(person.age) || 0,
+                //             company_name: person.company || '',
+                //             role: person.role,
+                //             injured_user_type: person.type,
+                //             types: typesToSend,
+                //             injury_types: normalizedInjuryTypes.length > 0
+                //                 ? normalizedInjuryTypes.join(', ')
+                //                 : (person.injuryType || ''),
+                //             body_parts: bodyPartsArray,
+                //             attachments: attachmentsBase64
+                //         });
+                //     }
+                // }
                 const injuries = [];
                 if (hasInjury && injuredPersons.length > 0) {
                     for (const person of injuredPersons) {
@@ -812,23 +929,38 @@ export const IncidentNewDetails = () => {
                                 })
                             );
                         }
+
+                        const bodyPartsArray: string[] = [];
+                        if (person.bodyParts.head) bodyPartsArray.push('head');
+                        if (person.bodyParts.neck) bodyPartsArray.push('neck');
+                        if (person.bodyParts.arms) bodyPartsArray.push('arms');
+                        if (person.bodyParts.eyes) bodyPartsArray.push('eyes');
+                        if (person.bodyParts.legs) bodyPartsArray.push('legs');
+                        if (person.bodyParts.skin) bodyPartsArray.push('skin');
+                        if (person.bodyParts.mouth) bodyPartsArray.push('mouth');
+                        if (person.bodyParts.ears) bodyPartsArray.push('ears');
+
                         injuries.push({
                             injury_type: person.injuryType || '',
                             injury_number: person.injuryNumber || '',
-                            who_got_injured_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
-                            name: person.name,
+                            who_got_injured_id: person.type === 'internal' 
+                                ? (person.who_got_injured_id ? Number(person.who_got_injured_id) : null)
+                                : null,                    // ← FIXED: Use who_got_injured_id for internal
+                            name: person.name || '',
                             mobile: person.mobile || '',
                             age: parseInt(person.age) || 0,
                             company_name: person.company || '',
-                            role: person.role,
+                            role: person.role || '',
                             injured_user_type: person.type,
-                            types: person.injuryTypes || [],
-                            injury_types: person.injuryType || '',
+                            types: bodyPartsArray,
+                            injury_types: bodyPartsArray.join(', '),
+                            body_parts: bodyPartsArray,
                             attachments: attachmentsBase64
                         });
                     }
                 }
 
+                console.log("injuries", injuries)
                 const payload: any = {
                     incident_id: parseInt(id),
                     investigator_details
@@ -872,6 +1004,23 @@ export const IncidentNewDetails = () => {
 
             } else if (currentStep === 3) {
                 setLoading(true);
+                const validCorrectiveActions = correctiveActions?.filter(a => a.action && a.description) || [];
+                const hasCorrectiveAction = validCorrectiveActions.length > 0 || (selectedCorrectiveAction && correctiveActionDescription);
+
+                const validPreventiveActions = preventiveActions?.filter(a => a.action && a.description) || [];
+                const hasPreventiveAction = validPreventiveActions.length > 0 || (selectedPreventiveAction && preventiveActionDescription);
+
+                if (!hasCorrectiveAction) {
+                    toast.error('Please add at least one corrective action with action type and description');
+                    setLoading(false);
+                    return;
+                }
+
+                if (!hasPreventiveAction) {
+                    toast.error('Please add at least one preventive action with action type and description');
+                    setLoading(false);
+                    return;
+                }
                 let baseUrl = localStorage.getItem('baseUrl') || '';
                 const token = localStorage.getItem('token') || '';
 
@@ -970,8 +1119,9 @@ export const IncidentNewDetails = () => {
                 const result = await response.json();
                 console.log('Provisional closure submitted successfully:', result);
 
-                toast.success('Provisional closure submitted successfully!');
 
+                toast.success('Provisional closure submitted successfully!');
+                fetchIncidentDetails();
                 setCurrentStep(4);
             } else if (currentStep === 4) {
                 // Final Closure Submission
@@ -991,6 +1141,7 @@ export const IncidentNewDetails = () => {
                         if (action.action && action.description) {
                             corrective_fields.push({
                                 tag_type_id: parseInt(action.action),
+                                id: action.id ? parseInt(action.id) : null,
                                 tag_type: 'corrective',
                                 description: action.description,
                                 responsible_person_id: action.responsiblePerson
@@ -1001,7 +1152,7 @@ export const IncidentNewDetails = () => {
                         }
                     });
                 }
-
+                console.log()
                 // Prepare preventive actions for final closure
                 const preventive_fields = [];
                 if (preventiveActions && preventiveActions.length > 0) {
@@ -1009,6 +1160,7 @@ export const IncidentNewDetails = () => {
                         if (action.action && action.description) {
                             preventive_fields.push({
                                 tag_type_id: parseInt(action.action),
+                                id: action.id ? parseInt(action.id) : null,
                                 tag_type: 'preventive',
                                 description: action.description,
                                 responsible_person_id: action.responsiblePerson
@@ -1020,6 +1172,8 @@ export const IncidentNewDetails = () => {
                     });
                 }
 
+                console.log('Corrective Actions:', correctiveActions);
+                console.log('Preventive Actions:', preventiveActions);
                 const payload = {
                     about: 'Pms::Incident',
                     about_id: parseInt(id!),
@@ -1082,6 +1236,436 @@ export const IncidentNewDetails = () => {
         preventiveActionDescription, preventiveActionResponsiblePerson, preventiveActionDate,
         finalClosureCorrectiveDescription, finalClosurePreventiveDescription, nextReviewDate,
         nextReviewResponsible, navigate]);
+
+    // const handleSubmit = useCallback(async () => {
+    //     if (!id) {
+    //         toast.error('Incident ID is missing');
+    //         return;
+    //     }
+
+    //     console.log('Submitting... Current Step:', currentStep);
+
+    //     setLoading(true);
+
+    //     try {
+    //         let baseUrl = localStorage.getItem('baseUrl') || '';
+    //         const token = localStorage.getItem('token') || '';
+
+    //         if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    //             baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    //         }
+
+    //         if (currentStep === 2) {
+    //             // Validation
+    //             if (!investigators || investigators.length === 0) {
+    //                 toast.error('Please add at least one investigator');
+    //                 return;
+    //             }
+
+    //             const hasValidInvestigation = investigationDescription || subStandardConditionId || subStandardActId;
+    //             if (!hasValidInvestigation) {
+    //                 toast.error('Please fill in the investigation details');
+    //                 return;
+    //             }
+
+    //             const validRootCauses = rootCauses.filter(rc => rc.causeId && rc.description.trim());
+    //             if (validRootCauses.length === 0) {
+    //                 toast.error('Please add at least one root cause with category and description');
+    //                 return;
+    //             }
+
+    //             // ==================== INVESTIGATOR DETAILS ====================
+    //             const investigator_details = investigators.map(inv => ({
+    //                 user_id: inv.type === 'internal' && inv.id ? parseInt(inv.id) : null,
+    //                 name: inv.name?.trim() || '',
+    //                 role: inv.role?.trim() || '',
+    //                 email: inv.email?.trim() || '',
+    //                 investigator_type: inv.type
+    //             }));
+
+    //             // ==================== INCIDENT INVESTIGATIONS ====================
+    //             const incident_investigations = [{
+    //                 name: investigators[0]?.name || '',
+    //                 mobile: investigators[0]?.contactNo || '',
+    //                 designation: investigators[0]?.role || '',
+    //                 sub_standard_condition_id: subStandardConditionId ? parseInt(subStandardConditionId) : null,
+    //                 sub_standard_act_id: subStandardActId ? parseInt(subStandardActId) : null,
+    //                 description: investigationDescription?.trim() || ''
+    //             }];
+
+    //             // ==================== ROOT CAUSES ====================
+    //             const inc_root_causes = validRootCauses.map(rc => ({
+    //                 rca_category_id: parseInt(rc.causeId),
+    //                 description: rc.description.trim()
+    //             }));
+
+    //             // ==================== PROPERTY DAMAGES ====================
+    //             const property_damages: any[] = [];
+    //             if (hasPropertyDamage && selectedPropertyDamage) {
+    //                 const propertyDamageObj = propertyDamages.find(pd => pd.propertyType === selectedPropertyDamage);
+    //                 let attachmentsBase64: string[] = [];
+
+    //                 if (propertyDamageObj?.attachments?.length > 0) {
+    //                     attachmentsBase64 = await Promise.all(
+    //                         propertyDamageObj.attachments.map((file: File) =>
+    //                             new Promise<string>((resolve, reject) => {
+    //                                 const reader = new FileReader();
+    //                                 reader.onload = () => resolve(reader.result as string);
+    //                                 reader.onerror = reject;
+    //                                 reader.readAsDataURL(file);
+    //                             })
+    //                         )
+    //                     );
+    //                 }
+
+    //                 property_damages.push({
+    //                     property_type_id: parseInt(selectedPropertyDamage),
+    //                     attachments: attachmentsBase64
+    //                 });
+    //             }
+
+    //             // ==================== INJURIES - FIXED VERSION ====================
+
+    //             // if (hasInjury && injuredPersons && injuredPersons.length > 0) {
+    //             //     for (const person of injuredPersons) {
+    //             //         // Convert bodyParts object to array (this was the main issue)
+    //             //         const bodyPartsArray: string[] = [];
+    //             //         if (person.bodyParts?.head) bodyPartsArray.push('head');
+    //             //         if (person.bodyParts?.neck) bodyPartsArray.push('neck');
+    //             //         if (person.bodyParts?.arms) bodyPartsArray.push('arms');
+    //             //         if (person.bodyParts?.eyes) bodyPartsArray.push('eyes');
+    //             //         if (person.bodyParts?.legs) bodyPartsArray.push('legs');
+    //             //         if (person.bodyParts?.skin) bodyPartsArray.push('skin');
+    //             //         if (person.bodyParts?.mouth) bodyPartsArray.push('mouth');
+    //             //         if (person.bodyParts?.ears) bodyPartsArray.push('ears');
+
+    //             //         let attachmentsBase64: string[] = [];
+    //             //         if (person.attachments?.length > 0) {
+    //             //             attachmentsBase64 = await Promise.all(
+    //             //                 person.attachments.map((file: File) =>
+    //             //                     new Promise<string>((resolve, reject) => {
+    //             //                         const reader = new FileReader();
+    //             //                         reader.onload = () => resolve(reader.result as string);
+    //             //                         reader.onerror = reject;
+    //             //                         reader.readAsDataURL(file);
+    //             //                     })
+    //             //                 )
+    //             //             );
+    //             //         }
+
+    //             //         injuries.push({
+    //             //             name: person.name?.trim() || '',
+    //             //             age: parseInt(person.age || '0'),
+    //             //             mobile: person.mobile?.trim() || '',
+    //             //             company_name: person.company?.trim() || '',
+    //             //             role: person.role?.trim() || '',
+    //             //             injured_user_type: person.type || 'external',
+
+    //             //             // Key fixes for injuries
+    //             //             body_parts: bodyPartsArray,           // ← Important: array, not object
+    //             //             injury_type: person.injuryType || '',
+    //             //             injury_number: person.injuryNumber || '',
+
+    //             //             types: Array.isArray(person.injuryTypes) ? person.injuryTypes : [],
+    //             //             injury_types: Array.isArray(person.injuryTypes) ? person.injuryTypes : [],
+
+    //             //             // Remove or set to null - usually not needed when sending full details
+    //             //             who_got_injured_id: null,
+
+    //             //             attachments: attachmentsBase64
+    //             //         });
+    //             //     }
+    //             // }
+
+    //             // ==================== INJURIES - FINAL FIX ====================
+
+    //             // ==================== INJURIES - FINAL FIXED VERSION ====================
+    //             const injuries: any[] = [];
+
+    //             if (hasInjury && injuredPersons && injuredPersons.length > 0) {
+    //                 for (const person of injuredPersons) {
+    //                     let attachmentsBase64: string[] = [];
+    //                     if (person.attachments?.length > 0) {
+    //                         attachmentsBase64 = await Promise.all(
+    //                             person.attachments.map((file: File) =>
+    //                                 new Promise<string>((resolve, reject) => {
+    //                                     const reader = new FileReader();
+    //                                     reader.onload = () => resolve(reader.result as string);
+    //                                     reader.onerror = reject;
+    //                                     reader.readAsDataURL(file);
+    //                                 })
+    //                             )
+    //                         );
+    //                     }
+
+    //                     const bodyPartsArray: string[] = [];
+    //                     if (person.bodyParts?.head) bodyPartsArray.push('head');
+    //                     if (person.bodyParts?.neck) bodyPartsArray.push('neck');
+    //                     if (person.bodyParts?.arms) bodyPartsArray.push('arms');
+    //                     if (person.bodyParts?.eyes) bodyPartsArray.push('eyes');
+    //                     if (person.bodyParts?.legs) bodyPartsArray.push('legs');
+    //                     if (person.bodyParts?.skin) bodyPartsArray.push('skin');
+    //                     if (person.bodyParts?.mouth) bodyPartsArray.push('mouth');
+    //                     if (person.bodyParts?.ears) bodyPartsArray.push('ears');
+
+    //                     const injuryObj: any = {
+    //                         name: person.name?.trim() || '',
+    //                         age: parseInt(person.age || '0') || 0,
+    //                         mobile: person.mobile?.trim() || '',
+    //                         company_name: person.company?.trim() || '',
+    //                         role: person.role?.trim() || '',
+    //                         injured_user_type: person.type || 'external',
+
+    //                         injury_type: person.injuryType || '',
+    //                         injury_number: person.injuryNumber || '',
+
+    //                         types: Array.isArray(person.injuryTypes) ? person.injuryTypes : [],
+    //                         injury_types: Array.isArray(person.injuryTypes)
+    //                             ? person.injuryTypes.join(', ')
+    //                             : (person.injuryType || ''),
+
+    //                         body_parts: bodyPartsArray,
+    //                         attachments: attachmentsBase64
+    //                     };
+
+    //                     // === IMPORTANT: Add who_got_injured_id for internal users ===
+    //                     if (person.type === 'internal' && person.id) {
+    //                         const userId = Number(person.id);
+    //                         if (!isNaN(userId) && userId > 0 && userId <= 2147483647) {
+    //                             injuryObj.who_got_injured_id = userId;
+    //                         } else {
+    //                             console.warn('Invalid who_got_injured_id skipped:', person.id);
+    //                         }
+    //                     }
+
+    //                     injuries.push(injuryObj);
+    //                 }
+    //             }
+
+    //             // ==================== FINAL PAYLOAD ====================
+    //             const payload: any = {
+    //                 incident_id: parseInt(id),
+    //                 investigator_details,
+    //                 incident_investigations,
+    //                 inc_root_causes
+    //             };
+
+    //             if (property_damages.length > 0) {
+    //                 payload.property_damages = property_damages;
+    //             }
+
+    //             if (injuries.length > 0) {
+    //                 payload.injuries = injuries;
+    //             }
+
+    //             console.log('🚀 FINAL PAYLOAD (Step 2):', JSON.stringify(payload, null, 2));
+
+    //             // API Call
+    //             const response = await fetch(`${baseUrl}/pms/incidents/add_inc_details.json`, {
+    //                 method: 'PUT',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                     'Authorization': `Bearer ${token}`
+    //                 },
+    //                 body: JSON.stringify(payload)
+    //             });
+
+    //             if (!response.ok) {
+    //                 const errorData = await response.json().catch(() => ({}));
+    //                 console.error('API Error:', errorData);
+    //                 throw new Error(errorData.message || 'Failed to save investigation details');
+    //             }
+
+    //             const result = await response.json();
+    //             console.log('✅ Success:', result);
+
+    //             toast.success('Investigation details submitted successfully!');
+    //             setCurrentStep(3);   // Move to Provisional step
+
+    //         } else if (currentStep === 3) {
+
+    //             let baseUrl = localStorage.getItem('baseUrl') || '';
+    //             const token = localStorage.getItem('token') || '';
+
+    //             if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    //                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    //             }
+
+    //             const corrective_fields: any[] = [];
+    //             const preventive_fields: any[] = [];
+
+    //             // ✅ Corrective
+    //             correctiveActions?.forEach(action => {
+    //                 if (action.action && action.description) {
+    //                     corrective_fields.push({
+    //                         tag_type_id: parseInt(action.action),
+    //                         tag_type: 'corrective',
+    //                         description: action.description,
+    //                         responsible_person_id: action.responsiblePerson
+    //                             ? parseInt(action.responsiblePerson)
+    //                             : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+    //                         date: action.targetDate || new Date().toISOString().split('T')[0]
+    //                     });
+    //                 }
+    //             });
+
+    //             // ✅ Preventive
+    //             preventiveActions?.forEach(action => {
+    //                 if (action.action && action.description) {
+    //                     preventive_fields.push({
+    //                         tag_type_id: parseInt(action.action),
+    //                         tag_type: 'preventive',
+    //                         description: action.description,
+    //                         responsible_person_id: action.responsiblePerson
+    //                             ? parseInt(action.responsiblePerson)
+    //                             : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+    //                         date: action.targetDate || new Date().toISOString().split('T')[0]
+    //                     });
+    //                 }
+    //             });
+
+    //             if (corrective_fields.length === 0) {
+    //                 toast.error('Add at least one corrective action');
+    //                 return;
+    //             }
+
+    //             if (preventive_fields.length === 0) {
+    //                 toast.error('Add at least one preventive action');
+    //                 return;
+    //             }
+
+    //             const payload = {
+    //                 about: 'Pms::Incident',
+    //                 about_id: parseInt(id),
+    //                 comment: 'Provisional closure update',
+    //                 priority: 'medium',
+    //                 current_status: 'provisional_closure',
+    //                 osr_staff_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
+    //                 corrective_fields,
+    //                 preventive_fields,
+    //                 assigned_to: investigators[0]?.id ? parseInt(investigators[0].id) : null
+    //             };
+
+    //             console.log('🚀 STEP 3 PAYLOAD:', payload);
+
+    //             const response = await fetch(`${baseUrl}/pms/incidents/inc_clousure_details.json`, {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                     'Authorization': `Bearer ${token}`
+    //                 },
+    //                 body: JSON.stringify(payload)
+    //             });
+
+    //             if (!response.ok) {
+    //                 const err = await response.json().catch(() => ({}));
+    //                 console.error(err);
+    //                 throw new Error('Step 3 failed');
+    //             }
+
+    //             toast.success('Provisional closure submitted!');
+    //             setCurrentStep(4);
+
+    //         } else if (currentStep === 4) {
+
+    //             let baseUrl = localStorage.getItem('baseUrl') || '';
+    //             const token = localStorage.getItem('token') || '';
+
+    //             if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    //                 baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    //             }
+
+    //             const corrective_fields: any[] = [];
+    //             const preventive_fields: any[] = [];
+
+    //             correctiveActions?.forEach(action => {
+    //                 if (action.action && action.description) {
+    //                     corrective_fields.push({
+    //                         tag_type_id: parseInt(action.action),
+    //                         tag_type: 'corrective',
+    //                         description: action.description,
+    //                         responsible_person_id: action.responsiblePerson
+    //                             ? parseInt(action.responsiblePerson)
+    //                             : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+    //                         date: action.targetDate || new Date().toISOString().split('T')[0]
+    //                     });
+    //                 }
+    //             });
+
+    //             preventiveActions?.forEach(action => {
+    //                 if (action.action && action.description) {
+    //                     preventive_fields.push({
+    //                         tag_type_id: parseInt(action.action),
+    //                         tag_type: 'preventive',
+    //                         description: action.description,
+    //                         responsible_person_id: action.responsiblePerson
+    //                             ? parseInt(action.responsiblePerson)
+    //                             : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+    //                         date: action.targetDate || new Date().toISOString().split('T')[0]
+    //                     });
+    //                 }
+    //             });
+
+    //             const payload = {
+    //                 about: 'Pms::Incident',
+    //                 about_id: parseInt(id),
+    //                 comment: finalClosureCorrectiveDescription || 'Final closure update',
+    //                 priority: 'high',
+    //                 current_status: 'final_closure',
+    //                 osr_staff_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
+    //                 corrective_fields,
+    //                 preventive_fields,
+    //                 corrective_summary: finalClosureCorrectiveDescription || '',
+    //                 preventive_summary: finalClosurePreventiveDescription || '',
+    //                 next_review_date: nextReviewDate || null,
+    //                 next_review_responsible_person_id: nextReviewResponsible ? parseInt(nextReviewResponsible) : null,
+    //                 assigned_to: nextReviewResponsible
+    //                     ? parseInt(nextReviewResponsible)
+    //                     : (investigators[0]?.id ? parseInt(investigators[0].id) : null)
+    //             };
+
+    //             console.log('🚀 STEP 4 PAYLOAD:', payload);
+
+    //             const response = await fetch(`${baseUrl}/pms/incidents/inc_clousure_details.json`, {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                     'Authorization': `Bearer ${token}`
+    //                 },
+    //                 body: JSON.stringify(payload)
+    //             });
+
+    //             if (!response.ok) {
+    //                 const err = await response.json().catch(() => ({}));
+    //                 console.error(err);
+    //                 throw new Error('Step 4 failed');
+    //             }
+
+    //             toast.success('Final closure submitted!');
+    //             navigate('/safety/incident');
+    //         }
+
+    //     } catch (error: any) {
+    //         console.error('Submission Error:', error);
+    //         toast.error(error.message || 'Failed to submit. Please try again.');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // }, [
+    //     currentStep,
+    //     id,
+    //     investigators,
+    //     investigationDescription,
+    //     subStandardConditionId,
+    //     subStandardActId,
+    //     rootCauses,
+    //     hasPropertyDamage,
+    //     selectedPropertyDamage,
+    //     propertyDamages,
+    //     hasInjury,
+    //     injuredPersons
+    // ]);
+
 
     const steps = [
         { number: 1, label: 'Report' },
@@ -1197,7 +1781,7 @@ export const IncidentNewDetails = () => {
 
                 {/* Section 3: Investigation Details */}
                 {(Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0) ||
-                (Array.isArray(incident?.root_causes) && incident.root_causes.length > 0) ? (
+                    (Array.isArray(incident?.root_causes) && incident.root_causes.length > 0) ? (
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={3} />
@@ -1239,7 +1823,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Category</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
                                                 </tr>
@@ -1248,7 +1832,7 @@ export const IncidentNewDetails = () => {
                                                 {incident.root_causes.map((rc, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                                         <td className="py-3 px-4 text-gray-900 font-medium">{idx + 1}</td>
-                                                        <td className="py-3 px-4 text-gray-900 font-medium">{rc.rca_category_name || rc.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{rc.category_name || rc.name || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-700">{rc.description || '-'}</td>
                                                     </tr>
                                                 ))}
@@ -1263,7 +1847,7 @@ export const IncidentNewDetails = () => {
 
                 {/* Section 4: Injuries & Property */}
                 {(Array.isArray(incident?.injuries) && incident.injuries.length > 0) ||
-                (Array.isArray(incident?.property_damages) && incident.property_damages.length > 0) ? (
+                    (Array.isArray(incident?.property_damages) && incident.property_damages.length > 0) ? (
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={4} />
@@ -1309,7 +1893,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">#</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Property Type</th>
                                                 </tr>
                                             </thead>
@@ -1317,7 +1901,7 @@ export const IncidentNewDetails = () => {
                                                 {incident.property_damages.map((pd, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                                         <td className="py-3 px-4 text-gray-900 font-medium">{idx + 1}</td>
-                                                        <td className="py-3 px-4 text-gray-900">{pd.property_type_name || pd.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{pd.property_type || pd.name || '-'}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -1331,7 +1915,7 @@ export const IncidentNewDetails = () => {
 
                 {/* Section 5: Actions */}
                 {(Array.isArray(incident?.corrective_fields) && incident.corrective_fields.length > 0) ||
-                (Array.isArray(incident?.preventive_fields) && incident.preventive_fields.length > 0) ? (
+                    (Array.isArray(incident?.preventive_fields) && incident.preventive_fields.length > 0) ? (
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={5} />
@@ -1354,7 +1938,7 @@ export const IncidentNewDetails = () => {
                                             <tbody>
                                                 {incident.corrective_fields.map((action, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.action_name || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-700">{action.description || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-900">{action.date ? new Date(action.date).toLocaleDateString() : '-'}</td>
                                                     </tr>
@@ -1381,7 +1965,7 @@ export const IncidentNewDetails = () => {
                                             <tbody>
                                                 {incident.preventive_fields.map((action, idx) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900 font-medium">{action.action_name || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-700">{action.description || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-900">{action.date ? new Date(action.date).toLocaleDateString() : '-'}</td>
                                                     </tr>
@@ -1464,16 +2048,30 @@ export const IncidentNewDetails = () => {
                     </button>
                     <h1 className="text-lg font-semibold">Incident Details</h1>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadIncidentReport}
-                    disabled={reportDownloadLoading}
-                    className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
-                >
-                    <Download className="w-4 h-4" />
-                    {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
-                </Button>
+
+                {/* ✅ Buttons wrapper */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadIncidentReport}
+                        disabled={reportDownloadLoading}
+                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                    >
+                        <Download className="w-4 h-4" />
+                        {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/safety/incident/edit/${id}`)}
+                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        Edit
+                    </Button>
+                </div>
             </div>
 
             {/* Check if incident is closed or in final closure */}
@@ -1487,156 +2085,162 @@ export const IncidentNewDetails = () => {
 
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto">
-                {currentStep === 1 && (
-                    <ReportStep
-                        loading={loading}
-                        error={error}
-                        incident={incident}
-                        incidentOverTime={incidentOverTime}
-                        setIncidentOverTime={setIncidentOverTime}
-                    />
-                )}
-                {currentStep === 2 && (
-                    <InvestigateStep
-                        incident={incident}
-                        investigators={investigators}
-                        setInvestigators={setInvestigators}
-                        incidentOverTime={incidentOverTime}
-                        showInvestigateDetails={showInvestigateDetails}
-                        showInvestigatorForm={showInvestigatorForm}
-                        setShowInvestigatorForm={setShowInvestigatorForm}
-                        internalUsers={internalUsers}
-                        conditions={conditions}
-                        setConditions={setConditions}
-                        subStandardConditionId={subStandardConditionId}
-                        setSubStandardConditionId={setSubStandardConditionId}
-                        subStandardActId={subStandardActId}
-                        setSubStandardActId={setSubStandardActId}
-                        investigationDescription={investigationDescription}
-                        setInvestigationDescription={setInvestigationDescription}
-                        substandardConditionCategories={substandardConditionCategories}
-                        substandardActCategories={substandardActCategories}
-                        rootCauses={rootCauses}
-                        setRootCauses={setRootCauses}
-                        rcaCategories={rcaCategories}
-                        hasInjury={hasInjury}
-                        setHasInjury={setHasInjury}
-                        injuredPersons={injuredPersons}
-                        setInjuredPersons={setInjuredPersons}
-                        hasPropertyDamage={hasPropertyDamage}
-                        setHasPropertyDamage={setHasPropertyDamage}
-                        selectedPropertyDamage={selectedPropertyDamage}
-                        setSelectedPropertyDamage={setSelectedPropertyDamage}
-                        propertyDamageCategories={propertyDamageCategories}
-                        propertyDamages={propertyDamages}
-                        setPropertyDamages={setPropertyDamages}
-                    />
-                )}
-                {currentStep === 3 && (
-                    <ProvisionalStep
-                        incident={incident}
-                        investigators={investigators}
-                        incidentOverTime={incidentOverTime}
-                        correctiveActions={correctiveActions}
-                        setCorrectiveActions={setCorrectiveActions}
-                        preventiveActions={preventiveActions}
-                        setPreventiveActions={setPreventiveActions}
-                        selectedCorrectiveAction={selectedCorrectiveAction}
-                        setSelectedCorrectiveAction={setSelectedCorrectiveAction}
-                        correctiveActionDescription={correctiveActionDescription}
-                        setCorrectiveActionDescription={setCorrectiveActionDescription}
-                        correctiveActionResponsiblePerson={correctiveActionResponsiblePerson}
-                        setCorrectiveActionResponsiblePerson={setCorrectiveActionResponsiblePerson}
-                        correctiveActionDate={correctiveActionDate}
-                        setCorrectiveActionDate={setCorrectiveActionDate}
-                        selectedPreventiveAction={selectedPreventiveAction}
-                        setSelectedPreventiveAction={setSelectedPreventiveAction}
-                        preventiveActionDescription={preventiveActionDescription}
-                        setPreventiveActionDescription={setPreventiveActionDescription}
-                        preventiveActionResponsiblePerson={preventiveActionResponsiblePerson}
-                        setPreventiveActionResponsiblePerson={setPreventiveActionResponsiblePerson}
-                        preventiveActionDate={preventiveActionDate}
-                        setPreventiveActionDate={setPreventiveActionDate}
-                        nextReviewDate={nextReviewDate}
-                        setNextReviewDate={setNextReviewDate}
-                        nextReviewResponsible={nextReviewResponsible}
-                        setNextReviewResponsible={setNextReviewResponsible}
-                        correctiveActionsCategories={correctiveActionsCategories}
-                        preventiveActionsCategories={preventiveActionsCategories}
-                        internalUsers={internalUsers}
-                    />
-                )}
-                {currentStep === 4 && (
-                    <FinalClosureStep
-                        incident={incident}
-                        investigators={investigators}
-                        incidentOverTime={incidentOverTime}
-                        correctiveActions={correctiveActions}
-                        setCorrectiveActions={setCorrectiveActions}
-                        preventiveActions={preventiveActions}
-                        setPreventiveActions={setPreventiveActions}
-                        finalClosureCorrectiveDescription={finalClosureCorrectiveDescription}
-                        setFinalClosureCorrectiveDescription={setFinalClosureCorrectiveDescription}
-                        finalClosurePreventiveDescription={finalClosurePreventiveDescription}
-                        setFinalClosurePreventiveDescription={setFinalClosurePreventiveDescription}
-                        nextReviewDate={nextReviewDate}
-                        setNextReviewDate={setNextReviewDate}
-                        nextReviewResponsible={nextReviewResponsible}
-                        setNextReviewResponsible={setNextReviewResponsible}
-                        correctiveActionsCategories={correctiveActionsCategories}
-                        preventiveActionsCategories={preventiveActionsCategories}
-                        internalUsers={internalUsers}
-                    />
-                )}
-            </div>
+                        {currentStep === 1 && (
+                            <ReportStep
+                                loading={loading}
+                                error={error}
+                                incident={incident}
+                                incidentOverTime={incidentOverTime}
+                                setIncidentOverTime={setIncidentOverTime}
+                            />
+                        )}
+                        {currentStep === 2 && (
+                            <InvestigateStep
+                                incident={incident}
+                                investigators={investigators}
+                                setInvestigators={setInvestigators}
+                                incidentOverTime={incidentOverTime}
+                                showInvestigateDetails={showInvestigateDetails}
+                                showInvestigatorForm={showInvestigatorForm}
+                                setShowInvestigatorForm={setShowInvestigatorForm}
+                                internalUsers={internalUsers}
+                                conditions={conditions}
+                                setConditions={setConditions}
+                                subStandardConditionId={subStandardConditionId}
+                                setSubStandardConditionId={setSubStandardConditionId}
+                                subStandardActId={subStandardActId}
+                                setSubStandardActId={setSubStandardActId}
+                                investigationDescription={investigationDescription}
+                                setInvestigationDescription={setInvestigationDescription}
+                                substandardConditionCategories={substandardConditionCategories}
+                                substandardActCategories={substandardActCategories}
+                                rootCauses={rootCauses}
+                                setRootCauses={setRootCauses}
+                                rcaCategories={rcaCategories}
+                                hasInjury={hasInjury}
+                                setHasInjury={setHasInjury}
+                                injuredPersons={injuredPersons}
+                                setInjuredPersons={setInjuredPersons}
+                                hasPropertyDamage={hasPropertyDamage}
+                                setHasPropertyDamage={setHasPropertyDamage}
+                                selectedPropertyDamage={selectedPropertyDamage}
+                                setSelectedPropertyDamage={setSelectedPropertyDamage}
+                                propertyDamageCategories={propertyDamageCategories}
+                                propertyDamages={propertyDamages}
+                                setPropertyDamages={setPropertyDamages}
+                            />
+                        )}
+                        {currentStep === 3 && (
+                            <ProvisionalStep
+                                incident={incident}
+                                investigators={investigators}
+                                incidentOverTime={incidentOverTime}
+                                correctiveActions={correctiveActions}
+                                setCorrectiveActions={setCorrectiveActions}
+                                preventiveActions={preventiveActions}
+                                setPreventiveActions={setPreventiveActions}
+                                selectedCorrectiveAction={selectedCorrectiveAction}
+                                setSelectedCorrectiveAction={setSelectedCorrectiveAction}
+                                correctiveActionDescription={correctiveActionDescription}
+                                setCorrectiveActionDescription={setCorrectiveActionDescription}
+                                correctiveActionResponsiblePerson={correctiveActionResponsiblePerson}
+                                setCorrectiveActionResponsiblePerson={setCorrectiveActionResponsiblePerson}
+                                correctiveActionDate={correctiveActionDate}
+                                setCorrectiveActionDate={setCorrectiveActionDate}
+                                selectedPreventiveAction={selectedPreventiveAction}
+                                setSelectedPreventiveAction={setSelectedPreventiveAction}
+                                preventiveActionDescription={preventiveActionDescription}
+                                setPreventiveActionDescription={setPreventiveActionDescription}
+                                preventiveActionResponsiblePerson={preventiveActionResponsiblePerson}
+                                setPreventiveActionResponsiblePerson={setPreventiveActionResponsiblePerson}
+                                preventiveActionDate={preventiveActionDate}
+                                setPreventiveActionDate={setPreventiveActionDate}
+                                nextReviewDate={nextReviewDate}
+                                setNextReviewDate={setNextReviewDate}
+                                nextReviewResponsible={nextReviewResponsible}
+                                setNextReviewResponsible={setNextReviewResponsible}
+                                correctiveActionsCategories={correctiveActionsCategories}
+                                preventiveActionsCategories={preventiveActionsCategories}
+                                internalUsers={internalUsers}
+                            />
+                        )}
+                        {currentStep === 4 && (
+                            <FinalClosureStep
+                                incident={incident}
+                                investigators={investigators}
+                                incidentOverTime={incidentOverTime}
+                                correctiveActions={correctiveActions}
+                                setCorrectiveActions={setCorrectiveActions}
+                                preventiveActions={preventiveActions}
+                                setPreventiveActions={setPreventiveActions}
+                                finalClosureCorrectiveDescription={finalClosureCorrectiveDescription}
+                                setFinalClosureCorrectiveDescription={setFinalClosureCorrectiveDescription}
+                                finalClosurePreventiveDescription={finalClosurePreventiveDescription}
+                                setFinalClosurePreventiveDescription={setFinalClosurePreventiveDescription}
+                                nextReviewDate={nextReviewDate}
+                                setNextReviewDate={setNextReviewDate}
+                                nextReviewResponsible={nextReviewResponsible}
+                                setNextReviewResponsible={setNextReviewResponsible}
+                                correctiveActionsCategories={correctiveActionsCategories}
+                                preventiveActionsCategories={preventiveActionsCategories}
+                                internalUsers={internalUsers}
+                            />
+                        )}
+                    </div>
 
-            {/* Footer Buttons */}
-            <div className="border-t p-4 space-y-2">
-                {currentStep === 1 && (
-                    <Button
-                        className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                        onClick={handleNext}
-                    >
-                        Next
-                    </Button>
-                )}
+                    {/* Footer Buttons */}
+                    <div className="border-t p-4 space-y-2">
+                        {currentStep === 1 && (
+                            <Button
+                                className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                onClick={handleNext}
+                            >
+                                Next
+                            </Button>
+                        )}
 
-                {currentStep === 2 && (
-                    <>
-                        <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={handleSaveAsDraft}
-                        >
-                            Save as draft
-                        </Button>
-                        <Button
-                            className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                            onClick={handleSubmit}
-                        >
-                            Next
-                        </Button>
-                    </>
-                )}
+                        {currentStep === 2 && (
+                            <>
+                                <div className="flex justify-center items-center gap-3 p-4">
+                                    <Button
+                                        variant="outline"
+                                        className="w-25 mx-3"
+                                        onClick={handleSaveAsDraft}
+                                    >
+                                        Save as draft
+                                    </Button>
+                                    <Button
+                                        className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                        onClick={handleSubmit}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </>
+                        )}
 
-                {currentStep === 3 && (
-                    <Button
-                        className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                        onClick={handleSubmit}
-                    >
-                        Submit
-                    </Button>
-                )}
+                        {currentStep === 3 && (
+                            <div className="flex justify-center">
+                                <Button
+                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
+                            </div>
+                        )}
 
-                {currentStep === 4 && (
-                    <Button
-                        className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                        onClick={handleSubmit}
-                    >
-                        Submit
-                    </Button>
-                )}
-            </div>
+                        {currentStep === 4 && (
+                            <div className="flex justify-center">
+                                <Button
+                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
         </div>

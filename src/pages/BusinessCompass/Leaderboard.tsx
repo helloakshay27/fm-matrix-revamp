@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AlertCircle,
   BookOpen,
@@ -6,10 +6,14 @@ import {
   CheckCircle2,
   FileText,
   LineChart,
+  Loader2,
+  Medal,
   Star,
   TrendingUp,
   Trophy,
+  MessageSquarePlus,
 } from "lucide-react";
+import { GiveFeedbackModal } from "@/components/BusinessCompass/GiveFeedbackModal";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import {
@@ -21,6 +25,21 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
+import { getBaseUrl, getToken } from "@/utils/auth";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface LeaderboardEntry {
+  user_id: number;
+  name: string;
+  email: string;
+  daily_points: number;
+  weekly_points: number;
+  feedback_points: number;
+  total_points: number;
+}
+
+// ─── Helper components ────────────────────────────────────────────────────────
 
 function ScoresNotLiveAlert() {
   return (
@@ -60,6 +79,207 @@ function LeaderboardEmptyState() {
     </div>
   );
 }
+
+function LeaderboardLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-20 text-center sm:py-24">
+      <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#DA7756]" />
+      <p className="text-sm text-neutral-500">Loading leaderboard…</p>
+    </div>
+  );
+}
+
+function LeaderboardError({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-20 text-center sm:py-24">
+      <AlertCircle className="mb-4 h-10 w-10 text-red-400" strokeWidth={1.5} />
+      <h3 className="text-lg font-bold text-neutral-800">
+        Failed to load leaderboard
+      </h3>
+      <p className="mt-2 max-w-md text-sm text-neutral-500">{message}</p>
+    </div>
+  );
+}
+
+function RankBadge({ rank }: { rank: number }) {
+  if (rank === 1)
+    return (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 shadow-sm">
+        <Trophy className="h-4 w-4 text-white" strokeWidth={2.5} />
+      </span>
+    );
+  if (rank === 2)
+    return (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-300 shadow-sm">
+        <Medal className="h-4 w-4 text-white" strokeWidth={2.5} />
+      </span>
+    );
+  if (rank === 3)
+    return (
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-600/80 shadow-sm">
+        <Medal className="h-4 w-4 text-white" strokeWidth={2.5} />
+      </span>
+    );
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-xs font-bold text-neutral-500">
+      {rank}
+    </span>
+  );
+}
+
+function UserAvatar({ name }: { name: string }) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
+
+  // Deterministic pastel color from name
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  const bg = `hsl(${hue}, 55%, 70%)`;
+  const fg = `hsl(${hue}, 40%, 25%)`;
+
+  return (
+    <span
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+      style={{ background: bg, color: fg }}
+    >
+      {initials || "?"}
+    </span>
+  );
+}
+
+function PointPill({
+  value,
+  label,
+  colorClass,
+}: {
+  value: number;
+  label: string;
+  colorClass: string;
+}) {
+  return (
+    <div className={cn("rounded-lg px-2.5 py-1.5 text-center", colorClass)}>
+      <p className="text-xs font-bold leading-none">{value}</p>
+      <p className="mt-0.5 text-[10px] font-medium leading-none opacity-75">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function LeaderboardTable({
+  entries,
+  onGiveFeedback,
+}: {
+  entries: LeaderboardEntry[];
+  onGiveFeedback: (user: { user_id: number; name: string }) => void;
+}) {
+  if (entries.length === 0) return <LeaderboardEmptyState />;
+
+  // Sort by total_points descending (API may already do this, but ensure it)
+  const sorted = [...entries].sort((a, b) => b.total_points - a.total_points);
+
+  return (
+    <div className="divide-y divide-neutral-100/80">
+      {sorted.map((entry, idx) => {
+        const rank = idx + 1;
+        const isTopThree = rank <= 3;
+
+        return (
+          <div
+            key={entry.user_id}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3.5 sm:px-5 sm:py-4",
+              isTopThree && "bg-gradient-to-r from-[#DA7756]/5 to-transparent",
+              rank === 1 && "from-amber-50/60"
+            )}
+          >
+            {/* Rank */}
+            <div className="shrink-0">
+              <RankBadge rank={rank} />
+            </div>
+
+            {/* Avatar */}
+            <UserAvatar name={entry.name} />
+
+            {/* Name & email */}
+            <div className="min-w-0 flex-1">
+              <p
+                className={cn(
+                  "truncate text-sm font-semibold text-neutral-800",
+                  rank === 1 && "text-amber-700"
+                )}
+              >
+                {entry.name.trim()}
+              </p>
+              <p className="truncate text-xs text-neutral-400">{entry.email}</p>
+            </div>
+
+            {/* Point breakdown — hidden on very small screens */}
+            <div className="hidden shrink-0 gap-1.5 sm:flex">
+              <PointPill
+                value={entry.daily_points}
+                label="Daily"
+                colorClass="bg-sky-50 text-sky-700"
+              />
+              <PointPill
+                value={entry.weekly_points}
+                label="Weekly"
+                colorClass="bg-violet-50 text-violet-700"
+              />
+              <PointPill
+                value={entry.feedback_points}
+                label="Feedback"
+                colorClass="bg-emerald-50 text-emerald-700"
+              />
+            </div>
+
+            {/* Total */}
+            <div className="flex shrink-0 items-center gap-4 text-right">
+              <div className="flex flex-col items-end">
+                <p
+                  className={cn(
+                    "text-base font-extrabold tabular-nums",
+                    rank === 1
+                      ? "text-amber-500"
+                      : rank === 2
+                        ? "text-neutral-400"
+                        : rank === 3
+                          ? "text-amber-700/70"
+                          : "text-neutral-700"
+                  )}
+                >
+                  {entry.total_points}
+                </p>
+                <p className="text-[10px] font-medium text-neutral-400">pts</p>
+              </div>
+
+              {/* Add Give Feedback Action */}
+              <button
+                onClick={() =>
+                  onGiveFeedback({ user_id: entry.user_id, name: entry.name })
+                }
+                title={`Give feedback to ${entry.name}`}
+                className="group flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#DA7756]/10 to-transparent p-2 text-[#DA7756] transition-all hover:scale-110 hover:from-[#DA7756] hover:text-white"
+              >
+                <MessageSquarePlus className="h-5 w-5 group-hover:animate-pulse" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── How Scores Work ──────────────────────────────────────────────────────────
 
 function SectionTitle({
   icon: Icon,
@@ -135,7 +355,7 @@ const FEEDBACK_RATING_COLUMNS = [
 function HowScoresWorkContent() {
   const tips = [
     "Stay consistent with daily reports — they add up over time.",
-    "Prioritize weekly reviews; they’re worth much more than a single daily report.",
+    "Prioritize weekly reviews; they're worth much more than a single daily report.",
     "Focus on quality: clear KPIs, achievements, and context improve automated scores.",
     "Use the date filter to see standings for the window that matters to you.",
   ];
@@ -299,8 +519,79 @@ function HowScoresWorkContent() {
   );
 }
 
+// ─── Main component ───────────────────────────────────────────────────────────
+
 const Leaderboard = () => {
   const [timeRange, setTimeRange] = useState("30");
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedUserForFeedback, setSelectedUserForFeedback] = useState<{
+    user_id: number;
+    name: string;
+  } | null>(null);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
+  const handleGiveFeedback = (user: { user_id: number; name: string }) => {
+    setSelectedUserForFeedback(user);
+    setIsFeedbackModalOpen(true);
+  };
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
+        const token = getToken();
+
+        const url = `${baseUrl.replace(/\/+$/, "")}/business_compass/leaderboard`;
+
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, { headers });
+
+        if (!response.ok) {
+          throw new Error(
+            `Server returned ${response.status} ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        setEntries(data.leaderboard ?? []);
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [timeRange]);
+
+  // Column header for the leaderboard card
+  const tableHeader = !loading && !error && entries.length > 0 && (
+    <div className="hidden items-center gap-3 border-b border-neutral-100 px-5 pb-3 pt-4 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 sm:flex">
+      <span className="w-8" />
+      <span className="w-9" />
+      <span className="flex-1">Member</span>
+      <div className="flex gap-1.5">
+        <span className="w-14 text-center text-sky-500">Daily</span>
+        <span className="w-14 text-center text-violet-500">Weekly</span>
+        <span className="w-16 text-center text-emerald-500">Feedback</span>
+      </div>
+      <span className="w-10 text-right">Total</span>
+    </div>
+  );
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
@@ -375,9 +666,27 @@ const Leaderboard = () => {
             value="leaderboard"
             className="mt-4 focus-visible:outline-none"
           >
-            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
-              <LeaderboardEmptyState />
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
+              {tableHeader}
+              {loading ? (
+                <LeaderboardLoading />
+              ) : error ? (
+                <LeaderboardError message={error} />
+              ) : (
+                <LeaderboardTable
+                  entries={entries}
+                  onGiveFeedback={handleGiveFeedback}
+                />
+              )}
             </Card>
+
+            {/* Summary bar */}
+            {!loading && !error && entries.length > 0 && (
+              <p className="mt-3 text-center text-xs text-neutral-400">
+                Showing {entries.length} member
+                {entries.length !== 1 ? "s" : ""}
+              </p>
+            )}
           </TabsContent>
 
           <TabsContent
@@ -388,6 +697,18 @@ const Leaderboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <GiveFeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        receiver={selectedUserForFeedback}
+        onSuccess={() => {
+          setIsFeedbackModalOpen(false);
+          setSelectedUserForFeedback(null);
+          // Re-trigger leaderboard fetch to reflect updated feedback_points
+          setTimeRange((prev) => prev);
+        }}
+      />
     </div>
   );
 };

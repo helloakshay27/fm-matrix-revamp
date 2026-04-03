@@ -85,6 +85,7 @@ const BUCKET_LABEL_MAP: Record<string, string> = {
   "16-30": "16 - 30 Days",
   "31-45": "31 - 45 Days",
   "45+": "> 45 Days",
+  all: "Total (All Buckets)",
 };
 
 const statusColorMap: Record<string, string> = {
@@ -223,50 +224,80 @@ const ARAgingSummaryReport: React.FC = () => {
     if (!customerData) return [];
 
     const agingDetails = customerData.aging_details || {};
-    const key = BUCKET_KEY_MAP[bucket];
-    const data = agingDetails[key]?.data || [];
 
-    return data.map((d: any, i: number) => ({
+    const mapRow = (d: any, i: number): DetailRow => ({
       id: `${i}`,
       invoiceId: d.id || d.invoice_id || "",
       customerId: customerData.id || "",
       date: formatDate(d.date),
-      dueDate: formatDate(d.due_date),
+      dueDate: d.due_date ? formatDate(d.due_date) : "--",
       transactionNo: d.number || "--",
       type: d.type || "--",
-      status: d.days_overdue > 0 ? "Overdue" : "Sent",
+      status: d.days_overdue > 0 ? "Overdue" : "Open",
       customerName: customerData.name,
       age: d.days_overdue > 0 ? `${d.days_overdue} Days` : "--",
-      amount: d.balance_due ?? 0,
-      balanceDue: d.balance_due ?? 0,
-    }));
+      amount: d.balance ?? d.balance_due ?? 0,
+      balanceDue: d.balance ?? d.balance_due ?? 0,
+    });
+
+    if (bucket === "all") {
+      const allKeys = ["current", "1_15", "16_30", "31_45", "gt_45"];
+      return allKeys.flatMap((key, ki) =>
+        (agingDetails[key]?.data || []).map((d: any, i: number) => mapRow(d, ki * 1000 + i))
+      );
+    }
+
+    const key = BUCKET_KEY_MAP[bucket];
+    const data = agingDetails[key]?.data || [];
+    return data.map(mapRow);
   };
 
   const allDetailRows = useMemo(() => {
     if (!detailView) return [];
+
+    const makeSection = (id: string, label: string, amount: number, balanceDue: number) => ({
+      id, date: "", dueDate: "", transactionNo: "", type: "",
+      status: "__section__", customerName: label,
+      age: "", amount, balanceDue,
+    });
+
+    if (detailView.bucket === "all") {
+      const buckets = [
+        { bucket: "current", label: "Current" },
+        { bucket: "1-15",    label: "1 - 15 Days" },
+        { bucket: "16-30",   label: "16 - 30 Days" },
+        { bucket: "31-45",   label: "31 - 45 Days" },
+        { bucket: "45+",     label: "> 45 Days" },
+      ];
+
+      const result: any[] = [];
+      let grandAmount = 0;
+      let grandBalance = 0;
+
+      buckets.forEach(({ bucket, label }) => {
+        const data = getDetailRows(bucket, detailView.customer);
+        if (data.length === 0) return;
+        const secAmount  = data.reduce((s, r) => s + r.amount, 0);
+        const secBalance = data.reduce((s, r) => s + r.balanceDue, 0);
+        grandAmount  += secAmount;
+        grandBalance += secBalance;
+        result.push(makeSection(`__section__${bucket}`, label, secAmount, secBalance));
+        result.push(...data);
+      });
+
+      result.push({ id: "__total__", date: "", dueDate: "", transactionNo: "", type: "", status: "__total__", customerName: "Total", age: "", amount: grandAmount, balanceDue: grandBalance });
+      return result;
+    }
+
     const data = getDetailRows(detailView.bucket, detailView.customer);
     const bucketLabel = BUCKET_LABEL_MAP[detailView.bucket] || detailView.bucket;
+    const totalAmount    = data.reduce((sum, r) => sum + r.amount, 0);
     const totalBalanceDue = data.reduce((sum, r) => sum + r.balanceDue, 0);
-    const totalAmount = data.reduce((sum, r) => sum + r.amount, 0);
 
     return [
-      // Section header row
-      {
-        id: "__section__",
-        date: "", dueDate: "", transactionNo: "", type: "",
-        status: "__section__",
-        customerName: bucketLabel,
-        age: "", amount: 0, balanceDue: 0,
-      },
+      makeSection("__section__", bucketLabel, totalAmount, totalBalanceDue),
       ...data,
-      // Total row
-      {
-        id: "__total__",
-        date: "", dueDate: "", transactionNo: "", type: "",
-        status: "__total__",
-        customerName: "Total",
-        age: "", amount: totalAmount, balanceDue: totalBalanceDue,
-      },
+      { id: "__total__", date: "", dueDate: "", transactionNo: "", type: "", status: "__total__", customerName: "Total", age: "", amount: totalAmount, balanceDue: totalBalanceDue },
     ];
   }, [detailView, rawData]);
 
@@ -293,7 +324,7 @@ const ARAgingSummaryReport: React.FC = () => {
   const makeBucketCell = (value: number, bucket: string, customerName: string, isTotal: boolean) =>
     isTotal ? (
       <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(value)}</span>
-    ) : value > 0 ? (
+    ) : value !== 0 ? (
       <span
         className="text-blue-600 cursor-pointer hover:underline font-medium text-sm"
         onClick={() => setDetailView({ bucket, customer: customerName })}
@@ -323,30 +354,41 @@ const ARAgingSummaryReport: React.FC = () => {
       day16to30: makeBucketCell(row.day16to30, "16-30", row.customerName, isTotal),
       day31to45: makeBucketCell(row.day31to45, "31-45", row.customerName, isTotal),
       dayAbove45: makeBucketCell(row.dayAbove45, "45+", row.customerName, isTotal),
-      total: (
-        <span className={`font-semibold text-sm ${isTotal ? "text-[#1A1A1A]" : ""}`}>
+      total: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(row.total)}</span>
+      ) : row.total !== 0 ? (
+        <span
+          className="text-blue-600 cursor-pointer hover:underline font-semibold text-sm"
+          onClick={() => setDetailView({ bucket: "all", customer: row.customerName })}
+        >
           {formatCurrency(row.total)}
         </span>
+      ) : (
+        <span className="text-sm text-gray-500">{formatCurrency(row.total)}</span>
       ),
-      totalFCY: (
-        <span className={`text-sm ${isTotal ? "font-bold text-[#1A1A1A]" : ""}`}>
+      totalFCY: isTotal ? (
+        <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(row.totalFCY)}</span>
+      ) : row.totalFCY !== 0 ? (
+        <span
+          className="text-blue-600 cursor-pointer hover:underline text-sm"
+          onClick={() => setDetailView({ bucket: "all", customer: row.customerName })}
+        >
           {formatCurrency(row.totalFCY)}
         </span>
+      ) : (
+        <span className="text-sm text-gray-500">{formatCurrency(row.totalFCY)}</span>
       ),
     };
   };
 
   const renderDetailRow = (row: DetailRow) => {
     if (row.status === "__section__") {
-      const sectionCell = (
-        <span className="font-semibold text-sm text-[#1A1A1A] bg-[#f9f7f2]">
-          {row.customerName}
-        </span>
-      );
       return {
-        date: sectionCell, dueDate: <span />, transactionNo: <span />,
-        type: <span />, status: <span />, customerName: <span />,
-        age: <span />, amount: <span />, balanceDue: <span />,
+        date: <span className="font-semibold text-sm text-[#1A1A1A]">{row.customerName}</span>,
+        dueDate: <span />, transactionNo: <span />,
+        type: <span />, status: <span />, customerName: <span />, age: <span />,
+        amount:     <span className="font-semibold text-sm text-[#1A1A1A]">{formatCurrency(row.amount)}</span>,
+        balanceDue: <span className="font-semibold text-sm text-[#1A1A1A]">{formatCurrency(row.balanceDue)}</span>,
       };
     }
 

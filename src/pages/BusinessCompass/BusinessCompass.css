@@ -1,0 +1,483 @@
+:root {
+  --bc-primary: #DA7756;
+  --bc-primary-light: #F6F4EE;
+  --bc-primary-dark: #2C2C2C;
+  --bc-secondary-green: #798C5E;
+  --bc-secondary-purple: #CECBF6;
+  --bc-secondary-teal: #9EC8BA;
+  --bc-info: #6B9BCC;
+  --bc-tag-bg: #CECBF6;
+  --bc-warning: #EDC488;
+  --bc-card-border: #E5E7EB;
+  --bc-card-bg: #ffffff;
+  --bc-divider: #D5DBDB;
+  --bc-success: #89F7E7;
+  --bc-error: #E7848E;
+  --bc-exception: #AAB9C5;
+  --bc-growth: #108C72;
+  --bc-hover: rgba(218, 119, 86, 0.15); 
+  --bc-selected: rgba(218, 119, 86, 0.08);
+
+  /* New Dashboard Colors */
+  --bc-orange-banner: #ee6103;
+  --bc-red-banner: #bc181d;
+  --bc-blue-card: #eef7ff;
+  --bc-purple-card: #f9f4ff;
+  --bc-pink-card: #ffeef2;
+  --bc-yellow-card: #fff9e6;
+  --bc-green-border: #10b981;
+  --bc-purple-border: #a855f7;
+  --bc-dark-blue: #1e1b4b;
+}
+
+.bc-dashboard-container {
+  padding: 32px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Banner Styles */
+.bc-banner {
+  border-radius: 16px;
+  padding: 24px 32px;
+  color: white;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bc-banner-orange { 
+  background: linear-gradient(135deg, #ee6103 0%, #ff8c42 100%);
+}
+
+.bc-banner-red { 
+  background: linear-gradient(135deg, #bc181d 0%, #dc2626 100%); 
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px;
+}
+
+.bc-banner-title {
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  letter-spacing: -0.02em;
+}
+
+.bc-banner-subtitle {
+  font-size: 16px;
+  opacity: 0.95;
+  max-width: 600px;
+}
+
+.bc-banner-btn {
+  background-color: white;
+  color: #333;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  width: fit-content;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.bc-banner-btn-secondary {
+  background-color: white;
+  color: #bc181d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+}
+
+.bc-banner-btn:hover {
+  filter: brightness(0.95);
+}
+
+/* Card Styles */
+.bc-card {
+  background: white;
+  border: 1px solid var(--bc-card-border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.bc-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 20px;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+}
+
+.bc-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  color: #64748b;
+  font-size: 15px;
+  padding: 24px 0;
+}
+
+.bc-card-icon-lg {
+  width: 64px;
+  height: 64px;
+  opacity: 0.15;
+}
+
+.bc-btn-submit {
+  background-color: #334155;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
+}
+
+.bc-btn-purple {
+  background-color: #9333ea;
+}
+
+.bc-btn-submit:hover {
+  filter: brightness(1.1);
+}
+
+/* Achievement Section */
+.bc-achievements-card {
+  padding: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.bc-progress-container {
+  margin-top: 24px;
+}
+
+.bc-progress-bar-bg {
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 5px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.bc-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  border-radius: 5px;
+  width: 15%; /* Just for visualization */
+}
+
+.bc-badge-tag {
+  background: #f1f5f9;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Alert/Feedback Section */
+.bc-alert-card {
+  background-color: #fff7ed;
+  border-color: #ffedd5;
+}
+
+.bc-feedback-card {
+  background-color: #f0fdf4;
+  border-color: #dcfce7;
+}
+
+.bc-goals-card {
+  background-color: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.bc-alert-inner {
+  border: 1px solid #fee2e2;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.bc-feedback-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.bc-stat-box {
+  border: 1px solid #f1f5f9;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bc-badge-count {
+  background: #ea580c;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  position: absolute;
+  top: 24px;
+  right: 24px;
+}
+
+/* Footer Stats */
+.bc-footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+.bc-hall-of-fame {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  color: white;
+}
+
+.bc-hall-of-fame .bc-card-header {
+  color: #fbbf24;
+}
+
+.bc-stat-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.bc-stat-card .bc-card-header {
+  justify-content: center;
+  font-size: 15px;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.bc-bg-pink { background-color: #ef4444; color: white; }
+/* Daily Report Specific Styles */
+.bc-info-banner {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.bc-info-icon-box {
+  background-color: #2563eb;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bc-info-text {
+  flex: 1;
+}
+
+.bc-info-title {
+  font-weight: 600;
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
+.bc-info-link {
+  font-size: 12px;
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.bc-tabs-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background-color: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.bc-tab {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.bc-tab-active {
+  background-color: white;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bc-report-calendar-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.bc-calendar-header {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.bc-calendar-carousel {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 10px 4px 20px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.bc-calendar-carousel::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bc-calendar-carousel::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+.bc-calendar-carousel::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.bc-day-card {
+  min-width: 84px;
+  height: 100px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.bc-day-card-selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.bc-day-dayname {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.bc-day-date {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.bc-day-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
+  width: 80%;
+  text-align: center;
+}
+
+.bc-day-missed { background-color: #ef4444; color: white; }
+.bc-day-holiday { background-color: #facd55; color: #854d0e; }
+.bc-day-upcoming { background-color: #e2e8f0; color: #64748b; }
+.bc-day-filled { background-color: #22c55e; color: white; }
+
+.bc-calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.bc-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bc-legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.bc-legend-green { background-color: #22c55e; }
+.bc-legend-red { background-color: #ef4444; }
+.bc-legend-yellow { background-color: #facd55; }
+.bc-legend-gray { background-color: #e2e8f0; }
+
+
+
