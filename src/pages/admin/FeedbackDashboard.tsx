@@ -331,14 +331,9 @@ async function safeApiRequest<T>(endpoint: string): Promise<T> {
   const token = embeddedToken || API_CONFIG.TOKEN;
   const { start, end } = getFeedbackDateRange();
   const baseParams: Record<string, string | number> = {
-    _t: Date.now(),
     start_date: start,
     end_date: end,
   };
-
-  if (token) {
-    baseParams.access_token = token;
-  }
 
   let requestError: unknown = null;
 
@@ -351,31 +346,13 @@ async function safeApiRequest<T>(endpoint: string): Promise<T> {
       timeout: 20000,
       headers: {
         Accept: "application/json",
+        ...(token ? { Authorization: getFeedbackAuthHeader() } : {}),
       },
     });
 
     return response.data;
   } catch (error) {
     requestError = error;
-    if (token) {
-      try {
-        const fallbackResponse = await axios.request<T>({
-          method: "get",
-          baseURL,
-          url: path,
-          params: { _t: Date.now() },
-          timeout: 20000,
-          headers: {
-            Accept: "application/json",
-            Authorization: getFeedbackAuthHeader(),
-          },
-        });
-
-        return fallbackResponse.data;
-      } catch (fallbackError) {
-        requestError = fallbackError;
-      }
-    }
 
     if (axios.isAxiosError(requestError)) {
       const responseData = toApiRecord(requestError.response?.data);
