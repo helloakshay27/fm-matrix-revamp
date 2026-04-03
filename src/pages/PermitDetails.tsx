@@ -827,10 +827,10 @@ export const PermitDetails = () => {
             return;
         }
 
-        // if (selectedExtendAssignees.length === 0) {
-        //     toast.error('Please select at least one assignee');
-        //     return;
-        // }
+        if (selectedExtendAssignees.length === 0) {
+            toast.error('Please select at least one assignee');
+            return;
+        }
 
         setIsExtending(true);
         try {
@@ -880,19 +880,20 @@ export const PermitDetails = () => {
             }
 
             toast.success('Permit extension request submitted successfully');
+            window.location.reload();
 
             // Clear form data
-            setExtendReason("");
-            setExtendDate("");
-            setExtendAttachments(null);
-            setSelectedExtendAssignees([]);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+            // setExtendReason("");
+            // setExtendDate("");
+            // setExtendAttachments(null);
+            // setSelectedExtendAssignees([]);
+            // if (fileInputRef.current) {
+            //     fileInputRef.current.value = "";
+            // }
 
-            // Refresh permit details to show updated information
-            const updatedData = await fetchPermitDetails(id);
-            setPermitData(updatedData);
+            // // Refresh permit details to show updated information
+            // const updatedData = await fetchPermitDetails(id);
+            // setPermitData(updatedData);
 
         } catch (error) {
             console.error('Error extending permit:', error);
@@ -919,10 +920,10 @@ export const PermitDetails = () => {
             return;
         }
 
-        // if (selectedResumeAssignees.length === 0) {
-        //     toast.error('Please select at least one assignee');
-        //     return;
-        // }
+        if (selectedResumeAssignees.length === 0) {
+            toast.error('Please select at least one assignee');
+            return;
+        }
 
         setIsResuming(true);
         try {
@@ -973,19 +974,21 @@ export const PermitDetails = () => {
             }
 
             toast.success('Permit resume request submitted successfully');
-
+                window.location.reload();
+           
             // Clear form data
-            setResumeReason("");
-            setResumeDate("");
-            setResumeAttachments(null);
-            setSelectedResumeAssignees([]);
-            if (resumeFileInputRef.current) {
-                resumeFileInputRef.current.value = "";
-            }
+            // setResumeReason("");
+            // setResumeDate("");
+            // setResumeAttachments(null);
+            // setSelectedResumeAssignees([]);
+            // if (resumeFileInputRef.current) {
+            //     resumeFileInputRef.current.value = "";
+            // }
 
-            // Refresh permit details to show updated information
-            const updatedData = await fetchPermitDetails(id);
-            setPermitData(updatedData);
+            // // Refresh permit details to show updated information
+            // const updatedData = await fetchPermitDetails(id);
+            // setPermitData(updatedData);
+
 
         } catch (error) {
             console.error('Error resuming permit:', error);

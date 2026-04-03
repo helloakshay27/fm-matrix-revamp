@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Clock, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,6 +35,7 @@ export interface RootCause {
 export interface InjuredPerson {
     id: string;
     type: 'internal' | 'external';
+    who_got_injured_id?: string | number | null;
     name: string;
     age: string;
     company?: string;
@@ -377,6 +378,45 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
         setInvestigators(newInvestigators);
     }, [setInvestigators]);
 
+    // New states for internal injury user dropdown
+    const [internalInjuryUsers, setInternalInjuryUsers] = useState<any[]>([]);
+    const [loadingInternalUsers, setLoadingInternalUsers] = useState(false);
+    const [errorInternalUsers, setErrorInternalUsers] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchInternalUsers = async () => {
+            setLoadingInternalUsers(true);
+            setErrorInternalUsers(null);
+            try {
+                let baseUrl = localStorage.getItem('baseUrl') || 'https://fm-uat-api.lockated.com';
+                const token = localStorage.getItem('token') || '';
+
+                if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                    baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+                }
+
+                const response = await fetch(`${baseUrl}/pms/users/get_escalate_to_users.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch internal users');
+                }
+                const data = await response.json();
+                setInternalInjuryUsers(Array.isArray(data) ? data : data.users || data.data || []);
+            } catch (err: any) {
+                console.error('Error fetching internal users:', err);
+                setErrorInternalUsers(err.message || 'Failed to load users');
+            } finally {
+                setLoadingInternalUsers(false);
+            }
+        };
+
+        fetchInternalUsers();
+    }, []);
+
     const hasFilledData = investigators.length > 0 || showInvestigateDetails;
 
     return (
@@ -556,13 +596,13 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
 
                     {/* Add Condition Button */}
                     <div className="flex justify-end">
-                    <Button
-                        variant="outline"
-                        className="w-25 border-gray-800 text-gray-800 bg-white"
-                        onClick={handleAddCondition}
-                    >
-                        + Add Condition
-                    </Button>
+                        <Button
+                            variant="outline"
+                            className="w-25 border-gray-800 text-gray-800 bg-white"
+                            onClick={handleAddCondition}
+                        >
+                            + Add Condition
+                        </Button>
                     </div>
 
                     {/* Root Cause */}
@@ -621,9 +661,9 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                             ))}
                             <div className="flex justify-end">
                                 <Button
-                                variant="outline"
-                                className="w-25 border-[#BF213E] text-[#BF213E]"
-                                onClick={handleAddRootCause}
+                                    variant="outline"
+                                    className="w-25 border-[#BF213E] text-[#BF213E]"
+                                    onClick={handleAddRootCause}
                                 >
                                     + Add Clause
                                 </Button>
@@ -632,7 +672,7 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                     </div>
 
                     {/* Injury Section */}
-                    <div className="border-t border-gray-300 pt-3">
+                    {/* <div className="border-t border-gray-300 pt-3">
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-sm font-semibold">Injury</span>
                             <Switch checked={hasInjury} onCheckedChange={setHasInjury} />
@@ -887,7 +927,318 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                                 </div>
                             </div>
                         )}
+                    </div> */}
+
+
+                 
+                                        {/* Injury Section */}
+                    <div className="border-t border-gray-300 pt-3">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-semibold">Injury</span>
+                            <Switch checked={hasInjury} onCheckedChange={setHasInjury} />
+                        </div>
+
+                        {hasInjury && (
+                            <div className="space-y-4">
+                                {injuredPersons.map((person, index) => (
+                                    <div key={person.id} className="p-4 rounded-lg border border-gray-200 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-sm font-semibold">Person #{index + 1}</h4>
+                                            {injuredPersons.length > 1 && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setInjuredPersons(prev => 
+                                                        prev.filter(p => p.id !== person.id)
+                                                    )}
+                                                    className="h-6 text-red-500 hover:text-red-700"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </div>
+
+                                        <Tabs
+                                            value={person.type}
+                                            onValueChange={(value) =>
+                                                updateInjuredPerson(person.id, 'type', value as 'internal' | 'external')
+                                            }
+                                            className="w-full"
+                                        >
+                                            <TabsList className="grid w-full grid-cols-2">
+                                                <TabsTrigger value="internal">Internal</TabsTrigger>
+                                                <TabsTrigger value="external">External</TabsTrigger>
+                                            </TabsList>
+
+                                            {/* ==================== INTERNAL TAB ==================== */}
+                                            <TabsContent value="internal" className="space-y-3 mt-4">
+                                                {/* Dropdown for selecting internal person */}
+                                                <FormControl fullWidth size="small">
+                                                    <InputLabel>Select Person</InputLabel>
+                                                    <MuiSelect
+                                                        value={person.who_got_injured_id?.toString() ?? ''}
+                                                        onChange={(e) => {
+                                                            const selectedId = e.target.value;
+                                                            const selectedUser = internalInjuryUsers.find((user: any) =>
+                                                                String(user.id) === selectedId
+                                                            );
+
+                                                            if (selectedUser) {
+                                                                updateInjuredPerson(person.id, 'who_got_injured_id', selectedUser.id);
+                                                                updateInjuredPerson(person.id, 'name', selectedUser.full_name || selectedUser.name || selectedUser.user_name || '');
+                                                            } else {
+                                                                updateInjuredPerson(person.id, 'who_got_injured_id', null);
+                                                                updateInjuredPerson(person.id, 'name', '');
+                                                            }
+                                                        }}
+                                                        label="Select Person"
+                                                        sx={{ backgroundColor: 'white' }}
+                                                        disabled={loadingInternalUsers}
+                                                    >
+                                                        <MenuItem value="">
+                                                            <em>{loadingInternalUsers ? 'Loading...' : 'Select Person'}</em>
+                                                        </MenuItem>
+                                                        {errorInternalUsers && (
+                                                            <MenuItem value="" disabled>Error: {errorInternalUsers}</MenuItem>
+                                                        )}
+                                                        {internalInjuryUsers.length > 0 ? (
+                                                            internalInjuryUsers.map((user: any) => (
+                                                                <MenuItem 
+                                                                    key={user.id ?? user.userId ?? user.full_name}
+                                                                    value={String(user.id || user.userId || '')}
+                                                                >
+                                                                    {user.full_name || user.name || user.user_name || `User ${String(user.id || user.userId || '')}`}
+                                                                </MenuItem>
+                                                            ))
+                                                        ) : (
+                                                            !loadingInternalUsers && (
+                                                                <MenuItem value="" disabled>No users available</MenuItem>
+                                                            )
+                                                        )}
+                                                    </MuiSelect>
+                                                </FormControl>
+
+                                                {/* Age & Role for Internal */}
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Enter Age"
+                                                    value={person.age}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^[0-9]*$/.test(value)) {
+                                                            updateInjuredPerson(person.id, 'age', value);
+                                                        }
+                                                    }}
+                                                    sx={{ backgroundColor: 'white' }}
+                                                />
+
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Enter Role"
+                                                    value={person.role}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^[a-zA-Z0-9\s]*$/.test(value)) {
+                                                            updateInjuredPerson(person.id, 'role', value);
+                                                        }
+                                                    }}
+                                                    sx={{ backgroundColor: 'white' }}
+                                                />
+
+                                                <div className="space-y-2">
+                                                    <div className="text-sm font-medium">Body Parts:</div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {[
+                                                            { key: 'head', label: 'Head' },
+                                                            { key: 'neck', label: 'Neck' },
+                                                            { key: 'legs', label: 'Legs' },
+                                                            { key: 'skin', label: 'Skin' },
+                                                            { key: 'arms', label: 'Arms' },
+                                                            { key: 'mouth', label: 'Mouth' },
+                                                            { key: 'eyes', label: 'Eyes' },
+                                                            { key: 'ears', label: 'Ears' },
+                                                        ].map(({ key, label }) => (
+                                                            <label key={key} className="flex items-center gap-2 text-sm">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="w-4 h-4"
+                                                                    checked={person.bodyParts[key as keyof InjuredPerson['bodyParts']]}
+                                                                    onChange={() => updateInjuredPersonBodyPart(person.id, key as keyof InjuredPerson['bodyParts'])}
+                                                                />
+                                                                <span>{label}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <div className="text-sm font-medium">Attachment:</div>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="file"
+                                                            id={`injury-attachment-internal-${person.id}`}
+                                                            className="hidden"
+                                                            accept="image/*"
+                                                            multiple
+                                                            onChange={(e) => handleInjuredPersonFileChange(person.id, e.target.files)}
+                                                        />
+                                                        <label
+                                                            htmlFor={`injury-attachment-internal-${person.id}`}
+                                                            className="w-16 h-16 bg-white border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-gray-400"
+                                                        >
+                                                            <Plus className="w-6 h-6 text-gray-400" />
+                                                        </label>
+                                                        {person.attachments.map((file, idx) => (
+                                                            <div key={idx} className="w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center relative">
+                                                                <img
+                                                                    src={URL.createObjectURL(file)}
+                                                                    alt={file.name}
+                                                                    className="w-full h-full object-cover rounded"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    className="absolute top-0 right-0 bg-white text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                                                    onClick={() => handleRemoveInjuredPersonAttachment(person.id, idx)}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </TabsContent>
+
+                                            {/* ==================== EXTERNAL TAB ==================== */}
+                                            <TabsContent value="external" className="space-y-3 mt-4">
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Enter Name"
+                                                    value={person.name}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^[a-zA-Z\s]*$/.test(value)) {
+                                                            updateInjuredPerson(person.id, 'name', value);
+                                                        }
+                                                    }}
+                                                    sx={{ backgroundColor: 'white' }}
+                                                />
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Enter Age"
+                                                    value={person.age}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^[0-9]*$/.test(value)) {
+                                                            updateInjuredPerson(person.id, 'age', value);
+                                                        }
+                                                    }}
+                                                    sx={{ backgroundColor: 'white' }}
+                                                />
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Enter Company"
+                                                    value={person.company || ''}
+                                                    onChange={(e) => updateInjuredPerson(person.id, 'company', e.target.value)}
+                                                    sx={{ backgroundColor: 'white' }}
+                                                />
+                                                <TextField
+                                                    fullWidth
+                                                    size="small"
+                                                    placeholder="Enter Role"
+                                                    value={person.role}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^[a-zA-Z0-9\s]*$/.test(value)) {
+                                                            updateInjuredPerson(person.id, 'role', value);
+                                                        }
+                                                    }}
+                                                    sx={{ backgroundColor: 'white' }}
+                                                />
+
+                                                <div className="space-y-2">
+                                                    <div className="text-sm font-medium">Body Parts:</div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {[
+                                                            { key: 'head', label: 'Head' },
+                                                            { key: 'neck', label: 'Neck' },
+                                                            { key: 'legs', label: 'Legs' },
+                                                            { key: 'skin', label: 'Skin' },
+                                                            { key: 'arms', label: 'Arms' },
+                                                            { key: 'mouth', label: 'Mouth' },
+                                                            { key: 'eyes', label: 'Eyes' },
+                                                            { key: 'ears', label: 'Ears' },
+                                                        ].map(({ key, label }) => (
+                                                            <label key={key} className="flex items-center gap-2 text-sm">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="w-4 h-4"
+                                                                    checked={person.bodyParts[key as keyof InjuredPerson['bodyParts']]}
+                                                                    onChange={() => updateInjuredPersonBodyPart(person.id, key as keyof InjuredPerson['bodyParts'])}
+                                                                />
+                                                                <span>{label}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <div className="text-sm font-medium">Attachment:</div>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="file"
+                                                            id={`injury-attachment-external-${person.id}`}
+                                                            className="hidden"
+                                                            accept="image/*"
+                                                            multiple
+                                                            onChange={(e) => handleInjuredPersonFileChange(person.id, e.target.files)}
+                                                        />
+                                                        <label
+                                                            htmlFor={`injury-attachment-external-${person.id}`}
+                                                            className="w-16 h-16 bg-white border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-gray-400"
+                                                        >
+                                                            <Plus className="w-6 h-6 text-gray-400" />
+                                                        </label>
+                                                        {person.attachments.map((file, idx) => (
+                                                            <div key={idx} className="w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center relative">
+                                                                <img
+                                                                    src={URL.createObjectURL(file)}
+                                                                    alt={file.name}
+                                                                    className="w-full h-full object-cover rounded"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    className="absolute top-0 right-0 bg-white text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                                                    onClick={() => handleRemoveInjuredPersonAttachment(person.id, idx)}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </TabsContent>
+                                        </Tabs>
+                                    </div>
+                                ))}
+
+                                <div className="flex justify-end">
+                                    <Button
+                                        variant="outline"
+                                        className="w-25 border-gray-800 text-gray-800"
+                                        onClick={handleAddInjuredPerson}
+                                    >
+                                        + Add Person
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
+
 
                     {/* Property Damage Section */}
                     <div className="border-t border-gray-300 pt-3">
