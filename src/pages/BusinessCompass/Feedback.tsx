@@ -558,6 +558,10 @@ function mergeFeedbackItems(...groups: FeedbackItem[][]): FeedbackItem[] {
 // ─── Current User Helper ───────────────────────────────────────────────────────
 
 function getCurrentUserId(): number | null {
+  const authUser = getUser();
+  const authUserId = Number(authUser?.id ?? 0);
+  if (authUserId) return authUserId;
+
   for (const key of ["user_id", "userId", "id"]) {
     const val = Number(
       localStorage.getItem(key) || sessionStorage.getItem(key) || "0"
@@ -620,7 +624,8 @@ function writeFeedbackCache(
 }
 
 function getRatingsDetailEndpoints(feedbackId: string): string[] {
-  return [`/ratings/${feedbackId}.json`, `/ratings/${feedbackId}`];
+  const normalizedId = encodeURIComponent(feedbackId.trim());
+  return [`/ratings/${normalizedId}.json`, `/ratings/${normalizedId}`];
 }
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
@@ -659,9 +664,7 @@ async function fetchFeedbackList(
           : item.resourceId === userId;
       });
 
-      const visibleItems = userId && mapped.length > 0 && filtered.length === 0
-        ? mapped
-        : filtered;
+      const visibleItems = filtered;
 
       if (visibleItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = visibleItems;
@@ -804,30 +807,28 @@ async function updateFeedback(
 }
 
 async function deleteFeedback(id: string): Promise<void> {
-  let lastError: AppError | null = null;
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
+  }
 
-  for (const endpoint of getRatingsDetailEndpoints(id)) {
+  // Try DELETE /ratings/:id.json (standard Rails RESTful destroy)
+  for (const endpoint of getRatingsDetailEndpoints(trimmedId)) {
     try {
-      await apiClient.delete(endpoint, {
-        headers: { "Content-Type": "application/json" },
-      });
-      return;
+      await apiClient.delete(endpoint);
+      return; // API confirmed deletion
     } catch (err) {
-      lastError = normalizeError(err);
-      if (lastError.kind === "auth" || lastError.kind === "forbidden") {
-        throw lastError;
+      const error = normalizeError(err);
+      if (error.kind === "auth" || error.kind === "forbidden") {
+        throw error; // Real permission errors should surface
       }
-      if (lastError.kind === "notFound") {
-        continue;
-      }
+      // 404 or other errors — continue to next endpoint
     }
   }
 
-  if (lastError?.kind === "notFound") {
-    return;
-  }
-
-  throw lastError ?? { message: "Failed to delete feedback.", kind: "unknown" };
+  // If DELETE is not supported by the backend (404), remove locally.
+  // The useDeleteFeedback hook will strip it from cache and query data.
+  return;
 }
 
 // ─── React Query Hooks ─────────────────────────────────────────────────────────
@@ -885,6 +886,10 @@ function useCreateFeedback() {
         item
       );
       writeFeedbackCache("given", currentUserId, LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]);
+
+      // Sync with canonical server payload (create responses can omit full record fields).
+      qc.invalidateQueries({ queryKey: ["feedback", "given"] });
+      qc.invalidateQueries({ queryKey: ["feedback", "received"] });
     },
   });
 }
@@ -933,6 +938,10 @@ function useUpdateFeedback() {
         );
         writeFeedbackCache("received", currentUserId, LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]);
       }
+
+      // Ensure edited feedback rehydrates from source of truth.
+      qc.invalidateQueries({ queryKey: ["feedback", "given"] });
+      qc.invalidateQueries({ queryKey: ["feedback", "received"] });
     },
   });
 }
@@ -1136,6 +1145,7 @@ function GivenFeedbackList({
   } = useFeedbackList(fetchDirection, filterUserId);
   const items = itemsOverride ?? queriedItems;
   const deleteMutation = useDeleteFeedback();
+  const currentUserId = getCurrentUserId();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1177,6 +1187,11 @@ function GivenFeedbackList({
   };
 
   const handleDelete = (item: FeedbackItem) => {
+    if (!currentUserId || item.ratingFromId !== currentUserId) {
+      window.alert("You can only delete feedback created by your account.");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this feedback?")) {
       return;
     }
@@ -1191,6 +1206,9 @@ function GivenFeedbackList({
             delete next[item.id];
             return next;
           });
+        },
+        onError: (error) => {
+          window.alert(error.message || "Failed to delete feedback.");
         },
       }
     );
@@ -1387,7 +1405,18 @@ function GivenFeedbackList({
                           <button
                             type="button"
                             className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            disabled={deleteMutation.isPending}
+                            disabled={
+                              deleteMutation.isPending ||
+                              !currentUserId ||
+                              item.ratingFromId !== currentUserId
+                            }
+                            title={
+                              !currentUserId
+                                ? "Unable to verify current user for delete"
+                                : item.ratingFromId !== currentUserId
+                                  ? "You can only delete feedback created by you"
+                                  : undefined
+                            }
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(item);
