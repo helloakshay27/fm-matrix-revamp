@@ -78,8 +78,6 @@ const BusinessCompassDashboard: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins">
-      <AdminViewEmulation />
-
       {/* Complete Your Profile Banner */}
       {!isProfileComplete && (
         <Card className="bg-gradient-to-r from-[#ee6103] to-[#ff8c42] text-white border-none rounded-[16px] shadow-lg overflow-hidden">

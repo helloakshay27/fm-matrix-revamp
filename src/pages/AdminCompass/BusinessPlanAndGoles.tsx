@@ -12,17 +12,17 @@ import { AdminViewEmulation } from '@/components/AdminViewEmulation';
 
 // ── Design Tokens (matching DailyMeeting exactly) ──
 const C = {
-  primary:     '#DA7756',
-  primaryHov:  '#c9674a',
-  primaryBg:   '#fef6f4',
+  primary: '#DA7756',
+  primaryHov: '#c9674a',
+  primaryBg: '#fef6f4',
   primaryTint: 'rgba(218,119,86,0.10)',
   primaryBord: 'rgba(218,119,86,0.22)',
   primaryBordStrong: 'rgba(218,119,86,0.35)',
-  pageBg:      '#ffffff',
-  textMain:    '#1a1a1a',
-  textMuted:   '#6b7280',
-  borderLgt:   '#e5e7eb',
-  cardBg:      '#fff',
+  pageBg: '#ffffff',
+  textMain: '#1a1a1a',
+  textMuted: '#6b7280',
+  borderLgt: '#e5e7eb',
+  cardBg: '#fff',
 };
 
 // ── Icons ──
@@ -241,7 +241,7 @@ const BusinessPlanAndGoles = () => {
   const [tempPurposeText, setTempPurposeText] = useState('');
   const [tempPurposeVideoUrl, setTempPurposeVideoUrl] = useState('');
 
-  const [coreValues, setCoreValues] = useState(['Innovation','Mindfulness','Performance','Accountability','Communication','Trust']);
+  const [coreValues, setCoreValues] = useState(['Innovation', 'Mindfulness', 'Performance', 'Accountability', 'Communication', 'Trust']);
   const [tempCoreValues, setTempCoreValues] = useState([]);
   const [coreVideoUrl, setCoreVideoUrl] = useState('');
   const [tempCoreVideoUrl, setTempCoreVideoUrl] = useState('');
@@ -305,13 +305,12 @@ const BusinessPlanAndGoles = () => {
 
   const tabs = [
     { key: 'strategic', label: 'Strategic Plan' },
-    { key: 'goals',     label: 'Goals' },
+    { key: 'goals', label: 'Goals' },
   ];
 
   return (
     <div className="min-h-screen p-4 md:p-8 font-sans max-w-[1400px] mx-auto" style={{ background: '#fafafa', color: C.textMain }}>
       <ThemeStyle />
-      <AdminViewEmulation />
 
       {/* ── Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
