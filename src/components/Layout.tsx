@@ -454,20 +454,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           userEmail === "besis69240@azeriom.com" ||
           userEmail === "megipow156@aixind.com" ||
           userEmail === "jevosak839@cimario.com" ? (
-          <TopNavigation
-            activeNavMenu={activeNavMenu}
-            setActiveNavMenu={setActiveNavMenu}
-          />
+          <EmployeeHeader />
           // isNewEmpHubRoute ? (
           //   <TopNavigation
           //     activeNavMenu={activeNavMenu}
           //     setActiveNavMenu={setActiveNavMenu}
           //   /> // 👈 your new header
           // ) : (
-          //   <EmployeeHeader />
+          // <EmployeeHeader />
           // )
         ) : (
-          <EmployeeHeaderStatic />
+          // <EmployeeHeaderStatic />
+          <TopNavigation
+            activeNavMenu={activeNavMenu}
+            setActiveNavMenu={setActiveNavMenu}
+          />
         )
       ) : (
         <Header />
@@ -500,7 +501,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-16"
                   : "ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

@@ -21,6 +21,8 @@ import {
   HelpCircle,
   Bug,
   FileText,
+  ListCheck,
+  ListChecks,
 } from "lucide-react";
 
 // Module-based navigation structures for Business Compass
@@ -41,13 +43,21 @@ const businessCompassNavigation: Record<string, any> = {
     icon: User,
     href: "/business-compass/weekly-report",
   },
-  "Tasks and Issues": {
-    icon: Target,
-    href: "/business-compass/tasks-and-issues",
+  // "Tasks and Issues": {
+  //   icon: Target,
+  //   href: "/business-compass/tasks-and-issues",
+  // },
+  Tasks: {
+    icon: ListChecks,
+    href: "/business-compass/tasks",
+  },
+  Issues: {
+    icon: Bug,
+    href: "/business-compass/issues",
   },
   "Directory and Chat": {
     icon: User,
-    href: "/business-compass/directory-and-chat",
+    href: "/business-compass/channels",
   },
   Feedback: {
     icon: MessageSquare,
