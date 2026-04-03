@@ -21,8 +21,7 @@ import {
 } from "@/utils/embeddedMode";
 
 // ─── API Endpoints ───────────────────────────────────────────────────────────
-const CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT =
-  "/api/pms/reports/customer_experience_feedback";
+const RATINGS_FEEDBACK_DASHBOARD_ENDPOINT = "/ratings/feedback_dashboard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface RatingBreakdown {
@@ -71,7 +70,7 @@ interface AnalyticsBucket {
   percentage?: number | string;
 }
 
-interface CustomerExperienceFeedbackAnalytics {
+interface RatingsFeedbackAnalytics {
   overall_summary?: Record<string, AnalyticsBucket>;
   data?: {
     overall_summary?: Record<string, AnalyticsBucket>;
@@ -267,7 +266,7 @@ function getFeedbackDateRange() {
 }
 
 function buildDashboardDataFromAnalytics(
-  raw: CustomerExperienceFeedbackAnalytics
+  raw: RatingsFeedbackAnalytics
 ): DashboardData | null {
   const summary = raw.data?.overall_summary ?? raw.overall_summary;
   if (!summary || typeof summary !== "object") {
@@ -434,8 +433,8 @@ const FeedbackDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await safeApiRequest<CustomerExperienceFeedbackAnalytics>(
-        CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT
+      const response = await safeApiRequest<RatingsFeedbackAnalytics>(
+        RATINGS_FEEDBACK_DASHBOARD_ENDPOINT
       );
 
       const payload =
@@ -443,7 +442,7 @@ const FeedbackDashboard = () => {
 
       if (!payload) {
         throw new Error(
-          `${CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT}: Dashboard payload is empty or invalid.`
+          `${RATINGS_FEEDBACK_DASHBOARD_ENDPOINT}: Dashboard payload is empty or invalid.`
         );
       }
 
