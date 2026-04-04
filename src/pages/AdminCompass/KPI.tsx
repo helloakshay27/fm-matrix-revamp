@@ -11,8 +11,11 @@ import KPIHistoryTab from "./AdminCompassComponent/KPIHistoryTab";
 import KPISettingsTab from "./AdminCompassComponent/KPISettingsTab";
 import KPIGuideTab from "./AdminCompassComponent/KPIGuideTab";
 import CreateKPIDialog from "./AdminCompassComponent/CreateKPIDialog";
-import { C, kpiClass } from "./AdminCompassComponent/shared";
-import { initialKpiCards, type KPICardData } from "./AdminCompassComponent/kpiTypes";
+import { C, kpiClass } from "./AdminCompassComponent/Shared";
+import {
+  initialKpiCards,
+  type KPICardData,
+} from "./AdminCompassComponent/kpiTypes";
 
 const tabs = [
   { name: "KPI Management" },
@@ -24,7 +27,8 @@ const tabs = [
 ] as const;
 
 const KPI = () => {
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["name"]>("KPI Management");
+  const [activeTab, setActiveTab] =
+    useState<(typeof tabs)[number]["name"]>("KPI Management");
   const [kpis, setKpis] = useState<KPICardData[]>(initialKpiCards);
   const [createKpiOpen, setCreateKpiOpen] = useState(false);
 
@@ -83,8 +87,12 @@ const KPI = () => {
           <div className="rounded-2xl border border-[rgba(218,119,86,0.22)] bg-[#fef6f4] px-5 py-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-neutral-600">Total KPIs</p>
-                <p className="mt-1 text-4xl font-bold leading-none text-[#1a1a1a]">{totalKPIs}</p>
+                <p className="text-sm font-semibold text-neutral-600">
+                  Total KPIs
+                </p>
+                <p className="mt-1 text-4xl font-bold leading-none text-[#1a1a1a]">
+                  {totalKPIs}
+                </p>
               </div>
               <BarChart3 className="h-9 w-9 text-[#DA7756]" />
             </div>
@@ -92,8 +100,12 @@ const KPI = () => {
           <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/90 px-5 py-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-neutral-600">On Target</p>
-                <p className="mt-1 text-4xl font-bold leading-none text-emerald-800">{onTargetCount}</p>
+                <p className="text-sm font-semibold text-neutral-600">
+                  On Target
+                </p>
+                <p className="mt-1 text-4xl font-bold leading-none text-emerald-800">
+                  {onTargetCount}
+                </p>
               </div>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
                 <span className="h-5 w-5 rounded-full bg-emerald-500" />
@@ -103,8 +115,12 @@ const KPI = () => {
           <div className="rounded-2xl border border-red-200/70 bg-red-50/90 px-5 py-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-neutral-600">At Risk</p>
-                <p className="mt-1 text-4xl font-bold leading-none text-red-800">{atRiskCount}</p>
+                <p className="text-sm font-semibold text-neutral-600">
+                  At Risk
+                </p>
+                <p className="mt-1 text-4xl font-bold leading-none text-red-800">
+                  {atRiskCount}
+                </p>
               </div>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
                 <span className="h-5 w-5 rounded-full bg-red-500" />
@@ -140,13 +156,17 @@ const KPI = () => {
       </div>
 
       <div className="mx-auto max-w-7xl p-6 pt-5">
-        {activeTab === "KPI Management" && <KPIManagementTab kpis={kpis} setKpis={setKpis} />}
+        {activeTab === "KPI Management" && (
+          <KPIManagementTab kpis={kpis} setKpis={setKpis} />
+        )}
         {activeTab === "Archived KPIs" && <ArchivedKPIsTab />}
         {activeTab === "Missed Entries" && <MissedEntitiesTab />}
         {activeTab === "KPI History" && <KPIHistoryTab />}
         {activeTab === "Settings" && <KPISettingsTab />}
         {activeTab === "KPI Guide" && (
-          <KPIGuideTab onGoToManagement={() => setActiveTab("KPI Management")} />
+          <KPIGuideTab
+            onGoToManagement={() => setActiveTab("KPI Management")}
+          />
         )}
       </div>
     </div>
