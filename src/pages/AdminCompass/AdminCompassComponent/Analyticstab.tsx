@@ -289,8 +289,12 @@ const AnalyticsTab = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {a.deptBreakdown.map((dept, index) => {
+<<<<<<< Updated upstream
                   const bgColor =
                     index % 2 === 0 ? "bg-[#fffaf8]" : "bg-[#fef6f4]";
+=======
+                  const bgColor = index % 2 === 0 ? "bg-[#fffaf8]" : "bg-[#fef6f4]";
+>>>>>>> Stashed changes
 
                   return (
                     <div
