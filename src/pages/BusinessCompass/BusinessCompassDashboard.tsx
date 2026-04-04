@@ -12,6 +12,7 @@ import {
   Clock,
   Activity,
   Building2,
+  Target,
 } from "lucide-react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,6 +122,49 @@ const BusinessCompassDashboard: React.FC = () => {
               <FileText size={16} />
               Weekly Report
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Critical Numbers (KPIs) */}
+      <Card className="rounded-[8px] bg-[#f8f6f0] border-none shadow-none overflow-hidden">
+        <CardHeader className="pb-4 pt-6 px-6">
+          <div className="flex items-center gap-2 text-xl font-bold text-[#1a1a1a]">
+            <Target className="text-[#1a1a1a]" size={22} strokeWidth={2.5} />
+            Critical Numbers (KPIs)
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { title: "AI Task Completion Rate", achieved: 0, target: 80, percentage: 0 },
+              { title: "Customer Satisfaction Score", achieved: 0, target: 95, percentage: 0 },
+              { title: "Lead Conversion Rate", achieved: 0, target: 20, percentage: 0 },
+              { title: "Monthly Revenue", achieved: 0, target: 0, percentage: "NaN" },
+              { title: "New Partnerships Formed", achieved: 0, target: 5, percentage: 0 },
+              { title: "Project Completion Rate", achieved: 0, target: 90, percentage: 0 },
+            ].map((kpi, idx) => (
+              <Card key={idx} className="w-full border-none rounded-[4px] shadow-sm bg-white p-4 flex flex-col gap-3">
+                <div>
+                  <Badge className="bg-[#C4B89D] hover:bg-[#C4B89D] text-white px-3 py-0.5 rounded-full text-[10px] font-bold border-none shadow-none pointer-events-none mb-3 inline-flex">
+                    Weekly
+                  </Badge>
+                  <div className="text-[13px] font-bold text-[#374151] leading-snug min-h-[40px] flex items-center pr-2">
+                    {kpi.title}
+                  </div>
+                </div>
+                <div className="mt-auto">
+                  <div className="flex items-baseline gap-1.5 mb-2">
+                    <span className="text-[28px] font-black text-[#1a1a1a] leading-none">{kpi.achieved}</span>
+                    <span className="text-[12px] font-semibold text-[#64748b]">/ {kpi.target} #</span>
+                  </div>
+                  <Progress value={kpi.percentage === "NaN" ? 0 : kpi.percentage} className="h-1.5 mb-2 bg-[#e2e8f0]" />
+                  <div className="text-[10px] font-medium text-[#64748b]">
+                    {kpi.percentage}% achieved
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         </CardContent>
       </Card>

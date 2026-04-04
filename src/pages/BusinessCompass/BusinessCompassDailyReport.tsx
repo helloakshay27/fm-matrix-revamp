@@ -26,6 +26,8 @@ import {
   Image as ImageIcon,
   FileText,
   Loader2,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -196,9 +198,8 @@ const BusinessCompassDailyReport: React.FC = () => {
         const formattedDate = dateObj.toLocaleDateString("en-CA");
 
         const queryParams = new URLSearchParams();
-        queryParams.append("q[:journal_type]", "daily");
+        queryParams.append("q[journal_type_eq]", "daily");
         queryParams.append("q[start_date_eq]", formattedDate);
-        if (token) queryParams.append("token", token);
 
         const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
         const response = await fetch(url, {
@@ -280,8 +281,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       if (!token) return;
 
       const queryParams = new URLSearchParams();
-      queryParams.append("q[:journal_type]", "daily");
-      if (token) queryParams.append("token", token);
+      queryParams.append("q[journal_type_eq]", "daily");
 
       const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
       const response = await fetch(url, {
@@ -294,7 +294,10 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setReportsList(Array.isArray(data) ? data : data.user_journals || []);
+        const allJournals = Array.isArray(data) ? data : data.user_journals || [];
+        // Filter locally to ensure only daily reports are shown in case API returns mixed
+        const dailyJournals = allJournals.filter((j: DailyReport) => j.journal_type === "daily");
+        setReportsList(dailyJournals);
       }
     } catch (err) {
       console.error("Failed to fetch reports history:", err);
@@ -334,20 +337,21 @@ const BusinessCompassDailyReport: React.FC = () => {
       );
       const formattedDate = dateObj.toLocaleDateString("en-CA"); // Gets YYYY-MM-DD format
 
+      const accomplishmentsScore = accomplishments.filter((a) => a.completed).length * 5;
+      const planningScore = planningItems.length * 5;
+
       const reportData = {
+        kpi: "value",
         achievements: accomplishments.map((a) => a.text),
-        tasks: planningItems.map((p) => ({
-          text: p.text,
-          starred: p.starred,
-        })),
-        total_score: 65, // Mocked for now based on UI preview
+        tasks: planningItems.map((p) => p.text),
+        total_score: isAbsent ? 0 : Math.min(100, accomplishmentsScore + planningScore + 20), // 20 base points
         is_absent: isAbsent,
         absence_reason: absenceReason,
         self_rating: selfRating[0],
         sections: {
           attendance: isAbsent ? 0 : 100,
-          tasks_completed: 30, // Mocked
-          collaboration: 35, // Mocked
+          tasks_completed: accomplishmentsScore,
+          collaboration: planningScore,
         },
         details: {
           notes: null,
@@ -359,17 +363,13 @@ const BusinessCompassDailyReport: React.FC = () => {
           journal_type: "daily",
           start_date: formattedDate,
           end_date: formattedDate,
-          description: isAbsent
-            ? absenceReason
-            : `Daily report for ${formattedDate}`,
+          description: isAbsent ? absenceReason : null,
           report_data: reportData,
         },
       };
 
       const queryParams = new URLSearchParams();
-      // Ensure API interprets the type based on the prompt signature 'q[:journal_type]'
-      queryParams.append("q[:journal_type]", "daily");
-      if (token) queryParams.append("token", token);
+      queryParams.append("q[journal_type_eq]", "daily");
 
       const endpoint = currentReportId
         ? `/user_journals/${currentReportId}.json`
@@ -1679,102 +1679,164 @@ const BusinessCompassDailyReport: React.FC = () => {
               </Card>
             ) : reportsList.length > 0 ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-6">
                   {reportsList.map((report) => (
                     <Card
                       key={report.id}
-                      className="bg-white border border-gray-100 rounded-[16px] shadow-sm overflow-hidden hover:shadow-md transition-all group"
+                      className="bg-white border border-gray-200 rounded-[12px] shadow-sm overflow-hidden transition-all"
                     >
-                      <div className="p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-blue-50 p-2 rounded-lg">
-                              <CalendarCheck
-                                size={18}
-                                className="text-blue-600"
-                              />
+                      <div className="p-6">
+                        {/* Header Row */}
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
+                          <div>
+                            <h2 className="text-xl font-medium text-[#1a1a1a]">
+                              {new Date(report.start_date).toLocaleDateString(
+                                "en-US",
+                                {
+                                  weekday: "long",
+                                  month: "long",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              )}
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-2">
+                              By: Common Admin Id
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-start gap-4">
+                            {/* Badges */}
+                            <div className="flex flex-col items-end gap-2">
+                              <Badge className="bg-[#f59e0b] hover:bg-[#f59e0b] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                                <Star size={12} className="fill-white" />
+                                {report.report_data?.self_rating || 0}/10
+                              </Badge>
+                              <Badge className="bg-[#dc2626] hover:bg-[#dc2626] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
+                                <Target size={12} className="fill-white" />
+                                {report.report_data?.total_score || 0}/100
+                              </Badge>
+                              <Badge variant="outline" className="text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-[4px] text-[11px] font-medium w-fit mt-1">
+                                {new Date(report.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                              </Badge>
                             </div>
-                            <div>
-                              <p className="text-sm font-black text-gray-900">
-                                {new Date(report.start_date).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                  }
-                                )}
-                              </p>
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                Daily Report
-                              </p>
+                            
+                            {/* Actions */}
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-4 text-blue-600 border-gray-200 hover:bg-blue-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                onClick={() => {
+                                  const date = new Date(report.start_date);
+                                  setSelectedDate(
+                                    date.getDate().toString().padStart(2, "0")
+                                  );
+                                  setSelectedMonth(
+                                    date.toLocaleString("default", { month: "long" })
+                                  );
+                                  setSelectedYear(date.getFullYear().toString());
+
+                                  window.scrollTo({ top: 0, behavior: "smooth" });
+                                  const submitTab = document.querySelector(
+                                    '[data-value="submit"]'
+                                  ) as HTMLElement;
+                                  if (submitTab) submitTab.click();
+                                }}
+                              >
+                                <Edit size={14} className="text-blue-500" /> Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-4 text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                onClick={() => {
+                                  // console.log("Delete report", report.id);
+                                }}
+                              >
+                                <Trash2 size={14} className="text-red-500" /> Delete
+                              </Button>
                             </div>
                           </div>
-                          <Badge
-                            className={cn(
-                              "px-2 py-0.5 rounded-full text-[10px] font-black tracking-tighter border-none",
-                              report.report_data?.total_score >= 80
-                                ? "bg-green-100 text-green-700"
-                                : report.report_data?.total_score >= 50
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-orange-100 text-orange-700"
-                            )}
-                          >
-                            Score: {report.report_data?.total_score || 0}
-                          </Badge>
                         </div>
 
-                        <div className="space-y-2">
-                          <p className="text-xs font-bold text-gray-500 line-clamp-2 min-h-[32px]">
-                            {report.description ||
-                              (report.report_data?.is_absent
-                                ? `Absent: ${report.report_data?.absence_reason}`
-                                : "No description provided")}
-                          </p>
+                        {/* Score Breakdown container */}
+                        <div className="bg-[#f8fafc] border border-gray-200 rounded-[8px] p-4 mb-6">
+                           <div className="flex items-center gap-2 mb-3">
+                             <BarChart3 size={14} className="text-blue-500" />
+                             <span className="text-xs font-bold text-slate-700">Score Breakdown</span>
+                           </div>
+                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Accomplishments</p>
+                               <p className="text-base font-bold text-[#c026d3]">{(report.report_data?.sections as {TASKS_COMPLETED?: number; tasks_completed?: number})?.tasks_completed || 0}/25</p>
+                             </div>
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Tasks</p>
+                               <p className="text-base font-bold text-[#ea580c]">{(report.report_data?.sections as {tasks?: number})?.tasks || 0}/25</p>
+                             </div>
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Planning</p>
+                               <p className="text-base font-bold text-[#0d9488]">{(report.report_data?.sections as {collaboration?: number})?.collaboration || 0}/25</p>
+                             </div>
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Timing</p>
+                               <p className="text-base font-bold text-[#d97706]">0/25</p>
+                             </div>
+                           </div>
+                        </div>
 
-                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
-                            <div className="text-center p-2 rounded-lg bg-gray-50/50">
-                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                                Tasks
-                              </p>
-                              <p className="text-xs font-black text-gray-700">
-                                {report.report_data?.tasks?.length || 0}
-                              </p>
+                        {/* Bottom sections */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Accomplishments */}
+                          <div className="border border-green-200 rounded-[8px] overflow-hidden bg-[#f0fdf4]">
+                            <div className="px-4 py-3 border-b border-green-200/50 flex items-center gap-2">
+                              <CheckCircle2 size={16} className="text-green-600" />
+                              <span className="text-sm font-semibold text-[#1a1a1a]">Accomplishments</span>
                             </div>
-                            <div className="text-center p-2 rounded-lg bg-gray-50/50">
-                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                                Achievements
-                              </p>
-                              <p className="text-xs font-black text-gray-700">
-                                {report.report_data?.achievements?.length || 0}
-                              </p>
+                            <div className="p-4">
+                              {report.report_data?.achievements?.length ? (
+                                <ul className="space-y-2">
+                                  {report.report_data.achievements.map((ach: string, idx: number) => (
+                                    <li key={idx} className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2">
+                                      <span className="text-gray-400 font-medium">✓</span>
+                                      {ach}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm shadow-sm flex items-start gap-2">
+                                  <p className="text-gray-400 italic">No accomplishments.</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Tomorrow's Plan */}
+                          <div className="border border-purple-200 rounded-[8px] overflow-hidden bg-[#faf5ff]">
+                            <div className="px-4 py-3 border-b border-purple-200/50 flex items-center gap-2">
+                              <Target size={16} className="text-purple-600" />
+                              <span className="text-sm font-semibold text-[#1a1a1a]">Tomorrow's Plan</span>
+                            </div>
+                            <div className="p-4">
+                              {report.report_data?.tasks?.length ? (
+                                <ul className="space-y-2">
+                                  {report.report_data.tasks.map((task: { text?: string } | string, idx: number) => (
+                                    <li key={idx} className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2">
+                                      <span className="text-gray-400 font-bold mt-0.5">•</span>
+                                      {typeof task === "string" ? task : task?.text || ""}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm shadow-sm flex items-start gap-2">
+                                  <p className="text-gray-400 italic">No plan for tomorrow.</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full h-9 border-blue-100 text-blue-600 font-bold text-xs hover:bg-blue-50 hover:text-blue-700 transition-colors group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600"
-                          onClick={() => {
-                            const date = new Date(report.start_date);
-                            setSelectedDate(
-                              date.getDate().toString().padStart(2, "0")
-                            );
-                            setSelectedMonth(
-                              date.toLocaleString("default", { month: "long" })
-                            );
-                            setSelectedYear(date.getFullYear().toString());
-
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                            const submitTab = document.querySelector(
-                              '[data-value="submit"]'
-                            ) as HTMLElement;
-                            if (submitTab) submitTab.click();
-                          }}
-                        >
-                          View Details
-                        </Button>
                       </div>
                     </Card>
                   ))}

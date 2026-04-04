@@ -32,20 +32,29 @@ const PostConsole: React.FC<PostConsoleProps> = ({
         </div>
         <button
           onClick={handleOpenCreatePost}
-          className="bg-[#E67E5F] text-white px-8 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-500/20 flex-shrink-0"
+          className="bg-[#E67E5F] text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-500/20 flex-shrink-0"
         >
           + Create Post
         </button>
       </div>
       <div className="h-px bg-gray-100 mx-6" />
       <div className="px-6 py-4 flex items-center gap-8">
-        <button className="flex items-center gap-2.5 text-[11px] font-bold text-gray-500 hover:text-[#E67E5F] transition-colors">
+        <button
+          onClick={handleOpenCreatePost}
+          className="flex items-center gap-2.5 text-[11px] font-bold text-gray-500 hover:text-[#E67E5F] transition-colors"
+        >
           <Image className="w-4 h-4" /> Add Photo
         </button>
-        <button className="flex items-center gap-2.5 text-[11px] font-bold text-gray-500 hover:text-[#E67E5F] transition-colors">
+        <button
+          onClick={handleOpenCreatePost}
+          className="flex items-center gap-2.5 text-[11px] font-bold text-gray-500 hover:text-[#E67E5F] transition-colors"
+        >
           <Video className="w-4 h-4" /> Add Video
         </button>
-        <button className="flex items-center gap-2.5 text-[11px] font-bold text-gray-500 hover:text-[#E67E5F] transition-colors">
+        <button
+          onClick={handleOpenCreatePost}
+          className="flex items-center gap-2.5 text-[11px] font-bold text-gray-500 hover:text-[#E67E5F] transition-colors"
+        >
           <Activity className="w-4 h-4" /> Add Feeling
         </button>
       </div>
