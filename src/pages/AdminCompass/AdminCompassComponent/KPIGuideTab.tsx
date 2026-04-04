@@ -140,7 +140,7 @@ interface SampleIndustry {
   cardBg: string;
   cardBorder: string;
   iconWrap: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; strokeWidth?: string | number }>;
   departments: SampleDepartment[];
 }
 
