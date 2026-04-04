@@ -153,7 +153,7 @@ const ReportsTab = () => {
             <select
               value={selectedMeetingId}
               onChange={(e) => setSelectedMeetingId(e.target.value)}
-              className="appearance-none bg-white border border-[rgba(218,119,86,0.22)] rounded-xl py-2 pl-4 pr-8 text-sm font-semibold text-neutral-700 focus:outline-none shadow-sm"
+              className="appearance-none bg-[#fffaf8] border border-[rgba(218,119,86,0.22)] rounded-xl py-2 pl-4 pr-8 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.18)] shadow-sm"
             >
               {meetingOptions.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -161,13 +161,13 @@ const ReportsTab = () => {
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 w-3.5 h-3.5 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#DA7756]/70 w-3.5 h-3.5 pointer-events-none" />
           </div>
           <div className="relative">
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="appearance-none bg-white border border-[rgba(218,119,86,0.22)] rounded-xl py-2 pl-4 pr-8 text-sm font-semibold text-neutral-700 focus:outline-none shadow-sm"
+              className="appearance-none bg-[#fffaf8] border border-[rgba(218,119,86,0.22)] rounded-xl py-2 pl-4 pr-8 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.18)] shadow-sm"
             >
               {periodOptions.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -175,7 +175,7 @@ const ReportsTab = () => {
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 w-3.5 h-3.5 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#DA7756]/70 w-3.5 h-3.5 pointer-events-none" />
           </div>
           <BtnIcon onClick={loadReport} title="Refresh">
             <RefreshCw
@@ -224,13 +224,13 @@ const ReportsTab = () => {
           <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-neutral-800 font-bold text-sm">
-                <Calendar className="w-5 h-5 text-neutral-500" /> Meeting Status
+                <Calendar className="w-5 h-5 text-[#DA7756]" /> Meeting Status
                 ({weekLabel})
               </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setWeekOffset((prev) => prev + 1)}
-                  className="w-7 h-7 flex items-center justify-center border border-neutral-200 rounded-lg hover:bg-neutral-50 text-neutral-500 transition-colors active:scale-95"
+                  className="w-7 h-7 flex items-center justify-center border border-[rgba(218,119,86,0.22)] rounded-lg hover:bg-[#fef6f4] text-[#DA7756] transition-colors active:scale-95"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
@@ -238,10 +238,10 @@ const ReportsTab = () => {
                   onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
                   disabled={weekOffset === 0}
                   className={cn(
-                    "w-7 h-7 flex items-center justify-center border border-neutral-200 rounded-lg transition-colors",
+                    "w-7 h-7 flex items-center justify-center border border-[rgba(218,119,86,0.22)] rounded-lg transition-colors",
                     weekOffset === 0
-                      ? "opacity-30 cursor-not-allowed bg-neutral-50"
-                      : "hover:bg-neutral-50 text-neutral-500 active:scale-95"
+                      ? "opacity-30 cursor-not-allowed bg-[#fffaf8]"
+                      : "hover:bg-[#fef6f4] text-[#DA7756] active:scale-95"
                   )}
                 >
                   <ArrowRight className="w-4 h-4" />
@@ -256,7 +256,7 @@ const ReportsTab = () => {
                     "flex flex-col items-center justify-center w-[12%] min-w-[70px] h-20 rounded-xl border flex-shrink-0 bg-white transition-all duration-300",
                     d.status === "done" && "border-green-400 bg-green-50/30",
                     d.status === "missed" && "border-red-300 bg-red-50/30",
-                    d.status === "holiday" && "border-blue-200 bg-blue-50/30"
+                    d.status === "holiday" && "border-[rgba(218,119,86,0.25)] bg-[#fef6f4]"
                   )}
                 >
                   <span
@@ -264,7 +264,7 @@ const ReportsTab = () => {
                       "text-xs font-semibold",
                       d.status === "done" && "text-green-600",
                       d.status === "missed" && "text-red-500",
-                      d.status === "holiday" && "text-blue-500"
+                      d.status === "holiday" && "text-[#DA7756]"
                     )}
                   >
                     {d.day}
@@ -274,7 +274,7 @@ const ReportsTab = () => {
                       "text-xl font-bold mt-0.5",
                       d.status === "done" && "text-green-600",
                       d.status === "missed" && "text-red-500",
-                      d.status === "holiday" && "text-blue-500"
+                      d.status === "holiday" && "text-[#DA7756]"
                     )}
                   >
                     {d.date}
@@ -287,7 +287,7 @@ const ReportsTab = () => {
                       <X className="w-4 h-4 text-red-500" />
                     )}
                     {d.status === "holiday" && (
-                      <span className="text-blue-400 font-bold text-lg leading-none">
+                      <span className="text-[#DA7756]/80 font-bold text-lg leading-none">
                         ~
                       </span>
                     )}
@@ -304,74 +304,74 @@ const ReportsTab = () => {
                 <div className="w-3 h-3 bg-red-400 rounded-sm" /> Missed
               </span>
               <span className="flex items-center gap-1.5">
-                <div className="w-3 h-3 bg-blue-300 rounded-sm" /> Holiday
+                <div className="w-3 h-3 bg-[#f6a67d] rounded-sm" /> Holiday
               </span>
             </div>
           </div>
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#eff6ff] rounded-2xl p-5 border border-blue-100 flex flex-col justify-between shadow-sm">
+            <div className="bg-[#fffaf8] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
               <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-blue-900 tracking-wider uppercase mb-2">
+                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
                   Meetings This Month
                 </div>
-                <Calendar className="w-5 h-5 text-blue-500" />
+                <Calendar className="w-5 h-5 text-[#DA7756]" />
               </div>
               <div>
-                <div className="text-3xl font-extrabold text-blue-900">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {r.meetingsThisMonth}
                 </div>
-                <div className="text-xs font-semibold text-blue-600 mt-1">
+                <div className="text-xs font-semibold text-[#DA7756] mt-1">
                   0 missed of 3 working days
                 </div>
               </div>
             </div>
-            <div className="bg-[#f0fdf4] rounded-2xl p-5 border border-green-100 flex flex-col justify-between shadow-sm">
+            <div className="bg-[#fef6f4] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
               <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-green-900 tracking-wider uppercase mb-2">
+                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
                   Attendance Rate
                 </div>
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <CheckCircle2 className="w-5 h-5 text-[#DA7756]" />
               </div>
               <div>
-                <div className="text-3xl font-extrabold text-green-900">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {Number(r.attendanceRate).toFixed(1)}%
                 </div>
-                <div className="text-xs font-semibold text-green-600 mt-1">
+                <div className="text-xs font-semibold text-[#DA7756] mt-1">
                   0/154 attended
                 </div>
               </div>
             </div>
-            <div className="bg-[#faf5ff] rounded-2xl p-5 border border-purple-100 flex flex-col justify-between shadow-sm">
+            <div className="bg-[#fff4ef] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
               <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-purple-900 tracking-wider uppercase mb-2">
+                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
                   Avg Self-Rating
                 </div>
-                <TrendingUp className="w-5 h-5 text-purple-500" />
+                <TrendingUp className="w-5 h-5 text-[#DA7756]" />
               </div>
               <div>
-                <div className="text-3xl font-extrabold text-purple-900">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {r.avgSelfRating ? Number(r.avgSelfRating).toFixed(1) : "0.0"}
                   /10
                 </div>
-                <div className="text-xs font-semibold text-purple-600 mt-1">
+                <div className="text-xs font-semibold text-[#DA7756] mt-1">
                   0 ratings
                 </div>
               </div>
             </div>
-            <div className="bg-[#fff7ed] rounded-2xl p-5 border border-orange-100 flex flex-col justify-between shadow-sm">
+            <div className="bg-[#fff8f1] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
               <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-orange-900 tracking-wider uppercase mb-2">
+                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
                   Unresolved
                 </div>
-                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                <AlertTriangle className="w-5 h-5 text-[#DA7756]" />
               </div>
               <div>
-                <div className="text-3xl font-extrabold text-orange-900">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {r.unresolvedTasks}
                 </div>
-                <div className="text-xs font-semibold text-orange-600 mt-1">
+                <div className="text-xs font-semibold text-[#DA7756] mt-1">
                   stuck issues
                 </div>
               </div>
@@ -382,7 +382,7 @@ const ReportsTab = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm p-4">
               <div className="flex items-center gap-2 mb-4 text-sm font-bold text-neutral-800">
-                <TrendingUp className="w-4 h-4 text-neutral-500" /> Attendance
+                <TrendingUp className="w-4 h-4 text-[#DA7756]" /> Attendance
                 Trend (Last 7 Days)
               </div>
               <ResponsiveContainer width="100%" height={220}>
@@ -418,7 +418,7 @@ const ReportsTab = () => {
             </div>
             <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm p-4">
               <div className="flex items-center gap-2 mb-4 text-sm font-bold text-neutral-800">
-                <TrendingUp className="w-4 h-4 text-purple-500" /> KPI
+                <TrendingUp className="w-4 h-4 text-[#DA7756]" /> KPI
                 Achievement Trend
               </div>
               <ResponsiveContainer width="100%" height={220}>
@@ -444,9 +444,9 @@ const ReportsTab = () => {
                   <Line
                     type="monotone"
                     dataKey="kpi"
-                    stroke="#a855f7"
+                    stroke="#DA7756"
                     strokeWidth={2}
-                    dot={{ fill: "#a855f7", r: 3 }}
+                    dot={{ fill: "#DA7756", r: 3 }}
                     name="KPI %"
                   />
                 </ReLineChart>
@@ -458,46 +458,43 @@ const ReportsTab = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
-                bg: "#fff7ed",
-                border: "orange-100",
+                cardClass: "bg-[#fff8f1] border-[rgba(218,119,86,0.14)]",
                 icon: AlertTriangle,
-                iconColor: "text-orange-500",
+                iconColor: "text-[#DA7756]",
                 label: "Issue Resolution",
                 value: "0%",
                 sub: "0 Resolved · 0 Open",
               },
               {
-                bg: "#eff6ff",
-                border: "blue-100",
+                cardClass: "bg-[#fffaf8] border-[rgba(218,119,86,0.14)]",
                 icon: Activity,
-                iconColor: "text-blue-500",
+                iconColor: "text-[#DA7756]",
                 label: "KPI Achievement",
                 value: "0%",
                 sub: "0 total entries",
               },
               {
-                bg: "#fef2f2",
-                border: "red-100",
+                cardClass: "bg-[#fef6f4] border-[rgba(218,119,86,0.14)]",
                 icon: Settings,
-                iconColor: "text-red-500",
+                iconColor: "text-[#DA7756]",
                 label: "Issue Metrics",
                 value: "0 days",
                 sub: "0 total stuck issues",
               },
             ].map(
-              ({ bg, border, icon: Icon, iconColor, label, value, sub }) => (
+              ({ cardClass, icon: Icon, iconColor, label, value, sub }) => (
                 <div
                   key={label}
-                  className={`bg-[${bg}] rounded-2xl p-4 border border-${border} flex gap-4 shadow-sm items-center`}
+                  className={cn("rounded-2xl p-4 border flex gap-4 shadow-sm items-center", cardClass)}
                 >
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-[rgba(218,119,86,0.12)]">
                     <Icon className={cn("w-5 h-5", iconColor)} />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-0.5">
                       {label}
                     </div>
-                    <div className="text-2xl font-extrabold text-blue-600 mb-1">
+                    <div className="text-2xl font-extrabold text-[#7a341d] mb-1">
                       {value}
                     </div>
                     <div className="text-[11px] font-semibold text-neutral-500">
@@ -512,14 +509,14 @@ const ReportsTab = () => {
           {/* Team KPIs */}
           <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm overflow-hidden">
             <div
-              className="p-4 flex items-center justify-between cursor-pointer bg-neutral-50 hover:bg-neutral-100 transition-colors border-b border-neutral-100"
+              className="p-4 flex items-center justify-between cursor-pointer bg-[#fffaf8] hover:bg-[#fef6f4] transition-colors border-b border-[rgba(218,119,86,0.1)]"
               onClick={() => setIsKpiExpanded(!isKpiExpanded)}
             >
               <div>
                 <div className="flex items-center gap-2 font-bold text-neutral-800 text-sm">
-                  <TrendingUp className="w-4 h-4 text-purple-600" /> Team Member
+                  <TrendingUp className="w-4 h-4 text-[#DA7756]" /> Team Member
                   KPIs{" "}
-                  <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-[#DA7756] text-white text-[10px] font-bold">
                     {r.memberStats.length} KPIs
                   </span>
                 </div>
@@ -550,7 +547,7 @@ const ReportsTab = () => {
                         <div className="font-bold text-sm text-neutral-800">
                           {member.name || "Unknown Member"}
                         </div>
-                        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-lg">
+                        <span className="px-2 py-1 bg-[#FAECE7] text-[#993C1D] text-xs font-bold rounded-lg border border-[rgba(218,119,86,0.12)]">
                           {member.kpis?.length || 0} KPIs
                         </span>
                       </div>

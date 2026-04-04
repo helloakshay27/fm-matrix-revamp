@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import { useSelector } from "react-redux";
 import {
   useQuery,
@@ -101,6 +101,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import {
+  getEmbeddedOrgId,
+  getEmbeddedToken,
+  resolveBaseUrlByOrgId,
+} from "@/utils/embeddedMode";
 import apiClient from "@/utils/apiClient";
 import { getUser } from "@/utils/auth";
 
@@ -169,6 +175,59 @@ const queryClient = new QueryClient({
   },
 });
 
+// ─── Token / Auth Service ──────────────────────────────────────────────────────
+
+/**
+ * In-memory token store. Credentials are never persisted beyond what
+ * the host app already puts in storage for bootstrap.
+ * After initial load the token lives only in module-scope memory.
+ */
+let _accessToken: string | null = null;
+let _refreshPromise: Promise<string> | null = null;
+
+function getAccessToken(): string {
+  if (_accessToken) return _accessToken;
+  const embedded = getEmbeddedToken();
+  if (embedded) {
+    _accessToken = embedded;
+    return embedded;
+  }
+  return getAuthHeader(); // returns "Bearer ..." string from host
+}
+
+function setAccessToken(token: string): void {
+  _accessToken = token;
+}
+
+function clearAccessToken(): void {
+  _accessToken = null;
+}
+
+/**
+ * Refresh the access token.
+ * Multiple concurrent callers coalesce onto a single Promise — only
+ * one HTTP request ever goes out, preventing token-refresh races.
+ */
+async function refreshAccessToken(): Promise<string> {
+  if (_refreshPromise) return _refreshPromise;
+
+  _refreshPromise = apiClient
+    .post<{ access_token: string }>(
+      "/auth/refresh",
+      {},
+      { headers: { "x-skip-auth-retry": "1" } }
+    )
+    .then(({ data }) => {
+      setAccessToken(data.access_token);
+      return data.access_token;
+    })
+    .finally(() => {
+      _refreshPromise = null;
+    });
+
+  return _refreshPromise;
+}
+
 // ─── Error Normalization ───────────────────────────────────────────────────────
 
 /**
@@ -228,6 +287,87 @@ function normalizeError(error: unknown): AppError {
 
   return { message: "An unexpected error occurred.", kind: "unknown" };
 }
+
+// ─── Axios Instance ────────────────────────────────────────────────────────────
+
+/**
+ * Centralized Axios instance. Every request goes through here so auth
+ * injection, token refresh, and error normalization are always applied.
+ */
+const apiClient = axios.create({
+  timeout: 30_000,
+  headers: { Accept: "application/json" },
+});
+
+async function resolveBaseUrl(): Promise<string> {
+  const base = API_CONFIG.BASE_URL;
+  if (base) {
+    return base.replace(/\/+$/, "");
+  }
+
+  const embeddedOrgId = getEmbeddedOrgId();
+  if (embeddedOrgId) {
+    try {
+      const resolved = await resolveBaseUrlByOrgId(embeddedOrgId);
+      return resolved.replace(/\/+$/, "");
+    } catch {
+      /* fall through */
+    }
+  }
+
+  throw {
+    message: "API base URL not configured. Please log in again.",
+    kind: "unknown",
+  } as AppError;
+}
+
+// Request interceptor — attach base URL, Authorization header, and access_token query param
+apiClient.interceptors.request.use(async (config) => {
+  if (!config.baseURL) {
+    config.baseURL = await resolveBaseUrl();
+  }
+  const token = getAccessToken();
+  // Extract raw token value (strip "Bearer " prefix if present)
+  const rawToken = token?.startsWith("Bearer ") ? token.slice(7) : token;
+  if (rawToken) {
+    // Set both Authorization header and access_token query param
+    // The lockated API accepts both; some routes require the query param
+    config.headers.Authorization = `Bearer ${rawToken}`;
+    config.params = { ...config.params, access_token: rawToken };
+  }
+  return config;
+});
+
+// Response interceptor — refresh token on 401, normalize all errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const original = error.config as typeof error.config & {
+      _retried?: boolean;
+      headers: Record<string, string>;
+    };
+
+    // Attempt one token refresh on 401, skip refresh endpoint itself
+    if (
+      error.response?.status === 401 &&
+      !original._retried &&
+      !original.headers["x-skip-auth-retry"]
+    ) {
+      original._retried = true;
+      try {
+        const newToken = await refreshAccessToken();
+        original.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient(original);
+      } catch {
+        clearAccessToken();
+        // Signal app-level logout (the app can listen for this)
+        window.dispatchEvent(new CustomEvent("auth:expired"));
+      }
+    }
+
+    return Promise.reject(normalizeError(error));
+  }
+);
 
 async function fetchFeedbackDetail(
   feedbackId: string
@@ -668,7 +808,10 @@ async function fetchFeedbackList(
           : item.resourceId === userId;
       });
 
-      const visibleItems = filtered;
+      const visibleItems =
+        userId && mapped.length > 0 && filtered.length === 0
+          ? mapped
+          : filtered;
 
       if (visibleItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = visibleItems;

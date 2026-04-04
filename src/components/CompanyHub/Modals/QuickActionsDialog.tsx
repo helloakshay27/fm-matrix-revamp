@@ -9,6 +9,7 @@ interface QuickActionsDialogProps {
   setOpenTaskModal: (open: boolean) => void;
   setOpenTodoModal: (open: boolean) => void;
   setIsCreatePostModalOpen: (open: boolean) => void;
+  setOpenTicketModal: (open: boolean) => void;
 }
 
 const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
@@ -17,6 +18,7 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
   setOpenTaskModal,
   setOpenTodoModal,
   setIsCreatePostModalOpen,
+  setOpenTicketModal,
 }) => {
   return (
     <Dialog open={isQuickActionsOpen} onOpenChange={setIsQuickActionsOpen}>
@@ -56,6 +58,9 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
                     strokeWidth={1.5}
                   />
                 ),
+                onClick: () => {
+                  setOpenTicketModal(true);
+                },
               },
               {
                 name: "Add To-do",

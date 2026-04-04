@@ -1236,6 +1236,7 @@ import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
 import DailyMeeting from "./pages/AdminCompass/DailyMeeting";
+import KPI from "./pages/AdminCompass/KPI";
 import ReportAnalytics from "./pages/ReportAnalytics";
 import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
 import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
@@ -2166,6 +2167,10 @@ function App() {
                           <Route
                             path="/admin-compass/daily-meeting"
                             element={<DailyMeeting />}
+                          />
+                          <Route
+                            path="/admin-compass/kpi"
+                            element={<KPI />}
                           />
 
 

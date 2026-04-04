@@ -2,8 +2,7 @@ import {
     History,
     RefreshCw,
     ChevronLeft,
-    ChevronRight,
-    Calendar as CalendarIcon
+    ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WeekPicker } from './WeekPicker';
@@ -14,8 +13,8 @@ const MeetingHistory = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-50 rounded-lg">
-                        <History className="w-5 h-5 text-purple-600" />
+                    <div className="rounded-lg border border-[#DA7756]/15 bg-[#fef6f4] p-2">
+                        <History className="w-5 h-5 text-[#DA7756]" />
                     </div>
                     <div>
                         <h2 className="text-lg font-bold text-[#1a1a1a]">Weekly Meeting History</h2>
@@ -43,7 +42,7 @@ const MeetingHistory = () => {
 
             {/* Content Area - Empty State */}
             <div className="bg-[#F8F9FB] border border-gray-100 rounded-2xl p-20 flex flex-col items-center justify-center text-center space-y-4">
-                <div className="text-gray-200">
+                <div className="text-[#DA7756]/35">
                     <History className="w-16 h-16" strokeWidth={1.5} />
                 </div>
                 <p className="text-gray-500 font-medium text-lg">No meetings found for Week 13, 2026</p>

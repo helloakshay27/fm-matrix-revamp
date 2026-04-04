@@ -35,20 +35,6 @@ const generateEmptyTrend = (days = 7) => {
   return result;
 };
 
-// Pastel colors array for department cards
-const PASTEL_COLORS = [
-  "bg-indigo-50",
-  "bg-fuchsia-50",
-  "bg-emerald-50",
-  "bg-amber-50",
-  "bg-red-50",
-  "bg-cyan-50",
-  "bg-blue-50",
-  "bg-purple-50",
-  "bg-green-50",
-  "bg-orange-50",
-];
-
 const normalizeAnalytics = (raw) => {
   if (!raw) return null;
   const validTrend =
@@ -138,13 +124,13 @@ const AnalyticsTab = () => {
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
-            className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium cursor-pointer"
+            className="appearance-none bg-[#fffaf8] border border-[rgba(218,119,86,0.22)] text-gray-700 py-2 pl-4 pr-10 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.2)] focus:border-[#DA7756] text-sm font-medium cursor-pointer"
           >
             <option value="last_7_days">Last 7 Days</option>
             <option value="last_14_days">Last 14 Days</option>
             <option value="last_30_days">Last 30 Days</option>
           </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#DA7756]/70">
             <ChevronDown className="w-4 h-4" />
           </div>
         </div>
@@ -160,49 +146,50 @@ const AnalyticsTab = () => {
           <div className="space-y-8">
             {/* Top Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between">
+              <div className="bg-[#fffaf8] rounded-2xl border border-[rgba(218,119,86,0.18)] p-5 shadow-sm flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">
                     Total Users
                   </span>
-                  <Users className="w-6 h-6 text-blue-500" />
+                  <Users className="w-6 h-6 text-[#DA7756]" />
                 </div>
-                <div className="text-3xl font-extrabold text-neutral-900">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {a.totalUsers}
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between">
+              <div className="bg-[#fef6f4] rounded-2xl border border-[rgba(218,119,86,0.18)] p-5 shadow-sm flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">
                     Active Reporters
                   </span>
-                  <TrendingUp className="w-6 h-6 text-green-500" />
+                  <TrendingUp className="w-6 h-6 text-[#DA7756]" />
                 </div>
-                <div className="text-3xl font-extrabold text-green-600">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {a.activeReporters}
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between">
+              <div className="bg-[#fff4ef] rounded-2xl border border-[rgba(218,119,86,0.18)] p-5 shadow-sm flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">
                     Lagging
                   </span>
-                  <TrendingDown className="w-6 h-6 text-orange-500" />
+                  <TrendingDown className="w-6 h-6 text-[#DA7756]" />
                 </div>
-                <div className="text-3xl font-extrabold text-orange-500">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {a.lagging}
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between">
+              <div className="bg-[#fff8f1] rounded-2xl border border-[rgba(218,119,86,0.18)] p-5 shadow-sm flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">
                     Not Reporting
                   </span>
+                  <Activity className="w-6 h-6 text-[#DA7756]" />
                 </div>
-                <div className="text-3xl font-extrabold text-red-600">
+                <div className="text-3xl font-extrabold text-[#7a341d]">
                   {a.notReporting}
                 </div>
               </div>
@@ -294,20 +281,20 @@ const AnalyticsTab = () => {
             </div>
 
             {/* Department Reporting Summary Grid (New API Format) */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-6 font-bold text-neutral-800 text-lg">
-                <Building2 className="w-5 h-5 text-indigo-600" /> Department
+                <Building2 className="w-5 h-5 text-[#DA7756]" /> Department
                 Reporting Summary
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {a.deptBreakdown.map((dept, index) => {
-                  const bgColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
+                  const bgColor = index % 2 === 0 ? "bg-[#fffaf8]" : "bg-[#fef6f4]";
 
                   return (
                     <div
                       key={dept.name}
-                      className={`${bgColor} rounded-xl p-4 transition-transform hover:scale-[1.01]`}
+                      className={`${bgColor} rounded-2xl p-4 border border-[rgba(218,119,86,0.14)] transition-transform hover:scale-[1.01]`}
                     >
                       {/* Card Header */}
                       <div className="flex justify-between items-start mb-4">
@@ -322,7 +309,7 @@ const AnalyticsTab = () => {
                             {dept.total} members
                           </p>
                         </div>
-                        <div className="bg-indigo-600 text-white text-[11px] font-bold px-2 py-0.5 rounded shadow-sm">
+                        <div className="bg-[#DA7756] text-white text-[11px] font-bold px-2 py-0.5 rounded-xl shadow-sm">
                           {dept.rate}%
                         </div>
                       </div>
@@ -330,7 +317,7 @@ const AnalyticsTab = () => {
                       {/* Stats Inner Cards */}
                       <div className="flex gap-2">
                         {/* TODAY */}
-                        <div className="bg-white rounded-lg p-2.5 flex-1 shadow-sm">
+                        <div className="bg-white rounded-xl p-2.5 flex-1 shadow-sm border border-[rgba(218,119,86,0.1)]">
                           <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wide mb-1">
                             Today
                           </div>
@@ -355,13 +342,13 @@ const AnalyticsTab = () => {
                         </div>
 
                         {/* THIS WEEK */}
-                        <div className="bg-white rounded-lg p-2.5 flex-1 shadow-sm">
+                        <div className="bg-white rounded-xl p-2.5 flex-1 shadow-sm border border-[rgba(218,119,86,0.1)]">
                           <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wide mb-1">
                             This Week
                           </div>
                           <div className="flex justify-between items-center">
                             <div className="text-center">
-                              <div className="text-blue-600 font-bold text-lg leading-none">
+                              <div className="text-[#DA7756] font-bold text-lg leading-none">
                                 {dept.thisWeek.done}
                               </div>
                               <div className="text-[9px] text-gray-500 mt-1">

@@ -404,21 +404,6 @@ function SopFormDialog({
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={isSaving}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#DA7756] px-3 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
-            >
-              {isSaving ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : isEdit ? (
-                <Save className="h-4 w-4" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-              {isSaving ? "Saving…" : isEdit ? "Update" : "Create"}
-            </button>
-            <button
-              type="button"
               onClick={() => onOpenChange(false)}
               className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100"
             >
@@ -659,6 +644,31 @@ function SopFormDialog({
                 </div>
               </>
             )}
+        </div>
+
+        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
+          >
+            {isSaving ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : isEdit ? (
+              <Save className="h-4 w-4" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {isSaving ? "Saving…" : isEdit ? "Update SOP" : "Create SOP"}
+          </button>
         </div>
       </DialogContent>
     </Dialog>

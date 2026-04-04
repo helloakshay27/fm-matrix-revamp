@@ -34,7 +34,7 @@ const DailyMeeting = () => {
 
   return (
     <div
-      className="space-y-6 mx-auto"
+      className="mx-auto rounded-[28px] border border-[rgba(218,119,86,0.16)] bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
       style={{ background: C.pageBg, color: C.textMain }}
     >
       {/* ── Tab bar ── */}
@@ -61,7 +61,7 @@ const DailyMeeting = () => {
       </div>
 
       {/* ── Tab content ── */}
-      <div className={activeTab !== "Settings" ? "p-6 max-w-7xl mx-auto" : ""}>
+      <div className={activeTab !== "Settings" ? "p-6 max-w-7xl mx-auto" : "px-2 pb-2"}>
         {activeTab === "Daily" && (
           <DailyTab
             selectedDateId={selectedDateId}

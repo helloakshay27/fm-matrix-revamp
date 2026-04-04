@@ -123,8 +123,8 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-[600px] flex flex-col overflow-hidden max-h-[90vh]">
-        <div className="flex items-start justify-between p-6 border-b border-orange-100">
+      <div className="bg-[#fffaf8] rounded-[28px] border border-[rgba(218,119,86,0.18)] shadow-2xl w-full max-w-[600px] flex flex-col overflow-hidden max-h-[90vh]">
+        <div className="flex items-start justify-between p-6 border-b border-[rgba(218,119,86,0.12)] bg-[#fef6f4]">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
               {isEdit
@@ -138,12 +138,12 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#DA7756] p-1 transition-colors"
+            className="text-gray-400 hover:text-[#DA7756] p-1 rounded-xl hover:bg-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-[#fffaf8]">
           {error && (
             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
@@ -159,7 +159,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="e.g., Sales Team Daily Stand-up"
-                className="w-full border border-gray-300 rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]"
+                className="w-full border border-[rgba(218,119,86,0.22)] bg-white rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]"
               />
             </div>
             <div>
@@ -172,7 +172,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                 onChange={(e) =>
                   setForm({ ...form, meeting_time: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]"
+                className="w-full border border-[rgba(218,119,86,0.22)] bg-white rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]"
               />
             </div>
           </div>
@@ -190,7 +190,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                     "px-4 py-1.5 rounded-xl text-sm font-semibold transition-all",
                     form.meeting_days.includes(day)
                       ? "bg-[#DA7756] text-white"
-                      : "bg-white text-gray-600 border border-gray-200 hover:bg-orange-50 hover:border-[#DA7756]/40"
+                      : "bg-white text-gray-600 border border-[rgba(218,119,86,0.16)] hover:bg-[#fef6f4] hover:border-[#DA7756]/40"
                   )}
                 >
                   {day}
@@ -201,7 +201,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
               Select the days this meeting will take place
             </p>
           </div>
-          <div className="space-y-5 border-t border-orange-100 pt-5">
+          <div className="space-y-5 border-t border-[rgba(218,119,86,0.12)] pt-5">
             <div>
               <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
                 Meeting Head <span className="text-[#DA7756]">*</span>
@@ -212,7 +212,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                   onChange={(e) =>
                     setForm({ ...form, meeting_head_id: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-2xl px-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756] bg-white"
+                  className="w-full border border-[rgba(218,119,86,0.22)] rounded-2xl px-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756] bg-white"
                 >
                   <option value="">Select meeting head</option>
                   {ALL_USERS.map((u) => (
@@ -234,7 +234,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                   onChange={(e) =>
                     setForm({ ...form, department_id: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-2xl px-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756] bg-white"
+                  className="w-full border border-[rgba(218,119,86,0.22)] rounded-2xl px-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756] bg-white"
                 >
                   <option value="">Select department</option>
                   {departmentOptions.map((d) => (
@@ -250,14 +250,14 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
               <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
                 Meeting Members
               </label>
-              <div className="border border-orange-100 rounded-lg overflow-hidden flex flex-col">
-                <div className="p-2 border-b border-orange-100 bg-orange-50/30">
+              <div className="border border-[rgba(218,119,86,0.14)] rounded-2xl overflow-hidden flex flex-col bg-white">
+                <div className="p-2 border-b border-[rgba(218,119,86,0.14)] bg-[#fef6f4]">
                   <input
                     type="text"
                     placeholder="Search members..."
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
-                    className="w-full bg-white border border-gray-200 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-[#DA7756]"
+                    className="w-full bg-white border border-[rgba(218,119,86,0.16)] rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-[#DA7756]"
                   />
                 </div>
                 <div className="max-h-48 overflow-y-auto p-1">
@@ -269,7 +269,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                     filteredUsers.map((user) => (
                       <label
                         key={user.id}
-                        className="flex items-start gap-3 p-2.5 hover:bg-orange-50/40 rounded-md cursor-pointer transition-colors"
+                        className="flex items-start gap-3 p-2.5 hover:bg-[#fef6f4] rounded-xl cursor-pointer transition-colors"
                       >
                         <div className="pt-0.5">
                           <input
@@ -308,10 +308,10 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
             </label>
           </div>
         </div>
-        <div className="p-4 border-t border-orange-100 bg-orange-50/30 flex justify-end gap-3 rounded-b-2xl">
+        <div className="p-4 border-t border-[rgba(218,119,86,0.12)] bg-[#fef6f4] flex justify-end gap-3 rounded-b-[28px]">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-2xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 bg-white border border-[rgba(218,119,86,0.18)] text-gray-700 rounded-2xl text-sm font-semibold hover:bg-[#fffaf8] transition-colors"
           >
             Cancel
           </button>
