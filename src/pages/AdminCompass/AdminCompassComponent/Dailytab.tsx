@@ -174,7 +174,6 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
           { label: "MEMBER", value: selectedMember, setter: setSelectedMember },
         ].map(({ label, value, setter }) => (
           <div key={label} className="flex items-center gap-2">
-<<<<<<< Updated upstream
             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
               {label}
             </span>
@@ -190,14 +189,6 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
               }
               className="p-1.5 text-[#DA7756]/70 hover:text-[#DA7756] bg-[#fffaf8] border border-[rgba(218,119,86,0.2)] rounded-xl shadow-sm transition-colors"
             >
-=======
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">{label}</span>
-            <div className="flex items-center gap-1.5 bg-[#fffaf8] border border-[rgba(218,119,86,0.3)] rounded-xl px-3 py-1.5 shadow-sm cursor-pointer hover:bg-[#fef6f4] transition-colors">
-              <span className="text-sm font-semibold text-neutral-800">{value}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-[#DA7756]/70" />
-            </div>
-            <button onClick={() => setter(label === "MEETING" ? "All Meetings" : "All Members")} className="p-1.5 text-[#DA7756]/70 hover:text-[#DA7756] bg-[#fffaf8] border border-[rgba(218,119,86,0.2)] rounded-xl shadow-sm transition-colors">
->>>>>>> Stashed changes
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -208,17 +199,12 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
         <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fffaf8]">
           <div>
             <h3 className="font-bold text-sm text-neutral-900 flex items-center gap-2">
-<<<<<<< Updated upstream
               <Calendar className="w-4 h-4 text-[#DA7756]" /> Daily Reports for
               HOD Huddle
-=======
-              <Calendar className="w-4 h-4 text-[#DA7756]" /> Daily Reports for HOD Huddle
->>>>>>> Stashed changes
             </h3>
             <p className="text-xs text-neutral-400 mt-0.5">31 Mar 2026 (Tue)</p>
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold flex-wrap">
-<<<<<<< Updated upstream
             <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#DA7756] text-white shadow-sm">
               Team 11
             </span>
@@ -228,18 +214,12 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
             <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#8f3f24] text-white shadow-sm">
               Missed 9
             </span>
-=======
-            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#DA7756] text-white shadow-sm">Team 11</span>
-            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#f6a67d] text-white shadow-sm">Submitted 2</span>
-            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#8f3f24] text-white shadow-sm">Missed 9</span>
->>>>>>> Stashed changes
           </div>
         </div>
         <div className="p-4 bg-[#fef6f4]">
           <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm">
             <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#fffaf8]">
               <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
-<<<<<<< Updated upstream
                 <Users className="w-4 h-4 text-[#DA7756]" /> HOD Huddle (10:00)
                 · 31 Mar (Tue)
               </div>
@@ -250,13 +230,6 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                 <BtnIcon title="Refresh">
                   <RefreshCw className="w-3.5 h-3.5" />
                 </BtnIcon>
-=======
-                <Users className="w-4 h-4 text-[#DA7756]" /> HOD Huddle (10:00) · 31 Mar (Tue)
-              </div>
-              <div className="flex gap-2">
-                <BtnIcon title="Calendar"><CalendarIcon className="w-3.5 h-3.5 text-[#DA7756]" /></BtnIcon>
-                <BtnIcon title="Refresh"><RefreshCw className="w-3.5 h-3.5" /></BtnIcon>
->>>>>>> Stashed changes
               </div>
             </div>
             <div className="p-4">
@@ -341,7 +314,6 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-<<<<<<< Updated upstream
                       <h3 className="font-bold text-neutral-900 text-sm">
                         {report.user}
                       </h3>
@@ -351,10 +323,6 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                     </div>
                     <div className="text-xs text-neutral-400 mt-0.5">
                       {report.email} • {report.timestamp}
-=======
-                      <h3 className="font-bold text-neutral-900 text-sm">{report.user}</h3>
-                      <span className="text-[10px] font-bold text-[#993C1D] border border-[rgba(218,119,86,0.18)] bg-[#FAECE7] px-2 py-0.5 rounded-xl">{report.dept}</span>
->>>>>>> Stashed changes
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
                       {report.kpiStats.map((stat, i) => (
@@ -423,17 +391,11 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                               className="flex items-start gap-2 text-xs text-neutral-700"
                             >
                               {item.done !== undefined ? (
-<<<<<<< Updated upstream
                                 item.done ? (
                                   <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                                 ) : (
                                   <Circle className="w-4 h-4 text-[#DA7756] mt-0.5 flex-shrink-0" />
                                 )
-=======
-                                item.done
-                                  ? <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                  : <Circle className="w-4 h-4 text-[#DA7756] mt-0.5 flex-shrink-0" />
->>>>>>> Stashed changes
                               ) : (
                                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-300 mt-1.5 shrink-0" />
                               )}
@@ -441,7 +403,6 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                                 {item.text}
                               </span>
                               {item.type && (
-<<<<<<< Updated upstream
                                 <span
                                   className={cn(
                                     "text-[9px] font-bold px-1.5 py-0.5 rounded-xl uppercase flex-shrink-0 border",
@@ -450,9 +411,6 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                                       : "text-red-500 border-red-200 bg-red-50"
                                   )}
                                 >
-=======
-                                <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-xl uppercase flex-shrink-0 border", item.type === "task" ? "text-[#993C1D] border-[rgba(218,119,86,0.18)] bg-[#FAECE7]" : "text-red-500 border-red-200 bg-red-50")}>
->>>>>>> Stashed changes
                                   {item.type}
                                 </span>
                               )}
