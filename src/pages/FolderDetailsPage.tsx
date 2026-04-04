@@ -50,6 +50,8 @@ interface FolderItem {
   format?: string;
   size: string;
   document_count: number;
+  files_count?: number;
+  folders_count?: number;
   status: "Active" | "Inactive";
   created_by: string;
   created_date: string;
@@ -216,8 +218,7 @@ export const FolderDetailsPage = () => {
   >(null);
   const [operationType, setOperationType] = useState<"move" | "copy">("move");
 
-  // Check if this is a file list view (not folder list)
-  const isFileListView = location.pathname.includes("/folder/");
+  // Always show both child folders and documents in the folder detail view
   const [folderData, setFolderData] = useState<FolderDetailsResponse | null>(
     null
   );
@@ -599,16 +600,14 @@ export const FolderDetailsPage = () => {
             id: child.id,
             folder_title: child.name,
             type: "folder" as const,
-            category: response.name || "Uncategorized",
-            size: "0 B",
-            document_count: 0,
-            status: "Active" as const,
-            created_by: "Unknown",
-            created_date: new Date().toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            }),
+            category: child.document_category_name || "Uncategorized",
+            size: formatFileSize(child.total_file_size || 0),
+            document_count: child.total_files || 0,
+            files_count: child.total_files || 0,
+            folders_count: (child.documents || []).length,
+            status: child.active === false ? ("Inactive" as const) : ("Active" as const),
+            created_by: child.created_by_full_name || "Unknown",
+            created_date: child.created_at ? formatDate(child.created_at) : "",
           })),
           // Add documents
           ...(response.documents || []).map((doc) => ({
@@ -632,11 +631,7 @@ export const FolderDetailsPage = () => {
           })),
         ];
 
-        // Filter to only show files if in file list view
-        const filteredItems = isFileListView
-          ? items.filter((item) => item.type === "file")
-          : items;
-        setFolderItems(filteredItems);
+        setFolderItems(items);
       } catch (error) {
         console.error("Error fetching folder details:", error);
       } finally {
@@ -645,7 +640,7 @@ export const FolderDetailsPage = () => {
     };
 
     fetchFolderDetails();
-  }, [id, isFileListView]);
+  }, [id]);
 
   // Helper function to format file size
   const formatFileSize = (bytes: number): string => {
@@ -802,16 +797,12 @@ export const FolderDetailsPage = () => {
             id: child.id,
             folder_title: child.name,
             type: "folder" as const,
-            category: response.name || "Uncategorized",
-            size: "0 B",
-            document_count: 0,
-            status: "Active" as const,
-            created_by: "Unknown",
-            created_date: new Date().toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            }),
+            category: child.document_category_name || "Uncategorized",
+            size: formatFileSize(child.total_file_size || 0),
+            document_count: child.total_files || 0,
+            status: child.active === false ? ("Inactive" as const) : ("Active" as const),
+            created_by: child.created_by_full_name || "Unknown",
+            created_date: child.created_at ? formatDate(child.created_at) : "",
           })),
           ...(response.documents || []).map((doc) => ({
             id: doc.id,
@@ -832,10 +823,7 @@ export const FolderDetailsPage = () => {
           })),
         ];
 
-        const filteredItems = isFileListView
-          ? items.filter((item) => item.type === "file")
-          : items;
-        setFolderItems(filteredItems);
+        setFolderItems(items);
       }
     } catch (error) {
       console.error("Error deleting items:", error);
@@ -909,20 +897,16 @@ export const FolderDetailsPage = () => {
 
       // Transform data
       const items: FolderItem[] = [
-        ...response.childs.map((child) => ({
+        ...(response.childs || []).map((child) => ({
           id: child.id,
           folder_title: child.name,
           type: "folder" as const,
-          category: response.name || "Uncategorized",
-          size: "0 B",
-          document_count: 0,
-          status: "Active" as const,
-          created_by: "Unknown",
-          created_date: new Date().toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
+          category: child.document_category_name || "Uncategorized",
+          size: formatFileSize(child.total_file_size || 0),
+          document_count: child.total_files || 0,
+          status: child.active === false ? ("Inactive" as const) : ("Active" as const),
+          created_by: child.created_by_full_name || "Unknown",
+          created_date: child.created_at ? formatDate(child.created_at) : "",
         })),
         ...response.documents.map((doc) => ({
           id: doc.id,
@@ -1041,16 +1025,12 @@ export const FolderDetailsPage = () => {
             id: child.id,
             folder_title: child.name,
             type: "folder" as const,
-            category: response.name || "Uncategorized",
-            size: "0 B",
-            document_count: 0,
-            status: "Active" as const,
-            created_by: "Unknown",
-            created_date: new Date().toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            }),
+            category: child.document_category_name || "Uncategorized",
+            size: formatFileSize(child.total_file_size || 0),
+            document_count: child.total_files || 0,
+            status: child.active === false ? ("Inactive" as const) : ("Active" as const),
+            created_by: child.created_by_full_name || "Unknown",
+            created_date: child.created_at ? formatDate(child.created_at) : "",
           })),
           ...(response.documents || []).map((doc) => ({
             id: doc.id,
@@ -1073,10 +1053,7 @@ export const FolderDetailsPage = () => {
           })),
         ];
 
-        const filteredItems = isFileListView
-          ? items.filter((item) => item.type === "file")
-          : items;
-        setFolderItems(filteredItems);
+        setFolderItems(items);
       }
 
       setShowShareModal(false);
