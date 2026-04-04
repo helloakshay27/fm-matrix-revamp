@@ -35,7 +35,7 @@ import {
   meetingOptions,
   periodOptions,
   BtnIcon,
-} from "./Shared";
+} from "./shared";
 
 const generateEmptyTrendForReport = (endDateStr, days = 7) => {
   const result = [];
@@ -224,8 +224,8 @@ const ReportsTab = () => {
           <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-neutral-800 font-bold text-sm">
-                <Calendar className="w-5 h-5 text-[#DA7756]" /> Meeting Status (
-                {weekLabel})
+                <Calendar className="w-5 h-5 text-[#DA7756]" /> Meeting Status
+                ({weekLabel})
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -256,8 +256,7 @@ const ReportsTab = () => {
                     "flex flex-col items-center justify-center w-[12%] min-w-[70px] h-20 rounded-xl border flex-shrink-0 bg-white transition-all duration-300",
                     d.status === "done" && "border-green-400 bg-green-50/30",
                     d.status === "missed" && "border-red-300 bg-red-50/30",
-                    d.status === "holiday" &&
-                      "border-[rgba(218,119,86,0.25)] bg-[#fef6f4]"
+                    d.status === "holiday" && "border-[rgba(218,119,86,0.25)] bg-[#fef6f4]"
                   )}
                 >
                   <span
@@ -482,30 +481,29 @@ const ReportsTab = () => {
                 value: "0 days",
                 sub: "0 total stuck issues",
               },
-            ].map(({ cardClass, icon: Icon, iconColor, label, value, sub }) => (
-              <div
-                key={label}
-                className={cn(
-                  "rounded-2xl p-4 border flex gap-4 shadow-sm items-center",
-                  cardClass
-                )}
-              >
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-[rgba(218,119,86,0.12)]">
-                  <Icon className={cn("w-5 h-5", iconColor)} />
+            ].map(
+              ({ cardClass, icon: Icon, iconColor, label, value, sub }) => (
+                <div
+                  key={label}
+                  className={cn("rounded-2xl p-4 border flex gap-4 shadow-sm items-center", cardClass)}
+                >
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-[rgba(218,119,86,0.12)]">
+                    <Icon className={cn("w-5 h-5", iconColor)} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-0.5">
+                      {label}
+                    </div>
+                    <div className="text-2xl font-extrabold text-[#7a341d] mb-1">
+                      {value}
+                    </div>
+                    <div className="text-[11px] font-semibold text-neutral-500">
+                      {sub}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-0.5">
-                    {label}
-                  </div>
-                  <div className="text-2xl font-extrabold text-[#7a341d] mb-1">
-                    {value}
-                  </div>
-                  <div className="text-[11px] font-semibold text-neutral-500">
-                    {sub}
-                  </div>
-                </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
 
           {/* Team KPIs */}
