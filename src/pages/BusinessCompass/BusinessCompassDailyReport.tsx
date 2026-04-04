@@ -693,7 +693,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </h1>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6 inline-flex h-auto rounded-2xl bg-[#DA7756] p-1 shadow-sm">
             <TabsTrigger
               value="submit"
