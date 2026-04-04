@@ -187,7 +187,27 @@ export const C = {
   primaryBg: "#fef6f4",
   textMain: "#1a1a1a",
   borderLgt: "#e5e7eb",
-  pageBg: "#ffffff",
+  pageBg: "#f6f4ee",
+};
+
+/** Tailwind fragments — KPI module surfaces & controls (Admin Compass) */
+export const kpiClass = {
+  border: "border border-[rgba(218,119,86,0.22)]",
+  borderSoft: "border border-[rgba(218,119,86,0.18)]",
+  borderStrong: "border border-[rgba(218,119,86,0.28)]",
+  surfaceCard: "bg-[#faf9f6]",
+  surfaceInput: "bg-[#faf9f6]",
+  surfacePanel: "bg-[#fef6f4]",
+  focusRing: "focus:border-[#DA7756] focus:outline-none focus:ring-2 focus:ring-[#DA7756]/25",
+  focusRingSm: "focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]/25",
+  checkbox:
+    "rounded border-[rgba(218,119,86,0.42)] text-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/30 focus:ring-offset-0",
+  btnSecondary:
+    "rounded-lg border border-[rgba(218,119,86,0.3)] bg-[#fef6f4] font-semibold text-[#1a1a1a] transition-colors hover:bg-[#f3ebe8]",
+  btnIcon:
+    "rounded-lg border border-[rgba(218,119,86,0.3)] bg-[#fef6f4] text-[#DA7756] transition-colors hover:bg-[#f3ebe8]",
+  btnDanger:
+    "rounded-lg border border-red-200/80 bg-[#fff5f3] text-red-600 transition-colors hover:bg-red-100/60",
 };
 
 export const datesData = [
@@ -287,7 +307,7 @@ export const BtnIcon = ({ onClick, children, className = "", title = "", disable
 );
 
 export const BtnPurple = ({ children, onClick, className = "", icon: Icon }) => (
-  <button onClick={onClick} className={cn("inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#a855f7] text-white shadow-sm hover:bg-[#9333ea] active:scale-[0.97] transition-all duration-150", className)}>
+  <button onClick={onClick} className={cn("inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#DA7756] text-white shadow-sm hover:bg-[#c9674a] active:scale-[0.97] transition-all duration-150", className)}>
     {Icon && <Icon className="w-4 h-4" />} {children}
   </button>
 );
