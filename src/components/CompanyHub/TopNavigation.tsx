@@ -67,6 +67,7 @@ const navMenuOptions: Record<
       title: "Create MOM",
       description: "Create MOM",
       icon: <Clock className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/vas/add-mom"
     },
     {
       title: "Create Ticket",
@@ -74,6 +75,7 @@ const navMenuOptions: Record<
       icon: (
         <AlertCircle className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />
       ),
+      href: "/maintenance/ticket/employee/add"
     },
   ],
   Work: [

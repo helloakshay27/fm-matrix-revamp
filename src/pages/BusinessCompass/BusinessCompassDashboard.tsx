@@ -38,7 +38,9 @@ const BusinessCompassDashboard: React.FC = () => {
   const [dailyReportCount, setDailyReportCount] = useState<number>(0);
   const [weeklyReportCount, setWeeklyReportCount] = useState<number>(0);
   const [isBusinessPlanExpanded, setIsBusinessPlanExpanded] = useState(false);
-  const [activePlanTab, setActivePlanTab] = useState<"images" | "video">("images");
+  const [activePlanTab, setActivePlanTab] = useState<"images" | "video">(
+    "images"
+  );
   const [planImages, setPlanImages] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [planVideoUrl, setPlanVideoUrl] = useState("");
@@ -100,11 +102,7 @@ const BusinessCompassDashboard: React.FC = () => {
   }, []);
 
   return (
-<<<<<<< Updated upstream
     <div className="mx-auto w-full max-w-7xl space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#f6f4ee] p-6 font-poppins">
-=======
-    <div className="max-w-7xl mx-auto space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#f6f4ee] p-6 font-poppins">
->>>>>>> Stashed changes
       {/* Complete Your Profile Banner */}
       {!isProfileComplete && (
         <Card className="overflow-hidden rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 text-[#1a1a1a] shadow-sm">
@@ -184,7 +182,7 @@ const BusinessCompassDashboard: React.FC = () => {
               </span>
             </div>
 
-            <div 
+            <div
               className="bg-[#fdfaff] rounded-[12px] p-3 flex items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm"
               onClick={() => setIsBusinessPlanExpanded(!isBusinessPlanExpanded)}
             >
@@ -201,7 +199,11 @@ const BusinessCompassDashboard: React.FC = () => {
                   Add Content
                 </Button>
               </div>
-              {isBusinessPlanExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              {isBusinessPlanExpanded ? (
+                <ChevronUp size={18} />
+              ) : (
+                <ChevronDown size={18} />
+              )}
             </div>
 
             {/* Expanded Content */}
@@ -210,22 +212,28 @@ const BusinessCompassDashboard: React.FC = () => {
                 {/* Tabs */}
                 <div className="flex items-center border-b border-gray-100">
                   <button
-                    onClick={(e) => { e.stopPropagation(); setActivePlanTab("images"); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActivePlanTab("images");
+                    }}
                     className={cn(
                       "flex-1 py-3 text-[13px] font-bold transition-all",
-                      activePlanTab === "images" 
-                        ? "bg-[#DA7756] text-white" 
+                      activePlanTab === "images"
+                        ? "bg-[#DA7756] text-white"
                         : "bg-transparent text-gray-500 hover:text-[#DA7756]"
                     )}
                   >
                     Images
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setActivePlanTab("video"); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActivePlanTab("video");
+                    }}
                     className={cn(
                       "flex-1 py-3 text-[13px] font-bold transition-all",
-                      activePlanTab === "video" 
-                        ? "bg-[#DA7756] text-white" 
+                      activePlanTab === "video"
+                        ? "bg-[#DA7756] text-white"
                         : "bg-transparent text-gray-500 hover:text-[#DA7756]"
                     )}
                   >
@@ -239,12 +247,21 @@ const BusinessCompassDashboard: React.FC = () => {
                     planImages.length > 0 ? (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
                         {planImages.map((img, i) => (
-                          <div key={i} className="group relative aspect-video rounded-lg overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                            <img src={img} alt="Plan" className="w-full h-full object-cover" />
-                            <button 
+                          <div
+                            key={i}
+                            className="group relative aspect-video rounded-lg overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md"
+                          >
+                            <img
+                              src={img}
+                              alt="Plan"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setPlanImages(planImages.filter((_, idx) => idx !== i));
+                                setPlanImages(
+                                  planImages.filter((_, idx) => idx !== i)
+                                );
                               }}
                               className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
                             >
@@ -258,33 +275,35 @@ const BusinessCompassDashboard: React.FC = () => {
                         <div className="w-16 h-16 bg-[#F6F4EE] rounded-2xl flex items-center justify-center mb-4">
                           <ImageIcon size={32} className="text-[#DA7756]/40" />
                         </div>
-                        <p className="text-[14px] font-black text-gray-400 mb-6">No images added yet</p>
+                        <p className="text-[14px] font-black text-gray-400 mb-6">
+                          No images added yet
+                        </p>
                         <Button className="bg-[#DA7756] hover:bg-[#DA7756]/90 text-white font-black h-9 px-6 rounded-[8px] flex items-center gap-2">
                           <Plus size={16} /> Add Images
                         </Button>
                       </>
                     )
-                  ) : (
-                    planVideoUrl ? (
-                      <div className="w-full aspect-video rounded-xl bg-black overflow-hidden relative group">
-                        <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity">
-                          Video Linked: {planVideoUrl}
-                        </div>
-                        <video controls className="w-full h-full">
-                          <source src={planVideoUrl} type="video/mp4" />
-                        </video>
+                  ) : planVideoUrl ? (
+                    <div className="w-full aspect-video rounded-xl bg-black overflow-hidden relative group">
+                      <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold opacity-0 group-hover:opacity-100 bg-black/20 transition-opacity">
+                        Video Linked: {planVideoUrl}
                       </div>
-                    ) : (
-                      <>
-                        <div className="w-16 h-16 bg-[#F6F4EE] rounded-2xl flex items-center justify-center mb-4">
-                          <Video size={32} className="text-[#DA7756]/40" />
-                        </div>
-                        <p className="text-[14px] font-black text-gray-400 mb-6">No video added yet</p>
-                        <Button className="bg-[#DA7756] hover:bg-[#DA7756]/90 text-white font-black h-9 px-6 rounded-[8px] flex items-center gap-2">
-                          <Plus size={16} /> Add Video
-                        </Button>
-                      </>
-                    )
+                      <video controls className="w-full h-full">
+                        <source src={planVideoUrl} type="video/mp4" />
+                      </video>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-[#F6F4EE] rounded-2xl flex items-center justify-center mb-4">
+                        <Video size={32} className="text-[#DA7756]/40" />
+                      </div>
+                      <p className="text-[14px] font-black text-gray-400 mb-6">
+                        No video added yet
+                      </p>
+                      <Button className="bg-[#DA7756] hover:bg-[#DA7756]/90 text-white font-black h-9 px-6 rounded-[8px] flex items-center gap-2">
+                        <Plus size={16} /> Add Video
+                      </Button>
+                    </>
                   )}
                 </div>
 
@@ -292,23 +311,25 @@ const BusinessCompassDashboard: React.FC = () => {
                 {activePlanTab === "images" && (
                   <div className="p-6 border-t border-gray-100 bg-[#F6F4EE]/30">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-[13px] font-black text-[#DA7756]">Add Images</span>
-                      <X 
-                        size={16} 
-                        className="text-gray-400 cursor-pointer" 
+                      <span className="text-[13px] font-black text-[#DA7756]">
+                        Add Images
+                      </span>
+                      <X
+                        size={16}
+                        className="text-gray-400 cursor-pointer"
                         onClick={() => setIsBusinessPlanExpanded(false)}
                       />
                     </div>
-                    
+
                     <div className="flex gap-2 mb-4">
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={newImageUrl}
                         onChange={(e) => setNewImageUrl(e.target.value)}
-                        placeholder="Paste image URL or Google Drive link..." 
+                        placeholder="Paste image URL or Google Drive link..."
                         className="flex-1 h-10 px-4 rounded-[8px] border border-gray-200 text-[13px] outline-none focus:border-[#DA7756] transition-all"
                       />
-                      <Button 
+                      <Button
                         onClick={() => handleAddImage()}
                         className="h-10 bg-[#DA7756]/10 hover:bg-[#DA7756]/20 text-[#DA7756] font-black px-4 rounded-[8px] flex items-center gap-2 border border-[#DA7756]/20 shadow-none hover:shadow-none"
                       >
@@ -320,7 +341,12 @@ const BusinessCompassDashboard: React.FC = () => {
                     </div>
 
                     <div className="space-y-1 mb-4">
-                      <p className="text-[10px] font-bold text-gray-400">0/12 images • Max 1 MB per image. <span className="text-[#DA7756] underline cursor-pointer">Compress images here</span></p>
+                      <p className="text-[10px] font-bold text-gray-400">
+                        0/12 images • Max 1 MB per image.{" "}
+                        <span className="text-[#DA7756] underline cursor-pointer">
+                          Compress images here
+                        </span>
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -609,10 +635,7 @@ const BusinessCompassDashboard: React.FC = () => {
               <Button
                 variant="ghost"
                 className="h-6 p-0 text-[11px] font-bold text-[#DA7756] hover:bg-transparent hover:text-[#c9673f] flex items-center gap-0.5"
-<<<<<<< Updated upstream
                 onClick={() => navigate("/business-compass/leaderboard")}
-=======
->>>>>>> Stashed changes
               >
                 View All <ChevronRight size={14} />
               </Button>
