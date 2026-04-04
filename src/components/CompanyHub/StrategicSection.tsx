@@ -73,7 +73,7 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
 
       <GlassCard className="col-span-1 lg:col-span-3 p-5 !bg-white shadow-sm !border-none h-full flex flex-col transition-all duration-500">
         <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-[12px] font-bold text-gray-700 tracking-tight">
+          <h3 className="text-[12px] font-bold text-[#DA7756] tracking-tight">
             Goals
           </h3>
           <button className="text-[10px] text-[#E67E5F] font-bold tracking-tight">
@@ -99,7 +99,7 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
 
       <GlassCard className="col-span-1 lg:col-span-3 p-5 !bg-white shadow-sm !border-none h-full flex flex-col transition-all duration-500">
         <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-[12px] font-bold text-gray-700 tracking-tight">
+          <h3 className="text-[12px] font-bold text-[#DA7756] tracking-tight">
             KRAs
           </h3>
           <button className="text-[10px] text-[#E67E5F] font-bold tracking-tight">
