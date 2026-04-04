@@ -737,7 +737,7 @@ export const AddTicketSidePanel: React.FC<AddTicketSidePanelProps> = ({
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50 space-y-6">
 
           {/* ── On Behalf Of ──────────────────────────────────────────────── */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="px-6 py-3 border-b border-gray-200">
               <h2 className="text-base font-medium text-gray-900 flex items-center gap-3">
                 <span
@@ -753,7 +753,7 @@ export const AddTicketSidePanel: React.FC<AddTicketSidePanelProps> = ({
               </h2>
             </div>
             <div className="p-6 space-y-4">
-              {/* On behalf radio */}
+             
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">Create On Behalf Of</p>
                 <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex gap-6">
@@ -776,7 +776,7 @@ export const AddTicketSidePanel: React.FC<AddTicketSidePanelProps> = ({
                 </RadioGroup>
               </div>
 
-              {/* User selector for non-self */}
+             
               {onBehalfOf !== 'self' && (
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>
@@ -799,7 +799,7 @@ export const AddTicketSidePanel: React.FC<AddTicketSidePanelProps> = ({
                 </FormControl>
               )}
 
-              {/* Name / Department / Contact / Site */}
+              
               <div className="grid grid-cols-2 gap-4">
                 <TextField
                   label="Name"
@@ -840,7 +840,7 @@ export const AddTicketSidePanel: React.FC<AddTicketSidePanelProps> = ({
                 />
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* ── Ticket Type ───────────────────────────────────────────────── */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
