@@ -100,11 +100,7 @@ const BusinessCompassDashboard: React.FC = () => {
   }, []);
 
   return (
-<<<<<<< Updated upstream
     <div className="mx-auto w-full max-w-7xl space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#f6f4ee] p-6 font-poppins">
-=======
-    <div className="max-w-7xl mx-auto space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#f6f4ee] p-6 font-poppins">
->>>>>>> Stashed changes
       {/* Complete Your Profile Banner */}
       {!isProfileComplete && (
         <Card className="overflow-hidden rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 text-[#1a1a1a] shadow-sm">
@@ -609,10 +605,7 @@ const BusinessCompassDashboard: React.FC = () => {
               <Button
                 variant="ghost"
                 className="h-6 p-0 text-[11px] font-bold text-[#DA7756] hover:bg-transparent hover:text-[#c9673f] flex items-center gap-0.5"
-<<<<<<< Updated upstream
                 onClick={() => navigate("/business-compass/leaderboard")}
-=======
->>>>>>> Stashed changes
               >
                 View All <ChevronRight size={14} />
               </Button>
