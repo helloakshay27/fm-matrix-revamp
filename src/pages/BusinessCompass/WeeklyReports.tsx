@@ -52,13 +52,17 @@ import { toast } from 'sonner';
  * Page shell + surfaces match `SystemAndSOP.tsx`:
  * `min-h-[calc(100vh-5rem)] bg-[#f6f4ee]`, `max-w-6xl`, cards `rounded-2xl border border-[#DA7756]/20`.
  */
-const accentEmphasis = '#C72030';
+const accentEmphasis = '#DA7756';
 const cardChrome =
     'overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm';
 const sectionHeader =
     'border-b border-neutral-200/40 bg-white/60 px-4 py-4 sm:px-5';
 const btnPrimary =
-    'bg-[#DA7756] font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85';
+    'bg-[#DA7756] font-semibold text-white shadow-sm transition-colors hover:bg-[#c9673f]';
+const btnOutline =
+    'border border-[#DA7756]/25 bg-white text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45';
+const btnIcon =
+    'inline-flex items-center justify-center rounded-lg border border-[#DA7756]/20 bg-white text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/40';
 const badgePoints =
     'border-0 bg-[#DA7756] px-3 py-1 text-xs text-white hover:bg-[#DA7756]';
 
@@ -80,21 +84,21 @@ const REMARK_CHIP_META: Record<
     },
     breakdown: {
         label: 'One Breakdown',
-        border: 'border-[#c55a42]',
+        border: 'border-[#DA7756]',
         bg: 'bg-[#fef6f4]',
         chipInactive:
             'border-neutral-200 bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
         chipActive:
-            'border-[#c55a42] bg-[#c55a42] text-white shadow-sm hover:bg-[#c55a42]/90',
+            'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#c9673f]',
     },
     employee: {
         label: 'One Employee',
-        border: 'border-[#b84a32]',
+        border: 'border-[#DA7756]',
         bg: 'bg-[#fef6f4]',
         chipInactive:
             'border-neutral-200 bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
         chipActive:
-            'border-[#b84a32] bg-[#b84a32] text-white shadow-sm hover:bg-[#b84a32]/90',
+            'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#c9673f]',
     },
     client: {
         label: 'One Client Feedback',
@@ -107,12 +111,12 @@ const REMARK_CHIP_META: Record<
     },
     empFeedback: {
         label: 'Employee Feedback',
-        border: 'border-[#C72030]/50',
+        border: 'border-[#DA7756]/60',
         bg: 'bg-[#fef6f4]',
         chipInactive:
             'border-neutral-200 bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
         chipActive:
-            'border-[#C72030] bg-[#C72030] text-white shadow-sm hover:bg-[#C72030]/90',
+            'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#c9673f]',
     },
 };
 
@@ -289,16 +293,16 @@ const WeeklyReports = () => {
                 </div>
 
                 <Tabs defaultValue="submit" className="w-full">
-                    <TabsList className="inline-flex h-auto w-full justify-start rounded-full bg-neutral-200/70 p-1 sm:w-auto">
+                    <TabsList className="inline-flex h-auto w-full justify-start rounded-2xl bg-[#DA7756] p-1 sm:w-auto">
                         <TabsTrigger
                             value="submit"
-                            className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm data-[state=inactive]:text-neutral-600"
+                            className="rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm data-[state=inactive]:text-white/80"
                         >
                             Submit Review
                         </TabsTrigger>
                         <TabsTrigger
                             value="history"
-                            className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm data-[state=inactive]:text-neutral-600"
+                            className="rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm data-[state=inactive]:text-white/80"
                         >
                             Review History
                         </TabsTrigger>
@@ -331,7 +335,7 @@ const WeeklyReports = () => {
                             <div className={cn('flex items-start justify-between', sectionHeader)}>
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <BarChart3 className="h-5 w-5 text-[#C72030]" />
+                                        <BarChart3 className="h-5 w-5 text-[#DA7756]" />
                                         <h3 className="font-bold text-neutral-900">Past Weeks KPIs</h3>
                                     </div>
                                     <p className="text-xs text-neutral-600">
@@ -351,7 +355,7 @@ const WeeklyReports = () => {
                         <Card className={cn('overflow-hidden', cardChrome)}>
                             <div className={cn('flex items-center justify-between', sectionHeader)}>
                                 <div className="flex items-center gap-2">
-                                    <Trophy className="h-5 w-5 text-[#C72030]" />
+                                    <Trophy className="h-5 w-5 text-[#DA7756]" />
                                     <h3 className="font-bold text-neutral-900">Your Achievements</h3>
                                 </div>
                                 <Badge className={badgePoints}>0/15 pts</Badge>
@@ -360,10 +364,10 @@ const WeeklyReports = () => {
                                 {wins.map((win, index) => (
                                     <div
                                         key={index}
-                                        className="group relative flex items-start gap-3 rounded-lg border border-neutral-100 bg-[#fafafa] p-4"
+                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-[#fef6f4]/70 p-4"
                                     >
                                         <Checkbox className="mt-1 rounded border-[#DA7756] data-[state=checked]:bg-[#DA7756]" />
-                                        <Star className="mt-1 h-4 w-4 cursor-pointer text-neutral-300 hover:text-amber-400" />
+                                        <Star className="mt-1 h-4 w-4 cursor-pointer text-[#DA7756]/35 hover:text-[#DA7756]" />
                                         <Textarea
                                             value={win}
                                             onChange={(e) => handleWinChange(index, e.target.value)}
@@ -373,7 +377,7 @@ const WeeklyReports = () => {
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveWin(index)}
-                                            className="p-1 text-red-400 hover:text-red-600"
+                                            className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756]"
                                         >
                                             <X className="h-4 w-4" />
                                         </button>
@@ -381,7 +385,7 @@ const WeeklyReports = () => {
                                 ))}
                                 <div className="flex flex-col gap-3 sm:flex-row">
                                     <Select defaultValue="none">
-                                        <SelectTrigger className="h-12 flex-1 rounded-xl border-dashed border-2 border-[#DA7756]/40 bg-white text-[#DA7756] hover:bg-[#f6f4ee]">
+                                        <SelectTrigger className="h-12 flex-1 rounded-xl border-dashed border-2 border-[#DA7756]/35 bg-[#fef6f4] text-[#DA7756] hover:bg-[#fdf0eb] focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]">
                                             <SelectValue placeholder="Import Daily Wins…" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -400,11 +404,11 @@ const WeeklyReports = () => {
                                 </div>
                                 <Button
                                     type="button"
-                                    className="h-12 w-full rounded-xl bg-[#C72030] font-bold uppercase tracking-wide text-white hover:bg-[#C72030]/90"
+                                    className={cn('h-12 w-full rounded-xl border text-sm font-semibold uppercase tracking-wide', btnOutline)}
                                 >
                                     Carry Forward Uncompleted
                                 </Button>
-                                <div className="rounded-xl border-2 border-dashed border-neutral-300/80 bg-white/50 px-6 py-8 text-center">
+                                <div className="rounded-xl border-2 border-dashed border-[#DA7756]/25 bg-[#fef6f4]/65 px-6 py-8 text-center">
                                     <input
                                         ref={achievementFileInputRef}
                                         type="file"
@@ -451,7 +455,7 @@ const WeeklyReports = () => {
                             <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between', sectionHeader)}>
                                 <div className="space-y-2">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <AlertTriangle className="h-5 w-5 shrink-0 text-[#C72030]" />
+                                        <AlertTriangle className="h-5 w-5 shrink-0 text-[#DA7756]" />
                                         <h3 className="font-bold text-neutral-900">Tasks & Issues</h3>
                                         <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700">
                                             Optional
@@ -486,7 +490,7 @@ const WeeklyReports = () => {
 
                         {/* Deep work */}
                         <div className="flex items-start gap-3 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm">
-                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#C72030]" />
+                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]" />
                             <p className="text-sm text-neutral-800">
                                 <span className="font-bold">Deep Work Blocks:</span> Protect your
                                 &quot;Prime Time&quot;! Have you blocked 90-min chunks for high-level
@@ -498,7 +502,7 @@ const WeeklyReports = () => {
                         <Card className={cn('overflow-hidden', cardChrome)}>
                             <div className={cn('flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between', sectionHeader)}>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <Target className="h-5 w-5 text-[#C72030]" />
+                                    <Target className="h-5 w-5 text-[#DA7756]" />
                                     <h3 className="font-bold text-neutral-900">Plan for Coming Week</h3>
                                     <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700">
                                         Optional
@@ -511,7 +515,7 @@ const WeeklyReports = () => {
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        className="rounded-lg border-[#DA7756]/30 text-xs font-bold text-[#DA7756] hover:bg-white/80"
+                                        className={cn('rounded-lg text-xs font-bold', btnOutline)}
                                     >
                                         Important & Not Urgent
                                     </Button>
@@ -522,7 +526,7 @@ const WeeklyReports = () => {
                                     <div key={day.key} className="space-y-2">
                                         <div
                                             className={cn(
-                                                'flex items-center justify-between rounded-lg border border-neutral-100 p-3',
+                                                'flex items-center justify-between rounded-xl border border-[#DA7756]/15 p-3',
                                                 day.color
                                             )}
                                         >
@@ -538,7 +542,7 @@ const WeeklyReports = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleAddPlan(day.key)}
-                                                    className="flex items-center gap-1 text-xs font-bold text-[#DA7756] hover:underline"
+                                                    className="inline-flex items-center gap-1 rounded-lg border border-[#DA7756]/25 bg-white px-2.5 py-1.5 text-xs font-bold text-[#DA7756] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[#DA7756]/45"
                                                 >
                                                     <Plus className="h-3 w-3" /> Add
                                                 </button>
@@ -551,9 +555,9 @@ const WeeklyReports = () => {
                                         {dayPlans[day.key]?.map((plan, index) => (
                                             <div
                                                 key={index}
-                                                className="ml-2 flex items-start gap-3 rounded-lg border border-neutral-100 bg-white p-4"
+                                                className="ml-2 flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                             >
-                                                <Star className="mt-1 h-4 w-4 cursor-pointer text-neutral-300 hover:text-amber-400" />
+                                                <Star className="mt-1 h-4 w-4 cursor-pointer text-[#DA7756]/35 hover:text-[#DA7756]" />
                                                 <Textarea
                                                     value={plan}
                                                     onChange={(e) =>
@@ -566,11 +570,11 @@ const WeeklyReports = () => {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemovePlan(day.key, index)}
-                                                        className="text-red-400 hover:text-red-600"
+                                                        className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756]"
                                                     >
                                                         <X className="h-4 w-4" />
                                                     </button>
-                                                    <div className="flex flex-col gap-1 text-neutral-400">
+                                                    <div className="flex flex-col gap-1 text-[#DA7756]/45">
                                                         <ChevronUp className="h-4 w-4 cursor-pointer hover:text-[#DA7756]" />
                                                         <ChevronDown className="h-4 w-4 cursor-pointer hover:text-[#DA7756]" />
                                                     </div>
@@ -694,12 +698,12 @@ const WeeklyReports = () => {
                         <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-5 shadow-sm">
                             <div className="mb-4 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Zap className="h-5 w-5 text-[#C72030]" />
+                                    <Zap className="h-5 w-5 text-[#DA7756]" />
                                     <h4 className="text-base font-bold text-neutral-900">
                                         Automated Weekly Score
                                     </h4>
                                 </div>
-                                <span className="text-2xl font-black text-[#C72030]">0/100</span>
+                                <span className="text-2xl font-black text-[#DA7756]">0/100</span>
                             </div>
                             <p className="mb-4 text-[11px] italic text-neutral-500">
                                 Based on KPIs, achievements, tasks, planning, and feedback.
@@ -741,7 +745,7 @@ const WeeklyReports = () => {
 
                         <Button
                             type="button"
-                            className={cn('h-12 w-full rounded-xl text-base shadow-lg', btnPrimary)}
+                            className="h-12 w-full rounded-xl bg-[#DA7756] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#c9673f]"
                         >
                             <Send className="mr-2 h-4 w-4" />
                             Submit for {submitRangeLabel}
@@ -749,7 +753,7 @@ const WeeklyReports = () => {
 
                         <div className="flex flex-col gap-3 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-start gap-3">
-                                <div className="rounded-lg bg-[#DA7756] p-2">
+                                <div className="rounded-lg bg-[#DA7756] p-2 shadow-sm">
                                     <Star className="h-4 w-4 fill-white text-white" />
                                 </div>
                                 <div>
@@ -757,7 +761,7 @@ const WeeklyReports = () => {
                                         <span className="text-sm font-bold text-neutral-900">
                                             Bonus Opportunity!
                                         </span>
-                                        <Badge className="border-0 bg-[#C72030] px-2 py-0.5 text-[10px] font-bold text-white hover:bg-[#C72030]">
+                                        <Badge className="border-0 bg-[#DA7756] px-2 py-0.5 text-[10px] font-bold text-white hover:bg-[#DA7756]">
                                             + 05 pts
                                         </Badge>
                                     </div>

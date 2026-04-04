@@ -85,6 +85,13 @@ interface DailyReport {
 
 const BusinessCompassDailyReport: React.FC = () => {
   const now = new Date();
+  const btnPrimary =
+    "bg-[#DA7756] text-white font-bold shadow-sm transition-colors hover:bg-[#c9673f] border-none";
+  const btnOutline =
+    "bg-white text-[#DA7756] border border-[rgba(218,119,86,0.25)] shadow-sm transition-colors hover:bg-[#fef6f4] hover:border-[rgba(218,119,86,0.45)]";
+  const btnIcon =
+    "border border-[rgba(218,119,86,0.22)] bg-white text-[#DA7756]/70 shadow-sm hover:bg-[#fef6f4] hover:text-[#DA7756]";
+
   const [selectedDate, setSelectedDate] = useState(now.getDate().toString());
   const [startDate, setStartDate] = useState(now.toLocaleDateString("en-CA"));
   const [isBannerVisible, setIsBannerVisible] = useState(true);
@@ -567,25 +574,26 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins pb-20 text-[#1a1a1a]">
+    <div className="max-w-7xl mx-auto space-y-6 rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#f6f4ee] p-6 pb-20 font-poppins text-[#1a1a1a]">
+      <AdminViewEmulation />
       {/* Interactive Info Banner Card */}
       {isBannerVisible && (
         <Card
           className={cn(
-            "bg-[#eff6ff] border-blue-200 rounded-[12px] shadow-sm overflow-hidden border transition-all duration-300",
+            "overflow-hidden rounded-[12px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm transition-all duration-300",
             isBannerExpanded ? "max-h-[1000px]" : "max-h-[80px]"
           )}
         >
           <CardContent className="p-0">
             <div
-              className="p-4 flex items-center gap-4 cursor-pointer hover:bg-blue-100/50 transition-colors"
+              className="flex cursor-pointer items-center gap-4 p-4 transition-colors hover:bg-[#fef6f4]"
               onClick={() => setIsBannerExpanded(!isBannerExpanded)}
             >
-              <div className="bg-[#2563eb] text-white p-2.5 rounded-[8px] flex items-center justify-center shadow-sm">
+              <div className="flex items-center justify-center rounded-[10px] bg-[#DA7756] p-2.5 text-white shadow-sm">
                 <Lightbulb size={20} />
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-[#1e3a8a] text-sm tracking-tight">
+                <h4 className="text-sm font-bold tracking-tight text-[#1a1a1a]">
                   How to Fill Your Daily Report
                 </h4>
               </div>
@@ -594,7 +602,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "text-blue-500 h-8 w-8 hover:bg-blue-100 rounded-full border-none transition-transform duration-200",
+                    "h-8 w-8 rounded-xl border-none text-[#DA7756] transition-transform duration-200 hover:bg-[#fef6f4]",
                     isBannerExpanded && "rotate-180"
                   )}
                 >
@@ -603,7 +611,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-gray-400 h-8 w-8 hover:bg-gray-100 rounded-full border-none"
+                  className="h-8 w-8 rounded-xl border-none text-[#DA7756]/60 hover:bg-[#fef6f4] hover:text-[#DA7756]"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsBannerVisible(false);
@@ -617,10 +625,10 @@ const BusinessCompassDailyReport: React.FC = () => {
             {isBannerExpanded && (
               <div className="px-16 pb-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="space-y-2">
-                  <h5 className="text-sm font-bold text-[#1e3a8a]">
+                  <h5 className="text-sm font-bold text-[#1a1a1a]">
                     How to use:
                   </h5>
-                  <ul className="space-y-2 text-xs text-[#1e3a8a]/70 font-medium list-disc pl-4">
+                  <ul className="list-disc space-y-2 pl-4 text-xs font-medium text-neutral-700">
                     <li>
                       Fill your daily report at the end of each workday to track
                       accomplishments and challenges.
@@ -645,26 +653,26 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <h5 className="text-sm font-bold text-[#1e3a8a] flex items-center gap-2">
+                  <h5 className="flex items-center gap-2 text-sm font-bold text-[#1a1a1a]">
                     💡 Best Practices:
                   </h5>
-                  <ul className="space-y-2 text-xs text-[#1e3a8a]/70 font-medium">
+                  <ul className="space-y-2 text-xs font-medium text-neutral-700">
                     <li className="flex items-start gap-2">
-                      <span className="text-green-600 font-bold">✓</span>
+                      <span className="font-bold text-[#DA7756]">✓</span>
                       <span>
                         Be specific in accomplishments - 'Completed X project'
                         not just 'worked on projects'
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-green-600 font-bold">✓</span>
+                      <span className="font-bold text-[#DA7756]">✓</span>
                       <span>
                         Tag team members in challenges when you need their help
                         using @mentions
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-green-600 font-bold">✓</span>
+                      <span className="font-bold text-[#DA7756]">✓</span>
                       <span>
                         Keep tomorrow's plan realistic - 3-5 key priorities is
                         better than a long list
@@ -686,16 +694,16 @@ const BusinessCompassDailyReport: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-gray-100 p-1.5 rounded-[12px] h-auto inline-flex shadow-inner mb-6">
+          <TabsList className="mb-6 inline-flex h-auto rounded-2xl bg-[#DA7756] p-1 shadow-sm">
             <TabsTrigger
               value="submit"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#1a1a1a] data-[state=active]:shadow-md bg-transparent text-gray-500 transition-all font-bold text-sm"
+              className="rounded-xl px-8 py-2 bg-transparent text-sm font-bold text-white/80 transition-all data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm"
             >
               Submit Report
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#1a1a1a] data-[state=active]:shadow-md bg-transparent text-gray-500 transition-all font-bold text-sm"
+              className="rounded-xl px-8 py-2 bg-transparent text-sm font-bold text-white/80 transition-all data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm"
             >
               Report History
             </TabsTrigger>
@@ -703,12 +711,12 @@ const BusinessCompassDailyReport: React.FC = () => {
 
           <TabsContent value="submit" className="space-y-6 mt-0">
             {/* Calendar Card */}
-            <Card className="rounded-[16px] border border-gray-200 shadow-sm overflow-hidden bg-white">
+            <Card className="overflow-hidden rounded-[16px] border border-[#DA7756]/20 bg-[#fffaf8] shadow-sm">
               <CardContent className="p-8">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-3">
-                    <div className="bg-blue-50 p-2 rounded-lg">
-                      <CalendarIcon size={20} className="text-blue-600" />
+                    <div className="rounded-xl border border-[rgba(218,119,86,0.18)] bg-[#FAECE7] p-2">
+                      <CalendarIcon size={20} className="text-[#DA7756]" />
                     </div>
                     <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
                       Daily Report for {selectedDate}{" "}
@@ -719,7 +727,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-gray-400 hover:text-gray-900 border-none"
+                      className={cn("h-8 w-8 rounded-xl", btnIcon)}
                       onClick={handlePrevWeek}
                     >
                       <ChevronLeft size={20} />
@@ -727,7 +735,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-gray-400 hover:text-gray-900 border-none"
+                      className={cn("h-8 w-8 rounded-xl", btnIcon)}
                       onClick={handleNextWeek}
                     >
                       <ChevronRight size={20} />
@@ -747,11 +755,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         item.type === "holiday" &&
                         "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
                         item.type === "upcoming" &&
-                        "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
+                          "bg-[#fdf8f6] text-[#b08972] border-[#DA7756]/10 hover:bg-[#fef6f4]",
                         item.type === "filled" &&
-                        "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
+                          "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
                         selectedDate === item.date && !item.isFuture
-                          ? "ring-4 ring-blue-500/20 scale-105 z-10 text-white"
+                          ? "z-10 scale-105 border-[#DA7756] bg-[#DA7756] text-white ring-4 ring-[#DA7756]/20"
                           : "border-transparent"
                       )}
                       onClick={() => !item.isFuture && handleSelectDate(item)}
@@ -777,7 +785,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </Badge>
                       )}
                       {selectedDate === item.date && (
-                        <div className="absolute -top-1 -right-1 h-3 w-3 bg-white rounded-full border-2 border-blue-500 shadow-sm" />
+                        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-[#DA7756] bg-white shadow-sm" />
                       )}
                     </div>
                   ))}
@@ -798,7 +806,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <span className="opacity-80">Holiday</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#f1f5f9] shadow-inner border border-gray-100" />
+                    <div className="h-3.5 w-3.5 rounded-[5px] border border-[#DA7756]/15 bg-[#fdf8f6] shadow-inner" />
                     <span className="opacity-80">Upcoming</span>
                   </div>
                 </div>
@@ -808,17 +816,17 @@ const BusinessCompassDailyReport: React.FC = () => {
             {!isAbsent && (
               <div className="space-y-6 animate-in fade-in duration-500">
                 {/* Today's Accomplishments Card */}
-                <Card className="rounded-[16px] border-2 border-[#10b981] overflow-hidden bg-white shadow-sm">
-                  <div className="bg-[#ecfdf5] p-5 flex items-center justify-between border-b border-[#10b981]/10">
+                <Card className="overflow-hidden rounded-[16px] border-2 border-[#DA7756]/30 bg-[#fffaf8] shadow-sm">
+                  <div className="flex items-center justify-between border-b border-[#DA7756]/10 bg-[#fef6f4] p-5">
                     <div className="flex items-center gap-3">
-                      <div className="bg-white p-1 rounded-full border border-[#10b981]/30">
-                        <CheckCircle2 size={18} className="text-[#10b981]" />
+                      <div className="rounded-full border border-[#DA7756]/30 bg-white p-1">
+                        <CheckCircle2 size={18} className="text-[#DA7756]" />
                       </div>
                       <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                         Today's Accomplishments
                       </h3>
                     </div>
-                    <Badge className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
+                    <Badge className="rounded-[6px] border-none bg-[#DA7756] px-3 py-1 text-[10px] font-black tracking-widest text-white shadow-sm hover:bg-[#DA7756]">
                       {accomplishments.filter((a) => a.completed).length * 5}/25
                       PTS
                     </Badge>
@@ -833,18 +841,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                         >
                           <div
                             className={cn(
-                              "flex items-center gap-4 bg-white border rounded-[10px] p-3 transition-all",
+                              "flex items-center gap-4 rounded-[10px] border bg-white p-3 transition-all",
                               item.completed
-                                ? "border-[#10b981] bg-green-50/10"
-                                : "border-gray-200"
+                                ? "border-[#DA7756]/35 bg-[#fef6f4]"
+                                : "border-[#DA7756]/15"
                             )}
                           >
                             <div
                               className={cn(
                                 "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2",
                                 item.completed
-                                  ? "bg-[#1a1a1a] border-[#1a1a1a]"
-                                  : "bg-white border-gray-300"
+                                  ? "border-[#DA7756] bg-[#DA7756]"
+                                  : "border-[#DA7756]/30 bg-white"
                               )}
                               onClick={() => toggleAccomplishment(item.id)}
                             >
@@ -888,10 +896,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="h-8 w-8 rounded-full border-none text-[#DA7756]/45 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[#fef6f4] hover:text-[#DA7756]"
                               onClick={() => removeAccomplishment(item.id)}
                             >
-                              <X size={16} className="text-red-500" />
+                              <X size={16} className="text-[#DA7756]" />
                             </Button>
                           </div>
                         </div>
@@ -899,14 +907,14 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                       {accomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
-                          <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#DA7756]/20 bg-[#fef6f4]">
                             <CheckCircle2
                               size={32}
-                              className="text-[#10b981]/30"
+                              className="text-[#DA7756]/30"
                             />
                           </div>
                           <div className="space-y-1">
-                            <p className="text-base font-bold text-[#065f46]">
+                            <p className="text-base font-bold text-[#1a1a1a]">
                               What did you get done today?
                             </p>
                             <p className="text-xs text-gray-500 font-medium">
@@ -920,7 +928,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
-                          className="flex-1 h-11 border-[#10b981]/30 text-[#10b981] font-bold text-sm bg-white hover:bg-[#ecfdf5] rounded-[8px] flex items-center justify-center gap-2"
+                          className={cn("flex h-11 flex-1 items-center justify-center gap-2 rounded-xl text-sm", btnOutline)}
                           onClick={addAccomplishment}
                         >
                           <Plus size={18} />
@@ -930,7 +938,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {accomplishments.some((a) => !a.completed) && (
                           <Button
                             variant="outline"
-                            className="h-11 border-blue-200 text-blue-600 font-bold text-xs bg-white hover:bg-blue-50 rounded-[8px] px-4"
+                            className={cn("h-11 rounded-xl px-4 text-xs", btnOutline)}
                           >
                             Transfer unchecked to tomorrow
                           </Button>
@@ -939,7 +947,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
 
                     <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[10px] text-[#059669] font-black uppercase tracking-widest bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                      <div className="flex items-center gap-2 rounded-full border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#DA7756]">
                         <Info size={14} />
                         <span>Limits: Images 2MB, Others 5MB</span>
                       </div>
@@ -955,7 +963,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           className="hidden"
                         />
                         <Button
-                          className="bg-[#10b981] hover:bg-[#059669] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none"
+                          className={cn("flex h-10 items-center gap-2 rounded-xl px-6 text-xs", btnPrimary)}
                           onClick={triggerFileUpload}
                         >
                           <Upload size={16} />
@@ -972,8 +980,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[10px] border border-gray-100 animate-in fade-in duration-300"
                           >
                             <div className="flex items-center gap-3">
-                              <ImageIcon size={16} className="text-blue-500" />
-                              <span className="text-sm font-medium text-blue-600 hover:underline cursor-pointer">
+                              <ImageIcon size={16} className="text-[#DA7756]" />
+                              <span className="cursor-pointer text-sm font-medium text-[#DA7756] hover:underline">
                                 {file.name}
                               </span>
                             </div>
@@ -984,7 +992,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none"
+                                className="h-7 w-7 rounded-full border-none text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756]"
                                 onClick={() =>
                                   setUploadedFiles(
                                     uploadedFiles.filter(
@@ -1004,13 +1012,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </Card>
 
                 {/* Tasks & Issues Card */}
-                <Card className="rounded-[8px] border-2 border-[#b91c1c] overflow-hidden bg-white shadow-sm mt-6">
-                  <div className="bg-[#fef2f2] p-4 border-b border-[#b91c1c]/10">
+                <Card className="mt-6 overflow-hidden rounded-[8px] border-2 border-[#DA7756]/30 bg-[#fffaf8] shadow-sm">
+                  <div className="border-b border-[#DA7756]/10 bg-[#fef6f4] p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-1 rounded-md border border-[#b91c1c]/30">
-                            <CheckSquare size={16} className="text-[#b91c1c]" />
+                          <div className="rounded-md border border-[#DA7756]/30 bg-white p-1">
+                            <CheckSquare size={16} className="text-[#DA7756]" />
                           </div>
                           <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                             Tasks & Issues
@@ -1045,11 +1053,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="bg-[#ea580c] text-white px-3 py-1 rounded-[4px] text-[9px] font-black tracking-widest shadow-md">
+                        <div className="rounded-lg bg-[#DA7756] px-3 py-1 text-[9px] font-black tracking-widest text-white shadow-sm">
                           0/20 PTS
                         </div>
                         <Button
-                          className="bg-[#b91c1c] hover:bg-[#991b1b] text-white font-black px-4 h-8 rounded-[4px] flex items-center gap-2 text-[10px] shadow-md transition-all border-none"
+                          className={cn("flex h-8 items-center gap-2 rounded-lg px-4 text-[10px]", btnPrimary)}
                           onClick={() => setIsAddTaskModalOpen(true)}
                         >
                           <Plus size={14} />
@@ -1061,7 +1069,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                   <CardContent className="p-10 flex flex-col items-center justify-center text-center">
                     <div className="flex flex-col items-center gap-3 opacity-30">
-                      <CheckSquare size={40} className="text-[#b91c1c]/20" />
+                      <CheckSquare size={40} className="text-[#DA7756]/20" />
                       <p className="text-base font-bold text-gray-400 tracking-tight">
                         No open tasks or issues
                       </p>
@@ -1070,12 +1078,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </Card>
 
                 {/* Bottom Tip Banner */}
-                <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
-                  <div className="bg-white p-1.5 rounded-full shadow-inner border border-[#fef08a]">
-                    <Lightbulb size={18} className="text-[#ca8a04]" />
+                <div className="mt-6 flex items-center gap-3 rounded-[12px] border border-[#DA7756]/20 bg-[#fef6f4] p-4 shadow-sm">
+                  <div className="rounded-full border border-[#DA7756]/20 bg-white p-1.5 shadow-inner">
+                    <Lightbulb size={18} className="text-[#DA7756]" />
                   </div>
                   <p className="text-xs text-gray-700 leading-relaxed font-medium">
-                    <span className="font-bold text-[#ca8a04]">
+                    <span className="font-bold text-[#DA7756]">
                       Delegate or Delete:
                     </span>{" "}
                     Look at your list. What doesn't actually need doing?
@@ -1083,17 +1091,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </div>
 
                 {/* Plan Card */}
-                <Card className="rounded-[16px] border-2 border-[#3b82f6] overflow-hidden bg-white shadow-sm mt-6">
-                  <div className="bg-[#eff6ff] p-5 flex items-center justify-between border-b border-[#3b82f6]/10">
+                <Card className="mt-6 overflow-hidden rounded-[16px] border-2 border-[#DA7756]/30 bg-[#fffaf8] shadow-sm">
+                  <div className="flex items-center justify-between border-b border-[#DA7756]/10 bg-[#fef6f4] p-5">
                     <div className="flex items-center gap-3">
-                      <div className="bg-white p-1 rounded-full border border-[#3b82f6]/30">
-                        <CheckCircle2 size={18} className="text-[#3b82f6]" />
+                      <div className="rounded-full border border-[#DA7756]/30 bg-white p-1">
+                        <CheckCircle2 size={18} className="text-[#DA7756]" />
                       </div>
-                      <h3 className="text-sm font-bold tracking-tight text-blue-900">
+                      <h3 className="text-sm font-bold tracking-tight text-[#1a1a1a]">
                         Plan for {nextDayLabel || "Tomorrow"}
                       </h3>
                     </div>
-                    <Badge className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
+                    <Badge className="rounded-[6px] border-none bg-[#DA7756] px-3 py-1 text-[10px] font-black tracking-widest text-white shadow-sm hover:bg-[#DA7756]">
                       0/25 PTS
                     </Badge>
                   </div>
@@ -1108,7 +1116,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             key={item.id}
                             className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
                           >
-                            <div className="flex items-center gap-4 bg-white border border-[#3b82f6]/30 rounded-[10px] p-3 shadow-sm hover:border-[#3b82f6] transition-all">
+                            <div className="flex items-center gap-4 rounded-[10px] border border-[#DA7756]/20 bg-white p-3 shadow-sm transition-all hover:border-[#DA7756]">
                               <Star
                                 size={18}
                                 className={cn(
@@ -1133,7 +1141,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <div className="flex items-center gap-2">
                                 <Calendar
                                   size={18}
-                                  className="text-[#3b82f6] cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                  className="cursor-pointer text-[#DA7756] opacity-70 transition-opacity hover:opacity-100"
                                 />
                                 <X
                                   size={18}
@@ -1147,11 +1155,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-4 text-center mb-8">
-                        <div className="h-16 w-16 rounded-full bg-[#eff6ff] border-2 border-[#3b82f6]/20 flex items-center justify-center">
-                          <Calendar size={32} className="text-[#3b82f6]/30" />
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#DA7756]/20 bg-[#fef6f4]">
+                          <Calendar size={32} className="text-[#DA7756]/30" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-base font-bold text-blue-900">
+                          <p className="text-base font-bold text-[#1a1a1a]">
                             Plan your next working day!
                           </p>
                           <p className="text-xs text-gray-500 font-medium">
@@ -1163,7 +1171,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                     <Button
                       variant="outline"
-                      className="w-full h-11 border-[#3b82f6]/30 text-[#3b82f6] font-bold text-sm bg-white hover:bg-[#eff6ff] rounded-[8px] flex items-center justify-center gap-2"
+                      className={cn("flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm", btnOutline)}
                       onClick={addPlanningItem}
                     >
                       <Plus size={18} />
@@ -1175,7 +1183,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             )}
 
             {/* Submission Section */}
-            <Card className="rounded-[16px] border border-gray-100 shadow-sm bg-white p-6 mt-6">
+            <Card className="mt-6 rounded-[16px] border border-[#DA7756]/20 bg-[#fffaf8] p-6 shadow-sm">
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex-1 w-full space-y-4">
@@ -1192,18 +1200,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                       onValueChange={setSelfRating}
                       max={10}
                       step={1}
-                      className="cursor-pointer [&_[role=slider]]:bg-black [&_[role=slider]]:border-black [&_[data-orientation=horizontal]]:h-1 [&_[data-orientation=horizontal]_span:first-child]:bg-black"
+                      className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-[#DA7756] [&_[data-orientation=horizontal]]:h-1 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
                     />
                   </div>
 
-                  <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 rounded-[10px] border border-gray-100 min-w-[150px] justify-center">
+                  <div className="flex min-w-[150px] items-center justify-center gap-3 rounded-[10px] border border-[#DA7756]/15 bg-[#fef6f4] px-4 py-3">
                     <Checkbox
                       id="absent"
                       checked={isAbsent}
                       onCheckedChange={(checked) =>
                         setIsAbsent(checked as boolean)
                       }
-                      className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
+                      className="h-5 w-5 rounded-[4px] border-[#DA7756]/35 data-[state=checked]:border-[#DA7756] data-[state=checked]:bg-[#DA7756]"
                     />
                     <label
                       htmlFor="absent"
@@ -1223,7 +1231,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       placeholder="Why are you absent today?"
                       value={absenceReason}
                       onChange={(e) => setAbsenceReason(e.target.value)}
-                      className="h-12 rounded-[10px] border-gray-200 focus:ring-[#22c55e]/20"
+                      className="h-12 rounded-[10px] border-[#DA7756]/20 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]"
                     />
                   </div>
                 )}
@@ -1244,7 +1252,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
                   )}
                   <Button
-                    className="w-full h-14 bg-black hover:bg-zinc-800 text-white font-black text-lg rounded-[14px] shadow-sm transition-all border-none focus-visible:ring-0 disabled:opacity-50"
+                    className={cn("h-14 w-full rounded-2xl text-lg focus-visible:ring-0 disabled:opacity-50", btnPrimary)}
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                   >
@@ -1270,22 +1278,22 @@ const BusinessCompassDailyReport: React.FC = () => {
             {/* Live Score Preview Section */}
             {!isAbsent && (
               <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Card className="rounded-[20px] border border-purple-100 shadow-sm overflow-hidden bg-[#fdfaff]">
+                <Card className="overflow-hidden rounded-[20px] border border-[#DA7756]/20 bg-[#fffaf8] shadow-sm">
                   <CardContent className="p-6 space-y-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="bg-purple-100 p-1.5 rounded-full">
-                          <Target size={18} className="text-[#8b5cf6]" />
+                        <div className="rounded-full bg-[#FAECE7] p-1.5">
+                          <Target size={18} className="text-[#DA7756]" />
                         </div>
                         <h3 className="text-sm font-bold text-[#1a1a1a] flex items-center gap-1.5">
                           Live Score Preview
                           <HelpCircle
                             size={14}
-                            className="text-blue-500 cursor-pointer"
+                            className="cursor-pointer text-[#DA7756]"
                           />
                         </h3>
                       </div>
-                      <span className="text-3xl font-black text-[#8b5cf6] tracking-tighter">
+                      <span className="text-3xl font-black tracking-tighter text-[#DA7756]">
                         0/100
                       </span>
                     </div>
@@ -1315,7 +1323,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       ].map((item, idx) => (
                         <div
                           key={idx}
-                          className="bg-white p-4 rounded-[14px] border border-purple-50 flex flex-col items-center gap-1 shadow-sm"
+                          className="flex flex-col items-center gap-1 rounded-[14px] border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                         >
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                             {item.label}
@@ -1334,7 +1342,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                     <div className="pt-4 border-t border-purple-50">
                       <div
-                        className="flex items-center justify-between text-gray-400 group cursor-pointer hover:text-purple-600 transition-colors"
+                        className="group flex cursor-pointer items-center justify-between text-gray-400 transition-colors hover:text-[#DA7756]"
                         onClick={() =>
                           setIsDetailedScoreExpanded(!isDetailedScoreExpanded)
                         }
@@ -1359,19 +1367,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                     {isDetailedScoreExpanded && (
                       <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-4 duration-500">
                         {/* 1. Accomplishments Detail */}
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="space-y-4 rounded-[14px] border border-[#DA7756]/15 bg-white p-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <ListTodo size={16} className="text-purple-600" />
-                              <span className="text-xs font-black text-purple-900 uppercase tracking-widest">
+                              <ListTodo size={16} className="text-[#DA7756]" />
+                              <span className="text-xs font-black uppercase tracking-widest text-[#1a1a1a]">
                                 Accomplishments
                               </span>
                             </div>
-                            <span className="text-xs font-black text-purple-600">
+                            <span className="text-xs font-black text-[#DA7756]">
                               0/25 pts
                             </span>
                           </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-purple-50">
+                          <div className="space-y-2.5 border-l-2 border-[#DA7756]/15 pl-6">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
                                 • Regular items:
@@ -1389,7 +1397,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                               <span className="text-gray-900">0 × 5 pts</span>
                             </div>
-                            <div className="flex items-center justify-between text-[11px] font-black text-purple-900 pt-1 border-t border-gray-50">
+                            <div className="flex items-center justify-between border-t border-gray-50 pt-1 text-[11px] font-black text-[#1a1a1a]">
                               <span>Total earned:</span>
                               <span>0 pts (max 25)</span>
                             </div>
@@ -1397,7 +1405,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
 
                         {/* 2. Tasks & Issues Detail */}
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="space-y-4 rounded-[14px] border border-[#DA7756]/15 bg-white p-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <CheckSquare
@@ -1412,8 +1420,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                               0/25 pts
                             </span>
                           </div>
-                          <div className="bg-slate-50/50 rounded-[12px] border border-slate-100 p-4 space-y-3">
-                            <p className="text-[11px] font-black text-[#1e40af] uppercase tracking-widest mb-2">
+                          <div className="space-y-3 rounded-[12px] border border-[#DA7756]/10 bg-[#fef6f4] p-4">
+                            <p className="mb-2 text-[11px] font-black uppercase tracking-widest text-[#1a1a1a]">
                               Score Calculation:
                             </p>
                             <div className="space-y-2">
@@ -1431,11 +1439,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <span className="flex items-center gap-2">
                                   <TrendingUp
                                     size={12}
-                                    className="text-blue-500"
+                                    className="text-[#DA7756]"
                                   />{" "}
                                   New Issues (0 × 2 pts, max 10)
                                 </span>
-                                <span className="text-blue-600">+0</span>
+                                <span className="text-[#DA7756]">+0</span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-100">
                                 <span>Subtotal (Positive)</span>
@@ -1465,22 +1473,22 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
 
                         {/* 3. Planning Detail */}
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="space-y-4 rounded-[14px] border border-[#DA7756]/15 bg-white p-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <CalendarCheck
                                 size={16}
-                                className="text-blue-600"
+                                className="text-[#DA7756]"
                               />
-                              <span className="text-xs font-black text-blue-900 uppercase tracking-widest">
+                              <span className="text-xs font-black uppercase tracking-widest text-[#1a1a1a]">
                                 Planning
                               </span>
                             </div>
-                            <span className="text-xs font-black text-blue-600">
+                            <span className="text-xs font-black text-[#DA7756]">
                               0/25 pts
                             </span>
                           </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-blue-50">
+                          <div className="space-y-2.5 border-l-2 border-[#DA7756]/15 pl-6">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
                                 • Regular items:
@@ -1498,7 +1506,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                               <span className="text-gray-900">0 × 4 pts</span>
                             </div>
-                            <div className="flex items-center justify-between text-[11px] font-black text-blue-900 pt-1 border-t border-gray-50">
+                            <div className="flex items-center justify-between border-t border-gray-50 pt-1 text-[11px] font-black text-[#1a1a1a]">
                               <span>Total earned:</span>
                               <span>0/25 pts</span>
                             </div>
@@ -1506,7 +1514,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
 
                         {/* 4. Submission Timing Detail */}
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="space-y-4 rounded-[14px] border border-[#DA7756]/15 bg-white p-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Clock size={16} className="text-[#ea580c]" />
@@ -1539,10 +1547,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                     )}
 
                     <div className="flex justify-center">
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-purple-50/50 px-4 py-1.5 rounded-full">
+                      <div className="flex items-center gap-1.5 rounded-full bg-[#fef6f4] px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#DA7756]">
                         <Zap
                           size={12}
-                          className="text-orange-700 fill-orange-700"
+                          className="fill-[#DA7756] text-[#DA7756]"
                         />
                         <span>
                           This is a live preview. Final score calculated after
@@ -1559,32 +1567,32 @@ const BusinessCompassDailyReport: React.FC = () => {
               {/* Automation Info Banner */}
               <div
                 className={cn(
-                  "bg-[#eff6ff] border border-blue-100 rounded-[14px] overflow-hidden transition-all duration-300 shadow-sm",
+                  "overflow-hidden rounded-[14px] border border-[#DA7756]/20 bg-[#DA7756]/10 transition-all duration-300 shadow-sm",
                   isScoreInfoExpanded ? "max-h-[3000px]" : "max-h-[80px]"
                 )}
               >
                 <div
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-blue-100/50 transition-all border-b border-transparent"
+                  className="flex cursor-pointer items-center justify-between border-b border-transparent p-4 transition-all hover:bg-[#fef6f4]"
                   onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="bg-white p-1.5 rounded-full shadow-sm">
-                      <HelpCircle size={18} className="text-blue-600" />
+                    <div className="rounded-full bg-white p-1.5 shadow-sm">
+                      <HelpCircle size={18} className="text-[#DA7756]" />
                     </div>
-                    <span className="text-sm font-bold text-[#1e40af] tracking-tight">
+                    <span className="text-sm font-bold tracking-tight text-[#1a1a1a]">
                       How is the Automated Daily Score Calculated?
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {!isScoreInfoExpanded && (
-                      <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#DA7756]">
                         Click to Expand
                       </span>
                     )}
                     <ChevronRight
                       size={18}
                       className={cn(
-                        "text-blue-400 transition-transform duration-300",
+                        "text-[#DA7756]/70 transition-transform duration-300",
                         isScoreInfoExpanded ? "-rotate-90" : "rotate-90"
                       )}
                     />
@@ -1596,12 +1604,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <div className="grid grid-cols-1 gap-6">
                       {/* 1. Daily KPI */}
                       <div className="flex gap-4">
-                        <div className="bg-[#eff6ff] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-blue-100">
-                          <TrendingUp size={20} className="text-[#3b82f6]" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#DA7756]/15 bg-[#fef6f4]">
+                          <TrendingUp size={20} className="text-[#DA7756]" />
                         </div>
                         <div className="space-y-3">
                           <div>
-                            <h4 className="text-sm font-bold text-[#1e40af] tracking-tight">
+                            <h4 className="text-sm font-bold tracking-tight text-[#1a1a1a]">
                               1. Daily KPI Achievement (Max 20 points)
                             </h4>
                             <p className="text-xs text-slate-500 font-medium mt-0.5 italic">
