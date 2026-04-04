@@ -26,7 +26,7 @@ import {
   departmentOptions,
   ALL_USERS,
   getInitials,
-} from "./shared";
+} from "./Shared";
 
 // ── MeetingConfigModal ──
 const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {

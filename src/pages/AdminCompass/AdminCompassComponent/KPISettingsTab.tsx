@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { kpiClass } from "./shared";
+import { kpiClass } from "./Shared";
 
 const DEFAULT_UNITS = [
   "₹",
@@ -47,9 +47,12 @@ const KPISettingsTab: React.FC = () => {
           kpiClass.surfaceCard
         )}
       >
-        <h2 className="text-lg font-bold text-[#1a1a1a] sm:text-xl">KPI Units Configuration</h2>
+        <h2 className="text-lg font-bold text-[#1a1a1a] sm:text-xl">
+          KPI Units Configuration
+        </h2>
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-          Define the units that will be available when creating KPIs across your organization.
+          Define the units that will be available when creating KPIs across your
+          organization.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
