@@ -613,7 +613,7 @@ const BusinessWeeklyReport = () => {
                         <Button 
                             onClick={handleSubmit} 
                             disabled={isSubmitting} 
-                            className="w-full bg-[#3182CE] hover:bg-[#2B6CB0] text-white h-12 rounded-[8px] font-bold text-sm shadow-lg disabled:opacity-50 transition-all"
+                            className="h-12 w-full rounded-[8px] bg-[#DA7756] text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#c9673f] disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <span className="flex items-center gap-2">

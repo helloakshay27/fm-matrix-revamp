@@ -127,39 +127,39 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
         ].map(({ label, value, setter }) => (
           <div key={label} className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">{label}</span>
-            <div className="flex items-center gap-1.5 bg-white border border-[rgba(218,119,86,0.3)] rounded-xl px-3 py-1.5 shadow-sm cursor-pointer hover:bg-[#fef6f4] transition-colors">
+            <div className="flex items-center gap-1.5 bg-[#fffaf8] border border-[rgba(218,119,86,0.3)] rounded-xl px-3 py-1.5 shadow-sm cursor-pointer hover:bg-[#fef6f4] transition-colors">
               <span className="text-sm font-semibold text-neutral-800">{value}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#DA7756]/70" />
             </div>
-            <button onClick={() => setter(label === "MEETING" ? "All Meetings" : "All Members")} className="p-1.5 text-neutral-400 hover:text-red-500 bg-white border border-neutral-200 rounded-xl shadow-sm transition-colors">
+            <button onClick={() => setter(label === "MEETING" ? "All Meetings" : "All Members")} className="p-1.5 text-[#DA7756]/70 hover:text-[#DA7756] bg-[#fffaf8] border border-[rgba(218,119,86,0.2)] rounded-xl shadow-sm transition-colors">
               <X className="w-3 h-3" />
             </button>
           </div>
         ))}
       </div>
 
-      <div className="border border-neutral-200 rounded-2xl shadow-sm overflow-hidden bg-white">
-        <div className="p-4 border-b border-neutral-100 flex justify-between items-start flex-wrap gap-3">
+      <div className="border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm overflow-hidden bg-white">
+        <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fffaf8]">
           <div>
             <h3 className="font-bold text-sm text-neutral-900 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#8b5cf6]" /> Daily Reports for HOD Huddle
+              <Calendar className="w-4 h-4 text-[#DA7756]" /> Daily Reports for HOD Huddle
             </h3>
             <p className="text-xs text-neutral-400 mt-0.5">31 Mar 2026 (Tue)</p>
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold flex-wrap">
-            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-500 text-white shadow-sm">Team 11</span>
-            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-green-500 text-white shadow-sm">Submitted 2</span>
-            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-red-500 text-white shadow-sm">Missed 9</span>
+            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#DA7756] text-white shadow-sm">Team 11</span>
+            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#f6a67d] text-white shadow-sm">Submitted 2</span>
+            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-[#8f3f24] text-white shadow-sm">Missed 9</span>
           </div>
         </div>
-        <div className="p-4 bg-[rgba(139,92,246,0.04)]">
-          <div className="bg-white border border-[rgba(139,92,246,0.18)] rounded-2xl overflow-hidden shadow-sm">
-            <div className="flex items-center justify-between p-3 border-b border-[rgba(139,92,246,0.1)]">
+        <div className="p-4 bg-[#fef6f4]">
+          <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#fffaf8]">
               <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
-                <Users className="w-4 h-4 text-[#8b5cf6]" /> HOD Huddle (10:00) · 31 Mar (Tue)
+                <Users className="w-4 h-4 text-[#DA7756]" /> HOD Huddle (10:00) · 31 Mar (Tue)
               </div>
               <div className="flex gap-2">
-                <BtnIcon title="Calendar"><CalendarIcon className="w-3.5 h-3.5 text-green-500" /></BtnIcon>
+                <BtnIcon title="Calendar"><CalendarIcon className="w-3.5 h-3.5 text-[#DA7756]" /></BtnIcon>
                 <BtnIcon title="Refresh"><RefreshCw className="w-3.5 h-3.5" /></BtnIcon>
               </div>
             </div>
@@ -168,11 +168,11 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
               <textarea
                 value={meetingNotes}
                 onChange={(e) => setMeetingNotes(e.target.value)}
-                className="w-full border border-neutral-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/25 min-h-[80px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-neutral-50"
+                className="w-full border border-[rgba(218,119,86,0.18)] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[80px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#fffaf8]"
                 placeholder="Enter meeting remarks, feedback, action items... Use @ to mention team members."
               />
             </div>
-            <div className="flex items-center justify-between bg-neutral-50 p-3 border-t border-neutral-100">
+            <div className="flex items-center justify-between bg-[#fffaf8] p-3 border-t border-[rgba(218,119,86,0.1)]">
               <label className="flex items-center gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -183,7 +183,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                 />
                 <span className="text-sm font-bold text-neutral-800">Select All</span>
               </label>
-              <BtnPrimary icon={FileText} className="bg-[#8b5cf6] hover:bg-[#7c3aed]">Save Meeting</BtnPrimary>
+              <BtnPrimary icon={FileText}>Save Meeting</BtnPrimary>
             </div>
           </div>
         </div>
@@ -226,7 +226,7 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-bold text-neutral-900 text-sm">{report.user}</h3>
-                      <span className="text-[10px] font-bold text-blue-500 border border-blue-200 bg-blue-50 px-2 py-0.5 rounded-xl">{report.dept}</span>
+                      <span className="text-[10px] font-bold text-[#993C1D] border border-[rgba(218,119,86,0.18)] bg-[#FAECE7] px-2 py-0.5 rounded-xl">{report.dept}</span>
                     </div>
                     <div className="text-xs text-neutral-400 mt-0.5">{report.email} • {report.timestamp}</div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -262,13 +262,13 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
                               {item.done !== undefined ? (
                                 item.done
                                   ? <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                  : <Circle className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                  : <Circle className="w-4 h-4 text-[#DA7756] mt-0.5 flex-shrink-0" />
                               ) : (
                                 <div className="w-1.5 h-1.5 rounded-full bg-neutral-300 mt-1.5 shrink-0" />
                               )}
                               <span className="flex-1 leading-snug">{item.text}</span>
                               {item.type && (
-                                <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-xl uppercase flex-shrink-0 border", item.type === "task" ? "text-blue-500 border-blue-200 bg-blue-50" : "text-red-500 border-red-200 bg-red-50")}>
+                                <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-xl uppercase flex-shrink-0 border", item.type === "task" ? "text-[#993C1D] border-[rgba(218,119,86,0.18)] bg-[#FAECE7]" : "text-red-500 border-red-200 bg-red-50")}>
                                   {item.type}
                                 </span>
                               )}

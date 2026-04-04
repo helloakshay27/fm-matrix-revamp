@@ -4,29 +4,29 @@ import { Button } from "@/components/ui/button"
 
 const WeeklyMeetingSettings = () => {
     return (
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm space-y-6 mt-6">
+        <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-6 shadow-sm">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-[#1a1a1a]">Weekly Meeting Configurations</h2>
-                    <p className="text-gray-500 text-sm mt-1">Configure recurring weekly meetings and their participants</p>
+                    <p className="text-neutral-500 text-sm mt-1">Configure recurring weekly meetings and their participants</p>
                 </div>
-                <Button className="bg-[#6366f1] hover:bg-[#5558e3] text-white rounded-[8px] h-10 px-4 font-bold gap-2">
+                <Button className="h-10 gap-2 rounded-xl bg-[#DA7756] px-4 font-bold text-white hover:bg-[#c9673f]">
                     <Plus className="w-4 h-4" />
                     New Meeting
                 </Button>
             </div>
 
             {/* Empty State */}
-            <div className="bg-white border border-gray-100 rounded-2xl py-20 flex flex-col items-center justify-center text-center space-y-6">
-                <div className="p-4 bg-gray-50 rounded-2xl">
-                    <Calendar className="w-12 h-12 text-gray-300" strokeWidth={1.5} />
+            <div className="flex flex-col items-center justify-center space-y-6 rounded-2xl border border-[#DA7756]/15 bg-[#fef6f4] py-20 text-center">
+                <div className="rounded-2xl border border-[#DA7756]/15 bg-white p-4">
+                    <Calendar className="w-12 h-12 text-[#DA7756]" strokeWidth={1.5} />
                 </div>
                 <div className="space-y-1">
                     <h3 className="text-[#1a1a1a] font-bold text-lg">No weekly meetings configured</h3>
-                    <p className="text-gray-500 text-sm">Create your first weekly meeting configuration to get started</p>
+                    <p className="text-neutral-500 text-sm">Create your first weekly meeting configuration to get started</p>
                 </div>
-                <Button className="bg-[#6366f1] hover:bg-[#5558e3] text-white rounded-[8px] h-11 px-6 font-bold gap-2">
+                <Button className="h-11 gap-2 rounded-xl bg-[#DA7756] px-6 font-bold text-white hover:bg-[#c9673f]">
                     <Plus className="w-5 h-5" />
                     Create Meeting
                 </Button>

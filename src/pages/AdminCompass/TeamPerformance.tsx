@@ -67,20 +67,20 @@ const TeamPerformance = () => {
         ))}
       </div>
 
-      <div className="bg-white p-4 rounded-[10px] shadow-md border border-gray-100 space-y-4">
+      <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm space-y-4 sm:p-5">
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="relative flex-1 min-w-[250px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#DA7756]/60 h-4 w-4" />
             <Input
               type="text"
               placeholder="Search by name, email, or designation..."
-              className="pl-10 pr-4 py-1 border-gray-200 rounded-[8px] focus:ring-1 focus:ring-blue-500"
+              className="pl-10 pr-4 py-1 rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]"
             />
           </div>
 
           <div className="flex gap-4 items-center">
             <Select>
-              <SelectTrigger className="w-[180px] rounded-[8px] h-9">
+              <SelectTrigger className="w-[180px] h-9 rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 text-neutral-700 focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]">
                 <SelectValue placeholder="All Departments" />
               </SelectTrigger>
               <SelectContent>
@@ -89,7 +89,7 @@ const TeamPerformance = () => {
             </Select>
 
             <Select>
-              <SelectTrigger className="w-[180px] rounded-[8px] h-9">
+              <SelectTrigger className="w-[180px] h-9 rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 text-neutral-700 focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -97,25 +97,31 @@ const TeamPerformance = () => {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="gap-2 font-medium rounded-[8px] h-9 !bg-white !text-gray-600 border !border-gray-200">
-              <LayoutGrid className="!text-gray-600 h-4 w-4" />
+            <Button
+              variant="outline"
+              className="gap-2 font-medium rounded-xl h-9 bg-white border border-[#DA7756]/25 text-neutral-700 hover:bg-[#fef6f4] hover:border-[#DA7756]/40"
+            >
+              <LayoutGrid className="h-4 w-4 text-[#DA7756]" />
               Group by Dept
             </Button>
 
-            <Button variant="outline" className="gap-2 font-medium rounded-[8px] h-9 !bg-green-50 !text-green-600 !border-green-500">
-              <Download className="!text-green-600 h-4 w-4" />
+            <Button
+              variant="outline"
+              className="gap-2 font-medium rounded-xl h-9 bg-[#fef6f4] text-[#DA7756] border border-[#DA7756]/40 hover:bg-[#fdf0eb]"
+            >
+              <Download className="h-4 w-4 text-[#DA7756]" />
               CSV
             </Button>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <Input type="text" placeholder="Min Score" className="w-24 text-sm rounded-[8px] border-gray-200 focus:ring-1 focus:ring-blue-500 bg-white" />
-          <Input type="text" placeholder="Max" className="w-20 text-sm rounded-[8px] border-gray-200 focus:ring-1 focus:ring-blue-500 bg-white" />
-          <Input type="text" placeholder="Min Daily Reports" className="w-36 text-sm rounded-[8px] border-gray-200 focus:ring-1 focus:ring-blue-500 bg-white" />
-          <Input type="text" placeholder="Min Weekly Reports" className="w-40 text-sm rounded-[8px] border-gray-200 focus:ring-1 focus:ring-blue-500 bg-white" />
-          <Input type="text" placeholder="Min KPIs" className="w-32 text-sm rounded-[8px] border-gray-200 focus:ring-1 focus:ring-blue-500 bg-white" />
-          <Input type="text" placeholder="Min Tasks" className="w-32 text-sm rounded-[8px] border-gray-200 focus:ring-1 focus:ring-blue-500 bg-white" />
+          <Input type="text" placeholder="Min Score" className="w-24 text-sm rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]" />
+          <Input type="text" placeholder="Max" className="w-20 text-sm rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]" />
+          <Input type="text" placeholder="Min Daily Reports" className="w-36 text-sm rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]" />
+          <Input type="text" placeholder="Min Weekly Reports" className="w-40 text-sm rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]" />
+          <Input type="text" placeholder="Min KPIs" className="w-32 text-sm rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]" />
+          <Input type="text" placeholder="Min Tasks" className="w-32 text-sm rounded-xl border border-[#DA7756]/25 bg-[#fef6f4]/90 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]" />
         </div>
       </div>
       <TeamMembersTable />
