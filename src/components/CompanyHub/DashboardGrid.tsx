@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { forwardRef, useState } from "react";
 import axios from "axios";
 import {
   AlertCircle,
@@ -9,9 +9,14 @@ import {
   CheckSquare,
   Plus,
   Loader2,
+  X,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import { TaskStats } from "./types";
+import { Dialog, DialogContent, Slide } from "@mui/material";
+import ProjectTaskCreateModal from "../ProjectTaskCreateModal";
+import { TransitionProps } from "@mui/material/transitions";
+import AddToDoModal from "../AddToDoModal";
 
 interface DashboardGridProps {
   taskStats: TaskStats;
@@ -19,7 +24,20 @@ interface DashboardGridProps {
   setSelectedMatrixQuadrant: (q: any) => void;
   activeTimeView: "hourly" | "weekly" | "monthly";
   setActiveTimeView: (v: "hourly" | "weekly" | "monthly") => void;
+  openTaskModal: boolean;
+  setOpenTaskModal: (open: boolean) => void;
+  handleCloseModal: () => void;
+  openTodoModal: boolean;
+  setOpenTodoModal: (open: boolean) => void;
+  handleCloseTodoModal: () => void;
 }
+
+const Transition = forwardRef(function Transition(
+  props: TransitionProps & { children: React.ReactElement },
+  ref: React.Ref<unknown>
+) {
+  return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const DashboardGrid: React.FC<DashboardGridProps> = ({
   taskStats,
@@ -27,6 +45,12 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
   setSelectedMatrixQuadrant,
   activeTimeView,
   setActiveTimeView,
+  openTaskModal,
+  setOpenTaskModal,
+  handleCloseModal,
+  openTodoModal,
+  setOpenTodoModal,
+  handleCloseTodoModal,
 }) => {
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
@@ -91,6 +115,10 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
       setIsLoadingTasks(false);
     }
   };
+
+  const refetch = () => {
+    window.location.reload();
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mt-2">
@@ -416,7 +444,7 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                 <h3 className="text-[12px] font-bold text-gray-700 tracking-tight">
                   Tasks
                 </h3>
-                <button className="bg-[#E67E5F] text-white px-4 py-1 rounded-[12px] text-[8px] font-bold transition-all shadow-lg shadow-orange-500/10 active:scale-95">
+                <button onClick={() => setOpenTaskModal(true)} className="bg-[#E67E5F] text-white px-4 py-1 rounded-[12px] text-[8px] font-bold transition-all shadow-lg shadow-orange-500/10 active:scale-95">
                   + Create Task
                 </button>
               </div>
@@ -446,7 +474,7 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                 <h3 className="text-[12px] font-bold text-gray-700 tracking-tight">
                   To-Do
                 </h3>
-                <button className="bg-[#E67E5F] text-white px-4 py-1 rounded-[12px] text-[8px] font-bold transition-all shadow-lg shadow-orange-500/10 active:scale-95">
+                <button onClick={() => setOpenTodoModal(true)} className="bg-[#E67E5F] text-white px-4 py-1 rounded-[12px] text-[8px] font-bold transition-all shadow-lg shadow-orange-500/10 active:scale-95">
                   + Create To-do
                 </button>
               </div>
@@ -488,6 +516,53 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
           </div>
         )}
       </div>
+
+
+      <Dialog
+        open={openTaskModal}
+        onClose={handleCloseModal}
+        TransitionComponent={Transition}
+        maxWidth={false}
+      >
+        <DialogContent
+          className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+          style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+          sx={{
+            padding: "0 !important",
+            "& .MuiDialogContent-root": {
+              padding: "0 !important",
+              overflow: "auto",
+            }
+          }}
+        >
+          <div className="sticky top-0 bg-white z-10">
+            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+            <X
+              className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+              onClick={handleCloseModal}
+            />
+            <hr className="border border-[#E95420] mt-4" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <ProjectTaskCreateModal
+              isEdit={false}
+              onCloseModal={handleCloseModal}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
+      {openTodoModal && (
+        <AddToDoModal
+          isModalOpen={openTodoModal}
+          setIsModalOpen={handleCloseTodoModal}
+          getTodos={refetch}
+          editingTodo={{}}
+          isEditMode={false}
+        />
+      )}
     </div>
   );
 };

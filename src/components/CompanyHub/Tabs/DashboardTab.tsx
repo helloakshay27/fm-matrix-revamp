@@ -28,6 +28,12 @@ interface DashboardTabProps {
   setDeleteConfirmation: (conf: any) => void;
   setIsVideoOpen: (open: boolean) => void;
   currentEmployee: any;
+  openTaskModal: boolean;
+  setOpenTaskModal: (open: boolean) => void;
+  handleCloseModal: () => void;
+  openTodoModal: boolean;
+  setOpenTodoModal: (open: boolean) => void;
+  handleCloseTodoModal: () => void;
 }
 
 const DashboardTab: React.FC<DashboardTabProps> = ({
@@ -48,6 +54,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   setDeleteConfirmation,
   setIsVideoOpen,
   currentEmployee,
+  openTaskModal,
+  setOpenTaskModal,
+  handleCloseModal,
+  openTodoModal,
+  setOpenTodoModal,
+  handleCloseTodoModal,
 }) => {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -65,6 +77,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         setSelectedMatrixQuadrant={setSelectedMatrixQuadrant}
         activeTimeView={activeTimeView}
         setActiveTimeView={setActiveTimeView}
+        openTaskModal={openTaskModal}
+        setOpenTaskModal={setOpenTaskModal}
+        handleCloseModal={handleCloseModal}
+        openTodoModal={openTodoModal}
+        setOpenTodoModal={setOpenTodoModal}
+        handleCloseTodoModal={handleCloseTodoModal}
       />
 
       <CompassSection lifeCompassStats={lifeCompassStats} />

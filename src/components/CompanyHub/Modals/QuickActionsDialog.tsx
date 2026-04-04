@@ -6,13 +6,18 @@ import { useNavigate } from "react-router-dom";
 interface QuickActionsDialogProps {
   isQuickActionsOpen: boolean;
   setIsQuickActionsOpen: (open: boolean) => void;
+  setOpenTaskModal: (open: boolean) => void;
+  setOpenTodoModal: (open: boolean) => void;
+  setIsCreatePostModalOpen: (open: boolean) => void;
 }
 
 const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
   isQuickActionsOpen,
   setIsQuickActionsOpen,
+  setOpenTaskModal,
+  setOpenTodoModal,
+  setIsCreatePostModalOpen,
 }) => {
-  const navigate = useNavigate();
   return (
     <Dialog open={isQuickActionsOpen} onOpenChange={setIsQuickActionsOpen}>
       <DialogContent className="max-w-3xl p-0 h-[250px] rounded-[12px] bg-white border-none shadow-xl">
@@ -39,7 +44,9 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
                     strokeWidth={1.5}
                   />
                 ),
-                href: "/vas/tasks?type=create",
+                onClick: () => {
+                  setOpenTaskModal(true);
+                },
               },
               {
                 name: "Raise Ticket",
@@ -58,7 +65,9 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
                     strokeWidth={1.5}
                   />
                 ),
-                href: "/vas/todo?type=create",
+                onClick: () => {
+                  setOpenTodoModal(true);
+                },
               },
               {
                 name: "Create Post",
@@ -68,12 +77,15 @@ const QuickActionsDialog: React.FC<QuickActionsDialogProps> = ({
                     strokeWidth={1.5}
                   />
                 ),
+                onClick: () => {
+                  setIsCreatePostModalOpen(true);
+                },
               },
             ].map((action, i) => (
               <div
                 key={i}
                 onClick={() => {
-                  navigate(action.href);
+                  action.onClick?.();
                   setIsQuickActionsOpen(false)
                 }}
                 className="flex flex-col items-center justify-center w-[140px] h-[120px] bg-[#FCFBF8] rounded-xl cursor-pointer hover:bg-[#F4F2EC] transition-all group"

@@ -36,6 +36,8 @@ import {
   QuickLink,
 } from "../components/CompanyHub/types";
 import { hasContent, extractText } from "../components/CompanyHub/utils";
+import { useDispatch } from "react-redux";
+import { resetUserAvailability } from "@/store/slices/projectTasksSlice";
 
 interface CompanyHubNewProps {
   userName?: string;
@@ -62,6 +64,19 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "business" | "admin"
   >("dashboard");
+
+  const dispatch = useDispatch();
+  const [openTaskModal, setOpenTaskModal] = useState(false);
+  const [openTodoModal, setOpenTodoModal] = useState(false)
+
+  const handleCloseModal = () => {
+    setOpenTaskModal(false);
+    dispatch(resetUserAvailability());
+  };
+
+  const handleCloseTodoModal = () => {
+    setOpenTodoModal(false);
+  }
 
   useEffect(() => {
     setCurrentSection("Company Hub New");
@@ -468,6 +483,12 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
               setDeleteConfirmation={setDeleteConfirmation}
               setIsVideoOpen={setIsVideoOpen}
               currentEmployee={currentEmployee}
+              openTaskModal={openTaskModal}
+              setOpenTaskModal={setOpenTaskModal}
+              handleCloseModal={handleCloseModal}
+              openTodoModal={openTodoModal}
+              setOpenTodoModal={setOpenTodoModal}
+              handleCloseTodoModal={handleCloseTodoModal}
             />
           )}
 
@@ -560,6 +581,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       <QuickActionsDialog
         isQuickActionsOpen={isQuickActionsOpen}
         setIsQuickActionsOpen={setIsQuickActionsOpen}
+        setOpenTaskModal={setOpenTaskModal}
+        setOpenTodoModal={setOpenTodoModal}
+        setIsCreatePostModalOpen={setIsCreatePostModalOpen}
       />
 
       <PostModals
