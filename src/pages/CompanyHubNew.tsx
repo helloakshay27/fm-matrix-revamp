@@ -37,6 +37,7 @@ import {
 import { hasContent, extractText } from "../components/CompanyHub/utils";
 import { useDispatch } from "react-redux";
 import { resetUserAvailability } from "@/store/slices/projectTasksSlice";
+import AddTicketSidePanel from "@/components/tickets/AddTicketSidePanel";
 
 interface CompanyHubNewProps {
   userName?: string;
@@ -76,6 +77,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const dispatch = useDispatch();
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openTodoModal, setOpenTodoModal] = useState(false)
+  const [openTicketModal, setOpenTicketModal] = useState(false)
 
   const handleCloseModal = () => {
     setOpenTaskModal(false);
@@ -584,6 +586,12 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         setOpenTaskModal={setOpenTaskModal}
         setOpenTodoModal={setOpenTodoModal}
         setIsCreatePostModalOpen={setIsCreatePostModalOpen}
+        setOpenTicketModal={setOpenTicketModal}
+      />
+
+      <AddTicketSidePanel
+        open={openTicketModal}
+        onClose={() => setOpenTicketModal(false)}
       />
 
       <PostModals
