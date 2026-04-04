@@ -415,7 +415,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] pb-24 overflow-x-hidden font-poppins">
+    <div className="min-h-screen bg-[#FAF9F6] pb-24 overflow-x-hidden font-poppins pt-6">
       <div className="pb-10">
         {/* --- TOP NAV TABS --- */}
         <div className="flex justify-center pb-2">
@@ -431,10 +431,10 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                 key={tab.key}
                 onClick={() => {
                   setActiveTab(tab.key);
-                  if (tab.key === "admin") setCurrentSection("Admin Compass");
-                  else if (tab.key === "business")
-                    setCurrentSection("Business Compass");
-                  else setCurrentSection("Company Hub New");
+                  // if (tab.key === "admin") setCurrentSection("Admin Compass");
+                  // else if (tab.key === "business")
+                  //   setCurrentSection("Business Compass");
+                  // else setCurrentSection("Company Hub New");
                 }}
                 className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${activeTab === tab.key
                   ? "bg-white shadow-xl shadow-black/5 text-gray-900"

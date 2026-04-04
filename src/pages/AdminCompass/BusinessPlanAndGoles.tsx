@@ -877,13 +877,12 @@ const BusinessPlanAndGoles = () => {
 
   const tabs = [
     { key: 'strategic', label: 'Strategic Plan' },
-    { key: 'goals',     label: 'Goals' },
+    { key: 'goals', label: 'Goals' },
   ];
 
   return (
     <div className="min-h-screen p-4 md:p-8 font-sans max-w-[1400px] mx-auto" style={{ background: '#fafafa', color: C.textMain }}>
       <ThemeStyle />
-      <AdminViewEmulation />
 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">

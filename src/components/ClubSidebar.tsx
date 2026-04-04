@@ -56,7 +56,7 @@ type SidebarItem = {
 const modulesByPackage = {
   "Club Management": [
     {
-      name: "Group Memberships",
+      name: "Memberships",
       icon: Star,
       href: "/club-management/membership/groups",
     },
@@ -111,7 +111,12 @@ const modulesByPackage = {
       name: "Vendor",
       icon: Truck,
       href: "/maintenance/vendor",
-    }
+    },
+    {
+      name: "Invoices",
+      icon: FileText,
+      href: "/accounting/invoices/list",
+    },
     // {
     //     name: "Accounting",
     //     icon: Calculator,

@@ -17,6 +17,7 @@ import { CalendarDays, Plus, Eye, Edit, Trash2, Filter, Loader2 } from 'lucide-r
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
+import { userService } from '@/services/userService';
 import ReactSelect from 'react-select';
 import {
   Dialog,
@@ -221,11 +222,7 @@ export const HolidayCalendarPage = () => {
       setLoadingSites(true);
       try {
         // 1. Fetch account to get user_id
-        const accountRes = await fetch(getFullUrl('/api/users/account.json'), {
-          headers: { 'Authorization': getAuthHeader(), 'Content-Type': 'application/json' },
-        });
-        if (!accountRes.ok) throw new Error('Failed to fetch account');
-        const accountData = await accountRes.json();
+        const accountData = await userService.getAccountDetails();
         const userId = accountData.id;
 
         // 2. Fetch allowed_sites for this user

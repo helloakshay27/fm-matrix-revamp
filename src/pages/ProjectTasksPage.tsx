@@ -453,13 +453,27 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { shouldShow } = useDynamicPermissions();
 
     const view = localStorage.getItem("selectedView");
     const urlToken = searchParams.get("token");
     const urlOrgId = searchParams.get("org_id");
     const urlUserId = searchParams.get("user_id");
+
+    useEffect(() => {
+        const type = searchParams.get("type");
+
+        if (type === "create") {
+            setOpenTaskModal(true);
+
+            // ✅ Remove only "type" param
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete("type");
+
+            setSearchParams(newParams, { replace: true }); // 🔥 important
+        }
+    }, [searchParams, setSearchParams]);
 
     // Initialize mobile token, org_id, and user_id from URL if available
     useEffect(() => {
@@ -1254,6 +1268,8 @@ const ProjectTasksPage = () => {
             navigate(`${id}`);
         } else if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
+        } else if (location.pathname.startsWith("/business-compass/tasks")) {
+            navigate(`/business-compass/tasks/${id}`);
         } else {
             navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
         }

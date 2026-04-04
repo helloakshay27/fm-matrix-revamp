@@ -28,10 +28,10 @@ interface Goal {
   title:           string;
   description?:    string;
   period:          string;
-  owner:           string;       // display name
+  owner:           string;
   owner_id?:       number | null;
-  dueDate:         string;       // display string e.g. "Mar 31, 2026"
-  target_date?:    string;       // API format "YYYY-MM-DD"
+  dueDate:         string;
+  target_date?:    string;
   current:         number;
   target:          number;
   unit:            string;
@@ -56,12 +56,16 @@ interface GoalFormState {
 // ── API: parse period from API → display ──
 const parsePeriod = (p: string): string => {
   const map: Record<string, string> = {
-    this_quarter: 'This Quarter',
-    this_year:    'This Year',
-    '3_5_years':  '3-5 Years',
-    bhag:         'BHAG',
+    this_quarter:        'This Quarter',
+    this_year:           'This Year',
+    three_to_five_years: '3-5 Years',   // ✅ updated key
+    '3_to_5_years':      '3-5 Years',   // fallback for old data
+    '3_5_years':         '3-5 Years',   // fallback
+    bhag:                'BHAG',
+    BHAG:                'BHAG',
   };
-  return map[p?.toLowerCase().replace(/-/g, '_').replace(/ /g, '_')] ?? p ?? 'This Quarter';
+  const normalized = p?.toLowerCase().replace(/-/g, '_').replace(/ /g, '_');
+  return map[p] ?? map[normalized] ?? p ?? 'This Quarter';
 };
 
 // ── API: period display → API format ──
@@ -69,21 +73,14 @@ const formatPeriod = (p: string): string => {
   const map: Record<string, string> = {
     'This Quarter': 'this_quarter',
     'This Year':    'this_year',
-    '3-5 Years':    '3_5_years',
-    'BHAG':         'bhag',
+    '3-5 Years':    'three_to_five_years',  // ✅ changed from 3_5_years
+    'BHAG':         'BHAG',
   };
   return map[p] ?? p.toLowerCase().replace(/ /g, '_');
 };
 
 // ── API: status display → API ──
 const formatStatus = (s: string): string => {
-  const map: Record<string, string> = {
-    'not_started': 'Not Started',
-    'on_track':    'On Track',
-    'achieved':    'Achieved',
-    'behind':      'Behind',
-  };
-  // if it's already a display value, map back
   const reverse: Record<string, string> = {
     'Not Started': 'not_started',
     'On Track':    'on_track',
@@ -170,7 +167,7 @@ const createGoalInApi = async (form: GoalFormState): Promise<Goal> => {
       target_value:   Number(form.target),
       current_value:  Number(form.current),
       unit:           form.unit,
-      period:         formatPeriod(form.period),
+      period:         formatPeriod(form.period),   // ✅ now sends three_to_five_years
       status:         formatStatus(form.status),
       owner_id:       form.owner_id ? parseInt(form.owner_id) : undefined,
       target_date:    parseDateToApi(form.dueDate) || undefined,
@@ -198,7 +195,7 @@ const updateGoalInApi = async (id: number, form: GoalFormState): Promise<void> =
       target_value:   Number(form.target),
       current_value:  Number(form.current),
       unit:           form.unit,
-      period:         formatPeriod(form.period),
+      period:         formatPeriod(form.period),   // ✅ now sends three_to_five_years
       status:         formatStatus(form.status),
       owner_id:       form.owner_id ? parseInt(form.owner_id) : undefined,
       target_date:    parseDateToApi(form.dueDate) || undefined,
@@ -411,10 +408,10 @@ const OWNER_CONFIG: Record<string, { bg: string; text: string }> = {
   'Unassigned': { bg: 'transparent', text: '#a3a3a3' },
 };
 const COLUMNS = [
-  { key: 'not_started', label: 'Not Started', hBg: '#fafafa',  hBorder: '#e5e5e5',                  cntBg: '#e5e5e5',                  cntText: '#525252' },
-  { key: 'on_track',    label: 'On Track',    hBg: '#f0fdf4',  hBorder: '#bbf7d0',                  cntBg: '#dcfce7',                  cntText: '#166534' },
-  { key: 'achieved',    label: 'Achieved',    hBg: '#fef6f4',  hBorder: 'rgba(218,119,86,0.25)',    cntBg: 'rgba(218,119,86,0.15)',    cntText: '#9a3412' },
-  { key: 'behind',      label: 'Behind',      hBg: '#fff5f5',  hBorder: '#fecaca',                  cntBg: '#fee2e2',                  cntText: '#991b1b' },
+  { key: 'not_started', label: 'Not Started', hBg: '#fafafa',  hBorder: '#e5e5e5',               cntBg: '#e5e5e5',               cntText: '#525252' },
+  { key: 'on_track',    label: 'On Track',    hBg: '#f0fdf4',  hBorder: '#bbf7d0',               cntBg: '#dcfce7',               cntText: '#166534' },
+  { key: 'achieved',    label: 'Achieved',    hBg: '#fef6f4',  hBorder: 'rgba(218,119,86,0.25)', cntBg: 'rgba(218,119,86,0.15)', cntText: '#9a3412' },
+  { key: 'behind',      label: 'Behind',      hBg: '#fff5f5',  hBorder: '#fecaca',               cntBg: '#fee2e2',               cntText: '#991b1b' },
 ];
 const PERIODS       = ['All Periods', 'This Quarter', 'This Year', '3-5 Years', 'BHAG'];
 const OWNERS        = ['All Owners', 'Jyoti', 'Rahul', 'Punit', 'Unassigned'];
@@ -530,7 +527,6 @@ export const GoalsView = () => {
   const [saveError, setSaveError]       = useState<string | null>(null);
   const [deletingId, setDeletingId]     = useState<number | null>(null);
   const [dragOverCol, setDragOverCol]   = useState<string | null>(null);
-  // Track pending PATCH calls to debounce slider
   const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const dragId = useRef<number | null>(null);
 
@@ -598,11 +594,9 @@ export const GoalsView = () => {
     }
   };
 
-  // ── PATCH progress (debounced — fires 600ms after slider stops) ──
+  // ── PATCH progress (debounced 600ms) ──
   const handleProgressChange = (id: number, val: number) => {
-    // Optimistic update immediately
     setGoals(prev => prev.map(g => g.id === id ? { ...g, current: val } : g));
-    // Debounce API call
     if (progressTimers.current[id]) clearTimeout(progressTimers.current[id]);
     progressTimers.current[id] = setTimeout(async () => {
       try {
@@ -613,14 +607,13 @@ export const GoalsView = () => {
     }, 600);
   };
 
-  // ── PATCH status (from list view dropdown) ──
+  // ── PATCH status ──
   const handleStatusChange = async (id: number, status: string) => {
     setGoals(prev => prev.map(g => g.id === id ? { ...g, status } : g));
     try {
       await patchGoalStatusInApi(id, status);
     } catch (err: any) {
       console.error('[Goals] PATCH status error:', err);
-      // revert on failure — re-fetch
       loadGoals();
     }
   };
@@ -634,11 +627,9 @@ export const GoalsView = () => {
         const created = await createGoalInApi(form);
         setGoals(prev => [...prev, created]);
         closeModal();
-        // Background re-fetch to get authoritative id
         fetchGoalsFromApi().then(data => setGoals(data)).catch(() => {});
       } else if (editingId !== null) {
         await updateGoalInApi(editingId, form);
-        // Optimistic update
         setGoals(prev => prev.map(g => g.id === editingId ? {
           ...g,
           title:          form.title,
@@ -655,7 +646,6 @@ export const GoalsView = () => {
           update_remarks: form.update_remarks,
         } : g));
         closeModal();
-        // Background re-fetch
         fetchGoalsFromApi().then(data => setGoals(data)).catch(() => {});
       }
     } catch (err: any) {
@@ -665,7 +655,7 @@ export const GoalsView = () => {
     }
   };
 
-  // ── Drag (status change via kanban drop = PATCH status) ──
+  // ── Drag (kanban status change) ──
   const dragHandlers = {
     onDragStart: (e: React.DragEvent, id: number) => {
       dragId.current = id;
@@ -690,7 +680,7 @@ export const GoalsView = () => {
     e.preventDefault();
     if (dragId.current == null) return;
     const id = dragId.current;
-    handleStatusChange(id, colKey); // PATCH status
+    handleStatusChange(id, colKey);
     setDragOverCol(null);
     dragId.current = null;
   };
@@ -933,7 +923,6 @@ export const GoalsView = () => {
             <div className="gv-modal-body" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {saveError && <div className="gv-error-banner">{saveError}</div>}
 
-              {/* Title */}
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#525252', marginBottom: 6 }}>Goal Title <span style={{ color: '#dc2626' }}>*</span></label>
                 <input type="text" placeholder="e.g. Increase Revenue by 20%"
@@ -941,7 +930,6 @@ export const GoalsView = () => {
                   className="gv-input" autoFocus />
               </div>
 
-              {/* Description */}
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#525252', marginBottom: 6 }}>Description</label>
                 <input type="text" placeholder="e.g. Build enterprise sales capability"
@@ -949,7 +937,6 @@ export const GoalsView = () => {
                   className="gv-input" />
               </div>
 
-              {/* Period + Status */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#525252', marginBottom: 6 }}>Period</label>
@@ -965,7 +952,6 @@ export const GoalsView = () => {
                 </div>
               </div>
 
-              {/* Owner ID + Due Date */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#525252', marginBottom: 6 }}>Owner ID</label>
@@ -982,7 +968,6 @@ export const GoalsView = () => {
                 </div>
               </div>
 
-              {/* Target Value + Unit */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#525252', marginBottom: 6 }}>Target Value</label>
@@ -997,7 +982,6 @@ export const GoalsView = () => {
                 </div>
               </div>
 
-              {/* Update Remarks */}
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#525252', marginBottom: 6 }}>Update Remarks</label>
                 <input type="text" placeholder="e.g. Interview pipeline is active"
@@ -1005,7 +989,6 @@ export const GoalsView = () => {
                   className="gv-input" />
               </div>
 
-              {/* Progress slider */}
               <div style={{ background: '#fff', borderRadius: 14, padding: 16, border: `1px solid ${C.primaryBord}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <label style={{ fontSize: 13, fontWeight: 600, color: '#525252' }}>Current Value / Progress</label>

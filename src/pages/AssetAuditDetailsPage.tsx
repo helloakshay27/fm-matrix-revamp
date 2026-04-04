@@ -329,8 +329,7 @@ export const AssetAuditDetailsPage = () => {
           id: String(data.id) || '',
           status: data.status || 'scheduled',
           createdBy: data.created_by || 'Unknown',
-          lastUpdated: `Last updated by ${data.updated_by || 'Unknown'} on ${data.updated_at ? new Date(data.updated_at).toLocaleString() : new Date().toLocaleString()}`,
-          basicDetails: {
+          lastUpdated: `Last updated by ${data.updated_by || 'Unknown'} on ${formatDateTime(data.updated_at)}`, basicDetails: {
             startDate: formatDate(data.start_date),
             endDate: formatDate(data.end_date),
             site: data.site || 'N/A',
@@ -454,9 +453,46 @@ export const AssetAuditDetailsPage = () => {
       toast.error('Failed to update audit status');
     }
   };
+  const handleResetAll = () => {
+    setFilterWing('');
+    setFilterArea('');
+    setFilterFloor('');
+    setFilterDepartment('');
+    setFilterAssetGroup('');
+    setFilterSubGroup('');
+  };
 
   const handleEditClick = () => {
     navigate(`/maintenance/audit/assets/edit/${id}`);
+  };
+
+  const capitalizeFirstLetter = (string: string) => {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  };
+
+  // Format date as DD/MM/YYYY and time as 5:19pm
+  const formatDateTime = (dateString: string): string => {
+    if (!dateString) return 'N/A';
+
+    const date = new Date(dateString);
+
+    // Format Date: 31/03/2026
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+
+    // Format Time: 5:19pm (12-hour, lowercase, no space)
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+
+    const formattedTime = `${hours}:${minutes}${ampm}`;
+
+    return `${formattedDate} ${formattedTime}`;
   };
 
   const handlePrintList = () => {
@@ -477,7 +513,7 @@ export const AssetAuditDetailsPage = () => {
           <div class="header">
             <h1>Asset Audit List</h1>
             <p><strong>Audit Name:</strong> ${auditDetails.name} (${auditDetails.id})</p>
-            <p><strong>Status:</strong> ${auditDetails.status}</p>
+            <p><strong>Status:</strong> ${capitalizeFirstLetter(auditDetails.status)}</p>
             <p><strong>Created By:</strong> ${auditDetails.createdBy}</p>
             <p><strong>Date Range:</strong> ${auditDetails.basicDetails.startDate} - ${auditDetails.basicDetails.endDate}</p>
             <p><strong>Site:</strong> ${auditDetails.basicDetails.site}</p>
@@ -577,10 +613,18 @@ export const AssetAuditDetailsPage = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
         {/* Breadcrumb */}
-        <div className="mb-4">
-          <span className="text-gray-500 text-sm">Audit List</span>
+        {/* Breadcrumb - Clickable */}
+        <div className="mb-4 flex items-center">
+          <span
+            className="text-gray-500 text-sm cursor-pointer hover:text-blue-600 transition-colors"
+            onClick={() => navigate('/maintenance/audit/assets')}   // ← Change this path if needed
+          >
+            Audit List
+          </span>
           <span className="text-gray-500 text-sm mx-2">&gt;</span>
-          <span className="text-sm font-medium">Audit Details</span>
+          <span className="text-sm font-medium text-gray-900">
+            Audit Details
+          </span>
         </div>
 
         {/* Header */}
@@ -726,135 +770,171 @@ export const AssetAuditDetailsPage = () => {
 
           <div className="p-6">
             {/* Filter Row */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-              <div>
-                <FormControl fullWidth variant="outlined" size="small">
-                  <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
-                  <MuiSelect
-                    labelId="wing-select-label"
-                    label="Wing"
-                    value={filterWing}
-                    onChange={(e: SelectChangeEvent<string>) => setFilterWing(e.target.value)}
-                    disabled={loadingWings}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>{loadingWings ? "Loading..." : "Select Wing"}</em></MenuItem>
-                    {wings.map((wing) => (
-                      <MenuItem key={wing.id} value={String(wing.id)}>
-                        {wing.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+            {/* Filter Row with Reset All Button */}
+            {/* Filter Section with "Filter by" Label */}
+            <div className="mb-6">
+
+              {/* Filter by Label */}
+              <div className="mb-3">
+                <span className="text-sm font-medium text-gray-700">Filter by</span>
               </div>
-              <div>
-                <FormControl fullWidth variant="outlined" size="small">
-                  <InputLabel id="area-select-label" shrink>Area</InputLabel>
-                  <MuiSelect
-                    labelId="area-select-label"
-                    label="Area"
-                    value={filterArea}
-                    onChange={(e: SelectChangeEvent<string>) => setFilterArea(e.target.value)}
-                    disabled={!filterWing || loadingAreas}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>{!filterWing ? "Select Wing first" : loadingAreas ? "Loading..." : "Select Area"}</em></MenuItem>
-                    {areas.map((area) => (
-                      <MenuItem key={area.id} value={String(area.id)}>
-                        {area.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <div>
-                <FormControl fullWidth variant="outlined" size="small">
-                  <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
-                  <MuiSelect
-                    labelId="floor-select-label"
-                    label="Floor"
-                    value={filterFloor}
-                    onChange={(e: SelectChangeEvent<string>) => setFilterFloor(e.target.value)}
-                    disabled={!filterArea || loadingFloors}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>{!filterArea ? "Select Area first" : loadingFloors ? "Loading..." : "Select Floor"}</em></MenuItem>
-                    {floors.map((floor) => (
-                      <MenuItem key={floor.id} value={String(floor.id)}>
-                        {floor.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <div>
-                <FormControl fullWidth variant="outlined" size="small">
-                  <InputLabel id="department-select-label" shrink>Department</InputLabel>
-                  <MuiSelect
-                    labelId="department-select-label"
-                    label="Department"
-                    value={filterDepartment}
-                    onChange={(e: SelectChangeEvent<string>) => setFilterDepartment(e.target.value)}
-                    disabled={loadingDepartments}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>{loadingDepartments ? "Loading..." : "Select Department"}</em></MenuItem>
-                    {departments.map((dept) => (
-                      <MenuItem key={dept.id} value={String(dept.id)}>
-                        {dept.department_name || dept.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <div>
-                <FormControl fullWidth variant="outlined" size="small">
-                  <InputLabel id="asset-group-select-label" shrink>Asset Group</InputLabel>
-                  <MuiSelect
-                    labelId="asset-group-select-label"
-                    label="Asset Group"
-                    value={filterAssetGroup}
-                    onChange={(e: SelectChangeEvent<string>) => setFilterAssetGroup(e.target.value)}
-                    disabled={loadingGroups}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>{loadingGroups ? "Loading..." : "Select Asset Group"}</em></MenuItem>
-                    {assetGroups.map((group) => (
-                      <MenuItem key={group.id} value={String(group.id)}>
-                        {group.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <div>
-                <FormControl fullWidth variant="outlined" size="small">
-                  <InputLabel id="sub-group-select-label" shrink>Sub Group</InputLabel>
-                  <MuiSelect
-                    labelId="sub-group-select-label"
-                    label="Sub Group"
-                    value={filterSubGroup}
-                    onChange={(e: SelectChangeEvent<string>) => setFilterSubGroup(e.target.value)}
-                    disabled={!filterAssetGroup || loadingSubGroups}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>{!filterAssetGroup ? "Select Asset Group first" : loadingSubGroups ? "Loading..." : "Select Sub Group"}</em></MenuItem>
-                    {assetSubGroups.map((subGroup) => (
-                      <MenuItem key={subGroup.id} value={String(subGroup.id)}>
-                        {subGroup.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+
+              {/* Dropdowns + Reset All */}
+              <div className="flex flex-col lg:flex-row gap-4 items-end">
+
+                {/* All 6 Filter Dropdowns */}
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 flex-1">
+
+                  {/* Wing */}
+                  <div>
+                    <FormControl fullWidth variant="outlined" size="small">
+                      <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
+                      <MuiSelect
+                        labelId="wing-select-label"
+                        label="Wing"
+                        value={filterWing}
+                        onChange={(e: SelectChangeEvent<string>) => setFilterWing(e.target.value)}
+                        disabled={loadingWings}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Wing</em></MenuItem>
+                        {wings.map((wing) => (
+                          <MenuItem key={wing.id} value={String(wing.id)}>
+                            {wing.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Area */}
+                  <div>
+                    <FormControl fullWidth variant="outlined" size="small">
+                      <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                      <MuiSelect
+                        labelId="area-select-label"
+                        label="Area"
+                        value={filterArea}
+                        onChange={(e: SelectChangeEvent<string>) => setFilterArea(e.target.value)}
+                        disabled={!filterWing || loadingAreas}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>{!filterWing ? "Select Wing first" : "Select Area"}</em></MenuItem>
+                        {areas.map((area) => (
+                          <MenuItem key={area.id} value={String(area.id)}>
+                            {area.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Floor */}
+                  <div>
+                    <FormControl fullWidth variant="outlined" size="small">
+                      <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
+                      <MuiSelect
+                        labelId="floor-select-label"
+                        label="Floor"
+                        value={filterFloor}
+                        onChange={(e: SelectChangeEvent<string>) => setFilterFloor(e.target.value)}
+                        disabled={!filterArea || loadingFloors}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>{!filterArea ? "Select Area first" : "Select Floor"}</em></MenuItem>
+                        {floors.map((floor) => (
+                          <MenuItem key={floor.id} value={String(floor.id)}>
+                            {floor.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Department */}
+                  <div>
+                    <FormControl fullWidth variant="outlined" size="small">
+                      <InputLabel id="department-select-label" shrink>Department</InputLabel>
+                      <MuiSelect
+                        labelId="department-select-label"
+                        label="Department"
+                        value={filterDepartment}
+                        onChange={(e: SelectChangeEvent<string>) => setFilterDepartment(e.target.value)}
+                        disabled={loadingDepartments}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Department</em></MenuItem>
+                        {departments.map((dept) => (
+                          <MenuItem key={dept.id} value={String(dept.id)}>
+                            {dept.department_name || dept.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Asset Group */}
+                  <div>
+                    <FormControl fullWidth variant="outlined" size="small">
+                      <InputLabel id="asset-group-select-label" shrink>Asset Group</InputLabel>
+                      <MuiSelect
+                        labelId="asset-group-select-label"
+                        label="Asset Group"
+                        value={filterAssetGroup}
+                        onChange={(e: SelectChangeEvent<string>) => setFilterAssetGroup(e.target.value)}
+                        disabled={loadingGroups}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Group</em></MenuItem>
+                        {assetGroups.map((group) => (
+                          <MenuItem key={group.id} value={String(group.id)}>
+                            {group.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Sub Group */}
+                  <div>
+                    <FormControl fullWidth variant="outlined" size="small">
+                      <InputLabel id="sub-group-select-label" shrink>Sub Group</InputLabel>
+                      <MuiSelect
+                        labelId="sub-group-select-label"
+                        label="Sub Group"
+                        value={filterSubGroup}
+                        onChange={(e: SelectChangeEvent<string>) => setFilterSubGroup(e.target.value)}
+                        disabled={!filterAssetGroup || loadingSubGroups}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Subgroup</em></MenuItem>
+                        {assetSubGroups.map((subGroup) => (
+                          <MenuItem key={subGroup.id} value={String(subGroup.id)}>
+                            {subGroup.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
+
+                {/* Reset All as Text */}
+                <span
+                  onClick={handleResetAll}
+                  className="text-red-600 hover:text-red-700 cursor-pointer font-medium whitespace-nowrap text-sm hover:underline pb-1"
+                >
+                  Reset All
+                </span>
               </div>
             </div>
 
+            {/* Print Button */}
             <div className="flex justify-end mb-4">
               <Button
                 onClick={handlePrintList}
