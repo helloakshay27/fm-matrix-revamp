@@ -91,13 +91,12 @@ export interface UpcomingEvent {
 }
 
 export interface TaskStats {
-  task_count: number;
-  todo_count: number;
-  in_progress_tasks: number;
-  overdue_tasks: number;
-  on_hold_tasks: number;
-  completed_tasks: number;
-  open_tasks: number;
+  dashboard?: {
+    p1_count: number;
+    p2_count: number;
+    p3_count: number;
+    p4_count: number;
+  };
 }
 
 export interface LifeCompassStats {

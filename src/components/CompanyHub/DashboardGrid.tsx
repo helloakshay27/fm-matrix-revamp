@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import axios from "axios";
 import {
   AlertCircle,
   FileText,
@@ -7,6 +8,7 @@ import {
   ChevronRight,
   CheckSquare,
   Plus,
+  Loader2,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import { TaskStats } from "./types";
@@ -26,6 +28,70 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
   activeTimeView,
   setActiveTimeView,
 }) => {
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+
+  const handleQuadrantClick = async (item: any) => {
+    setIsLoadingTasks(true);
+    const priority = item.q.replace("Q", "P"); // Q1 -> 1, Q2 -> 2 etc.
+
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = user.id;
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      // Call the API to fetch tasks with the corresponding priority
+      const response = await axios.get(
+        `${protocol}${baseUrl}/todos.json?q[priority_eq]=${priority}&q[responsible_person_id_eq]=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const fetchedTasks =
+        response.data.todos
+
+      const formattedTasks = fetchedTasks.filter(todo => todo.status !== "completed").map((t: any) => ({
+        id: t.id,
+        title: t.title || t.name || "Untitled Task",
+        status: t.status,
+      }));
+
+      setSelectedMatrixQuadrant({
+        id: item.q,
+        title: item.label,
+        description:
+          item.q === "Q1"
+            ? "High Priority: Do it now"
+            : item.q === "Q2"
+              ? "Strategic Focus: Schedule it"
+              : item.q === "Q3"
+                ? "Short-term Action: Delegate it"
+                : "Lower Priority: Review/Delegate",
+        color: item.color,
+        focus: !!item.focus,
+        tasks: formattedTasks,
+      });
+    } catch (error) {
+      console.error("❌ Matrix task fetch failed:", error);
+      // Even if fetch fails, show the section but with empty tasks or an error message
+      setSelectedMatrixQuadrant({
+        id: item.q,
+        title: item.label,
+        description: "Failed to load tasks. Please try again.",
+        color: item.color,
+        focus: !!item.focus,
+        tasks: [],
+      });
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mt-2">
       {/* LEFT COLUMN: TASK PRIORITY MATRIX (Eisenhower) */}
@@ -35,7 +101,7 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
             <div className="animate-fade-in-scale h-full flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[14px] font-bold text-gray-700 tracking-tight">
-                  Task Priority Matrix
+                  Todo Priority Matrix
                   <p className="text-[10px] text-gray-400 font-bold tracking-widest">
                     Eisenhower
                   </p>
@@ -47,14 +113,14 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                   {
                     q: "Q1",
                     label: "Important & Urgent",
-                    val: taskStats.overdue_tasks || 8,
+                    val: taskStats?.dashboard?.p1_count || 0,
                     icon: <AlertCircle className="w-8 h-4" />,
                     color: "#E67E5F",
                   },
                   {
                     q: "Q2",
                     label: "Important not Urgent",
-                    val: taskStats.open_tasks || 12,
+                    val: taskStats?.dashboard?.p2_count || 0,
                     icon: <FileText className="w-4 h-4" />,
                     focus: true,
                     color: "#5D56C1",
@@ -62,82 +128,31 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                   {
                     q: "Q3",
                     label: "Not Important Urgent",
-                    val: taskStats.todo_count || 5,
+                    val: taskStats?.dashboard?.p3_count || 0,
                     icon: <Activity className="w-4 h-4" />,
                     color: "#F59E0B",
                   },
                   {
                     q: "Q4",
                     label: "Not Important not Urgent",
-                    val: taskStats.on_hold_tasks || 3,
+                    val: taskStats?.dashboard?.p4_count || 0,
                     icon: <MousePointer2 className="w-4 h-4" />,
                     color: "#10B981",
                   },
                 ].map((item, i) => (
                   <div
                     key={i}
-                    onClick={() =>
-                      setSelectedMatrixQuadrant({
-                        id: item.q,
-                        title: item.label,
-                        description:
-                          item.q === "Q1"
-                            ? "High Priority: Do it now"
-                            : item.q === "Q2"
-                            ? "Strategic Focus: Schedule it"
-                            : item.q === "Q3"
-                            ? "Short-term Action: Delegate it"
-                            : "Lower Priority: Review/Delegate",
-                        color: item.color,
-                        focus: !!item.focus,
-                        tasks:
-                          item.q === "Q1"
-                            ? [
-                                "Finalize Quarterly Budget - 10:00 AM",
-                                "Client Crisis Call (Runwal) - 2:30 PM",
-                                "HR Compliance Audit - 4:00 PM",
-                                "Submit Monthly Tax Returns - 5:00 PM",
-                                "Server Maintenance Alert - Immediate",
-                                "Sign Vendor Contracts - Today",
-                                "Prepare AGM Slides - Today",
-                                "Resolve Customer Refund Case",
-                              ]
-                            : item.q === "Q2"
-                            ? [
-                                "Schedule quarterly strategic planning session",
-                                "Design team skill development program",
-                                "Research process improvement methodologies",
-                                "Build relationships with key stakeholders",
-                                "Create long-term product roadmap",
-                                "Develop succession planning strategy",
-                                "Review and update company policies",
-                                "Plan team building activities",
-                                "Conduct market research for new opportunities",
-                                "Document best practices and workflows",
-                                "Invest in professional development courses",
-                                "Design customer feedback collection system",
-                              ]
-                            : item.q === "Q3"
-                            ? [
-                                "Format Internal Memos",
-                                "Schedule Minor Logistics",
-                                "Respond to Routine Emails",
-                                "Update Office Inventory",
-                                "Coordinate Printing Samples",
-                              ]
-                            : [
-                                "Review Outdated HR Policies",
-                                "Archive 2024 Audit Logs",
-                                "Update Internal Wiki Fonts",
-                              ],
-                      })
-                    }
-                    className={`rounded-[20px] p-6 border cursor-pointer transition-all flex flex-col items-center justify-center relative overflow-hidden ${
-                      item.focus
-                        ? "bg-[radial-gradient(235.58%_575.5%_at_50%_50%,_#F6F4EE_0%,_#2C2C2A_100%)] border-[#D9D1BD]"
-                        : "bg-[#FDFCFB] border-[#F2F0EA]"
-                    }`}
+                    onClick={() => handleQuadrantClick(item)}
+                    className={`rounded-[20px] p-6 border cursor-pointer transition-all flex flex-col items-center justify-center relative overflow-hidden ${item.focus
+                      ? "bg-[radial-gradient(235.58%_575.5%_at_50%_50%,_#F6F4EE_0%,_#2C2C2A_100%)] border-[#D9D1BD]"
+                      : "bg-[#FDFCFB] border-[#F2F0EA]"
+                      } ${isLoadingTasks ? "pointer-events-none opacity-80" : ""}`}
                   >
+                    {isLoadingTasks && (
+                      <div className="absolute inset-0 bg-white/40 flex items-center justify-center z-20 backdrop-blur-[1px]">
+                        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                      </div>
+                    )}
                     {item.focus && (
                       <span className="absolute top-4 right-4 text-[9px] font-black bg-[#C6C0F3] text-[#5D56C1] px-2 py-0.5 rounded-full z-10 uppercase tracking-widest shadow-sm">
                         Focus
@@ -200,22 +215,18 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
 
       {/* RIGHT COLUMN: TODAY + TASKS/TODO STACK */}
       <div
-        className={`lg:col-span-6 flex flex-col gap-8 transition-all ${
-          activeTimeView === "monthly" ? "!lg:col-span-12" : ""
-        }`}
+        className={`lg:col-span-6 flex flex-col gap-8 transition-all ${activeTimeView === "monthly" ? "!lg:col-span-12" : ""
+          }`}
       >
         {/* Today */}
         <GlassCard
-          className={`px-5 ${
-            activeTimeView === "monthly" ? "py-4" : "py-3"
-          } !bg-white/80 backdrop-blur-sm w-full shadow-sm !border-none !rounded-[24px] flex flex-col overflow-hidden transition-all ${
-            activeTimeView === "monthly" ? "h-[335px]" : "h-[155px]"
-          }`}
+          className={`px-5 ${activeTimeView === "monthly" ? "py-4" : "py-3"
+            } !bg-white/80 backdrop-blur-sm w-full shadow-sm !border-none !rounded-[24px] flex flex-col overflow-hidden transition-all ${activeTimeView === "monthly" ? "h-[335px]" : "h-[155px]"
+            }`}
         >
           <div
-            className={`flex items-center justify-between ${
-              activeTimeView === "monthly" ? "mb-2" : "mb-1"
-            } px-1`}
+            className={`flex items-center justify-between ${activeTimeView === "monthly" ? "mb-2" : "mb-1"
+              } px-1`}
           >
             <h3 className="text-[14px] font-bold text-gray-800 tracking-tight">
               {activeTimeView === "monthly" ? "March 2026" : "Today"}
@@ -229,11 +240,10 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                       v.toLowerCase() as "hourly" | "weekly" | "monthly"
                     )
                   }
-                  className={`px-4 py-1.5 text-[11px] font-bold rounded-[8px] transition-all ${
-                    activeTimeView === v.toLowerCase()
-                      ? "bg-white/80 shadow-sm text-gray-900 backdrop-blur-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-1.5 text-[11px] font-bold rounded-[8px] transition-all ${activeTimeView === v.toLowerCase()
+                    ? "bg-white/80 shadow-sm text-gray-900 backdrop-blur-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   {v} View
                 </button>
@@ -336,57 +346,55 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
             <div className="flex gap-2 justify-between items-start flex-1 mt-2">
               {(activeTimeView === "hourly"
                 ? [
-                    { t: "12 PM", tasks: 0 },
-                    { t: "1 PM", tasks: 1 },
-                    { t: "2 PM", tasks: 0 },
-                    { t: "3 PM", tasks: 0 },
-                    { t: "4 PM", tasks: 3, active: true },
-                    { t: "5 PM", tasks: 0 },
-                    { t: "6 PM", tasks: 1 },
-                    { t: "7 PM", tasks: 0 },
-                    { t: "8 PM", tasks: 0 },
-                    { t: "9 PM", tasks: 0 },
-                  ]
+                  { t: "12 PM", tasks: 0 },
+                  { t: "1 PM", tasks: 1 },
+                  { t: "2 PM", tasks: 0 },
+                  { t: "3 PM", tasks: 0 },
+                  { t: "4 PM", tasks: 3, active: true },
+                  { t: "5 PM", tasks: 0 },
+                  { t: "6 PM", tasks: 1 },
+                  { t: "7 PM", tasks: 0 },
+                  { t: "8 PM", tasks: 0 },
+                  { t: "9 PM", tasks: 0 },
+                ]
                 : [
-                    { t: "Tues", v: "—" },
-                    { t: "Wed", v: "1 task" },
-                    { t: "Thurs", v: "3 tasks", active: true },
-                    { t: "Fri", v: "—" },
-                    { t: "Sat", v: "Weekly Off", off: true },
-                    { t: "Sun", v: "Weekly Off", off: true },
-                    { t: "Mon", v: "—" },
-                    { t: "Tues", v: "1 task" },
-                    { t: "Wed", v: "—" },
-                    { t: "Thurs", v: "—" },
-                  ]
+                  { t: "Tues", v: "—" },
+                  { t: "Wed", v: "1 task" },
+                  { t: "Thurs", v: "3 tasks", active: true },
+                  { t: "Fri", v: "—" },
+                  { t: "Sat", v: "Weekly Off", off: true },
+                  { t: "Sun", v: "Weekly Off", off: true },
+                  { t: "Mon", v: "—" },
+                  { t: "Tues", v: "1 task" },
+                  { t: "Wed", v: "—" },
+                  { t: "Thurs", v: "—" },
+                ]
               ).map((item: any, i) => (
                 <div
                   key={i}
                   className="flex-1 flex flex-col items-center gap-2 group cursor-pointer"
                 >
                   <p
-                    className={`text-[10px] font-bold tracking-tight transition-colors ${
-                      item.active
-                        ? activeTimeView === "weekly"
-                          ? "text-red-500"
-                          : "text-[#E67E5F]"
-                        : item.off
+                    className={`text-[10px] font-bold tracking-tight transition-colors ${item.active
+                      ? activeTimeView === "weekly"
+                        ? "text-red-500"
+                        : "text-[#E67E5F]"
+                      : item.off
                         ? "text-[#E67E5F]"
                         : "text-gray-400"
-                    }`}
+                      }`}
                   >
                     {item.t}
                   </p>
                   <div
-                    className={`w-full max-w-[62px] h-[75px] rounded-[14px] border flex items-center justify-center text-[9px] font-bold transition-all p-1 text-center leading-tight ${
-                      item.active
-                        ? activeTimeView === "weekly"
-                          ? "bg-red-50/50 border-red-500 text-red-500 shadow-sm"
-                          : "bg-[#FDFCFB]/90 border-[#E67E5F] text-[#E67E5F] shadow-sm"
-                        : item.off
+                    className={`w-full max-w-[62px] h-[75px] rounded-[14px] border flex items-center justify-center text-[9px] font-bold transition-all p-1 text-center leading-tight ${item.active
+                      ? activeTimeView === "weekly"
+                        ? "bg-red-50/50 border-red-500 text-red-500 shadow-sm"
+                        : "bg-[#FDFCFB]/90 border-[#E67E5F] text-[#E67E5F] shadow-sm"
+                      : item.off
                         ? "bg-orange-50/50 border-orange-200 text-[#E67E5F]"
                         : "bg-[#FAF9F6]/80 border-[#E8E4D9] text-gray-400"
-                    }`}
+                      }`}
                   >
                     {item.v ||
                       (item.tasks > 0
@@ -453,11 +461,10 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                     className="flex items-center gap-2 bg-white border border-gray-100/30 p-2 rounded-[10px] shadow-sm transition-all group cursor-pointer"
                   >
                     <div
-                      className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${
-                        todo.d
-                          ? "bg-[#E67E5F] border-[#E67E5F]"
-                          : "border-gray-200 group-hover:border-[#E67E5F]"
-                      }`}
+                      className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all ${todo.d
+                        ? "bg-[#E67E5F] border-[#E67E5F]"
+                        : "border-gray-200 group-hover:border-[#E67E5F]"
+                        }`}
                     >
                       {todo.d ? (
                         <CheckSquare
@@ -469,9 +476,8 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                       )}
                     </div>
                     <span
-                      className={`text-[10px] font-semibold truncate ${
-                        todo.d ? "text-gray-400 line-through" : "text-gray-700"
-                      }`}
+                      className={`text-[10px] font-semibold truncate ${todo.d ? "text-gray-400 line-through" : "text-gray-700"
+                        }`}
                     >
                       {todo.l}
                     </span>

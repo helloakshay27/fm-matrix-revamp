@@ -125,6 +125,44 @@ function toNumber(value: unknown, fallback = 0) {
   return Number.isFinite(num) ? num : fallback;
 }
 
+function toOptionalNumber(value: unknown): number | undefined {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : undefined;
+}
+
+function pickFirstValue(record: ApiRecord, keys: string[]): unknown {
+  for (const key of keys) {
+    if (key in record) return record[key];
+  }
+  return undefined;
+}
+
+function pickFirstNumber(record: ApiRecord, keys: string[]): number | undefined {
+  for (const key of keys) {
+    if (!(key in record)) continue;
+    const parsed = toOptionalNumber(record[key]);
+    if (parsed !== undefined) return parsed;
+  }
+  return undefined;
+}
+
+function pickFirstNullableNumber(
+  record: ApiRecord,
+  keys: string[]
+): number | null | undefined {
+  for (const key of keys) {
+    if (!(key in record)) continue;
+
+    const value = record[key];
+    if (value === null) return null;
+
+    const parsed = toOptionalNumber(value);
+    if (parsed !== undefined) return parsed;
+  }
+
+  return undefined;
+}
+
 function toApiRecord(value: unknown): ApiRecord {
   return value && typeof value === "object" ? (value as ApiRecord) : {};
 }
@@ -226,6 +264,7 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
 
   const wrapper = raw as RatingsFeedbackDashboardResponse;
   const source = (wrapper.data ?? raw) as ApiDashboardData;
+  const sourceRecord = toApiRecord(source);
   const breakdown = source.ratingBreakdown ?? source.rating_breakdown ?? {};
   const recent =
     source.recentFeedbacks ??
@@ -293,17 +332,83 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       }
     : buildDashboardDataFromFeedbacks(recentFeedbacks).ratingBreakdown;
 
+  const totalFeedbacksFromApi = pickFirstNumber(sourceRecord, [
+    "totalFeedbacks",
+    "total_feedbacks",
+    "total",
+    "feedback_count",
+    "total_count",
+  ]);
+
+  const totalFeedbacksFromBreakdown = Object.values(derivedRatingBreakdown).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+  const totalFeedbacksFromDepartments = departments.reduce(
+    (sum, department) => sum + department.count,
+    0
+  );
+  const totalFeedbacks =
+    totalFeedbacksFromApi ??
+    (totalFeedbacksFromBreakdown > 0
+      ? totalFeedbacksFromBreakdown
+      : totalFeedbacksFromDepartments > 0
+      ? totalFeedbacksFromDepartments
+      : recentFeedbacks.length);
+
+  const averageRatingFromApi = pickFirstNumber(sourceRecord, [
+    "averageRating",
+    "average_rating",
+    "avg_rating",
+    "avgRating",
+  ]);
+  const averageRatingFromRecent =
+    recentFeedbacks.length > 0
+      ? recentFeedbacks.reduce((sum, item) => sum + item.rating, 0) /
+        recentFeedbacks.length
+      : undefined;
+  const averageRatingFromBreakdown =
+    totalFeedbacksFromBreakdown > 0
+      ? (Number(derivedRatingBreakdown["1"]) * 1 +
+          Number(derivedRatingBreakdown["2"]) * 2 +
+          Number(derivedRatingBreakdown["3"]) * 3 +
+          Number(derivedRatingBreakdown["4"]) * 4 +
+          Number(derivedRatingBreakdown["5"]) * 5) /
+        totalFeedbacksFromBreakdown
+      : undefined;
+  const averageRating =
+    averageRatingFromApi ?? averageRatingFromRecent ?? averageRatingFromBreakdown ?? 0;
+
+  const activeTeamFromApi = pickFirstNumber(sourceRecord, [
+    "activeTeam",
+    "active_team",
+    "active_teams",
+    "active_team_count",
+    "team_count",
+  ]);
+  const activeTeamFromDepartments = departments.filter(
+    (department) => department.count > 0
+  ).length;
+  const activeTeam =
+    activeTeamFromApi ??
+    (activeTeamFromDepartments > 0 ? activeTeamFromDepartments : departments.length);
+
+  const readRate = pickFirstNullableNumber(sourceRecord, ["readRate", "read_rate"]);
+  const readTrackingFlag = pickFirstValue(sourceRecord, [
+    "readTrackingAvailable",
+    "read_tracking_available",
+  ]);
+  const readTrackingAvailable =
+    typeof readTrackingFlag === "boolean"
+      ? readTrackingFlag
+      : readRate !== undefined && readRate !== null;
+
   return {
-    totalFeedbacks: toNumber(source.totalFeedbacks ?? source.total_feedbacks),
-    averageRating: toNumber(source.averageRating ?? source.average_rating),
-    activeTeam: toNumber(source.activeTeam ?? source.active_team),
-    readRate:
-      source.readRate === null || source.read_rate === null
-        ? null
-        : toNumber(source.readRate ?? source.read_rate, 0),
-    readTrackingAvailable: Boolean(
-      source.readTrackingAvailable ?? source.read_tracking_available
-    ),
+    totalFeedbacks,
+    averageRating,
+    activeTeam,
+    readRate: readRate ?? null,
+    readTrackingAvailable,
     ratingBreakdown: derivedRatingBreakdown,
     departments,
     recentFeedbacks,
