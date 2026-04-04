@@ -46,13 +46,12 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const { setCurrentSection } = useLayout();
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [taskStats, setTaskStats] = useState<TaskStats>({
-    task_count: 0,
-    todo_count: 0,
-    in_progress_tasks: 0,
-    overdue_tasks: 0,
-    on_hold_tasks: 0,
-    completed_tasks: 0,
-    open_tasks: 0,
+    dashboard: {
+      p1_count: 0,
+      p2_count: 0,
+      p3_count: 0,
+      p4_count: 0,
+    },
   });
   const [lifeCompassStats, setLifeCompassStats] = useState<LifeCompassStats>({
     journaling_consistency: 0,
@@ -98,6 +97,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const [selectedMatrixQuadrant, setSelectedMatrixQuadrant] = useState<any>(null);
 
   const user = React.useMemo(() => getUser(), []);
+  const userId = JSON.parse(localStorage.getItem("user") || "{}").id
   const displayName =
     userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   const companyId = String(user?.lock_role?.company_id || "116");
@@ -237,7 +237,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
         // 4. Stats
         const statsRes = await axios.get(
-          `${protocol}${baseUrl}/task_managements/task_todo_counts.json`,
+          `${protocol}${baseUrl}/todos.json?page=1&q[user_id_eq]=${userId}`
+          ,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTaskStats(statsRes.data);
