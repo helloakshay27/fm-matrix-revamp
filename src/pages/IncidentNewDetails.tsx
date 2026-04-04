@@ -953,7 +953,7 @@ export const IncidentNewDetails = () => {
                             role: person.role || '',
                             injured_user_type: person.type,
                             types: bodyPartsArray,
-                            injury_types: bodyPartsArray.join(', '),
+                            // injury_types: bodyPartsArray.join(', '),
                             body_parts: bodyPartsArray,
                             attachments: attachmentsBase64
                         });
@@ -1876,7 +1876,11 @@ export const IncidentNewDetails = () => {
                                                         <td className="py-3 px-4 text-gray-900">{injury.age || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-900">{injury.injured_user_type || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-900">{injury.role || '-'}</td>
-                                                        <td className="py-3 px-4 text-gray-900">{injury.injury_type || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">
+                                                            {injury.injury_type || (Array.isArray(injury.injury_types) && injury.injury_types.length > 0
+                                                                ? injury.injury_types.join(', ')
+                                                                : '-')}
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
