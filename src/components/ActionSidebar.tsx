@@ -342,7 +342,6 @@ const actionIconMap: Record<string, any> = {
   sos_category_setup: AlertCircle,
 
   // Master Module (from API response)
-  account: Building,
   building: Building,
   wing: Building,
   area: MapPin,
@@ -369,7 +368,6 @@ const actionIconMap: Record<string, any> = {
   amenity: Star,
   carpool: Car,
   visitors: UserCheck,
-  events: PartyPopper,
   curated_services: Gift,
   service_category: Layers,
   service: Star,
@@ -379,7 +377,6 @@ const actionIconMap: Record<string, any> = {
   helpdesk: Ticket,
   notices: Bell,
   sos_directory: AlertCircle,
-  wallet: Wallet,
   esr_csr: HandHeart,
   customers: Users,
 

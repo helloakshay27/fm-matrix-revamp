@@ -11,9 +11,13 @@ import {
   Search,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { kpiClass } from "./shared";
+import { kpiClass } from "./Shared";
 
 export interface KPIHistoryRow {
   id: string;
@@ -49,7 +53,8 @@ type SortDir = "asc" | "desc";
 const calendarDayClassNames = {
   day_selected:
     "bg-[#DA7756] text-white hover:bg-[#DA7756] hover:text-white focus:bg-[#DA7756] focus:text-white rounded-full w-10 h-10 flex items-center justify-center",
-  day_today: "border border-[#DA7756] text-[#DA7756] font-semibold rounded-full",
+  day_today:
+    "border border-[#DA7756] text-[#DA7756] font-semibold rounded-full",
 };
 
 function HistoryDatePickerField({
@@ -67,7 +72,10 @@ function HistoryDatePickerField({
 
   return (
     <div className="sm:col-span-1">
-      <label htmlFor={id} className="mb-1 block text-xs font-medium text-neutral-500">
+      <label
+        htmlFor={id}
+        className="mb-1 block text-xs font-medium text-neutral-500"
+      >
         {label}
       </label>
       <Popover open={open} onOpenChange={setOpen}>
@@ -84,7 +92,10 @@ function HistoryDatePickerField({
                 setOpen(true);
               }
             }}
-            className={cn(dateInputClass, "cursor-pointer pr-10 tabular-nums outline-none")}
+            className={cn(
+              dateInputClass,
+              "cursor-pointer pr-10 tabular-nums outline-none"
+            )}
           />
           <PopoverTrigger asChild>
             <button
@@ -97,7 +108,10 @@ function HistoryDatePickerField({
           </PopoverTrigger>
         </div>
         <PopoverContent
-          className={cn("w-auto border-[rgba(218,119,86,0.2)] p-0", kpiClass.surfaceCard)}
+          className={cn(
+            "w-auto border-[rgba(218,119,86,0.2)] p-0",
+            kpiClass.surfaceCard
+          )}
           align="start"
         >
           <Calendar
@@ -145,8 +159,10 @@ const KPIHistoryTab: React.FC = () => {
       if (sortKey === "date") {
         cmp = new Date(a.date).getTime() - new Date(b.date).getTime();
       } else if (sortKey === "achievement") {
-        const na = parseFloat(String(a.achievement).replace(/[^0-9.-]/g, "")) || 0;
-        const nb = parseFloat(String(b.achievement).replace(/[^0-9.-]/g, "")) || 0;
+        const na =
+          parseFloat(String(a.achievement).replace(/[^0-9.-]/g, "")) || 0;
+        const nb =
+          parseFloat(String(b.achievement).replace(/[^0-9.-]/g, "")) || 0;
         cmp = na - nb;
       }
       return sortDir === "asc" ? cmp : -cmp;
@@ -154,7 +170,8 @@ const KPIHistoryTab: React.FC = () => {
     return copy;
   }, [filtered, sortKey, sortDir]);
 
-  const allSelected = sorted.length > 0 && sorted.every((e) => selectedIds.has(e.id));
+  const allSelected =
+    sorted.length > 0 && sorted.every((e) => selectedIds.has(e.id));
 
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -187,11 +204,22 @@ const KPIHistoryTab: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <div className={cn("rounded-lg p-5 shadow-sm sm:p-6", kpiClass.border, kpiClass.surfaceCard)}>
+      <div
+        className={cn(
+          "rounded-lg p-5 shadow-sm sm:p-6",
+          kpiClass.border,
+          kpiClass.surfaceCard
+        )}
+      >
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2.5">
-            <CalendarDays className="h-6 w-6 shrink-0 text-[#DA7756]" strokeWidth={2} />
-            <h2 className="text-lg font-bold text-[#1a1a1a]">KPI History Log</h2>
+            <CalendarDays
+              className="h-6 w-6 shrink-0 text-[#DA7756]"
+              strokeWidth={2}
+            />
+            <h2 className="text-lg font-bold text-[#1a1a1a]">
+              KPI History Log
+            </h2>
           </div>
           <button
             type="button"
@@ -257,13 +285,22 @@ const KPIHistoryTab: React.FC = () => {
             className={cn("h-4 w-4 disabled:opacity-40", kpiClass.checkbox)}
           />
           <span>
-            Showing <span className="font-semibold text-[#1a1a1a]">{showingCount}</span> of{" "}
-            <span className="font-semibold text-[#1a1a1a]">{totalCount}</span> entries
+            Showing{" "}
+            <span className="font-semibold text-[#1a1a1a]">{showingCount}</span>{" "}
+            of{" "}
+            <span className="font-semibold text-[#1a1a1a]">{totalCount}</span>{" "}
+            entries
           </span>
         </label>
       </div>
 
-      <div className={cn("overflow-hidden rounded-lg shadow-sm", kpiClass.border, kpiClass.surfaceCard)}>
+      <div
+        className={cn(
+          "overflow-hidden rounded-lg shadow-sm",
+          kpiClass.border,
+          kpiClass.surfaceCard
+        )}
+      >
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse text-sm">
             <thead>
@@ -274,7 +311,10 @@ const KPIHistoryTab: React.FC = () => {
                     checked={allSelected}
                     onChange={toggleSelectAll}
                     disabled={sorted.length === 0}
-                    className={cn("h-4 w-4 disabled:opacity-40", kpiClass.checkbox)}
+                    className={cn(
+                      "h-4 w-4 disabled:opacity-40",
+                      kpiClass.checkbox
+                    )}
                     aria-label="Select all"
                   />
                 </th>
@@ -288,12 +328,24 @@ const KPIHistoryTab: React.FC = () => {
                     <ArrowDownUp className="h-3.5 w-3.5 text-neutral-400" />
                   </button>
                 </th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">Type</th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">KPI Name</th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">Department</th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">User</th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">Planned</th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">Actual</th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  Type
+                </th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  KPI Name
+                </th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  Department
+                </th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  User
+                </th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  Planned
+                </th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  Actual
+                </th>
                 <th className="px-3 py-3 text-left font-semibold text-[#334155]">
                   <button
                     type="button"
@@ -304,8 +356,12 @@ const KPIHistoryTab: React.FC = () => {
                     <ArrowDownUp className="h-3.5 w-3.5 text-neutral-400" />
                   </button>
                 </th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">Status</th>
-                <th className="px-3 py-3 text-left font-semibold text-[#334155]">Notes</th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  Status
+                </th>
+                <th className="px-3 py-3 text-left font-semibold text-[#334155]">
+                  Notes
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -314,10 +370,17 @@ const KPIHistoryTab: React.FC = () => {
                   <td colSpan={11} className="px-6 py-20">
                     <div className="flex flex-col items-center justify-center text-center">
                       <div className="mb-4 rounded-full bg-sky-50 p-5">
-                        <Filter className="h-12 w-12 text-sky-300" strokeWidth={1.25} />
+                        <Filter
+                          className="h-12 w-12 text-sky-300"
+                          strokeWidth={1.25}
+                        />
                       </div>
-                      <p className="text-base font-bold text-[#1a1a1a]">No entries found</p>
-                      <p className="mt-1 text-sm text-neutral-500">Try adjusting your filters</p>
+                      <p className="text-base font-bold text-[#1a1a1a]">
+                        No entries found
+                      </p>
+                      <p className="mt-1 text-sm text-neutral-500">
+                        Try adjusting your filters
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -337,12 +400,20 @@ const KPIHistoryTab: React.FC = () => {
                     </td>
                     <td className="px-3 py-3 text-neutral-800">{row.date}</td>
                     <td className="px-3 py-3 text-neutral-800">{row.type}</td>
-                    <td className="px-3 py-3 font-medium text-[#1a1a1a]">{row.kpiName}</td>
-                    <td className="px-3 py-3 text-neutral-700">{row.department}</td>
+                    <td className="px-3 py-3 font-medium text-[#1a1a1a]">
+                      {row.kpiName}
+                    </td>
+                    <td className="px-3 py-3 text-neutral-700">
+                      {row.department}
+                    </td>
                     <td className="px-3 py-3 text-neutral-700">{row.user}</td>
-                    <td className="px-3 py-3 text-neutral-800">{row.planned}</td>
+                    <td className="px-3 py-3 text-neutral-800">
+                      {row.planned}
+                    </td>
                     <td className="px-3 py-3 text-neutral-800">{row.actual}</td>
-                    <td className="px-3 py-3 text-neutral-800">{row.achievement}</td>
+                    <td className="px-3 py-3 text-neutral-800">
+                      {row.achievement}
+                    </td>
                     <td className="px-3 py-3 text-neutral-800">{row.status}</td>
                     <td className="px-3 py-3 text-neutral-600">{row.notes}</td>
                   </tr>

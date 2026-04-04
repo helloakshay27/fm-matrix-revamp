@@ -11,9 +11,13 @@ import {
   Search,
   Users,
 } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { kpiClass } from "./shared";
+import { kpiClass } from "./Shared";
 
 interface MissedEntryDetail {
   id: string;
@@ -39,7 +43,11 @@ const MISSED_USERS: MissedUserRow[] = [
     missedCount: 2,
     entries: [
       { id: "e1", kpiName: "Invoices Raised", missedOn: "Mar 28, 2026" },
-      { id: "e2", kpiName: "Monthly Close Checklist", missedOn: "Mar 30, 2026" },
+      {
+        id: "e2",
+        kpiName: "Monthly Close Checklist",
+        missedOn: "Mar 30, 2026",
+      },
     ],
   },
 ];
@@ -74,7 +82,11 @@ const MissedEntitiesTab: React.FC = () => {
   );
   const usersWithMissed = filteredUsers.length;
   const lookbackLabel =
-    lookbackDays === "7" ? "7 days" : lookbackDays === "90" ? "90 days" : "30 days";
+    lookbackDays === "7"
+      ? "7 days"
+      : lookbackDays === "90"
+        ? "90 days"
+        : "30 days";
 
   const groupedByDept = useMemo(() => {
     const map = new Map<string, MissedUserRow[]>();
@@ -92,8 +104,12 @@ const MissedEntitiesTab: React.FC = () => {
         <div className="rounded-2xl border border-[rgba(218,119,86,0.28)] bg-[#fef6f4] px-5 py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-neutral-600">Total Missed Entries</p>
-              <p className="mt-1 text-4xl font-bold leading-none text-[#1a1a1a]">{totalMissed}</p>
+              <p className="text-sm font-semibold text-neutral-600">
+                Total Missed Entries
+              </p>
+              <p className="mt-1 text-4xl font-bold leading-none text-[#1a1a1a]">
+                {totalMissed}
+              </p>
             </div>
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#DA7756]/15">
               <AlertCircle className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
@@ -104,8 +120,12 @@ const MissedEntitiesTab: React.FC = () => {
         <div className="rounded-2xl border border-rose-200/90 bg-rose-50/90 px-5 py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-neutral-600">Users with Missed Entries</p>
-              <p className="mt-1 text-4xl font-bold leading-none text-rose-900">{usersWithMissed}</p>
+              <p className="text-sm font-semibold text-neutral-600">
+                Users with Missed Entries
+              </p>
+              <p className="mt-1 text-4xl font-bold leading-none text-rose-900">
+                {usersWithMissed}
+              </p>
             </div>
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-rose-100">
               <Users className="h-6 w-6 text-rose-600" strokeWidth={2} />
@@ -116,7 +136,9 @@ const MissedEntitiesTab: React.FC = () => {
         <div className="rounded-2xl border border-sky-200/90 bg-sky-50/90 px-5 py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-neutral-600">Lookback Period</p>
+              <p className="text-sm font-semibold text-neutral-600">
+                Lookback Period
+              </p>
               <p className="mt-1 text-2xl font-bold leading-tight text-sky-950 sm:text-3xl">
                 {lookbackLabel}
               </p>
@@ -128,7 +150,13 @@ const MissedEntitiesTab: React.FC = () => {
         </div>
       </div>
 
-      <div className={cn("rounded-xl p-5 shadow-sm", kpiClass.borderSoft, kpiClass.surfaceCard)}>
+      <div
+        className={cn(
+          "rounded-xl p-5 shadow-sm",
+          kpiClass.borderSoft,
+          kpiClass.surfaceCard
+        )}
+      >
         <div className="mb-4 flex items-center gap-2">
           <Filter className="h-5 w-5 text-[#DA7756]" strokeWidth={2} />
           <h3 className="text-sm font-bold text-[#1a1a1a]">Filters</h3>
@@ -172,7 +200,9 @@ const MissedEntitiesTab: React.FC = () => {
 
       <div>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-bold text-[#1a1a1a]">Missed Entries by User</h2>
+          <h2 className="text-lg font-bold text-[#1a1a1a]">
+            Missed Entries by User
+          </h2>
           <button
             type="button"
             onClick={() => setGroupByDept((v) => !v)}
@@ -295,9 +325,13 @@ const UserMissedCard: React.FC<{
                     kpiClass.surfaceCard
                   )}
                 >
-                  <span className="font-medium text-[#1a1a1a]">{e.kpiName}</span>
+                  <span className="font-medium text-[#1a1a1a]">
+                    {e.kpiName}
+                  </span>
                   {e.missedOn && (
-                    <span className="text-xs text-neutral-500">{e.missedOn}</span>
+                    <span className="text-xs text-neutral-500">
+                      {e.missedOn}
+                    </span>
                   )}
                 </li>
               ))}
