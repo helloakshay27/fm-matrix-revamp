@@ -11,6 +11,8 @@ interface CommunityFeedProps {
   isLoadingPosts: boolean;
   posts: Post[];
   setDeleteConfirmation: (conf: any) => void;
+  handleLikePost: (postId: number) => void;
+  handleAddComment: (postId: number, commentBody: string) => void;
 }
 
 const CommunityFeed: React.FC<CommunityFeedProps> = ({
@@ -20,6 +22,8 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
   isLoadingPosts,
   posts,
   setDeleteConfirmation,
+  handleLikePost,
+  handleAddComment,
 }) => {
   return (
     <div className="lg:col-span-8 space-y-8">
@@ -51,6 +55,8 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({
             key={post.id}
             post={post}
             setDeleteConfirmation={setDeleteConfirmation}
+            handleLikePost={handleLikePost}
+            handleAddComment={handleAddComment}
           />
         ))
       ) : (

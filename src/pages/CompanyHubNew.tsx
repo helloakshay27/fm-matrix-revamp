@@ -25,7 +25,6 @@ import { PostModals } from "../components/CompanyHub/Modals/PostModals";
 // Tabs
 import DashboardTab from "../components/CompanyHub/Tabs/DashboardTab";
 import BusinessCompassTab from "../components/CompanyHub/Tabs/BusinessCompassTab";
-import AdminCompassTab from "../components/CompanyHub/Tabs/AdminCompassTab";
 
 // Types & Utils
 import {
@@ -36,6 +35,9 @@ import {
   QuickLink,
 } from "../components/CompanyHub/types";
 import { hasContent, extractText } from "../components/CompanyHub/utils";
+import { useDispatch } from "react-redux";
+import { resetUserAvailability } from "@/store/slices/projectTasksSlice";
+import AddTicketSidePanel from "@/components/tickets/AddTicketSidePanel";
 
 interface CompanyHubNewProps {
   userName?: string;
@@ -46,13 +48,12 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const { setCurrentSection } = useLayout();
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [taskStats, setTaskStats] = useState<TaskStats>({
-    task_count: 0,
-    todo_count: 0,
-    in_progress_tasks: 0,
-    overdue_tasks: 0,
-    on_hold_tasks: 0,
-    completed_tasks: 0,
-    open_tasks: 0,
+    dashboard: {
+      p1_count: 0,
+      p2_count: 0,
+      p3_count: 0,
+      p4_count: 0,
+    },
   });
   const [lifeCompassStats, setLifeCompassStats] = useState<LifeCompassStats>({
     journaling_consistency: 0,
@@ -60,9 +61,32 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     current_streak: 0,
     leaderboard_rank: 0,
   });
-  const [activeTab, setActiveTab] = useState<
-    "dashboard" | "business" | "admin"
-  >("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "business">("dashboard");
+
+  const tabs = [
+    { key: "dashboard", label: "Dashboard" },
+    { key: "business", label: "My Workspace" },
+    {
+      key: "admin",
+      label: "My Personal Space",
+      isExternal: true,
+      url: "https://life.lockated.com",
+    },
+  ];
+
+  const dispatch = useDispatch();
+  const [openTaskModal, setOpenTaskModal] = useState(false);
+  const [openTodoModal, setOpenTodoModal] = useState(false)
+  const [openTicketModal, setOpenTicketModal] = useState(false)
+
+  const handleCloseModal = () => {
+    setOpenTaskModal(false);
+    dispatch(resetUserAvailability());
+  };
+
+  const handleCloseTodoModal = () => {
+    setOpenTodoModal(false);
+  }
 
   useEffect(() => {
     setCurrentSection("Company Hub New");
@@ -98,6 +122,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const [selectedMatrixQuadrant, setSelectedMatrixQuadrant] = useState<any>(null);
 
   const user = React.useMemo(() => getUser(), []);
+  const userId = JSON.parse(localStorage.getItem("user") || "{}").id
   const displayName =
     userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   const companyId = String(user?.lock_role?.company_id || "116");
@@ -109,9 +134,11 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const fullUrl = `https://${cleanBaseUrl}/communities/3/posts.json`;
+
       const response = await axios.get(
-        `${protocol}${baseUrl}/communities/3/posts.json`,
+        fullUrl,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -120,10 +147,25 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         response.data.posts ||
         response.data.data ||
         (Array.isArray(response.data) ? response.data : []);
-      const postsData = rawPosts.map((post: any) => ({
-        ...post,
-        type: "post" as const,
-      }));
+      const postsData = rawPosts.map((post: any) => {
+        // Calculate total likes if not provided by backend
+        const totalLikes = post.total_likes ?? 
+          (post.likes_with_emoji ? Object.values(post.likes_with_emoji).reduce((a: any, b: any) => a + (Number(b) || 0), 0) : 0);
+        
+        // Identify post type
+        let type: "post" | "event" | "notice" | "document" = "post";
+        if (post.event) type = "event";
+        else if (post.notice) type = "notice";
+        else if (post.resource_type === "Document") type = "document";
+
+        return {
+          ...post,
+          type,
+          total_likes: totalLikes,
+          total_comments: post.total_comments ?? (Array.isArray(post.comments) ? post.comments.length : 0),
+          comments: Array.isArray(post.comments) ? post.comments : [],
+        };
+      });
       setPosts(postsData);
     } catch (e) {
       console.error("❌ Posts fetch failed:", e);
@@ -237,7 +279,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
         // 4. Stats
         const statsRes = await axios.get(
-          `${protocol}${baseUrl}/task_managements/task_todo_counts.json`,
+          `${protocol}${baseUrl}/todos.json?page=1&q[user_id_eq]=${userId}`
+          ,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTaskStats(statsRes.data);
@@ -345,6 +388,66 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     }
   };
 
+  const handleLikePost = async (postId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const fullUrl = `https://${cleanBaseUrl}/likes.json`;
+
+      await axios.post(
+        fullUrl,
+        {
+          like: {
+            thing_id: postId,
+            thing_type: "Post",
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchPosts();
+    } catch (error) {
+      console.error("Like failed:", error);
+      toast.error("Failed to update like");
+    }
+  };
+
+  const handleAddComment = async (postId: number, commentBody: string) => {
+    if (!commentBody.trim()) return;
+    const toastId = toast.loading("Adding comment...");
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const fullUrl = `https://${cleanBaseUrl}/comments.json`;
+
+      await axios.post(
+        fullUrl,
+        {
+          comment: {
+            body: commentBody,
+            commentable_id: postId,
+            commentable_type: "Post",
+            commentor_id: userId,
+            active: true,
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Comment added", { id: toastId });
+      fetchPosts();
+    } catch (error) {
+      console.error("Comment failed:", error);
+      toast.error("Failed to add comment", { id: toastId });
+    }
+  };
+
   // Cached Missions/Visons
   const cachedMission = React.useMemo(() => {
     try {
@@ -420,21 +523,15 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         {/* --- TOP NAV TABS --- */}
         <div className="flex justify-center pb-2">
           <div className="flex gap-1 bg-[rgba(232,229,220,0.2)] border-[1.31px] border-[rgba(211,209,199,1)] rounded-full p-1 shadow-sm">
-            {(
-              [
-                { key: "dashboard", label: "Dashboard" },
-                { key: "business", label: "Business Compass" },
-                { key: "admin", label: "Admin Compass" },
-              ] as const
-            ).map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => {
-                  setActiveTab(tab.key);
-                  // if (tab.key === "admin") setCurrentSection("Admin Compass");
-                  // else if (tab.key === "business")
-                  //   setCurrentSection("Business Compass");
-                  // else setCurrentSection("Company Hub New");
+                  if (tab.isExternal && tab.url) {
+                    window.open(tab.url, "_blank");
+                    return;
+                  }
+                  setActiveTab(tab.key as "dashboard" | "business");
                 }}
                 className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${activeTab === tab.key
                   ? "bg-white shadow-xl shadow-black/5 text-gray-900"
@@ -467,12 +564,18 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
               setDeleteConfirmation={setDeleteConfirmation}
               setIsVideoOpen={setIsVideoOpen}
               currentEmployee={currentEmployee}
+              openTaskModal={openTaskModal}
+              setOpenTaskModal={setOpenTaskModal}
+              handleCloseModal={handleCloseModal}
+              openTodoModal={openTodoModal}
+              setOpenTodoModal={setOpenTodoModal}
+              handleCloseTodoModal={handleCloseTodoModal}
+              handleLikePost={handleLikePost}
+              handleAddComment={handleAddComment}
             />
           )}
 
           {activeTab === "business" && <BusinessCompassTab />}
-
-          {activeTab === "admin" && <AdminCompassTab />}
         </div>
       </div>
 
@@ -559,6 +662,15 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       <QuickActionsDialog
         isQuickActionsOpen={isQuickActionsOpen}
         setIsQuickActionsOpen={setIsQuickActionsOpen}
+        setOpenTaskModal={setOpenTaskModal}
+        setOpenTodoModal={setOpenTodoModal}
+        setIsCreatePostModalOpen={setIsCreatePostModalOpen}
+        setOpenTicketModal={setOpenTicketModal}
+      />
+
+      <AddTicketSidePanel
+        open={openTicketModal}
+        onClose={() => setOpenTicketModal(false)}
       />
 
       <PostModals

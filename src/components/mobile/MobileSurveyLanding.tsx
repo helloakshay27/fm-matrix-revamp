@@ -1896,8 +1896,8 @@ export const MobileSurveyLanding: React.FC = () => {
                 />
               ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
                 <img
-                  src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
-                  alt="FM Matrix Logo"
+                  src="/gophygital-logo-min.jpg"
+                  alt="gophygital Logo"
                   className="w-full h-full object-contain"
                 />
               ) : (

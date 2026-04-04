@@ -1,13 +1,17 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Clock,
   ExternalLink,
   Info,
   Megaphone,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
+import { getUser } from "@/utils/auth";
+import axios from "axios";
 
 type AnnouncementItem = {
   id: string;
@@ -21,25 +25,10 @@ type AnnouncementItem = {
   ctaLabel: string;
   ctaHref?: string;
   expires: string;
+  isActive: boolean;
+  dbId?: number;
 };
 
-const CURRENT_ANNOUNCEMENTS: AnnouncementItem[] = [
-  {
-    id: "1",
-    title: "Live Support for any issues in Business Compass",
-    subtitle: "EXTREME SUPPORT FOR YOUR BUSINESS GROWTH",
-    body:
-      "Morning Session: 10:30 AM - 1 PM Afternoon Session: 3 PM - 6 PM (Mon, Tue, Wed, Fri)",
-    slogan:
-      "GOING ABOVE & BEYOND: More Than Duty. Your Success is Our Priority.",
-    typeLabel: "Info",
-    categoryLabel: "Platform",
-    dateLine: "Feb 25, 2026 by sj",
-    ctaLabel: "Click for Live Support",
-    ctaHref: "#",
-    expires: "Jun 30, 2026",
-  },
-];
 
 function AnnouncementCard({ item }: { item: AnnouncementItem }) {
   return (
@@ -90,24 +79,6 @@ function AnnouncementCard({ item }: { item: AnnouncementItem }) {
             </p>
           </div>
 
-          {item.ctaHref ? (
-            <a
-              href={item.ctaHref}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#DA7756] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#DA7756]/85"
-            >
-              <ExternalLink className="h-4 w-4 text-white" strokeWidth={2} />
-              {item.ctaLabel}
-            </a>
-          ) : (
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#DA7756] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#DA7756]/85"
-            >
-              <ExternalLink className="h-4 w-4 text-white" strokeWidth={2} />
-              {item.ctaLabel}
-            </button>
-          )}
-
           <p className="text-[11px] text-neutral-400">
             Expires: {item.expires}
           </p>
@@ -118,9 +89,105 @@ function AnnouncementCard({ item }: { item: AnnouncementItem }) {
 }
 
 const Announcement = () => {
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const user = getUser() as unknown as { lock_role?: { company_id?: number | string } };
+  const companyId = localStorage.getItem("org_id") || user?.lock_role?.company_id || "116";
+
+  const fetchAnnouncements = async () => {
+    if (!companyId) {
+      setError("No company ID found");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+
+      const annEndpoint = `${protocol}${baseUrl}/extra_fields?resource_id=${companyId}&resource_type=CompanySetup&group_name=announcement`;
+      const response = await axios.get(annEndpoint, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      
+      let fetchedAnns = [];
+      if (Array.isArray(response.data)) {
+         fetchedAnns = response.data;
+      } else if (Array.isArray(response.data?.data)) {
+         fetchedAnns = response.data.data;
+      } else if (Array.isArray(response.data?.announcement)) {
+         fetchedAnns = response.data.announcement;
+      }
+
+      if (fetchedAnns.length > 0) {
+        const mappedAnns = fetchedAnns
+          .filter((a: Record<string, any>) => {
+            // Default to active if no field_value or not JSON
+            if (!a.field_value || !a.field_value.trim().startsWith("{")) {
+              return true;
+            }
+            
+            try {
+              const parsed = JSON.parse(a.field_value);
+              // Only show announcements explicitly marked as active (isActive: true)
+              return parsed.isActive === true;
+            } catch (e) {
+              console.error("Failed to parse announcement data", e);
+              // If parsing fails, don't show the announcement
+              return false;
+            }
+          })
+          .map((a: Record<string, any>) => {
+            let description = a.field_value || "";
+            let isActive = true;
+            if (a.field_value && a.field_value.trim().startsWith("{")) {
+              try {
+                const parsed = JSON.parse(a.field_value);
+                description = parsed.description || parsed.content || a.field_value;
+                isActive = parsed.isActive !== undefined ? parsed.isActive : true;
+              } catch (e) {
+                console.error("Failed to parse announcement data", e);
+              }
+            }
+            
+            return {
+              id: String(a.id || a.extra_field_id),
+              title: a.field_name || "Announcement",
+              subtitle: "COMPANY ANNOUNCEMENT",
+              body: description,
+              slogan: "Stay informed with the latest updates.",
+              typeLabel: "Info",
+              categoryLabel: "Company",
+              dateLine: `${new Date().toLocaleDateString()} by Admin`,
+              ctaLabel: "Learn More",
+              ctaHref: "#",
+              expires: "Dec 31, 2026",
+              isActive: isActive,
+              dbId: a.id || a.extra_field_id
+            };
+          });
+        
+        setAnnouncements(mappedAnns);
+      } else {
+        setAnnouncements([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch announcements:", error);
+      setError("Failed to load announcements");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [companyId]);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
@@ -140,11 +207,32 @@ const Announcement = () => {
           <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
             Current
           </h2>
-          <div className="space-y-4">
-            {CURRENT_ANNOUNCEMENTS.map((item) => (
-              <AnnouncementCard key={item.id} item={item} />
-            ))}
-          </div>
+          
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[#DA7756]" />
+              <span className="ml-2 text-neutral-600">Loading announcements...</span>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-12">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+              <span className="ml-2 text-neutral-600">{error}</span>
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <Megaphone className="h-12 w-12 text-neutral-300" />
+              <div className="ml-4 text-center">
+                <p className="text-neutral-600 font-medium">No active announcements</p>
+                <p className="text-neutral-400 text-sm mt-1">Check back later for updates</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {announcements.map((item) => (
+                <AnnouncementCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>

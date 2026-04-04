@@ -292,7 +292,7 @@ const WeeklyReports = () => {
                     <TabsList className="inline-flex h-auto w-full justify-start rounded-full bg-neutral-200/70 p-1 sm:w-auto">
                         <TabsTrigger
                             value="submit"
-                            className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:text-neutral-600"
+                            className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm data-[state=inactive]:text-neutral-600"
                         >
                             Submit Review
                         </TabsTrigger>
