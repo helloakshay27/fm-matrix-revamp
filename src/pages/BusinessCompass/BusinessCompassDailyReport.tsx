@@ -84,7 +84,10 @@ interface DailyReport {
 }
 
 const BusinessCompassDailyReport: React.FC = () => {
+<<<<<<< Updated upstream
   const now = new Date();
+=======
+>>>>>>> Stashed changes
   const btnPrimary =
     "bg-[#DA7756] text-white font-bold shadow-sm transition-colors hover:bg-[#c9673f] border-none";
   const btnOutline =
@@ -92,8 +95,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   const btnIcon =
     "border border-[rgba(218,119,86,0.22)] bg-white text-[#DA7756]/70 shadow-sm hover:bg-[#fef6f4] hover:text-[#DA7756]";
 
+<<<<<<< Updated upstream
   const [selectedDate, setSelectedDate] = useState(now.getDate().toString());
   const [startDate, setStartDate] = useState(now.toLocaleDateString("en-CA"));
+=======
+  const [selectedDate, setSelectedDate] = useState("27");
+>>>>>>> Stashed changes
   const [isBannerVisible, setIsBannerVisible] = useState(true);
   const [isBannerExpanded, setIsBannerExpanded] = useState(false);
   const [selfRating, setSelfRating] = useState([2]);
@@ -693,7 +700,11 @@ const BusinessCompassDailyReport: React.FC = () => {
           </h1>
         </div>
 
+<<<<<<< Updated upstream
   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+=======
+        <Tabs defaultValue="submit" className="w-full">
+>>>>>>> Stashed changes
           <TabsList className="mb-6 inline-flex h-auto rounded-2xl bg-[#DA7756] p-1 shadow-sm">
             <TabsTrigger
               value="submit"
@@ -728,7 +739,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                       variant="ghost"
                       size="icon"
                       className={cn("h-8 w-8 rounded-xl", btnIcon)}
+<<<<<<< Updated upstream
                       onClick={handlePrevWeek}
+=======
+>>>>>>> Stashed changes
                     >
                       <ChevronLeft size={20} />
                     </Button>
@@ -736,7 +750,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                       variant="ghost"
                       size="icon"
                       className={cn("h-8 w-8 rounded-xl", btnIcon)}
+<<<<<<< Updated upstream
                       onClick={handleNextWeek}
+=======
+>>>>>>> Stashed changes
                     >
                       <ChevronRight size={20} />
                     </Button>
@@ -758,7 +775,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                           "bg-[#fdf8f6] text-[#b08972] border-[#DA7756]/10 hover:bg-[#fef6f4]",
                         item.type === "filled" &&
                           "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
+<<<<<<< Updated upstream
                         selectedDate === item.date && !item.isFuture
+=======
+                        selectedDate === item.date
+>>>>>>> Stashed changes
                           ? "z-10 scale-105 border-[#DA7756] bg-[#DA7756] text-white ring-4 ring-[#DA7756]/20"
                           : "border-transparent"
                       )}
@@ -964,7 +985,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         />
                         <Button
                           className={cn("flex h-10 items-center gap-2 rounded-xl px-6 text-xs", btnPrimary)}
+<<<<<<< Updated upstream
                           onClick={triggerFileUpload}
+=======
+                          onClick={handleMockUpload}
+>>>>>>> Stashed changes
                         >
                           <Upload size={16} />
                           File Upload
@@ -1098,7 +1123,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <CheckCircle2 size={18} className="text-[#DA7756]" />
                       </div>
                       <h3 className="text-sm font-bold tracking-tight text-[#1a1a1a]">
+<<<<<<< Updated upstream
                         Plan for {nextDayLabel || "Tomorrow"}
+=======
+                        Plan for Mon, 30 Mar
+>>>>>>> Stashed changes
                       </h3>
                     </div>
                     <Badge className="rounded-[6px] border-none bg-[#DA7756] px-3 py-1 text-[10px] font-black tracking-widest text-white shadow-sm hover:bg-[#DA7756]">
