@@ -26,13 +26,13 @@ const PostConsole: React.FC<PostConsoleProps> = ({
         </div>
         <div
           onClick={handleOpenCreatePost}
-          className="flex-1 bg-[#FAF9F6] border border-gray-100 rounded-full px-6 py-2 text-sm text-gray-400 cursor-pointer hover:bg-white hover:border-[#E67E5F]/30 transition-all font-medium"
+          className="flex-1 bg-[#FAF9F6] border border-gray-100 rounded-[20px] px-6 py-2 text-sm text-gray-400 cursor-pointer hover:bg-white hover:border-[#E67E5F]/30 transition-all font-medium"
         >
           What's on your mind?
         </div>
         <button
           onClick={handleOpenCreatePost}
-          className="bg-[#E67E5F] text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-500/20 flex-shrink-0"
+          className="bg-[#E67E5F] text-white px-8 py-2.5 rounded-[20px] text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-500/20 flex-shrink-0"
         >
           + Create Post
         </button>

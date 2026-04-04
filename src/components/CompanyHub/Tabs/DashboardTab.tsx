@@ -34,6 +34,8 @@ interface DashboardTabProps {
   openTodoModal: boolean;
   setOpenTodoModal: (open: boolean) => void;
   handleCloseTodoModal: () => void;
+  handleLikePost: (postId: number) => void;
+  handleAddComment: (postId: number, comment: string) => void;
 }
 
 const DashboardTab: React.FC<DashboardTabProps> = ({
@@ -60,6 +62,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   openTodoModal,
   setOpenTodoModal,
   handleCloseTodoModal,
+  handleLikePost,
+  handleAddComment,
 }) => {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -100,6 +104,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             isLoadingPosts={isLoadingPosts}
             posts={posts}
             setDeleteConfirmation={setDeleteConfirmation}
+            handleLikePost={handleLikePost}
+            handleAddComment={handleAddComment}
           />
 
           {/* Sidebar Column */}

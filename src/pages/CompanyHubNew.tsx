@@ -134,9 +134,11 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const protocol = baseUrl.startsWith("http") ? "" : "https://";
+      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const fullUrl = `https://${cleanBaseUrl}/communities/3/posts.json`;
+
       const response = await axios.get(
-        `${protocol}${baseUrl}/communities/3/posts.json`,
+        fullUrl,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -145,10 +147,25 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         response.data.posts ||
         response.data.data ||
         (Array.isArray(response.data) ? response.data : []);
-      const postsData = rawPosts.map((post: any) => ({
-        ...post,
-        type: "post" as const,
-      }));
+      const postsData = rawPosts.map((post: any) => {
+        // Calculate total likes if not provided by backend
+        const totalLikes = post.total_likes ?? 
+          (post.likes_with_emoji ? Object.values(post.likes_with_emoji).reduce((a: any, b: any) => a + (Number(b) || 0), 0) : 0);
+        
+        // Identify post type
+        let type: "post" | "event" | "notice" | "document" = "post";
+        if (post.event) type = "event";
+        else if (post.notice) type = "notice";
+        else if (post.resource_type === "Document") type = "document";
+
+        return {
+          ...post,
+          type,
+          total_likes: totalLikes,
+          total_comments: post.total_comments ?? (Array.isArray(post.comments) ? post.comments.length : 0),
+          comments: Array.isArray(post.comments) ? post.comments : [],
+        };
+      });
       setPosts(postsData);
     } catch (e) {
       console.error("❌ Posts fetch failed:", e);
@@ -371,6 +388,66 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     }
   };
 
+  const handleLikePost = async (postId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const fullUrl = `https://${cleanBaseUrl}/likes.json`;
+
+      await axios.post(
+        fullUrl,
+        {
+          like: {
+            thing_id: postId,
+            thing_type: "Post",
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchPosts();
+    } catch (error) {
+      console.error("Like failed:", error);
+      toast.error("Failed to update like");
+    }
+  };
+
+  const handleAddComment = async (postId: number, commentBody: string) => {
+    if (!commentBody.trim()) return;
+    const toastId = toast.loading("Adding comment...");
+    try {
+      const token = localStorage.getItem("token");
+      const baseUrl =
+        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
+      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const fullUrl = `https://${cleanBaseUrl}/comments.json`;
+
+      await axios.post(
+        fullUrl,
+        {
+          comment: {
+            body: commentBody,
+            commentable_id: postId,
+            commentable_type: "Post",
+            commentor_id: userId,
+            active: true,
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Comment added", { id: toastId });
+      fetchPosts();
+    } catch (error) {
+      console.error("Comment failed:", error);
+      toast.error("Failed to add comment", { id: toastId });
+    }
+  };
+
   // Cached Missions/Visons
   const cachedMission = React.useMemo(() => {
     try {
@@ -493,6 +570,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
               openTodoModal={openTodoModal}
               setOpenTodoModal={setOpenTodoModal}
               handleCloseTodoModal={handleCloseTodoModal}
+              handleLikePost={handleLikePost}
+              handleAddComment={handleAddComment}
             />
           )}
 

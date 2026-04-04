@@ -100,7 +100,7 @@ const BusinessCompassDashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins">
+    <div className="p-6 space-y-6 w-full font-poppins">
       {/* Complete Your Profile Banner */}
       {!isProfileComplete && (
         <Card className="bg-gradient-to-r from-[#ee6103] to-[#ff8c42] text-white border-none rounded-[16px] shadow-lg overflow-hidden">
@@ -195,50 +195,7 @@ const BusinessCompassDashboard: React.FC = () => {
                   Add Content
                 </Button>
               </div>
-              <div className="flex items-center gap-3 text-[#1a1c2e]/40 relative">
-                <div 
-                  className="cursor-help py-1"
-                  onMouseEnter={() => setShowInfoTooltip(true)}
-                  onMouseLeave={() => setShowInfoTooltip(false)}
-                >
-                  <Info size={18} />
-                </div>
-                {showInfoTooltip && (
-                  <div className="absolute right-0 top-8 z-50 w-[420px] bg-[#0f172a] text-white p-6 rounded-xl shadow-2xl border border-gray-800 pointer-events-none animate-in fade-in zoom-in duration-200">
-                    <h4 className="text-[16px] font-black mb-6 text-center text-[#c084fc]">
-                      How to Create Business Plan Infographics
-                    </h4>
-                    <div className="space-y-4 text-[13px] font-bold">
-                      <div className="flex gap-3">
-                        <span className="text-[#c084fc] shrink-0">1.</span>
-                        <p className="leading-relaxed">First, complete your business plan sections above (Core Values, Purpose, Brand Promises, BHAG, Goals, etc.)</p>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="text-[#c084fc] shrink-0">2.</span>
-                        <p className="leading-relaxed">Click the 'Copy Text' button at the top of the page to copy your plan</p>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="text-[#c084fc] shrink-0">3.</span>
-                        <p className="leading-relaxed">Go to <span className="underline">gemini.google.com</span></p>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="text-[#c084fc] shrink-0">4.</span>
-                        <div className="flex-1">
-                          <p className="mb-3">Use this prompt:</p>
-                          <div className="bg-[#1e293b] p-4 rounded-lg border border-gray-700/50 italic text-[#cbd5e1] font-medium leading-relaxed">
-                            "Create an infographic for the business plan of my company in landscape mode (red, black & white colors) from the plan given below: &lt;paste your business plan here&gt;"
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className="text-[#c084fc] shrink-0">5.</span>
-                        <p className="leading-relaxed">Download the generated infographic and add it here using the image URL or upload feature</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {isBusinessPlanExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              </div>
+              {isBusinessPlanExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </div>
 
             {/* Expanded Content */}
@@ -638,20 +595,20 @@ const BusinessCompassDashboard: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-4 mb-6">
         {/* Hall of Fame (spans vertically) */}
         <div className="w-full lg:w-1/4 flex">
-          <Card className="bg-gradient-to-br from-[#DA7756] to-[#DA7756] text-white border-[#C4B89D] rounded-[8px] shadow-md p-6 flex flex-col w-full min-h-[220px]">
+          <Card className="bg-transparent text-black border-transparent rounded-[8px] shadow-md p-6 flex flex-col w-full min-h-[220px]">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 font-bold text-[15px] text-[#000000]">
                 <Trophy size={18} /> Hall of Fame
               </div>
               <Button
                 variant="ghost"
-                className="text-white/80 hover:text-white hover:bg-[#DA7756]/15 h-6 text-[11px] font-bold p-0 flex items-center gap-0.5"
+                className="text-black/80 hover:text-black hover:bg-gray-100 h-6 text-[11px] font-bold p-0 flex items-center gap-0.5"
                 onClick={() => navigate("/business-compass/leaderboard")}
               >
                 View All <ChevronRight size={14} />
               </Button>
             </div>
-            <p className="flex-1 flex items-center justify-center text-[13px] font-medium opacity-60 text-center pb-4 italic">
+            <p className="flex-1 flex items-center justify-center text-[13px] font-medium text-gray-600 text-center pb-4 italic">
               No champions yet. Start submitting reports!
             </p>
           </Card>
@@ -659,8 +616,8 @@ const BusinessCompassDashboard: React.FC = () => {
 
         {/* Smaller Stats Grid */}
         <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="rounded-[12px] border-none shadow-sm bg-[#feeaed] p-4 flex flex-col items-center text-center gap-2">
-            <Badge className="bg-[#DA7756] text-white px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
+          <Card className="rounded-[12px] border-none shadow-sm bg-transparent p-4 flex flex-col items-center text-center gap-2">
+            <Badge className="bg-gray-100 text-black px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
               Daily Reports (DR)
             </Badge>
             <div className="text-3xl font-black text-[#0f172a]">
@@ -668,22 +625,22 @@ const BusinessCompassDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="rounded-[12px] border-none shadow-sm bg-[#fef5d1] p-4 flex flex-col items-center text-center gap-2">
-            <Badge className="bg-[#ea580c] text-white px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
+          <Card className="rounded-[12px] border-none shadow-sm bg-transparent p-4 flex flex-col items-center text-center gap-2">
+            <Badge className="bg-gray-100 text-black px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
               DR Pending
             </Badge>
             <div className="text-3xl font-black text-[#0f172a]">0</div>
           </Card>
 
-          <Card className="rounded-[12px] border-none shadow-sm bg-[#e4ecff] p-4 flex flex-col items-center text-center gap-2">
-            <Badge className="bg-[#2563eb] text-white px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
+          <Card className="rounded-[12px] border-none shadow-sm bg-transparent p-4 flex flex-col items-center text-center gap-2">
+            <Badge className="bg-gray-100 text-black px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
               KPIs
             </Badge>
             <div className="text-3xl font-black text-[#0f172a]">0</div>
           </Card>
 
-          <Card className="rounded-[12px] border-none shadow-sm bg-[#f3e8ff] p-4 flex flex-col items-center text-center gap-2">
-            <Badge className="bg-[#9333ea] text-white px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
+          <Card className="rounded-[12px] border-none shadow-sm bg-transparent p-4 flex flex-col items-center text-center gap-2">
+            <Badge className="bg-gray-100 text-black px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
               Weekly Reports (WR)
             </Badge>
             <div className="text-3xl font-black text-[#0f172a]">
@@ -691,15 +648,15 @@ const BusinessCompassDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="rounded-[12px] border-none shadow-sm bg-[#e0fafe] p-4 flex flex-col items-center text-center gap-2">
-            <Badge className="bg-[#0d9488] text-white px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
+          <Card className="rounded-[12px] border-none shadow-sm bg-transparent p-4 flex flex-col items-center text-center gap-2">
+            <Badge className="bg-gray-100 text-black px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
               WR Pending
             </Badge>
             <div className="text-3xl font-black text-[#0f172a]">0</div>
           </Card>
 
-          <Card className="rounded-[12px] border-none shadow-sm bg-[#dcfce7] p-4 flex flex-col items-center text-center gap-2">
-            <Badge className="bg-[#16a34a] text-white px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
+          <Card className="rounded-[12px] border-none shadow-sm bg-transparent p-4 flex flex-col items-center text-center gap-2">
+            <Badge className="bg-gray-100 text-black px-3 h-[22px] rounded-full justify-center text-[10px] font-bold tracking-tight border-none shadow-none pointer-events-none mb-1">
               JDs
             </Badge>
             <div className="text-3xl font-black text-[#0f172a]">0</div>

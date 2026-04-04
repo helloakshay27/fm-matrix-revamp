@@ -1,6 +1,5 @@
 import React from 'react';
 import { Calendar, Info, TrendingUp, AlertCircle, Trophy, Plus, Upload, CheckSquare, Lightbulb, AlertTriangle, X, Star, Target, MessageSquare, Activity, Send, Zap, Flag, Smile, Users, User, ChevronUp, ChevronDown, Loader2, CheckCircle2 } from 'lucide-react';
-import { AdminViewEmulation } from '@/components/AdminViewEmulation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -245,7 +244,6 @@ const BusinessWeeklyReport = () => {
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto">
-            <AdminViewEmulation />
             {/* Header Section */}
             <div className="flex justify-between items-start">
                 <div>
