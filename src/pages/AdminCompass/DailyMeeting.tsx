@@ -17,7 +17,7 @@ import ReportsTab from "./AdminCompassComponent/Reportstab";
 import AnalyticsTab from "./AdminCompassComponent/Analyticstab";
 import SettingsTab from "./AdminCompassComponent/Settingstab";
 import DailyTab from "./AdminCompassComponent/Dailytab";
-import { C } from "./AdminCompassComponent/shared";
+import { C } from "./AdminCompassComponent/Shared";
 
 const tabs = [
   { name: "Daily", icon: Calendar },
