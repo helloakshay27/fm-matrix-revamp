@@ -11,7 +11,6 @@ import {
 import {
   getCategories,
   getAllSites,
-  getFoldersTree,
   createDocument,
   fileToBase64,
   Category,
@@ -19,6 +18,8 @@ import {
   Folder,
   CreateDocumentPayload,
   FolderPermission,
+  getUserFolders,
+  UserFolder,
 } from "@/services/documentService";
 import {
   FormControl,
@@ -120,7 +121,7 @@ export const AddDocumentDashboard = () => {
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
-  const [folders, setFolders] = useState<Folder[]>([]);
+  const [folders, setFolders] = useState<UserFolder[]>([]);
 
   const hostname = window.location.hostname;
   const isPulseSite =
@@ -160,15 +161,13 @@ export const AddDocumentDashboard = () => {
         console.error("Error fetching sites:", error);
       }
 
-      // Fetch folders (may fail, that's okay)
+      // Fetch folders
       try {
-        const foldersData = await getFoldersTree();
+        const foldersData = await getUserFolders(1);
         console.warn("Folders loaded:", foldersData);
-        setFolders(foldersData.folders || []);
+        setFolders(foldersData || []);
       } catch (error) {
-        console.warn(
-          "Folders endpoint not available (500 error) - continuing without folders"
-        );
+        console.warn("Error fetching folders:", error);
         setFolders([]);
       }
     };
