@@ -4,6 +4,7 @@ import {
     MenuItem,
     Select,
     TextField,
+    Typography,
 } from "@mui/material";
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -13,6 +14,8 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { createMilestone, fetchMilestones } from "@/store/slices/projectMilestoneSlice";
 import { SpeechInput } from "./SpeechInput";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 interface Project {
     id: string | number;
@@ -92,6 +95,8 @@ const AddMilestoneModal = ({
     opportunityId,
     projects = [],
     showProjectSelector = false,
+    quillRef,
+    quillEditorRef,
 }: any) => {
     const handleInputChange = (e: any) => {
         const { name, value } = e.target;
@@ -157,7 +162,26 @@ const AddMilestoneModal = ({
                     disabled={isReadOnly}
                 />
             </div>
-
+            <div className="mt-4 space-y-2">
+                <Typography variant="subtitle2" className="font-medium">
+                    Description
+                </Typography>
+                {isReadOnly ? (
+                    <div
+                        className="border border-gray-300 rounded p-3 bg-gray-50"
+                        dangerouslySetInnerHTML={{ __html: formData.description || '' }}
+                    />
+                ) : (
+                    <div
+                        ref={quillRef}
+                        style={{
+                            border: "1px solid rgba(0, 0, 0, 0.23)",
+                            borderRadius: "4px",
+                            minHeight: "150px",
+                        }}
+                    />
+                )}
+            </div>
             <div className="flex items-start gap-4 mt-3">
                 <div className="w-1/2 flex flex-col justify-between">
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -291,6 +315,7 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
     const [formData, setFormData] = useState({
         milestoneTitle: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
             .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
+        description: prefillData?.description || '',
         owner: prefillData?.responsible_person?.id || "",
         startDate: "",
         endDate: "",
@@ -298,6 +323,40 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
         dependsOn: "",
         projectId: "",
     });
+
+    const quillRef = useRef<HTMLDivElement>(null);
+    const quillEditorRef = useRef<Quill | null>(null);
+
+    // Initialize Quill editor
+    useEffect(() => {
+        if (quillRef.current && !quillEditorRef.current) {
+            quillEditorRef.current = new Quill(quillRef.current, {
+                theme: "snow",
+                placeholder: "Type description...",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        ["blockquote"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        ["link"],
+                        ["clean"],
+                    ],
+                },
+            });
+
+            // Set initial description if exists
+            if (formData.description) {
+                quillEditorRef.current.root.innerHTML = formData.description;
+            }
+
+            // Handle text changes
+            quillEditorRef.current.on("text-change", () => {
+                const htmlContent = quillEditorRef.current?.root.innerHTML;
+                setFormData((prev) => ({ ...prev, description: htmlContent || "" }));
+            });
+        }
+    }, []);
 
     useEffect(() => {
         const getMilestones = async () => {
@@ -418,6 +477,7 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
         const milestonePayload: any = {
             milestone: {
                 title: data.milestoneTitle,
+                description: data.description || '',
                 status: 'open',
                 owner_id: data.owner,
                 start_date: data.startDate,
@@ -458,6 +518,7 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
             setSavedMilestones([...savedMilestones, { id: nextId, formData: { ...formData } }]);
             setFormData({
                 milestoneTitle: '',
+                description: '',
                 owner: '',
                 startDate: '',
                 endDate: '',
@@ -465,6 +526,9 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
                 dependsOn: '',
                 projectId: '',
             });
+            if (quillEditorRef.current) {
+                quillEditorRef.current.setContents([]);
+            }
             setNextId(nextId + 1);
             const projectId = project?.id ? String(project.id) : (id || "");
             await dispatch(fetchMilestones({ token, baseUrl, id: projectId })).unwrap();
@@ -534,93 +598,144 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
         !formData.milestoneTitle && !formData.owner && !formData.startDate && !formData.endDate;
 
     return (
-        <form className="pb-12 h-full text-[12px]" onSubmit={handleSubmit}>
-            <div className={`h-[calc(100%-4rem)] overflow-y-auto pr-3 ${className}`}>
-                {savedMilestones.map((m) => (
-                    <AddMilestoneModal
-                        key={m.id}
-                        users={owners}
-                        formData={m.formData}
-                        setFormData={() => { }}
-                        isReadOnly={true}
-                        milestoneOptions={milestones}
-                        hasSavedMilestones={savedMilestones.length > 0}
-                        projectStartDate={project?.start_date || projectData?.start_date}
-                        projectEndDate={project?.end_date || projectData?.end_date}
-                        opportunityId={opportunityId}
-                        projects={projects}
-                        showProjectSelector={!!opportunityId}
-                    />
-                ))}
-                {!isDelete && (
-                    <AddMilestoneModal
-                        users={owners}
-                        formData={formData}
-                        setFormData={setFormData}
-                        setIsDelete={setIsDelete}
-                        isReadOnly={false}
-                        milestoneOptions={milestones}
-                        hasSavedMilestones={savedMilestones.length > 0}
-                        projectStartDate={project?.start_date || projectData?.start_date}
-                        projectEndDate={project?.end_date || projectData?.end_date}
-                        opportunityId={opportunityId}
-                        projects={projects}
-                        showProjectSelector={!!opportunityId}
-                    />
-                )}
-
-                <div className="flex items-center justify-center gap-4 w-full bottom-0 bg-white mt-16">
-                    <Button
-                        type="submit"
-                        size="lg"
-                        className="bg-[#C72030] hover:bg-[#C72030] text-white"
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? 'Processing...' : 'Add Milestone'}
-                    </Button>
-
-                    {isFormEmpty ? (
-                        <Button
-                            type="button"
-                            size="lg"
-                            variant="outline"
-                            className="border-2 border-[#C72030] text-black w-max"
-                            disabled={isSubmitting}
-                            onClick={() => {
-                                if (savedMilestones.length === 0) {
-                                    setFormData({
-                                        milestoneTitle: '',
-                                        owner: '',
-                                        startDate: '',
-                                        endDate: '',
-                                        duration: '',
-                                        dependsOn: '',
-                                        projectId: '',
-                                    });
-                                    handleClose();
-                                } else {
-                                    setSavedMilestones([]);
-                                    handleClose();
-                                }
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                    ) : (
-                        <Button
-                            type="button"
-                            size="lg"
-                            variant="outline"
-                            className="border-2 border-[#C72030] text-black w-max"
-                            disabled={isSubmitting}
-                            onClick={handleAddMilestone}
-                        >
-                            Save & Add New
-                        </Button>
+        <>
+            <form className="pb-12 h-full text-[12px]" onSubmit={handleSubmit}>
+                <div className={`h-[calc(100%-4rem)] overflow-y-auto pr-3 ${className}`}>
+                    {savedMilestones.map((m) => (
+                        <AddMilestoneModal
+                            key={m.id}
+                            users={owners}
+                            formData={m.formData}
+                            setFormData={() => { }}
+                            isReadOnly={true}
+                            milestoneOptions={milestones}
+                            hasSavedMilestones={savedMilestones.length > 0}
+                            projectStartDate={project?.start_date || projectData?.start_date}
+                            projectEndDate={project?.end_date || projectData?.end_date}
+                            opportunityId={opportunityId}
+                            projects={projects}
+                            showProjectSelector={!!opportunityId}
+                            quillRef={quillRef}
+                            quillEditorRef={quillEditorRef}
+                        />
+                    ))}
+                    {!isDelete && (
+                        <AddMilestoneModal
+                            users={owners}
+                            formData={formData}
+                            setFormData={setFormData}
+                            setIsDelete={setIsDelete}
+                            isReadOnly={false}
+                            milestoneOptions={milestones}
+                            hasSavedMilestones={savedMilestones.length > 0}
+                            projectStartDate={project?.start_date || projectData?.start_date}
+                            projectEndDate={project?.end_date || projectData?.end_date}
+                            opportunityId={opportunityId}
+                            projects={projects}
+                            showProjectSelector={!!opportunityId}
+                            quillRef={quillRef}
+                            quillEditorRef={quillEditorRef}
+                        />
                     )}
+
+                    <div className="flex items-center justify-center gap-4 w-full bottom-0 bg-white mt-16">
+                        <Button
+                            type="submit"
+                            size="lg"
+                            className="bg-[#C72030] hover:bg-[#C72030] text-white"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Processing...' : 'Add Milestone'}
+                        </Button>
+
+                        {isFormEmpty ? (
+                            <Button
+                                type="button"
+                                size="lg"
+                                variant="outline"
+                                className="border-2 border-[#C72030] text-black w-max"
+                                disabled={isSubmitting}
+                                onClick={() => {
+                                    if (savedMilestones.length === 0) {
+                                        setFormData({
+                                            milestoneTitle: '',
+                                            description: '',
+                                            owner: '',
+                                            startDate: '',
+                                            endDate: '',
+                                            duration: '',
+                                            dependsOn: '',
+                                            projectId: '',
+                                        });
+                                        if (quillEditorRef.current) {
+                                            quillEditorRef.current.setContents([]);
+                                        }
+                                        handleClose();
+                                    } else {
+                                        setSavedMilestones([]);
+                                        handleClose();
+                                    }
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                        ) : (
+                            <Button
+                                type="button"
+                                size="lg"
+                                variant="outline"
+                                className="border-2 border-[#C72030] text-black w-max"
+                                disabled={isSubmitting}
+                                onClick={handleAddMilestone}
+                            >
+                                Save & Add New
+                            </Button>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+            <style>{`
+        .ql-toolbar {
+            border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+            border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+            border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+            border-radius: 4px 4px 0 0;
+            background-color: #fafafa;
+            margin: 0 !important;
+            padding: 5px !important;
+        }
+
+        .ql-container {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+            border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+            border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+            border-radius: 0 0 4px 4px;
+            font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+            margin: 0 !important;
+        }
+
+        .ql-editor {
+            padding: 12px 14px;
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 150px;
+        }
+
+        .ql-editor.ql-blank::before {
+            color: rgba(0, 0, 0, 0.6);
+            font-style: normal;
+        }
+
+        .ql-toolbar button:hover {
+            color: #01569E;
+        }
+
+        .ql-toolbar button.ql-active {
+            color: #01569E;
+        }
+        `}</style>
+        </>
     )
 }
 

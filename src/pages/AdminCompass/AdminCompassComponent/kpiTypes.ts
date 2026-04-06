@@ -11,6 +11,11 @@ export interface KPICardData {
   color: string;
   tags: string[];
   priority: "low" | "medium" | "high";
+  // Optional API fields
+  departmentId?: number | null;
+  assigneeId?: number | null;
+  description?: string;
+  _raw?: any;
 }
 
 export const initialKpiCards: KPICardData[] = [

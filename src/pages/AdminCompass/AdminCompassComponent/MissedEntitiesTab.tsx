@@ -25,6 +25,21 @@ interface MissedEntryDetail {
   missedOn?: string;
 }
 
+interface CompanyUserOption {
+  id: number;
+  name: string;
+}
+
+interface CompanyDepartmentOption {
+  id: number;
+  name: string;
+}
+
+interface KPIOption {
+  id: string;
+  name: string;
+}
+
 interface MissedUserRow {
   id: string;
   name: string;
@@ -59,22 +74,75 @@ const selectClass = cn(
   kpiClass.focusRing
 );
 
-const MissedEntitiesTab: React.FC = () => {
+type MissedEntitiesTabProps = {
+  users?: CompanyUserOption[];
+  departments?: CompanyDepartmentOption[];
+  kpis?: KPIOption[];
+};
+
+const MissedEntitiesTab: React.FC<MissedEntitiesTabProps> = ({
+  users = [],
+  departments = [],
+  kpis = [],
+}) => {
   const [search, setSearch] = useState("");
   const [groupByDept, setGroupByDept] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [lookbackDays, setLookbackDays] = useState("30");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedUserId, setSelectedUserId] = useState("all");
+  const [selectedKpiName, setSelectedKpiName] = useState("all");
+
+  const userRows = useMemo<MissedUserRow[]>(() => {
+    if (users.length === 0) return MISSED_USERS;
+
+    return users.map((u) => ({
+      id: String(u.id),
+      name: u.name || `User ${u.id}`,
+      email: "N/A",
+      department: "General",
+      missedCount: 0,
+      entries: [],
+    }));
+  }, [users]);
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return MISSED_USERS;
-    return MISSED_USERS.filter(
-      (u) =>
+    return userRows.filter((u) => {
+      const matchesSearch =
+        !q ||
         u.name.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
-        u.entries.some((e) => e.kpiName.toLowerCase().includes(q))
-    );
-  }, [search]);
+        u.entries.some((e) => e.kpiName.toLowerCase().includes(q));
+
+      const matchesDepartment =
+        selectedDepartment === "all" || u.department === selectedDepartment;
+
+      const matchesUser = selectedUserId === "all" || u.id === selectedUserId;
+
+      const matchesKpi =
+        selectedKpiName === "all" ||
+        u.entries.some((entry) => entry.kpiName === selectedKpiName);
+
+      return matchesSearch && matchesDepartment && matchesUser && matchesKpi;
+    });
+  }, [search, selectedDepartment, selectedKpiName, selectedUserId, userRows]);
+
+  const departmentOptions = useMemo(() => {
+    const source = departments.length > 0 ? departments.map((d) => d.name) : userRows.map((u) => u.department);
+    return Array.from(new Set(source.filter(Boolean)));
+  }, [departments, userRows]);
+
+  const userOptions = useMemo(
+    () => userRows.map((u) => ({ id: u.id, name: u.name })),
+    [userRows]
+  );
+
+  const kpiOptions = useMemo(() => {
+    const fromEntries = userRows.flatMap((u) => u.entries.map((entry) => entry.kpiName));
+    const fromKpiList = kpis.map((kpi) => kpi.name);
+    return Array.from(new Set([...fromEntries, ...fromKpiList].filter(Boolean)));
+  }, [kpis, userRows]);
 
   const totalMissed = useMemo(
     () => filteredUsers.reduce((acc, u) => acc + u.missedCount, 0),
@@ -177,14 +245,41 @@ const MissedEntitiesTab: React.FC = () => {
               )}
             />
           </div>
-          <select className={selectClass} defaultValue="all">
+          <select
+            className={selectClass}
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+          >
             <option value="all">All Departments</option>
+            {departmentOptions.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
           </select>
-          <select className={selectClass} defaultValue="all">
+          <select
+            className={selectClass}
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(e.target.value)}
+          >
             <option value="all">All Users</option>
+            {userOptions.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
+            ))}
           </select>
-          <select className={selectClass} defaultValue="all">
+          <select
+            className={selectClass}
+            value={selectedKpiName}
+            onChange={(e) => setSelectedKpiName(e.target.value)}
+          >
             <option value="all">All KPIs</option>
+            {kpiOptions.map((kpiName) => (
+              <option key={kpiName} value={kpiName}>
+                {kpiName}
+              </option>
+            ))}
           </select>
           <select
             className={selectClass}

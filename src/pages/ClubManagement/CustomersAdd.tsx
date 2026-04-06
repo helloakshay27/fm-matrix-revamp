@@ -285,6 +285,24 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
     const [searchTerm, setSearchTerm] = React.useState('');
     const [newRows, setNewRows] = React.useState([]); // Editable new rows
     const [customerExemptions, setCustomerExemptions] = React.useState<any[]>([]);
+    const [ledgers, setLedgers] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchLedgers = async () => {
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+            const lock_account_id = localStorage.getItem("lock_account_id");
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                });
+                const groups = res.data.data || [];
+                const allLedgers = groups.flatMap((g: any) => g.ledgers || []).filter((l: any) => l.name === 'Accounts Receivable');
+                setLedgers(allLedgers);
+            } catch (err) {}
+        };
+        fetchLedgers();
+    }, []);
 
     React.useEffect(() => {
         if (showConfig) {
@@ -596,6 +614,20 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             >
                 <MenuItem value="">Select currency</MenuItem>
                 <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+            </TextField>
+
+            <TextField
+                select
+                label="Accounts Receivable"
+                name="lock_account_ledger_id"
+                value={form.lock_account_ledger_id || ""}
+                onChange={handleChange}
+                fullWidth
+            >
+                <MenuItem value="">Select Ledger</MenuItem>
+                {ledgers.map((l: any) => (
+                    <MenuItem key={l.id} value={l.id}>{l.name}</MenuItem>
+                ))}
             </TextField>
 
 
@@ -1064,6 +1096,7 @@ const CustomersAdd = () => {
   gst_preference: "",
   tax_exemption_id: "",
   gst_tds_enabled: false,
+  lock_account_ledger_id: "",
 //   department: "",
 //   designation: "",
 
@@ -1320,6 +1353,7 @@ const CustomersAdd = () => {
                 opening_balance: form.opening_balance || 0,
                 payment_term_id,
                 enable_portal: form.enable_portal || false,
+                lock_account_ledger_id: form.lock_account_ledger_id || null,
 
                 gstin: form.gstin || null,
                 gst_preference: form.gst_preference || null,

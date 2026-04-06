@@ -195,7 +195,7 @@ export const IncidentSetupDashboard = () => {
       const data = await fetchByTagType('IncidenceSubSubCategory');
       setSubSubCategories(data.map(item => ({
         id: item.id,
-        category: item.sub_category_name || '',
+        subCategoryName: item.sub_category_name || '',
         subCategory: item.parent_name || '',
         subCategoryId: item.parent_id || '',
         subSubCategory: item.name
@@ -1535,8 +1535,7 @@ export const IncidentSetupDashboard = () => {
     } else if (editingItem?.type === 'Sub Sub Sub Category') {
       const parentSubSubCategoryObj = subSubCategories.find(subsub =>
         subsub.subSubCategory === editFormData.subSubCategory &&
-        subsub.subCategory === editFormData.subCategory &&
-        subsub.category === editFormData.category
+        subsub.subCategory === editFormData.subCategory
       );
       if (!parentSubSubCategoryObj) {
         toast.error('Please select a valid Sub Sub Category');
@@ -2365,7 +2364,7 @@ export const IncidentSetupDashboard = () => {
                           }}
                         >
                           {subSubCategories
-                            .filter(subsub => subsub.category === editFormData.category && subsub.subCategory === editFormData.subCategory)
+                            .filter(subsub => subsub.subCategory === editFormData.subCategory)
                             .map(subSubCategory => (
                               <MenuItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
                                 {subSubCategory.subSubCategory}
@@ -2839,7 +2838,7 @@ export const IncidentSetupDashboard = () => {
                           }}
                         >
                           {subSubCategories
-                            .filter(subsub => String(subsub.categoryId) === String(selectedParentCategory) && String(subsub.subCategoryId) === String(selectedSubCategory))
+                            .filter(subsub => String(subsub.subCategoryId) === String(selectedSubCategory))
                             .map(subSubCategory => (
                               <MenuItem key={subSubCategory.id} value={String(subSubCategory.id)}>
                                 {subSubCategory.subSubCategory}
@@ -3261,7 +3260,9 @@ export const IncidentSetupDashboard = () => {
                           </TableRow>
                         )) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => (
                           <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">
+                              {subCategories.find(s => String(s.id) === String(item.subCategoryId))?.category || item.subCategoryName || ''}
+                            </TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
                             <TableCell className="px-4 py-3">
