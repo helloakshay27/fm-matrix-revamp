@@ -608,15 +608,24 @@ const KPI = () => {
   }, []);
 
   const handleSaveKpiUnits = async (units: string[]) => {
+    const previousCount = kpiUnits.length;
+    const nextCount = units.length;
+
     setIsSavingKpiUnits(true);
     try {
       const savedUnits = await upsertKpiUnitsConfiguration(units);
       setKpiUnits(savedUnits);
-      toast.success("KPI unit created successfully");
+      if (nextCount < previousCount) {
+        toast.success("Deleted");
+      } else if (nextCount > previousCount) {
+        toast.success("Added");
+      } else {
+        toast.success("Saved");
+      }
     } catch (error) {
       const msg = getApiErrorMessage(error);
       console.error("Update KPI units configuration error:", msg, error);
-      toast.error(`Failed to update KPI units configuration: ${msg}`);
+      toast.error("Failed to save");
       throw error;
     } finally {
       setIsSavingKpiUnits(false);

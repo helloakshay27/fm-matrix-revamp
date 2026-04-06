@@ -3,6 +3,16 @@
 // ─────────────────────────────────────────────
 import React, { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { kpiClass } from "./Shared";
 
@@ -32,6 +42,8 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
 }) => {
   const [units, setUnits] = useState<string[]>(initialUnits);
   const [draft, setDraft] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [unitToDelete, setUnitToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     setUnits(initialUnits.length > 0 ? initialUnits : DEFAULT_UNITS);
@@ -61,8 +73,25 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
     setDraft("");
   };
 
-  const removeUnit = (unit: string) => {
-    setUnits((prev) => prev.filter((u) => u !== unit));
+  const removeUnit = async (unit: string) => {
+    const nextUnits = units.filter((u) => u !== unit);
+    if (nextUnits.length === units.length) return;
+
+    console.warn("[KPI Units] Remove Unit clicked, calling update API", nextUnits);
+    await onSave(nextUnits);
+    setUnits(nextUnits);
+  };
+
+  const openDeleteDialog = (unit: string) => {
+    setUnitToDelete(unit);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!unitToDelete) return;
+    await removeUnit(unitToDelete);
+    setIsDeleteDialogOpen(false);
+    setUnitToDelete(null);
   };
 
   return (
@@ -95,7 +124,8 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
               <span className="max-w-[min(100%,18rem)] truncate">{unit}</span>
               <button
                 type="button"
-                onClick={() => removeUnit(unit)}
+                onClick={() => openDeleteDialog(unit)}
+                disabled={isSaving}
                 className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-[#f3ebe8] hover:text-[#DA7756]"
                 aria-label={`Remove unit ${unit}`}
               >
@@ -134,6 +164,45 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
             Add Unit
           </button>
         </div>
+
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={(open) => {
+            setIsDeleteDialogOpen(open);
+            if (!open) setUnitToDelete(null);
+          }}
+        >
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete KPI Unit?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {unitToDelete
+                  ? `Are you sure you want to delete "${unitToDelete}" from KPI units?`
+                  : "Are you sure you want to delete this KPI unit?"}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleConfirmDelete();
+                }}
+                disabled={isSaving}
+                className="bg-[#DA7756] text-white hover:bg-[#c9674a]"
+              >
+                {isSaving ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </span>
+                ) : (
+                  "Delete"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
