@@ -42,6 +42,7 @@ interface ServiceRecord {
   active?: boolean;
   is_flagged?: boolean;
   execution_type?: string;
+  category?: string;
 }
 
 interface PaginationData {
@@ -143,16 +144,16 @@ export const ServiceDashboard = () => {
   const inactiveServicesCount = apiData?.inactive_services_count ?? 0;
 
   const handleAddClick = useCallback(() => navigate('/maintenance/service/add'), [navigate]);
-const handleAddSchedule = useCallback(() => {
-  console.log("selectedItems:----",selectedItems);
-  
-  if (selectedItems.length > 0) {
-    // Pass selected service IDs as a query param
-    navigate(`/maintenance/schedule/add?type=Service&serviceIds=${selectedItems.join(',')}`);
-  } else {
-    navigate('/maintenance/schedule/add?type=Service');
-  }
-}, [navigate, selectedItems]);  const handleImportClick = useCallback(() => {
+  const handleAddSchedule = useCallback(() => {
+    console.log("selectedItems:----", selectedItems);
+
+    if (selectedItems.length > 0) {
+      // Pass selected service IDs as a query param
+      navigate(`/maintenance/schedule/add?type=Service&serviceIds=${selectedItems.join(',')}`);
+    } else {
+      navigate('/maintenance/schedule/add?type=Service');
+    }
+  }, [navigate, selectedItems]); const handleImportClick = useCallback(() => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
   }, []);
@@ -784,7 +785,7 @@ const handleAddSchedule = useCallback(() => {
       case 'createdOn':
         return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
       case 'category':
-        return '-';
+        return item.category || '-';
       default:
         return '-';
     }
