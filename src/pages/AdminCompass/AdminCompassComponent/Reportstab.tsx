@@ -1,42 +1,21 @@
 // ─────────────────────────────────────────────
-// ReportsTab.jsx
+// ReportsTab.jsx — Unified Modern Theme
 // ─────────────────────────────────────────────
 import React, { useState, useEffect } from "react";
 import {
-  FileSpreadsheet,
-  BarChart2,
-  Calendar,
-  AlertTriangle,
-  CheckCircle2,
-  TrendingUp,
-  Activity,
-  Settings,
-  ChevronDown,
-  ChevronUp,
-  ArrowLeft,
-  ArrowRight,
-  RefreshCw,
-  X,
+  FileSpreadsheet, BarChart2, Calendar, AlertTriangle,
+  CheckCircle2, TrendingUp, Activity, Settings,
+  ChevronDown, ChevronUp, ArrowLeft, ArrowRight,
+  RefreshCw, X, Users,
 } from "lucide-react";
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  LineChart as ReLineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
+  ResponsiveContainer, AreaChart, Area, LineChart as ReLineChart,
+  Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import {
-  fetchMeetingReport,
-  meetingOptions,
-  periodOptions,
-  BtnIcon,
-} from "./Shared";
+import { periodOptions, getAuthHeaders } from "./Shared"; 
 
+// ── DATA NORMALIZATION & FALLBACKS ──
 const generateEmptyTrendForReport = (endDateStr, days = 7) => {
   const result = [];
   const end = endDateStr ? new Date(endDateStr) : new Date();
@@ -55,10 +34,8 @@ const generateEmptyTrendForReport = (endDateStr, days = 7) => {
 const normalizeReport = (raw) => {
   if (!raw) return null;
   const data = raw.data || raw;
-  const validActivityTrend =
-    Array.isArray(data.activity_trend) && data.activity_trend.length > 0;
-  const validKpiTrend =
-    Array.isArray(data.kpi_trend) && data.kpi_trend.length > 0;
+  const validActivityTrend = Array.isArray(data.activity_trend) && data.activity_trend.length > 0;
+  const validKpiTrend = Array.isArray(data.kpi_trend) && data.kpi_trend.length > 0;
   const endDate = data.period?.to;
   return {
     period: data.period || { from: "", to: "" },
@@ -67,511 +44,502 @@ const normalizeReport = (raw) => {
     attendanceRate: data.attendance_rate ?? 0,
     avgSelfRating: data.avg_self_rating ?? 0,
     unresolvedTasks: data.unresolved_tasks ?? 0,
-    activityTrend: validActivityTrend
-      ? data.activity_trend
-      : generateEmptyTrendForReport(endDate, 7),
-    kpiTrend: validKpiTrend
-      ? data.kpi_trend
-      : generateEmptyTrendForReport(endDate, 7),
+    activityTrend: validActivityTrend ? data.activity_trend : generateEmptyTrendForReport(endDate, 7),
+    kpiTrend: validKpiTrend ? data.kpi_trend : generateEmptyTrendForReport(endDate, 7),
     memberStats: Array.isArray(data.member_stats) ? data.member_stats : [],
-    weeklyHistory: Array.isArray(data.history) ? data.history : [],
     _raw: raw,
   };
 };
 
-const mapApiHistoryToWeek = (apiHistoryArray, baseDateOffset = 0) => {
-  const days = [];
-  const baseDate = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() - baseDateOffset * 7 - i);
-    const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
-    const dateNum = d.getDate().toString();
-    let status = "holiday";
-    if (dayName !== "Sat" && dayName !== "Sun") {
-      status = d.getDate() % 2 !== 0 ? "done" : "missed";
-    }
-    days.push({ day: dayName, date: dateNum, status });
-  }
-  return days;
+// ── APIs FOR DYNAMIC DATA ──
+
+// 1. Fetch Dynamic Meetings Dropdown
+const fetchDynamicMeetings = async () => {
+  const res = await fetch(`https://fm-uat-api.lockated.com/daily_meeting_configs`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+  const raw = await res.text();
+  let json;
+  try { json = JSON.parse(raw); } catch { json = []; }
+  
+  let list = [];
+  if (Array.isArray(json)) list = json;
+  else if (Array.isArray(json.data?.daily_meeting_configs)) list = json.data.daily_meeting_configs;
+  else if (Array.isArray(json.data?.meeting_configs)) list = json.data.meeting_configs;
+  else if (Array.isArray(json.data)) list = json.data;
+  else if (Array.isArray(json.daily_meeting_configs)) list = json.daily_meeting_configs;
+  
+  return list.map((m) => ({
+    id: String(m.id),
+    label: m.name ?? m.title ?? m.label ?? `Meeting ${m.id}`,
+  }));
 };
 
+// 2. Fetch Report Stats
+const fetchDynamicReport = async ({ meetingId, period }) => {
+  const url = new URL("https://fm-uat-api.lockated.com/user_journals/daily_meeting_report");
+  if (meetingId && meetingId !== "all") {
+    url.searchParams.append("meeting_id", meetingId);
+  }
+  if (period) {
+    url.searchParams.append("period", period);
+  }
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  
+  if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+  const raw = await res.text();
+  try { return JSON.parse(raw); } catch { return null; }
+};
+
+// 3. Fetch Single Date Status from Daily API
+const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
+  const url = new URL("https://fm-uat-api.lockated.com/user_journals/daily_meeting");
+  url.searchParams.append("date", dateStr); 
+  
+  if (meetingId && meetingId !== "all") {
+    url.searchParams.append("meeting_id", meetingId);
+  }
+
+  try {
+    const res = await fetch(url.toString(), {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) return "missed";
+    const json = await res.json();
+    
+    // Find the exact date inside the date_row array returned by API
+    const dateRow = json.data?.date_row || [];
+    const targetDateObj = dateRow.find((d) => d.full_date === dateStr);
+    
+    if (targetDateObj) {
+      return targetDateObj.status === "non_meeting" ? "holiday" : targetDateObj.status;
+    }
+    return "missed"; // Fallback if date not found
+  } catch (err) {
+    return "missed";
+  }
+};
+
+// ── MAIN COMPONENT ──
 const ReportsTab = () => {
-  const [selectedMeetingId, setSelectedMeetingId] = useState("1");
+  // Main States
+  const [dynamicMeetings, setDynamicMeetings] = useState([]);
+  const [selectedMeetingId, setSelectedMeetingId] = useState("all");
+  const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("last_7_days");
+  
+  // Report States
   const [report, setReport] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [isKpiExpanded, setIsKpiExpanded] = useState(false);
+  
+  // Calendar States
   const [weekOffset, setWeekOffset] = useState(0);
+  const [weeklyStatusData, setWeeklyStatusData] = useState([]);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
 
+  // 1. Fetch Meetings List on Mount
+  useEffect(() => {
+    const loadMeetingsDropdown = async () => {
+      setIsFetchingMeetings(true);
+      try {
+        const fetchedList = await fetchDynamicMeetings();
+        setDynamicMeetings(fetchedList);
+      } catch (err) {
+        console.error("Failed to load meetings", err);
+      } finally {
+        setIsFetchingMeetings(false);
+      }
+    };
+    loadMeetingsDropdown();
+  }, []);
+
+  // 2. Fetch Main Report
   const loadReport = async () => {
-    setIsLoading(true);
-    setApiError(null);
+    setIsLoading(true); setApiError(null);
     try {
-      const raw = await fetchMeetingReport({
-        meetingId: selectedMeetingId,
-        period: selectedPeriod,
-      });
+      const raw = await fetchDynamicReport({ meetingId: selectedMeetingId, period: selectedPeriod });
       setReport(normalizeReport(raw));
     } catch (err) {
-      setApiError(err.message);
-      setReport(null);
+      setApiError(err.message); setReport(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadReport();
+  // 3. Fetch Exactly Last 7 Days Calendar Status
+  const loadCalendarWeek = async () => {
+    setIsCalendarLoading(true);
+    try {
+      // Base date is Today minus weekOffset (e.g. if offset is 0, base is Today)
+      const baseDate = new Date();
+      baseDate.setDate(baseDate.getDate() - weekOffset * 7);
+
+      const daysToFetch = [];
+      
+      // Generate exactly 7 days ending on baseDate (i = 6 down to 0)
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() - i);
+        
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+        const dateNum = d.getDate().toString();
+
+        daysToFetch.push({
+          day: dayName,
+          date: dateNum,
+          dateStr: dateStr,
+          isWeekend: dayName === "Sat" || dayName === "Sun"
+        });
+      }
+
+      // Fetch statuses for the 7 dates concurrently
+      const weekResults = await Promise.all(
+        daysToFetch.map(async (dayObj) => {
+          // Automatic holiday fallback for weekends to save API calls / logic
+          if (dayObj.isWeekend) {
+            return { ...dayObj, status: "holiday" };
+          }
+          const status = await fetchDailyMeetingStatusForCalendar(dayObj.dateStr, selectedMeetingId);
+          return { ...dayObj, status };
+        })
+      );
+
+      setWeeklyStatusData(weekResults);
+    } catch (err) {
+      console.error(err);
+      setWeeklyStatusData([]);
+    } finally {
+      setIsCalendarLoading(false);
+    }
+  };
+
+  // Re-fetch report when dropdowns change
+  useEffect(() => { 
+    loadReport(); 
   }, [selectedMeetingId, selectedPeriod]);
 
+  // Re-fetch calendar when offset or meeting changes
+  useEffect(() => {
+    loadCalendarWeek();
+  }, [weekOffset, selectedMeetingId]);
+
   const r = report;
-  const weeklyStatusData = r
-    ? mapApiHistoryToWeek(r.weeklyHistory, weekOffset)
-    : [];
-  const weekLabel =
-    weekOffset === 0
-      ? "Current Week"
-      : weekOffset === 1
-        ? "1 week ago"
-        : `${weekOffset} weeks ago`;
+  const weekLabel = weekOffset === 0 ? "Last 7 Days" : `${weekOffset} weeks ago`;
 
   return (
-    <div className="space-y-5 pb-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-neutral-900">
-            Meeting Reports
-          </h2>
-          <p className="text-sm text-neutral-500 mt-0.5">
-            {r?.config?.name ? r.config.name : "Loading..."}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
-            <select
-              value={selectedMeetingId}
-              onChange={(e) => setSelectedMeetingId(e.target.value)}
-              className="appearance-none bg-[#fffaf8] border border-[rgba(218,119,86,0.22)] rounded-xl py-2 pl-4 pr-8 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.18)] shadow-sm"
-            >
-              {meetingOptions.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#DA7756]/70 w-3.5 h-3.5 pointer-events-none" />
+    <div className="space-y-6 pb-12  min-h-screen pt-8" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      
+      {/* Header and Controls */}
+      <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-[48px] h-[48px] rounded-[14px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center shrink-0">
+              <BarChart2 className="w-6 h-6 text-[#D37E5F]" />
+            </div>
+            <div>
+              <h2 className="text-[24px] font-black text-[#1A1A1A] tracking-tight">Meeting Reports</h2>
+              <p className="text-[12px] font-bold text-[#8C8580] uppercase tracking-widest mt-1">
+                {selectedMeetingId === "all" ? "All Meetings Data" : (r?.config?.name || "Loading...")}
+              </p>
+            </div>
           </div>
-          <div className="relative">
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="appearance-none bg-[#fffaf8] border border-[rgba(218,119,86,0.22)] rounded-xl py-2 pl-4 pr-8 text-sm font-semibold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.18)] shadow-sm"
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="relative">
+              <select
+                value={selectedMeetingId} 
+                onChange={(e) => setSelectedMeetingId(e.target.value)}
+                disabled={isFetchingMeetings}
+                className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[160px] w-full disabled:opacity-50"
+              >
+                {isFetchingMeetings ? (
+                  <option value="all">Loading Meetings...</option>
+                ) : (
+                  <>
+                    <option value="all">All Meetings</option>
+                    {dynamicMeetings.map((m) => (
+                      <option key={m.id} value={m.id}>{m.label}</option>
+                    ))}
+                  </>
+                )}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
+            </div>
+            
+            <div className="relative">
+              <select
+                value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[160px] w-full"
+              >
+                {periodOptions.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
+            </div>
+            
+            <button
+              onClick={() => { loadReport(); loadCalendarWeek(); }}
+              disabled={isLoading || isCalendarLoading}
+              className="w-[46px] h-[46px] flex items-center justify-center border border-[#F0EBE8] rounded-[16px] bg-white text-[#8C8580] hover:text-[#1A1A1A] hover:bg-gray-50 transition-all shrink-0 disabled:opacity-50"
             >
-              {periodOptions.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#DA7756]/70 w-3.5 h-3.5 pointer-events-none" />
+              <RefreshCw className={cn("w-5 h-5", (isLoading || isCalendarLoading) && "animate-spin text-[#EB4A4A]")} />
+            </button>
           </div>
-          <BtnIcon onClick={loadReport} title="Refresh">
-            <RefreshCw
-              className={cn("w-3.5 h-3.5", isLoading && "animate-spin")}
-            />
-          </BtnIcon>
         </div>
       </div>
 
       {apiError && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-3 flex items-center gap-2 text-red-600 text-xs font-bold shadow-sm">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          {apiError.includes("No Auth Token")
-            ? "No auth token — save it in Settings tab first."
-            : `API error: ${apiError}`}
+        <div className="bg-[#EB4A4A]/10 text-[#EB4A4A] text-sm font-bold p-5 rounded-[20px] flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          {apiError.includes("No Auth Token") ? "No auth token — save it in Settings tab first." : `API error: ${apiError}`}
         </div>
       )}
 
       {isLoading && (
-        <div className="space-y-5 animate-pulse">
-          <div className="h-32 bg-neutral-100 rounded-2xl" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-28 bg-neutral-100 rounded-2xl" />
-            ))}
+        <div className="space-y-6 animate-pulse">
+          <div className="h-36 bg-[#F0EBE8] rounded-[24px]" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (<div key={i} className="h-32 bg-[#F0EBE8] rounded-[20px]" />))}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="h-56 bg-neutral-100 rounded-2xl" />
-            <div className="h-56 bg-neutral-100 rounded-2xl" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-64 bg-[#F0EBE8] rounded-[24px]" />
+            <div className="h-64 bg-[#F0EBE8] rounded-[24px]" />
           </div>
         </div>
       )}
 
       {!isLoading && !apiError && !r && (
-        <div className="flex flex-col items-center justify-center py-28 border-2 border-dashed border-neutral-200 rounded-2xl">
-          <BarChart2 size={48} className="mb-4 opacity-20" />
-          <p className="text-sm text-neutral-400 font-medium">
-            No report data for this period
-          </p>
+        <div className="flex flex-col items-center justify-center py-28 border-2 border-dashed border-[#F0EBE8] rounded-[32px] bg-white">
+          <BarChart2 size={56} className="mb-4 text-[#F0EBE8]" />
+          <p className="text-sm font-bold text-[#8C8580]">No report data for this period</p>
         </div>
       )}
 
       {!isLoading && r && (
         <div className="space-y-6">
-          {/* Weekly Status */}
-          <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-neutral-800 font-bold text-sm">
-                <Calendar className="w-5 h-5 text-[#DA7756]" /> Meeting Status
-                ({weekLabel})
+          
+          {/* Calendar Section (Read Only - Only Past 7 Days) */}
+          <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+              <div className="flex items-center gap-3 text-[#1A1A1A] font-black text-lg">
+                <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-[#D37E5F]" />
+                </div>
+                Meeting Status 
+                <span className="text-[#8C8580] text-sm ml-1 font-bold bg-[#FCFAFA] px-3 py-1 rounded-[8px] border border-[#F0EBE8]">
+                  {weekLabel}
+                </span>
               </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setWeekOffset((prev) => prev + 1)}
-                  className="w-7 h-7 flex items-center justify-center border border-[rgba(218,119,86,0.22)] rounded-lg hover:bg-[#fef6f4] text-[#DA7756] transition-colors active:scale-95"
-                >
-                  <ArrowLeft className="w-4 h-4" />
+              <div className="flex items-center gap-2">
+                <button onClick={() => setWeekOffset((prev) => prev + 1)} className="w-10 h-10 flex items-center justify-center border border-[#F0EBE8] rounded-[12px] hover:bg-gray-50 text-[#8C8580] hover:text-[#1A1A1A] transition-colors">
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))}
-                  disabled={weekOffset === 0}
-                  className={cn(
-                    "w-7 h-7 flex items-center justify-center border border-[rgba(218,119,86,0.22)] rounded-lg transition-colors",
-                    weekOffset === 0
-                      ? "opacity-30 cursor-not-allowed bg-[#fffaf8]"
-                      : "hover:bg-[#fef6f4] text-[#DA7756] active:scale-95"
-                  )}
-                >
-                  <ArrowRight className="w-4 h-4" />
+                <button onClick={() => setWeekOffset((prev) => Math.max(0, prev - 1))} disabled={weekOffset === 0} className={cn("w-10 h-10 flex items-center justify-center border border-[#F0EBE8] rounded-[12px] transition-colors", weekOffset === 0 ? "opacity-30 cursor-not-allowed bg-gray-50" : "hover:bg-gray-50 text-[#8C8580] hover:text-[#1A1A1A]")}>
+                  <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {weeklyStatusData.map((d, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex flex-col items-center justify-center w-[12%] min-w-[70px] h-20 rounded-xl border flex-shrink-0 bg-white transition-all duration-300",
-                    d.status === "done" && "border-green-400 bg-green-50/30",
-                    d.status === "missed" && "border-red-300 bg-red-50/30",
-                    d.status === "holiday" && "border-[rgba(218,119,86,0.25)] bg-[#fef6f4]"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "text-xs font-semibold",
-                      d.status === "done" && "text-green-600",
-                      d.status === "missed" && "text-red-500",
-                      d.status === "holiday" && "text-[#DA7756]"
-                    )}
-                  >
-                    {d.day}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xl font-bold mt-0.5",
-                      d.status === "done" && "text-green-600",
-                      d.status === "missed" && "text-red-500",
-                      d.status === "holiday" && "text-[#DA7756]"
-                    )}
-                  >
-                    {d.date}
-                  </span>
-                  <div className="mt-1">
-                    {d.status === "done" && (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    )}
-                    {d.status === "missed" && (
-                      <X className="w-4 h-4 text-red-500" />
-                    )}
-                    {d.status === "holiday" && (
-                      <span className="text-[#DA7756]/80 font-bold text-lg leading-none">
-                        ~
-                      </span>
-                    )}
+            
+            {/* Visual feedback while calendar API fetches */}
+            <div className={cn("flex gap-[18px] overflow-x-auto pb-4 pt-1 transition-opacity duration-300", isCalendarLoading ? "opacity-40" : "opacity-100")} style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}>
+              {weeklyStatusData.map((dateItem, i) => {
+                let bg, textColor, labelBg, labelColor, displayLabel;
+                const status = dateItem.status;
+
+                // STRICT COLORS based on requirement
+                if (status === "missed") {
+                  bg = "#F34A4A"; textColor = "#FFFFFF"; labelBg = "rgba(255,255,255,0.25)"; labelColor = "#FFFFFF"; displayLabel = "Miss";
+                } else if (status === "holiday") {
+                  bg = "#F5D142"; textColor = "#8A6D3B"; labelBg = "rgba(0,0,0,0.08)"; labelColor = "#8A6D3B"; displayLabel = "Holiday";
+                } else if (status === "submitted" || status === "fill" || status === "done") {
+                  bg = "#2ECC71"; textColor = "#FFFFFF"; labelBg = "rgba(255,255,255,0.25)"; labelColor = "#FFFFFF"; displayLabel = "Filled";
+                } else {
+                  // Fallback for anything else in the past (treated as missed/unknown)
+                  bg = "#F3F4F6"; textColor = "#6B7280"; labelBg = "#E5E7EB"; labelColor = "#9CA3AF"; displayLabel = "N/A";
+                }
+
+                return (
+                  <div key={dateItem.dateStr || i} className="relative flex-shrink-0 mt-1 ml-1 select-none">
+                    <div
+                      className="flex flex-col items-center justify-center rounded-[16px] cursor-default"
+                      style={{
+                        width: 90, height: 110, background: bg, color: textColor,
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.06)"
+                      }}
+                    >
+                      <span className="text-[11px] font-extrabold uppercase tracking-widest mb-1 opacity-90" style={{ color: textColor }}>{dateItem.day}</span>
+                      <span className="text-[30px] font-bold leading-none" style={{ color: textColor }}>{dateItem.date}</span>
+                      <div className="mt-2.5 h-[18px] px-3 rounded-full flex items-center justify-center text-[9px] font-extrabold uppercase tracking-widest" style={{ background: labelBg, color: labelColor }}>
+                        {displayLabel}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* UPDATED LEGEND - No 'Upcoming' */}
+            <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-4">
+              <div className="flex items-center gap-2.5"><span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" /> Filled</div>
+              <div className="flex items-center gap-2.5"><span className="w-[15px] h-[15px] rounded-full bg-[#F34A4A]" /> Missed</div>
+              <div className="flex items-center gap-2.5"><span className="w-[15px] h-[15px] rounded-full bg-[#F5D142]" /> Holiday</div>
+            </div>
+          </div>
+
+          {/* Dynamic KPI Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Meetings This Month", val: r.meetingsThisMonth ?? 0, sub: "Calculated from API", icon: Calendar, color: "text-[#DAB835]", bg: "bg-[#FCFAFA]" },
+              { label: "Attendance Rate", val: `${Number(r.attendanceRate || 0).toFixed(1)}%`, sub: "Overall Attendance", icon: CheckCircle2, color: "text-[#2ECC71]", bg: "bg-[#FCFAFA]" },
+              { label: "Avg Self-Rating", val: `${r.avgSelfRating ? Number(r.avgSelfRating).toFixed(1) : "0.0"}/10`, sub: "Team average", icon: TrendingUp, color: "text-[#EB4A4A]", bg: "bg-[#FCFAFA]" },
+              { label: "Unresolved", val: r.unresolvedTasks ?? 0, sub: "Total stuck issues", icon: AlertTriangle, color: "text-[#DAB835]", bg: "bg-[#FCFAFA]" },
+            ].map((metric, i) => (
+              <div key={i} className={cn("rounded-[24px] p-6 border border-[#F0EBE8] flex flex-col justify-between shadow-sm", metric.bg)}>
+                <div className="flex items-start justify-between">
+                  <div className="text-[11px] font-black text-[#8C8580] tracking-widest uppercase mb-3 leading-snug">
+                    {metric.label}
+                  </div>
+                  <div className="w-10 h-10 rounded-[12px] bg-white border border-[#F0EBE8] flex items-center justify-center shrink-0">
+                    <metric.icon className={cn("w-5 h-5", metric.color)} />
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-center gap-5 mt-3 text-xs text-neutral-500 font-medium">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> Meeting
-                Done
-              </span>
-              <span className="flex items-center gap-1.5">
-                <div className="w-3 h-3 bg-red-400 rounded-sm" /> Missed
-              </span>
-              <span className="flex items-center gap-1.5">
-                <div className="w-3 h-3 bg-[#f6a67d] rounded-sm" /> Holiday
-              </span>
-            </div>
+                <div>
+                  <div className="text-[32px] font-black text-[#1A1A1A] leading-none mb-2">
+                    {metric.val}
+                  </div>
+                  <div className="text-[11px] font-bold text-[#8C8580] uppercase tracking-wider">
+                    {metric.sub}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#fffaf8] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
-                  Meetings This Month
+          {/* Dynamic Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6 text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
+                <div className="w-8 h-8 rounded-[8px] bg-[#2ECC71]/10 flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-[#2ECC71]" /> 
                 </div>
-                <Calendar className="w-5 h-5 text-[#DA7756]" />
+                Attendance Trend
               </div>
-              <div>
-                <div className="text-3xl font-extrabold text-[#7a341d]">
-                  {r.meetingsThisMonth}
-                </div>
-                <div className="text-xs font-semibold text-[#DA7756] mt-1">
-                  0 missed of 3 working days
-                </div>
-              </div>
-            </div>
-            <div className="bg-[#fef6f4] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
-                  Attendance Rate
-                </div>
-                <CheckCircle2 className="w-5 h-5 text-[#DA7756]" />
-              </div>
-              <div>
-                <div className="text-3xl font-extrabold text-[#7a341d]">
-                  {Number(r.attendanceRate).toFixed(1)}%
-                </div>
-                <div className="text-xs font-semibold text-[#DA7756] mt-1">
-                  0/154 attended
-                </div>
-              </div>
-            </div>
-            <div className="bg-[#fff4ef] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
-                  Avg Self-Rating
-                </div>
-                <TrendingUp className="w-5 h-5 text-[#DA7756]" />
-              </div>
-              <div>
-                <div className="text-3xl font-extrabold text-[#7a341d]">
-                  {r.avgSelfRating ? Number(r.avgSelfRating).toFixed(1) : "0.0"}
-                  /10
-                </div>
-                <div className="text-xs font-semibold text-[#DA7756] mt-1">
-                  0 ratings
-                </div>
-              </div>
-            </div>
-            <div className="bg-[#fff8f1] rounded-2xl p-5 border border-[rgba(218,119,86,0.14)] flex flex-col justify-between shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="text-xs font-bold text-[#7a341d] tracking-wider uppercase mb-2">
-                  Unresolved
-                </div>
-                <AlertTriangle className="w-5 h-5 text-[#DA7756]" />
-              </div>
-              <div>
-                <div className="text-3xl font-extrabold text-[#7a341d]">
-                  {r.unresolvedTasks}
-                </div>
-                <div className="text-xs font-semibold text-[#DA7756] mt-1">
-                  stuck issues
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm p-4">
-              <div className="flex items-center gap-2 mb-4 text-sm font-bold text-neutral-800">
-                <TrendingUp className="w-4 h-4 text-[#DA7756]" /> Attendance
-                Trend (Last 7 Days)
-              </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={r.activityTrend}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#f0f0f0"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#a3a3a3" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#a3a3a3" }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="attendance"
-                    stroke="#22c55e"
-                    strokeWidth={2}
-                    fill="#dcfce7"
-                    name="Attendance %"
-                  />
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={r.activityTrend || []}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0EBE8" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }} axisLine={false} tickLine={false} domain={[0, 100]} dx={-10} />
+                  <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", fontWeight: "bold" }} />
+                  <Area type="monotone" dataKey="attendance" stroke="#2ECC71" strokeWidth={3} fill="#2ECC71" fillOpacity={0.15} name="Attendance %" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm p-4">
-              <div className="flex items-center gap-2 mb-4 text-sm font-bold text-neutral-800">
-                <TrendingUp className="w-4 h-4 text-[#DA7756]" /> KPI
-                Achievement Trend
+
+            <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6 text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
+                <div className="w-8 h-8 rounded-[8px] bg-[#EB4A4A]/10 flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-[#EB4A4A]" /> 
+                </div>
+                KPI Achievement
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <ReLineChart data={r.kpiTrend}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#f0f0f0"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#a3a3a3" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#a3a3a3" }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="kpi"
-                    stroke="#DA7756"
-                    strokeWidth={2}
-                    dot={{ fill: "#DA7756", r: 3 }}
-                    name="KPI %"
-                  />
+              <ResponsiveContainer width="100%" height={240}>
+                <ReLineChart data={r.kpiTrend || []}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0EBE8" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }} axisLine={false} tickLine={false} dy={10} />
+                  <YAxis tick={{ fontSize: 11, fill: "#8C8580", fontWeight: "bold" }} axisLine={false} tickLine={false} domain={[0, 100]} dx={-10} />
+                  <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", fontWeight: "bold" }} />
+                  <Line type="monotone" dataKey="kpi" stroke="#EB4A4A" strokeWidth={3} dot={{ fill: "#EB4A4A", r: 4, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} name="KPI %" />
                 </ReLineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Issue & KPI Metrics */}
+          {/* Issue & KPI Sub Metrics Row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              {
-                cardClass: "bg-[#fff8f1] border-[rgba(218,119,86,0.14)]",
-                icon: AlertTriangle,
-                iconColor: "text-[#DA7756]",
-                label: "Issue Resolution",
-                value: "0%",
-                sub: "0 Resolved · 0 Open",
-              },
-              {
-                cardClass: "bg-[#fffaf8] border-[rgba(218,119,86,0.14)]",
-                icon: Activity,
-                iconColor: "text-[#DA7756]",
-                label: "KPI Achievement",
-                value: "0%",
-                sub: "0 total entries",
-              },
-              {
-                cardClass: "bg-[#fef6f4] border-[rgba(218,119,86,0.14)]",
-                icon: Settings,
-                iconColor: "text-[#DA7756]",
-                label: "Issue Metrics",
-                value: "0 days",
-                sub: "0 total stuck issues",
-              },
-            ].map(
-              ({ cardClass, icon: Icon, iconColor, label, value, sub }) => (
-                <div
-                  key={label}
-                  className={cn("rounded-2xl p-4 border flex gap-4 shadow-sm items-center", cardClass)}
-                >
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-[rgba(218,119,86,0.12)]">
-                    <Icon className={cn("w-5 h-5", iconColor)} />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-0.5">
-                      {label}
-                    </div>
-                    <div className="text-2xl font-extrabold text-[#7a341d] mb-1">
-                      {value}
-                    </div>
-                    <div className="text-[11px] font-semibold text-neutral-500">
-                      {sub}
-                    </div>
-                  </div>
+              { icon: AlertTriangle, iconColor: "text-[#EB4A4A]", label: "Issue Resolution", value: "0%", sub: "0 Resolved · 0 Open" },
+              { icon: Activity, iconColor: "text-[#2ECC71]", label: "KPI Achievement", value: "0%", sub: "0 total entries" },
+              { icon: Settings, iconColor: "text-[#DAB835]", label: "Issue Metrics", value: "0 days", sub: "0 total stuck issues" },
+            ].map(({ icon: Icon, iconColor, label, value, sub }) => (
+              <div key={label} className="bg-white rounded-[20px] p-5 border border-[#F0EBE8] flex gap-4 shadow-sm items-center">
+                <div className="w-12 h-12 rounded-[14px] bg-[#FCFAFA] flex items-center justify-center shrink-0 border border-[#F0EBE8]">
+                  <Icon className={cn("w-6 h-6", iconColor)} />
                 </div>
-              )
-            )}
+                <div>
+                  <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-1">{label}</div>
+                  <div className="text-[20px] font-black text-[#1A1A1A] mb-0.5 leading-none">{value}</div>
+                  <div className="text-[11px] font-bold text-[#8C8580]">{sub}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Team KPIs */}
-          <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] shadow-sm overflow-hidden">
+          {/* Dynamic Team KPIs Accordion */}
+          <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm overflow-hidden">
             <div
-              className="p-4 flex items-center justify-between cursor-pointer bg-[#fffaf8] hover:bg-[#fef6f4] transition-colors border-b border-[rgba(218,119,86,0.1)]"
+              className="p-6 flex items-center justify-between cursor-pointer bg-[#FCFAFA] hover:bg-gray-50 transition-colors"
               onClick={() => setIsKpiExpanded(!isKpiExpanded)}
             >
               <div>
-                <div className="flex items-center gap-2 font-bold text-neutral-800 text-sm">
-                  <TrendingUp className="w-4 h-4 text-[#DA7756]" /> Team Member
-                  KPIs{" "}
-                  <span className="px-2 py-0.5 rounded-full bg-[#DA7756] text-white text-[10px] font-bold">
-                    {r.memberStats.length} KPIs
+                <div className="flex items-center gap-3 font-black text-[#1A1A1A] text-base uppercase tracking-wider">
+                  <div className="w-8 h-8 rounded-[8px] bg-white border border-[#F0EBE8] flex items-center justify-center">
+                    <Users className="w-4 h-4 text-[#8C8580]" />
+                  </div>
+                  Team Member KPIs
+                  <span className="px-3 py-1 rounded-[8px] bg-[#1A1A1A] text-white text-[10px] font-bold tracking-widest ml-2">
+                    {r.memberStats?.length || 0} Members
                   </span>
                 </div>
-                <div className="text-xs text-neutral-400 mt-1">
-                  {r.period.from} - {r.period.to} • Click to{" "}
-                  {isKpiExpanded ? "collapse" : "expand"}
-                </div>
               </div>
-              {isKpiExpanded ? (
-                <ChevronUp className="w-5 h-5 text-neutral-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-neutral-400" />
-              )}
+              <div className="w-10 h-10 flex items-center justify-center bg-white border border-[#F0EBE8] rounded-[12px]">
+                {isKpiExpanded ? <ChevronUp className="w-5 h-5 text-[#8C8580]" /> : <ChevronDown className="w-5 h-5 text-[#8C8580]" />}
+              </div>
             </div>
+
             {isKpiExpanded && (
-              <div className="divide-y divide-neutral-100 max-h-[400px] overflow-y-auto">
-                {r.memberStats.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-neutral-400">
+              <div className="divide-y divide-[#F0EBE8] max-h-[500px] overflow-y-auto p-4 bg-white">
+                {!r.memberStats || r.memberStats.length === 0 ? (
+                  <div className="p-10 text-center text-sm font-bold text-[#8C8580]">
                     No Team Members Found
                   </div>
                 ) : (
                   r.memberStats.map((member, i) => (
-                    <div
-                      key={i}
-                      className="p-4 hover:bg-neutral-50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-bold text-sm text-neutral-800">
+                    <div key={i} className="p-4 bg-[#FCFAFA] rounded-[16px] mb-3 border border-[#F0EBE8] transition-colors">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="font-black text-sm text-[#1A1A1A] uppercase tracking-wider">
                           {member.name || "Unknown Member"}
                         </div>
-                        <span className="px-2 py-1 bg-[#FAECE7] text-[#993C1D] text-xs font-bold rounded-lg border border-[rgba(218,119,86,0.12)]">
-                          {member.kpis?.length || 0} KPIs
+                        <span className="px-3 py-1 bg-white text-[#8C8580] text-[10px] font-bold uppercase tracking-widest rounded-[8px] border border-[#F0EBE8]">
+                          {member.kpis?.length || 0} Assigned KPIs
                         </span>
                       </div>
+                      
                       {!member.kpis || member.kpis.length === 0 ? (
-                        <div className="text-xs text-neutral-400">
-                          No KPIs assigned
-                        </div>
+                        <div className="text-xs font-bold text-[#8C8580] italic">No KPIs assigned to this user.</div>
                       ) : (
-                        <div className="space-y-2 mt-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {member.kpis.map((kpi, kIdx) => (
-                            <div
-                              key={kIdx}
-                              className="flex justify-between items-center bg-white border border-neutral-100 p-2.5 rounded-xl"
-                            >
+                            <div key={kIdx} className="flex justify-between items-center bg-white border border-[#F0EBE8] p-4 rounded-[14px]">
                               <div>
-                                <div className="text-sm font-semibold text-neutral-700">
-                                  {kpi.name}
-                                </div>
-                                <div className="text-[10px] text-neutral-400 mt-0.5">
-                                  {kpi.entries || 0} entries •{" "}
-                                  {kpi.value || "0.0/0.0"} {kpi.unit}
+                                <div className="text-sm font-black text-[#1A1A1A] mb-1">{kpi.name}</div>
+                                <div className="text-[11px] font-bold text-[#8C8580] uppercase tracking-wider">
+                                  {kpi.entries || 0} entries • {kpi.value || "0.0/0.0"} {kpi.unit}
                                 </div>
                               </div>
-                              <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-lg border border-red-200">
+                              <span className="px-3 py-1.5 bg-[#EB4A4A] text-white text-[11px] font-black rounded-[8px] min-w-[45px] text-center">
                                 {kpi.score || "0%"}
                               </span>
                             </div>
@@ -584,6 +552,7 @@ const ReportsTab = () => {
               </div>
             )}
           </div>
+
         </div>
       )}
     </div>
