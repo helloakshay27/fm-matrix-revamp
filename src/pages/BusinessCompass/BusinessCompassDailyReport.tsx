@@ -43,6 +43,22 @@ import AddTaskOrIssueModal from "@/components/BusinessCompass/AddTaskOrIssueModa
 import { getBaseUrl, getToken } from "@/utils/auth";
 import axios from "axios";
 
+interface AttachmentFile {
+  id: number;
+  document_file_name: string;
+  document_content_type: string;
+  document_file_size: number;
+  document_updated_at: string;
+  relation: string;
+  relation_id: number;
+  active: number;
+  changed_by: string | null;
+  added_from: string | null;
+  comments: string | null;
+  url: string;
+  document_url: string;
+}
+
 interface DailyReport {
   id: number;
   user_id: number;
@@ -78,7 +94,7 @@ interface DailyReport {
     tasks_issues?: any[];
   };
   url: string;
-  attachments: unknown[];
+  attachments: AttachmentFile[];
   self_rating?: number;
   is_absent?: boolean;
 }
@@ -105,8 +121,16 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<
     { id: string; name: string; size: string; type: string; base64?: string; file?: File }[]
   >([]);
+  const [reportAttachments, setReportAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+
+  // Helper function to determine if file is an image
+  const isImageFile = (fileName: string, contentType: string) => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+    const lowerFileName = fileName.toLowerCase();
+    return contentType.startsWith('image/') || imageExtensions.some(ext => lowerFileName.endsWith(ext));
+  };
 
   const addAccomplishment = () => {
     setAccomplishments([
@@ -312,19 +336,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         setAccomplishments([]);
       }
 
-      // Load accomplishment attachments
-      if (report.report_data?.accomplishments?.attachments) {
-        setUploadedFiles(
-          report.report_data.accomplishments.attachments.map((att: any, idx: number) => ({
-            id: `fetched-att-${idx}`,
-            name: att.filename,
-            size: "N/A",
-            type: att.content_type,
-            base64: att.base64,
-          }))
-        );
+
+      // Load report attachments (from API response)
+      if (report.attachments && report.attachments.length > 0) {
+        setReportAttachments(report.attachments);
       } else {
-        setUploadedFiles([]);
+        setReportAttachments([]);
       }
 
       // Populate planning items (tomorrow's plan)
@@ -349,6 +366,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setCurrentReportId(null);
       setAccomplishments([]);
       setUploadedFiles([]);
+      setReportAttachments([]);
       setPlanningItems([]);
       setIsAbsent(false);
       setAbsenceReason("");
@@ -432,16 +450,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                 );
               }
 
-              if (rData.accomplishments?.attachments) {
-                setUploadedFiles(
-                  rData.accomplishments.attachments.map((att: any, idx: number) => ({
-                    id: `fetched-att-${idx}`,
-                    name: att.filename,
-                    size: "N/A",
-                    type: att.content_type,
-                    base64: att.base64,
-                  }))
-                );
+              // Load report attachments (from API response)
+              if (existingReport.attachments && existingReport.attachments.length > 0) {
+                setReportAttachments(existingReport.attachments);
+              } else {
+                setReportAttachments([]);
               }
 
               if (rData.tomorrow_plan) {
@@ -462,6 +475,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           } else {
             setCurrentReportId(null);
             setAccomplishments([]);
+            setUploadedFiles([]);
+            setReportAttachments([]);
             setIsAbsent(false);
             setAbsenceReason("");
             setSelfRating([2]);
@@ -1002,7 +1017,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="text-xs font-bold text-gray-400">
-                          {uploadedFiles.length}/5
+                          {uploadedFiles.length + reportAttachments.length}/5
                         </span>
                         <input
                           type="file"
@@ -1012,7 +1027,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                           className="hidden"
                         />
                         <Button
-                          className="bg-[#10b981] hover:bg-[#059669] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none"
+                          disabled={uploadedFiles.length + reportAttachments.length >= 5}
+                          className={cn(
+                            "bg-[#10b981] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none",
+                            uploadedFiles.length + reportAttachments.length >= 5
+                              ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400"
+                              : "hover:bg-[#059669]"
+                          )}
                           onClick={triggerFileUpload}
                         >
                           <Upload size={16} />
@@ -1055,6 +1076,53 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+
+                    {/* Report Attachments Section */}
+                    {reportAttachments && reportAttachments.length > 0 && (
+                      <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <Upload size={16} className="text-purple-600" />
+                          <span className="text-sm font-bold text-[#1a1a1a]">Linked Files ({reportAttachments.length})</span>
+                        </div>
+                        <div className="space-y-2">
+                          {reportAttachments.map((attachment: AttachmentFile, idx: number) => {
+                            const isImage = isImageFile(attachment.document_file_name, attachment.document_content_type);
+                            return (
+                              <div
+                                key={attachment.id || idx}
+                                className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                              >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {isImage ? (
+                                    <ImageIcon size={20} className="text-purple-600 shrink-0" />
+                                  ) : (
+                                    <FileText size={20} className="text-blue-600 shrink-0" />
+                                  )}
+                                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                    <a
+                                      href={attachment.document_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                    >
+                                      {attachment.document_file_name}
+                                    </a>
+                                    <span className="text-[11px] text-gray-600 font-medium">
+                                      {attachment.relation} • {(attachment.document_file_size / 1024).toFixed(2)} KB • {new Date(attachment.document_updated_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0 ml-3">
+                                  <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                    {attachment.active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -1970,21 +2038,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     setAccomplishments([]);
                                   }
 
-                                  // Load accomplishment attachments
-                                  if (report.report_data?.accomplishments?.attachments) {
-                                    setUploadedFiles(
-                                      report.report_data.accomplishments.attachments.map((att: any, idx: number) => ({
-                                        id: `fetched-att-${idx}`,
-                                        name: att.filename,
-                                        size: "N/A",
-                                        type: att.content_type,
-                                        base64: att.base64,
-                                      }))
-                                    );
-                                  } else {
-                                    setUploadedFiles([]);
-                                  }
-
                                   // Populate planning items
                                   if (report.report_data?.tomorrow_plan) {
                                     setPlanningItems(
@@ -2104,33 +2157,49 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Attachments Section */}
-                        {report.report_data?.accomplishments?.attachments?.length > 0 && (
-                          <div className="space-y-3 mt-4">
+                        {/* API Response Attachments Section */}
+                        {report.attachments && report.attachments.length > 0 && (
+                          <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
                             <div className="flex items-center gap-2">
-                              <Upload size={16} className="text-blue-600" />
-                              <span className="text-sm font-bold text-[#1a1a1a]">Attachments ({report.report_data.accomplishments.attachments.length})</span>
+                              <Upload size={16} className="text-purple-600" />
+                              <span className="text-sm font-bold text-[#1a1a1a]">Linked Files ({report.attachments.length})</span>
                             </div>
                             <div className="space-y-2">
-                              {report.report_data.accomplishments.attachments.map((att: any, idx: number) => (
-                                <div
-                                  key={idx}
-                                  onClick={() => {
-                                    window.open(att.base64, '_blank');
-                                  }}
-                                  className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[10px] border border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <ImageIcon size={16} className="text-blue-500" />
-                                    <span className="text-sm font-medium text-blue-600 hover:underline">
-                                      {att.filename}
-                                    </span>
+                              {report.attachments.map((attachment: AttachmentFile, idx: number) => {
+                                const isImage = isImageFile(attachment.document_file_name, attachment.document_content_type);
+                                return (
+                                  <div
+                                    key={attachment.id || idx}
+                                    className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      {isImage ? (
+                                        <ImageIcon size={20} className="text-purple-600 shrink-0" />
+                                      ) : (
+                                        <FileText size={20} className="text-blue-600 shrink-0" />
+                                      )}
+                                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                        <a
+                                          href={attachment.document_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                        >
+                                          {attachment.document_file_name}
+                                        </a>
+                                        <span className="text-[11px] text-gray-600 font-medium">
+                                          {attachment.relation} • {(attachment.document_file_size / 1024).toFixed(2)} KB • {new Date(attachment.document_updated_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                                      <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                        {attachment.active ? 'Active' : 'Inactive'}
+                                      </Badge>
+                                    </div>
                                   </div>
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    {att.size || 'N/A'}
-                                  </span>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
