@@ -73,7 +73,7 @@ const mapPeriodToApi = (label: string): string => {
     'This Year':    'this_year',
     'This Quarter': 'this_quarter',
     'BHAG':         'BHAG',
-    '3-5 Years':    'medium_term',
+    '3-5 Years':    'three_to_five_years',
   };
   return map[label] || 'this_year';
 };
@@ -94,14 +94,9 @@ const TrashIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
-const EditIconWhite = () => (
-  <svg className="w-4 h-4 text-white/80 hover:text-white cursor-pointer transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-  </svg>
-);
-const TargetIconLarge = () => (
-  <svg className="w-10 h-10 mx-auto mb-2 opacity-80" style={{ color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+const CalendarLargeIcon = () => (
+  <svg className="w-5 h-5" style={{ color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
   </svg>
 );
 const TrendIcon = () => (
@@ -186,10 +181,6 @@ const ThemeStyle = () => (
       cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; outline: none; box-sizing: border-box;
     }
     .st-select:focus { border-color: ${C.primary}; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
-    .st-error-banner {
-      background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
-      border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600;
-    }
     .st-skeleton {
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
       background-size: 200% 100%; animation: st-shimmer 1.4s infinite; border-radius: 8px;
@@ -361,7 +352,7 @@ interface Goal {
   currentValue?: string;
   unit?: string;
   period?: string;
-  targetDate?: string;
+  targetDate?: string;   // YYYY-MM-DD from API
   ownerName?: string;
   ownerId?: string | number;
   status?: string;
@@ -382,10 +373,11 @@ const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () =
   );
 };
 
+// ── Skeleton ──
 const SkeletonCards = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pl-0 md:pl-[36px]">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {[1, 2, 3, 4].map((n) => (
-      <div key={n} className="bg-white/20 rounded-xl p-4">
+      <div key={n} className="rounded-xl p-4 border" style={{ borderColor: C.borderLgt }}>
         <div className="st-skeleton h-4 w-3/4 mb-3" />
         <div className="st-skeleton h-2 w-full mt-4" />
       </div>
@@ -398,7 +390,7 @@ export const ShortTermSection = () => {
   const [activeModal, setActiveModal]     = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
 
-  const [goals, setGoals]     = useState<Goal[]>([]);
+  const [goals, setGoals]           = useState<Goal[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -407,16 +399,16 @@ export const ShortTermSection = () => {
 
   const [isSaving, setIsSaving]   = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [strategicGoal, setStrategicGoal] = useState<any>(null);
 
+  const [strategicGoal, setStrategicGoal] = useState<any>(null);
   const [tempStrategic, setTempStrategic] = useState<any>(null);
 
-  // ── Fetch goals from BASE_URL — filter 'this_year' ──
+  // ── Fetch goals — filter 'this_year' ──
   const fetchGoals = useCallback(async () => {
     setIsFetching(true);
     setFetchError(null);
     try {
-      const res = await fetch(`http://localhost:3000/goals`, {
+      const res = await fetch(`${BASE_URL}/goals`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
@@ -425,7 +417,7 @@ export const ShortTermSection = () => {
       const json = await res.json();
       const records = Array.isArray(json) ? json : (json.goals || json.data || []);
 
-      // ✅ Filter ONLY short-term / this_year goals
+      // Filter ONLY short-term / this_year goals
       const yearGoals = records.filter((g: any) =>
         g.period === 'this_year' ||
         (g.period && g.period.toLowerCase().includes('year'))
@@ -449,25 +441,23 @@ export const ShortTermSection = () => {
 
       setGoals(mapped);
 
-      // Update Strategic Summary from Dashboard if available
       if (json.dashboard) {
         setStrategicGoal({
           title: `Annual Target: ${json.dashboard.on_track} On Track, ${json.dashboard.behind} Behind`,
-          type: "Annual",
-          targetDate: "",
-          revenue: "",
-          profit: ""
+          type: 'Annual',
+          targetDate: '',
+          revenue: '',
+          profit: '',
         });
       } else {
         setStrategicGoal({
-            title: "To become the leading platform in our industry by 2030",
-            type: "Annual",
-            targetDate: "",
-            revenue: "",
-            profit: ""
+          title: 'To become the leading platform in our industry by 2030',
+          type: 'Annual',
+          targetDate: '',
+          revenue: '',
+          profit: '',
         });
       }
-
     } catch (err: any) {
       console.error('[ShortTermSection] fetch error:', err);
       setFetchError(err.message || 'Failed to load goals');
@@ -488,7 +478,7 @@ export const ShortTermSection = () => {
     );
 
     try {
-      const res = await fetch(`http://localhost:3000/goals/${id}`, {
+      const res = await fetch(`${BASE_URL}/goals/${id}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -518,7 +508,9 @@ export const ShortTermSection = () => {
   };
 
   const openStrategicModal = () => {
-    setTempStrategic(strategicGoal ? { ...strategicGoal } : { title: "", type: "Annual", targetDate: "", revenue: "", profit: "" });
+    setTempStrategic(strategicGoal
+      ? { ...strategicGoal }
+      : { title: '', type: 'Annual', targetDate: '', revenue: '', profit: '' });
     setActiveModal('edit_strategic');
   };
 
@@ -529,11 +521,6 @@ export const ShortTermSection = () => {
 
   const confirmDeleteStrategic = () => setActiveModal('confirm_delete');
   const executeDeleteStrategic = () => { setStrategicGoal(null); closeModal(); };
-const CalendarLargeIcon = () => (
-  <svg className="w-8 h-8 opacity-80 mb-2 mx-auto" style={{ color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
 
   // ── Open Edit Goal Modal ──
   const openGoalModal = (goal: Goal) => {
@@ -554,7 +541,7 @@ const CalendarLargeIcon = () => (
       targetValue: '100',
       currentValue: '0',
       unit: '%',
-      period: 'This Year',
+      period: 'this_year',
       status: 'On Track',
       ownerId: '',
       updateRemarks: '',
@@ -583,7 +570,7 @@ const CalendarLargeIcon = () => (
         current_value: Number(tempGoal.currentValue) || 0,
         progress_percentage: clampProgress(tempGoal.progress),
         unit: tempGoal.unit || '%',
-        period: mapPeriodToApi(tempGoal.period || 'this_year'),
+        period: mapPeriodToApi(tempGoal.period || 'This Year'),
         status: tempGoal.status || 'On Track',
         owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : undefined,
         target_date: tempGoalDate ? formatDateForApi(tempGoalDate) : '',
@@ -594,15 +581,13 @@ const CalendarLargeIcon = () => (
     try {
       let res: Response;
       if (editingGoalId) {
-        // UPDATE existing goal
-        res = await fetch(`http://localhost:3000/goals/${editingGoalId}`, {
+        res = await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(payload),
         });
       } else {
-        // CREATE new goal
-        res = await fetch(`http://localhost:3000/goals`, {
+        res = await fetch(`${BASE_URL}/goals`, {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(payload),
@@ -628,7 +613,7 @@ const CalendarLargeIcon = () => (
   const deleteGoal = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this goal?')) return;
     try {
-      const res = await fetch(`http://localhost:3000/goals/${id}`, {
+      const res = await fetch(`${BASE_URL}/goals/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -660,20 +645,24 @@ const CalendarLargeIcon = () => (
       >
         {/* ── Header ── */}
         <div
-          className="px-6 py-4 border-b flex items-center gap-2"
+          className="px-6 py-4 border-b flex items-center justify-between"
           style={{ borderColor: C.borderLgt, background: '#fafafa' }}
         >
-          <CalendarLargeIcon/>
-          <h2 className="font-bold text-lg m-0" style={{ color: C.textMain }}>
-            Short-term Goals (This Year)
-          </h2>
-          <InfoIcon />
+          <div className="flex items-center gap-2">
+            <CalendarLargeIcon />
+            <h2 className="font-bold text-lg m-0" style={{ color: C.textMain }}>
+              Short-term Goals (This Year)
+            </h2>
+            <InfoIcon />
+          </div>
+          {isFetching && <LoaderIcon className="w-4 h-4" />}
         </div>
 
         <div className="p-6">
 
+          {/* ── Strategic / Annual Goal Banner ── */}
           {strategicGoal ? (
-            <div 
+            <div
               className="bg-white rounded-xl p-5 mb-8 flex justify-between items-center group transition-all"
               style={{ border: `1.5px solid ${C.primaryBord}`, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
             >
@@ -690,7 +679,7 @@ const CalendarLargeIcon = () => (
           ) : (
             <div className="text-center mb-10 border-b pb-8 mt-4" style={{ borderColor: C.borderLgt }}>
               <CalendarLargeIcon />
-              <h3 className="text-xl font-bold mb-1" style={{ color: C.textMain }}>Set Your Annual Objectives</h3>
+              <h3 className="text-xl font-bold mb-1 mt-2" style={{ color: C.textMain }}>Set Your Annual Objectives</h3>
               <p className="text-sm mb-5" style={{ color: C.textMuted }}>What do you want to achieve this year?</p>
               <button
                 onClick={openStrategicModal}
@@ -716,7 +705,6 @@ const CalendarLargeIcon = () => (
           <div className="flex items-center gap-2 mb-5">
             <TrendIcon />
             <h4 className="text-[14px] font-bold m-0" style={{ color: C.textMain }}>Annual Initiatives</h4>
-            {isFetching && <LoaderIcon className="w-3.5 h-3.5 text-gray-400 ml-2" />}
           </div>
 
           {/* ── Goal Cards ── */}
@@ -821,13 +809,32 @@ const CalendarLargeIcon = () => (
         {/* ══ MODAL 0: Confirm Delete Strategic ══ */}
         {activeModal === 'confirm_delete' && (
           <Modal onClose={closeModal}>
-            <div className="st-modal-box" style={{ maxWidth: '380px' }}>
-              <div className="p-6 text-center font-bold text-[15px]" style={{ color: C.textMain }}>
+            <div
+              style={{
+                background: '#fff',
+                borderRadius: 16,
+                boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+                width: '100%',
+                maxWidth: 380,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ padding: '28px 28px 20px', textAlign: 'center', fontSize: 15, fontWeight: 700, color: C.textMain }}>
                 Are you sure you want to delete this strategic goal?
               </div>
-              <div className="p-4 flex justify-center gap-3 bg-white border-t" style={{ borderColor: C.borderLgt }}>
-                <button onClick={executeDeleteStrategic} className="px-6 py-2 font-bold text-white rounded-xl shadow-sm text-[13px] transition-colors" style={{ background: '#dc2626' }}>Delete</button>
-                <button onClick={closeModal} className="px-6 py-2 font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl text-[13px] transition-colors">Cancel</button>
+              <div style={{ padding: '0 28px 28px', display: 'flex', justifyContent: 'center', gap: 12 }}>
+                <button
+                  onClick={executeDeleteStrategic}
+                  style={{ padding: '10px 24px', fontWeight: 700, color: '#fff', background: '#dc2626', border: 'none', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={closeModal}
+                  style={{ padding: '10px 24px', fontWeight: 700, color: C.textMain, background: '#f3f4f6', border: 'none', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </Modal>
@@ -836,24 +843,53 @@ const CalendarLargeIcon = () => (
         {/* ══ MODAL 1: Edit Strategic Goal ══ */}
         {activeModal === 'edit_strategic' && tempStrategic && (
           <Modal onClose={closeModal}>
-            <div className="st-modal-box" style={{ maxWidth: '680px' }}>
-              
-              <div className="flex justify-between items-center px-6 py-5 border-b" style={{ borderColor: C.primaryBord, background: '#fff' }}>
-                <h2 className="font-bold text-[18px]" style={{ color: C.textMain }}>
+            <div
+              style={{
+                background: '#fff',
+                borderRadius: 16,
+                boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+                width: '100%',
+                maxWidth: 680,
+                display: 'flex',
+                flexDirection: 'column',
+                maxHeight: '90vh',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Header */}
+              <div style={{ padding: '28px 28px 0', position: 'relative' }}>
+                <button
+                  onClick={closeModal}
+                  style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4, borderRadius: 6, lineHeight: 1 }}
+                >
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textMain }}>
                   {strategicGoal ? 'Edit Strategic Goal' : 'Set Annual Vision'}
                 </h2>
-                <button onClick={closeModal} className="p-1 rounded-md hover:bg-black/5 text-gray-400 transition-colors">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: C.textMuted }}>
+                  Define your high-level annual objective
+                </p>
               </div>
-              
-              <div className="p-6 overflow-y-auto space-y-5 flex-1" style={{ background: 'transparent' }}>
+
+              {/* Body */}
+              <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <label className="st-label">Goal Title <span style={{ color: C.primary }}>*</span></label>
-                  <input type="text" value={tempStrategic.title} placeholder="e.g., Achieve ₹100Cr Revenue" onChange={e => setTempStrategic({...tempStrategic, title: e.target.value})} className="st-input font-medium" />
+                  <input
+                    type="text"
+                    value={tempStrategic.title}
+                    placeholder="e.g. Achieve ₹100Cr Revenue"
+                    onChange={(e) => setTempStrategic({ ...tempStrategic, title: e.target.value })}
+                    className="st-input"
+                    onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
+                    onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
+                  />
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label className="st-label">Goal Type</label>
                     <select className="st-select">
@@ -862,25 +898,48 @@ const CalendarLargeIcon = () => (
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker value={tempStrategic.targetDate} onChange={val => setTempStrategic({...tempStrategic, targetDate: val})} placeholder="dd-mm-yyyy" />
+                    <DatePicker
+                      value={tempStrategic.targetDate}
+                      onChange={(val) => setTempStrategic({ ...tempStrategic, targetDate: val })}
+                      placeholder="dd-mm-yyyy"
+                    />
                   </div>
                   <div>
                     <label className="st-label">Revenue Target (₹Cr)</label>
-                    <input type="text" value={tempStrategic.revenue} onChange={e => setTempStrategic({...tempStrategic, revenue: e.target.value})} className="st-input" />
+                    <input
+                      type="text"
+                      value={tempStrategic.revenue}
+                      onChange={(e) => setTempStrategic({ ...tempStrategic, revenue: e.target.value })}
+                      className="st-input"
+                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
+                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
+                    />
                   </div>
                   <div>
                     <label className="st-label">Profit Target (₹Cr)</label>
-                    <input type="text" value={tempStrategic.profit} onChange={e => setTempStrategic({...tempStrategic, profit: e.target.value})} className="st-input" />
+                    <input
+                      type="text"
+                      value={tempStrategic.profit}
+                      onChange={(e) => setTempStrategic({ ...tempStrategic, profit: e.target.value })}
+                      className="st-input"
+                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
+                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="p-5 flex justify-end gap-3 border-t bg-white" style={{ borderColor: C.primaryBord }}>
-                <button onClick={closeModal} className="px-5 py-2.5 text-[13px] font-bold text-gray-700 bg-white border rounded-xl hover:bg-gray-50 transition-colors" style={{ borderColor: C.borderLgt }}>Cancel</button>
-                <button 
-                  onClick={saveStrategic} 
-                  className="px-6 py-2.5 text-[13px] font-bold text-white rounded-xl transition-colors shadow-sm"
-                  style={{ background: C.primary }}
+              {/* Footer */}
+              <div style={{ padding: '0 28px 28px', display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={closeModal}
+                  style={{ padding: '10px 20px', fontWeight: 700, fontSize: 13, color: C.textMain, background: '#f3f4f6', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveStrategic}
+                  style={{ padding: '10px 24px', fontWeight: 700, fontSize: 13, color: '#fff', background: C.primary, border: 'none', borderRadius: 10, cursor: 'pointer', transition: 'background 0.15s' }}
                   onMouseEnter={(e) => e.currentTarget.style.background = C.primaryHov}
                   onMouseLeave={(e) => e.currentTarget.style.background = C.primary}
                 >
@@ -891,27 +950,43 @@ const CalendarLargeIcon = () => (
           </Modal>
         )}
 
-        {/* ══ MODAL 2: Edit / Create Goal ══ */}
-        {(activeModal === 'edit_goal' || activeModal === 'create_goal') && tempGoal && (
+        {/* ══ MODAL 2: Create / Edit Goal ══ */}
+        {activeModal === 'goal_details' && tempGoal && (
           <Modal onClose={closeModal}>
-            <div className="st-modal-box" style={{ maxWidth: '560px' }}>
-              
-              <div className="flex justify-between items-start px-6 py-5 border-b bg-white" style={{ borderColor: C.primaryBord }}>
-                <div>
-                  <h2 className="font-bold text-[18px] m-0" style={{ color: C.textMain }}>
-                    {activeModal === 'create_goal' ? 'Create New Operational Goal' : 'Edit Goal Details'}
-                  </h2>
-                  {activeModal === 'create_goal' && (
-                    <p className="text-[12px] mt-1" style={{ color: C.textMuted }}>Set a measurable target that contributes to your strategic objectives</p>
-                  )}
-                </div>
-                <button onClick={closeModal} className="p-1 rounded-md hover:bg-black/5 text-gray-400 transition-colors mt-0.5">
-                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <div
+              style={{
+                background: '#fff',
+                borderRadius: 16,
+                boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+                width: '100%',
+                maxWidth: 640,
+                display: 'flex',
+                flexDirection: 'column',
+                maxHeight: '90vh',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Header */}
+              <div style={{ padding: '28px 28px 0', position: 'relative' }}>
+                <button
+                  onClick={closeModal}
+                  style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4, borderRadius: 6, lineHeight: 1 }}
+                >
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textMain }}>
+                  {editingGoalId ? 'Edit Goal Details' : 'Create New Operational Goal'}
+                </h2>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: C.textMuted }}>
+                  Set a measurable target that contributes to your strategic objectives
+                </p>
               </div>
-              
-              <div className="p-6 overflow-y-auto space-y-5 flex-1" style={{ background: 'transparent' }}>
-                
+
+              {/* Body */}
+              <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
                 {saveError && (
                   <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#991b1b', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600 }}>
                     {saveError}
@@ -926,7 +1001,7 @@ const CalendarLargeIcon = () => (
                     value={tempGoal.title}
                     placeholder="e.g. Achieve ₹50Cr revenue"
                     onChange={(e) => setTempGoal({ ...tempGoal, title: e.target.value })}
-                    className="st-input font-bold"
+                    className="st-input"
                     onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
                     onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
                   />
@@ -934,7 +1009,7 @@ const CalendarLargeIcon = () => (
 
                 {/* Description */}
                 <div>
-                  <label className="st-label">Description {activeModal === 'edit_goal' && '(shown on hover)'}</label>
+                  <label className="st-label">Description</label>
                   <textarea
                     placeholder="Add detailed description about this goal..."
                     value={tempGoal.description}
@@ -970,7 +1045,7 @@ const CalendarLargeIcon = () => (
                   </div>
                 </div>
 
-                {/* Owner ID + Unit + Status/Period */}
+                {/* Owner ID + Unit + Period */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                   <div>
                     <label className="st-label">Owner ID</label>
@@ -990,7 +1065,6 @@ const CalendarLargeIcon = () => (
                       value={tempGoal.unit || ''}
                       onChange={(e) => setTempGoal({ ...tempGoal, unit: e.target.value })}
                       className="st-select"
-                      style={{ color: tempGoal.unit ? C.textMain : '#9ca3af' }}
                     >
                       <option value="">Select unit</option>
                       <option value="%">%</option>
@@ -1002,19 +1076,19 @@ const CalendarLargeIcon = () => (
                   <div>
                     <label className="st-label">Period</label>
                     <select
-                      value={tempGoal.period || 'This Year'}
+                      value={tempGoal.period || 'this_year'}
                       onChange={(e) => setTempGoal({ ...tempGoal, period: e.target.value })}
                       className="st-select"
                     >
-                      <option value="3-5 Years">3-5 Years</option>
-                      <option value="This Year">This Year</option>
-                      <option value="This Quarter">This Quarter</option>
+                      <option value="this_year">This Year</option>
+                      <option value="this_quarter">This Quarter</option>
+                      <option value="three_to_five_years">3-5 Years</option>
                       <option value="BHAG">BHAG</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Progress (edit mode only) */}
+                {/* Progress — edit mode only */}
                 {editingGoalId && (
                   <div style={{ background: '#f9fafb', borderRadius: 10, padding: '16px 18px', border: '1px solid #e5e7eb' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -1036,47 +1110,66 @@ const CalendarLargeIcon = () => (
                       className="st-modal-slider"
                       style={{ background: sliderBg(tempGoal.progress) }}
                     />
+                    {/* Progress display bar */}
+                    <div
+                      style={{
+                        background: C.primary,
+                        color: '#fff',
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        padding: '8px',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        marginTop: 16,
+                      }}
+                    >
+                      {tempGoal.progress.toFixed(1)}% Completed
+                    </div>
                   </div>
                 )}
-                
-                {/* Update Remarks (edit mode only) */}
-                {editingGoalId && (
-                   <div>
-                     <label className="st-label">Update Remarks</label>
-                     <textarea
-                       placeholder="Add notes about this update..."
-                       value={tempGoal.updateRemarks}
-                       onChange={(e) => setTempGoal({ ...tempGoal, updateRemarks: e.target.value })}
-                       className="st-textarea min-h-[60px]"
-                       onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                       onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                     />
-                   </div>
-                )}
 
+                {/* Update Remarks — edit mode only */}
+                {editingGoalId && (
+                  <div>
+                    <label className="st-label">Update Remarks</label>
+                    <textarea
+                      placeholder="Add notes about this update..."
+                      value={tempGoal.updateRemarks}
+                      onChange={(e) => setTempGoal({ ...tempGoal, updateRemarks: e.target.value })}
+                      className="st-textarea"
+                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
+                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* ── Footer ── */}
+              {/* Footer */}
               <div style={{ padding: '0 28px 28px' }}>
                 <button
                   onClick={saveGoalDetails}
                   disabled={isSaving}
                   style={{
                     width: '100%',
-                    background: '#C72030',
+                    background: C.primary,
                     color: '#fff',
                     border: 'none',
                     borderRadius: 8,
                     padding: '14px',
                     fontSize: 15,
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
                     transition: 'background 0.15s',
-                    opacity: isSaving ? 0.7 : 1
+                    opacity: isSaving ? 0.7 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
                   }}
-                  onMouseEnter={(e) => { if(!isSaving) e.currentTarget.style.background = '#a81a28' }}
-                  onMouseLeave={(e) => { if(!isSaving) e.currentTarget.style.background = '#C72030' }}
+                  onMouseEnter={(e) => { if (!isSaving) e.currentTarget.style.background = C.primaryHov; }}
+                  onMouseLeave={(e) => { if (!isSaving) e.currentTarget.style.background = C.primary; }}
                 >
+                  {isSaving && <LoaderIcon />}
                   {isSaving ? 'Saving...' : (editingGoalId ? 'Save Changes' : 'Create Goal')}
                 </button>
               </div>
