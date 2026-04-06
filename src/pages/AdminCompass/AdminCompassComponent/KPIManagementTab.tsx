@@ -9,11 +9,23 @@ import {
   Search,
   LayoutGrid,
   List,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { C, kpiClass } from "./Shared";
 import type { KPICardData } from "./kpiTypes";
+
+type FilterUser = {
+  id: number;
+  name: string;
+};
+
+type FilterDepartment = {
+  id: number;
+  name: string;
+};
 
 const tagStyles: Record<string, string> = {
   Sales: "bg-sky-100 text-sky-900 border-sky-200/80",
@@ -35,14 +47,31 @@ const priorityStyles: Record<KPICardData["priority"], string> = {
 export interface KPIManagementTabProps {
   kpis: KPICardData[];
   setKpis: React.Dispatch<React.SetStateAction<KPICardData[]>>;
+  onDeleteKpi?: (id: string | number) => Promise<void>;
+  onEditKpi?: (kpi: KPICardData) => void;
+  users?: FilterUser[];
+  departments?: FilterDepartment[];
 }
 
 const KPICardView: React.FC<{
   kpi: KPICardData;
   selected: boolean;
   onToggleSelect: () => void;
-  onDelete: () => void;
-}> = ({ kpi, selected, onToggleSelect, onDelete }) => {
+  onDelete: (id: string) => Promise<void>;
+  onEdit: (kpi: KPICardData) => void;
+}> = ({ kpi, selected, onToggleSelect, onDelete, onEdit }) => {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete KPI "${kpi.name}"?`)) return;
+    setDeleting(true);
+    try {
+      await onDelete(kpi.id);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Card
       className={cn(
@@ -109,6 +138,7 @@ const KPICardView: React.FC<{
         </button>
         <button
           type="button"
+          onClick={() => onEdit(kpi)}
           className={cn(
             "inline-flex h-[42px] w-10 shrink-0 items-center justify-center",
             kpiClass.btnIcon
@@ -119,14 +149,19 @@ const KPICardView: React.FC<{
         </button>
         <button
           type="button"
-          onClick={onDelete}
+          onClick={handleDelete}
+          disabled={deleting}
           className={cn(
-            "inline-flex h-[42px] w-10 shrink-0 items-center justify-center",
+            "inline-flex h-[42px] w-10 shrink-0 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed",
             kpiClass.btnDanger
           )}
           aria-label="Delete KPI"
         >
-          <Trash2 className="h-4 w-4" />
+          {deleting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
         </button>
       </div>
     </Card>
@@ -137,8 +172,21 @@ const KPIListView: React.FC<{
   kpis: KPICardData[];
   selectedIds: Set<string>;
   toggleOne: (id: string) => void;
-  onDelete: (id: string) => void;
-}> = ({ kpis, selectedIds, toggleOne, onDelete }) => {
+  onDelete: (id: string) => Promise<void>;
+  onEdit: (kpi: KPICardData) => void;
+}> = ({ kpis, selectedIds, toggleOne, onDelete, onEdit }) => {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this KPI?")) return;
+    setDeletingId(id);
+    try {
+      await onDelete(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -195,6 +243,7 @@ const KPIListView: React.FC<{
                 <div className="inline-flex gap-1">
                   <button
                     type="button"
+                    onClick={() => onEdit(kpi)}
                     className={cn(
                       "inline-flex h-8 w-8 items-center justify-center",
                       kpiClass.btnIcon
@@ -205,14 +254,19 @@ const KPIListView: React.FC<{
                   </button>
                   <button
                     type="button"
-                    onClick={() => onDelete(kpi.id)}
+                    onClick={() => handleDelete(kpi.id)}
+                    disabled={deletingId === kpi.id}
                     className={cn(
-                      "inline-flex h-8 w-8 items-center justify-center",
+                      "inline-flex h-8 w-8 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed",
                       kpiClass.btnDanger
                     )}
                     aria-label="Delete"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    {deletingId === kpi.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 </div>
               </td>
@@ -227,21 +281,57 @@ const KPIListView: React.FC<{
 const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   kpis,
   setKpis,
+  onDeleteKpi,
+  onEditKpi,
+  users = [],
+  departments = [],
 }) => {
   const [view, setView] = useState<"cards" | "list">("cards");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedUser, setSelectedUser] = useState("all");
+  const [selectedFrequency, setSelectedFrequency] = useState("all");
+
+  const frequencyOptions = useMemo(() => {
+    const values = new Set(
+      kpis.map((k) => String(k.frequency || "").trim()).filter(Boolean)
+    );
+    return Array.from(values);
+  }, [kpis]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return kpis;
-    return kpis.filter(
-      (k) =>
+    return kpis.filter((k) => {
+      const matchesSearch =
+        !q ||
         k.name.toLowerCase().includes(q) ||
         k.owner.toLowerCase().includes(q) ||
-        k.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  }, [kpis, search]);
+        k.tags.some((t) => t.toLowerCase().includes(q));
+
+      const matchesDepartment =
+        selectedDepartment === "all" ||
+        k.tags.some((t) => t.toLowerCase() === selectedDepartment.toLowerCase()) ||
+        String(k.departmentId ?? "") === selectedDepartment;
+
+      const matchesUser =
+        selectedUser === "all" ||
+        String(k.assigneeId ?? "") === selectedUser ||
+        k.owner.toLowerCase() ===
+          (users.find((u) => String(u.id) === selectedUser)?.name.toLowerCase() ?? "");
+
+      const matchesFrequency =
+        selectedFrequency === "all" ||
+        k.frequency.toLowerCase() === selectedFrequency.toLowerCase();
+
+      return (
+        matchesSearch &&
+        matchesDepartment &&
+        matchesUser &&
+        matchesFrequency
+      );
+    });
+  }, [kpis, search, selectedDepartment, selectedUser, selectedFrequency, users]);
 
   const allFilteredSelected =
     filtered.length > 0 && filtered.every((k) => selectedIds.has(k.id));
@@ -271,13 +361,25 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     });
   };
 
-  const deleteKpi = (id: string) => {
-    setKpis((prev) => prev.filter((k) => k.id !== id));
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
+  const handleDeleteKpi = async (id: string) => {
+    try {
+      // Call API if provided
+      if (onDeleteKpi) {
+        await onDeleteKpi(id);
+      }
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } catch (error) {
+      console.error("Delete error:", error);
+      throw error;
+    }
+  };
+
+  const handleEditKpi = (kpi: KPICardData) => {
+    onEditKpi?.(kpi);
   };
 
   const filterSelectClass = cn(
@@ -340,14 +442,15 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
         </div>
         <select
           className={cn(filterSelectClass, "min-w-[200px] shrink-0")}
-          defaultValue=""
+          value={selectedDepartment}
+          onChange={(e) => setSelectedDepartment(e.target.value)}
         >
-          <option value="" disabled>
-            Select Department…
-          </option>
-          <option value="sales">Sales</option>
-          <option value="operations">Operations</option>
-          <option value="finance">Finance</option>
+          <option value="all">All Departments</option>
+          {departments.map((dept) => (
+            <option key={dept.id} value={String(dept.id)}>
+              {dept.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -379,14 +482,41 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             )}
           />
         </div>
-        <select className={filterSelectCompactClass} defaultValue="all">
+        <select
+          className={filterSelectCompactClass}
+          value={selectedDepartment}
+          onChange={(e) => setSelectedDepartment(e.target.value)}
+        >
           <option value="all">All Departments</option>
+          {departments.map((dept) => (
+            <option key={dept.id} value={String(dept.id)}>
+              {dept.name}
+            </option>
+          ))}
         </select>
-        <select className={filterSelectCompactClass} defaultValue="all">
+        <select
+          className={filterSelectCompactClass}
+          value={selectedUser}
+          onChange={(e) => setSelectedUser(e.target.value)}
+        >
           <option value="all">All Users</option>
+          {users.map((u) => (
+            <option key={u.id} value={String(u.id)}>
+              {u.name}
+            </option>
+          ))}
         </select>
-        <select className={filterSelectCompactClass} defaultValue="all">
+        <select
+          className={filterSelectCompactClass}
+          value={selectedFrequency}
+          onChange={(e) => setSelectedFrequency(e.target.value)}
+        >
           <option value="all">All Frequencies</option>
+          {frequencyOptions.map((freq) => (
+            <option key={freq} value={freq}>
+              {freq}
+            </option>
+          ))}
         </select>
         <select className={filterSelectCompactClass} defaultValue="all">
           <option value="all">All KPIs</option>
@@ -407,7 +537,8 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
               kpi={kpi}
               selected={selectedIds.has(kpi.id)}
               onToggleSelect={() => toggleOne(kpi.id)}
-              onDelete={() => deleteKpi(kpi.id)}
+              onDelete={handleDeleteKpi}
+              onEdit={handleEditKpi}
             />
           ))}
         </div>
@@ -416,7 +547,8 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
           kpis={filtered}
           selectedIds={selectedIds}
           toggleOne={toggleOne}
-          onDelete={deleteKpi}
+          onDelete={handleDeleteKpi}
+          onEdit={handleEditKpi}
         />
       )}
     </div>

@@ -34,9 +34,15 @@ const DailyMeeting = () => {
 
   return (
     <div
-      className="mx-auto rounded-[28px] border border-[rgba(218,119,86,0.16)] bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
+      className="mx-auto border border-[rgba(218,119,86,0.16)] bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
       style={{ background: C.pageBg, color: C.textMain }}
     >
+        <div className="px-6 pt-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold">Daily Meetings</h1>
+      <p className="text-sm text-gray-500 mt-1">
+        Review daily reports and conduct team meetings
+      </p>
+    </div>
       {/* ── Tab bar ── */}
       <div className="p-6 pb-0">
         <div className="flex space-x-1 bg-[#DA7756] rounded-2xl p-1 overflow-x-auto max-w-7xl mx-auto">
