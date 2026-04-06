@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
   Lightbulb,
@@ -41,7 +41,6 @@ import { Label } from "@/components/ui/label";
 import "./BusinessCompass.css";
 import AddTaskOrIssueModal from "@/components/BusinessCompass/AddTaskOrIssueModal";
 import { getBaseUrl, getToken } from "@/utils/auth";
-import axios from "axios";
 
 interface DailyReport {
   id: number;
@@ -54,7 +53,9 @@ interface DailyReport {
   updated_at: string;
   report_data?: {
     kpi?: string;
+    tasks?: (string | { text: string; starred: boolean })[];
     total_score?: number;
+    achievements?: string[];
     is_absent?: boolean;
     absence_reason?: string;
     self_rating?: number;
@@ -62,29 +63,16 @@ interface DailyReport {
       attendance?: number;
       collaboration?: number;
       tasks_completed?: number;
-      is_absent?: boolean;
-      self_rating?: number;
     };
     details?: {
       notes?: string | null;
-      is_absent?: boolean;
-      self_rating?: number;
     };
-    accomplishments?: {
-      items: { title: string }[];
-      attachments: any[];
-    };
-    tomorrow_plan?: { title: string }[];
-    tasks_issues?: any[];
   };
   url: string;
   attachments: unknown[];
-  self_rating?: number;
-  is_absent?: boolean;
 }
 
 const BusinessCompassDailyReport: React.FC = () => {
-  const now = new Date();
   const btnPrimary =
     "bg-[#DA7756] text-white font-bold shadow-sm transition-colors hover:bg-[#c9673f] border-none";
   const btnOutline =
@@ -92,8 +80,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const btnIcon =
     "border border-[rgba(218,119,86,0.22)] bg-white text-[#DA7756]/70 shadow-sm hover:bg-[#fef6f4] hover:text-[#DA7756]";
 
-  const [selectedDate, setSelectedDate] = useState(now.getDate().toString());
-  const [startDate, setStartDate] = useState(now.toLocaleDateString("en-CA"));
+  const [selectedDate, setSelectedDate] = useState("27");
   const [isBannerVisible, setIsBannerVisible] = useState(true);
   const [isBannerExpanded, setIsBannerExpanded] = useState(false);
   const [selfRating, setSelfRating] = useState([2]);
@@ -101,8 +88,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [absenceReason, setAbsenceReason] = useState("");
   const [isDetailedScoreExpanded, setIsDetailedScoreExpanded] = useState(false);
   const [isScoreInfoExpanded, setIsScoreInfoExpanded] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(now.toLocaleString('default', { month: 'long' }));
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState("April");
+  const [selectedYear, setSelectedYear] = useState("2026");
   const [accomplishments, setAccomplishments] = useState<
     { id: string; text: string; completed: boolean; starred: boolean }[]
   >([]);
@@ -110,9 +97,8 @@ const BusinessCompassDailyReport: React.FC = () => {
     { id: string; text: string; starred: boolean }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
-    { id: string; name: string; size: string; type: string; base64?: string; file?: File }[]
+    { id: string; name: string; size: string }[]
   >([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
 
   const addAccomplishment = () => {
@@ -173,37 +159,30 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
   };
 
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
+  const handleMockUpload = () => {
+    if (uploadedFiles.length < 5) {
+      setUploadedFiles([
+        ...uploadedFiles,
+        {
+          id: Date.now().toString(),
+          name: `Document_${uploadedFiles.length + 1}.pdf`,
+          size: "1.2 MB",
+        },
+      ]);
+    }
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    const newFiles = await Promise.all(
-      Array.from(files).map(async (file) => {
-        const base64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-
-        return {
-          id: Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-          type: file.type,
-          base64,
-          file,
-        };
-      })
-    );
-
-    setUploadedFiles((prev) => [...prev, ...newFiles].slice(0, 5));
-    // Reset input
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  const days = [
+    { day: "Sun", date: "22", status: "Holiday", type: "holiday" },
+    { day: "Mon", date: "23", status: "Miss", type: "missed" },
+    { day: "Tue", date: "24", status: "Miss", type: "missed" },
+    { day: "Wed", date: "25", status: "Miss", type: "missed" },
+    { day: "Thu", date: "26", status: "Miss", type: "missed" },
+    { day: "Fri", date: "27", status: "+5", type: "missed" },
+    { day: "Sat", date: "28", status: "Holiday", type: "holiday" },
+    { day: "Sun", date: "29", status: "", type: "upcoming" },
+    { day: "Mon", date: "30", status: "", type: "upcoming" },
+  ];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -211,122 +190,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [currentReportId, setCurrentReportId] = useState<number | null>(null);
   const [reportsList, setReportsList] = useState<DailyReport[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("submit");
-
-  const [viewStartDate, setViewStartDate] = useState(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    // Start from 3 days ago to center today
-    d.setDate(d.getDate() - 3);
-    return d;
-  });
-
-  const days = React.useMemo(() => {
-    const result = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const date = new Date(viewStartDate);
-    for (let i = 0; i < 9; i++) {
-      const dateStr = date.toLocaleDateString("en-CA");
-      const isToday = date.getTime() === today.getTime();
-      const isPast = date.getTime() < today.getTime();
-      const isFuture = date.getTime() > today.getTime();
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
-      const report = reportsList.find((r) => r.start_date === dateStr);
-
-      let type: "filled" | "missed" | "holiday" | "upcoming" = "upcoming";
-      let status = "";
-
-      if (report) {
-        type = "filled";
-        status = report.report_data?.total_score
-          ? `+${report.report_data.total_score}`
-          : "Done";
-      } else if (isWeekend) {
-        type = "holiday";
-        status = "Holiday";
-      } else if (isPast) {
-        type = "missed";
-        status = "Miss";
-      } else if (isToday) {
-        type = "upcoming";
-        status = "Today";
-      } else {
-        type = "upcoming";
-        status = "";
-      }
-
-      result.push({
-        day: date.toLocaleString("default", { weekday: "short" }),
-        date: date.getDate().toString(),
-        fullDate: dateStr,
-        status,
-        type,
-        actualDate: new Date(date),
-        isFuture,
-      });
-      date.setDate(date.getDate() + 1);
-    }
-    return result;
-  }, [viewStartDate, reportsList]);
-
-  const handlePrevWeek = () => {
-    const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() - 7);
-    setViewStartDate(newDate);
-
-    // Update month/year display
-    const midWeek = new Date(newDate);
-    midWeek.setDate(midWeek.getDate() + 3);
-    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
-    setSelectedYear(midWeek.getFullYear().toString());
-  };
-
-  const handleNextWeek = () => {
-    const newDate = new Date(viewStartDate);
-    newDate.setDate(newDate.getDate() + 7);
-    setViewStartDate(newDate);
-
-    // Update month/year display
-    const midWeek = new Date(newDate);
-    midWeek.setDate(midWeek.getDate() + 3);
-    setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
-    setSelectedYear(midWeek.getFullYear().toString());
-  };
-
-  const handleSelectDate = (item: any) => {
-    setSelectedDate(item.date);
-    setStartDate(item.fullDate);
-    setSelectedMonth(item.actualDate.toLocaleString("default", { month: "long" }));
-    setSelectedYear(item.actualDate.getFullYear().toString());
-  };
-
-  const nextDayLabel = React.useMemo(() => {
-    try {
-      const dateObj = new Date(
-        `${selectedDate} ${selectedMonth} ${selectedYear}`
-      );
-      if (isNaN(dateObj.getTime())) return "";
-
-      const nextDay = new Date(dateObj);
-      nextDay.setDate(nextDay.getDate() + 1);
-
-      // If next day is Sunday (0), skip to Monday (+1 day)
-      if (nextDay.getDay() === 0) {
-        nextDay.setDate(nextDay.getDate() + 1);
-      }
-
-      return nextDay.toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-      });
-    } catch (e) {
-      return "";
-    }
-  }, [selectedDate, selectedMonth, selectedYear]);
 
   // Fetch report for the selected date to see if we should PUT or POST
   React.useEffect(() => {
@@ -336,12 +199,17 @@ const BusinessCompassDailyReport: React.FC = () => {
         const token = getToken();
         if (!token) return;
 
+        const dateObj = new Date(
+          `${selectedDate} ${selectedMonth} ${selectedYear}`
+        );
+        const formattedDate = dateObj.toLocaleDateString("en-CA");
+
         const queryParams = new URLSearchParams();
         queryParams.append("q[journal_type_eq]", "daily");
-        queryParams.append("q[start_date_eq]", startDate);
+        queryParams.append("q[start_date_eq]", formattedDate);
 
         const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
-        const response = await axios.get(url, {
+        const response = await fetch(url, {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -349,8 +217,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           },
         });
 
-        if (response.status === 200) {
-          const data = response.data;
+        if (response.ok) {
+          const data = await response.json();
           const journals = Array.isArray(data)
             ? data
             : data.user_journals || [];
@@ -359,52 +227,42 @@ const BusinessCompassDailyReport: React.FC = () => {
               id: number;
               start_date: string;
               report_data?: Record<string, unknown>;
-            }) => j.start_date === startDate
+            }) => j.start_date === formattedDate
           );
 
           if (existingReport && existingReport.id) {
             setCurrentReportId(existingReport.id);
-            // Populate state with data from existing report
+            // Optionally populate state (accomplishments, absent, rating, etc.)
             if (existingReport.report_data) {
-              const rData = existingReport.report_data as any;
-
-              if (rData.accomplishments?.items) {
+              const rData = existingReport.report_data;
+              if (rData.achievements) {
                 setAccomplishments(
-                  rData.accomplishments.items.map((ach: any, idx: number) => ({
+                  rData.achievements.map((ach: string, idx: number) => ({
                     id: `fetched-ach-${idx}`,
-                    text: ach.title || "",
+                    text: ach,
                     completed: true,
                     starred: false,
                   }))
                 );
               }
-
-              if (rData.accomplishments?.attachments) {
-                setUploadedFiles(
-                  rData.accomplishments.attachments.map((att: any, idx: number) => ({
-                    id: `fetched-att-${idx}`,
-                    name: att.filename,
-                    size: "N/A",
-                    type: att.content_type,
-                    base64: att.base64,
-                  }))
-                );
-              }
-
-              if (rData.tomorrow_plan) {
+              if (rData.tasks) {
                 setPlanningItems(
-                  rData.tomorrow_plan.map((p: any, idx: number) => ({
-                    id: `fetched-plan-${idx}`,
-                    text: p.title || "",
-                    starred: false,
-                  }))
+                  rData.tasks.map(
+                    (
+                      task: string | { text: string; starred: boolean },
+                      idx: number
+                    ) => ({
+                      id: `fetched-plan-${idx}`,
+                      text: typeof task === "string" ? task : task.text || "",
+                      starred: typeof task === "object" ? task.starred : false,
+                    })
+                  )
                 );
               }
-
-              if (existingReport.is_absent !== undefined) setIsAbsent(existingReport.is_absent);
-              if (existingReport.description) setAbsenceReason(existingReport.description);
-              if (existingReport.self_rating !== undefined)
-                setSelfRating([existingReport.self_rating]);
+              if (rData.is_absent !== undefined) setIsAbsent(rData.is_absent);
+              if (rData.absence_reason) setAbsenceReason(rData.absence_reason);
+              if (rData.self_rating !== undefined)
+                setSelfRating([rData.self_rating]);
             }
           } else {
             setCurrentReportId(null);
@@ -420,7 +278,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     };
 
     fetchExistingReport();
-  }, [startDate]);
+  }, [selectedDate, selectedMonth, selectedYear]);
 
   const fetchReportsList = async () => {
     try {
@@ -432,33 +290,22 @@ const BusinessCompassDailyReport: React.FC = () => {
       const queryParams = new URLSearchParams();
       queryParams.append("q[journal_type_eq]", "daily");
 
-      // Filter by current month/year
-      const monthIndex =
-        new Date(`${selectedMonth} 1, ${selectedYear}`).getMonth() + 1;
-      const startDate = `${selectedYear}-${monthIndex
-        .toString()
-        .padStart(2, "0")}-01`;
-      const lastDay = new Date(parseInt(selectedYear), monthIndex, 0).getDate();
-      const endDate = `${selectedYear}-${monthIndex
-        .toString()
-        .padStart(2, "0")}-${lastDay.toString().padStart(2, "0")}`;
-
-      queryParams.append("q[start_date_gteq]", startDate);
-      queryParams.append("q[start_date_lteq]", endDate);
-
-      const url = `${baseUrl.replace(
-        /\/+$/,
-        ""
-      )}/user_journals.json?${queryParams.toString()}`;
-
-      const response = await axios.get(url, {
+      const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
+      const response = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
-      setReportsList(response.data || []);
+      if (response.ok) {
+        const data = await response.json();
+        const allJournals = Array.isArray(data) ? data : data.user_journals || [];
+        // Filter locally to ensure only daily reports are shown in case API returns mixed
+        const dailyJournals = allJournals.filter((j: DailyReport) => j.journal_type === "daily");
+        setReportsList(dailyJournals);
+      }
     } catch (err) {
       console.error("Failed to fetch reports history:", err);
     } finally {
@@ -468,7 +315,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   React.useEffect(() => {
     fetchReportsList();
-  }, [selectedMonth, selectedYear]);
+  }, []);
 
   const handleSubmit = async () => {
     // Basic validation
@@ -491,30 +338,40 @@ const BusinessCompassDailyReport: React.FC = () => {
       const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
       const token = getToken();
 
+      // Construct date string
+      const dateObj = new Date(
+        `${selectedDate} ${selectedMonth} ${selectedYear}`
+      );
+      const formattedDate = dateObj.toLocaleDateString("en-CA"); // Gets YYYY-MM-DD format
+
+      const accomplishmentsScore = accomplishments.filter((a) => a.completed).length * 5;
+      const planningScore = planningItems.length * 5;
+
+      const reportData = {
+        kpi: "value",
+        achievements: accomplishments.map((a) => a.text),
+        tasks: planningItems.map((p) => p.text),
+        total_score: isAbsent ? 0 : Math.min(100, accomplishmentsScore + planningScore + 20), // 20 base points
+        is_absent: isAbsent,
+        absence_reason: absenceReason,
+        self_rating: selfRating[0],
+        sections: {
+          attendance: isAbsent ? 0 : 100,
+          tasks_completed: accomplishmentsScore,
+          collaboration: planningScore,
+        },
+        details: {
+          notes: null,
+        },
+      };
+
       const payload = {
         user_journal: {
           journal_type: "daily",
-          start_date: startDate,
-          end_date: startDate,
-          self_rating: selfRating[0],
-          is_absent: isAbsent,
+          start_date: formattedDate,
+          end_date: formattedDate,
           description: isAbsent ? absenceReason : null,
-          report_data: {
-            accomplishments: {
-              items: accomplishments.map((a) => ({
-                title: a.text,
-              })),
-              attachments: uploadedFiles.map((f) => ({
-                filename: f.name,
-                content_type: f.type,
-                base64: f.base64,
-              })),
-            },
-            tasks_issues: [], // No state for this yet in the component
-            tomorrow_plan: planningItems.map((p) => ({
-              title: p.text,
-            })),
-          },
+          report_data: reportData,
         },
       };
 
@@ -528,24 +385,23 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const url = `${baseUrl.replace(/\/+$/, "")}${endpoint}?${queryParams.toString()}`;
 
-      const response = await axios({
-        method: method,
-        url: url,
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        data: payload,
+        body: JSON.stringify(payload),
       });
 
-      if (response.status !== 200 && response.status !== 201) {
+      if (!response.ok) {
         throw new Error(
           `Server returned ${response.status} ${response.statusText}`
         );
       }
 
-      const data = response.data;
+      const data = await response.json();
 
       // If we just created it, store the new ID to allow subsequent PUT updates
       if (!currentReportId && data.id) {
@@ -559,7 +415,6 @@ const BusinessCompassDailyReport: React.FC = () => {
       // Clear form data after successful submission
       if (!isAbsent) {
         setAccomplishments([]);
-        setUploadedFiles([]);
       }
     } catch (err: unknown) {
       console.error("Submission failed:", err);
@@ -576,6 +431,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#f6f4ee] p-6 pb-20 font-poppins text-[#1a1a1a]">
       <AdminViewEmulation />
+
       {/* Interactive Info Banner Card */}
       {isBannerVisible && (
         <Card
@@ -693,7 +549,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           </h1>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="submit" className="w-full">
           <TabsList className="mb-6 inline-flex h-auto rounded-2xl bg-[#DA7756] p-1 shadow-sm">
             <TabsTrigger
               value="submit"
@@ -723,12 +579,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                       {selectedMonth.slice(0, 3)}, {selectedYear}
                     </span>
                   </div>
-                  {/* <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
                       className={cn("h-8 w-8 rounded-xl", btnIcon)}
-                      onClick={handlePrevWeek}
                     >
                       <ChevronLeft size={20} />
                     </Button>
@@ -736,11 +591,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                       variant="ghost"
                       size="icon"
                       className={cn("h-8 w-8 rounded-xl", btnIcon)}
-                      onClick={handleNextWeek}
                     >
                       <ChevronRight size={20} />
                     </Button>
-                  </div> */}
+                  </div>
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
@@ -749,20 +603,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                       key={index}
                       className={cn(
                         "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-pointer border-2 transition-all shrink-0 snap-center shadow-sm relative group",
-                        item.isFuture && "opacity-40 grayscale cursor-not-allowed pointer-events-none",
                         item.type === "missed" &&
-                        "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
+                          "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
                         item.type === "holiday" &&
-                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
+                          "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
                         item.type === "upcoming" &&
                           "bg-[#fdf8f6] text-[#b08972] border-[#DA7756]/10 hover:bg-[#fef6f4]",
                         item.type === "filled" &&
                           "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
-                        selectedDate === item.date && !item.isFuture
+                        selectedDate === item.date
                           ? "z-10 scale-105 border-[#DA7756] bg-[#DA7756] text-white ring-4 ring-[#DA7756]/20"
                           : "border-transparent"
                       )}
-                      onClick={() => !item.isFuture && handleSelectDate(item)}
+                      onClick={() => setSelectedDate(item.date)}
                     >
                       <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
                         {item.day}
@@ -774,11 +627,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <Badge
                           className={cn(
                             "text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter",
-                            (item.type === "missed" || item.type === "filled")
+                            item.type === "missed"
                               ? "bg-white/20 text-white"
                               : "bg-black/10 text-[#854d0e]",
                             selectedDate === item.date &&
-                            "bg-white/20 text-white"
+                              "bg-white/20 text-white"
                           )}
                         >
                           {item.status}
@@ -955,16 +808,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <span className="text-xs font-bold text-gray-400">
                           {uploadedFiles.length}/5
                         </span>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          multiple
-                          className="hidden"
-                        />
                         <Button
                           className={cn("flex h-10 items-center gap-2 rounded-xl px-6 text-xs", btnPrimary)}
-                          onClick={triggerFileUpload}
+                          onClick={handleMockUpload}
                         >
                           <Upload size={16} />
                           File Upload
@@ -1098,7 +944,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <CheckCircle2 size={18} className="text-[#DA7756]" />
                       </div>
                       <h3 className="text-sm font-bold tracking-tight text-[#1a1a1a]">
-                        Plan for {nextDayLabel || "Tomorrow"}
+                        Plan for Mon, 30 Mar
                       </h3>
                     </div>
                     <Badge className="rounded-[6px] border-none bg-[#DA7756] px-3 py-1 text-[10px] font-black tracking-widest text-white shadow-sm hover:bg-[#DA7756]">
@@ -1163,7 +1009,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             Plan your next working day!
                           </p>
                           <p className="text-xs text-gray-500 font-medium">
-                            List 3-5 key tasks for {nextDayLabel || "tomorrow"} to stay focused.
+                            List 3-5 key tasks for 30 Mar to stay focused.
                           </p>
                         </div>
                       </div>
@@ -1865,13 +1711,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                               By: Common Admin Id
                             </p>
                           </div>
-
+                          
                           <div className="flex items-start gap-4">
                             {/* Badges */}
                             <div className="flex flex-col items-end gap-2">
                               <Badge className="bg-[#f59e0b] hover:bg-[#f59e0b] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
                                 <Star size={12} className="fill-white" />
-                                {report.report_data?.details?.self_rating ?? report.report_data?.self_rating ?? report.self_rating ?? 0}/10
+                                {report.report_data?.self_rating || 0}/10
                               </Badge>
                               <Badge className="bg-[#dc2626] hover:bg-[#dc2626] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
                                 <Target size={12} className="fill-white" />
@@ -1881,7 +1727,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 {new Date(report.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                               </Badge>
                             </div>
-
+                            
                             {/* Actions */}
                             <div className="flex flex-col gap-2">
                               <Button
@@ -1890,12 +1736,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 className="h-8 px-4 text-blue-600 border-gray-200 hover:bg-blue-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
                                 onClick={() => {
                                   const date = new Date(report.start_date);
-                                  const formattedDate = date.toLocaleDateString("en-CA");
-
-                                  // Set the start date first (this triggers the fetchExistingReport useEffect)
-                                  setStartDate(formattedDate);
-
-                                  // Set calendar dates
                                   setSelectedDate(
                                     date.getDate().toString().padStart(2, "0")
                                   );
@@ -1904,62 +1744,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   );
                                   setSelectedYear(date.getFullYear().toString());
 
-                                  // Set the current report ID
-                                  setCurrentReportId(report.id);
-
-                                  // Populate accomplishments
-                                  if (report.report_data?.accomplishments?.items) {
-                                    setAccomplishments(
-                                      report.report_data.accomplishments.items.map((ach: any, idx: number) => ({
-                                        id: `fetched-ach-${idx}`,
-                                        text: ach.title || "",
-                                        completed: true,
-                                        starred: false,
-                                      }))
-                                    );
-                                  } else {
-                                    setAccomplishments([]);
-                                  }
-
-                                  // Load accomplishment attachments
-                                  if (report.report_data?.accomplishments?.attachments) {
-                                    setUploadedFiles(
-                                      report.report_data.accomplishments.attachments.map((att: any, idx: number) => ({
-                                        id: `fetched-att-${idx}`,
-                                        name: att.filename,
-                                        size: "N/A",
-                                        type: att.content_type,
-                                        base64: att.base64,
-                                      }))
-                                    );
-                                  } else {
-                                    setUploadedFiles([]);
-                                  }
-
-                                  // Populate planning items
-                                  if (report.report_data?.tomorrow_plan) {
-                                    setPlanningItems(
-                                      report.report_data.tomorrow_plan.map((p: any, idx: number) => ({
-                                        id: `fetched-plan-${idx}`,
-                                        text: p.title || "",
-                                        starred: false,
-                                      }))
-                                    );
-                                  } else {
-                                    setPlanningItems([]);
-                                  }
-
-                                  // Set absence and rating
-                                  if (report.is_absent !== undefined) setIsAbsent(report.is_absent);
-                                  if (report.description) setAbsenceReason(report.description);
-                                  if (report.self_rating !== undefined)
-                                    setSelfRating([report.self_rating]);
-
-                                  // Switch to submit tab
-                                  setActiveTab("submit");
-
-                                  // Scroll to top
                                   window.scrollTo({ top: 0, behavior: "smooth" });
+                                  const submitTab = document.querySelector(
+                                    '[data-value="submit"]'
+                                  ) as HTMLElement;
+                                  if (submitTab) submitTab.click();
                                 }}
                               >
                                 <Edit size={14} className="text-blue-500" /> Edit
@@ -1980,28 +1769,28 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                         {/* Score Breakdown container */}
                         <div className="bg-[#f8fafc] border border-gray-200 rounded-[8px] p-4 mb-6">
-                          <div className="flex items-center gap-2 mb-3">
-                            <BarChart3 size={14} className="text-blue-500" />
-                            <span className="text-xs font-bold text-slate-700">Score Breakdown</span>
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Accomplishments</p>
-                              <p className="text-base font-bold text-[#c026d3]">{report.report_data?.sections?.tasks_completed || 0}/25</p>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Tasks</p>
-                              <p className="text-base font-bold text-[#ea580c]">{report.report_data?.sections?.attendance || 0}/25</p>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Planning</p>
-                              <p className="text-base font-bold text-[#0d9488]">{report.report_data?.sections?.collaboration || 0}/25</p>
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Timing</p>
-                              <p className="text-base font-bold text-[#d97706]">0/25</p>
-                            </div>
-                          </div>
+                           <div className="flex items-center gap-2 mb-3">
+                             <BarChart3 size={14} className="text-blue-500" />
+                             <span className="text-xs font-bold text-slate-700">Score Breakdown</span>
+                           </div>
+                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Accomplishments</p>
+                               <p className="text-base font-bold text-[#c026d3]">{(report.report_data?.sections as {TASKS_COMPLETED?: number; tasks_completed?: number})?.tasks_completed || 0}/25</p>
+                             </div>
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Tasks</p>
+                               <p className="text-base font-bold text-[#ea580c]">{(report.report_data?.sections as {tasks?: number})?.tasks || 0}/25</p>
+                             </div>
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Planning</p>
+                               <p className="text-base font-bold text-[#0d9488]">{(report.report_data?.sections as {collaboration?: number})?.collaboration || 0}/25</p>
+                             </div>
+                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
+                               <p className="text-[10px] text-gray-500 font-medium mb-1">Timing</p>
+                               <p className="text-base font-bold text-[#d97706]">0/25</p>
+                             </div>
+                           </div>
                         </div>
 
                         {/* Bottom sections */}
@@ -2013,12 +1802,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="text-sm font-semibold text-[#1a1a1a]">Accomplishments</span>
                             </div>
                             <div className="p-4">
-                              {report.report_data?.accomplishments?.items?.length ? (
+                              {report.report_data?.achievements?.length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.accomplishments.items.map((ach: any, idx: number) => (
+                                  {report.report_data.achievements.map((ach: string, idx: number) => (
                                     <li key={idx} className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2">
                                       <span className="text-gray-400 font-medium">✓</span>
-                                      {ach.title}
+                                      {ach}
                                     </li>
                                   ))}
                                 </ul>
@@ -2037,12 +1826,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="text-sm font-semibold text-[#1a1a1a]">Tomorrow's Plan</span>
                             </div>
                             <div className="p-4">
-                              {report.report_data?.tomorrow_plan?.length ? (
+                              {report.report_data?.tasks?.length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.tomorrow_plan.map((task: any, idx: number) => (
+                                  {report.report_data.tasks.map((task: { text?: string } | string, idx: number) => (
                                     <li key={idx} className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2">
                                       <span className="text-gray-400 font-bold mt-0.5">•</span>
-                                      {task.title}
+                                      {typeof task === "string" ? task : task?.text || ""}
                                     </li>
                                   ))}
                                 </ul>
@@ -2054,37 +1843,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           </div>
                         </div>
-
-                        {/* Attachments Section */}
-                        {report.report_data?.accomplishments?.attachments?.length > 0 && (
-                          <div className="space-y-3 mt-4">
-                            <div className="flex items-center gap-2">
-                              <Upload size={16} className="text-blue-600" />
-                              <span className="text-sm font-bold text-[#1a1a1a]">Attachments ({report.report_data.accomplishments.attachments.length})</span>
-                            </div>
-                            <div className="space-y-2">
-                              {report.report_data.accomplishments.attachments.map((att: any, idx: number) => (
-                                <div
-                                  key={idx}
-                                  onClick={() => {
-                                    window.open(att.base64, '_blank');
-                                  }}
-                                  className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[10px] border border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <ImageIcon size={16} className="text-blue-500" />
-                                    <span className="text-sm font-medium text-blue-600 hover:underline">
-                                      {att.filename}
-                                    </span>
-                                  </div>
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    {att.size || 'N/A'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
 
                       </div>
                     </Card>

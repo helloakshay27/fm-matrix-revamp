@@ -315,7 +315,7 @@ export const BillsAdd: React.FC = () => {
         const token = localStorage.getItem('token');
         const lock_account_id = localStorage.getItem('lock_account_id');
         axios
-            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json`, {
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined,
                     "Content-Type": "application/json"
@@ -705,61 +705,61 @@ export const BillsAdd: React.FC = () => {
 
         const newErrors: Record<string, string> = {};
 
-    if (!selectedCustomer) {
-        setErrors(newErrors);
-        toast.error('Vendor is required');
-        return false;
-    }
-     // NEW VALIDATIONS
-    if (!sourceOfSupply) {
-        setErrors(newErrors);
-        toast.error('Source of Supply is required');
-        return false;
-    }
+        if (!selectedCustomer) {
+            setErrors(newErrors);
+            toast.error('Vendor is required');
+            return false;
+        }
+        // NEW VALIDATIONS
+        if (!sourceOfSupply) {
+            setErrors(newErrors);
+            toast.error('Source of Supply is required');
+            return false;
+        }
 
-    if (!destinationOfSupply) {
-        setErrors(newErrors);
-        toast.error('Destination of Supply is required');
-        return false;
-    }
+        if (!destinationOfSupply) {
+            setErrors(newErrors);
+            toast.error('Destination of Supply is required');
+            return false;
+        }
 
-    if (!salesOrderDate) {
-        setErrors(newErrors);
-        toast.error('Bill date is required');
-        return false;
-    }
+        if (!salesOrderDate) {
+            setErrors(newErrors);
+            toast.error('Bill date is required');
+            return false;
+        }
 
-    // if (!expectedShipmentDate) {
-    //     setErrors(newErrors);
-    //     toast.error('Expected Shipment date is required');
-    //     return false;
-    // }
+        // if (!expectedShipmentDate) {
+        //     setErrors(newErrors);
+        //     toast.error('Expected Shipment date is required');
+        //     return false;
+        // }
 
-    if (expectedShipmentDate && salesOrderDate &&
-        new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+        if (expectedShipmentDate && salesOrderDate &&
+            new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
 
-        toast.error('Expected Shipment Date cannot be earlier than Sales Order Date');
-        return false;
-    }
+            toast.error('Expected Shipment Date cannot be earlier than Sales Order Date');
+            return false;
+        }
 
-    if (!selectedTerm) {
-        setErrors(newErrors);
-        toast.error('Payment terms is required');
-        return false;
-    }
+        if (!selectedTerm) {
+            setErrors(newErrors);
+            toast.error('Payment terms is required');
+            return false;
+        }
 
-    const hasValidItems = items.some(
-        item => item.name && item.quantity > 0 && item.rate > 0
-    );
+        const hasValidItems = items.some(
+            item => item.name && item.quantity > 0 && item.rate > 0
+        );
 
-    if (!hasValidItems) {
-        setErrors(newErrors);
-        toast.error('Please add at least one valid item');
-        return false;
-    }
+        if (!hasValidItems) {
+            setErrors(newErrors);
+            toast.error('Please add at least one valid item');
+            return false;
+        }
 
-    setErrors({});
-    return true;
+        setErrors({});
+        return true;
     };
 
     const saleOrderPayload = {
@@ -1105,22 +1105,22 @@ export const BillsAdd: React.FC = () => {
             </header> */}
             <header className="mb-4">
 
-  {/* Back Button - Top */}
-  <button
-    type="button"
-    onClick={() => navigate('/accounting/bills')}
-    className="flex items-center gap-2 text-black font-medium mb-2"
-  >
-    <ArrowLeft className="h-4 w-4 text-black" />
-    Back to Bill List
-  </button>
+                {/* Back Button - Top */}
+                <button
+                    type="button"
+                    onClick={() => navigate('/accounting/bills')}
+                    className="flex items-center gap-2 text-black font-medium mb-2"
+                >
+                    <ArrowLeft className="h-4 w-4 text-black" />
+                    Back to Bill List
+                </button>
 
-  {/* Title - Below */}
-  <h1 className="text-2xl font-bold text-black">
-    New Bill
-  </h1>
+                {/* Title - Below */}
+                <h1 className="text-2xl font-bold text-black">
+                    New Bill
+                </h1>
 
-</header>
+            </header>
 
             <div className="space-y-6">
                 {/* Customer Section */}
@@ -1756,7 +1756,7 @@ export const BillsAdd: React.FC = () => {
                                 startIcon={<Add />}
                                 onClick={addItem}
                                 // variant="outlined"
-                                variant="outline" 
+                                variant="outline"
                                 sx={{ textTransform: 'none' }}
                             >
                                 Add New Row

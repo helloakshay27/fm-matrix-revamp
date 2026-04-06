@@ -1422,7 +1422,6 @@ export const sidebarToApiFunctionMapping = {
     "checklist master",
   ],
   energy: ["pms_energy", "energy", "meters"],
-  "meter types": ["pms_meter_types", "meter types"],
   water: ["pms_water", "water"],
   stp: ["pms_stp", "stp"],
   "daily readings": ["pms_daily_readings", "daily readings"],

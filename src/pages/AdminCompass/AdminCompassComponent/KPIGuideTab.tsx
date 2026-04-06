@@ -18,7 +18,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { kpiClass } from "./shared";
+import { kpiClass } from "./Shared";
 
 const CHECKLIST_PILLS = [
   "Specific & Clear",
@@ -44,7 +44,8 @@ const STEPS = [
   {
     n: 2,
     title: "Make It Measurable with a Unit",
-    description: "Every KPI needs a clear unit so progress can be tracked objectively.",
+    description:
+      "Every KPI needs a clear unit so progress can be tracked objectively.",
     detail:
       "Pick a unit from your organization’s list (₹, %, #, Hours, etc.) so everyone reports the same way and dashboards stay comparable.",
     icon: BarChart3,
@@ -54,7 +55,8 @@ const STEPS = [
   {
     n: 3,
     title: "Set a Realistic Target Value",
-    description: "Set a target that is ambitious but achievable based on past performance.",
+    description:
+      "Set a target that is ambitious but achievable based on past performance.",
     detail:
       "Use history, seasonality, and capacity when you set the number. You can adjust targets later as the business changes.",
     icon: TrendingUp,
@@ -64,7 +66,8 @@ const STEPS = [
   {
     n: 4,
     title: "Set Traffic Light Thresholds",
-    description: "Define when a KPI is Green (on track), Yellow (at risk), or Red (off track).",
+    description:
+      "Define when a KPI is Green (on track), Yellow (at risk), or Red (off track).",
     detail:
       "Thresholds turn raw numbers into decisions. Agree on green/yellow/red bands with the owner so alerts feel fair and actionable.",
     icon: AlertCircle,
@@ -74,7 +77,8 @@ const STEPS = [
   {
     n: 5,
     title: "Assign to the Right Person",
-    description: "Every KPI should have a clear owner who is responsible for tracking and improving it.",
+    description:
+      "Every KPI should have a clear owner who is responsible for tracking and improving it.",
     detail:
       "The owner updates actuals, explains variances, and drives follow-up. One primary owner keeps accountability simple.",
     icon: UserRound,
@@ -84,7 +88,8 @@ const STEPS = [
   {
     n: 6,
     title: "Choose the Right Frequency",
-    description: "How often you track a KPI should match how often it changes meaningfully.",
+    description:
+      "How often you track a KPI should match how often it changes meaningfully.",
     detail:
       "Use weekly for fast-moving metrics (pipeline, tickets) and monthly or quarterly for slower ones (revenue, churn).",
     icon: CheckCircle2,
@@ -135,7 +140,7 @@ interface SampleIndustry {
   cardBg: string;
   cardBorder: string;
   iconWrap: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; strokeWidth?: string | number }>;
   departments: SampleDepartment[];
 }
 
@@ -153,7 +158,10 @@ const INDIAN_SAMPLE_INDUSTRIES: SampleIndustry[] = [
       {
         name: "Production",
         kpis: [
-          { name: "Overall equipment effectiveness (OEE) %", frequency: "daily" },
+          {
+            name: "Overall equipment effectiveness (OEE) %",
+            frequency: "daily",
+          },
           { name: "Production volume vs plan", frequency: "daily" },
           { name: "Machine downtime hours", frequency: "weekly" },
           { name: "First-pass yield %", frequency: "weekly" },
@@ -163,8 +171,14 @@ const INDIAN_SAMPLE_INDUSTRIES: SampleIndustry[] = [
       {
         name: "Quality",
         kpis: [
-          { name: "Defects per million opportunities (DPMO)", frequency: "weekly" },
-          { name: "Customer complaints — manufacturing linked", frequency: "weekly" },
+          {
+            name: "Defects per million opportunities (DPMO)",
+            frequency: "weekly",
+          },
+          {
+            name: "Customer complaints — manufacturing linked",
+            frequency: "weekly",
+          },
           { name: "Inspection pass rate %", frequency: "daily" },
           { name: "Cost of poor quality (COPQ)", frequency: "monthly" },
         ],
@@ -193,7 +207,10 @@ const INDIAN_SAMPLE_INDUSTRIES: SampleIndustry[] = [
           { name: "Lost-time injury frequency", frequency: "monthly" },
           { name: "Near-miss reports logged", frequency: "weekly" },
           { name: "Safety audit closure rate", frequency: "quarterly" },
-          { name: "Statutory compliance checklist completion %", frequency: "monthly" },
+          {
+            name: "Statutory compliance checklist completion %",
+            frequency: "monthly",
+          },
         ],
       },
     ],
@@ -240,7 +257,10 @@ const INDIAN_SAMPLE_INDUSTRIES: SampleIndustry[] = [
         name: "Back office",
         kpis: [
           { name: "GST filing timeliness", frequency: "monthly" },
-          { name: "Cash deposit vs POS reconciliation variance", frequency: "daily" },
+          {
+            name: "Cash deposit vs POS reconciliation variance",
+            frequency: "daily",
+          },
           { name: "Vendor payment within terms %", frequency: "monthly" },
           { name: "Inventory audit accuracy %", frequency: "quarterly" },
         ],
@@ -263,7 +283,10 @@ const INDIAN_SAMPLE_INDUSTRIES: SampleIndustry[] = [
           { name: "Purchase order cycle time", frequency: "weekly" },
           { name: "Cost savings vs last quarter", frequency: "quarterly" },
           { name: "Supplier quality rejection rate", frequency: "weekly" },
-          { name: "Import / customs clearance lead time", frequency: "monthly" },
+          {
+            name: "Import / customs clearance lead time",
+            frequency: "monthly",
+          },
           { name: "Purchase price vs benchmark index", frequency: "monthly" },
         ],
       },
@@ -280,7 +303,10 @@ const INDIAN_SAMPLE_INDUSTRIES: SampleIndustry[] = [
         name: "Sales (B2B)",
         kpis: [
           { name: "Revenue vs target", frequency: "monthly" },
-          { name: "Active customer accounts (repeat orders)", frequency: "weekly" },
+          {
+            name: "Active customer accounts (repeat orders)",
+            frequency: "weekly",
+          },
           { name: "Average collection period (days)", frequency: "monthly" },
           { name: "Gross margin by product line", frequency: "monthly" },
           { name: "Order win rate from quotations", frequency: "quarterly" },
@@ -390,9 +416,12 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
               <BookOpen className="h-6 w-6 text-white" strokeWidth={2} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white sm:text-2xl">KPI Creation Guide</h1>
+              <h1 className="text-xl font-bold text-white sm:text-2xl">
+                KPI Creation Guide
+              </h1>
               <p className="mt-1 max-w-xl text-sm leading-relaxed text-white/90">
-                Learn how to create KPIs and browse sample KPIs for your industry.
+                Learn how to create KPIs and browse sample KPIs for your
+                industry.
               </p>
             </div>
           </div>
@@ -413,7 +442,10 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
             className={cn(
               "inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-all sm:flex-none sm:px-5",
               panel === "how-to"
-                ? cn("border border-[#DA7756] text-[#DA7756] shadow-sm", kpiClass.surfacePanel)
+                ? cn(
+                    "border border-[#DA7756] text-[#DA7756] shadow-sm",
+                    kpiClass.surfacePanel
+                  )
                 : "border-transparent bg-transparent text-neutral-600 hover:bg-[#fef6f4]/70 hover:text-[#1a1a1a]"
             )}
           >
@@ -426,7 +458,10 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
             className={cn(
               "inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-all sm:flex-none sm:px-5",
               panel === "samples"
-                ? cn("border border-[#DA7756] text-[#DA7756] shadow-sm", kpiClass.surfacePanel)
+                ? cn(
+                    "border border-[#DA7756] text-[#DA7756] shadow-sm",
+                    kpiClass.surfacePanel
+                  )
                 : "border-transparent bg-transparent text-neutral-600 hover:bg-[#fef6f4]/70 hover:text-[#1a1a1a]"
             )}
           >
@@ -485,11 +520,15 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
                       </span>
                     </div>
                     <div className="min-w-0 flex-1 pt-0.5">
-                      <p className="text-xs font-semibold text-neutral-500">Step {step.n}</p>
+                      <p className="text-xs font-semibold text-neutral-500">
+                        Step {step.n}
+                      </p>
                       <h3 className="mt-0.5 text-sm font-bold text-[#1a1a1a] sm:text-base">
                         {step.title}
                       </h3>
-                      <p className="mt-1 text-sm text-neutral-600">{step.description}</p>
+                      <p className="mt-1 text-sm text-neutral-600">
+                        {step.description}
+                      </p>
                     </div>
                     <ChevronDown
                       className={cn(
@@ -500,7 +539,9 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
                   </button>
                   {isOpen && (
                     <div className="border-t border-[rgba(218,119,86,0.1)] bg-[#faf9f6]/90 px-4 py-4 sm:px-5 sm:pl-[4.25rem]">
-                      <p className="text-sm leading-relaxed text-neutral-700">{step.detail}</p>
+                      <p className="text-sm leading-relaxed text-neutral-700">
+                        {step.detail}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -512,9 +553,12 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
               <CheckCircle2 className="h-7 w-7" strokeWidth={2} />
             </div>
-            <h3 className="text-lg font-bold text-[#1a1a1a]">Ready to create your first KPI?</h3>
+            <h3 className="text-lg font-bold text-[#1a1a1a]">
+              Ready to create your first KPI?
+            </h3>
             <p className="mx-auto mt-2 max-w-lg text-sm text-neutral-600">
-              Head over to the KPI Management tab and click &quot;New KPI&quot; to get started.
+              Head over to the KPI Management tab and click &quot;New KPI&quot;
+              to get started.
             </p>
             <button
               type="button"
@@ -530,30 +574,38 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
         <div className="space-y-5">
           <div className="rounded-xl border border-[rgba(218,119,86,0.15)] bg-neutral-50/90 p-5 shadow-sm sm:p-6">
             <div className="mb-3 flex items-start gap-2">
-              <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" strokeWidth={2} />
+              <Lightbulb
+                className="mt-0.5 h-5 w-5 shrink-0 text-amber-500"
+                strokeWidth={2}
+              />
               <div className="min-w-0">
                 <h2 className="text-base font-bold text-[#1a1a1a] sm:text-lg">
-                  Sample KPIs for Indian Businesses — Manufacturing, Retail, Trading &amp; Services
+                  Sample KPIs for Indian Businesses — Manufacturing, Retail,
+                  Trading &amp; Services
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-                  Click on an industry, then a department to view sample KPIs. Use these as a reference
-                  when creating your own KPIs.
+                  Click on an industry, then a department to view sample KPIs.
+                  Use these as a reference when creating your own KPIs.
                 </p>
               </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-neutral-200/80 pt-4">
-              {(Object.keys(FREQUENCY_BADGE) as SampleFrequency[]).map((freq) => (
-                <span
-                  key={freq}
-                  className={cn(
-                    "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-                    FREQUENCY_BADGE[freq].className
-                  )}
-                >
-                  {FREQUENCY_BADGE[freq].label}
-                </span>
-              ))}
-              <span className="text-sm text-neutral-500">— recommended tracking frequency</span>
+              {(Object.keys(FREQUENCY_BADGE) as SampleFrequency[]).map(
+                (freq) => (
+                  <span
+                    key={freq}
+                    className={cn(
+                      "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                      FREQUENCY_BADGE[freq].className
+                    )}
+                  >
+                    {FREQUENCY_BADGE[freq].label}
+                  </span>
+                )
+              )}
+              <span className="text-sm text-neutral-500">
+                — recommended tracking frequency
+              </span>
             </div>
           </div>
 
@@ -584,7 +636,9 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
                       <IndustryIcon className="h-6 w-6" strokeWidth={2} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-bold text-[#1a1a1a]">{ind.name}</h3>
+                      <h3 className="text-base font-bold text-[#1a1a1a]">
+                        {ind.name}
+                      </h3>
                       <p className="mt-0.5 text-sm text-neutral-600">
                         {ind.deptCount} departments · {ind.kpiCount} sample KPIs
                       </p>
@@ -636,7 +690,9 @@ const KPIGuideTab: React.FC<KPIGuideTabProps> = ({ onGoToManagement }) => {
                                       key={k.name}
                                       className="flex flex-col gap-2 border-b border-neutral-50 py-3 last:border-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                                     >
-                                      <span className="text-sm text-neutral-800">{k.name}</span>
+                                      <span className="text-sm text-neutral-800">
+                                        {k.name}
+                                      </span>
                                       <span
                                         className={cn(
                                           "inline-flex w-fit shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold",

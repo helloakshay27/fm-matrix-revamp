@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // ─────────────────────────────────────────────
 // shared.jsx — API, constants, shared components
 // ─────────────────────────────────────────────
@@ -288,7 +289,7 @@ export const SectionCard = ({ children, className = "" }) => (
   </Card>
 );
 
-export const BtnPrimary = ({ children, onClick, className = "", type = "button", icon: Icon }) => (
+export const BtnPrimary = ({ children, onClick, className = "", type = "button" as "button" | "submit" | "reset", icon: Icon }) => (
   <button type={type} onClick={onClick} className={cn("inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#DA7756] text-white shadow-sm hover:bg-[#c9674a] active:scale-[0.97] transition-all duration-150", className)}>
     {Icon && <Icon className="w-4 h-4" />} {children}
   </button>

@@ -2,10 +2,17 @@
 // KPIManagementTab.tsx
 // ─────────────────────────────────────────────
 import React, { useMemo, useState } from "react";
-import { Trash2, Edit, UserRound, Search, LayoutGrid, List } from "lucide-react";
+import {
+  Trash2,
+  Edit,
+  UserRound,
+  Search,
+  LayoutGrid,
+  List,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { C, kpiClass } from "./shared";
+import { C, kpiClass } from "./Shared";
 import type { KPICardData } from "./kpiTypes";
 
 const tagStyles: Record<string, string> = {
@@ -57,7 +64,8 @@ const KPICardView: React.FC<{
               key={tag}
               className={cn(
                 "inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold",
-                tagStyles[tag] ?? "bg-neutral-100 text-neutral-800 border-neutral-200"
+                tagStyles[tag] ??
+                  "bg-neutral-100 text-neutral-800 border-neutral-200"
               )}
             >
               {tag}
@@ -66,7 +74,9 @@ const KPICardView: React.FC<{
         </div>
       </div>
 
-      <h3 className="text-[15px] font-bold leading-snug text-[#1a1a1a]">{kpi.name}</h3>
+      <h3 className="text-[15px] font-bold leading-snug text-[#1a1a1a]">
+        {kpi.name}
+      </h3>
       <p className="mt-1 text-xs text-neutral-500">Owner: {kpi.owner}</p>
 
       <div className="mt-4 flex items-start justify-between gap-3 border-t border-[rgba(218,119,86,0.12)] pt-3">
@@ -163,9 +173,13 @@ const KPIListView: React.FC<{
                   className={cn("h-4 w-4", kpiClass.checkbox)}
                 />
               </td>
-              <td className="px-3 py-3 font-semibold text-[#1a1a1a]">{kpi.name}</td>
+              <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
+                {kpi.name}
+              </td>
               <td className="px-3 py-3 text-neutral-600">{kpi.owner}</td>
-              <td className="px-3 py-3 font-semibold text-[#1a1a1a]">{kpi.target}</td>
+              <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
+                {kpi.target}
+              </td>
               <td className="px-3 py-3 text-neutral-600">{kpi.frequency}</td>
               <td className="px-3 py-3">
                 <span
@@ -181,7 +195,10 @@ const KPIListView: React.FC<{
                 <div className="inline-flex gap-1">
                   <button
                     type="button"
-                    className={cn("inline-flex h-8 w-8 items-center justify-center", kpiClass.btnIcon)}
+                    className={cn(
+                      "inline-flex h-8 w-8 items-center justify-center",
+                      kpiClass.btnIcon
+                    )}
                     aria-label="Edit"
                   >
                     <Edit className="h-3.5 w-3.5" />
@@ -189,7 +206,10 @@ const KPIListView: React.FC<{
                   <button
                     type="button"
                     onClick={() => onDelete(kpi.id)}
-                    className={cn("inline-flex h-8 w-8 items-center justify-center", kpiClass.btnDanger)}
+                    className={cn(
+                      "inline-flex h-8 w-8 items-center justify-center",
+                      kpiClass.btnDanger
+                    )}
                     aria-label="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -204,7 +224,10 @@ const KPIListView: React.FC<{
   );
 };
 
-const KPIManagementTab: React.FC<KPIManagementTabProps> = ({ kpis, setKpis }) => {
+const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
+  kpis,
+  setKpis,
+}) => {
   const [view, setView] = useState<"cards" | "list">("cards");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -307,12 +330,18 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({ kpis, setKpis }) =>
         style={{ backgroundColor: C.primaryBg }}
       >
         <div>
-          <h3 className="text-sm font-bold text-[#1a1a1a]">Quick Setup: Department KPIs</h3>
+          <h3 className="text-sm font-bold text-[#1a1a1a]">
+            Quick Setup: Department KPIs
+          </h3>
           <p className="mt-1 text-xs text-neutral-600">
-            Configure all KPIs for a department at once with priorities and thresholds.
+            Configure all KPIs for a department at once with priorities and
+            thresholds.
           </p>
         </div>
-        <select className={cn(filterSelectClass, "min-w-[200px] shrink-0")} defaultValue="">
+        <select
+          className={cn(filterSelectClass, "min-w-[200px] shrink-0")}
+          defaultValue=""
+        >
           <option value="" disabled>
             Select Department…
           </option>
@@ -328,7 +357,10 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({ kpis, setKpis }) =>
             type="checkbox"
             checked={allFilteredSelected}
             onChange={toggleSelectAll}
-            className={cn("h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4", kpiClass.checkbox)}
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4",
+              kpiClass.checkbox
+            )}
           />
           Select all
         </label>
