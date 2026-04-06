@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   datesData, detailedReports, failedMembers, statusColors, fullMonthNames,
   SectionCard, BtnPrimary, BtnOutline, BtnIcon, BtnPurple,
-} from "./shared";
+} from "./Shared";
 
 const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
   const selectedDate = datesData.find((d) => d.id === selectedDateId) || datesData[0];
