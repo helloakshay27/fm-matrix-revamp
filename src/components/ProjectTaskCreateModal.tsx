@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import CloseIcon from "@mui/icons-material/Close";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import ImageIcon from "@mui/icons-material/Image";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import DescriptionIcon from "@mui/icons-material/Description";
+import FolderIcon from "@mui/icons-material/Folder";
+import AudioFileIcon from "@mui/icons-material/AudioFile";
+import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 import { CalendarIcon, X, Mic, MicOff } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import axios from "axios";
@@ -84,7 +93,9 @@ const TaskForm = ({
   setEndDate,
   setIsModalOpen,
   setIsTagModalOpen,
-  isConversion
+  isConversion,
+  attachments,
+  setAttachments
 }) => {
   const { data: userAvailabilityData } = useAppSelector(
     (state) => state.fetchUserAvailability
@@ -92,6 +103,37 @@ const TaskForm = ({
   const userAvailability = Array.isArray(userAvailabilityData)
     ? userAvailabilityData
     : [];
+
+  // Helper function to get file type icon and color
+  const getFileTypeInfo = useCallback((fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+
+    if (['pdf'].includes(ext)) {
+      return { icon: PictureAsPdfIcon, color: '#DC2626', bgColor: '#FEE2E2', type: 'PDF' };
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      return { icon: ImageIcon, color: '#2563EB', bgColor: '#DBEAFE', type: 'Image' };
+    }
+    if (['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) {
+      return { icon: AudioFileIcon, color: '#9333EA', bgColor: '#F3E8FF', type: 'Audio' };
+    }
+    if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) {
+      return { icon: VideoLibraryIcon, color: '#EA580C', bgColor: '#FFEDD5', type: 'Video' };
+    }
+    if (['doc', 'docx', 'txt', 'rtf', 'xlsx', 'xls', 'csv', 'ppt', 'pptx'].includes(ext)) {
+      return { icon: DescriptionIcon, color: '#16A34A', bgColor: '#DCFCE7', type: 'Document' };
+    }
+    return { icon: AttachFileIcon, color: '#6B7280', bgColor: '#F3F4F6', type: 'File' };
+  }, []);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
   const baseUrl = localStorage.getItem("baseUrl");
 
   const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
@@ -101,7 +143,10 @@ const TaskForm = ({
 
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragDropRef = useRef<HTMLDivElement>(null);
 
+  const [isDragActive, setIsDragActive] = useState(false);
   const [shift, setShift] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -187,6 +232,58 @@ const TaskForm = ({
       setRosterData(null);
     } finally {
       setLoadingRoster(false);
+    }
+  };
+
+  // Validate file sizes - max 10MB per file
+  const validateAndAddFiles = (filesToAdd: File[]) => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    filesToAdd.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push(`${file.name} (${formatFileSize(file.size)})`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    // Show error for oversized files
+    if (invalidFiles.length > 0) {
+      toast.dismiss();
+      invalidFiles.forEach((fileName) => {
+        toast.error(`${fileName} exceeds 10MB limit`);
+      });
+    }
+
+    // Add valid files
+    if (validFiles.length > 0) {
+      setAttachments([...attachments, ...validFiles]);
+      toast.dismiss();
+      toast.success(`${validFiles.length} file(s) added successfully`);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const files = Array.from(e.dataTransfer.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
     }
   };
 
@@ -956,6 +1053,151 @@ const TaskForm = ({
           disabled={isReadOnly}
         />
       </div>
+
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          Attachments
+          {attachments.length > 0 && (
+            <span className="ml-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+              {attachments.length}
+            </span>
+          )}
+        </label>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []) as File[];
+            if (files.length > 0) {
+              validateAndAddFiles(files);
+            }
+            if (fileInputRef.current) {
+              fileInputRef.current.value = "";
+            }
+          }}
+          disabled={isReadOnly}
+          className="hidden"
+          accept="*/*"
+        />
+
+        {/* Drag and Drop Area */}
+        <div
+          ref={dragDropRef}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          onClick={() => !isReadOnly && fileInputRef.current?.click()}
+          className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
+            ? 'border-blue-500 bg-blue-50'
+            : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+            } ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <CloudUploadIcon
+              sx={{
+                fontSize: 40,
+                color: isDragActive ? '#3B82F6' : '#9CA3AF',
+                transition: 'all 0.3s ease',
+              }}
+            />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-gray-700">
+                {isDragActive ? 'Drop files here' : 'Drag files here or click to browse'}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Support: PDF, Images, Videos, Audio, Documents (Max size per file: 10MB)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* File List */}
+        {attachments.length > 0 && (
+          <div className="mt-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-700">
+                Files to upload ({attachments.length})
+              </h3>
+              {attachments.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setAttachments([])}
+                  disabled={isReadOnly}
+                  className="text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {attachments.map((file, idx) => {
+                const fileInfo = getFileTypeInfo(file.name);
+                const IconComponent = fileInfo.icon;
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:shadow-sm transition-shadow"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div
+                        className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
+                        style={{ backgroundColor: fileInfo.bgColor }}
+                      >
+                        <IconComponent sx={{ fontSize: 20, color: fileInfo.color }} />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {file.name}
+                          </p>
+                          <span
+                            className="px-2 py-0.5 text-xs font-semibold rounded-full text-white flex-shrink-0"
+                            style={{ backgroundColor: fileInfo.color }}
+                          >
+                            {fileInfo.type}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAttachments(attachments.filter((_, i) => i !== idx));
+                      }}
+                      disabled={isReadOnly}
+                      className="ml-3 flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Remove file"
+                    >
+                      <CloseIcon sx={{ fontSize: 18 }} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Summary */}
+            <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <span className="font-semibold">{attachments.length}</span> file(s) ready to upload
+                {' '}
+                <span className="text-blue-600">
+                  ({formatFileSize(attachments.reduce((sum, f) => sum + f.size, 0))})
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -996,6 +1238,7 @@ const ProjectTaskCreateModal = ({
   const [isRecurring, setIsRecurring] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [endDate, setEndDate] = useState(() => {
     const targetDate = prefillData?.target_date;
     if (!targetDate) return null;
@@ -1171,27 +1414,79 @@ const ProjectTaskCreateModal = ({
       }`;
     const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${startDate?.date
       }`;
-    return {
-      task_management: {
-        title: data.taskTitle,
-        description: data.description,
-        responsible_person_id: data.responsiblePerson,
-        priority: data.priority,
-        observer_ids: data.observer.map((observer) => observer.value),
-        task_tag_ids: data.tags.map((tag) => tag.value),
-        expected_start_date: formatedStartDate,
-        target_date: formatedEndDate,
-        allocation_date: formatedEndDate,
-        project_management_id: id || formData.project,
-        milestone_id: mid || formData.milestone,
-        active: true,
-        estimated_hour: totalWorkingHours,
-        task_allocation_times_attributes: dateWiseHours,
-        ...(opportunityId && { opportunity_id: opportunityId }),
-        ...(data.isRecurring && { is_recurring: data.isRecurring }),
-        ...(data.isRecurring && data.cronExpression && { cron_expression: data.cronExpression }),
-      },
-    };
+
+    const formDatatoSend = new FormData();
+
+    formDatatoSend.append("task_management[title]", data.taskTitle);
+    formDatatoSend.append("task_management[description]", data.description);
+    formDatatoSend.append("task_management[responsible_person_id]", data.responsiblePerson);
+    formDatatoSend.append("task_management[priority]", data.priority);
+    data.observer.forEach((observer) => {
+      formDatatoSend.append(
+        "task_management[observer_ids][]",
+        observer.value
+      );
+    });
+    data.tags.forEach((tag) => {
+      formDatatoSend.append(
+        "task_management[task_tag_ids][]",
+        tag.value
+      );
+    });
+    formDatatoSend.append("task_management[expected_start_date]", formatedStartDate);
+    formDatatoSend.append("task_management[target_date]", formatedEndDate);
+    formDatatoSend.append("task_management[allocation_date]", formatedEndDate);
+    formDatatoSend.append("task_management[project_management_id]", id || formData.project);
+    formDatatoSend.append("task_management[milestone_id]", mid || formData.milestone);
+    formDatatoSend.append("task_management[active]", "true");
+    formDatatoSend.append("task_management[estimated_hour]", totalWorkingHours.toString());
+    dateWiseHours.forEach((item, index) => {
+      if (item.id) {
+        formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][id]`, item.id);
+      }
+      formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][date]`, item.date);
+      formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][hours]`, item.hours);
+    });
+    if (opportunityId) {
+      formDatatoSend.append("task_management[opportunity_id]", opportunityId);
+    }
+    if (data.isRecurring) {
+      formDatatoSend.append("task_management[is_recurring]", data.isRecurring);
+    }
+    if (data.isRecurring && data.cronExpression) {
+      formDatatoSend.append("task_management[cron_expression]", data.cronExpression);
+    }
+
+    // Add attachments if any
+    if (attachments && attachments.length > 0) {
+      attachments.forEach((file) => {
+        formDatatoSend.append("task_management[attachments][]", file);
+      });
+    }
+
+    return formDatatoSend;
+
+    // return {
+    //   task_management: {
+    //     title: data.taskTitle,
+    //     description: data.description,
+    //     responsible_person_id: data.responsiblePerson,
+    //     priority: data.priority,
+    //     observer_ids: data.observer.map((observer) => observer.value),
+    //     task_tag_ids: data.tags.map((tag) => tag.value),
+    //     expected_start_date: formatedStartDate,
+    //     target_date: formatedEndDate,
+    //     allocation_date: formatedEndDate,
+    //     project_management_id: id || formData.project,
+    //     milestone_id: mid || formData.milestone,
+    //     active: true,
+    //     estimated_hour: totalWorkingHours,
+    //     task_allocation_times_attributes: dateWiseHours,
+    //     ...(opportunityId && { opportunity_id: opportunityId }),
+    //     ...(data.isRecurring && { is_recurring: data.isRecurring }),
+    //     ...(data.isRecurring && data.cronExpression && { cron_expression: data.cronExpression }),
+    //   },
+    // };
   };
 
   const isFormEmpty = () => {
@@ -1269,6 +1564,7 @@ const ProjectTaskCreateModal = ({
       setPrevObservers([]);
       setIsDelete(false);
       setNextId(nextId + 1);
+      setAttachments([]);
       dispatch(fetchProjectTasks({ baseUrl, token, id: mid ? mid : "" }));
     } catch (error) {
       console.error("Error creating task:", error);
@@ -1379,6 +1675,8 @@ const ProjectTaskCreateModal = ({
             setIsModalOpen={setIsModalOpen}
             setIsTagModalOpen={setIsTagModalOpen}
             isConversion={isConversion}
+            attachments={[]}
+            setAttachments={() => { }}
           />
         ))}
 
@@ -1414,6 +1712,8 @@ const ProjectTaskCreateModal = ({
             setIsModalOpen={setIsModalOpen}
             setIsTagModalOpen={setIsTagModalOpen}
             isConversion={isConversion}
+            attachments={attachments}
+            setAttachments={setAttachments}
           />
         )}
 
