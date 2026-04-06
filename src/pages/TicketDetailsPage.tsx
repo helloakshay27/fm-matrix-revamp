@@ -8145,7 +8145,13 @@ export const TicketDetailsPage = () => {
                     ) : (
                       (() => {
                         const sorted = [...complaintLogs].sort(
-                          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                          (a, b) => {
+                            // Always push 'creation' logs to the end
+                            if (a.log_type === 'creation' && b.log_type !== 'creation') return 1;
+                            if (b.log_type === 'creation' && a.log_type !== 'creation') return -1;
+                            // Otherwise sort by newest first
+                            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                          }
                         );
 
                         return (
@@ -8191,51 +8197,43 @@ export const TicketDetailsPage = () => {
 
                                         {/* Log Content */}
                                         <div className="text-[12px] leading-snug">
-                                          {/* Date on top - only show if different from previous log */}
-                                          {showDate && (
-                                            <div className="text-[#1A1A1A] text-[16px] font-semibold mb-1">
-                                              {currentDate}
-                                            </div>
-                                          )}
-
-                                          {/* Time and log type header */}
-                                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                            <span className="text-[#6B6B6B] text-[12px]">
-                                              {formatLogTime(log.created_at)}
-                                            </span>
-                                            <span className="font-semibold text-[#1A1A1A] text-[16px]">
-                                              {log.log_type === 'creation' ? 'Ticket Created'
-                                                : log.log_type === 'status_update' ? `Status: ${log.log_status || '-'}`
-                                                : log.log_type === 'assignee_change' ? 'Assignee Changed'
-                                                : log.log_type === 'comment' ? 'Commented'
-                                                : log.log_status || 'Updated'}
-                                            </span>
-                                            {(log.log_by || log.updated_by) && (
-                                              <span className="text-[#1A1A1A] text-[16px]">
-                                                By <span className="text-[#1A1A1A]">{log.log_by || log.updated_by}</span>
-                                              </span>
-                                            )}
+                                          {/* Date/Time line */}
+                                          <div className="text-[#6B6B6B] text-[12px] mb-1">
+                                            {formatLogTime(log.created_at)}
                                           </div>
 
-                                          {/* Creation summary */}
-                                          {log.log_type === 'creation' && log.creation_summary && (
-                                            <div className="text-[#2C2C2C] text-[14px] leading-[20px] mt-1">
-                                              <div>Ticket: <span className="font-medium">{log.creation_summary.ticket_raised}</span></div>
-                                              <div>Created by: <span className="font-medium">{log.creation_summary.ticket_created_by}</span></div>
+                                          {/* Log description based on type */}
+                                          {log.log_type === 'creation' ? (
+                                            <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                              <div className="font-semibold">Ticket Created By {log.creation_summary?.ticket_created_by || log.log_by || log.updated_by}.</div>
                                             </div>
-                                          )}
-
-                                          {/* Assignee change */}
-                                          {log.log_type === 'assignee_change' && log.assignment_changes && (
-                                            <div className="text-[#2C2C2C] text-[14px] leading-[20px] mt-1">
-                                              <div>Assigned to: <span className="font-medium">{log.assignment_changes.assigned_to}</span></div>
+                                          ) : log.log_type === 'status_update' ? (
+                                            <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                              <div className="font-semibold">Status Changed: <span className="font-normal"> {log.log_status || '-'}</span></div>
+                                              {(log.log_by || log.updated_by) && (
+                                                <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                              )}
                                             </div>
-                                          )}
-
-                                          {/* Comment below */}
-                                          {log.log_comment && log.log_comment.trim() !== '' && (
-                                            <div className="text-[#2C2C2C] text-[16px] leading-[20px] mt-1">
-                                              {log.log_comment}
+                                          ) : log.log_type === 'assignee_change' ? (
+                                            <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                              <div className="font-semibold">Assignee Changed: <span className="font-normal"> {log.assignment_changes?.assigned_to || '-'}</span></div>
+                                              {(log.log_by || log.updated_by) && (
+                                                <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                              )}
+                                            </div>
+                                          ) : log.log_type === 'comment' ? (
+                                            <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                              <div className="font-semibold">Comment Added: <span className="font-normal">"{log.log_comment}"</span></div>
+                                              {(log.log_by || log.updated_by) && (
+                                                <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                              <div className="font-semibold">{log.log_status || 'Updated'}</div>
+                                              {(log.log_by || log.updated_by) && (
+                                                <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                              )}
                                             </div>
                                           )}
 
@@ -11285,7 +11283,13 @@ export const TicketDetailsPage = () => {
                 ) : (
                   (() => {
                     const sorted = [...complaintLogs].sort(
-                      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                      (a, b) => {
+                        // Always push 'creation' logs to the end
+                        if (a.log_type === 'creation' && b.log_type !== 'creation') return 1;
+                        if (b.log_type === 'creation' && a.log_type !== 'creation') return -1;
+                        // Otherwise sort by newest first
+                        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                      }
                     );
 
                     return (
@@ -11331,51 +11335,43 @@ export const TicketDetailsPage = () => {
 
                                     {/* Log Content */}
                                     <div className="text-[12px] leading-snug">
-                                      {/* Date on top - only show if different from previous log */}
-                                      {showDate && (
-                                        <div className="text-[#1A1A1A] text-[16px] font-semibold mb-1">
-                                          {currentDate}
-                                        </div>
-                                      )}
-
-                                      {/* Time and log type header */}
-                                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                        <span className="text-[#6B6B6B] text-[12px]">
-                                          {formatLogTime(log.created_at)}
-                                        </span>
-                                        <span className="font-semibold text-[#1A1A1A] text-[16px]">
-                                          {log.log_type === 'creation' ? 'Ticket Created'
-                                            : log.log_type === 'status_update' ? `Status: ${log.log_status || '-'}`
-                                            : log.log_type === 'assignee_change' ? 'Assignee Changed'
-                                            : log.log_type === 'comment' ? 'Commented'
-                                            : log.log_status || 'Updated'}
-                                        </span>
-                                        {(log.log_by || log.updated_by) && (
-                                          <span className="text-[#1A1A1A] text-[16px]">
-                                            By <span className="text-[#1A1A1A]">{log.log_by || log.updated_by}</span>
-                                          </span>
-                                        )}
+                                      {/* Date/Time line */}
+                                      <div className="text-[#6B6B6B] text-[12px] mb-1">
+                                        {formatLogTime(log.created_at)}
                                       </div>
 
-                                      {/* Creation summary */}
-                                      {log.log_type === 'creation' && log.creation_summary && (
-                                        <div className="text-[#2C2C2C] text-[14px] leading-[20px] mt-1">
-                                          <div>Ticket: <span className="font-medium">{log.creation_summary.ticket_raised}</span></div>
-                                          <div>Created by: <span className="font-medium">{log.creation_summary.ticket_created_by}</span></div>
+                                      {/* Log description based on type */}
+                                      {log.log_type === 'creation' ? (
+                                        <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                          <div className="font-semibold">Ticket Created By {log.creation_summary?.ticket_created_by || log.log_by || log.updated_by}.</div>
                                         </div>
-                                      )}
-
-                                      {/* Assignee change */}
-                                      {log.log_type === 'assignee_change' && log.assignment_changes && (
-                                        <div className="text-[#2C2C2C] text-[14px] leading-[20px] mt-1">
-                                          <div>Assigned to: <span className="font-medium">{log.assignment_changes.assigned_to}</span></div>
+                                      ) : log.log_type === 'status_update' ? (
+                                        <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                          <div className="font-semibold">Status Changed: <span className="font-normal"> {log.log_status || '-'}</span></div>
+                                          {(log.log_by || log.updated_by) && (
+                                            <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                          )}
                                         </div>
-                                      )}
-
-                                      {/* Comment below */}
-                                      {log.log_comment && log.log_comment.trim() !== '' && (
-                                        <div className="text-[#2C2C2C] text-[16px] leading-[20px] mt-1">
-                                          {log.log_comment}
+                                      ) : log.log_type === 'assignee_change' ? (
+                                        <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                          <div className="font-semibold">Assignee Changed: <span className="font-normal"> {log.assignment_changes?.assigned_to || '-'}</span></div>
+                                          {(log.log_by || log.updated_by) && (
+                                            <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                          )}
+                                        </div>
+                                      ) : log.log_type === 'comment' ? (
+                                        <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                          <div className="font-semibold">Comment Added: <span className="font-normal">"{log.log_comment}"</span></div>
+                                          {(log.log_by || log.updated_by) && (
+                                            <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
+                                          <div className="font-semibold">{log.log_status || 'Updated'}</div>
+                                          {(log.log_by || log.updated_by) && (
+                                            <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
+                                          )}
                                         </div>
                                       )}
 
