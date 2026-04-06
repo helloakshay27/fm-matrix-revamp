@@ -1,36 +1,63 @@
 // ─────────────────────────────────────────────
 // KPISettingsTab.tsx  —  KPI Units Configuration
 // ─────────────────────────────────────────────
-import React, { useState } from "react";
-import { Plus, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { kpiClass } from "./Shared";
 
 const DEFAULT_UNITS = [
   "₹",
-  "#",
   "%",
   "Hours",
   "Days",
   "Calls",
   "Leads",
-  "Invoices",
-  "Orders",
-  "Units",
+  "Meetings",
+  "Tickets",
 ];
 
-const KPISettingsTab: React.FC = () => {
-  const [units, setUnits] = useState<string[]>(DEFAULT_UNITS);
+type KPISettingsTabProps = {
+  units?: string[];
+  isSaving?: boolean;
+  onSave: (units: string[]) => Promise<void> | void;
+  onAddUnit?: (units: string[]) => Promise<void> | void;
+};
+
+const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
+  units: initialUnits = DEFAULT_UNITS,
+  isSaving = false,
+  onSave,
+  onAddUnit,
+}) => {
+  const [units, setUnits] = useState<string[]>(initialUnits);
   const [draft, setDraft] = useState("");
 
-  const addUnit = () => {
+  useEffect(() => {
+    setUnits(initialUnits.length > 0 ? initialUnits : DEFAULT_UNITS);
+  }, [initialUnits]);
+
+  const normalizedInitialUnits = useMemo(
+    () => (initialUnits.length > 0 ? initialUnits : DEFAULT_UNITS),
+    [initialUnits]
+  );
+
+  const addUnit = async () => {
     const next = draft.trim();
     if (!next) return;
     if (units.some((u) => u.toLowerCase() === next.toLowerCase())) {
       setDraft("");
       return;
     }
-    setUnits((prev) => [...prev, next]);
+
+    const nextUnits = [...units, next];
+    console.warn("[KPI Units] Add Unit clicked, calling update API", nextUnits);
+    if (onAddUnit) {
+      await onAddUnit(nextUnits);
+    } else {
+      await onSave(nextUnits);
+    }
+    setUnits(nextUnits);
     setDraft("");
   };
 
@@ -86,7 +113,7 @@ const KPISettingsTab: React.FC = () => {
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                addUnit();
+                void addUnit();
               }
             }}
             placeholder="Add new unit (e.g., Km, Projects, Clients)…"
@@ -99,7 +126,8 @@ const KPISettingsTab: React.FC = () => {
           />
           <button
             type="button"
-            onClick={addUnit}
+            onClick={() => void addUnit()}
+            disabled={isSaving}
             className="inline-flex h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg bg-[#DA7756] px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a] sm:px-6"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />

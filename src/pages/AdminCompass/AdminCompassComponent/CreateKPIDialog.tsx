@@ -9,7 +9,9 @@ import {
   LineChart,
   Users,
   X,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -27,17 +29,15 @@ import {
 } from "@/components/ui/select";
 import type { KPICardData } from "./kpiTypes";
 
-const KPI_UNITS = [
+const DEFAULT_KPI_UNITS = [
   "₹",
-  "#",
   "%",
   "Hours",
   "Days",
   "Calls",
   "Leads",
-  "Invoices",
-  "Orders",
-  "Units",
+  "Meetings",
+  "Tickets",
 ] as const;
 
 const DEPARTMENTS = [
@@ -50,13 +50,10 @@ const DEPARTMENTS = [
   "Marketing",
 ] as const;
 
-const ASSIGNABLE_USERS = [
-  "Adhip Shetty",
-  "Akshay Shinde",
-  "Akshit Baid",
-  "Arun Mohan",
-  "Bilal Shaikh",
-];
+type AssigneeUser = {
+  id: number;
+  name: string;
+};
 
 const inputClass =
   "h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25";
@@ -67,13 +64,19 @@ const selectTriggerClass =
 export interface CreateKPIDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated?: (kpi: KPICardData) => void;
+  onCreated?: (kpi: KPICardData) => Promise<void> | void;
+  isLoading?: boolean;
+  users?: AssigneeUser[];
+  units?: string[];
 }
 
 const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
   open,
   onOpenChange,
   onCreated,
+  isLoading = false,
+  users = [],
+  units = DEFAULT_KPI_UNITS,
 }) => {
   const [kpiName, setKpiName] = useState("");
   const [unit, setUnit] = useState<string>("");
@@ -103,35 +106,46 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
     setAssignees((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!kpiName.trim() || !unit || !department) return;
+    if (!kpiName.trim() || !unit || !department) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
-    const selectedNames = ASSIGNABLE_USERS.filter((n) => assignees[n]);
-    const owner = selectedNames[0] ?? "Unassigned";
+    try {
+      const selectedUsers = users.filter((u) => assignees[String(u.id)]);
+      const owner = selectedUsers[0]?.name ?? "Unassigned";
+      const assigneeId = selectedUsers[0]?.id ?? null;
 
-    const freqLabel =
-      frequency === "Weekly" || frequency === "Monthly" || frequency === "Quarterly"
-        ? frequency
-        : "Weekly";
+      const freqLabel =
+        frequency === "Weekly" || frequency === "Monthly" || frequency === "Quarterly"
+          ? frequency
+          : "Weekly";
 
-    const newKpi: KPICardData = {
-      id: `kpi-${Date.now()}`,
-      name: kpiName.trim(),
-      owner,
-      target: targetValue.trim() || "0",
-      value: targetValue.trim() || "0",
-      unit,
-      status: "on-target",
-      frequency: freqLabel as KPICardData["frequency"],
-      badge: "Active",
-      color: "bg-sky-100",
-      tags: [department, "Individual"],
-      priority: priority as KPICardData["priority"],
-    };
+      // Format data for API
+      const kpiData: KPICardData = {
+        id: `kpi-${Date.now()}`,
+        name: kpiName.trim(),
+        owner,
+        target: targetValue.trim() || "0",
+        value: targetValue.trim() || "0",
+        unit,
+        status: "on-target",
+        frequency: freqLabel as KPICardData["frequency"],
+        badge: "Active",
+        color: "bg-sky-100",
+        tags: [department, "Individual"],
+        priority: priority as KPICardData["priority"],
+        description: relatedUrl || undefined,
+        assigneeId,
+      };
 
-    onCreated?.(newKpi);
-    onOpenChange(false);
+      await onCreated?.(kpiData);
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Failed to create KPI");
+    }
   };
 
   return (
@@ -197,7 +211,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                     <SelectValue placeholder="Select unit" />
                   </SelectTrigger>
                   <SelectContent>
-                    {KPI_UNITS.map((u) => (
+                    {units.map((u) => (
                       <SelectItem key={u} value={u}>
                         {u}
                       </SelectItem>
@@ -321,20 +335,25 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                 "max-h-52 space-y-2 overflow-y-auto rounded-xl border border-neutral-200/90 bg-[#faf9f6] p-3"
               )}
             >
-              {ASSIGNABLE_USERS.map((name) => (
+              {users.map((user) => (
                 <label
-                  key={name}
+                  key={user.id}
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-neutral-800 hover:bg-white/80"
                 >
                   <input
                     type="checkbox"
-                    checked={!!assignees[name]}
-                    onChange={() => toggleAssignee(name)}
+                    checked={!!assignees[String(user.id)]}
+                    onChange={() => toggleAssignee(String(user.id))}
                     className="h-4 w-4 rounded border-[rgba(218,119,86,0.42)] text-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/30"
                   />
-                  {name}
+                  {user.name}
                 </label>
               ))}
+              {users.length === 0 && (
+                <p className="px-2 py-2 text-sm text-neutral-500">
+                  No company members found.
+                </p>
+              )}
             </div>
           </div>
 
@@ -342,21 +361,24 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
+              disabled={isLoading}
               className={cn(
                 "rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-900",
-                "hover:bg-neutral-50"
+                "hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
               )}
             >
               Cancel
             </button>
             <button
               type="submit"
+              disabled={isLoading}
               className={cn(
-                "rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors",
-                "bg-[#DA7756] hover:bg-[#c9674a]"
+                "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors",
+                "bg-[#DA7756] hover:bg-[#c9674a] disabled:opacity-50 disabled:cursor-not-allowed"
               )}
             >
-              Create KPI
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isLoading ? "Creating..." : "Create KPI"}
             </button>
           </div>
         </form>
