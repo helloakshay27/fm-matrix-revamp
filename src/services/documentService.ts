@@ -57,7 +57,7 @@ export interface CreateFolderPayload {
   folder: {
     name: string;
     category_id: number;
-    parent_id?: number;
+    parent_id?: number | null;
     of_phase?: string;
   };
   permissions: FolderPermission[];
@@ -81,7 +81,17 @@ export interface FolderTreeResponse {
 export interface FolderChild {
   id: number;
   name: string;
-  parent_id: number;
+  parent_id: number | null;
+  category_id: number | null;
+  of_phase: string | null;
+  created_at: string;
+  updated_at: string;
+  total_file_size: number;
+  total_files: number;
+  document_category_name: string | null;
+  created_by_full_name: string | null;
+  active: boolean | null;
+  documents?: FolderDocument[];
 }
 
 export interface FolderDocument {
@@ -423,6 +433,34 @@ export const getFoldersList = async (
   });
 
   return response.data;
+};
+
+/**
+ * Fetch user folders for parent folder dropdown
+ */
+export interface UserFolder {
+  id: number;
+  name: string;
+  parent_id: number | null;
+}
+
+export const getUserFolders = async (page: number = 1): Promise<UserFolder[]> => {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+
+  const response = await axios.get(
+    `https://${baseUrl}/folders/user_folders.json?page=${page}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  // API may return { folders: [...] } or a plain array
+  const data = response.data;
+  return Array.isArray(data) ? data : (data.folders || []);
 };
 
 /**

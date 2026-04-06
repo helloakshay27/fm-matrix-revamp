@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   ChevronRight,
   FileText,
@@ -9,12 +9,34 @@ import {
   FolderKanban, // Added for Project Tasks
   Ticket, // Added for Tickets
   Globe,
-  Home
+  Home,
+  Bell,
+  User,
+  Wallet,
+  LogOut,
+  Settings,
+  ChevronDown,
+  Shield
 } from "lucide-react";
 import recessLogo from "@/assets/recess-logo";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { useNotification } from "@/contexts/NotificationContext";
+import { useLayout } from "@/contexts/LayoutContext";
+import { usePermissions } from "@/contexts/PermissionsContext";
+import { permissionService } from "@/services/permissionService";
+import { getUser, clearAuth } from "@/utils/auth";
+import axios from "axios";
+import { toast } from "sonner";
 
 interface TopNavigationProps {
   activeNavMenu: string | null;
@@ -45,6 +67,7 @@ const navMenuOptions: Record<
       title: "Create MOM",
       description: "Create MOM",
       icon: <Clock className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/vas/add-mom"
     },
     {
       title: "Create Ticket",
@@ -52,6 +75,7 @@ const navMenuOptions: Record<
       icon: (
         <AlertCircle className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />
       ),
+      href: "/maintenance/ticket/employee/add"
     },
   ],
   Work: [
@@ -60,6 +84,18 @@ const navMenuOptions: Record<
       description: "",
       icon: <Globe className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
       href: "/employee/company-hub",
+    },
+    {
+      title: "Business Compass",
+      description: "",
+      icon: <Shield className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/business-compass/profile",
+    },
+    {
+      title: "Admin Compass",
+      description: "",
+      icon: <Shield className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/admin-compass/business-plan-goals",
     },
     {
       title: "Dasboard",
@@ -107,6 +143,92 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const navigate = useNavigate()
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { userRole } = usePermissions();
+  const {
+    notifications,
+    notificationCount,
+    isNotificationOpen,
+    setIsNotificationOpen,
+    markAllAsRead,
+    handleNotificationClick: handleNotificationClickContext,
+  } = useNotification();
+  const { setCurrentSection } = useLayout();
+
+  const [availableBalance, setAvailableBalance] = useState(0);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userRoleName, setUserRoleName] = useState<string | null>(null);
+
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
+  const id = JSON.parse(localStorage.getItem("user") || "{}").id || "";
+
+  const fetchWalletDetails = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wallet/balance.json?user_id=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setAvailableBalance(response.data.available_amount);
+    } catch (error: any) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (id && baseUrl && token) {
+      fetchWalletDetails();
+    }
+  }, [id, baseUrl, token]);
+
+  useEffect(() => {
+    const roleName = permissionService.getRoleName();
+    setUserRoleName(roleName);
+  }, []);
+
+  const user = getUser() || {
+    id: 0,
+    firstname: "Guest",
+    lastname: "",
+    email: "",
+  };
+  const userFullName = `${user.firstname} ${user.lastname}`.trim();
+
+  const handleLogout = () => {
+    clearAuth();
+    navigate("/login");
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    await handleNotificationClickContext(notification);
+    if (notification.ntype === "conversation") {
+      navigate(`/vas/channels/messages/${notification.payload.conversation_id}`);
+    } else if (notification.ntype === "projectspace") {
+      navigate(`/vas/channels/groups/${notification.payload.project_space_id}`);
+    }
+  };
+
+  const getFirstAdminLink = (): string => {
+    if (!userRole || !userRole.lock_modules) return "/";
+    for (const module of userRole.lock_modules) {
+      if (
+        module.module_name === "Employee Sidebar" ||
+        module.module_name === "Employee Projects Sidebar"
+      ) continue;
+      const firstActiveFunction = module.lock_functions.find(
+        (func) => func.function_active === 1 && func.react_link && !func.parent_function
+      );
+      if (firstActiveFunction && firstActiveFunction.react_link) return firstActiveFunction.react_link;
+    }
+    return "/";
+  };
+
+  const userType = localStorage.getItem("userType");
+  const tempSwitchToAdmin = localStorage.getItem("tempType") === "pms_organization_admin";
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -140,7 +262,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
     <>
       {/* --- TOP NAV BAR --- */}
       <div className="flex items-center justify-between px-8 py-4 bg-[#FAF9F6]/80 backdrop-blur-md sticky top-0 z-50 border-b border-[rgba(211,209,199,1)]">
-        <div className="flex items-center gap-12 w-full">
+        <div className="flex items-center gap-12">
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
             {isOmanSite ? (
               <svg
@@ -299,6 +421,173 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
               </div>
             ))}
           </nav>
+        </div>
+
+        {/* Right Section - Actions */}
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
+          <button
+            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+            onClick={() => navigate("/employee-wallet")}
+          >
+            <Wallet className="w-5 h-5 text-[#DA7756]" /> ₹ {availableBalance.toFixed(2)}
+          </button>
+
+          <button
+            className="p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
+            onClick={() => {
+              setCurrentSection("Project Task");
+              navigate(`/vas/channels`);
+            }}
+          >
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 36 33"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M35.9998 10.3125C35.9992 9.76567 35.7714 9.24142 35.3665 8.85476C34.9615 8.46809 34.4125 8.2506 33.8398 8.24999H27.36V2.0625C27.3594 1.51568 27.1316 0.991428 26.7266 0.604767C26.3217 0.218106 25.7727 0.000611413 25.2 0H2.16C1.58733 0.000610958 1.0383 0.218106 0.633356 0.604767C0.228416 0.991427 0.000639841 1.51568 0 2.0625V24.0625C3.78713e-06 24.1923 0.0384875 24.3194 0.111 24.4292C0.183513 24.539 0.287092 24.6269 0.409758 24.6829C0.532424 24.7388 0.669165 24.7604 0.804168 24.7453C0.93917 24.7301 1.06692 24.6787 1.17264 24.5971L8.09947 19.25H8.63982L8.64 25.4375C8.64064 25.9843 8.86842 26.5085 9.27336 26.8952C9.6783 27.2819 10.2273 27.4994 10.8 27.5H27.9004L34.8274 32.8471C34.9331 32.9287 35.0608 32.9801 35.1958 32.9953C35.3308 33.0105 35.4676 32.9888 35.5903 32.9329C35.7129 32.877 35.8165 32.789 35.889 32.6792C35.9615 32.5694 36 32.4423 36 32.3125L35.9998 10.3125ZM7.84476 17.875C7.68002 17.875 7.52026 17.9289 7.39212 18.0278L1.44 22.6226V2.0625C1.4402 1.88022 1.51612 1.70547 1.65111 1.57658C1.78609 1.44769 1.96911 1.375H25.2C25.3909 1.37519 25.5739 1.44769 25.7089 1.57658C25.8439 1.70547 25.9198 1.88022 25.92 2.0625V8.93582L25.9198 8.93749L25.92 8.93916V17.1875C25.9198 17.3698 25.8439 17.5445 25.7089 17.6734C25.5739 17.8023 25.3909 17.8748 25.2 17.875H7.84476ZM28.6077 26.2778C28.4796 26.1789 28.3198 26.125 28.1551 26.125H10.8C10.6091 26.1248 10.4261 26.0523 10.2911 25.9234C10.1561 25.7945 10.0802 25.6197 10.08 25.4375L10.0798 19.25H25.2C25.7727 19.2494 26.3217 19.0319 26.7266 18.6452C27.1316 18.2585 27.3594 17.7343 27.36 17.1875V9.62499H33.8398C34.0307 9.62518 34.2137 9.69768 34.3487 9.82657C34.4837 9.95545 34.5596 10.1302 34.5598 10.3125L34.56 30.8726L28.6077 26.2778Z"
+                fill="none"
+                stroke="black"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+
+          {/* Notifications Dropdown */}
+          <DropdownMenu
+            open={isNotificationOpen}
+            onOpenChange={setIsNotificationOpen}
+          >
+            <DropdownMenuTrigger asChild>
+              <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                <Bell className="w-5 h-5 text-gray-600" />
+                {notificationCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {notificationCount}
+                  </Badge>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="max-w-[400px] p-0 max-h-[500px] overflow-hidden"
+            >
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {notificationCount > 0
+                      ? `${notificationCount} unread notification${notificationCount > 1 ? "s" : ""}`
+                      : "All caught up!"}
+                  </p>
+                </div>
+                {notificationCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-[#C72030] hover:text-[#A01020] font-medium"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+              <div className="overflow-y-auto max-h-[400px]">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-12 text-center">
+                    <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-gray-500">No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {notifications.map((notification) => (
+                      <button
+                        key={notification.id}
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read ? "bg-[#C72030]" : "bg-gray-300"}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className={`text-sm ${!notification.read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}>
+                                {notification.title}
+                              </p>
+                              <span className="text-xs text-gray-500 whitespace-nowrap">{notification.time}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* User Profile Dropdown */}
+          <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72 p-0">
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <p className="text-sm font-semibold text-gray-900">{userFullName}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{user.email}</p>
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 font-medium">
+                    <User className="w-3 h-3 mr-1" />
+                    {userRoleName || user?.lock_role?.name || "No Role"}
+                  </Badge>
+                </div>
+              </div>
+              {tempSwitchToAdmin && (
+                <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
+                  <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">Switch View</p>
+                  <button
+                    onClick={() => {
+                      localStorage.setItem("userType", "pms_organization_admin");
+                      localStorage.setItem("selectedView", "admin");
+                      localStorage.removeItem("tempType");
+                      window.location.href = getFirstAdminLink();
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      <span className="font-medium">Admin View</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
+              )}
+              <div className="py-1">
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="mx-2 my-1 rounded-md">
+                  <User className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">My Profile</span>
+                </DropdownMenuItem>
+              </div>
+              <DropdownMenuSeparator className="my-1" />
+              <div className="p-2">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
