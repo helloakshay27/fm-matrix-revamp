@@ -80,7 +80,8 @@ export const useTasks = ({
   sortDirection,
 }: UseTasksOptions = {}) => {
   const location = useLocation();
-  const allTaskPath = location.pathname.startsWith("/vas/tasks")
+  const allTaskPath = location.pathname.startsWith("/vas/tasks") ||
+    location.pathname.startsWith("/business-compass/daily-report");
   return useQuery({
     queryKey: tasksQueryKeys.list(taskType, page, filters, sortBy, sortDirection),
     queryFn: () =>
