@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
 
-// ── Design tokens ──
+// ── Design tokens — from BusinessPlanAndGoles ──
 const C = {
-  primary:     '#DA7756',
-  primaryHov:  '#c9674a',
-  primaryBg:   '#fef6f4',
-  primaryTint: 'rgba(218,119,86,0.10)',
-  primaryBord: 'rgba(218,119,86,0.22)',
+  primary:           '#DA7756',
+  primaryHov:        '#c9673f',
+  primaryBg:         '#fdf9f7',
+  primaryTint:       'rgba(218,119,86,0.06)',
+  primaryBord:       '#e8e3de',
+  primaryBordStrong: '#d4cdc6',
+  pageBg:            '#f6f4ee',
+  cardBg:            '#ffffff',
+  tealBg:            '#9EC8BA',
+  textMain:          '#1a1a1a',
+  textMuted:         '#6b7280',
+  borderLgt:         '#ebebeb',
+  font:              "'Poppins', sans-serif",
 };
 
 const BASE_URL = 'https://fm-uat-api.lockated.com';
@@ -32,18 +40,17 @@ interface Kpi {
   current_value?: number | null;
   department_id?: number | null;
   assignee_id?:  number | null;
-  // local UI state
   selected:      boolean;
   owner?:        string | null;
 }
 
 interface KpiFormState {
-  name:        string;
-  unit:        string;
-  frequency:   string;
+  name:         string;
+  unit:         string;
+  frequency:    string;
   target_value: string;
-  department:  string;
-  assign_to:   string;
+  department:   string;
+  assign_to:    string;
 }
 
 const EMPTY_FORM: KpiFormState = {
@@ -56,7 +63,6 @@ const EMPTY_FORM: KpiFormState = {
 const fetchKpisFromApi = async (): Promise<Kpi[]> => {
   const res = await fetch(`${BASE_URL}/kpis`, { method: 'GET', headers: getAuthHeaders() });
   const raw = await res.text();
-  console.log('[KPIs] GET status:', res.status, 'raw:', raw.slice(0, 400));
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 200)}`);
   let json: any;
   try { json = JSON.parse(raw); } catch { json = []; }
@@ -67,7 +73,6 @@ const fetchKpisFromApi = async (): Promise<Kpi[]> => {
       : Array.isArray(json.data?.kpis)
         ? json.data.kpis
         : json.kpis ?? [];
-  console.log('[KPIs] GET list count:', list.length, 'ids:', list.map((k:any) => k.id));
   return list.map((k: any) => ({
     id:            k.id,
     name:          k.name ?? '',
@@ -80,33 +85,29 @@ const fetchKpisFromApi = async (): Promise<Kpi[]> => {
     department_id: k.department_id ?? null,
     assignee_id:   k.assignee_id ?? null,
     owner:         k.assignee?.name ?? k.owner ?? null,
-    selected:      true, // all fetched KPIs shown as selected by default
+    selected:      true,
   }));
 };
 
 const createKpiInApi = async (form: KpiFormState): Promise<Kpi> => {
   const payload = {
     kpi: {
-      name:        form.name.trim(),
-      unit:        form.unit !== 'Select unit' ? form.unit : undefined,
-      frequency:   form.frequency.toLowerCase(),
+      name:         form.name.trim(),
+      unit:         form.unit !== 'Select unit' ? form.unit : undefined,
+      frequency:    form.frequency.toLowerCase(),
       target_value: form.target_value ? parseFloat(form.target_value) : undefined,
-      department:  form.department !== 'Select' ? form.department : undefined,
-      assign_to:   form.assign_to !== 'Select user' ? form.assign_to : undefined,
+      department:   form.department !== 'Select' ? form.department : undefined,
+      assign_to:    form.assign_to !== 'Select user' ? form.assign_to : undefined,
     },
   };
-  console.log('[KPIs] POST payload:', JSON.stringify(payload));
   const res = await fetch(`${BASE_URL}/kpis`, {
     method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   const raw = await res.text();
-  console.log('[KPIs] POST response:', raw.slice(0, 400));
   if (!res.ok) throw new Error(`API error ${res.status}: ${raw || res.statusText}`);
   let json: any;
   try { json = JSON.parse(raw); } catch { json = {}; }
-  // Handle { success, data: { kpi: {...} } } OR { kpi: {...} } OR bare object
   const k = json.data?.kpi ?? json.data ?? json.kpi ?? json;
-  console.log('[KPIs] POST parsed kpi id:', k?.id);
   return {
     id:            k.id,
     name:          k.name ?? form.name,
@@ -125,17 +126,14 @@ const createKpiInApi = async (form: KpiFormState): Promise<Kpi> => {
 
 const updateKpiInApi = async (id: number, patch: Partial<{ current_value: number; target_value: number; frequency: string }>) => {
   const payload = { kpi: patch };
-  console.log('[KPIs] PUT /kpis/' + id, 'type:', typeof id, JSON.stringify(payload));
   const res = await fetch(`${BASE_URL}/kpis/${id}`, {
     method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   const raw = await res.text();
-  console.log('[KPIs] PUT response:', raw.slice(0, 300));
   if (!res.ok) throw new Error(`PUT error ${res.status}: ${raw || res.statusText}`);
 };
 
 const deleteKpiFromApi = async (id: number) => {
-  console.log('[KPIs] DELETE /kpis/' + id);
   const res = await fetch(`${BASE_URL}/kpis/${id}`, {
     method: 'DELETE', headers: getAuthHeaders(),
   });
@@ -145,81 +143,147 @@ const deleteKpiFromApi = async (id: number) => {
   }
 };
 
+// ── Theme Styles ──
+const ThemeStyle = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+    .kpi-wrap * { font-family: 'Poppins', sans-serif !important; }
+
+    @keyframes kpi-spin { to { transform: rotate(360deg); } }
+    @keyframes kpi-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .5; }
+    }
+
+    .kpi-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+      background: rgba(0,0,0,0.40);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .kpi-modal-box {
+      background: #f6f4ee;
+      border-radius: 20px;
+      border: 1px solid rgba(218,119,86,0.20);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.20);
+      width: 100%; max-width: 520px;
+      display: flex; flex-direction: column;
+      max-height: 90vh; overflow: hidden;
+    }
+    .kpi-input {
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 9px 12px; font-size: 13px; font-weight: 600;
+      color: #1a1a1a; background: #fffaf8;
+      transition: border-color .15s, box-shadow .15s;
+      box-sizing: border-box; outline: none;
+      font-family: 'Poppins', sans-serif !important;
+    }
+    .kpi-input:focus {
+      border-color: #DA7756;
+      box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
+    }
+    .kpi-input::placeholder { color: #a3a3a3; font-weight: 500; }
+    .kpi-select {
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 9px 36px 9px 12px; font-size: 13px; font-weight: 600;
+      color: #1a1a1a; background: #fffaf8;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
+      cursor: pointer; outline: none; box-sizing: border-box;
+      font-family: 'Poppins', sans-serif !important;
+    }
+    .kpi-select:focus {
+      border-color: #DA7756;
+      box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
+    }
+    .kpi-checkbox {
+      width: 17px; height: 17px;
+      accent-color: #DA7756; cursor: pointer; flex-shrink: 0;
+    }
+    .kpi-error {
+      background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
+      border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 700;
+      font-family: 'Poppins', sans-serif;
+    }
+    .kpi-card-lift { transition: box-shadow .2s, transform .2s; }
+    .kpi-card-lift:hover {
+      box-shadow: 0 8px 32px rgba(218,119,86,0.12) !important;
+      transform: translateY(-1px);
+    }
+    .kpi-scroll::-webkit-scrollbar { width: 6px; }
+    .kpi-scroll::-webkit-scrollbar-track { background: transparent; }
+    .kpi-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
+    .kpi-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
+  `}</style>
+);
+
 // ── Icons ──
 const TrendIcon = () => (
-  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 17, height: 17, color: '#1a1a1a' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
   </svg>
 );
-const QuestionIcon = () => (
-  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const InfoIcon = () => (
+  <svg style={{ width: 15, height: 15, color: '#1a1a1a', opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 const EditIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
 const PlusIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
   </svg>
 );
 const CloseIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
 const TrashIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
 const LoaderIcon = () => (
-  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+  <svg
+    style={{ width: 15, height: 15, animation: 'kpi-spin 0.8s linear infinite' }}
+    fill="none" viewBox="0 0 24 24"
+  >
+    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
   </svg>
 );
 
-// ── Styles ──
-const ModalStyle = () => (
-  <style>{`
-    .kpi-overlay {
-      position: fixed; inset: 0; z-index: 99999;
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px;
-      background: rgba(0,0,0,0.45);
-      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
-    }
-    .kpi-modal-box {
-      background: ${C.primaryBg}; border-radius: 20px;
-      border: 1px solid ${C.primaryBord};
-      box-shadow: 0 30px 80px rgba(0,0,0,0.25);
-      width: 100%; max-width: 520px;
-      display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
-    }
-    .kpi-input {
-      width: 100%; border: 1px solid #ede8e5; border-radius: 12px;
-      padding: 10px 12px; font-size: 13px; color: #171717;
-      background: #ffffff; transition: border-color 0.15s, box-shadow 0.15s;
-      box-sizing: border-box; outline: none; font-family: inherit;
-    }
-    .kpi-input:focus { border-color: ${C.primary}; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
-    .kpi-input::placeholder { color: #a3a3a3; }
-    .kpi-select {
-      width: 100%; border: 1px solid #ede8e5; border-radius: 12px;
-      padding: 10px 36px 10px 12px; font-size: 13px; color: #171717;
-      background: #ffffff; appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
-      cursor: pointer; outline: none; box-sizing: border-box;
-    }
-    .kpi-select:focus { border-color: ${C.primary}; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
-    .kpi-checkbox { width: 18px; height: 18px; accent-color: ${C.primary}; cursor: pointer; flex-shrink: 0; }
-    .kpi-error { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; }
-  `}</style>
+// ── Shared icon button ──
+const BtnIcon = ({ children, onClick, title = '', danger = false }: any) => (
+  <button
+    onClick={onClick}
+    title={title}
+    style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      width: 30, height: 30, borderRadius: 10,
+      background: '#fff', border: `1px solid ${C.primaryBord}`,
+      color: '#9ca3af', cursor: 'pointer',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      transition: 'all .15s',
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.background = danger ? '#fff5f5' : C.primaryBg;
+      e.currentTarget.style.color = danger ? '#dc2626' : C.primary;
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.background = '#fff';
+      e.currentTarget.style.color = '#9ca3af';
+    }}
+  >
+    {children}
+  </button>
 );
 
 // ── Portal Modal ──
@@ -246,27 +310,20 @@ export const CriticalNumbers = () => {
   const [kpis, setKpis]                   = useState<Kpi[]>([]);
   const [isFetching, setIsFetching]       = useState(true);
   const [fetchError, setFetchError]       = useState<string | null>(null);
-
   const [showSelectPanel, setShowSelectPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingKpi, setEditingKpi]           = useState<Kpi | null>(null);
-
   const [form, setForm]           = useState<KpiFormState>(EMPTY_FORM);
   const [isSaving, setIsSaving]   = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  // DELETE state
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // ── Fetch on mount ──
   const loadKpis = useCallback(async () => {
-    setIsFetching(true);
-    setFetchError(null);
+    setIsFetching(true); setFetchError(null);
     try {
       const data = await fetchKpisFromApi();
       setKpis(data);
     } catch (err: any) {
-      console.error('[KPIs] fetch error:', err);
       setFetchError(err.message || 'Failed to load KPIs.');
     } finally {
       setIsFetching(false);
@@ -276,19 +333,9 @@ export const CriticalNumbers = () => {
   useEffect(() => { loadKpis(); }, [loadKpis]);
 
   const selectedCount = kpis.filter(k => k.selected).length;
+  const toggleKpi = (id: number) => setKpis(prev => prev.map(k => k.id === id ? { ...k, selected: !k.selected } : k));
 
-  const toggleKpi = (id: number) =>
-    setKpis(prev => prev.map(k => k.id === id ? { ...k, selected: !k.selected } : k));
-
-  // ── Open create modal ──
-  const openCreate = () => {
-    setForm(EMPTY_FORM);
-    setEditingKpi(null);
-    setSaveError(null);
-    setShowCreateModal(true);
-  };
-
-  // ── Open edit modal ──
+  const openCreate = () => { setForm(EMPTY_FORM); setEditingKpi(null); setSaveError(null); setShowCreateModal(true); };
   const openEdit = (kpi: Kpi) => {
     setForm({
       name:         kpi.name,
@@ -298,19 +345,10 @@ export const CriticalNumbers = () => {
       department:   'Select',
       assign_to:    kpi.owner ?? 'Select user',
     });
-    setEditingKpi(kpi);
-    setSaveError(null);
-    setShowCreateModal(true);
+    setEditingKpi(kpi); setSaveError(null); setShowCreateModal(true);
   };
+  const closeModal = () => { setForm(EMPTY_FORM); setEditingKpi(null); setSaveError(null); setShowCreateModal(false); };
 
-  const closeModal = () => {
-    setForm(EMPTY_FORM);
-    setEditingKpi(null);
-    setSaveError(null);
-    setShowCreateModal(false);
-  };
-
-  // ── Create ──
   const handleCreate = async () => {
     if (!form.name.trim()) { setSaveError('KPI Name is required.'); return; }
     setIsSaving(true); setSaveError(null);
@@ -318,10 +356,7 @@ export const CriticalNumbers = () => {
       const created = await createKpiInApi(form);
       setKpis(prev => [...prev, created]);
       closeModal();
-      // Re-fetch to get authoritative server id (in case POST echo had wrong/missing id)
-      fetchKpisFromApi()
-        .then(data => setKpis(data))
-        .catch(e => console.warn('[KPIs] post-create sync failed:', e));
+      fetchKpisFromApi().then(data => setKpis(data)).catch(() => {});
     } catch (err: any) {
       setSaveError(err.message || 'Failed to create KPI.');
     } finally {
@@ -329,7 +364,6 @@ export const CriticalNumbers = () => {
     }
   };
 
-  // ── Update (PUT) ──
   const handleUpdate = async () => {
     if (!editingKpi) return;
     if (!form.name.trim()) { setSaveError('KPI Name is required.'); return; }
@@ -340,7 +374,6 @@ export const CriticalNumbers = () => {
         frequency:    form.frequency.toLowerCase(),
       };
       await updateKpiInApi(editingKpi.id, patch);
-      // Optimistic update
       setKpis(prev => prev.map(k => k.id === editingKpi.id ? {
         ...k,
         name:         form.name,
@@ -350,10 +383,7 @@ export const CriticalNumbers = () => {
         owner:        form.assign_to !== 'Select user' ? form.assign_to : k.owner,
       } : k));
       closeModal();
-      // Background re-fetch to sync
-      fetchKpisFromApi()
-        .then(data => setKpis(data))
-        .catch(e => console.warn('[KPIs] background sync failed:', e));
+      fetchKpisFromApi().then(data => setKpis(data)).catch(() => {});
     } catch (err: any) {
       setSaveError(err.message || 'Failed to update KPI.');
     } finally {
@@ -361,14 +391,12 @@ export const CriticalNumbers = () => {
     }
   };
 
-  // ── Delete ──
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
       await deleteKpiFromApi(id);
       setKpis(prev => prev.filter(k => k.id !== id));
     } catch (err: any) {
-      console.error('[KPIs] delete error:', err);
       setFetchError(err.message || 'Failed to delete KPI.');
     } finally {
       setDeletingId(null);
@@ -377,41 +405,75 @@ export const CriticalNumbers = () => {
 
   const canSave = form.name.trim().length > 0;
 
-  return (
-    <div style={{ padding: '24px 0', fontFamily: 'sans-serif' }}>
-      <ModalStyle />
+  // Skeleton shimmer
+  const Shimmer = ({ w = '100%', h = 16 }: { w?: string; h?: number }) => (
+    <div
+      style={{
+        width: w, height: h, borderRadius: 10,
+        background: '#e5e1d8',
+        animation: 'kpi-pulse 1.4s ease-in-out infinite',
+      }}
+    />
+  );
 
-      {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+  return (
+    <div className="kpi-wrap" style={{ padding: '24px 0', fontFamily: C.font }}>
+      <ThemeStyle />
+
+      {/* ── Header — teal bg matching BusinessPlanAndGoles ── */}
+      <div
+        style={{
+          borderRadius: 8, padding: '18px 20px',
+          background: C.tealBg,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 20,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10, background: C.primary,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(218,119,86,0.3)', flexShrink: 0,
+            width: 36, height: 36, borderRadius: 10,
+            background: 'rgba(255,255,255,0.30)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
             <TrendIcon />
           </div>
-          <h1 style={{ fontSize: 18, fontWeight: 800, color: '#171717', margin: 0 }}>
+          <h1 style={{
+            fontSize: 12, fontWeight: 900, color: '#070707', margin: 0,
+            letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: C.font,
+          }}>
             Critical Numbers (KPIs)
           </h1>
-          <QuestionIcon />
+          <InfoIcon />
           {isFetching && <LoaderIcon />}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 text-sm font-semibold transition-colors"
-            style={{ color: C.primary }}
-            onMouseEnter={e => e.currentTarget.style.color = C.primaryHov}
-            onMouseLeave={e => e.currentTarget.style.color = C.primary}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontSize: 12, fontWeight: 800, color: '#070707',
+              background: 'rgba(255,255,255,0.25)',
+              border: '1px solid rgba(255,255,255,0.40)',
+              borderRadius: 8, padding: '6px 14px', cursor: 'pointer',
+              fontFamily: C.font, transition: 'background .15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.40)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
           >
             <PlusIcon /> Create New
           </button>
-          <div className="w-px h-4 bg-gray-200" />
+          <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.15)' }} />
           <button
             onClick={() => setShowSelectPanel(v => !v)}
-            className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontSize: 12, fontWeight: 800, color: '#070707',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              fontFamily: C.font, opacity: 0.7, transition: 'opacity .15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
           >
             <EditIcon /> Select KPIs
           </button>
@@ -420,93 +482,139 @@ export const CriticalNumbers = () => {
 
       {/* ── Fetch error ── */}
       {fetchError && (
-        <div className="kpi-error flex items-center justify-between mb-4">
+        <div
+          className="kpi-error"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}
+        >
           <span>⚠ {fetchError}</span>
-          <button onClick={loadKpis} className="underline text-sm font-semibold ml-4">Retry</button>
+          <button
+            onClick={loadKpis}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', fontWeight: 700, textDecoration: 'underline', fontFamily: C.font }}
+          >Retry</button>
         </div>
       )}
 
       {/* ── KPI Selection Panel ── */}
       {showSelectPanel && (
         <div style={{
-          background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
-          borderRadius: 16, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.02)', marginBottom: 16,
+          background: C.primaryBg,
+          border: `1px solid ${C.primaryBord}`,
+          borderRadius: 16, padding: 20,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          marginBottom: 16,
         }}>
-          <p className="text-sm text-gray-600 mb-4 font-medium">
+          <p style={{ fontSize: 13, fontWeight: 600, color: C.textMuted, marginBottom: 16, fontFamily: C.font }}>
             Select KPIs to display as Critical Numbers (3–5 recommended):
           </p>
 
           {isFetching ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 20 }}>
               {[1,2,3,4].map(n => (
-                <div key={n} className="h-16 rounded-xl animate-pulse" style={{ background: '#f3f4f6' }} />
+                <div key={n} style={{ height: 64, borderRadius: 14, background: '#f3f4f6', animation: 'kpi-pulse 1.4s ease-in-out infinite' }} />
               ))}
             </div>
           ) : kpis.length === 0 ? (
-            <p className="text-sm text-gray-400 italic mb-5">No KPIs found. Create one above.</p>
+            <p style={{ fontSize: 13, color: '#a3a3a3', fontStyle: 'italic', marginBottom: 20, fontFamily: C.font }}>
+              No KPIs found. Create one above.
+            </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 20 }}>
               {kpis.map(kpi => (
                 <label
                   key={kpi.id}
-                  className="flex items-start gap-3 p-3.5 bg-white rounded-xl cursor-pointer transition-all hover:shadow-sm"
-                  style={{ border: `1.5px solid ${kpi.selected ? C.primary : '#ede8e5'}` }}
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 12,
+                    padding: '12px 14px', background: C.cardBg, borderRadius: 14, cursor: 'pointer',
+                    border: `1.5px solid ${kpi.selected ? C.primary : C.borderLgt}`,
+                    transition: 'border-color .15s, box-shadow .15s',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                  }}
                 >
                   <input
-                    type="checkbox"
-                    checked={kpi.selected}
+                    type="checkbox" checked={kpi.selected}
                     onChange={() => toggleKpi(kpi.id)}
-                    className="kpi-checkbox mt-0.5"
+                    className="kpi-checkbox"
+                    style={{ marginTop: 2 }}
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#171717] leading-tight">{kpi.name}</p>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md">{kpi.frequency}</span>
-                      {kpi.unit && <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md">{kpi.unit}</span>}
-                      {kpi.owner && <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md">{kpi.owner}</span>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: C.textMain, margin: '0 0 6px', fontFamily: C.font }}>
+                      {kpi.name}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, color: C.textMuted,
+                        background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
+                        padding: '2px 8px', borderRadius: 6,
+                        fontFamily: C.font,
+                      }}>{kpi.frequency}</span>
+                      {kpi.unit && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, color: C.textMuted,
+                          background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
+                          padding: '2px 8px', borderRadius: 6,
+                          fontFamily: C.font,
+                        }}>{kpi.unit}</span>
+                      )}
+                      {kpi.owner && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 600, color: C.textMuted,
+                          background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
+                          padding: '2px 8px', borderRadius: 6,
+                          fontFamily: C.font,
+                        }}>{kpi.owner}</span>
+                      )}
                     </div>
                   </div>
-                  {/* Edit + Delete inline */}
-                  <div className="flex items-center gap-1 ml-1 shrink-0">
-                    <button
-                      onClick={e => { e.preventDefault(); openEdit(kpi); }}
-                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-blue-500 hover:bg-blue-50"
-                      title="Edit"
-                    >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <BtnIcon onClick={(e: any) => { e.preventDefault(); openEdit(kpi); }} title="Edit">
                       <EditIcon />
-                    </button>
-                    <button
-                      onClick={e => { e.preventDefault(); handleDelete(kpi.id); }}
-                      disabled={deletingId === kpi.id}
-                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
-                      title="Delete"
+                    </BtnIcon>
+                    <BtnIcon
+                      onClick={(e: any) => { e.preventDefault(); handleDelete(kpi.id); }}
+                      title="Delete" danger
                     >
                       {deletingId === kpi.id ? <LoaderIcon /> : <TrashIcon />}
-                    </button>
+                    </BtnIcon>
                   </div>
                 </label>
               ))}
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-4 border-t" style={{ borderColor: C.primaryBord }}>
-            <span className="text-sm text-gray-500 font-medium">
-              Selected: <span className="font-bold text-gray-800">{selectedCount} KPIs</span>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            paddingTop: 16, borderTop: `1px solid ${C.primaryBord}`,
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted, fontFamily: C.font }}>
+              Selected:{' '}
+              <strong style={{ color: C.textMain, fontWeight: 800 }}>{selectedCount} KPIs</strong>
             </span>
-            <div className="flex items-center gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button
                 onClick={() => setShowSelectPanel(false)}
-                style={{ padding: '8px 18px', fontSize: 13, fontWeight: 600, color: '#374151', background: '#fff', border: '1px solid #e5e5e5', borderRadius: 10, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                style={{
+                  padding: '8px 18px', fontSize: 13, fontWeight: 700,
+                  color: C.textMain, background: '#fff',
+                  border: `1px solid ${C.primaryBord}`,
+                  borderRadius: 10, cursor: 'pointer', fontFamily: C.font,
+                  transition: 'background .15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = C.primaryBg}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}
               >
                 Cancel
               </button>
               <button
                 onClick={() => setShowSelectPanel(false)}
-                style={{ padding: '8px 18px', fontSize: 13, fontWeight: 700, color: '#fff', background: C.primary, border: 'none', borderRadius: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(218,119,86,0.3)', transition: 'background 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = C.primaryHov}
-                onMouseLeave={e => e.currentTarget.style.background = C.primary}
+                style={{
+                  padding: '8px 18px', fontSize: 13, fontWeight: 900,
+                  color: '#fff', background: '#1a1a1a',
+                  border: 'none', borderRadius: 10, cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  transition: 'background .15s', fontFamily: C.font,
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#000'}
+                onMouseLeave={e => e.currentTarget.style.background = '#1a1a1a'}
               >
                 Save Selection
               </button>
@@ -515,50 +623,67 @@ export const CriticalNumbers = () => {
         </div>
       )}
 
-      {/* ── KPI Cards (selected ones) ── */}
+      {/* ── KPI Cards ── */}
       {!showSelectPanel && !isFetching && kpis.filter(k => k.selected).length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
           {kpis.filter(k => k.selected).map(kpi => (
             <div
               key={kpi.id}
-              className="bg-white rounded-2xl border p-4 shadow-sm hover:shadow-md transition-all group"
-              style={{ borderColor: '#ede8e5' }}
+              className="kpi-card-lift"
+              style={{
+                background: C.cardBg, borderRadius: 16,
+                border: `1px solid ${C.borderLgt}`,
+                borderTop: `4px solid ${C.primary}`,
+                padding: '16px 18px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                position: 'relative',
+              }}
             >
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-[13px] font-bold text-[#171717] leading-snug flex-1 pr-2">{kpi.name}</p>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  <button
-                    onClick={() => openEdit(kpi)}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
-                    title="Edit"
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(kpi.id)}
-                    disabled={deletingId === kpi.id}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
-                    title="Delete"
-                  >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+                <p style={{
+                  fontSize: 13, fontWeight: 800, color: C.textMain,
+                  margin: 0, lineHeight: 1.4, flex: 1, paddingRight: 8,
+                  fontFamily: C.font,
+                }}>
+                  {kpi.name}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: 0, transition: 'opacity .15s', flexShrink: 0 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                  className="kpi-card-actions"
+                >
+                  <BtnIcon onClick={() => openEdit(kpi)} title="Edit"><EditIcon /></BtnIcon>
+                  <BtnIcon onClick={() => handleDelete(kpi.id)} title="Delete" danger>
                     {deletingId === kpi.id ? <LoaderIcon /> : <TrashIcon />}
-                  </button>
+                  </BtnIcon>
                 </div>
               </div>
-              <div className="flex items-end justify-between">
+
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                 <div>
-                  <p className="text-2xl font-black" style={{ color: C.primary }}>
+                  <p style={{
+                    fontSize: 26, fontWeight: 900, color: C.primary,
+                    margin: '0 0 2px', fontFamily: C.font, lineHeight: 1,
+                  }}>
                     {kpi.current_value ?? '—'}{kpi.unit && kpi.unit !== 'Select unit' ? ` ${kpi.unit}` : ''}
                   </p>
                   {kpi.target_value != null && (
-                    <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                    <p style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, margin: 0, fontFamily: C.font }}>
                       Target: {kpi.target_value}{kpi.unit && kpi.unit !== 'Select unit' ? ` ${kpi.unit}` : ''}
                     </p>
                   )}
                 </div>
-                <span className="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg capitalize">
+                <span style={{
+                  fontSize: 11, fontWeight: 700, color: C.textMuted,
+                  background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
+                  padding: '4px 10px', borderRadius: 8, textTransform: 'capitalize',
+                  fontFamily: C.font,
+                }}>
                   {kpi.frequency}
                 </span>
               </div>
+
+              {/* hover reveal overlay for actions */}
+              <style>{`.kpi-card-lift:hover .kpi-card-actions { opacity: 1 !important; }`}</style>
             </div>
           ))}
         </div>
@@ -568,15 +693,27 @@ export const CriticalNumbers = () => {
       {!showSelectPanel && !isFetching && kpis.filter(k => k.selected).length === 0 && !fetchError && (
         <button
           onClick={openCreate}
-          className="flex flex-col items-center justify-center w-full py-10 rounded-2xl border-2 border-dashed transition-all"
-          style={{ borderColor: 'rgba(218,119,86,0.30)', background: 'rgba(218,119,86,0.03)' }}
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            width: '100%', padding: '40px 0',
+            borderRadius: 16, border: `2px dashed ${C.primaryBord}`,
+            background: C.primaryTint, cursor: 'pointer',
+            transition: 'all .15s', fontFamily: C.font,
+          }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.background = C.primaryBg; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(218,119,86,0.30)'; e.currentTarget.style.background = 'rgba(218,119,86,0.03)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.primaryBord; e.currentTarget.style.background = C.primaryTint; }}
         >
-          <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ background: C.primaryTint }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: 'rgba(218,119,86,0.18)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 8, color: C.primary,
+          }}>
             <PlusIcon />
           </div>
-          <span className="text-[13px] font-bold" style={{ color: C.primary }}>Create First KPI</span>
+          <span style={{ fontSize: 13, fontWeight: 900, color: C.primary, fontFamily: C.font }}>
+            Create First KPI
+          </span>
         </button>
       )}
 
@@ -586,35 +723,38 @@ export const CriticalNumbers = () => {
           <div className="kpi-modal-box">
 
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px 16px', borderBottom: `1px solid ${C.primaryBord}`, flexShrink: 0 }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '20px 28px 16px',
+              borderBottom: `1px solid ${C.primaryBord}`,
+              background: C.cardBg, flexShrink: 0,
+            }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: C.primary, display: 'inline-block', flexShrink: 0 }} />
-                <h2 style={{ fontSize: 19, fontWeight: 800, color: '#171717', margin: 0 }}>
+                <span style={{
+                  width: 10, height: 10, borderRadius: '50%',
+                  background: C.primary, display: 'inline-block', flexShrink: 0,
+                }} />
+                <h2 style={{ fontSize: 17, fontWeight: 900, color: C.textMain, margin: 0, fontFamily: C.font }}>
                   {editingKpi ? 'Edit KPI' : 'Create New KPI'}
                 </h2>
               </div>
-              <button
-                onClick={closeModal}
-                style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', color: '#737373', display: 'flex', alignItems: 'center' }}
-                onMouseEnter={e => { e.currentTarget.style.background = C.primaryTint; e.currentTarget.style.color = C.primary; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#737373'; }}
-              >
-                <CloseIcon />
-              </button>
+              <BtnIcon onClick={closeModal}><CloseIcon /></BtnIcon>
             </div>
 
             {/* Body */}
-            <div style={{ padding: '20px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div
+              className="kpi-scroll"
+              style={{ padding: '20px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}
+            >
               {saveError && <div className="kpi-error">{saveError}</div>}
 
               {/* KPI Name */}
               <div>
-                <label className="block text-[13px] font-bold text-[#171717] mb-1.5">
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
                   KPI Name <span style={{ color: C.primary }}>*</span>
                 </label>
                 <input
-                  type="text"
-                  placeholder="e.g., Revenue, Calls Made"
+                  type="text" placeholder="e.g., Revenue, Calls Made"
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
                   className="kpi-input"
@@ -623,18 +763,17 @@ export const CriticalNumbers = () => {
               </div>
 
               {/* Unit + Target Value */}
-              <div className="grid grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
-                  <label className="block text-[13px] font-bold text-[#171717] mb-1.5">Unit</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>Unit</label>
                   <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className="kpi-select">
                     {UNITS.map(u => <option key={u}>{u}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[13px] font-bold text-[#171717] mb-1.5">Target Value</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>Target Value</label>
                   <input
-                    type="number"
-                    placeholder="e.g., 1000"
+                    type="number" placeholder="e.g., 1000"
                     value={form.target_value}
                     onChange={e => setForm({ ...form, target_value: e.target.value })}
                     className="kpi-input"
@@ -643,9 +782,9 @@ export const CriticalNumbers = () => {
               </div>
 
               {/* Department + Frequency */}
-              <div className="grid grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
-                  <label className="block text-[13px] font-bold text-[#171717] mb-1.5">
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
                     Department <span style={{ color: C.primary }}>*</span>
                   </label>
                   <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} className="kpi-select">
@@ -653,7 +792,7 @@ export const CriticalNumbers = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[13px] font-bold text-[#171717] mb-1.5">
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
                     Frequency <span style={{ color: C.primary }}>*</span>
                   </label>
                   <select value={form.frequency} onChange={e => setForm({ ...form, frequency: e.target.value })} className="kpi-select">
@@ -664,7 +803,7 @@ export const CriticalNumbers = () => {
 
               {/* Assign to User */}
               <div>
-                <label className="block text-[13px] font-bold text-[#171717] mb-1.5">Assign to User</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>Assign to User</label>
                 <select value={form.assign_to} onChange={e => setForm({ ...form, assign_to: e.target.value })} className="kpi-select">
                   {USERS.map(u => <option key={u}>{u}</option>)}
                 </select>
@@ -672,11 +811,23 @@ export const CriticalNumbers = () => {
             </div>
 
             {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '16px 28px', borderTop: `1px solid ${C.primaryBord}`, background: C.primaryBg, flexShrink: 0, borderRadius: '0 0 20px 20px' }}>
+            <div style={{
+              display: 'flex', justifyContent: 'flex-end', gap: 10,
+              padding: '16px 28px',
+              borderTop: `1px solid ${C.primaryBord}`,
+              background: C.cardBg, flexShrink: 0,
+              borderRadius: '0 0 20px 20px',
+            }}>
               <button
                 onClick={closeModal}
-                style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, color: '#374151', background: '#fff', border: '1px solid #e5e5e5', borderRadius: 12, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                style={{
+                  padding: '10px 20px', fontSize: 13, fontWeight: 700,
+                  color: C.textMain, background: '#fff',
+                  border: `1px solid ${C.primaryBord}`,
+                  borderRadius: 12, cursor: 'pointer', fontFamily: C.font,
+                  transition: 'background .15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = C.primaryBg}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}
               >
                 Cancel
@@ -685,22 +836,22 @@ export const CriticalNumbers = () => {
                 onClick={editingKpi ? handleUpdate : handleCreate}
                 disabled={!canSave || isSaving}
                 style={{
-                  padding: '10px 22px', fontSize: 13, fontWeight: 700, color: '#fff',
-                  background: canSave && !isSaving ? C.primary : '#e5b5a3',
+                  padding: '10px 22px', fontSize: 13, fontWeight: 900, color: '#fff',
+                  background: canSave && !isSaving ? '#1a1a1a' : '#9ca3af',
                   border: 'none', borderRadius: 12,
                   cursor: canSave && !isSaving ? 'pointer' : 'not-allowed',
-                  boxShadow: canSave ? '0 2px 8px rgba(218,119,86,0.3)' : 'none',
-                  transition: 'background 0.15s',
+                  boxShadow: canSave ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
+                  transition: 'background .15s',
                   display: 'flex', alignItems: 'center', gap: 8,
+                  fontFamily: C.font,
                 }}
-                onMouseEnter={e => { if (canSave && !isSaving) e.currentTarget.style.background = C.primaryHov; }}
-                onMouseLeave={e => { if (canSave && !isSaving) e.currentTarget.style.background = C.primary; }}
+                onMouseEnter={e => { if (canSave && !isSaving) e.currentTarget.style.background = '#000'; }}
+                onMouseLeave={e => { if (canSave && !isSaving) e.currentTarget.style.background = '#1a1a1a'; }}
               >
                 {isSaving && <LoaderIcon />}
                 {isSaving ? 'Saving...' : editingKpi ? 'Save Changes' : 'Create KPI'}
               </button>
             </div>
-
           </div>
         </Modal>
       )}

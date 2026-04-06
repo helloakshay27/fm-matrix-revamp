@@ -86,6 +86,18 @@ const navMenuOptions: Record<
       href: "/employee/company-hub",
     },
     {
+      title: "Business Compass",
+      description: "",
+      icon: <Shield className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/business-compass/profile",
+    },
+    {
+      title: "Admin Compass",
+      description: "",
+      icon: <Shield className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/admin-compass/business-plan-goals",
+    },
+    {
       title: "Dasboard",
       description: "View and manage your dashboard",
       icon: <Home className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,

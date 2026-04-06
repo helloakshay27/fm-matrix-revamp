@@ -12,7 +12,7 @@ const DailyReport: React.FC = () => {
             const t = setTimeout(() => {
                 try { window.print(); } catch { /* noop */ }
             }, 400);
-            return () => clearTimeout(t);
+            return () => clearTimeout(t); 
         }
     }, [location.search]);
 
