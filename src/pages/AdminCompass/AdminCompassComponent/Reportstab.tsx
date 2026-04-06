@@ -35,7 +35,7 @@ import {
   meetingOptions,
   periodOptions,
   BtnIcon,
-} from "./shared";
+} from "./Shared";
 
 const generateEmptyTrendForReport = (endDateStr, days = 7) => {
   const result = [];

@@ -17,7 +17,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { SectionCard, fetchAnalytics } from "./shared";
+import { SectionCard, fetchAnalytics } from "./Shared";
 
 const generateEmptyTrend = (days = 7) => {
   const result = [];
