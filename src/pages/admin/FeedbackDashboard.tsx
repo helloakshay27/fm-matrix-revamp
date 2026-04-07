@@ -10,6 +10,8 @@ import {
   Sparkles,
   Loader2,
   AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -47,6 +49,14 @@ interface DepartmentFeedback {
   rating: number;
 }
 
+interface FeedbackLeaderboardItem {
+  id: string;
+  rank: number;
+  name: string;
+  designation: string;
+  count: number;
+}
+
 interface DashboardData {
   totalFeedbacks: number;
   averageRating: number;
@@ -55,6 +65,8 @@ interface DashboardData {
   readTrackingAvailable: boolean;
   ratingBreakdown: RatingBreakdown;
   departments: DepartmentFeedback[];
+  mostFeedbackReceived: FeedbackLeaderboardItem[];
+  mostFeedbackGiven: FeedbackLeaderboardItem[];
   recentFeedbacks: RecentFeedback[];
 }
 
@@ -248,6 +260,8 @@ function buildDashboardDataFromFeedbacks(items: RecentFeedback[]): DashboardData
     readTrackingAvailable: false,
     ratingBreakdown,
     departments: [],
+    mostFeedbackReceived: [],
+    mostFeedbackGiven: [],
     recentFeedbacks: [...items]
       .sort(
         (a, b) =>
@@ -289,6 +303,92 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       };
     })
     .sort((left, right) => left.rank - right.rank);
+
+  const receivedLeaderboardRaw = pickList(source, [
+    "mostFeedbackReceived",
+    "most_feedback_received",
+    "feedback_received_leaderboard",
+    "top_feedback_received",
+    "feedback_received_top",
+  ]);
+  const mostFeedbackReceived = receivedLeaderboardRaw
+    .map((item, index) => {
+      const row = toApiRecord(item);
+
+      return {
+        id: String(
+          row.id ??
+            row.user_id ??
+            row.employee_id ??
+            row.staff_id ??
+            `received-${index}`
+        ),
+        rank: toNumber(row.rank, index + 1),
+        name:
+          getString(row.name) ||
+          getString(row.user_name) ||
+          getString(row.employee_name) ||
+          getString(row.staff_name) ||
+          "Unknown User",
+        designation:
+          getString(row.designation) ||
+          getString(row.department_name) ||
+          getString(row.role) ||
+          "No designation",
+        count: toNumber(
+          row.feedback_received ??
+            row.received_count ??
+            row.total_feedback_received ??
+            row.total_received ??
+            row.count
+        ),
+      };
+    })
+    .sort((left, right) => left.rank - right.rank)
+    .slice(0, 5);
+
+  const givenLeaderboardRaw = pickList(source, [
+    "mostFeedbackGiven",
+    "most_feedback_given",
+    "feedback_given_leaderboard",
+    "top_feedback_given",
+    "feedback_given_top",
+  ]);
+  const mostFeedbackGiven = givenLeaderboardRaw
+    .map((item, index) => {
+      const row = toApiRecord(item);
+
+      return {
+        id: String(
+          row.id ??
+            row.user_id ??
+            row.employee_id ??
+            row.staff_id ??
+            `given-${index}`
+        ),
+        rank: toNumber(row.rank, index + 1),
+        name:
+          getString(row.name) ||
+          getString(row.user_name) ||
+          getString(row.employee_name) ||
+          getString(row.staff_name) ||
+          "Unknown User",
+        designation:
+          getString(row.designation) ||
+          getString(row.department_name) ||
+          getString(row.role) ||
+          "No designation",
+        count: toNumber(
+          row.feedback_given ??
+            row.given_count ??
+            row.total_feedback_given ??
+            row.total_given ??
+            row.count
+        ),
+      };
+    })
+    .sort((left, right) => left.rank - right.rank)
+    .slice(0, 5);
 
   const recentFeedbacks = recent.map((item, index) => {
     const recentItem = toApiRecord(item);
@@ -411,6 +511,8 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     readTrackingAvailable,
     ratingBreakdown: derivedRatingBreakdown,
     departments,
+    mostFeedbackReceived,
+    mostFeedbackGiven,
     recentFeedbacks,
   };
 }
@@ -591,6 +693,8 @@ const FeedbackDashboard = () => {
     readTrackingAvailable,
     ratingBreakdown,
     departments,
+    mostFeedbackReceived,
+    mostFeedbackGiven,
     recentFeedbacks,
   } = data;
 
@@ -696,6 +800,72 @@ const FeedbackDashboard = () => {
             </div>
           )}
         </Card>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <ArrowDownLeft className="h-5 w-5 text-[#DA7756]" strokeWidth={2.25} />
+              <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Received</h2>
+            </div>
+            {mostFeedbackReceived.length > 0 ? (
+              <ul className="space-y-3">
+                {mostFeedbackReceived.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
+                      {entry.rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
+                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-[#DA7756]/15 px-3 py-1 text-sm font-semibold text-[#9e4f36]">
+                      {entry.count} received
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+                No feedback-received leaderboard data in current API response.
+              </div>
+            )}
+          </Card>
+
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <ArrowUpRight className="h-5 w-5 text-[#b85f42]" strokeWidth={2.25} />
+              <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Given</h2>
+            </div>
+            {mostFeedbackGiven.length > 0 ? (
+              <ul className="space-y-3">
+                {mostFeedbackGiven.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#b85f42] text-sm font-bold text-white">
+                      {entry.rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
+                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-[#b85f42]/15 px-3 py-1 text-sm font-semibold text-[#8f4a33]">
+                      {entry.count} given
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+                No feedback-given leaderboard data in current API response.
+              </div>
+            )}
+          </Card>
+        </div>
 
         {/* Read Tracking / Rating Breakdown */}
         <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
