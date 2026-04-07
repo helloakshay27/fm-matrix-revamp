@@ -17,7 +17,7 @@ import EditKPIDialog, {
   type EditKPIFormValues,
 } from "./AdminCompassComponent/EditKPIDialog";
 import {
-  BASE_URL as ADMIN_COMPASS_BASE_URL,
+  getBaseUrl as ADMIN_COMPASS_BASE_URL,
   C,
   getAuthHeaders as getAdminCompassAuthHeaders,
   kpiClass,
@@ -31,7 +31,6 @@ import { getBaseUrl, getToken as getAuthToken } from "@/utils/auth";
 // ─────────────────────────────────────────────
 // API CONFIG
 // ─────────────────────────────────────────────
-const DEFAULT_BASE_URL = "https://fm-uat-api.lockated.com";
 const KPI_LIST_ENDPOINTS = ["/kpis", "/api/kpis"] as const;
 
 type RawKpiData = {

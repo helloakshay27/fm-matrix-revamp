@@ -14,18 +14,23 @@ const C = {
 };
 
 // ── BASE URL ──
-export const BASE_URL = 'https://fm-uat-api.lockated.com';
+const getBaseUrl = () => {
+  const raw = (localStorage.getItem('baseUrl') || '').replace(/\/$/, '');
+  if (!raw) return '';
+  return raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+};
+
+export const BASE_URL = getBaseUrl();
 
 // ── Helpers ──
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('auth_token') || '';
+  const token = localStorage.getItem('token') || '';
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: token } : {}),
   };
 };
 
-// DD-MM-YYYY → YYYY-MM-DD (for API)
 const formatDateForApi = (dateStr: string): string => {
   if (!dateStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
@@ -35,7 +40,6 @@ const formatDateForApi = (dateStr: string): string => {
   return dateStr;
 };
 
-// YYYY-MM-DD → DD-MM-YYYY (for DatePicker display)
 const apiDateToDisplay = (dateStr: string): string => {
   if (!dateStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
@@ -67,7 +71,6 @@ const clampProgress = (val: any): number => {
   return isNaN(n) ? 0 : Math.min(100, Math.max(0, n));
 };
 
-// ── Period mapping ──
 const mapPeriodToApi = (label: string): string => {
   const map: Record<string, string> = {
     'This Year':    'this_year',
@@ -352,7 +355,7 @@ interface Goal {
   currentValue?: string;
   unit?: string;
   period?: string;
-  targetDate?: string;   // YYYY-MM-DD from API
+  targetDate?: string;
   ownerName?: string;
   ownerId?: string | number;
   status?: string;
@@ -395,7 +398,7 @@ export const ShortTermSection = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [tempGoal, setTempGoal]         = useState<Goal | null>(null);
-  const [tempGoalDate, setTempGoalDate] = useState(''); // DD-MM-YYYY for DatePicker
+  const [tempGoalDate, setTempGoalDate] = useState('');
 
   const [isSaving, setIsSaving]   = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -403,7 +406,6 @@ export const ShortTermSection = () => {
   const [strategicGoal, setStrategicGoal] = useState<any>(null);
   const [tempStrategic, setTempStrategic] = useState<any>(null);
 
-  // ── Fetch goals — filter 'this_year' ──
   const fetchGoals = useCallback(async () => {
     setIsFetching(true);
     setFetchError(null);
@@ -417,7 +419,6 @@ export const ShortTermSection = () => {
       const json = await res.json();
       const records = Array.isArray(json) ? json : (json.goals || json.data || []);
 
-      // Filter ONLY short-term / this_year goals
       const yearGoals = records.filter((g: any) =>
         g.period === 'this_year' ||
         (g.period && g.period.toLowerCase().includes('year'))
@@ -432,7 +433,7 @@ export const ShortTermSection = () => {
         currentValue: String(g.current_value ?? '0'),
         unit: g.unit || '%',
         period: g.period || 'this_year',
-        targetDate: g.target_date || '',   // YYYY-MM-DD from API
+        targetDate: g.target_date || '',
         ownerName: g.owner_name || '',
         ownerId: g.owner_id || '',
         status: g.status || 'On Track',
@@ -468,35 +469,17 @@ export const ShortTermSection = () => {
 
   useEffect(() => { fetchGoals(); }, [fetchGoals]);
 
-  // ── PATCH progress on card slider change ──
   const handleCardSlider = async (id: number, val: string) => {
     const clamped = clampProgress(val);
-
-    // Optimistic UI update
-    setGoals((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, progress: clamped } : g))
-    );
-
+    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, progress: clamped } : g)));
     try {
       const res = await fetch(`${BASE_URL}/goals/${id}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          goal: {
-            progress_percentage: clamped,
-            current_value: clamped,
-          },
-        }),
+        body: JSON.stringify({ goal: { progress_percentage: clamped, current_value: clamped } }),
       });
-
-      if (!res.ok) {
-        console.error(`[PATCH progress] HTTP ${res.status}`);
-        fetchGoals(); // Rollback on failure
-      }
-    } catch (err) {
-      console.error('[PATCH progress] network error:', err);
-      fetchGoals(); // Rollback on failure
-    }
+      if (!res.ok) fetchGoals();
+    } catch { fetchGoals(); }
   };
 
   const closeModal = () => {
@@ -522,17 +505,14 @@ export const ShortTermSection = () => {
   const confirmDeleteStrategic = () => setActiveModal('confirm_delete');
   const executeDeleteStrategic = () => { setStrategicGoal(null); closeModal(); };
 
-  // ── Open Edit Goal Modal ──
   const openGoalModal = (goal: Goal) => {
     setTempGoal({ ...goal });
-    // Convert YYYY-MM-DD → DD-MM-YYYY for DatePicker
     setTempGoalDate(apiDateToDisplay(goal.targetDate || ''));
     setEditingGoalId(goal.id ?? null);
     setSaveError(null);
     setActiveModal('goal_details');
   };
 
-  // ── Open Create Goal Modal ──
   const addGoal = () => {
     setTempGoal({
       title: '',
@@ -552,13 +532,9 @@ export const ShortTermSection = () => {
     setActiveModal('goal_details');
   };
 
-  // ── PUT / POST Goal ──
   const saveGoalDetails = async () => {
     if (!tempGoal) return;
-    if (!tempGoal.title.trim()) {
-      setSaveError('Goal title cannot be empty.');
-      return;
-    }
+    if (!tempGoal.title.trim()) { setSaveError('Goal title cannot be empty.'); return; }
     setIsSaving(true);
     setSaveError(null);
 
@@ -582,23 +558,14 @@ export const ShortTermSection = () => {
       let res: Response;
       if (editingGoalId) {
         res = await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
-          method: 'PUT',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
+          method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payload),
         });
       } else {
         res = await fetch(`${BASE_URL}/goals`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
+          method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload),
         });
       }
-
-      if (!res.ok) {
-        const errBody = await res.text();
-        throw new Error(`API error ${res.status}: ${errBody}`);
-      }
-
+      if (!res.ok) { const errBody = await res.text(); throw new Error(`API error ${res.status}: ${errBody}`); }
       closeModal();
       fetchGoals();
     } catch (err: any) {
@@ -609,50 +576,32 @@ export const ShortTermSection = () => {
     }
   };
 
-  // ── DELETE Goal ──
   const deleteGoal = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this goal?')) return;
     try {
-      const res = await fetch(`${BASE_URL}/goals/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
+      const res = await fetch(`${BASE_URL}/goals/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       fetchGoals();
     } catch (err: any) {
-      console.error('[deleteGoal]', err);
       alert('Failed to delete goal: ' + (err.message || 'Unknown error'));
     }
   };
 
   const handleModalProgressChange = (val: string) => {
     const clamped = clampProgress(val);
-    setTempGoal((prev: any) => ({
-      ...prev,
-      progress: clamped,
-      currentValue: String(clamped),
-    }));
+    setTempGoal((prev: any) => ({ ...prev, progress: clamped, currentValue: String(clamped) }));
   };
 
-  // ─────────────────────────────────────────────────────────
   return (
     <div style={{ padding: '24px 0', fontFamily: 'sans-serif' }}>
       <ThemeStyle />
 
-      <div
-        className="rounded-2xl overflow-hidden shadow-sm mt-6 border bg-white"
-        style={{ borderColor: C.borderLgt }}
-      >
+      <div className="rounded-2xl overflow-hidden shadow-sm mt-6 border bg-white" style={{ borderColor: C.borderLgt }}>
         {/* ── Header ── */}
-        <div
-          className="px-6 py-4 border-b flex items-center justify-between"
-          style={{ borderColor: C.borderLgt, background: '#fafafa' }}
-        >
+        <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: C.borderLgt, background: '#fafafa' }}>
           <div className="flex items-center gap-2">
             <CalendarLargeIcon />
-            <h2 className="font-bold text-lg m-0" style={{ color: C.textMain }}>
-              Short-term Goals (This Year)
-            </h2>
+            <h2 className="font-bold text-lg m-0" style={{ color: C.textMain }}>Short-term Goals (This Year)</h2>
             <InfoIcon />
           </div>
           {isFetching && <LoaderIcon className="w-4 h-4" />}
@@ -662,18 +611,11 @@ export const ShortTermSection = () => {
 
           {/* ── Strategic / Annual Goal Banner ── */}
           {strategicGoal ? (
-            <div
-              className="bg-white rounded-xl p-5 mb-8 flex justify-between items-center group transition-all"
-              style={{ border: `1.5px solid ${C.primaryBord}`, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}
-            >
+            <div className="bg-white rounded-xl p-5 mb-8 flex justify-between items-center group transition-all" style={{ border: `1.5px solid ${C.primaryBord}`, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
               <h3 className="font-bold text-[16px]" style={{ color: C.textMain }}>{strategicGoal.title}</h3>
               <div className="flex gap-2">
-                <div onClick={openStrategicModal} className="p-1.5 hover:bg-gray-100 rounded-md cursor-pointer transition-colors" title="Edit">
-                  <EditIcon />
-                </div>
-                <div onClick={confirmDeleteStrategic} className="p-1.5 hover:bg-red-50 rounded-md cursor-pointer transition-colors" title="Delete">
-                  <TrashIcon />
-                </div>
+                <div onClick={openStrategicModal} className="p-1.5 hover:bg-gray-100 rounded-md cursor-pointer transition-colors" title="Edit"><EditIcon /></div>
+                <div onClick={confirmDeleteStrategic} className="p-1.5 hover:bg-red-50 rounded-md cursor-pointer transition-colors" title="Delete"><TrashIcon /></div>
               </div>
             </div>
           ) : (
@@ -711,80 +653,34 @@ export const ShortTermSection = () => {
           {isFetching ? <SkeletonCards /> : (
             <>
               {goals.length === 0 && !fetchError && (
-                <div
-                  className="text-center py-8 text-sm italic rounded-xl mb-4 border border-dashed"
-                  style={{ color: C.textMuted, borderColor: C.borderLgt }}
-                >
+                <div className="text-center py-8 text-sm italic rounded-xl mb-4 border border-dashed" style={{ color: C.textMuted, borderColor: C.borderLgt }}>
                   No annual goals found. Add one below.
                 </div>
               )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 {goals.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className="bg-white rounded-xl p-4 transition-all group hover:shadow-md"
-                    style={{ border: `1px solid ${C.borderLgt}` }}
-                  >
+                  <div key={goal.id} className="bg-white rounded-xl p-4 transition-all group hover:shadow-md" style={{ border: `1px solid ${C.borderLgt}` }}>
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-start gap-2.5 flex-1 min-w-0">
                         <div>
-                          <span className="font-bold text-[14px] leading-snug block" style={{ color: C.textMain }}>
-                            {goal.title}
-                          </span>
+                          <span className="font-bold text-[14px] leading-snug block" style={{ color: C.textMain }}>{goal.title}</span>
                           {(goal.ownerName || goal.targetDate) && (
                             <div className="text-xs mt-1 flex items-center gap-1 font-medium" style={{ color: C.textMuted }}>
                               <span style={{ color: C.primary }}>•</span>
                               {goal.ownerName || 'Unassigned'}
-                              {goal.targetDate && (
-                                <span className="ml-1">
-                                  📅 {apiDateToDisplay(goal.targetDate)}
-                                </span>
-                              )}
+                              {goal.targetDate && <span className="ml-1">📅 {apiDateToDisplay(goal.targetDate)}</span>}
                             </div>
                           )}
                         </div>
                       </div>
-
-                      <div
-                        className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-lg border ml-2"
-                        style={{ borderColor: C.borderLgt }}
-                      >
-                        <button
-                          onClick={() => openGoalModal(goal)}
-                          className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors"
-                          title="Edit"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          onClick={() => deleteGoal(goal.id as number)}
-                          className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                          title="Delete"
-                        >
-                          <TrashIcon />
-                        </button>
+                      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-lg border ml-2" style={{ borderColor: C.borderLgt }}>
+                        <button onClick={() => openGoalModal(goal)} className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors" title="Edit"><EditIcon /></button>
+                        <button onClick={() => deleteGoal(goal.id as number)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Delete"><TrashIcon /></button>
                       </div>
                     </div>
-
-                    {/* Progress Slider */}
                     <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value={goal.progress}
-                        onChange={(e) => handleCardSlider(goal.id as number, e.target.value)}
-                        className="st-goal-slider"
-                        style={{ background: sliderBg(goal.progress) }}
-                      />
-                      <span
-                        className="text-xs font-bold w-9 text-right shrink-0 tabular-nums"
-                        style={{ color: C.textMuted }}
-                      >
-                        {goal.progress}%
-                      </span>
+                      <input type="range" min="0" max="100" step="1" value={goal.progress} onChange={(e) => handleCardSlider(goal.id as number, e.target.value)} className="st-goal-slider" style={{ background: sliderBg(goal.progress) }} />
+                      <span className="text-xs font-bold w-9 text-right shrink-0 tabular-nums" style={{ color: C.textMuted }}>{goal.progress}%</span>
                     </div>
                   </div>
                 ))}
@@ -794,13 +690,9 @@ export const ShortTermSection = () => {
 
           {/* ── Add Goal Button ── */}
           <div className="mt-6 flex justify-end">
-            <button
-              onClick={addGoal}
-              className="text-sm font-bold px-4 py-2 rounded-lg transition-colors"
-              style={{ color: C.primary, background: 'transparent' }}
+            <button onClick={addGoal} className="text-sm font-bold px-4 py-2 rounded-lg transition-colors" style={{ color: C.primary, background: 'transparent' }}
               onMouseEnter={(e) => { e.currentTarget.style.background = C.primaryTint; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-            >
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
               + Add New Initiative
             </button>
           </div>
@@ -809,32 +701,13 @@ export const ShortTermSection = () => {
         {/* ══ MODAL 0: Confirm Delete Strategic ══ */}
         {activeModal === 'confirm_delete' && (
           <Modal onClose={closeModal}>
-            <div
-              style={{
-                background: '#fff',
-                borderRadius: 16,
-                boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-                width: '100%',
-                maxWidth: 380,
-                overflow: 'hidden',
-              }}
-            >
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', width: '100%', maxWidth: 380, overflow: 'hidden' }}>
               <div style={{ padding: '28px 28px 20px', textAlign: 'center', fontSize: 15, fontWeight: 700, color: C.textMain }}>
                 Are you sure you want to delete this strategic goal?
               </div>
               <div style={{ padding: '0 28px 28px', display: 'flex', justifyContent: 'center', gap: 12 }}>
-                <button
-                  onClick={executeDeleteStrategic}
-                  style={{ padding: '10px 24px', fontWeight: 700, color: '#fff', background: '#dc2626', border: 'none', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={closeModal}
-                  style={{ padding: '10px 24px', fontWeight: 700, color: C.textMain, background: '#f3f4f6', border: 'none', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
+                <button onClick={executeDeleteStrategic} style={{ padding: '10px 24px', fontWeight: 700, color: '#fff', background: '#dc2626', border: 'none', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}>Delete</button>
+                <button onClick={closeModal} style={{ padding: '10px 24px', fontWeight: 700, color: C.textMain, background: '#f3f4f6', border: 'none', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}>Cancel</button>
               </div>
             </div>
           </Modal>
@@ -843,108 +716,41 @@ export const ShortTermSection = () => {
         {/* ══ MODAL 1: Edit Strategic Goal ══ */}
         {activeModal === 'edit_strategic' && tempStrategic && (
           <Modal onClose={closeModal}>
-            <div
-              style={{
-                background: '#fff',
-                borderRadius: 16,
-                boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-                width: '100%',
-                maxWidth: 680,
-                display: 'flex',
-                flexDirection: 'column',
-                maxHeight: '90vh',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Header */}
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', maxHeight: '90vh', overflow: 'hidden' }}>
               <div style={{ padding: '28px 28px 0', position: 'relative' }}>
-                <button
-                  onClick={closeModal}
-                  style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4, borderRadius: 6, lineHeight: 1 }}
-                >
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                <button onClick={closeModal} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4, borderRadius: 6, lineHeight: 1 }}>
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textMain }}>
-                  {strategicGoal ? 'Edit Strategic Goal' : 'Set Annual Vision'}
-                </h2>
-                <p style={{ margin: '6px 0 0', fontSize: 13, color: C.textMuted }}>
-                  Define your high-level annual objective
-                </p>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textMain }}>{strategicGoal ? 'Edit Strategic Goal' : 'Set Annual Vision'}</h2>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: C.textMuted }}>Define your high-level annual objective</p>
               </div>
-
-              {/* Body */}
               <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <label className="st-label">Goal Title <span style={{ color: C.primary }}>*</span></label>
-                  <input
-                    type="text"
-                    value={tempStrategic.title}
-                    placeholder="e.g. Achieve ₹100Cr Revenue"
-                    onChange={(e) => setTempStrategic({ ...tempStrategic, title: e.target.value })}
-                    className="st-input"
-                    onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                    onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                  />
+                  <input type="text" value={tempStrategic.title} placeholder="e.g. Achieve ₹100Cr Revenue" onChange={(e) => setTempStrategic({ ...tempStrategic, title: e.target.value })} className="st-input" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                 </div>
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label className="st-label">Goal Type</label>
-                    <select className="st-select">
-                      <option>Annual</option>
-                    </select>
+                    <select className="st-select"><option>Annual</option></select>
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
-                      value={tempStrategic.targetDate}
-                      onChange={(val) => setTempStrategic({ ...tempStrategic, targetDate: val })}
-                      placeholder="dd-mm-yyyy"
-                    />
+                    <DatePicker value={tempStrategic.targetDate} onChange={(val) => setTempStrategic({ ...tempStrategic, targetDate: val })} placeholder="dd-mm-yyyy" />
                   </div>
                   <div>
                     <label className="st-label">Revenue Target (₹Cr)</label>
-                    <input
-                      type="text"
-                      value={tempStrategic.revenue}
-                      onChange={(e) => setTempStrategic({ ...tempStrategic, revenue: e.target.value })}
-                      className="st-input"
-                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                    />
+                    <input type="text" value={tempStrategic.revenue} onChange={(e) => setTempStrategic({ ...tempStrategic, revenue: e.target.value })} className="st-input" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                   </div>
                   <div>
                     <label className="st-label">Profit Target (₹Cr)</label>
-                    <input
-                      type="text"
-                      value={tempStrategic.profit}
-                      onChange={(e) => setTempStrategic({ ...tempStrategic, profit: e.target.value })}
-                      className="st-input"
-                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                    />
+                    <input type="text" value={tempStrategic.profit} onChange={(e) => setTempStrategic({ ...tempStrategic, profit: e.target.value })} className="st-input" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                   </div>
                 </div>
               </div>
-
-              {/* Footer */}
               <div style={{ padding: '0 28px 28px', display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-                <button
-                  onClick={closeModal}
-                  style={{ padding: '10px 20px', fontWeight: 700, fontSize: 13, color: C.textMain, background: '#f3f4f6', border: 'none', borderRadius: 10, cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveStrategic}
-                  style={{ padding: '10px 24px', fontWeight: 700, fontSize: 13, color: '#fff', background: C.primary, border: 'none', borderRadius: 10, cursor: 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = C.primaryHov}
-                  onMouseLeave={(e) => e.currentTarget.style.background = C.primary}
-                >
-                  Save Vision
-                </button>
+                <button onClick={closeModal} style={{ padding: '10px 20px', fontWeight: 700, fontSize: 13, color: C.textMain, background: '#f3f4f6', border: 'none', borderRadius: 10, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={saveStrategic} style={{ padding: '10px 24px', fontWeight: 700, fontSize: 13, color: '#fff', background: C.primary, border: 'none', borderRadius: 10, cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={(e) => e.currentTarget.style.background = C.primaryHov} onMouseLeave={(e) => e.currentTarget.style.background = C.primary}>Save Vision</button>
               </div>
             </div>
           </Modal>
@@ -953,119 +759,44 @@ export const ShortTermSection = () => {
         {/* ══ MODAL 2: Create / Edit Goal ══ */}
         {activeModal === 'goal_details' && tempGoal && (
           <Modal onClose={closeModal}>
-            <div
-              style={{
-                background: '#fff',
-                borderRadius: 16,
-                boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-                width: '100%',
-                maxWidth: 640,
-                display: 'flex',
-                flexDirection: 'column',
-                maxHeight: '90vh',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Header */}
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', width: '100%', maxWidth: 640, display: 'flex', flexDirection: 'column', maxHeight: '90vh', overflow: 'hidden' }}>
               <div style={{ padding: '28px 28px 0', position: 'relative' }}>
-                <button
-                  onClick={closeModal}
-                  style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4, borderRadius: 6, lineHeight: 1 }}
-                >
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                <button onClick={closeModal} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4, borderRadius: 6, lineHeight: 1 }}>
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textMain }}>
-                  {editingGoalId ? 'Edit Goal Details' : 'Create New Operational Goal'}
-                </h2>
-                <p style={{ margin: '6px 0 0', fontSize: 13, color: C.textMuted }}>
-                  Set a measurable target that contributes to your strategic objectives
-                </p>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textMain }}>{editingGoalId ? 'Edit Goal Details' : 'Create New Operational Goal'}</h2>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: C.textMuted }}>Set a measurable target that contributes to your strategic objectives</p>
               </div>
-
-              {/* Body */}
               <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
                 {saveError && (
-                  <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#991b1b', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600 }}>
-                    {saveError}
-                  </div>
+                  <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#991b1b', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600 }}>{saveError}</div>
                 )}
-
-                {/* Title */}
                 <div>
                   <label className="st-label">Goal Title <span style={{ color: C.primary }}>*</span></label>
-                  <input
-                    type="text"
-                    value={tempGoal.title}
-                    placeholder="e.g. Achieve ₹50Cr revenue"
-                    onChange={(e) => setTempGoal({ ...tempGoal, title: e.target.value })}
-                    className="st-input"
-                    onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                    onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                  />
+                  <input type="text" value={tempGoal.title} placeholder="e.g. Achieve ₹50Cr revenue" onChange={(e) => setTempGoal({ ...tempGoal, title: e.target.value })} className="st-input" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                 </div>
-
-                {/* Description */}
                 <div>
                   <label className="st-label">Description</label>
-                  <textarea
-                    placeholder="Add detailed description about this goal..."
-                    value={tempGoal.description}
-                    onChange={(e) => setTempGoal({ ...tempGoal, description: e.target.value })}
-                    className="st-textarea"
-                    onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                    onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                  />
+                  <textarea placeholder="Add detailed description about this goal..." value={tempGoal.description} onChange={(e) => setTempGoal({ ...tempGoal, description: e.target.value })} className="st-textarea" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                 </div>
-
-                {/* Target Value + Target Date */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label className="st-label">Target Value</label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={tempGoal.targetValue || ''}
-                      placeholder="e.g. 100"
-                      onChange={(e) => setTempGoal({ ...tempGoal, targetValue: e.target.value })}
-                      className="st-input"
-                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                    />
+                    <input type="number" step="any" value={tempGoal.targetValue || ''} placeholder="e.g. 100" onChange={(e) => setTempGoal({ ...tempGoal, targetValue: e.target.value })} className="st-input" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
-                      value={tempGoalDate}
-                      onChange={setTempGoalDate}
-                      placeholder="dd-mm-yyyy"
-                    />
+                    <DatePicker value={tempGoalDate} onChange={setTempGoalDate} placeholder="dd-mm-yyyy" />
                   </div>
                 </div>
-
-                {/* Owner ID + Unit + Period */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                   <div>
                     <label className="st-label">Owner ID</label>
-                    <input
-                      type="number"
-                      value={tempGoal.ownerId || ''}
-                      placeholder="e.g. 123"
-                      onChange={(e) => setTempGoal({ ...tempGoal, ownerId: e.target.value })}
-                      className="st-input"
-                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                    />
+                    <input type="number" value={tempGoal.ownerId || ''} placeholder="e.g. 123" onChange={(e) => setTempGoal({ ...tempGoal, ownerId: e.target.value })} className="st-input" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                   </div>
                   <div>
                     <label className="st-label">Unit</label>
-                    <select
-                      value={tempGoal.unit || ''}
-                      onChange={(e) => setTempGoal({ ...tempGoal, unit: e.target.value })}
-                      className="st-select"
-                    >
+                    <select value={tempGoal.unit || ''} onChange={(e) => setTempGoal({ ...tempGoal, unit: e.target.value })} className="st-select">
                       <option value="">Select unit</option>
                       <option value="%">%</option>
                       <option value="days">Days</option>
@@ -1075,11 +806,7 @@ export const ShortTermSection = () => {
                   </div>
                   <div>
                     <label className="st-label">Period</label>
-                    <select
-                      value={tempGoal.period || 'this_year'}
-                      onChange={(e) => setTempGoal({ ...tempGoal, period: e.target.value })}
-                      className="st-select"
-                    >
+                    <select value={tempGoal.period || 'this_year'} onChange={(e) => setTempGoal({ ...tempGoal, period: e.target.value })} className="st-select">
                       <option value="this_year">This Year</option>
                       <option value="this_quarter">This Quarter</option>
                       <option value="three_to_five_years">3-5 Years</option>
@@ -1087,88 +814,30 @@ export const ShortTermSection = () => {
                     </select>
                   </div>
                 </div>
-
-                {/* Progress — edit mode only */}
                 {editingGoalId && (
                   <div style={{ background: '#f9fafb', borderRadius: 10, padding: '16px 18px', border: '1px solid #e5e7eb' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       <label style={{ fontSize: 13, fontWeight: 600, color: C.textMain }}>Current Progress</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <input
-                          type="number" min="0" max="100" step="1"
-                          value={tempGoal.progress}
-                          onChange={(e) => handleModalProgressChange(e.target.value)}
-                          style={{ width: 56, border: '1px solid #e5e7eb', borderRadius: 8, textAlign: 'center', padding: '4px 6px', fontSize: 13, fontWeight: 700, outline: 'none', color: C.textMain }}
-                        />
+                        <input type="number" min="0" max="100" step="1" value={tempGoal.progress} onChange={(e) => handleModalProgressChange(e.target.value)} style={{ width: 56, border: '1px solid #e5e7eb', borderRadius: 8, textAlign: 'center', padding: '4px 6px', fontSize: 13, fontWeight: 700, outline: 'none', color: C.textMain }} />
                         <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted }}>%</span>
                       </div>
                     </div>
-                    <input
-                      type="range" min="0" max="100" step="1"
-                      value={tempGoal.progress}
-                      onChange={(e) => handleModalProgressChange(e.target.value)}
-                      className="st-modal-slider"
-                      style={{ background: sliderBg(tempGoal.progress) }}
-                    />
-                    {/* Progress display bar */}
-                    <div
-                      style={{
-                        background: C.primary,
-                        color: '#fff',
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        padding: '8px',
-                        borderRadius: 8,
-                        fontSize: 13,
-                        marginTop: 16,
-                      }}
-                    >
+                    <input type="range" min="0" max="100" step="1" value={tempGoal.progress} onChange={(e) => handleModalProgressChange(e.target.value)} className="st-modal-slider" style={{ background: sliderBg(tempGoal.progress) }} />
+                    <div style={{ background: C.primary, color: '#fff', fontWeight: 700, textAlign: 'center', padding: '8px', borderRadius: 8, fontSize: 13, marginTop: 16 }}>
                       {tempGoal.progress.toFixed(1)}% Completed
                     </div>
                   </div>
                 )}
-
-                {/* Update Remarks — edit mode only */}
                 {editingGoalId && (
                   <div>
                     <label className="st-label">Update Remarks</label>
-                    <textarea
-                      placeholder="Add notes about this update..."
-                      value={tempGoal.updateRemarks}
-                      onChange={(e) => setTempGoal({ ...tempGoal, updateRemarks: e.target.value })}
-                      className="st-textarea"
-                      onFocus={(e) => e.currentTarget.style.borderColor = C.primary}
-                      onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt}
-                    />
+                    <textarea placeholder="Add notes about this update..." value={tempGoal.updateRemarks} onChange={(e) => setTempGoal({ ...tempGoal, updateRemarks: e.target.value })} className="st-textarea" onFocus={(e) => e.currentTarget.style.borderColor = C.primary} onBlur={(e) => e.currentTarget.style.borderColor = C.borderLgt} />
                   </div>
                 )}
               </div>
-
-              {/* Footer */}
               <div style={{ padding: '0 28px 28px' }}>
-                <button
-                  onClick={saveGoalDetails}
-                  disabled={isSaving}
-                  style={{
-                    width: '100%',
-                    background: C.primary,
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 8,
-                    padding: '14px',
-                    fontSize: 15,
-                    fontWeight: 700,
-                    cursor: isSaving ? 'not-allowed' : 'pointer',
-                    transition: 'background 0.15s',
-                    opacity: isSaving ? 0.7 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                  }}
-                  onMouseEnter={(e) => { if (!isSaving) e.currentTarget.style.background = C.primaryHov; }}
-                  onMouseLeave={(e) => { if (!isSaving) e.currentTarget.style.background = C.primary; }}
-                >
+                <button onClick={saveGoalDetails} disabled={isSaving} style={{ width: '100%', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, padding: '14px', fontSize: 15, fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', transition: 'background 0.15s', opacity: isSaving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onMouseEnter={(e) => { if (!isSaving) e.currentTarget.style.background = C.primaryHov; }} onMouseLeave={(e) => { if (!isSaving) e.currentTarget.style.background = C.primary; }}>
                   {isSaving && <LoaderIcon />}
                   {isSaving ? 'Saving...' : (editingGoalId ? 'Save Changes' : 'Create Goal')}
                 </button>
@@ -1176,7 +845,6 @@ export const ShortTermSection = () => {
             </div>
           </Modal>
         )}
-
       </div>
     </div>
   );
