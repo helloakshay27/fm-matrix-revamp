@@ -18,6 +18,11 @@ export interface KPICardData {
   _raw?: any;
 }
 
+export interface ArchivedKPIEntry extends KPICardData {
+  archivedDate: string;
+  reason: string;
+}
+
 export const initialKpiCards: KPICardData[] = [
   {
     id: "1",

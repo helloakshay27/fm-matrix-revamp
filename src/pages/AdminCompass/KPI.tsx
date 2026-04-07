@@ -22,7 +22,10 @@ import {
   getAuthHeaders as getAdminCompassAuthHeaders,
   kpiClass,
 } from "./AdminCompassComponent/Shared";
-import { type KPICardData } from "./AdminCompassComponent/kpiTypes";
+import {
+  type ArchivedKPIEntry,
+  type KPICardData,
+} from "./AdminCompassComponent/kpiTypes";
 import { getBaseUrl, getToken as getAuthToken } from "@/utils/auth";
 
 // ─────────────────────────────────────────────
@@ -69,6 +72,8 @@ type KpiUpdatePayload = {
 type CompanyUser = {
   id: number;
   name: string;
+  email?: string;
+  departmentId?: number;
 };
 
 type CompanyDepartment = {
@@ -82,6 +87,11 @@ type RawCompanyUser = {
   full_name?: string;
   firstname?: string;
   lastname?: string;
+  email?: string;
+  official_email?: string;
+  work_email?: string;
+  department_id?: number | string;
+  dept_id?: number | string;
 };
 
 type RawDepartment = {
@@ -204,6 +214,13 @@ const fetchCompanyUsers = async (): Promise<CompanyUser[]> => {
         u.full_name ??
         [u.firstname, u.lastname].filter(Boolean).join(" ") ??
         `User ${u.id}`,
+      email: u.email ?? u.official_email ?? u.work_email,
+      departmentId:
+        u.department_id != null
+          ? Number(u.department_id)
+          : u.dept_id != null
+            ? Number(u.dept_id)
+            : undefined,
     }))
     .filter((u: CompanyUser) => Number.isFinite(u.id) && !!u.name);
 };
@@ -543,6 +560,7 @@ const KPI = () => {
   const [kpiUnits, setKpiUnits] = useState<string[]>(DEFAULT_KPI_UNITS);
   const [editingKpi, setEditingKpi] = useState<KPICardData | null>(null);
   const [isSavingKpiUnits, setIsSavingKpiUnits] = useState(false);
+  const [archivedKpis, setArchivedKpis] = useState<ArchivedKPIEntry[]>([]);
 
   // Fetch KPIs on component mount
   useEffect(() => {
@@ -714,6 +732,41 @@ const KPI = () => {
     }
   };
 
+  const handleArchiveSelected = (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const idSet = new Set(ids);
+    const selected = kpis.filter((k) => idSet.has(k.id));
+    if (selected.length === 0) return;
+
+    const archivedAt = new Date().toLocaleDateString();
+    const archivedEntries: ArchivedKPIEntry[] = selected.map((kpi) => ({
+      ...kpi,
+      archivedDate: archivedAt,
+      reason: "Archived manually",
+    }));
+
+    setArchivedKpis((prev) => [...archivedEntries, ...prev]);
+    setKpis((prev) => prev.filter((k) => !idSet.has(k.id)));
+    setActiveTab("Archived KPIs");
+    toast.success(`${selected.length} KPI(s) archived`);
+  };
+
+  const handleRestoreArchivedKpi = (id: string) => {
+    const target = archivedKpis.find((kpi) => kpi.id === id);
+    if (!target) return;
+
+    const { archivedDate: _archivedDate, reason: _reason, ...restoredKpi } = target;
+    setKpis((prev) => [restoredKpi, ...prev]);
+    setArchivedKpis((prev) => prev.filter((kpi) => kpi.id !== id));
+    toast.success("KPI restored to management");
+  };
+
+  const handleDeleteArchivedKpi = (id: string) => {
+    setArchivedKpis((prev) => prev.filter((kpi) => kpi.id !== id));
+    toast.success("Archived KPI removed");
+  };
+
   const { totalKPIs, onTargetCount, atRiskCount } = useMemo(() => {
     const onTargetCount = kpis.filter((k) => k.status === "on-target").length;
     const atRiskCount = kpis.filter((k) => k.status === "at-risk").length;
@@ -722,7 +775,7 @@ const KPI = () => {
 
   return (
     <div
-      className="mx-auto rounded-[28px] border border-[rgba(218,119,86,0.16)] bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
+      className="mx-auto w-full max-w-7xl rounded-b-[28px] rounded-t-none border border-[rgba(218,119,86,0.16)] border-t-0 bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
       style={{ background: C.pageBg, color: C.textMain }}
     >
       <CreateKPIDialog
@@ -743,7 +796,7 @@ const KPI = () => {
         isLoading={isUpdating}
         onSubmit={handleUpdateKpi}
       />
-      <div className="p-6 pb-0 max-w-7xl mx-auto">
+      <div className="p-6 pb-0">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-[#1a1a1a] sm:text-[40px] sm:leading-tight">
@@ -850,18 +903,25 @@ const KPI = () => {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl p-6 pt-5">
+      <div className="px-6 pt-5 pb-2">
         {activeTab === "KPI Management" && (
           <KPIManagementTab
             kpis={kpis}
             setKpis={setKpis}
             onDeleteKpi={handleDeleteKpi}
             onEditKpi={handleEditKpi}
+            onArchiveSelected={handleArchiveSelected}
             users={companyUsers}
             departments={companyDepartments}
           />
         )}
-        {activeTab === "Archived KPIs" && <ArchivedKPIsTab />}
+        {activeTab === "Archived KPIs" && (
+          <ArchivedKPIsTab
+            archived={archivedKpis}
+            onRestoreKpi={handleRestoreArchivedKpi}
+            onDeleteArchivedKpi={handleDeleteArchivedKpi}
+          />
+        )}
         {activeTab === "Missed Entries" && (
           <MissedEntitiesTab
             users={companyUsers}
