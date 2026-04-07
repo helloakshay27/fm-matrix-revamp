@@ -348,17 +348,21 @@ export const fetchViRoles = createAsyncThunk(
           ? "/roles.json"
           : "/lock_roles.json";
 
-      const response = await axios.get<ViRolesResponse>(
-        `https://${baseUrl}${rolesEndpoint}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.get(`https://${baseUrl}${rolesEndpoint}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-      return response.data.roles;
+      // Handle different API response structures
+      // /roles.json returns { roles: [...] } or array directly
+      // /lock_roles.json returns { roles: [...] }
+      const data = response.data;
+      if (Array.isArray(data)) {
+        return data;
+      }
+      return data.roles || data.lock_roles || [];
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         return rejectWithValue(
