@@ -142,6 +142,52 @@ function toOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(num) ? num : undefined;
 }
 
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function findFirstNumberDeep(
+  value: unknown,
+  keySet: Set<string>,
+  maxDepth = 6,
+  depth = 0
+): number | undefined {
+  if (value === null || value === undefined || depth > maxDepth) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFirstNumberDeep(item, keySet, maxDepth, depth + 1);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+
+  if (typeof value !== "object") {
+    return undefined;
+  }
+
+  const record = value as ApiRecord;
+  for (const [key, raw] of Object.entries(record)) {
+    if (!keySet.has(normalizeKey(key))) continue;
+    const parsed = toOptionalNumber(raw);
+    if (parsed !== undefined) return parsed;
+  }
+
+  for (const nested of Object.values(record)) {
+    const found = findFirstNumberDeep(nested, keySet, maxDepth, depth + 1);
+    if (found !== undefined) return found;
+  }
+
+  return undefined;
+}
+
+function pickFirstNumberDeep(payload: unknown, keys: string[]): number | undefined {
+  const normalizedKeySet = new Set(keys.map(normalizeKey));
+  return findFirstNumberDeep(payload, normalizedKeySet);
+}
+
 function pickFirstValue(record: ApiRecord, keys: string[]): unknown {
   for (const key of keys) {
     if (key in record) return record[key];
@@ -183,7 +229,18 @@ function getString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-function pickList(payload: unknown, keys: string[]): unknown[] {
+function pickFirstString(record: ApiRecord, keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function pickList(payload: unknown, keys: string[], allowAnyArray = false): unknown[] {
   if (Array.isArray(payload)) return payload;
 
   const record = toApiRecord(payload);
@@ -192,8 +249,10 @@ function pickList(payload: unknown, keys: string[]): unknown[] {
     if (Array.isArray(candidate)) return candidate;
   }
 
-  for (const value of Object.values(record)) {
-    if (Array.isArray(value) && value.length > 0) return value;
+  if (allowAnyArray) {
+    for (const value of Object.values(record)) {
+      if (Array.isArray(value) && value.length > 0) return value;
+    }
   }
 
   return [];
@@ -210,6 +269,134 @@ function buildFeedbackComment(item: ApiRecord) {
   ]
     .filter(Boolean)
     .join(" ") || "No comment provided";
+}
+
+function mapLeaderboardItems(rawList: unknown[], mode: "received" | "given") {
+  return rawList
+    .map((item, index) => {
+      const row = toApiRecord(item);
+
+      return {
+        id: String(
+          row.id ??
+            row.user_id ??
+            row.employee_id ??
+            row.staff_id ??
+            `${mode}-${index}`
+        ),
+        rank: toNumber(row.rank, index + 1),
+        name:
+          pickFirstString(row, ["name", "user_name", "employee_name", "staff_name"]) ||
+          "Unknown User",
+        designation:
+          pickFirstString(row, ["designation", "department_name", "role"]) ||
+          "No designation",
+        count: toNumber(
+          mode === "received"
+            ? row.feedback_received ??
+                row.received_count ??
+                row.total_feedback_received ??
+                row.total_received ??
+                row.count
+            : row.feedback_given ??
+                row.given_count ??
+                row.total_feedback_given ??
+                row.total_given ??
+                row.count
+        ),
+      };
+    })
+    .sort((left, right) => left.rank - right.rank)
+    .slice(0, 5);
+}
+
+function buildLeaderboardFromActivity(
+  activityRows: unknown[],
+  mode: "received" | "given"
+): FeedbackLeaderboardItem[] {
+  const byPerson = new Map<
+    string,
+    { id: string; name: string; designation: string; count: number }
+  >();
+
+  for (const activity of activityRows) {
+    const row = toApiRecord(activity);
+    const name =
+      mode === "received"
+        ? pickFirstString(row, [
+            "receiver_name",
+            "feedback_receiver_name",
+            "to_user_name",
+            "recipient_name",
+            "name",
+          ])
+        : pickFirstString(row, [
+            "giver_name",
+            "feedback_giver_name",
+            "from_user_name",
+            "sender_name",
+            "name",
+          ]);
+
+    if (!name) continue;
+
+    const designation =
+      mode === "received"
+        ? pickFirstString(row, [
+            "receiver_designation",
+            "feedback_receiver_designation",
+            "receiver_department_name",
+            "designation",
+            "department_name",
+          ])
+        : pickFirstString(row, [
+            "giver_designation",
+            "feedback_giver_designation",
+            "giver_department_name",
+            "designation",
+            "department_name",
+          ]);
+
+    const id = String(
+      (mode === "received"
+        ? row.receiver_id ?? row.feedback_receiver_id ?? row.to_user_id
+        : row.giver_id ?? row.feedback_giver_id ?? row.from_user_id) ?? name
+    );
+
+    const count = toNumber(
+      mode === "received"
+        ? row.feedback_received ?? row.received_count ?? row.count
+        : row.feedback_given ?? row.given_count ?? row.count,
+      1
+    );
+
+    const key = `${id}::${name}`;
+    const existing = byPerson.get(key);
+    if (existing) {
+      existing.count += Math.max(1, count);
+      if (!existing.designation && designation) {
+        existing.designation = designation;
+      }
+    } else {
+      byPerson.set(key, {
+        id,
+        name,
+        designation: designation || "No designation",
+        count: Math.max(1, count),
+      });
+    }
+  }
+
+  return [...byPerson.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((row, index) => ({
+      id: row.id,
+      rank: index + 1,
+      name: row.name,
+      designation: row.designation,
+      count: row.count,
+    }));
 }
 
 function mapFeedbackItem(rawItem: unknown, index: number): RecentFeedback {
@@ -283,7 +470,7 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
   const recent =
     source.recentFeedbacks ??
     source.recent_feedbacks ??
-    pickList(source, ["recent_feedback_activity"]);
+    pickList(source, ["recent_feedback_activity", "feedback_activity", "feedback_logs"]);
   const departmentsRaw =
     source.feedbackByDepartment ??
     source.feedback_by_department ??
@@ -311,41 +498,10 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     "top_feedback_received",
     "feedback_received_top",
   ]);
-  const mostFeedbackReceived = receivedLeaderboardRaw
-    .map((item, index) => {
-      const row = toApiRecord(item);
-
-      return {
-        id: String(
-          row.id ??
-            row.user_id ??
-            row.employee_id ??
-            row.staff_id ??
-            `received-${index}`
-        ),
-        rank: toNumber(row.rank, index + 1),
-        name:
-          getString(row.name) ||
-          getString(row.user_name) ||
-          getString(row.employee_name) ||
-          getString(row.staff_name) ||
-          "Unknown User",
-        designation:
-          getString(row.designation) ||
-          getString(row.department_name) ||
-          getString(row.role) ||
-          "No designation",
-        count: toNumber(
-          row.feedback_received ??
-            row.received_count ??
-            row.total_feedback_received ??
-            row.total_received ??
-            row.count
-        ),
-      };
-    })
-    .sort((left, right) => left.rank - right.rank)
-    .slice(0, 5);
+  const mostFeedbackReceived =
+    receivedLeaderboardRaw.length > 0
+      ? mapLeaderboardItems(receivedLeaderboardRaw, "received")
+      : buildLeaderboardFromActivity(recent, "received");
 
   const givenLeaderboardRaw = pickList(source, [
     "mostFeedbackGiven",
@@ -354,41 +510,10 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     "top_feedback_given",
     "feedback_given_top",
   ]);
-  const mostFeedbackGiven = givenLeaderboardRaw
-    .map((item, index) => {
-      const row = toApiRecord(item);
-
-      return {
-        id: String(
-          row.id ??
-            row.user_id ??
-            row.employee_id ??
-            row.staff_id ??
-            `given-${index}`
-        ),
-        rank: toNumber(row.rank, index + 1),
-        name:
-          getString(row.name) ||
-          getString(row.user_name) ||
-          getString(row.employee_name) ||
-          getString(row.staff_name) ||
-          "Unknown User",
-        designation:
-          getString(row.designation) ||
-          getString(row.department_name) ||
-          getString(row.role) ||
-          "No designation",
-        count: toNumber(
-          row.feedback_given ??
-            row.given_count ??
-            row.total_feedback_given ??
-            row.total_given ??
-            row.count
-        ),
-      };
-    })
-    .sort((left, right) => left.rank - right.rank)
-    .slice(0, 5);
+  const mostFeedbackGiven =
+    givenLeaderboardRaw.length > 0
+      ? mapLeaderboardItems(givenLeaderboardRaw, "given")
+      : buildLeaderboardFromActivity(recent, "given");
 
   const recentFeedbacks = recent.map((item, index) => {
     const recentItem = toApiRecord(item);
@@ -432,13 +557,22 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       }
     : buildDashboardDataFromFeedbacks(recentFeedbacks).ratingBreakdown;
 
-  const totalFeedbacksFromApi = pickFirstNumber(sourceRecord, [
-    "totalFeedbacks",
-    "total_feedbacks",
-    "total",
-    "feedback_count",
-    "total_count",
-  ]);
+  const totalFeedbacksFromApi =
+    pickFirstNumber(sourceRecord, [
+      "totalFeedbacks",
+      "total_feedbacks",
+      "total",
+      "feedback_count",
+      "total_count",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "totalFeedbacks",
+      "total_feedbacks",
+      "total_feedback",
+      "feedback_count",
+      "total_count",
+      "feedbacks_count",
+    ]);
 
   const totalFeedbacksFromBreakdown = Object.values(derivedRatingBreakdown).reduce(
     (sum, count) => sum + count,
@@ -456,12 +590,22 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       ? totalFeedbacksFromDepartments
       : recentFeedbacks.length);
 
-  const averageRatingFromApi = pickFirstNumber(sourceRecord, [
-    "averageRating",
-    "average_rating",
-    "avg_rating",
-    "avgRating",
-  ]);
+  const averageRatingFromApi =
+    pickFirstNumber(sourceRecord, [
+      "averageRating",
+      "average_rating",
+      "avg_rating",
+      "avgRating",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "averageRating",
+      "average_rating",
+      "avg_rating",
+      "avgRating",
+      "overall_average_rating",
+      "overall_avg_rating",
+      "mean_rating",
+    ]);
   const averageRatingFromRecent =
     recentFeedbacks.length > 0
       ? recentFeedbacks.reduce((sum, item) => sum + item.rating, 0) /
@@ -479,19 +623,37 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
   const averageRating =
     averageRatingFromApi ?? averageRatingFromRecent ?? averageRatingFromBreakdown ?? 0;
 
-  const activeTeamFromApi = pickFirstNumber(sourceRecord, [
-    "activeTeam",
-    "active_team",
-    "active_teams",
-    "active_team_count",
-    "team_count",
-  ]);
+  const activeTeamFromApi =
+    pickFirstNumber(sourceRecord, [
+      "activeTeam",
+      "active_team",
+      "active_teams",
+      "active_team_count",
+      "team_count",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "activeTeam",
+      "active_team",
+      "active_teams",
+      "active_team_count",
+      "active_users",
+      "active_users_count",
+      "team_count",
+      "member_count",
+    ]);
+  const activeTeamFromLeaderboards = new Set(
+    [...mostFeedbackReceived, ...mostFeedbackGiven].map((item) => item.id || item.name)
+  ).size;
   const activeTeamFromDepartments = departments.filter(
     (department) => department.count > 0
   ).length;
   const activeTeam =
     activeTeamFromApi ??
-    (activeTeamFromDepartments > 0 ? activeTeamFromDepartments : departments.length);
+    (activeTeamFromLeaderboards > 0
+      ? activeTeamFromLeaderboards
+      : activeTeamFromDepartments > 0
+      ? activeTeamFromDepartments
+      : departments.length);
 
   const readRate = pickFirstNullableNumber(sourceRecord, ["readRate", "read_rate"]);
   const readTrackingFlag = pickFirstValue(sourceRecord, [
