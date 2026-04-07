@@ -1011,6 +1011,7 @@ const SmsManagementPage: React.FC = () => {
                     onCheckedChange={(checked) =>
                       handleCheckboxChange("is_default", !!checked)
                     }
+                    className="data-[state=checked]:bg-[#C72030]"
                   />
                   <Label
                     htmlFor="is_default"
@@ -1027,6 +1028,7 @@ const SmsManagementPage: React.FC = () => {
                   onCheckedChange={(checked) =>
                     handleCheckboxChange("active", !!checked)
                   }
+                  className="data-[state=checked]:bg-[#C72030]"
                 />
                 <Label
                   htmlFor="active"
