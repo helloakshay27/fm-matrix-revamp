@@ -240,6 +240,54 @@ function pickFirstString(record: ApiRecord, keys: string[]): string {
   return "";
 }
 
+function toBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (value === 1) return true;
+    if (value === 0) return false;
+    return undefined;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "read", "viewed", "seen"].includes(normalized)) {
+      return true;
+    }
+    if (["false", "0", "no", "unread", "not_read"].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return undefined;
+}
+
+function deriveReadRateFromActivity(activityRows: unknown[]): number | undefined {
+  let read = 0;
+  let trackable = 0;
+
+  for (const row of activityRows) {
+    const item = toApiRecord(row);
+    const readState = toBoolean(
+      pickFirstValue(item, [
+        "is_read",
+        "isRead",
+        "read",
+        "read_status",
+        "is_viewed",
+        "is_seen",
+        "viewed",
+        "seen",
+      ])
+    );
+
+    if (readState === undefined) continue;
+    trackable += 1;
+    if (readState) read += 1;
+  }
+
+  if (trackable === 0) return undefined;
+  return (read / trackable) * 100;
+}
+
 function pickList(payload: unknown, keys: string[], allowAnyArray = false): unknown[] {
   if (Array.isArray(payload)) return payload;
 
@@ -655,14 +703,64 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       ? activeTeamFromDepartments
       : departments.length);
 
-  const readRate = pickFirstNullableNumber(sourceRecord, ["readRate", "read_rate"]);
+  const readRateFromDirect = pickFirstNullableNumber(sourceRecord, [
+    "readRate",
+    "read_rate",
+    "read_percentage",
+    "readPercent",
+    "read_percent",
+  ]);
+  const readCountFromApi = pickFirstNumber(sourceRecord, [
+    "read_count",
+    "read_feedback_count",
+    "feedback_read_count",
+    "total_read",
+  ]);
+  const unreadCountFromApi = pickFirstNumber(sourceRecord, [
+    "unread_count",
+    "unread_feedback_count",
+    "feedback_unread_count",
+    "total_unread",
+  ]);
+  const readRateFromCounts =
+    readCountFromApi !== undefined && unreadCountFromApi !== undefined
+      ? readCountFromApi + unreadCountFromApi > 0
+        ? (readCountFromApi / (readCountFromApi + unreadCountFromApi)) * 100
+        : undefined
+      : readCountFromApi !== undefined && totalFeedbacks > 0
+      ? (readCountFromApi / totalFeedbacks) * 100
+      : undefined;
+  const readRateFromActivity = deriveReadRateFromActivity(recent);
+  const selectedReadRate =
+    readRateFromDirect ?? readRateFromCounts ?? readRateFromActivity ?? null;
+  const readRate =
+    selectedReadRate === null
+      ? null
+      : Math.max(
+          0,
+          Math.min(
+            100,
+            selectedReadRate > 0 && selectedReadRate < 1
+              ? selectedReadRate * 100
+              : selectedReadRate
+          )
+        );
   const readTrackingFlag = pickFirstValue(sourceRecord, [
     "readTrackingAvailable",
     "read_tracking_available",
+    "is_read_tracking_available",
+    "readTrackingEnabled",
+    "read_tracking_enabled",
   ]);
   const readTrackingAvailable =
     typeof readTrackingFlag === "boolean"
       ? readTrackingFlag
+      : typeof readTrackingFlag === "string"
+      ? ["true", "1", "yes", "enabled"].includes(
+          readTrackingFlag.trim().toLowerCase()
+        )
+      : typeof readTrackingFlag === "number"
+      ? readTrackingFlag > 0
       : readRate !== undefined && readRate !== null;
 
   return {
@@ -836,7 +934,7 @@ const FeedbackDashboard = () => {
           </p>
           <p className="mt-1 break-all text-xs text-red-500">{error}</p>
           <button
-            onClick={fetchDashboard}
+            onClick={() => fetchDashboard()}
             className="mt-4 rounded-lg bg-[#DA7756] px-5 py-2 text-xs font-semibold text-white hover:bg-[#DA7756]/85"
           >
             Retry
@@ -860,10 +958,10 @@ const FeedbackDashboard = () => {
     recentFeedbacks,
   } = data;
 
-  const totalRatings = Object.values(ratingBreakdown).reduce(
-    (a, b) => a + b,
-    0
-  );
+  const readRateDisplay =
+    readTrackingAvailable && readRate !== null
+      ? `${Number.isInteger(readRate) ? readRate : readRate.toFixed(1)}%`
+      : "N/A";
 
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
@@ -885,7 +983,7 @@ const FeedbackDashboard = () => {
         </header>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 
           {/* Total Feedbacks — from API */}
           <Card className="rounded-2xl border-0 bg-sky-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
@@ -926,6 +1024,19 @@ const FeedbackDashboard = () => {
               <p className="mt-1 text-xs font-medium text-neutral-600">
                 Active Team
               </p>
+            </div>
+          </Card>
+
+          {/* Read Rate — from API */}
+          <Card className="rounded-2xl border-0 bg-emerald-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-neutral-700">Read Rate</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums text-neutral-900">
+                  {readRateDisplay}
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-emerald-600" strokeWidth={2.2} />
             </div>
           </Card>
         </div>
@@ -1028,61 +1139,6 @@ const FeedbackDashboard = () => {
             )}
           </Card>
         </div>
-
-        {/* Read Tracking / Rating Breakdown */}
-        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900">
-            {totalRatings > 0 ? "Rating Breakdown" : "Read Tracking"}
-          </h2>
-          {totalRatings > 0 ? (
-            <>
-              <div className="space-y-3">
-                {(["5", "4", "3", "2", "1"] as const).map((star) => (
-                  <RatingBar
-                    key={star}
-                    label={star}
-                    count={ratingBreakdown[star]}
-                    total={totalRatings}
-                  />
-                ))}
-              </div>
-              <div className="mt-5 flex items-center gap-2">
-                <StarRow value={Math.round(averageRating)} />
-                <span className="text-sm text-neutral-500">
-                  {averageRating.toFixed(1)} out of 5 &nbsp;·&nbsp;{totalRatings}{" "}
-                  ratings
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                  Read Tracking
-                </p>
-                <p className="mt-2 text-2xl font-bold text-neutral-900">
-                  {readTrackingAvailable ? `${readRate ?? 0}%` : "N/A"}
-                </p>
-                <p className="mt-1 text-sm text-neutral-600">
-                  {readTrackingAvailable
-                    ? "Percentage of feedback that has been read."
-                    : "Read tracking is not available for this dataset."}
-                </p>
-              </div>
-              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                  Average Rating
-                </p>
-                <p className="mt-2 text-2xl font-bold text-neutral-900">
-                  {averageRating > 0 ? averageRating.toFixed(1) : "N/A"}
-                </p>
-                <p className="mt-1 text-sm text-neutral-600">
-                  Rating breakdown is not included in the current dashboard response.
-                </p>
-              </div>
-            </div>
-          )}
-        </Card>
 
         {/* AI Summary */}
         <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-5 shadow-sm sm:px-6 sm:py-6">
