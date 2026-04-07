@@ -1608,8 +1608,8 @@ function GivenFeedbackList({
                               !currentUserId
                                 ? "Unable to verify current user for delete"
                                 : item.ratingFromId != null &&
-                                    Number(item.ratingFromId) !==
-                                      Number(currentUserId)
+                                  Number(item.ratingFromId) !==
+                                  Number(currentUserId)
                                   ? "You can only delete feedback created by you"
                                   : undefined
                             }
@@ -1975,7 +1975,7 @@ function GiveFeedbackForm({
                   seg.bg,
                   seg.text,
                   rating === seg.stars &&
-                    "relative z-10 ring-2 ring-inset ring-neutral-900/80"
+                  "relative z-10 ring-2 ring-inset ring-neutral-900/80"
                 )}
               >
                 <span className="block text-[10px] font-semibold leading-tight sm:text-xs">
@@ -2197,8 +2197,8 @@ function FeedbackPage() {
 
     return normalizedSelectedName
       ? merged.filter((item) =>
-          item.recipientName.toLowerCase().includes(normalizedSelectedName)
-        )
+        item.recipientName.toLowerCase().includes(normalizedSelectedName)
+      )
       : merged;
   }, [
     selectedReceivedFeedback,
@@ -2282,7 +2282,6 @@ function FeedbackPage() {
   }, [givenFeedback, receivedFeedback, feedbackSummary]);
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-6">
         {bannerVisible && (
           <div className="flex items-center gap-3 rounded-2xl border border-sky-200/60 bg-sky-50/90 px-4 py-3 pr-2 shadow-sm">
@@ -2292,7 +2291,7 @@ function FeedbackPage() {
             <button
               type="button"
               className="min-w-0 flex-1 text-left"
-              onClick={() => {}}
+              onClick={() => { }}
             >
               <p className="text-sm font-semibold text-sky-950">
                 Giving & Receiving Feedback

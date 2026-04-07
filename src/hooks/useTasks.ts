@@ -17,6 +17,7 @@ import {
   UpdateTaskPayload,
   ApiError,
 } from "@/types/tasks";
+import { useLocation } from "react-router-dom";
 
 /**
  * Query Keys for tasks
@@ -78,10 +79,13 @@ export const useTasks = ({
   sortBy,
   sortDirection,
 }: UseTasksOptions = {}) => {
+  const location = useLocation();
+  const allTaskPath = location.pathname.startsWith("/vas/tasks") ||
+    location.pathname.startsWith("/business-compass/daily-report");
   return useQuery({
     queryKey: tasksQueryKeys.list(taskType, page, filters, sortBy, sortDirection),
     queryFn: () =>
-      taskType === "my"
+      allTaskPath && taskType === "my"
         ? fetchMyTasks(page, filters, sortBy, sortDirection)
         : fetchTasks(page, filters, sortBy, sortDirection),
     staleTime: 30 * 1000, // 30 seconds

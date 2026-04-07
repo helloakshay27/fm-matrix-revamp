@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-// SettingsTab.jsx — Coral/Amber Theme
+// SettingsTab.jsx — Unified Modern Theme
 // ─────────────────────────────────────────────
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -21,16 +21,21 @@ import {
   createMeetingConfig,
   updateMeetingConfig,
   deleteMeetingConfig,
-  addMembersToConfig,
-  removeMemberFromConfig,
-  departmentOptions,
-  ALL_USERS,
   getInitials,
+  BASE_URL,
 } from "./Shared";
 
 // ── MeetingConfigModal ──
-const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
+const MeetingConfigModal = ({
+  onClose,
+  onSaved,
+  existingConfig = null,
+  users = [],
+  departments = [],
+  dropdownsLoading = false,
+}) => {
   const isEdit = !!existingConfig;
+
   const [form, setForm] = useState({
     name: existingConfig?.name ?? "",
     meeting_time: existingConfig?.meetingTime ?? "",
@@ -49,9 +54,11 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
       : "",
     is_default: existingConfig?.isDefault ?? false,
   });
+
   const [selectedMemberIds, setSelectedMemberIds] = useState(
-    existingConfig ? existingConfig.memberIds : []
+    (existingConfig?.memberIds ?? []).map(Number)
   );
+
   const [memberSearch, setMemberSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -63,15 +70,22 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
         ? f.meeting_days.filter((d) => d !== day)
         : [...f.meeting_days, day],
     }));
-  const toggleMember = (id) =>
-    setSelectedMemberIds((prev) =>
-      prev.includes(id) ? prev.filter((mId) => mId !== id) : [...prev, id]
-    );
 
-  const filteredUsers = ALL_USERS.filter(
+  const toggleMember = (id) => {
+    const numId = Number(id);
+    setSelectedMemberIds((prev) =>
+      prev.includes(numId)
+        ? prev.filter((mId) => mId !== numId)
+        : [...prev, numId]
+    );
+  };
+
+  const filteredUsers = users.filter(
     (u) =>
-      u.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(memberSearch.toLowerCase())
+      (u.name ?? u.full_name ?? u.username ?? "")
+        .toLowerCase()
+        .includes(memberSearch.toLowerCase()) ||
+      (u.email ?? "").toLowerCase().includes(memberSearch.toLowerCase())
   );
 
   const handleSubmit = async () => {
@@ -81,6 +95,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
     }
     setIsLoading(true);
     setError(null);
+
     const payload = {
       name: form.name.trim(),
       meeting_time: form.meeting_time,
@@ -90,28 +105,16 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
         ? parseInt(form.department_id, 10)
         : null,
       is_default: form.is_default,
+      member_ids: selectedMemberIds,
     };
+
     try {
-      let configId = existingConfig?.id;
       if (isEdit) {
-        await updateMeetingConfig(configId, payload);
-        const oldMembers = existingConfig.memberIds || [];
-        const toAdd = selectedMemberIds.filter(
-          (id) => !oldMembers.includes(id)
-        );
-        const toRemove = oldMembers.filter(
-          (id) => !selectedMemberIds.includes(id)
-        );
-        if (toAdd.length > 0) await addMembersToConfig(configId, toAdd);
-        for (const rId of toRemove) await removeMemberFromConfig(configId, rId);
+        // ✅ PUT /daily_meeting_configs/:id — same payload, same fields
+        await updateMeetingConfig(existingConfig.id, payload);
       } else {
-        const created = await createMeetingConfig({
-          ...payload,
-          member_ids: selectedMemberIds,
-        });
-        configId = created?.id || created?.data?.id;
-        if (configId && selectedMemberIds.length > 0 && !created?.member_ids)
-          await addMembersToConfig(configId, selectedMemberIds);
+        // ✅ POST /daily_meeting_configs
+        await createMeetingConfig(payload);
       }
       onSaved();
     } catch (err) {
@@ -122,49 +125,54 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-[#fffaf8] rounded-[28px] border border-[rgba(218,119,86,0.18)] shadow-2xl w-full max-w-[600px] flex flex-col overflow-hidden max-h-[90vh]">
-        <div className="flex items-start justify-between p-6 border-b border-[rgba(218,119,86,0.12)] bg-[#fef6f4]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-2xl w-full max-w-[600px] flex flex-col overflow-hidden max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b border-[#F0EBE8] bg-[#FCFAFA]">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-[20px] font-black text-[#1A1A1A] tracking-tight">
               {isEdit
                 ? "Edit Meeting Configuration"
                 : "Create Meeting Configuration"}
             </h2>
-            <p className="text-sm text-gray-500 mt-1 leading-relaxed max-w-[90%]">
+            <p className="text-[12px] font-bold text-[#8C8580] mt-1 leading-relaxed max-w-[90%]">
               Configure a recurring daily meeting. This will auto-select when
               the meeting head logs in to record minutes.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-[#DA7756] p-1 rounded-xl hover:bg-white transition-colors"
+            className="text-[#8C8580] hover:text-[#1A1A1A] p-2 rounded-[12px] border border-transparent hover:border-[#F0EBE8] hover:bg-white transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-[#fffaf8]">
+
+        {/* Body */}
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-white">
           {error && (
-            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
+            <div className="bg-[#EB4A4A]/10 text-[#EB4A4A] text-sm font-bold p-4 rounded-[16px] flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 shrink-0" /> {error}
             </div>
           )}
+
+          {/* Name + Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
-                Meeting Name <span className="text-[#DA7756]">*</span>
+              <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
+                Meeting Name <span className="text-[#EB4A4A]">*</span>
               </label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g., Sales Team Daily Stand-up"
-                className="w-full border border-[rgba(218,119,86,0.22)] bg-white rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]"
+                placeholder="e.g., Sales Team Stand-up"
+                className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] transition-colors"
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
-                Meeting Time <span className="text-[#DA7756]">*</span>
+              <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
+                Meeting Time <span className="text-[#EB4A4A]">*</span>
               </label>
               <input
                 type="time"
@@ -172,12 +180,14 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                 onChange={(e) =>
                   setForm({ ...form, meeting_time: e.target.value })
                 }
-                className="w-full border border-[rgba(218,119,86,0.22)] bg-white rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]"
+                className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] transition-colors"
               />
             </div>
           </div>
+
+          {/* Meeting Days */}
           <div>
-            <label className="text-sm font-semibold text-gray-800 mb-2 block">
+            <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
               Meeting Days
             </label>
             <div className="flex flex-wrap gap-2">
@@ -187,24 +197,23 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                   type="button"
                   onClick={() => toggleDay(day)}
                   className={cn(
-                    "px-4 py-1.5 rounded-xl text-sm font-semibold transition-all",
+                    "px-4 py-2 rounded-[12px] text-xs font-bold transition-all border",
                     form.meeting_days.includes(day)
-                      ? "bg-[#DA7756] text-white"
-                      : "bg-white text-gray-600 border border-[rgba(218,119,86,0.16)] hover:bg-[#fef6f4] hover:border-[#DA7756]/40"
+                      ? "bg-[#1A1A1A] text-white border-[#1A1A1A]"
+                      : "bg-white text-[#8C8580] border-[#F0EBE8] hover:bg-[#FCFAFA] hover:text-[#1A1A1A]"
                   )}
                 >
                   {day}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Select the days this meeting will take place
-            </p>
           </div>
-          <div className="space-y-5 border-t border-[rgba(218,119,86,0.12)] pt-5">
+
+          <div className="space-y-5 border-t border-[#F0EBE8] pt-5">
+            {/* Meeting Head */}
             <div>
-              <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
-                Meeting Head <span className="text-[#DA7756]">*</span>
+              <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
+                Meeting Head <span className="text-[#EB4A4A]">*</span>
               </label>
               <div className="relative">
                 <select
@@ -212,20 +221,25 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                   onChange={(e) =>
                     setForm({ ...form, meeting_head_id: e.target.value })
                   }
-                  className="w-full border border-[rgba(218,119,86,0.22)] rounded-2xl px-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756] bg-white"
+                  disabled={dropdownsLoading}
+                  className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] appearance-none focus:outline-none focus:border-[#EB4A4A] transition-colors disabled:opacity-50"
                 >
-                  <option value="">Select meeting head</option>
-                  {ALL_USERS.map((u) => (
+                  <option value="">
+                    {dropdownsLoading ? "Loading..." : "Select meeting head"}
+                  </option>
+                  {users.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name}
+                      {u.name ?? u.full_name ?? u.username}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
               </div>
             </div>
+
+            {/* Department */}
             <div>
-              <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
+              <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
                 Department (Optional)
               </label>
               <div className="relative">
@@ -234,57 +248,67 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                   onChange={(e) =>
                     setForm({ ...form, department_id: e.target.value })
                   }
-                  className="w-full border border-[rgba(218,119,86,0.22)] rounded-2xl px-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756] bg-white"
+                  disabled={dropdownsLoading}
+                  className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] appearance-none focus:outline-none focus:border-[#EB4A4A] transition-colors disabled:opacity-50"
                 >
-                  <option value="">Select department</option>
-                  {departmentOptions.map((d) => (
+                  <option value="">
+                    {dropdownsLoading ? "Loading..." : "Select department"}
+                  </option>
+                  {departments.map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.label}
+                      {d.department_name}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
               </div>
             </div>
+
+            {/* Meeting Members */}
             <div>
-              <label className="text-sm font-semibold text-gray-800 mb-1.5 block">
+              <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
                 Meeting Members
               </label>
-              <div className="border border-[rgba(218,119,86,0.14)] rounded-2xl overflow-hidden flex flex-col bg-white">
-                <div className="p-2 border-b border-[rgba(218,119,86,0.14)] bg-[#fef6f4]">
-                  <input
-                    type="text"
-                    placeholder="Search members..."
-                    value={memberSearch}
-                    onChange={(e) => setMemberSearch(e.target.value)}
-                    className="w-full bg-white border border-[rgba(218,119,86,0.16)] rounded-2xl px-3 py-2 text-sm focus:outline-none focus:border-[#DA7756]"
-                  />
+              <div className="border border-[#F0EBE8] rounded-[16px] overflow-hidden flex flex-col bg-white">
+                <div className="p-2 border-b border-[#F0EBE8] bg-[#FCFAFA]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580]" />
+                    <input
+                      type="text"
+                      placeholder="Search members..."
+                      value={memberSearch}
+                      onChange={(e) => setMemberSearch(e.target.value)}
+                      className="w-full bg-white border border-[#F0EBE8] rounded-[12px] pl-9 pr-3 py-2 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A]"
+                    />
+                  </div>
                 </div>
-                <div className="max-h-48 overflow-y-auto p-1">
-                  {filteredUsers.length === 0 ? (
-                    <div className="p-3 text-sm text-gray-500 text-center">
+                <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+                  {dropdownsLoading ? (
+                    <div className="p-4 text-sm font-bold text-[#8C8580] text-center">
+                      Loading members...
+                    </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <div className="p-4 text-sm font-bold text-[#8C8580] text-center">
                       No members found.
                     </div>
                   ) : (
                     filteredUsers.map((user) => (
                       <label
                         key={user.id}
-                        className="flex items-start gap-3 p-2.5 hover:bg-[#fef6f4] rounded-xl cursor-pointer transition-colors"
+                        className="flex items-center gap-3 p-2.5 hover:bg-[#FCFAFA] rounded-[12px] cursor-pointer transition-colors border border-transparent hover:border-[#F0EBE8]"
                       >
-                        <div className="pt-0.5">
-                          <input
-                            type="checkbox"
-                            checked={selectedMemberIds.includes(user.id)}
-                            onChange={() => toggleMember(user.id)}
-                            className="w-4 h-4 text-[#DA7756] rounded border-gray-300 focus:ring-[#DA7756] cursor-pointer accent-[#DA7756]"
-                          />
-                        </div>
+                        <input
+                          type="checkbox"
+                          checked={selectedMemberIds.includes(Number(user.id))}
+                          onChange={() => toggleMember(user.id)}
+                          className="w-4 h-4 text-[#EB4A4A] rounded border-[#F0EBE8] focus:ring-[#EB4A4A] cursor-pointer accent-[#EB4A4A]"
+                        />
                         <div>
-                          <div className="text-sm font-semibold text-gray-800">
-                            {user.name}
+                          <div className="text-sm font-bold text-[#1A1A1A]">
+                            {user.name ?? user.full_name ?? user.username}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {user.email}
+                          <div className="text-[11px] font-bold text-[#8C8580]">
+                            {user.email ?? ""}
                           </div>
                         </div>
                       </label>
@@ -293,25 +317,29 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
                 </div>
               </div>
             </div>
-            <label className="flex items-center gap-2 cursor-pointer mt-2">
+
+            {/* Default toggle */}
+            <label className="flex items-center gap-3 cursor-pointer mt-4 p-3 bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px]">
               <input
                 type="checkbox"
                 checked={form.is_default}
                 onChange={(e) =>
                   setForm({ ...form, is_default: e.target.checked })
                 }
-                className="w-4 h-4 rounded border-gray-300 cursor-pointer accent-[#DA7756]"
+                className="w-4 h-4 rounded border-[#F0EBE8] cursor-pointer accent-[#EB4A4A]"
               />
-              <span className="text-sm font-semibold text-gray-800">
+              <span className="text-sm font-black text-[#1A1A1A]">
                 Set as default meeting
               </span>
             </label>
           </div>
         </div>
-        <div className="p-4 border-t border-[rgba(218,119,86,0.12)] bg-[#fef6f4] flex justify-end gap-3 rounded-b-[28px]">
+
+        {/* Footer */}
+        <div className="p-5 border-t border-[#F0EBE8] bg-[#FCFAFA] flex justify-end gap-3 rounded-b-[32px]">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-white border border-[rgba(218,119,86,0.18)] text-gray-700 rounded-2xl text-sm font-semibold hover:bg-[#fffaf8] transition-colors"
+            className="px-5 py-2.5 bg-white border border-[#F0EBE8] text-[#8C8580] rounded-[16px] text-sm font-bold hover:bg-gray-50 hover:text-[#1A1A1A] transition-colors"
           >
             Cancel
           </button>
@@ -319,11 +347,15 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
             onClick={handleSubmit}
             disabled={isLoading}
             className={cn(
-              "px-5 py-2 bg-[#DA7756] text-white rounded-2xl text-sm font-semibold hover:bg-[#c9673f] transition-colors shadow-sm",
-              isLoading && "opacity-70 pointer-events-none"
+              "px-6 py-2.5 bg-[#1A1A1A] text-white rounded-[16px] text-sm font-bold hover:bg-black transition-colors shadow-sm",
+              isLoading && "opacity-50 pointer-events-none"
             )}
           >
-            {isLoading ? "Saving..." : isEdit ? "Update" : "Create"}
+            {isLoading
+              ? "Saving..."
+              : isEdit
+              ? "Update Config"
+              : "Create Config"}
           </button>
         </div>
       </div>
@@ -333,7 +365,7 @@ const MeetingConfigModal = ({ onClose, onSaved, existingConfig = null }) => {
 };
 
 // ── ConfigCard ──
-const ConfigCard = ({ config, onEdit, loadConfigs }) => {
+const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const menuRef = useRef(null);
@@ -366,46 +398,52 @@ const ConfigCard = ({ config, onEdit, loadConfigs }) => {
     if (typeof val === "object" && val !== null) return val.name;
     return val;
   };
+
   const meetingHeadName = getDisplayName(config.meetingHead) || "Unknown Head";
+
   const mappedMembers = (config.memberIds || []).map((id) => {
-    const user = ALL_USERS.find((u) => u.id === id);
-    return user ? user.name : `User ${id}`;
+    const user = allUsers.find((u) => Number(u.id) === Number(id));
+    return user
+      ? (user.name ?? user.full_name ?? user.username ?? `User ${id}`)
+      : `User ${id}`;
   });
+
   const visibleMembers = mappedMembers.slice(0, 3);
   const hiddenMembersCount = mappedMembers.length - 3;
   const membersText =
     mappedMembers.length > 0
-      ? `${visibleMembers.join(", ")} ${hiddenMembersCount > 0 ? `+${hiddenMembersCount} more` : ""}`
-      : "No members";
+      ? `${visibleMembers.join(", ")}${
+          hiddenMembersCount > 0 ? ` +${hiddenMembersCount} more` : ""
+        }`
+      : "No members assigned";
+
+  const meetingHeadUser = allUsers.find(
+    (u) =>
+      Number(u.id) === Number(config.meetingHeadId) ||
+      (u.name ?? u.full_name ?? u.username) === meetingHeadName
+  );
+
   const weekDays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
-  // Coral avatar palette
-  const avatarColors = [
-    "bg-[#DA7756] text-[#4A1B0C]",
-    "bg-[#c9673f] text-[#4A1B0C]",
-    "bg-[#e8956b] text-[#4A1B0C]",
-    "bg-[#b85530] text-white",
-  ];
-
   return (
-    <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm p-6 hover:shadow-md hover:border-[rgba(218,119,86,0.35)] transition-all relative">
+    <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 hover:shadow-md hover:border-[#D37E5F] transition-all relative">
       <div className="absolute top-5 right-4" ref={menuRef}>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="p-1 text-gray-400 hover:text-[#DA7756] rounded-md hover:bg-orange-50 transition-colors"
+          className="p-1.5 text-[#8C8580] hover:text-[#1A1A1A] rounded-[8px] hover:bg-[#FCFAFA] transition-colors"
         >
           <MoreHorizontal className="w-5 h-5" />
         </button>
         {menuOpen && (
-          <div className="absolute right-0 mt-1 w-32 bg-white border border-[rgba(218,119,86,0.18)] rounded-lg shadow-lg py-1 z-10">
+          <div className="absolute right-0 mt-1 w-36 bg-white border border-[#F0EBE8] rounded-[16px] shadow-lg py-1 z-10 overflow-hidden">
             <button
               onClick={() => {
                 setMenuOpen(false);
                 onEdit(config);
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-orange-50"
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#1A1A1A] hover:bg-[#FCFAFA]"
             >
-              <Edit className="w-4 h-4 text-[#DA7756]" /> Edit
+              <Edit className="w-4 h-4 text-[#8C8580]" /> Edit
             </button>
             <button
               onClick={() => {
@@ -413,18 +451,21 @@ const ConfigCard = ({ config, onEdit, loadConfigs }) => {
                 handleDelete();
               }}
               disabled={isDeleting}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#EB4A4A] hover:bg-[#EB4A4A]/10"
             >
-              <Trash className="w-4 h-4 text-red-400" />{" "}
+              <Trash className="w-4 h-4 text-[#EB4A4A]" />{" "}
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
           </div>
         )}
       </div>
-      <div className="mb-4 pr-8">
-        <h3 className="text-lg font-bold text-gray-900 mb-3">{config.name}</h3>
-        <div className="inline-flex items-center gap-1.5 bg-[#FAECE7] text-[#993C1D] px-2.5 py-1 rounded-md text-xs font-semibold mb-3">
-          <Clock className="w-3.5 h-3.5" />{" "}
+
+      <div className="mb-5 pr-8">
+        <h3 className="text-[18px] font-black text-[#1A1A1A] mb-3 leading-tight tracking-tight">
+          {config.name}
+        </h3>
+        <div className="inline-flex items-center gap-1.5 bg-[#FCFAFA] border border-[#F0EBE8] text-[#1A1A1A] px-3 py-1.5 rounded-[8px] text-xs font-bold mb-4">
+          <Clock className="w-3.5 h-3.5 text-[#8C8580]" />{" "}
           {config.meetingTime || "No time set"}
         </div>
         <div className="flex gap-1.5 flex-wrap">
@@ -432,10 +473,10 @@ const ConfigCard = ({ config, onEdit, loadConfigs }) => {
             <div
               key={day}
               className={cn(
-                "w-7 h-7 flex items-center justify-center rounded text-xs font-bold",
+                "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider",
                 config.meetingDays.some((cd) => cd.startsWith(day))
-                  ? "bg-[#DA7756] text-white"
-                  : "bg-orange-50 text-[#c9673f]/50"
+                  ? "bg-[#1A1A1A] text-white"
+                  : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
               )}
             >
               {day}
@@ -443,32 +484,33 @@ const ConfigCard = ({ config, onEdit, loadConfigs }) => {
           ))}
         </div>
       </div>
-      <div className="mb-4">
-        <div className="text-[10px] font-bold text-[#DA7756]/70 uppercase tracking-wider mb-2">
+
+      <div className="mb-5">
+        <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-2">
           Meeting Head
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#FAECE7] text-[#993C1D] flex items-center justify-center font-bold text-sm border border-[rgba(218,119,86,0.25)] shrink-0">
+          <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] text-[#D37E5F] border border-[#F6E1D7] flex items-center justify-center font-black text-sm shrink-0">
             {getInitials(meetingHeadName)}
           </div>
           <div className="truncate">
-            <div className="text-sm font-bold text-gray-900 truncate">
+            <div className="text-sm font-black text-[#1A1A1A] truncate">
               {meetingHeadName}
             </div>
-            <div className="text-xs text-gray-500 truncate">
-              {ALL_USERS.find((u) => u.name === meetingHeadName)?.email ||
-                "No email"}
+            <div className="text-[11px] font-bold text-[#8C8580] truncate mt-0.5">
+              {meetingHeadUser?.email ?? "No email"}
             </div>
           </div>
         </div>
       </div>
-      <div className="mb-5">
+
+      <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <div className="text-[10px] font-bold text-[#DA7756]/70 uppercase tracking-wider">
+          <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest">
             Members
           </div>
-          <div className="bg-[#FAECE7] text-[#993C1D] text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-            {config.memberIds.length}
+          <div className="bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580] text-[10px] font-black px-2 py-0.5 rounded-[6px]">
+            {config.memberIds?.length ?? 0}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -476,59 +518,58 @@ const ConfigCard = ({ config, onEdit, loadConfigs }) => {
             {mappedMembers.slice(0, 4).map((name, i) => (
               <div
                 key={i}
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white relative z-10",
-                  avatarColors[i % 4]
-                )}
+                className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#FCFAFA] text-[#1A1A1A] border-2 border-white relative z-10"
               >
                 {getInitials(name)}
               </div>
             ))}
             {mappedMembers.length > 4 && (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-orange-50 text-[#993C1D] border-2 border-white relative z-10">
+              <div className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#F0EBE8] text-[#1A1A1A] border-2 border-white relative z-10">
                 +{mappedMembers.length - 4}
               </div>
             )}
           </div>
-          <div className="text-xs text-gray-500 truncate flex-1">
+          <div className="text-[11px] font-bold text-[#8C8580] truncate flex-1 leading-snug">
             {membersText}
           </div>
         </div>
       </div>
-      <div className="pt-4 border-t border-orange-100">
-        <div className="text-[10px] font-bold text-[#DA7756]/70 uppercase tracking-wider mb-3">
+
+      <div className="pt-5 border-t border-[#F0EBE8]">
+        <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
           This Week
         </div>
-        <div className="flex justify-between items-center px-1 mb-3">
+        <div className="flex justify-between items-center px-1 mb-4">
           {weekDays.map((day, i) => {
-            let dotColor = "bg-gray-200";
-            if (i < 2) dotColor = "bg-green-500";
-            else if (i === 2) dotColor = "bg-red-500";
+            let dotColor = "bg-[#E5E7EB]";
+            if (i < 2) dotColor = "bg-[#2ECC71]";
+            else if (i === 2) dotColor = "bg-[#EB4A4A]";
             return (
-              <div key={day} className="flex flex-col items-center gap-1.5">
-                <span className="text-[10px] font-semibold text-gray-400">
+              <div key={day} className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-bold text-[#8C8580]">
                   {day}
                 </span>
-                <div className={cn("w-2.5 h-2.5 rounded-full", dotColor)} />
+                <div className={cn("w-2 h-2 rounded-full", dotColor)} />
               </div>
             );
           })}
         </div>
-        <div className="flex items-center gap-3 text-[10px] font-semibold text-gray-500">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-green-500" /> Held
+        <div className="flex items-center gap-3 text-[10px] font-bold text-[#8C8580]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#2ECC71]" /> Held
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-red-500" /> Missed
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#EB4A4A]" /> Missed
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-gray-200" /> Upcoming/Off
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" /> Upcoming/Off
           </div>
         </div>
       </div>
+
       {config.isDefault && (
-        <div className="mt-4 flex">
-          <span className="bg-[#FAECE7] text-[#993C1D] text-xs font-semibold px-3 py-1 rounded-md">
+        <div className="mt-5 flex">
+          <span className="bg-[#1A1A1A] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
             Default Meeting
           </span>
         </div>
@@ -546,6 +587,38 @@ const SettingsTab = () => {
   const [headFilter, setHeadFilter] = useState("All Heads");
   const [showModal, setShowModal] = useState(false);
   const [editingConfig, setEditingConfig] = useState(null);
+
+  const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [dropdownsLoading, setDropdownsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      setDropdownsLoading(true);
+      const token = localStorage.getItem("auth_token");
+      try {
+        const [deptRes, usersRes] = await Promise.all([
+          fetch(`${BASE_URL}/pms/departments.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(
+            `https://fm-uat-api.lockated.com/api/users?organization_id=88&token=${token}`
+          ),
+        ]);
+        const deptData = await deptRes.json();
+        const usersData = await usersRes.json();
+        setDepartments(
+          (deptData?.departments ?? []).filter((d) => d.active === true)
+        );
+        setUsers(usersData?.users ?? usersData ?? []);
+      } catch (err) {
+        console.error("Failed to load dropdown data:", err);
+      } finally {
+        setDropdownsLoading(false);
+      }
+    };
+    fetchDropdownData();
+  }, []);
 
   const loadConfigs = async () => {
     setIsLoading(true);
@@ -586,72 +659,84 @@ const SettingsTab = () => {
     if (typeof val === "object" && val !== null) return val.name;
     return val;
   };
+
   const filteredConfigs = configs.filter((c) => {
     const matchesSearch = c.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const headName = getDisplayName(c.meetingHead);
-    const matchesHead = headFilter === "All Heads" || headName === headFilter;
+    const matchesHead =
+      headFilter === "All Heads" || headName === headFilter;
     return matchesSearch && matchesHead;
   });
+
   const uniqueHeads = [
     "All Heads",
     ...new Set(
       configs.map((c) => getDisplayName(c.meetingHead)).filter(Boolean)
     ),
   ];
+
   const totalMembersCount = configs.reduce(
     (acc, curr) => acc + (curr.memberIds?.length || 0),
     0
   );
 
   return (
-    <div className="pb-12 bg-[#fdf8f6] min-h-screen  px-6  pt-6">
+    <div
+      className="space-y-6 pb-12 px-4 sm:px-8 min-h-screen pt-8"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Daily Meeting Configurations
+            <h2 className="text-[24px] font-black text-[#1A1A1A] tracking-tight">
+              Meeting Configurations
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Configure recurring daily meetings and their participants
+            <p className="text-[12px] font-bold text-[#8C8580] uppercase tracking-widest mt-1">
+              Configure recurring meetings and participants
             </p>
           </div>
           <button
             onClick={handleCreate}
-            className="flex items-center gap-2 bg-[#DA7756] hover:bg-[#c9673f] text-white px-5 py-2.5 rounded-2xl text-sm font-semibold shadow-sm transition-colors"
+            className="flex items-center gap-2 bg-white border border-[#F0EBE8] text-[#1A1A1A] hover:bg-gray-50 px-5 py-2.5 rounded-[16px] text-sm font-bold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" /> New Meeting
           </button>
         </div>
-        <div className="bg-white rounded-2xl border border-[rgba(218,119,86,0.18)] p-4 shadow-sm flex flex-wrap items-center gap-4 text-sm text-gray-600">
-          <div className="font-semibold text-gray-900">
+
+        {/* Stats Bar */}
+        <div className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 shadow-sm flex flex-wrap items-center gap-4 text-sm font-bold text-[#8C8580]">
+          <div className="text-[#1A1A1A] font-black">
             {configs.length} Active Meetings
           </div>
-          <div className="w-1 h-1 rounded-full bg-[rgba(218,119,86,0.4)]"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]"></div>
           <div>{totalMembersCount} Total Members</div>
-          <div className="w-1 h-1 rounded-full bg-[rgba(218,119,86,0.4)]"></div>
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-[#DA7756]" /> Next: Sa at 10:00
+          <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]"></div>
+          <div className="flex items-center gap-2 text-[#1A1A1A]">
+            <Clock className="w-4 h-4 text-[#D37E5F]" /> Next: Sa at 10:00
           </div>
         </div>
+
+        {/* Search & Filter */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#DA7756]/50" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580]" />
             <input
               type="text"
               placeholder="Search meetings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-[rgba(218,119,86,0.22)] rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756] shadow-sm"
+              className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] pl-11 pr-4 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] shadow-sm transition-colors"
             />
           </div>
-          <div className="flex items-center gap-2 bg-white border border-[rgba(218,119,86,0.22)] rounded-2xl px-3 py-2.5 shadow-sm min-w-[200px]">
-            <Filter className="w-4 h-4 text-[#DA7756]/50 shrink-0" />
+          <div className="flex items-center gap-2 bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 shadow-sm min-w-[200px]">
+            <Filter className="w-4 h-4 text-[#8C8580] shrink-0" />
             <select
               value={headFilter}
               onChange={(e) => setHeadFilter(e.target.value)}
-              className="w-full bg-transparent text-sm text-gray-700 font-semibold focus:outline-none appearance-none"
+              className="w-full bg-transparent text-sm text-[#1A1A1A] font-bold focus:outline-none appearance-none cursor-pointer"
             >
               {uniqueHeads.map((h) => (
                 <option key={h} value={h}>
@@ -659,68 +744,84 @@ const SettingsTab = () => {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+            <ChevronDown className="w-4 h-4 text-[#8C8580] shrink-0 pointer-events-none" />
           </div>
         </div>
+
+        {/* Error State */}
         {listError && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+          <div className="bg-[#EB4A4A]/10 border border-[#EB4A4A]/20 rounded-[20px] p-5 flex items-start gap-4 shadow-sm">
+            <AlertTriangle className="w-5 h-5 text-[#EB4A4A] shrink-0 mt-0.5" />
             <div className="flex-1">
-              <div className="text-sm font-bold text-red-800">
+              <div className="text-sm font-black text-[#EB4A4A]">
                 Failed to load configurations
               </div>
-              <div className="text-sm text-red-600 mt-1">{listError}</div>
+              <div className="text-sm font-bold text-[#EB4A4A]/80 mt-1">
+                {listError}
+              </div>
             </div>
             <button
               onClick={loadConfigs}
-              className="bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-50"
+              className="bg-white border border-[#EB4A4A]/30 text-[#EB4A4A] px-4 py-2 rounded-[12px] text-xs font-black hover:bg-[#EB4A4A]/5 transition-colors"
             >
               Retry
             </button>
           </div>
         )}
+
+        {/* Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="bg-white border border-[rgba(218,119,86,0.12)] rounded-xl shadow-sm p-5 animate-pulse h-64"
+                className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 animate-pulse h-[320px]"
               />
             ))}
           </div>
         ) : filteredConfigs.length === 0 && !listError ? (
-          <div className="text-center py-20 bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl">
-            <p className="text-gray-500 font-medium">
+          <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
+            <p className="text-[#8C8580] font-bold text-sm">
               No meeting configurations found.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredConfigs.map((config) => (
               <ConfigCard
                 key={config.id}
                 config={config}
                 loadConfigs={loadConfigs}
                 onEdit={handleEdit}
+                allUsers={users}
               />
             ))}
+
+            {/* Create New Card */}
             <button
               onClick={handleCreate}
-              className="border-2 border-dashed border-[rgba(218,119,86,0.3)] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-[#DA7756] hover:bg-[#fef6f4] hover:border-[rgba(218,119,86,0.5)] transition-all duration-200 min-h-[160px] group"
+              className="border-2 border-dashed border-[#F0EBE8] rounded-[24px] p-6 flex flex-col items-center justify-center gap-4 text-[#8C8580] hover:bg-[#FCFAFA] hover:text-[#1A1A1A] transition-all duration-200 min-h-[320px] group"
             >
-              <div className="w-10 h-10 rounded-xl bg-[rgba(218,119,86,0.08)] border border-[rgba(218,119,86,0.2)] flex items-center justify-center group-hover:bg-[rgba(218,119,86,0.15)] transition-colors">
+              <div className="w-12 h-12 rounded-[14px] bg-white border border-[#F0EBE8] flex items-center justify-center shadow-sm group-hover:shadow transition-all">
                 <Plus className="w-5 h-5" />
               </div>
-              <span className="text-sm font-bold">Add Config</span>
+              <span className="text-sm font-black uppercase tracking-wider">
+                Add Configuration
+              </span>
             </button>
           </div>
         )}
       </div>
+
+      {/* Modal Portal */}
       {showModal && (
         <MeetingConfigModal
           onClose={handleModalClose}
           onSaved={handleSaved}
           existingConfig={editingConfig}
+          users={users}
+          departments={departments}
+          dropdownsLoading={dropdownsLoading}
         />
       )}
     </div>

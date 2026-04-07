@@ -898,7 +898,7 @@ function DiscProfileReport({
 
 function TeamMemberCard({ member }: { member: any }) {
   const avatarLetter = member.name?.[0]?.toUpperCase() || "?";
-  
+
   // Helper to color based on DISC type
   const getDiscColor = (type: string) => {
     switch (type) {
@@ -1276,7 +1276,7 @@ const DiscPersonalityAssessment = () => {
             };
             const toScore = (n: number) =>
               Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
-            
+
             setSavedProfile({
               counts,
               scores: {
@@ -1332,7 +1332,7 @@ const DiscPersonalityAssessment = () => {
         };
         const toScore = (n: number) =>
           Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
-        
+
         setSelectedMemberReport({
           counts,
           scores: {
@@ -1390,7 +1390,7 @@ const DiscPersonalityAssessment = () => {
       setIsSubmitting(true);
       const token = getToken();
       const baseUrl = getBaseUrl() || "https://fm-uat-api.lockated.com";
-      
+
       // Map answers to the format expected by the backend: [{ question_id: X, dimension: 'D' }, ...]
       const formattedAnswers = answers.map((answerIndex, qIndex) => ({
         question_id: questions[qIndex].id,
@@ -1407,7 +1407,7 @@ const DiscPersonalityAssessment = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success && data.data && data.data.report) {
         const report = data.data.report;
         const counts = {
@@ -1418,7 +1418,7 @@ const DiscPersonalityAssessment = () => {
         };
         const toScore = (n: number) =>
           Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
-        
+
         const result: DiscProfileResult = {
           counts,
           scores: {
@@ -1529,7 +1529,6 @@ const DiscPersonalityAssessment = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">

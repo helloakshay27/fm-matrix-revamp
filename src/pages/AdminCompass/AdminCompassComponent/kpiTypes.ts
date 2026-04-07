@@ -11,6 +11,16 @@ export interface KPICardData {
   color: string;
   tags: string[];
   priority: "low" | "medium" | "high";
+  // Optional API fields
+  departmentId?: number | null;
+  assigneeId?: number | null;
+  description?: string;
+  _raw?: any;
+}
+
+export interface ArchivedKPIEntry extends KPICardData {
+  archivedDate: string;
+  reason: string;
 }
 
 export const initialKpiCards: KPICardData[] = [

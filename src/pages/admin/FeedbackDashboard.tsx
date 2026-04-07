@@ -10,6 +10,8 @@ import {
   Sparkles,
   Loader2,
   AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -47,6 +49,14 @@ interface DepartmentFeedback {
   rating: number;
 }
 
+interface FeedbackLeaderboardItem {
+  id: string;
+  rank: number;
+  name: string;
+  designation: string;
+  count: number;
+}
+
 interface DashboardData {
   totalFeedbacks: number;
   averageRating: number;
@@ -55,6 +65,8 @@ interface DashboardData {
   readTrackingAvailable: boolean;
   ratingBreakdown: RatingBreakdown;
   departments: DepartmentFeedback[];
+  mostFeedbackReceived: FeedbackLeaderboardItem[];
+  mostFeedbackGiven: FeedbackLeaderboardItem[];
   recentFeedbacks: RecentFeedback[];
 }
 
@@ -130,6 +142,52 @@ function toOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(num) ? num : undefined;
 }
 
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function findFirstNumberDeep(
+  value: unknown,
+  keySet: Set<string>,
+  maxDepth = 6,
+  depth = 0
+): number | undefined {
+  if (value === null || value === undefined || depth > maxDepth) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFirstNumberDeep(item, keySet, maxDepth, depth + 1);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+
+  if (typeof value !== "object") {
+    return undefined;
+  }
+
+  const record = value as ApiRecord;
+  for (const [key, raw] of Object.entries(record)) {
+    if (!keySet.has(normalizeKey(key))) continue;
+    const parsed = toOptionalNumber(raw);
+    if (parsed !== undefined) return parsed;
+  }
+
+  for (const nested of Object.values(record)) {
+    const found = findFirstNumberDeep(nested, keySet, maxDepth, depth + 1);
+    if (found !== undefined) return found;
+  }
+
+  return undefined;
+}
+
+function pickFirstNumberDeep(payload: unknown, keys: string[]): number | undefined {
+  const normalizedKeySet = new Set(keys.map(normalizeKey));
+  return findFirstNumberDeep(payload, normalizedKeySet);
+}
+
 function pickFirstValue(record: ApiRecord, keys: string[]): unknown {
   for (const key of keys) {
     if (key in record) return record[key];
@@ -171,7 +229,66 @@ function getString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-function pickList(payload: unknown, keys: string[]): unknown[] {
+function pickFirstString(record: ApiRecord, keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function toBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (value === 1) return true;
+    if (value === 0) return false;
+    return undefined;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "read", "viewed", "seen"].includes(normalized)) {
+      return true;
+    }
+    if (["false", "0", "no", "unread", "not_read"].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return undefined;
+}
+
+function deriveReadRateFromActivity(activityRows: unknown[]): number | undefined {
+  let read = 0;
+  let trackable = 0;
+
+  for (const row of activityRows) {
+    const item = toApiRecord(row);
+    const readState = toBoolean(
+      pickFirstValue(item, [
+        "is_read",
+        "isRead",
+        "read",
+        "read_status",
+        "is_viewed",
+        "is_seen",
+        "viewed",
+        "seen",
+      ])
+    );
+
+    if (readState === undefined) continue;
+    trackable += 1;
+    if (readState) read += 1;
+  }
+
+  if (trackable === 0) return undefined;
+  return (read / trackable) * 100;
+}
+
+function pickList(payload: unknown, keys: string[], allowAnyArray = false): unknown[] {
   if (Array.isArray(payload)) return payload;
 
   const record = toApiRecord(payload);
@@ -180,8 +297,10 @@ function pickList(payload: unknown, keys: string[]): unknown[] {
     if (Array.isArray(candidate)) return candidate;
   }
 
-  for (const value of Object.values(record)) {
-    if (Array.isArray(value) && value.length > 0) return value;
+  if (allowAnyArray) {
+    for (const value of Object.values(record)) {
+      if (Array.isArray(value) && value.length > 0) return value;
+    }
   }
 
   return [];
@@ -198,6 +317,134 @@ function buildFeedbackComment(item: ApiRecord) {
   ]
     .filter(Boolean)
     .join(" ") || "No comment provided";
+}
+
+function mapLeaderboardItems(rawList: unknown[], mode: "received" | "given") {
+  return rawList
+    .map((item, index) => {
+      const row = toApiRecord(item);
+
+      return {
+        id: String(
+          row.id ??
+            row.user_id ??
+            row.employee_id ??
+            row.staff_id ??
+            `${mode}-${index}`
+        ),
+        rank: toNumber(row.rank, index + 1),
+        name:
+          pickFirstString(row, ["name", "user_name", "employee_name", "staff_name"]) ||
+          "Unknown User",
+        designation:
+          pickFirstString(row, ["designation", "department_name", "role"]) ||
+          "No designation",
+        count: toNumber(
+          mode === "received"
+            ? row.feedback_received ??
+                row.received_count ??
+                row.total_feedback_received ??
+                row.total_received ??
+                row.count
+            : row.feedback_given ??
+                row.given_count ??
+                row.total_feedback_given ??
+                row.total_given ??
+                row.count
+        ),
+      };
+    })
+    .sort((left, right) => left.rank - right.rank)
+    .slice(0, 5);
+}
+
+function buildLeaderboardFromActivity(
+  activityRows: unknown[],
+  mode: "received" | "given"
+): FeedbackLeaderboardItem[] {
+  const byPerson = new Map<
+    string,
+    { id: string; name: string; designation: string; count: number }
+  >();
+
+  for (const activity of activityRows) {
+    const row = toApiRecord(activity);
+    const name =
+      mode === "received"
+        ? pickFirstString(row, [
+            "receiver_name",
+            "feedback_receiver_name",
+            "to_user_name",
+            "recipient_name",
+            "name",
+          ])
+        : pickFirstString(row, [
+            "giver_name",
+            "feedback_giver_name",
+            "from_user_name",
+            "sender_name",
+            "name",
+          ]);
+
+    if (!name) continue;
+
+    const designation =
+      mode === "received"
+        ? pickFirstString(row, [
+            "receiver_designation",
+            "feedback_receiver_designation",
+            "receiver_department_name",
+            "designation",
+            "department_name",
+          ])
+        : pickFirstString(row, [
+            "giver_designation",
+            "feedback_giver_designation",
+            "giver_department_name",
+            "designation",
+            "department_name",
+          ]);
+
+    const id = String(
+      (mode === "received"
+        ? row.receiver_id ?? row.feedback_receiver_id ?? row.to_user_id
+        : row.giver_id ?? row.feedback_giver_id ?? row.from_user_id) ?? name
+    );
+
+    const count = toNumber(
+      mode === "received"
+        ? row.feedback_received ?? row.received_count ?? row.count
+        : row.feedback_given ?? row.given_count ?? row.count,
+      1
+    );
+
+    const key = `${id}::${name}`;
+    const existing = byPerson.get(key);
+    if (existing) {
+      existing.count += Math.max(1, count);
+      if (!existing.designation && designation) {
+        existing.designation = designation;
+      }
+    } else {
+      byPerson.set(key, {
+        id,
+        name,
+        designation: designation || "No designation",
+        count: Math.max(1, count),
+      });
+    }
+  }
+
+  return [...byPerson.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((row, index) => ({
+      id: row.id,
+      rank: index + 1,
+      name: row.name,
+      designation: row.designation,
+      count: row.count,
+    }));
 }
 
 function mapFeedbackItem(rawItem: unknown, index: number): RecentFeedback {
@@ -248,6 +495,8 @@ function buildDashboardDataFromFeedbacks(items: RecentFeedback[]): DashboardData
     readTrackingAvailable: false,
     ratingBreakdown,
     departments: [],
+    mostFeedbackReceived: [],
+    mostFeedbackGiven: [],
     recentFeedbacks: [...items]
       .sort(
         (a, b) =>
@@ -269,7 +518,7 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
   const recent =
     source.recentFeedbacks ??
     source.recent_feedbacks ??
-    pickList(source, ["recent_feedback_activity"]);
+    pickList(source, ["recent_feedback_activity", "feedback_activity", "feedback_logs"]);
   const departmentsRaw =
     source.feedbackByDepartment ??
     source.feedback_by_department ??
@@ -289,6 +538,30 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       };
     })
     .sort((left, right) => left.rank - right.rank);
+
+  const receivedLeaderboardRaw = pickList(source, [
+    "mostFeedbackReceived",
+    "most_feedback_received",
+    "feedback_received_leaderboard",
+    "top_feedback_received",
+    "feedback_received_top",
+  ]);
+  const mostFeedbackReceived =
+    receivedLeaderboardRaw.length > 0
+      ? mapLeaderboardItems(receivedLeaderboardRaw, "received")
+      : buildLeaderboardFromActivity(recent, "received");
+
+  const givenLeaderboardRaw = pickList(source, [
+    "mostFeedbackGiven",
+    "most_feedback_given",
+    "feedback_given_leaderboard",
+    "top_feedback_given",
+    "feedback_given_top",
+  ]);
+  const mostFeedbackGiven =
+    givenLeaderboardRaw.length > 0
+      ? mapLeaderboardItems(givenLeaderboardRaw, "given")
+      : buildLeaderboardFromActivity(recent, "given");
 
   const recentFeedbacks = recent.map((item, index) => {
     const recentItem = toApiRecord(item);
@@ -332,13 +605,22 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       }
     : buildDashboardDataFromFeedbacks(recentFeedbacks).ratingBreakdown;
 
-  const totalFeedbacksFromApi = pickFirstNumber(sourceRecord, [
-    "totalFeedbacks",
-    "total_feedbacks",
-    "total",
-    "feedback_count",
-    "total_count",
-  ]);
+  const totalFeedbacksFromApi =
+    pickFirstNumber(sourceRecord, [
+      "totalFeedbacks",
+      "total_feedbacks",
+      "total",
+      "feedback_count",
+      "total_count",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "totalFeedbacks",
+      "total_feedbacks",
+      "total_feedback",
+      "feedback_count",
+      "total_count",
+      "feedbacks_count",
+    ]);
 
   const totalFeedbacksFromBreakdown = Object.values(derivedRatingBreakdown).reduce(
     (sum, count) => sum + count,
@@ -356,12 +638,22 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       ? totalFeedbacksFromDepartments
       : recentFeedbacks.length);
 
-  const averageRatingFromApi = pickFirstNumber(sourceRecord, [
-    "averageRating",
-    "average_rating",
-    "avg_rating",
-    "avgRating",
-  ]);
+  const averageRatingFromApi =
+    pickFirstNumber(sourceRecord, [
+      "averageRating",
+      "average_rating",
+      "avg_rating",
+      "avgRating",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "averageRating",
+      "average_rating",
+      "avg_rating",
+      "avgRating",
+      "overall_average_rating",
+      "overall_avg_rating",
+      "mean_rating",
+    ]);
   const averageRatingFromRecent =
     recentFeedbacks.length > 0
       ? recentFeedbacks.reduce((sum, item) => sum + item.rating, 0) /
@@ -379,28 +671,96 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
   const averageRating =
     averageRatingFromApi ?? averageRatingFromRecent ?? averageRatingFromBreakdown ?? 0;
 
-  const activeTeamFromApi = pickFirstNumber(sourceRecord, [
-    "activeTeam",
-    "active_team",
-    "active_teams",
-    "active_team_count",
-    "team_count",
-  ]);
+  const activeTeamFromApi =
+    pickFirstNumber(sourceRecord, [
+      "activeTeam",
+      "active_team",
+      "active_teams",
+      "active_team_count",
+      "team_count",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "activeTeam",
+      "active_team",
+      "active_teams",
+      "active_team_count",
+      "active_users",
+      "active_users_count",
+      "team_count",
+      "member_count",
+    ]);
+  const activeTeamFromLeaderboards = new Set(
+    [...mostFeedbackReceived, ...mostFeedbackGiven].map((item) => item.id || item.name)
+  ).size;
   const activeTeamFromDepartments = departments.filter(
     (department) => department.count > 0
   ).length;
   const activeTeam =
     activeTeamFromApi ??
-    (activeTeamFromDepartments > 0 ? activeTeamFromDepartments : departments.length);
+    (activeTeamFromLeaderboards > 0
+      ? activeTeamFromLeaderboards
+      : activeTeamFromDepartments > 0
+      ? activeTeamFromDepartments
+      : departments.length);
 
-  const readRate = pickFirstNullableNumber(sourceRecord, ["readRate", "read_rate"]);
+  const readRateFromDirect = pickFirstNullableNumber(sourceRecord, [
+    "readRate",
+    "read_rate",
+    "read_percentage",
+    "readPercent",
+    "read_percent",
+  ]);
+  const readCountFromApi = pickFirstNumber(sourceRecord, [
+    "read_count",
+    "read_feedback_count",
+    "feedback_read_count",
+    "total_read",
+  ]);
+  const unreadCountFromApi = pickFirstNumber(sourceRecord, [
+    "unread_count",
+    "unread_feedback_count",
+    "feedback_unread_count",
+    "total_unread",
+  ]);
+  const readRateFromCounts =
+    readCountFromApi !== undefined && unreadCountFromApi !== undefined
+      ? readCountFromApi + unreadCountFromApi > 0
+        ? (readCountFromApi / (readCountFromApi + unreadCountFromApi)) * 100
+        : undefined
+      : readCountFromApi !== undefined && totalFeedbacks > 0
+      ? (readCountFromApi / totalFeedbacks) * 100
+      : undefined;
+  const readRateFromActivity = deriveReadRateFromActivity(recent);
+  const selectedReadRate =
+    readRateFromDirect ?? readRateFromCounts ?? readRateFromActivity ?? null;
+  const readRate =
+    selectedReadRate === null
+      ? null
+      : Math.max(
+          0,
+          Math.min(
+            100,
+            selectedReadRate > 0 && selectedReadRate < 1
+              ? selectedReadRate * 100
+              : selectedReadRate
+          )
+        );
   const readTrackingFlag = pickFirstValue(sourceRecord, [
     "readTrackingAvailable",
     "read_tracking_available",
+    "is_read_tracking_available",
+    "readTrackingEnabled",
+    "read_tracking_enabled",
   ]);
   const readTrackingAvailable =
     typeof readTrackingFlag === "boolean"
       ? readTrackingFlag
+      : typeof readTrackingFlag === "string"
+      ? ["true", "1", "yes", "enabled"].includes(
+          readTrackingFlag.trim().toLowerCase()
+        )
+      : typeof readTrackingFlag === "number"
+      ? readTrackingFlag > 0
       : readRate !== undefined && readRate !== null;
 
   return {
@@ -411,6 +771,8 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     readTrackingAvailable,
     ratingBreakdown: derivedRatingBreakdown,
     departments,
+    mostFeedbackReceived,
+    mostFeedbackGiven,
     recentFeedbacks,
   };
 }
@@ -572,7 +934,7 @@ const FeedbackDashboard = () => {
           </p>
           <p className="mt-1 break-all text-xs text-red-500">{error}</p>
           <button
-            onClick={fetchDashboard}
+            onClick={() => fetchDashboard()}
             className="mt-4 rounded-lg bg-[#DA7756] px-5 py-2 text-xs font-semibold text-white hover:bg-[#DA7756]/85"
           >
             Retry
@@ -591,13 +953,15 @@ const FeedbackDashboard = () => {
     readTrackingAvailable,
     ratingBreakdown,
     departments,
+    mostFeedbackReceived,
+    mostFeedbackGiven,
     recentFeedbacks,
   } = data;
 
-  const totalRatings = Object.values(ratingBreakdown).reduce(
-    (a, b) => a + b,
-    0
-  );
+  const readRateDisplay =
+    readTrackingAvailable && readRate !== null
+      ? `${Number.isInteger(readRate) ? readRate : readRate.toFixed(1)}%`
+      : "N/A";
 
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
@@ -619,7 +983,7 @@ const FeedbackDashboard = () => {
         </header>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 
           {/* Total Feedbacks — from API */}
           <Card className="rounded-2xl border-0 bg-sky-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
@@ -662,6 +1026,19 @@ const FeedbackDashboard = () => {
               </p>
             </div>
           </Card>
+
+          {/* Read Rate — from API */}
+          <Card className="rounded-2xl border-0 bg-emerald-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-neutral-700">Read Rate</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums text-neutral-900">
+                  {readRateDisplay}
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-emerald-600" strokeWidth={2.2} />
+            </div>
+          </Card>
         </div>
 
         <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
@@ -697,60 +1074,71 @@ const FeedbackDashboard = () => {
           )}
         </Card>
 
-        {/* Read Tracking / Rating Breakdown */}
-        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900">
-            {totalRatings > 0 ? "Rating Breakdown" : "Read Tracking"}
-          </h2>
-          {totalRatings > 0 ? (
-            <>
-              <div className="space-y-3">
-                {(["5", "4", "3", "2", "1"] as const).map((star) => (
-                  <RatingBar
-                    key={star}
-                    label={star}
-                    count={ratingBreakdown[star]}
-                    total={totalRatings}
-                  />
-                ))}
-              </div>
-              <div className="mt-5 flex items-center gap-2">
-                <StarRow value={Math.round(averageRating)} />
-                <span className="text-sm text-neutral-500">
-                  {averageRating.toFixed(1)} out of 5 &nbsp;·&nbsp;{totalRatings}{" "}
-                  ratings
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                  Read Tracking
-                </p>
-                <p className="mt-2 text-2xl font-bold text-neutral-900">
-                  {readTrackingAvailable ? `${readRate ?? 0}%` : "N/A"}
-                </p>
-                <p className="mt-1 text-sm text-neutral-600">
-                  {readTrackingAvailable
-                    ? "Percentage of feedback that has been read."
-                    : "Read tracking is not available for this dataset."}
-                </p>
-              </div>
-              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                  Average Rating
-                </p>
-                <p className="mt-2 text-2xl font-bold text-neutral-900">
-                  {averageRating > 0 ? averageRating.toFixed(1) : "N/A"}
-                </p>
-                <p className="mt-1 text-sm text-neutral-600">
-                  Rating breakdown is not included in the current dashboard response.
-                </p>
-              </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <ArrowDownLeft className="h-5 w-5 text-[#DA7756]" strokeWidth={2.25} />
+              <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Received</h2>
             </div>
-          )}
-        </Card>
+            {mostFeedbackReceived.length > 0 ? (
+              <ul className="space-y-3">
+                {mostFeedbackReceived.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
+                      {entry.rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
+                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-[#DA7756]/15 px-3 py-1 text-sm font-semibold text-[#9e4f36]">
+                      {entry.count} received
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+                No feedback-received leaderboard data in current API response.
+              </div>
+            )}
+          </Card>
+
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <ArrowUpRight className="h-5 w-5 text-[#b85f42]" strokeWidth={2.25} />
+              <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Given</h2>
+            </div>
+            {mostFeedbackGiven.length > 0 ? (
+              <ul className="space-y-3">
+                {mostFeedbackGiven.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#b85f42] text-sm font-bold text-white">
+                      {entry.rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
+                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-[#b85f42]/15 px-3 py-1 text-sm font-semibold text-[#8f4a33]">
+                      {entry.count} given
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+                No feedback-given leaderboard data in current API response.
+              </div>
+            )}
+          </Card>
+        </div>
 
         {/* AI Summary */}
         <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-5 shadow-sm sm:px-6 sm:py-6">

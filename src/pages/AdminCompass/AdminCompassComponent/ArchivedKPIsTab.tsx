@@ -1,10 +1,11 @@
 // ─────────────────────────────────────────────
 // ArchivedKPIsTab.tsx
 // ─────────────────────────────────────────────
-import React, { useState } from "react";
+import React from "react";
 import { Trash2, RotateCcw, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { kpiClass } from "./Shared";
+import type { ArchivedKPIEntry } from "./kpiTypes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,17 +13,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface ArchivedKPI {
-  id: string;
-  name: string;
-  owner: string;
-  archivedDate: string;
-  reason: string;
-  frequency: string;
+interface ArchivedKPIsTabProps {
+  archived: ArchivedKPIEntry[];
+  onRestoreKpi?: (id: string) => void;
+  onDeleteArchivedKpi?: (id: string) => void;
 }
 
-const ArchivedKPIsTab: React.FC = () => {
-  const [archived] = useState<ArchivedKPI[]>([]);
+const ArchivedKPIsTab: React.FC<ArchivedKPIsTabProps> = ({
+  archived,
+  onRestoreKpi,
+  onDeleteArchivedKpi,
+}) => {
 
   return (
     <div
@@ -108,9 +109,19 @@ const ArchivedKPIsTab: React.FC = () => {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem className="cursor-pointer">
+                        <DropdownMenuItem
+                          className="cursor-pointer"
+                          onClick={() => onRestoreKpi?.(kpi.id)}
+                        >
                           <RotateCcw className="mr-2 h-4 w-4" />
                           Restore KPI
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer text-red-600 focus:text-red-600"
+                          onClick={() => onDeleteArchivedKpi?.(kpi.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Permanently
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

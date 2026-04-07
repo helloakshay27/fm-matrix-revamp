@@ -33,6 +33,21 @@ export interface KPIHistoryRow {
   notes: string;
 }
 
+interface CompanyUserOption {
+  id: number;
+  name: string;
+}
+
+interface CompanyDepartmentOption {
+  id: number;
+  name: string;
+}
+
+interface KPIOption {
+  id: string;
+  name: string;
+}
+
 const selectClass = cn(
   "w-full rounded-lg px-3 py-2 text-sm text-[#1a1a1a] shadow-sm",
   kpiClass.border,
@@ -131,25 +146,60 @@ function HistoryDatePickerField({
   );
 }
 
-const KPIHistoryTab: React.FC = () => {
+type KPIHistoryTabProps = {
+  users?: CompanyUserOption[];
+  departments?: CompanyDepartmentOption[];
+  kpis?: KPIOption[];
+};
+
+const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
+  users = [],
+  departments = [],
+  kpis = [],
+}) => {
   const [entries] = useState<KPIHistoryRow[]>([]);
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selectedKpi, setSelectedKpi] = useState("all");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedUser, setSelectedUser] = useState("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  const departmentOptions = useMemo(
+    () => Array.from(new Set(departments.map((d) => d.name).filter(Boolean))),
+    [departments]
+  );
+
+  const userOptions = useMemo(
+    () => users.map((u) => ({ id: String(u.id), name: u.name })),
+    [users]
+  );
+
+  const kpiOptions = useMemo(
+    () => Array.from(new Set(kpis.map((k) => k.name).filter(Boolean))),
+    [kpis]
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return entries;
-    return entries.filter(
-      (e) =>
+    return entries.filter((e) => {
+      const matchesSearch =
+        !q ||
         e.kpiName.toLowerCase().includes(q) ||
         e.user.toLowerCase().includes(q) ||
-        e.department.toLowerCase().includes(q)
-    );
-  }, [entries, search]);
+        e.department.toLowerCase().includes(q);
+
+      const matchesKpi = selectedKpi === "all" || e.kpiName === selectedKpi;
+      const matchesDepartment =
+        selectedDepartment === "all" || e.department === selectedDepartment;
+      const matchesUser = selectedUser === "all" || e.user === selectedUser;
+
+      return matchesSearch && matchesKpi && matchesDepartment && matchesUser;
+    });
+  }, [entries, search, selectedDepartment, selectedKpi, selectedUser]);
 
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
@@ -223,7 +273,7 @@ const KPIHistoryTab: React.FC = () => {
           </div>
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#DA7756] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a]"
           >
             <Download className="h-4 w-4" />
             Export All
@@ -247,14 +297,41 @@ const KPIHistoryTab: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <select className={selectClass} defaultValue="all">
+          <select
+            className={selectClass}
+            value={selectedKpi}
+            onChange={(e) => setSelectedKpi(e.target.value)}
+          >
             <option value="all">All KPIs</option>
+            {kpiOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
-          <select className={selectClass} defaultValue="all">
+          <select
+            className={selectClass}
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+          >
             <option value="all">All Departments</option>
+            {departmentOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
-          <select className={selectClass} defaultValue="all">
+          <select
+            className={selectClass}
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+          >
             <option value="all">All Users</option>
+            {userOptions.map((user) => (
+              <option key={user.id} value={user.name}>
+                {user.name}
+              </option>
+            ))}
           </select>
           <select className={selectClass} defaultValue="all">
             <option value="all">All Frequencies</option>

@@ -250,10 +250,12 @@ export const AddFMUserPage = () => {
     } else if (!validateEmail(formData.emailAddress)) {
       toast.error('Please enter a valid email address')
       return false
-    } else if (!formData.selectUserType) {
-      toast.error("Please select user type");
-      return false;
-    } else if (!formData.selectRole) {
+    }
+    // else if (!formData.selectUserType) {
+    //   toast.error("Please select user type");
+    //   return false;
+    // } 
+    else if (!formData.selectRole) {
       toast.error("Please select role");
       return false;
     } else if (!formData.selectAccessLevel) {

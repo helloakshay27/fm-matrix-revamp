@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, forwardRef, useEffect, useMemo } from "react";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
   Lightbulb,
@@ -42,6 +42,35 @@ import "./BusinessCompass.css";
 import AddTaskOrIssueModal from "@/components/BusinessCompass/AddTaskOrIssueModal";
 import { getBaseUrl, getToken } from "@/utils/auth";
 import axios from "axios";
+import { useTasks } from "@/hooks/useTasks";
+import { useIssues } from "@/hooks/useIssues";
+import { Dialog, DialogContent, Slide, Menu, MenuItem } from "@mui/material";
+import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
+import { TransitionProps } from "@mui/material/transitions";
+import AddIssueModal from "@/components/AddIssueModal";
+
+const Transition = forwardRef(function Transition(
+  props: TransitionProps & { children: React.ReactElement },
+  ref: React.Ref<unknown>
+) {
+  return <Slide direction="left" ref={ref} {...props} />;
+});
+
+interface AttachmentFile {
+  id: number;
+  document_file_name: string;
+  document_content_type: string;
+  document_file_size: number;
+  document_updated_at: string;
+  relation: string;
+  relation_id: number;
+  active: number;
+  changed_by: string | null;
+  added_from: string | null;
+  comments: string | null;
+  url: string;
+  document_url: string;
+}
 
 interface DailyReport {
   id: number;
@@ -78,7 +107,7 @@ interface DailyReport {
     tasks_issues?: any[];
   };
   url: string;
-  attachments: unknown[];
+  attachments: AttachmentFile[];
   self_rating?: number;
   is_absent?: boolean;
 }
@@ -105,8 +134,170 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<
     { id: string; name: string; size: string; type: string; base64?: string; file?: File }[]
   >([]);
+  const [reportAttachments, setReportAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [openTaskModal, setOpenTaskModal] = useState(false);
+  const [openIssueModal, setOpenIssueModal] = useState(false);
+  const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] = useState<null | HTMLElement>(null);
+
+  // Tasks and Issues data state
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const [mergedTasksIssues, setMergedTasksIssues] = useState<any[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Pagination state
+  const [currentTasksPage, setCurrentTasksPage] = useState(1);
+  const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
+  const [hasMoreTasks, setHasMoreTasks] = useState(true);
+  const [hasMoreIssues, setHasMoreIssues] = useState(true);
+
+  // Get current user for filtering my tasks/issues
+  const user = typeof localStorage !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
+  const userId = user?.id;
+
+  // Build filter for my issues
+  const myIssuesFilter = `
+  q[status_in][]=open
+  &q[status_in][]=overdued
+  &q[status_in][]=completed
+  ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
+`.replace(/\s+/g, "");
+
+  // Fetch tasks and issues with pagination
+  const { data: tasksData, isLoading: tasksLoading } = useTasks({
+    taskType: "my",
+    page: currentTasksPage,
+    filters: {
+      "q[status_in][]": ["open", "overdued", "completed"],
+    }
+  });
+
+  const { data: issuesData, isLoading: issuesLoading } = useIssues({
+    baseUrl,
+    token,
+    page: currentIssuesPage,
+    filters: myIssuesFilter,
+    enabled: !!token && !!userId,
+  });
+
+  // Merge and filter tasks and issues with infinite scroll support
+  useEffect(() => {
+    const tasks = tasksData?.data?.task_managements || tasksData?.task_managements || [];
+    const issues = issuesData?.issues || [];
+
+    // Check if there are more pages
+    const tasksPagination = tasksData?.data?.pagination || tasksData?.pagination;
+    const issuesPagination = issuesData?.pagination;
+
+    setHasMoreTasks(currentTasksPage < (tasksPagination?.total_pages || 1));
+    setHasMoreIssues(currentIssuesPage < (issuesPagination?.total_pages || 1));
+
+    // Transform tasks
+    const transformedTasks = tasks.map((task: any) => ({
+      id: `task-${task.id}`,
+      title: task.title,
+      type: "task",
+      status: task.status || "open",
+      priority: task.priority || "Medium",
+      created_at: task.created_at,
+      responsible: task.responsible_person_id,
+      originalData: task,
+    }));
+
+    // Transform issues
+    const transformedIssues = issues.map((issue: any) => ({
+      id: `issue-${issue.id}`,
+      title: issue.title,
+      type: "issue",
+      status: issue.status || "open",
+      priority: issue.priority || "Medium",
+      created_at: issue.created_at,
+      responsible: issue.responsible_person_id,
+      originalData: issue,
+    }));
+
+    const newData = [...transformedTasks, ...transformedIssues].sort(
+      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
+
+    // For first page, replace data; for subsequent pages, append
+    if (currentTasksPage === 1 && currentIssuesPage === 1) {
+      setMergedTasksIssues(newData);
+    } else {
+      setMergedTasksIssues((prev) => {
+        // Remove duplicates by ID and append new data
+        const existingIds = new Set(prev.map((item) => item.id));
+        const uniqueNewData = newData.filter((item) => !existingIds.has(item.id));
+        const merged = [...prev, ...uniqueNewData].sort(
+          (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        );
+        return merged;
+      });
+    }
+
+    setIsLoadingMore(false);
+  }, [tasksData, issuesData, currentTasksPage, currentIssuesPage]);
+
+  // Handle infinite scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+
+      if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading) {
+        setIsLoadingMore(true);
+
+        // Load next page of tasks if available
+        if (hasMoreTasks) {
+          setCurrentTasksPage((prev) => prev + 1);
+        }
+
+        // Load next page of issues if available
+        if (hasMoreIssues) {
+          setCurrentIssuesPage((prev) => prev + 1);
+        }
+
+        // If no more pages, stop loading
+        if (!hasMoreTasks && !hasMoreIssues) {
+          setIsLoadingMore(false);
+        }
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [isLoadingMore, tasksLoading, issuesLoading, hasMoreTasks, hasMoreIssues]);
+
+  // Calculate counts for different statuses
+  const taskIssueCounts = useMemo(() => {
+    const completed = mergedTasksIssues.filter(
+      (item) => item.status === "completed" || item.status === "closed"
+    ).length;
+    const open = mergedTasksIssues.filter(
+      (item) => item.status === "open" || item.status === "reopen"
+    ).length;
+    const overdue = mergedTasksIssues.filter(
+      (item) => item.status === "overdue" || item.status === "on_hold"
+    ).length;
+    const inProgress = mergedTasksIssues.filter(
+      (item) => item.status === "in_progress"
+    ).length;
+
+    return { completed, open, overdue, inProgress, total: mergedTasksIssues.length };
+  }, [mergedTasksIssues]);
+
+  // Helper function to determine if file is an image
+  const isImageFile = (fileName: string, contentType: string) => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+    const lowerFileName = fileName.toLowerCase();
+    return contentType.startsWith('image/') || imageExtensions.some(ext => lowerFileName.endsWith(ext));
+  };
 
   const addAccomplishment = () => {
     setAccomplishments([
@@ -312,19 +503,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         setAccomplishments([]);
       }
 
-      // Load accomplishment attachments
-      if (report.report_data?.accomplishments?.attachments) {
-        setUploadedFiles(
-          report.report_data.accomplishments.attachments.map((att: any, idx: number) => ({
-            id: `fetched-att-${idx}`,
-            name: att.filename,
-            size: "N/A",
-            type: att.content_type,
-            base64: att.base64,
-          }))
-        );
+
+      // Load report attachments (from API response)
+      if (report.attachments && report.attachments.length > 0) {
+        setReportAttachments(report.attachments);
       } else {
-        setUploadedFiles([]);
+        setReportAttachments([]);
       }
 
       // Populate planning items (tomorrow's plan)
@@ -349,6 +533,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setCurrentReportId(null);
       setAccomplishments([]);
       setUploadedFiles([]);
+      setReportAttachments([]);
       setPlanningItems([]);
       setIsAbsent(false);
       setAbsenceReason("");
@@ -432,16 +617,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                 );
               }
 
-              if (rData.accomplishments?.attachments) {
-                setUploadedFiles(
-                  rData.accomplishments.attachments.map((att: any, idx: number) => ({
-                    id: `fetched-att-${idx}`,
-                    name: att.filename,
-                    size: "N/A",
-                    type: att.content_type,
-                    base64: att.base64,
-                  }))
-                );
+              // Load report attachments (from API response)
+              if (existingReport.attachments && existingReport.attachments.length > 0) {
+                setReportAttachments(existingReport.attachments);
+              } else {
+                setReportAttachments([]);
               }
 
               if (rData.tomorrow_plan) {
@@ -462,6 +642,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           } else {
             setCurrentReportId(null);
             setAccomplishments([]);
+            setUploadedFiles([]);
+            setReportAttachments([]);
             setIsAbsent(false);
             setAbsenceReason("");
             setSelfRating([2]);
@@ -1002,7 +1184,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="text-xs font-bold text-gray-400">
-                          {uploadedFiles.length}/5
+                          {uploadedFiles.length + reportAttachments.length}/5
                         </span>
                         <input
                           type="file"
@@ -1012,7 +1194,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                           className="hidden"
                         />
                         <Button
-                          className="bg-[#10b981] hover:bg-[#059669] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none"
+                          disabled={uploadedFiles.length + reportAttachments.length >= 5}
+                          className={cn(
+                            "bg-[#10b981] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none",
+                            uploadedFiles.length + reportAttachments.length >= 5
+                              ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400"
+                              : "hover:bg-[#059669]"
+                          )}
                           onClick={triggerFileUpload}
                         >
                           <Upload size={16} />
@@ -1057,6 +1245,53 @@ const BusinessCompassDailyReport: React.FC = () => {
                         ))}
                       </div>
                     )}
+
+                    {/* Report Attachments Section */}
+                    {reportAttachments && reportAttachments.length > 0 && (
+                      <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <Upload size={16} className="text-purple-600" />
+                          <span className="text-sm font-bold text-[#1a1a1a]">Linked Files ({reportAttachments.length})</span>
+                        </div>
+                        <div className="space-y-2">
+                          {reportAttachments.map((attachment: AttachmentFile, idx: number) => {
+                            const isImage = isImageFile(attachment.document_file_name, attachment.document_content_type);
+                            return (
+                              <div
+                                key={attachment.id || idx}
+                                className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                              >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {isImage ? (
+                                    <ImageIcon size={20} className="text-purple-600 shrink-0" />
+                                  ) : (
+                                    <FileText size={20} className="text-blue-600 shrink-0" />
+                                  )}
+                                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                    <a
+                                      href={attachment.document_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                    >
+                                      {attachment.document_file_name}
+                                    </a>
+                                    <span className="text-[11px] text-gray-600 font-medium">
+                                      {attachment.relation} • {(attachment.document_file_size / 1024).toFixed(2)} KB • {new Date(attachment.document_updated_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0 ml-3">
+                                  <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                    {attachment.active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -1074,8 +1309,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </h3>
                         </div>
                         <p className="text-[11px] text-gray-500 font-medium">
-                          Check the box for completed items to mark them
-                          completed.
+                          {tasksLoading || issuesLoading ? "Loading..." : `Total: ${taskIssueCounts.total} items`}
                         </p>
                         <div className="flex flex-wrap gap-2 pt-1">
                           <Badge
@@ -1083,31 +1317,31 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="bg-[#ecfdf5] text-[#047857] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
                           >
                             <CheckSquare size={10} />
-                            Closed: 0
+                            Closed: {taskIssueCounts.completed}
                           </Badge>
                           <Badge
                             variant="outline"
                             className="bg-[#eff6ff] text-[#1d4ed8] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
                           >
                             <Info size={10} />
-                            Open: 0
+                            Open: {taskIssueCounts.open}
                           </Badge>
                           <Badge
                             variant="outline"
                             className="bg-[#fef2f2] text-[#b91c1c] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
                           >
                             <Clock size={10} />
-                            Overdue: 0
+                            Overdue: {taskIssueCounts.overdue}
                           </Badge>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="bg-[#ea580c] text-white px-3 py-1 rounded-[4px] text-[9px] font-black tracking-widest shadow-md">
-                          0/20 PTS
+                          {taskIssueCounts.completed}/20 PTS
                         </div>
                         <Button
                           className="bg-[#b91c1c] hover:bg-[#991b1b] text-white font-black px-4 h-8 rounded-[4px] flex items-center gap-2 text-[10px] shadow-md transition-all border-none"
-                          onClick={() => setIsAddTaskModalOpen(true)}
+                          onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
                         >
                           <Plus size={14} />
                           Add
@@ -1116,13 +1350,83 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
                   </div>
 
-                  <CardContent className="p-10 flex flex-col items-center justify-center text-center">
-                    <div className="flex flex-col items-center gap-3 opacity-30">
-                      <CheckSquare size={40} className="text-[#b91c1c]/20" />
-                      <p className="text-base font-bold text-gray-400 tracking-tight">
-                        No open tasks or issues
-                      </p>
-                    </div>
+                  <CardContent className="p-6">
+                    {tasksLoading || issuesLoading ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
+                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
+                      </div>
+                    ) : mergedTasksIssues.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center text-center py-10">
+                        <div className="flex flex-col items-center gap-3 opacity-30">
+                          <CheckSquare size={40} className="text-[#b91c1c]/20" />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">
+                            No open tasks or issues
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto" ref={scrollContainerRef}>
+                        {mergedTasksIssues.map((item: any) => (
+                          <div
+                            key={item.id}
+                            className={cn(
+                              "flex items-center gap-3 p-3 rounded-[10px] border transition-all",
+                              item.status === "completed" || item.status === "closed"
+                                ? "bg-green-50/50 border-green-200/50"
+                                : item.status === "overdue" || item.status === "on_hold"
+                                  ? "bg-red-50/50 border-red-200/50"
+                                  : item.status === "in_progress"
+                                    ? "bg-amber-50/50 border-amber-200/50"
+                                    : "bg-blue-50/50 border-blue-200/50"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
+                                {item.type}
+                              </span>
+                              {item.status === "completed" || item.status === "closed" ? (
+                                <CheckCircle2 size={16} className="text-green-600" />
+                              ) : item.status === "overdue" || item.status === "on_hold" ? (
+                                <AlertCircle size={16} className="text-red-600" />
+                              ) : item.status === "in_progress" ? (
+                                <Clock size={16} className="text-amber-600" />
+                              ) : (
+                                <Info size={16} className="text-blue-600" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(
+                                "text-sm font-medium truncate",
+                                (item.status === "completed" || item.status === "closed") && "line-through text-gray-400"
+                              )}>
+                                {item.title}
+                              </p>
+                              <p className="text-xs text-gray-500 capitalize">
+                                {item.status.replace(/_/g, " ")}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span
+                                className="text-[10px] px-2 py-1 rounded-full font-bold"
+                                style={{
+                                  backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                  color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                }}
+                              >
+                                {item.priority}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        {isLoadingMore && (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
+                            <p className="text-xs text-gray-500 font-medium">Loading more...</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -1970,21 +2274,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     setAccomplishments([]);
                                   }
 
-                                  // Load accomplishment attachments
-                                  if (report.report_data?.accomplishments?.attachments) {
-                                    setUploadedFiles(
-                                      report.report_data.accomplishments.attachments.map((att: any, idx: number) => ({
-                                        id: `fetched-att-${idx}`,
-                                        name: att.filename,
-                                        size: "N/A",
-                                        type: att.content_type,
-                                        base64: att.base64,
-                                      }))
-                                    );
-                                  } else {
-                                    setUploadedFiles([]);
-                                  }
-
                                   // Populate planning items
                                   if (report.report_data?.tomorrow_plan) {
                                     setPlanningItems(
@@ -2104,33 +2393,49 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Attachments Section */}
-                        {report.report_data?.accomplishments?.attachments?.length > 0 && (
-                          <div className="space-y-3 mt-4">
+                        {/* API Response Attachments Section */}
+                        {report.attachments && report.attachments.length > 0 && (
+                          <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
                             <div className="flex items-center gap-2">
-                              <Upload size={16} className="text-blue-600" />
-                              <span className="text-sm font-bold text-[#1a1a1a]">Attachments ({report.report_data.accomplishments.attachments.length})</span>
+                              <Upload size={16} className="text-purple-600" />
+                              <span className="text-sm font-bold text-[#1a1a1a]">Linked Files ({report.attachments.length})</span>
                             </div>
                             <div className="space-y-2">
-                              {report.report_data.accomplishments.attachments.map((att: any, idx: number) => (
-                                <div
-                                  key={idx}
-                                  onClick={() => {
-                                    window.open(att.base64, '_blank');
-                                  }}
-                                  className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[10px] border border-gray-100 cursor-pointer hover:bg-blue-50 transition-colors"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <ImageIcon size={16} className="text-blue-500" />
-                                    <span className="text-sm font-medium text-blue-600 hover:underline">
-                                      {att.filename}
-                                    </span>
+                              {report.attachments.map((attachment: AttachmentFile, idx: number) => {
+                                const isImage = isImageFile(attachment.document_file_name, attachment.document_content_type);
+                                return (
+                                  <div
+                                    key={attachment.id || idx}
+                                    className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      {isImage ? (
+                                        <ImageIcon size={20} className="text-purple-600 shrink-0" />
+                                      ) : (
+                                        <FileText size={20} className="text-blue-600 shrink-0" />
+                                      )}
+                                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                        <a
+                                          href={attachment.document_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                        >
+                                          {attachment.document_file_name}
+                                        </a>
+                                        <span className="text-[11px] text-gray-600 font-medium">
+                                          {attachment.relation} • {(attachment.document_file_size / 1024).toFixed(2)} KB • {new Date(attachment.document_updated_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                                      <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                        {attachment.active ? 'Active' : 'Inactive'}
+                                      </Badge>
+                                    </div>
                                   </div>
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                    {att.size || 'N/A'}
-                                  </span>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -2154,10 +2459,143 @@ const BusinessCompassDailyReport: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-      <AddTaskOrIssueModal
+
+      {/* <AddTaskOrIssueModal
         isOpen={isAddTaskModalOpen}
         onClose={() => setIsAddTaskModalOpen(false)}
+      /> */}
+
+      <Dialog
+        open={openTaskModal}
+        onClose={() => setOpenTaskModal(false)}
+        TransitionComponent={Transition}
+        maxWidth={false}
+      >
+        <DialogContent
+          className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+          style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+          sx={{
+            padding: "0 !important",
+            "& .MuiDialogContent-root": {
+              padding: "0 !important",
+              overflow: "auto",
+            }
+          }}
+        >
+          <div className="sticky top-0 bg-white z-10">
+            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+            <X
+              className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+              onClick={() => setOpenTaskModal(false)}
+            />
+            <hr className="border border-[#E95420] mt-4" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <ProjectTaskCreateModal
+              isEdit={false}
+              onCloseModal={() => setOpenTaskModal(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AddIssueModal
+        openDialog={openIssueModal}
+        handleCloseDialog={() => setOpenIssueModal(false)}
       />
+
+      <Menu
+        anchorEl={taskIssueMenuAnchor}
+        open={Boolean(taskIssueMenuAnchor)}
+        onClose={() => setTaskIssueMenuAnchor(null)}
+        sx={{
+          "& .MuiPaper-root": {
+            borderRadius: "12px",
+            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+            minWidth: "220px",
+            overflow: "visible",
+            "&::before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: -8,
+              right: 20,
+              width: 12,
+              height: 12,
+              backgroundColor: "#ffffff",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+              boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+            },
+          },
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          onClick={() => {
+            setOpenTaskModal(true);
+            setTaskIssueMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "8px 8px 4px 8px",
+            borderRadius: "10px",
+            backgroundColor: "transparent",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: "#f0f4ff",
+              transform: "translateX(4px)",
+            },
+            "&:active": {
+              backgroundColor: "#e0e8ff",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <CheckSquare size={18} className="text-blue-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Task</span>
+              <span className="text-xs text-gray-500 font-medium">Create a new task</span>
+            </div>
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setOpenIssueModal(true);
+            setTaskIssueMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "4px 8px 8px 8px",
+            borderRadius: "10px",
+            backgroundColor: "transparent",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: "#fef2f2",
+              transform: "translateX(4px)",
+            },
+            "&:active": {
+              backgroundColor: "#fee2e2",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-red-50 rounded-lg">
+              <AlertCircle size={18} className="text-red-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+              <span className="text-xs text-gray-500 font-medium">Report a problem</span>
+            </div>
+          </div>
+        </MenuItem>
+      </Menu>
     </div>
   );
 };
