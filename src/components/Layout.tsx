@@ -293,7 +293,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null;
     }
 
-    if (isEmployeeUser && isLocalhost) {
+    // org_id 34 always gets ActionHeader (never employee view)
+    if (isEmployeeUser && isLocalhost && org_id !== "34") {
       return null; // No dynamic header for employees
     }
 
