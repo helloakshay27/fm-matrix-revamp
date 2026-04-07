@@ -293,7 +293,6 @@ const BugReports = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <AdminViewEmulation />
       <SubmitReportDialog open={submitOpen} onOpenChange={setSubmitOpen} />
 
       <div className="mx-auto max-w-6xl space-y-8">

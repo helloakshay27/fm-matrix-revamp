@@ -1,7 +1,21 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, X, Download, User, Ticket, Settings, FileText, Users, AlertTriangle, Building, DollarSign, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Download,
+  User,
+  Ticket,
+  Settings,
+  FileText,
+  Users,
+  AlertTriangle,
+  Building,
+  DollarSign,
+  MapPin,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/utils/apiClient";
 import { getToken, getUser } from "@/utils/auth";
@@ -18,7 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 
 interface SelectedTicket {
   id: number;
@@ -195,12 +215,12 @@ const UpdateTicketsPage: React.FC = () => {
     shortTermImpact: "",
     longTermImpact: "",
     // Add location fields
-    area: '',
-    building: '',
-    wing: '',
-    floor: '',
-    room: '',
-    vendor: "" // <-- Add this line to fix the error
+    area: "",
+    building: "",
+    wing: "",
+    floor: "",
+    room: "",
+    vendor: "", // <-- Add this line to fix the error
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -212,8 +232,10 @@ const UpdateTicketsPage: React.FC = () => {
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
   const [complaintModes, setComplaintModes] = useState<ComplaintMode[]>([]);
-  const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
-const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+  const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>(
+    []
+  );
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCostPopup, setShowCostPopup] = useState(false);
@@ -228,13 +250,15 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [reviewDate, setReviewDate] = useState<string>(""); // Changed to string for date input
   const [ticketApiData, setTicketApiData] = useState<any>(null); // Store original API data
-  const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
-    id: number;
-    identifier: string;
-    identifier_action: string;
-    body: string;
-    active?: boolean;
-  }>>([]);
+  const [communicationTemplates, setCommunicationTemplates] = useState<
+    Array<{
+      id: number;
+      identifier: string;
+      identifier_action: string;
+      body: string;
+      active?: boolean;
+    }>
+  >([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [costApprovalRequests, setCostApprovalRequests] = useState<
     Array<{
@@ -271,7 +295,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
 
   // Filtered location state
-  const [filteredBuildings, setFilteredBuildings] = useState<BuildingResponse[]>([]);
+  const [filteredBuildings, setFilteredBuildings] = useState<
+    BuildingResponse[]
+  >([]);
   const [filteredWings, setFilteredWings] = useState<WingResponse[]>([]);
   const [filteredAreas, setFilteredAreas] = useState<AreaResponse[]>([]);
   const [filteredFloors, setFilteredFloors] = useState<FloorResponse[]>([]);
@@ -279,24 +305,24 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   // Field styles for Material-UI components
   const fieldStyles = {
-    height: '45px',
-    backgroundColor: '#fff',
-    borderRadius: '4px',
-    '& .MuiOutlinedInput-root': {
-      height: '45px',
-      '& fieldset': {
-        borderColor: '#ddd',
+    height: "45px",
+    backgroundColor: "#fff",
+    borderRadius: "4px",
+    "& .MuiOutlinedInput-root": {
+      height: "45px",
+      "& fieldset": {
+        borderColor: "#ddd",
       },
-      '&:hover fieldset': {
-        borderColor: '#C72030',
+      "&:hover fieldset": {
+        borderColor: "#C72030",
       },
-      '&.Mui-focused fieldset': {
-        borderColor: '#C72030',
+      "&.Mui-focused fieldset": {
+        borderColor: "#C72030",
       },
     },
-    '& .MuiInputLabel-root': {
-      '&.Mui-focused': {
-        color: '#C72030',
+    "& .MuiInputLabel-root": {
+      "&.Mui-focused": {
+        color: "#C72030",
       },
     },
   };
@@ -305,19 +331,28 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [statusResponse, usersResponse, complaintModesResponse, templatesResponse] =
-          await Promise.all([
-            apiClient.get("/pms/admin/complaint_statuses.json"),
-            apiClient.get("/pms/users/get_escalate_to_users.json"),
-            apiClient.get("/pms/admin/complaint_modes.json"),
-            apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES),
-          ]);
+        const [
+          statusResponse,
+          usersResponse,
+          complaintModesResponse,
+          templatesResponse,
+        ] = await Promise.all([
+          apiClient.get("/pms/admin/complaint_statuses.json"),
+          apiClient.get("/pms/users/get_escalate_to_users.json"),
+          apiClient.get("/pms/admin/complaint_modes.json"),
+          apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES),
+        ]);
 
         setComplaintStatuses(statusResponse.data || []);
         setFmUsers(usersResponse.data.users || []);
         setComplaintModes(complaintModesResponse.data || []);
-        setCommunicationTemplates(Array.isArray(templatesResponse.data) ? templatesResponse.data : []);
-        console.log("📋 Communication templates loaded:", templatesResponse.data);
+        setCommunicationTemplates(
+          Array.isArray(templatesResponse.data) ? templatesResponse.data : []
+        );
+        console.log(
+          "📋 Communication templates loaded:",
+          templatesResponse.data
+        );
 
         // Load location data
         await loadLocationData();
@@ -338,40 +373,40 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   }, [toast, dispatch]);
 
   useEffect(() => {
-  const fetchSuppliers = async () => {
-    setLoadingSuppliers(true);
-    try {
-      const url = getFullUrl('/pms/suppliers.json');
-      const options = {
-        method: 'GET',
-        headers: {
-          Authorization: getAuthHeader(),
-        },
-      };
-      const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Failed to fetch suppliers');
-      const data = await response.json();
-      setSuppliers(
-        Array.isArray(data.pms_suppliers)
-          ? data.pms_suppliers.map(s => ({
-            id: s.id,
-            name: s.company_name || `Supplier #${s.id}`
-          }))
-          : []
-      );
-    } catch (error) {
-      console.error('Error loading suppliers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load suppliers",
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingSuppliers(false);
-    }
-  };
-  fetchSuppliers();
-}, []);
+    const fetchSuppliers = async () => {
+      setLoadingSuppliers(true);
+      try {
+        const url = getFullUrl("/pms/suppliers.json");
+        const options = {
+          method: "GET",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error("Failed to fetch suppliers");
+        const data = await response.json();
+        setSuppliers(
+          Array.isArray(data.pms_suppliers)
+            ? data.pms_suppliers.map((s) => ({
+                id: s.id,
+                name: s.company_name || `Supplier #${s.id}`,
+              }))
+            : []
+        );
+      } catch (error) {
+        console.error("Error loading suppliers:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load suppliers",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+    fetchSuppliers();
+  }, []);
 
   // Add location data loading functions
   const loadLocationData = async () => {
@@ -380,30 +415,30 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       loadBuildings(),
       loadWings(),
       loadFloors(),
-      loadRooms()
+      loadRooms(),
     ]);
   };
 
   const loadAreas = async () => {
     setLoadingAreas(true);
     try {
-      const url = getFullUrl('/pms/areas.json');
+      const url = getFullUrl("/pms/areas.json");
       const options = {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: getAuthHeader(),
         },
       };
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Failed to fetch areas');
+      if (!response.ok) throw new Error("Failed to fetch areas");
       const data = await response.json();
       setAreas(data.areas || []);
     } catch (error) {
-      console.error('Error loading areas:', error);
+      console.error("Error loading areas:", error);
       toast({
         title: "Error",
         description: "Failed to load areas",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoadingAreas(false);
@@ -416,24 +451,24 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       // Use site_id in API call if provided, otherwise load all buildings
       const url = siteId
         ? getFullUrl(`/pms/sites/${siteId}/buildings.json`)
-        : getFullUrl('/pms/buildings.json');
+        : getFullUrl("/pms/buildings.json");
 
       const options = {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: getAuthHeader(),
         },
       };
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Failed to fetch buildings');
+      if (!response.ok) throw new Error("Failed to fetch buildings");
       const data = await response.json();
       setBuildings(data.pms_buildings || data || []);
     } catch (error) {
-      console.error('Error loading buildings:', error);
+      console.error("Error loading buildings:", error);
       toast({
         title: "Error",
         description: "Failed to load buildings",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoadingBuildings(false);
@@ -446,24 +481,24 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       // Add building_id as query parameter if provided
       const url = buildingId
         ? getFullUrl(`/pms/wings.json?building_id=${buildingId}`)
-        : getFullUrl('/pms/wings.json');
+        : getFullUrl("/pms/wings.json");
 
       const options = {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: getAuthHeader(),
         },
       };
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Failed to fetch wings');
+      if (!response.ok) throw new Error("Failed to fetch wings");
       const data = await response.json();
       setWings(data.wings || []);
     } catch (error) {
-      console.error('Error loading wings:', error);
+      console.error("Error loading wings:", error);
       toast({
         title: "Error",
         description: "Failed to load wings",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoadingWings(false);
@@ -476,24 +511,24 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       // Add wing_id as query parameter if provided
       const url = wingId
         ? getFullUrl(`/pms/floors.json?wing_id=${wingId}`)
-        : getFullUrl('/pms/floors.json');
+        : getFullUrl("/pms/floors.json");
 
       const options = {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: getAuthHeader(),
         },
       };
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Failed to fetch floors');
+      if (!response.ok) throw new Error("Failed to fetch floors");
       const data = await response.json();
       setFloors(data.floors || []);
     } catch (error) {
-      console.error('Error loading floors:', error);
+      console.error("Error loading floors:", error);
       toast({
         title: "Error",
         description: "Failed to load floors",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoadingFloors(false);
@@ -506,24 +541,24 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       // Add floor_id as query parameter if provided
       const url = floorId
         ? getFullUrl(`/pms/rooms.json?floor_id=${floorId}`)
-        : getFullUrl('/pms/rooms.json');
+        : getFullUrl("/pms/rooms.json");
 
       const options = {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: getAuthHeader(),
         },
       };
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Failed to fetch rooms');
+      if (!response.ok) throw new Error("Failed to fetch rooms");
       const data = await response.json();
       setRooms(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error loading rooms:', error);
+      console.error("Error loading rooms:", error);
       toast({
         title: "Error",
         description: "Failed to load rooms",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoadingRooms(false);
@@ -532,11 +567,11 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   // Handle location changes with cascading API calls
   const handleAreaChange = async (areaId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       area: areaId,
-      floor: '',
-      room: ''
+      floor: "",
+      room: "",
     }));
 
     // Clear dependent dropdowns
@@ -549,7 +584,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         setLoadingFloors(true);
         const url = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
         const options = {
-          method: 'GET',
+          method: "GET",
           headers: {
             Authorization: getAuthHeader(),
           },
@@ -560,7 +595,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
           setFilteredFloors(data.floors || []);
         }
       } catch (error) {
-        console.error('Error loading floors for area:', error);
+        console.error("Error loading floors for area:", error);
       } finally {
         setLoadingFloors(false);
       }
@@ -568,13 +603,13 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   };
 
   const handleBuildingChange = async (buildingId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       building: buildingId,
-      wing: '',
-      area: '',
-      floor: '',
-      room: ''
+      wing: "",
+      area: "",
+      floor: "",
+      room: "",
     }));
 
     // Clear dependent dropdowns
@@ -589,7 +624,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         setLoadingWings(true);
         const url = getFullUrl(`/pms/wings.json?building_id=${buildingId}`);
         const options = {
-          method: 'GET',
+          method: "GET",
           headers: {
             Authorization: getAuthHeader(),
           },
@@ -600,7 +635,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
           setFilteredWings(data.wings || []);
         }
       } catch (error) {
-        console.error('Error loading wings for building:', error);
+        console.error("Error loading wings for building:", error);
       } finally {
         setLoadingWings(false);
       }
@@ -608,12 +643,12 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   };
 
   const handleWingChange = async (wingId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       wing: wingId,
-      area: '',
-      floor: '',
-      room: ''
+      area: "",
+      floor: "",
+      room: "",
     }));
 
     // Clear dependent dropdowns
@@ -627,7 +662,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         setLoadingAreas(true);
         const url = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
         const options = {
-          method: 'GET',
+          method: "GET",
           headers: {
             Authorization: getAuthHeader(),
           },
@@ -638,7 +673,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
           setFilteredAreas(data.areas || []);
         }
       } catch (error) {
-        console.error('Error loading areas for wing:', error);
+        console.error("Error loading areas for wing:", error);
       } finally {
         setLoadingAreas(false);
       }
@@ -646,10 +681,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   };
 
   const handleFloorChange = async (floorId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       floor: floorId,
-      room: ''
+      room: "",
     }));
 
     // Clear dependent dropdown
@@ -661,7 +696,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         setLoadingRooms(true);
         const url = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
         const options = {
-          method: 'GET',
+          method: "GET",
           headers: {
             Authorization: getAuthHeader(),
           },
@@ -669,10 +704,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         const response = await fetch(url, options);
         if (response.ok) {
           const data = await response.json();
-          setFilteredRooms(Array.isArray(data) ? data : (data.rooms || []));
+          setFilteredRooms(Array.isArray(data) ? data : data.rooms || []);
         }
       } catch (error) {
-        console.error('Error loading rooms for floor:', error);
+        console.error("Error loading rooms for floor:", error);
       } finally {
         setLoadingRooms(false);
       }
@@ -697,17 +732,23 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       const matchedCategory = helpdeskData?.helpdesk_categories.find(
         (cat) => cat.name === ticketData.category_type
       );
-      const matchedMode = complaintModes.find((mode) => mode.name === ticketData.complaint_mode);
+      const matchedMode = complaintModes.find(
+        (mode) => mode.name === ticketData.complaint_mode
+      );
       const matchedStatus = complaintStatuses.find(
         (status) => status.id === ticketData.complaint_status_id
       );
 
       // Match assigned user by name (API returns name, not ID)
-      const assignedUser = fmUsers.find((user) => user.full_name === ticketData.assigned_to);
+      const assignedUser = fmUsers.find(
+        (user) => user.full_name === ticketData.assigned_to
+      );
 
       // Match responsible person by name if available
       const responsiblePersonUser = ticketData.responsible_person
-        ? fmUsers.find((user) => user.full_name === ticketData.responsible_person)
+        ? fmUsers.find(
+            (user) => user.full_name === ticketData.responsible_person
+          )
         : null;
 
       console.log("👤 Matching assigned user:", {
@@ -721,12 +762,14 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       let buildingId = "";
       let wingId = "";
       let areaId = "";
-      let floorId = ticketData.floor_id?.toString() || "";
-      let roomId = ticketData.room_id?.toString() || "";
+      const floorId = ticketData.floor_id?.toString() || "";
+      const roomId = ticketData.room_id?.toString() || "";
 
       // Match building by name
       if (ticketData.building_name) {
-        const matchedBuilding = buildings.find(b => b.name === ticketData.building_name);
+        const matchedBuilding = buildings.find(
+          (b) => b.name === ticketData.building_name
+        );
         if (matchedBuilding) {
           buildingId = matchedBuilding.id.toString();
         }
@@ -749,10 +792,18 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       });
 
       console.log("📋 Available templates:", {
-        preventiveTemplates: communicationTemplates.filter(t => t.identifier === "Preventive Action"),
-        correctiveTemplates: communicationTemplates.filter(t => t.identifier === "Corrective Action"),
-        shortTermTemplates: communicationTemplates.filter(t => t.identifier === "Short-term Impact"),
-        longTermTemplates: communicationTemplates.filter(t => t.identifier === "Long-term Impact"),
+        preventiveTemplates: communicationTemplates.filter(
+          (t) => t.identifier === "Preventive Action"
+        ),
+        correctiveTemplates: communicationTemplates.filter(
+          (t) => t.identifier === "Corrective Action"
+        ),
+        shortTermTemplates: communicationTemplates.filter(
+          (t) => t.identifier === "Short-term Impact"
+        ),
+        longTermTemplates: communicationTemplates.filter(
+          (t) => t.identifier === "Long-term Impact"
+        ),
       });
 
       setFormData((prev) => ({
@@ -768,7 +819,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         vendor: ticketData.supplier_id ? ticketData.supplier_id.toString() : "",
         comments: ticketData.comment || "",
         // Responsible Person
-        responsiblePerson: responsiblePersonUser ? responsiblePersonUser.id.toString() : "",
+        responsiblePerson: responsiblePersonUser
+          ? responsiblePersonUser.id.toString()
+          : "",
         // Complaint Type (from issue_type)
         complaintType: ticketData.issue_type || "",
         // Admin Priority
@@ -796,19 +849,21 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         // Root Cause Template IDs from API
         rootCauseTemplateIds: ticketData.rca_template_ids || [],
         // Preventive Action Template IDs from API
-        preventiveActionTemplateIds: ticketData.preventive_action_template_ids || [],
+        preventiveActionTemplateIds:
+          ticketData.preventive_action_template_ids || [],
         // Corrective Action Template IDs from API
-        correctiveActionTemplateIds: ticketData.corrective_action_template_ids || [],
+        correctiveActionTemplateIds:
+          ticketData.corrective_action_template_ids || [],
         // Short-term Impact Template IDs from API
-        shortTermImpactTemplateIds: ticketData.short_term_impact_template_ids || [],
+        shortTermImpactTemplateIds:
+          ticketData.short_term_impact_template_ids || [],
         // Long-term Impact Template IDs from API
-        longTermImpactTemplateIds: ticketData.long_term_impact_template_ids || [],
-        // Service Type - bind from API
-        serviceType: ticketData.service_type || "",
+        longTermImpactTemplateIds:
+          ticketData.long_term_impact_template_ids || [],
         // Associated To (Asset or Service) - using asset_service field
         associatedTo: {
           asset: ticketData.asset_service === "Asset",
-          service: ticketData.asset_service === "Service"
+          service: ticketData.asset_service === "Service",
         },
         // Location fields from API (using IDs from response)
         building: buildingId,
@@ -826,7 +881,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
         try {
           const url = getFullUrl(`/pms/wings.json?building_id=${buildingId}`);
           const options = {
-            method: 'GET',
+            method: "GET",
             headers: {
               Authorization: getAuthHeader(),
             },
@@ -839,13 +894,17 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
             // Match wing by name after fetching wings
             if (ticketData.wing_name) {
-              const matchedWing = wingsData.find((w: any) => w.name === ticketData.wing_name);
+              const matchedWing = wingsData.find(
+                (w: any) => w.name === ticketData.wing_name
+              );
               if (matchedWing) {
                 wingId = matchedWing.id.toString();
-                setFormData(prev => ({ ...prev, wing: wingId }));
+                setFormData((prev) => ({ ...prev, wing: wingId }));
 
                 // Call areas API with wing_id parameter
-                const areasUrl = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
+                const areasUrl = getFullUrl(
+                  `/pms/areas.json?wing_id=${wingId}`
+                );
                 const areasResponse = await fetch(areasUrl, options);
                 if (areasResponse.ok) {
                   const areasData = await areasResponse.json();
@@ -854,13 +913,17 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
                   // Match area by name after fetching areas
                   if (ticketData.area_name) {
-                    const matchedArea = areas.find((a: any) => a.name === ticketData.area_name);
+                    const matchedArea = areas.find(
+                      (a: any) => a.name === ticketData.area_name
+                    );
                     if (matchedArea) {
                       areaId = matchedArea.id.toString();
-                      setFormData(prev => ({ ...prev, area: areaId }));
+                      setFormData((prev) => ({ ...prev, area: areaId }));
 
                       // Call floors API with area_id parameter
-                      const floorsUrl = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
+                      const floorsUrl = getFullUrl(
+                        `/pms/floors.json?area_id=${areaId}`
+                      );
                       const floorsResponse = await fetch(floorsUrl, options);
                       if (floorsResponse.ok) {
                         const floorsData = await floorsResponse.json();
@@ -869,11 +932,17 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
                         // If we have floor_id, fetch rooms
                         if (floorId) {
-                          const roomsUrl = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
+                          const roomsUrl = getFullUrl(
+                            `/pms/rooms.json?floor_id=${floorId}`
+                          );
                           const roomsResponse = await fetch(roomsUrl, options);
                           if (roomsResponse.ok) {
                             const roomsData = await roomsResponse.json();
-                            setFilteredRooms(Array.isArray(roomsData) ? roomsData : (roomsData.rooms || []));
+                            setFilteredRooms(
+                              Array.isArray(roomsData)
+                                ? roomsData
+                                : roomsData.rooms || []
+                            );
                           }
                         }
                       }
@@ -884,21 +953,27 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             }
           }
         } catch (error) {
-          console.error('Error loading location cascade for ticket:', error);
+          console.error("Error loading location cascade for ticket:", error);
         }
       }
 
       // Fetch assets and services based on ticket data
-      if (ticketData.asset_service === "Asset" && ticketData.asset_or_service_id) {
-        setFormData(prev => ({
+      if (
+        ticketData.asset_service === "Asset" &&
+        ticketData.asset_or_service_id
+      ) {
+        setFormData((prev) => ({
           ...prev,
           associatedTo: { asset: true, service: false },
           selectedAsset: ticketData.asset_or_service_id.toString(),
           selectedService: "",
         }));
         fetchAssets(false); // Don't auto-select during manual changes
-      } else if (ticketData.asset_service === "Service" && ticketData.asset_or_service_id) {
-        setFormData(prev => ({
+      } else if (
+        ticketData.asset_service === "Service" &&
+        ticketData.asset_or_service_id
+      ) {
+        setFormData((prev) => ({
           ...prev,
           associatedTo: { asset: false, service: true },
           selectedAsset: "",
@@ -911,20 +986,25 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       if (ticketData.review_tracking) {
         // Convert review_tracking date from DD/MM/YYYY to YYYY-MM-DD format
         const dateStr = ticketData.review_tracking;
-        if (dateStr.includes('/')) {
+        if (dateStr.includes("/")) {
           // Format is DD/MM/YYYY, convert to YYYY-MM-DD
-          const parts = dateStr.split('/');
+          const parts = dateStr.split("/");
           if (parts.length === 3) {
             const [day, month, year] = parts;
-            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
             setReviewDate(formattedDate);
-            console.log('📅 Review date converted from', dateStr, 'to', formattedDate);
+            console.log(
+              "📅 Review date converted from",
+              dateStr,
+              "to",
+              formattedDate
+            );
           }
-        } else if (dateStr.includes('T')) {
+        } else if (dateStr.includes("T")) {
           // Format is ISO timestamp, extract date part
-          const reviewDateStr = dateStr.split('T')[0];
+          const reviewDateStr = dateStr.split("T")[0];
           setReviewDate(reviewDateStr);
-          console.log('📅 Review date extracted from ISO:', reviewDateStr);
+          console.log("📅 Review date extracted from ISO:", reviewDateStr);
         } else {
           // Assume already in correct format
           setReviewDate(dateStr);
@@ -933,9 +1013,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
       // Set cost involved flag
       if (ticketData.cost_involved !== undefined) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          costInvolved: ticketData.cost_involved
+          costInvolved: ticketData.cost_involved,
         }));
       }
 
@@ -951,7 +1031,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
           approvals: req.approvals || {},
           masterStatus: req.master_status,
           cancelledBy: req.cancelled_by_name || null,
-          attachments: req.attachments_attributes ? req.attachments_attributes.map((att: any) => att.document) : [],
+          attachments: req.attachments_attributes
+            ? req.attachments_attributes.map((att: any) => att.document)
+            : [],
           isFromAPI: true, // Mark as API data
         }));
         setCostApprovalRequests(mappedRequests);
@@ -961,10 +1043,13 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
       // Fetch sub-categories based on category selection
       if (matchedCategory && matchedCategory.id) {
-        fetchSubCategories(matchedCategory.id.toString(), ticketData.sub_category_type);
+        fetchSubCategories(
+          matchedCategory.id.toString(),
+          ticketData.sub_category_type
+        );
       } else {
         setSubCategories([]);
-        setFormData(prev => ({ ...prev, subCategoryType: "" }));
+        setFormData((prev) => ({ ...prev, subCategoryType: "" }));
       }
     } catch (error) {
       console.error("Error fetching ticket data:", error);
@@ -979,13 +1064,16 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
     // Wait for all required data including buildings and templates to be loaded
-    if (id &&
+    if (
+      id &&
       helpdeskData?.helpdesk_categories &&
       complaintModes.length > 0 &&
       fmUsers.length > 0 &&
       complaintStatuses.length > 0 &&
       buildings.length > 0 &&
-      communicationTemplates.length > 0) { // Add templates check
+      communicationTemplates.length > 0
+    ) {
+      // Add templates check
       console.log("✅ All data loaded, fetching ticket data for ID:", id);
       fetchTicketData(id);
     }
@@ -1017,171 +1105,189 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
     communicationTemplates, // Add templates dependency
   ]);
 
-
   // Define fetchAssets and fetchServices before useEffect hooks to avoid hoisting issues
-  const fetchAssets = useCallback(async (shouldSetSelectedValue = true) => {
-    if (isLoadingAssets) return;
+  const fetchAssets = useCallback(
+    async (shouldSetSelectedValue = true) => {
+      if (isLoadingAssets) return;
 
-    setIsLoadingAssets(true);
-    try {
-      console.log("🔄 Fetching assets from API...");
-      const response = await apiClient.get("/pms/assets/get_assets.json");
-      const assets = response.data || [];
-      console.log("📦 Assets received:", assets.length, "items");
-      console.log(
-        "📦 Sample assets:",
-        assets.slice(0, 3).map((a) => ({ id: a.id, name: a.name }))
-      );
-
-      setAssetOptions(assets);
-
-      // Only set the selected value if we should (during initial load) and we have ticket data
-      if (
-        shouldSetSelectedValue &&
-        ticketApiData?.asset_service === "Asset" &&
-        ticketApiData?.asset_or_service_id
-      ) {
+      setIsLoadingAssets(true);
+      try {
+        console.log("🔄 Fetching assets from API...");
+        const response = await apiClient.get("/pms/assets/get_assets.json");
+        const assets = response.data || [];
+        console.log("📦 Assets received:", assets.length, "items");
         console.log(
-          "🔍 Looking for asset with ID:",
-          ticketApiData.asset_or_service_id
+          "📦 Sample assets:",
+          assets.slice(0, 3).map((a) => ({ id: a.id, name: a.name }))
         );
-        console.log("🔍 Asset type:", typeof ticketApiData.asset_or_service_id);
 
-        const targetId = ticketApiData.asset_or_service_id.toString();
-        const matchingAsset = assets.find((asset) => {
-          const assetId = asset.id.toString();
-          console.log(
-            "🔍 Comparing asset ID:",
-            assetId,
-            "with target:",
-            targetId
-          );
-          return assetId === targetId;
-        });
+        setAssetOptions(assets);
 
-        console.log("✅ Found matching asset:", matchingAsset);
+        // Only set the selected value if we should (during initial load) and we have ticket data
+        if (
+          shouldSetSelectedValue &&
+          ticketApiData?.asset_service === "Asset" &&
+          ticketApiData?.asset_or_service_id
+        ) {
+          console.log(
+            "🔍 Looking for asset with ID:",
+            ticketApiData.asset_or_service_id
+          );
+          console.log(
+            "🔍 Asset type:",
+            typeof ticketApiData.asset_or_service_id
+          );
 
-        if (matchingAsset) {
-          console.log(
-            "📦 Setting selectedAsset to ID:",
-            matchingAsset.id,
-            "Name:",
-            matchingAsset.name
-          );
-          setFormData((prev) => ({
-            ...prev,
-            selectedAsset: matchingAsset.id.toString(),
-          }));
-        } else {
-          console.log("❌ No matching asset found for ID:", targetId);
-          console.log(
-            "📋 Available asset IDs:",
-            assets.map((a) => a.id.toString())
-          );
+          const targetId = ticketApiData.asset_or_service_id.toString();
+          const matchingAsset = assets.find((asset) => {
+            const assetId = asset.id.toString();
+            console.log(
+              "🔍 Comparing asset ID:",
+              assetId,
+              "with target:",
+              targetId
+            );
+            return assetId === targetId;
+          });
+
+          console.log("✅ Found matching asset:", matchingAsset);
+
+          if (matchingAsset) {
+            console.log(
+              "📦 Setting selectedAsset to ID:",
+              matchingAsset.id,
+              "Name:",
+              matchingAsset.name
+            );
+            setFormData((prev) => ({
+              ...prev,
+              selectedAsset: matchingAsset.id.toString(),
+            }));
+          } else {
+            console.log("❌ No matching asset found for ID:", targetId);
+            console.log(
+              "📋 Available asset IDs:",
+              assets.map((a) => a.id.toString())
+            );
+          }
         }
-      }
-    } catch (error) {
-      console.error("Error fetching assets:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch assets",
-        variant: "destructive",
-      });
-      setAssetOptions([]);
-    } finally {
-      setIsLoadingAssets(false);
-    }
-  }, [isLoadingAssets, ticketApiData, toast]);
-
-  const fetchServices = useCallback(async (shouldSetSelectedValue = true) => {
-    if (isLoadingServices) return;
-
-    setIsLoadingServices(true);
-    try {
-      console.log("🔄 Fetching services from API...");
-      const response = await apiClient.get("/pms/services/get_services.json");
-      const services = response.data || [];
-      console.log("📦 Services received:", services.length, "items");
-      console.log(
-        "📦 Sample services:",
-        services.slice(0, 3).map((s) => ({ id: s.id, name: s.service_name || s.name }))
-      );
-
-      setServiceOptions(services);
-
-      // Only set the selected value if we should (during initial load) and we have ticket data
-      if (
-        shouldSetSelectedValue &&
-        ticketApiData?.asset_service === "Service" &&
-        ticketApiData?.asset_or_service_id
-      ) {
-        console.log(
-          "🔍 Looking for service with ID:",
-          ticketApiData.asset_or_service_id
-        );
-        console.log(
-          "🔍 Service type:",
-          typeof ticketApiData.asset_or_service_id
-        );
-
-        const targetId = ticketApiData.asset_or_service_id.toString();
-        const matchingService = services.find((service) => {
-          const serviceId = service.id.toString();
-          console.log(
-            "🔍 Comparing service ID:",
-            serviceId,
-            "with target:",
-            targetId
-          );
-          return serviceId === targetId;
+      } catch (error) {
+        console.error("Error fetching assets:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch assets",
+          variant: "destructive",
         });
-
-        console.log("✅ Found matching service:", matchingService);
-
-        if (matchingService) {
-          console.log(
-            "📦 Setting selectedService to ID:",
-            matchingService.id,
-            "Name:",
-            matchingService.service_name || matchingService.name
-          );
-          setFormData((prev) => ({
-            ...prev,
-            selectedService: matchingService.id.toString(),
-          }));
-        } else {
-          console.log("❌ No matching service found for ID:", targetId);
-          console.log(
-            "📋 Available service IDs:",
-            services.map((s) => s.id.toString())
-          );
-        }
+        setAssetOptions([]);
+      } finally {
+        setIsLoadingAssets(false);
       }
-    } catch (error) {
-      console.error("Error fetching services:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch services",
-        variant: "destructive",
-      });
-      setServiceOptions([]);
-    } finally {
-      setIsLoadingServices(false);
-    }
-  }, [isLoadingServices, ticketApiData, toast]);
+    },
+    [isLoadingAssets, ticketApiData, toast]
+  );
+
+  const fetchServices = useCallback(
+    async (shouldSetSelectedValue = true) => {
+      if (isLoadingServices) return;
+
+      setIsLoadingServices(true);
+      try {
+        console.log("🔄 Fetching services from API...");
+        const response = await apiClient.get("/pms/services/get_services.json");
+        const services = response.data || [];
+        console.log("📦 Services received:", services.length, "items");
+        console.log(
+          "📦 Sample services:",
+          services
+            .slice(0, 3)
+            .map((s) => ({ id: s.id, name: s.service_name || s.name }))
+        );
+
+        setServiceOptions(services);
+
+        // Only set the selected value if we should (during initial load) and we have ticket data
+        if (
+          shouldSetSelectedValue &&
+          ticketApiData?.asset_service === "Service" &&
+          ticketApiData?.asset_or_service_id
+        ) {
+          console.log(
+            "🔍 Looking for service with ID:",
+            ticketApiData.asset_or_service_id
+          );
+          console.log(
+            "🔍 Service type:",
+            typeof ticketApiData.asset_or_service_id
+          );
+
+          const targetId = ticketApiData.asset_or_service_id.toString();
+          const matchingService = services.find((service) => {
+            const serviceId = service.id.toString();
+            console.log(
+              "🔍 Comparing service ID:",
+              serviceId,
+              "with target:",
+              targetId
+            );
+            return serviceId === targetId;
+          });
+
+          console.log("✅ Found matching service:", matchingService);
+
+          if (matchingService) {
+            console.log(
+              "📦 Setting selectedService to ID:",
+              matchingService.id,
+              "Name:",
+              matchingService.service_name || matchingService.name
+            );
+            setFormData((prev) => ({
+              ...prev,
+              selectedService: matchingService.id.toString(),
+            }));
+          } else {
+            console.log("❌ No matching service found for ID:", targetId);
+            console.log(
+              "📋 Available service IDs:",
+              services.map((s) => s.id.toString())
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch services",
+          variant: "destructive",
+        });
+        setServiceOptions([]);
+      } finally {
+        setIsLoadingServices(false);
+      }
+    },
+    [isLoadingServices, ticketApiData, toast]
+  );
 
   // Handle asset/service loading when associatedTo changes
   useEffect(() => {
     console.log("🔄 AssociatedTo change detected:", formData.associatedTo);
 
     // Fetch assets when asset checkbox is checked and we don't have asset options yet
-    if (formData.associatedTo.asset && assetOptions.length === 0 && !isLoadingAssets) {
+    if (
+      formData.associatedTo.asset &&
+      assetOptions.length === 0 &&
+      !isLoadingAssets
+    ) {
       console.log("🔄 Fetching assets due to checkbox change");
       fetchAssets(false); // Don't auto-select during manual changes
     }
 
     // Fetch services when service checkbox is checked and we don't have service options yet
-    if (formData.associatedTo.service && serviceOptions.length === 0 && !isLoadingServices) {
+    if (
+      formData.associatedTo.service &&
+      serviceOptions.length === 0 &&
+      !isLoadingServices
+    ) {
       console.log("🔄 Fetching services due to checkbox change");
       fetchServices(false); // Don't auto-select during manual changes
     }
@@ -1192,7 +1298,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
     isLoadingAssets,
     isLoadingServices,
     fetchAssets,
-    fetchServices
+    fetchServices,
   ]);
 
   // Synchronize asset/service selection when options become available
@@ -1205,7 +1311,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
     console.log("🔄 Current form selections:", {
       selectedAsset: formData.selectedAsset,
       selectedService: formData.selectedService,
-      associatedTo: formData.associatedTo
+      associatedTo: formData.associatedTo,
     });
 
     // If we have ticket data with asset/service info but haven't set the selection yet
@@ -1213,25 +1319,26 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       const targetId = ticketApiData.asset_or_service_id.toString();
 
       // Handle asset synchronization
-      if (ticketApiData.asset_service === "Asset" &&
+      if (
+        ticketApiData.asset_service === "Asset" &&
         assetOptions.length > 0 &&
-        (!formData.selectedAsset || !formData.associatedTo.asset)) {
-
+        (!formData.selectedAsset || !formData.associatedTo.asset)
+      ) {
         console.log("🔄 Attempting asset synchronization with ID:", targetId);
-        const matchingAsset = assetOptions.find(asset =>
-          asset.id.toString() === targetId
+        const matchingAsset = assetOptions.find(
+          (asset) => asset.id.toString() === targetId
         );
 
         if (matchingAsset) {
           console.log("✅ Synchronizing asset selection:", matchingAsset.name);
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             selectedAsset: matchingAsset.id.toString(),
             associatedTo: {
               ...prev.associatedTo,
               asset: true,
-              service: false
-            }
+              service: false,
+            },
           }));
         } else {
           console.log("❌ Asset not found in options for ID:", targetId);
@@ -1239,32 +1346,43 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       }
 
       // Handle service synchronization
-      if (ticketApiData.asset_service === "Service" &&
+      if (
+        ticketApiData.asset_service === "Service" &&
         serviceOptions.length > 0 &&
-        (!formData.selectedService || !formData.associatedTo.service)) {
-
+        (!formData.selectedService || !formData.associatedTo.service)
+      ) {
         console.log("🔄 Attempting service synchronization with ID:", targetId);
-        const matchingService = serviceOptions.find(service =>
-          service.id.toString() === targetId
+        const matchingService = serviceOptions.find(
+          (service) => service.id.toString() === targetId
         );
 
         if (matchingService) {
-          console.log("✅ Synchronizing service selection:", matchingService.service_name);
-          setFormData(prev => ({
+          console.log(
+            "✅ Synchronizing service selection:",
+            matchingService.service_name
+          );
+          setFormData((prev) => ({
             ...prev,
             selectedService: matchingService.id.toString(),
             associatedTo: {
               ...prev.associatedTo,
               asset: false,
-              service: true
-            }
+              service: true,
+            },
           }));
         } else {
           console.log("❌ Service not found in options for ID:", targetId);
         }
       }
     }
-  }, [ticketApiData, assetOptions, serviceOptions, formData.selectedAsset, formData.selectedService, formData.associatedTo]);
+  }, [
+    ticketApiData,
+    assetOptions,
+    serviceOptions,
+    formData.selectedAsset,
+    formData.selectedService,
+    formData.associatedTo,
+  ]);
 
   // Debug useEffect to monitor asset/service state
   useEffect(() => {
@@ -1285,7 +1403,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       if (!assetExists && assetOptions.length > 0) {
         console.log("❌ Selected asset not found in options:", {
           selectedAsset: formData.selectedAsset,
-          availableAssets: assetOptions.map((a) => ({ id: a.id, name: a.name })),
+          availableAssets: assetOptions.map((a) => ({
+            id: a.id,
+            name: a.name,
+          })),
         });
       }
     }
@@ -1299,18 +1420,29 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       if (!serviceExists && serviceOptions.length > 0) {
         console.log("❌ Selected service not found in options:", {
           selectedService: formData.selectedService,
-          availableServices: serviceOptions.map((s) => ({ id: s.id, name: s.service_name })),
+          availableServices: serviceOptions.map((s) => ({
+            id: s.id,
+            name: s.service_name,
+          })),
         });
       }
     }
-  }, [formData.associatedTo, formData.selectedAsset, formData.selectedService, assetOptions, serviceOptions]);
+  }, [
+    formData.associatedTo,
+    formData.selectedAsset,
+    formData.selectedService,
+    assetOptions,
+    serviceOptions,
+  ]);
 
   // Load communication templates on mount
   useEffect(() => {
     const fetchTemplates = async () => {
       setLoadingTemplates(true);
       try {
-        const response = await apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES);
+        const response = await apiClient.get(
+          API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES
+        );
         const templates = response.data || [];
         setCommunicationTemplates(templates);
       } catch (error) {
@@ -1438,29 +1570,39 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
     }));
 
     // Handle asset/service loading immediately when checkbox changes
-    if (group === 'associatedTo') {
-      if (field === 'asset' && checked) {
+    if (group === "associatedTo") {
+      if (field === "asset" && checked) {
         console.log("🔄 Asset checkbox checked - fetching assets immediately");
         // Clear service selection when asset is selected
-        setFormData(prev => ({ ...prev, selectedService: "", associatedTo: { ...prev.associatedTo, service: false } }));
+        setFormData((prev) => ({
+          ...prev,
+          selectedService: "",
+          associatedTo: { ...prev.associatedTo, service: false },
+        }));
         // Fetch assets if we don't have them yet
         if (assetOptions.length === 0) {
           fetchAssets(false);
         }
-      } else if (field === 'service' && checked) {
-        console.log("🔄 Service checkbox checked - fetching services immediately");
+      } else if (field === "service" && checked) {
+        console.log(
+          "🔄 Service checkbox checked - fetching services immediately"
+        );
         // Clear asset selection when service is selected
-        setFormData(prev => ({ ...prev, selectedAsset: "", associatedTo: { ...prev.associatedTo, asset: false } }));
+        setFormData((prev) => ({
+          ...prev,
+          selectedAsset: "",
+          associatedTo: { ...prev.associatedTo, asset: false },
+        }));
         // Fetch services if we don't have them yet
         if (serviceOptions.length === 0) {
           fetchServices(false);
         }
       } else if (!checked) {
         // Clear selections when unchecked
-        if (field === 'asset') {
-          setFormData(prev => ({ ...prev, selectedAsset: "" }));
-        } else if (field === 'service') {
-          setFormData(prev => ({ ...prev, selectedService: "" }));
+        if (field === "asset") {
+          setFormData((prev) => ({ ...prev, selectedAsset: "" }));
+        } else if (field === "service") {
+          setFormData((prev) => ({ ...prev, selectedService: "" }));
         }
       }
     }
@@ -1490,36 +1632,48 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   // Helper function to get Root Cause Analysis values from ticket data
   const getRootCauseAnalysisValues = () => {
     // First priority: Use formData.rootCauseTemplateIds (user's current selections)
-    if (formData.rootCauseTemplateIds && formData.rootCauseTemplateIds.length > 0) {
-      console.log('🔍 Root Cause Analysis Template IDs from formData:', formData.rootCauseTemplateIds);
+    if (
+      formData.rootCauseTemplateIds &&
+      formData.rootCauseTemplateIds.length > 0
+    ) {
+      console.log(
+        "🔍 Root Cause Analysis Template IDs from formData:",
+        formData.rootCauseTemplateIds
+      );
       return formData.rootCauseTemplateIds;
     }
-    
+
     // Second priority: Use template IDs from API if available (initial load)
-    if (ticketApiData?.rca_template_ids && Array.isArray(ticketApiData.rca_template_ids)) {
+    if (
+      ticketApiData?.rca_template_ids &&
+      Array.isArray(ticketApiData.rca_template_ids)
+    ) {
       // Filter out duplicate IDs using Set
       const uniqueIds = [...new Set(ticketApiData.rca_template_ids)];
-      
-      console.log('🔍 Root Cause Analysis Template IDs from API:', uniqueIds);
-      
+
+      console.log("🔍 Root Cause Analysis Template IDs from API:", uniqueIds);
+
       // Find templates by IDs
       const matchedTemplates = communicationTemplates.filter(
         (t) =>
-          uniqueIds.includes(t.id) &&
-          t.identifier === "Root Cause Analysis"
+          uniqueIds.includes(t.id) && t.identifier === "Root Cause Analysis"
       );
-      
-      console.log('🔍 Root Cause Analysis Matched Templates:', matchedTemplates.map(t => ({ id: t.id, action: t.identifier_action })));
-      
+
+      console.log(
+        "🔍 Root Cause Analysis Matched Templates:",
+        matchedTemplates.map((t) => ({ id: t.id, action: t.identifier_action }))
+      );
+
       // Return array of IDs for Material-UI Select
       return matchedTemplates.map((t) => t.id);
     }
-    
+
     // Fallback: Use text matching if no template IDs
     if (!formData.rootCause && !ticketApiData?.root_cause) return [];
-    
-    const rootCauseString = formData.rootCause || ticketApiData?.root_cause || '';
-    
+
+    const rootCauseString =
+      formData.rootCause || ticketApiData?.root_cause || "";
+
     if (!rootCauseString) return [];
 
     const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
@@ -1533,31 +1687,43 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   };
 
   // Handle Root Cause multi-select change with auto-save
-  // Handle Root Cause multi-select change (only updates state, API call happens on Save) 
-  const handleRootCauseChange = (selectedValues: string | string[] | number | number[]) => {
+  // Handle Root Cause multi-select change (only updates state, API call happens on Save)
+  const handleRootCauseChange = (
+    selectedValues: string | string[] | number | number[]
+  ) => {
     // Convert to array of numbers (template IDs)
     let templateIds: number[] = [];
     if (Array.isArray(selectedValues)) {
-      templateIds = selectedValues.map(v => typeof v === 'number' ? v : parseInt(String(v)));
+      templateIds = selectedValues.map((v) =>
+        typeof v === "number" ? v : parseInt(String(v))
+      );
     } else {
-      templateIds = [typeof selectedValues === 'number' ? selectedValues : parseInt(String(selectedValues))];
+      templateIds = [
+        typeof selectedValues === "number"
+          ? selectedValues
+          : parseInt(String(selectedValues)),
+      ];
     }
 
     // Filter out any NaN values
-    templateIds = templateIds.filter(id => !isNaN(id));
+    templateIds = templateIds.filter((id) => !isNaN(id));
 
     // Update local state with the selected template text for display
-    const selectedTemplates = communicationTemplates.filter(t => templateIds.includes(t.id));
-    const rootCauseString = selectedTemplates.map(t => t.identifier_action).join(', ');
+    const selectedTemplates = communicationTemplates.filter((t) =>
+      templateIds.includes(t.id)
+    );
+    const rootCauseString = selectedTemplates
+      .map((t) => t.identifier_action)
+      .join(", ");
 
     // Store both the display string and the template IDs
     setFormData((prev) => ({
       ...prev,
       rootCause: rootCauseString,
-      rootCauseTemplateIds: templateIds // Store IDs for submission
+      rootCauseTemplateIds: templateIds, // Store IDs for submission
     }));
 
-    console.log('✅ Root cause selected:', { templateIds, rootCauseString });
+    console.log("✅ Root cause selected:", { templateIds, rootCauseString });
   };
 
   const handleCostPopupFileUpload = (
@@ -1757,7 +1923,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       );
 
       // Complaint data
-      formDataToSend.append("complaint[complaint_type]", formData.complaintType || "");
+      formDataToSend.append(
+        "complaint[complaint_type]",
+        formData.complaintType || ""
+      );
       formDataToSend.append(
         "complaint[preventive_action]",
         formData.preventiveAction || ""
@@ -1799,62 +1968,107 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       );
 
       // Add severity
-      formDataToSend.append(
-        "complaint[severity]",
-        formData.severity || ""
-      );
+      formDataToSend.append("complaint[severity]", formData.severity || "");
 
       // Add root cause template IDs with array notation
-      if (formData.rootCauseTemplateIds && formData.rootCauseTemplateIds.length > 0) {
-        formData.rootCauseTemplateIds.forEach(templateId => {
-          formDataToSend.append('root_cause[template_ids][]', String(templateId));
+      if (
+        formData.rootCauseTemplateIds &&
+        formData.rootCauseTemplateIds.length > 0
+      ) {
+        formData.rootCauseTemplateIds.forEach((templateId) => {
+          formDataToSend.append(
+            "root_cause[template_ids][]",
+            String(templateId)
+          );
         });
-        console.log('📝 Adding root cause template IDs:', formData.rootCauseTemplateIds);
+        console.log(
+          "📝 Adding root cause template IDs:",
+          formData.rootCauseTemplateIds
+        );
       } else {
-        console.log('⚠️ No root cause template IDs to submit');
+        console.log("⚠️ No root cause template IDs to submit");
       }
 
       // Add preventive action template IDs with array notation
-      if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
-        formData.preventiveActionTemplateIds.forEach(templateId => {
-          formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+      if (
+        formData.preventiveActionTemplateIds &&
+        formData.preventiveActionTemplateIds.length > 0
+      ) {
+        formData.preventiveActionTemplateIds.forEach((templateId) => {
+          formDataToSend.append(
+            "preventive_action[template_ids][]",
+            String(templateId)
+          );
         });
-        console.log('📝 Adding preventive action template IDs:', formData.preventiveActionTemplateIds);
+        console.log(
+          "📝 Adding preventive action template IDs:",
+          formData.preventiveActionTemplateIds
+        );
       } else {
-        console.log('⚠️ No preventive action template IDs to submit');
+        console.log("⚠️ No preventive action template IDs to submit");
       }
 
       // Add corrective action template IDs with array notation
-      if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
-        formData.correctiveActionTemplateIds.forEach(templateId => {
-          formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+      if (
+        formData.correctiveActionTemplateIds &&
+        formData.correctiveActionTemplateIds.length > 0
+      ) {
+        formData.correctiveActionTemplateIds.forEach((templateId) => {
+          formDataToSend.append(
+            "corrective_action[template_ids][]",
+            String(templateId)
+          );
         });
-        console.log('📝 Adding corrective action template IDs:', formData.correctiveActionTemplateIds);
+        console.log(
+          "📝 Adding corrective action template IDs:",
+          formData.correctiveActionTemplateIds
+        );
       } else {
-        console.log('⚠️ No corrective action template IDs to submit');
+        console.log("⚠️ No corrective action template IDs to submit");
       }
 
       // Add short-term impact template IDs with array notation
-      if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
-        formData.shortTermImpactTemplateIds.forEach(templateId => {
-          formDataToSend.append('short_term_impact[template_ids][]', String(templateId));
+      if (
+        formData.shortTermImpactTemplateIds &&
+        formData.shortTermImpactTemplateIds.length > 0
+      ) {
+        formData.shortTermImpactTemplateIds.forEach((templateId) => {
+          formDataToSend.append(
+            "short_term_impact[template_ids][]",
+            String(templateId)
+          );
         });
-        console.log('📝 Adding short-term impact template IDs:', formData.shortTermImpactTemplateIds);
+        console.log(
+          "📝 Adding short-term impact template IDs:",
+          formData.shortTermImpactTemplateIds
+        );
       } else {
-        console.log('⚠️ No short-term impact template IDs to submit');
+        console.log("⚠️ No short-term impact template IDs to submit");
       }
 
       // Add long-term impact template IDs with array notation
-      if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
-        formData.longTermImpactTemplateIds.forEach(templateId => {
-          formDataToSend.append('long_term_impact[template_ids][]', String(templateId));
+      if (
+        formData.longTermImpactTemplateIds &&
+        formData.longTermImpactTemplateIds.length > 0
+      ) {
+        formData.longTermImpactTemplateIds.forEach((templateId) => {
+          formDataToSend.append(
+            "long_term_impact[template_ids][]",
+            String(templateId)
+          );
         });
-        console.log('📝 Adding long-term impact template IDs:', formData.longTermImpactTemplateIds);
+        console.log(
+          "📝 Adding long-term impact template IDs:",
+          formData.longTermImpactTemplateIds
+        );
       } else {
-        console.log('⚠️ No long-term impact template IDs to submit');
+        console.log("⚠️ No long-term impact template IDs to submit");
       }
 
-      formDataToSend.append("complaint[short_term_impact]", formData.impact || "");
+      formDataToSend.append(
+        "complaint[short_term_impact]",
+        formData.impact || ""
+      );
       formDataToSend.append("complaint[correction]", formData.correction || "");
       formDataToSend.append("complaint[impact]", formData.longTermImpact || "");
       formDataToSend.append(
@@ -1995,19 +2209,30 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
       // Log FormData contents for debugging
       console.log("FormData contents:");
-      for (let [key, value] of formDataToSend.entries()) {
+      for (const [key, value] of formDataToSend.entries()) {
         console.log(key, value);
       }
 
       // Get authentication token with fallback
       const authToken = API_CONFIG.TOKEN || getToken();
-      console.log("Using TOKEN from API config:", API_CONFIG.TOKEN ? 'Token present' : 'Token missing');
-      console.log("Using fallback getToken():", getToken() ? 'Token present' : 'Token missing');
-      console.log("Final authToken:", authToken ? 'Token present' : 'Token missing');
+      console.log(
+        "Using TOKEN from API config:",
+        API_CONFIG.TOKEN ? "Token present" : "Token missing"
+      );
+      console.log(
+        "Using fallback getToken():",
+        getToken() ? "Token present" : "Token missing"
+      );
+      console.log(
+        "Final authToken:",
+        authToken ? "Token present" : "Token missing"
+      );
       console.log("Using BASE_URL from API config:", API_CONFIG.BASE_URL);
 
       if (!authToken) {
-        console.error("No authentication token found in API config or auth utils");
+        console.error(
+          "No authentication token found in API config or auth utils"
+        );
         throw new Error("No authentication token found. Please login again.");
       }
 
@@ -2044,7 +2269,11 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       console.log("API Response:", result);
 
       // Extract ticket number from response or use the one from original ticket data
-      const ticketNumber = result?.ticket_number || result?.complaint?.ticket_number || ticketApiData?.ticket_number || `#${ticketId}`;
+      const ticketNumber =
+        result?.ticket_number ||
+        result?.complaint?.ticket_number ||
+        ticketApiData?.ticket_number ||
+        `#${ticketId}`;
 
       toast({
         title: "Success",
@@ -2057,7 +2286,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
       console.error("Error updating tickets:", error);
 
       // Handle authentication errors specifically
-      if (error instanceof Error && error.message.includes("Authentication failed")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Authentication failed")
+      ) {
         toast({
           title: "Authentication Error",
           description: "Your session has expired. Please login again.",
@@ -2070,8 +2302,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
       toast({
         title: "Error",
-        description: `Failed to update tickets: ${error instanceof Error ? error.message : "Unknown error"
-          }`,
+        description: `Failed to update tickets: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
         variant: "destructive",
       });
     } finally {
@@ -2095,7 +2328,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
           Back to Ticket List
         </button>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">UPDATE TICKET</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            UPDATE TICKET
+          </h1>
         </div>
 
         {/* Loading State */}
@@ -2106,12 +2341,21 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             </div>
           </div>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="space-y-6"
+          >
             {/* Section 1: Ticket Information */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <span
+                    className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                    style={{ backgroundColor: "#E5E0D3" }}
+                  >
                     <Ticket size={16} color="#C72030" />
                   </span>
                   Ticket Information
@@ -2125,7 +2369,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       label="Title"
                       placeholder="Enter title"
                       value={formData.title}
-                      onChange={(e) => handleInputChange("title", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("title", e.target.value)
+                      }
                       disabled
                       fullWidth
                       variant="outlined"
@@ -2139,7 +2385,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       InputProps={{
                         sx: {
                           ...fieldStyles,
-                          backgroundColor: '#f9fafb',
+                          backgroundColor: "#f9fafb",
                         },
                       }}
                     />
@@ -2147,41 +2393,55 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
                   {/* Preventive Action */}
                   <div className="space-y-1">
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                    >
                       <InputLabel shrink>Preventive Action</InputLabel>
                       <MuiSelect
                         multiple
                         value={(() => {
                           // Use template IDs from formData to find selected template actions
-                          if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
+                          if (
+                            formData.preventiveActionTemplateIds &&
+                            formData.preventiveActionTemplateIds.length > 0
+                          ) {
                             return formData.preventiveActionTemplateIds
-                              .map(id => {
-                                const template = communicationTemplates.find(t => t.id === id);
+                              .map((id) => {
+                                const template = communicationTemplates.find(
+                                  (t) => t.id === id
+                                );
                                 return template?.identifier_action || "";
                               })
-                              .filter(action => action !== "");
+                              .filter((action) => action !== "");
                           }
                           return [];
                         })()}
                         onChange={(e) => {
                           const selectedValues = e.target.value as string[];
-                          
+
                           // Find all selected templates and store their IDs
                           const selectedTemplateIds = selectedValues
-                            .map(value => {
+                            .map((value) => {
                               const template = communicationTemplates.find(
-                                t => t.identifier === "Preventive Action" && t.identifier_action === value
+                                (t) =>
+                                  t.identifier === "Preventive Action" &&
+                                  t.identifier_action === value
                               );
                               return template?.id;
                             })
                             .filter((id): id is number => id !== undefined);
-                          
-                          setFormData(prev => ({
+
+                          setFormData((prev) => ({
                             ...prev,
                             preventiveActionTemplateIds: selectedTemplateIds,
-                            preventiveAction: selectedValues.join(", ")
+                            preventiveAction: selectedValues.join(", "),
                           }));
-                          console.log('📝 Preventive Action Template IDs stored:', selectedTemplateIds);
+                          console.log(
+                            "📝 Preventive Action Template IDs stored:",
+                            selectedTemplateIds
+                          );
                         }}
                         label="Preventive Action"
                         notched
@@ -2190,17 +2450,28 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                         renderValue={(selected) => {
                           const selectedArray = selected as string[];
                           if (selectedArray.length === 0) {
-                            return <span className="text-gray-500">
-                              {loadingTemplates ? 'Loading templates...' : 'Select preventive action'}
-                            </span>;
+                            return (
+                              <span className="text-gray-500">
+                                {loadingTemplates
+                                  ? "Loading templates..."
+                                  : "Select preventive action"}
+                              </span>
+                            );
                           }
                           return selectedArray.join(", ");
                         }}
                       >
                         {communicationTemplates
-                          .filter(template => template.identifier === "Preventive Action" && template?.active === true)
+                          .filter(
+                            (template) =>
+                              template.identifier === "Preventive Action" &&
+                              template?.active === true
+                          )
                           .map((template) => (
-                            <MenuItem key={template.id} value={template.identifier_action}>
+                            <MenuItem
+                              key={template.id}
+                              value={template.identifier_action}
+                            >
                               {template.identifier_action}
                             </MenuItem>
                           ))}
@@ -2213,12 +2484,14 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Status</InputLabel>
                       <MuiSelect
                         value={formData.selectedStatus}
-                        onChange={(e) => handleInputChange("selectedStatus", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("selectedStatus", e.target.value)
+                        }
                         label="Status"
                         notched
                         displayEmpty
@@ -2227,7 +2500,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                           <span className="text-gray-500">Select status</span>
                         </MenuItem>
                         {complaintStatuses.map((status) => (
-                          <MenuItem key={status.id} value={status.id.toString()}>
+                          <MenuItem
+                            key={status.id}
+                            value={status.id.toString()}
+                          >
                             {status.name}
                           </MenuItem>
                         ))}
@@ -2235,30 +2511,36 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     </FormControl>
                   </div>
                   <div className="space-y-1">
-                  <FormControl
-  fullWidth
-  variant="outlined"
-  sx={{ '& .MuiInputBase-root': fieldStyles }}
->
-  <InputLabel shrink>Vendor</InputLabel>
-  <MuiSelect
-    value={formData.vendor}
-    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-    label="Vendor"
-    notched
-    displayEmpty
-    disabled={loadingSuppliers}
-  >
-    <MenuItem value="">
-      {loadingSuppliers ? "Loading..." : "Select Vendor"}
-    </MenuItem>
-    {suppliers.map((supplier) => (
-      <MenuItem key={supplier.id} value={supplier.id.toString()}>
-        {supplier.name}
-      </MenuItem>
-    ))}
-  </MuiSelect>
-</FormControl>  </div>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                    >
+                      <InputLabel shrink>Vendor</InputLabel>
+                      <MuiSelect
+                        value={formData.vendor}
+                        onChange={(e) =>
+                          setFormData({ ...formData, vendor: e.target.value })
+                        }
+                        label="Vendor"
+                        notched
+                        displayEmpty
+                        disabled={loadingSuppliers}
+                      >
+                        <MenuItem value="">
+                          {loadingSuppliers ? "Loading..." : "Select Vendor"}
+                        </MenuItem>
+                        {suppliers.map((supplier) => (
+                          <MenuItem
+                            key={supplier.id}
+                            value={supplier.id.toString()}
+                          >
+                            {supplier.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>{" "}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2267,7 +2549,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <span
+                    className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                    style={{ backgroundColor: "#E5E0D3" }}
+                  >
                     <Users size={16} color="#C72030" />
                   </span>
                   Assignment Details
@@ -2280,18 +2565,22 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Responsible Person</InputLabel>
                       <MuiSelect
                         value={formData.responsiblePerson}
-                        onChange={(e) => handleInputChange("responsiblePerson", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("responsiblePerson", e.target.value)
+                        }
                         label="Responsible Person"
                         notched
                         displayEmpty
                       >
                         <MenuItem value="">
-                          <span className="text-gray-500">Select responsible person</span>
+                          <span className="text-gray-500">
+                            Select responsible person
+                          </span>
                         </MenuItem>
                         {fmUsers.map((user) => (
                           <MenuItem key={user.id} value={user.id.toString()}>
@@ -2329,12 +2618,14 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       variant="outlined"
                       required
                       disabled={helpdeskLoading}
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Category Type</InputLabel>
                       <MuiSelect
                         value={formData.categoryType}
-                        onChange={(e) => handleInputChange("categoryType", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("categoryType", e.target.value)
+                        }
                         label="Category Type"
                         notched
                         displayEmpty
@@ -2343,7 +2634,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                           <span className="text-gray-500">Select category</span>
                         </MenuItem>
                         {helpdeskData?.helpdesk_categories?.map((category) => (
-                          <MenuItem key={category.id} value={category.id.toString()}>
+                          <MenuItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
                             {category.name}
                           </MenuItem>
                         ))}
@@ -2358,7 +2652,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <span
+                    className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                    style={{ backgroundColor: "#E5E0D3" }}
+                  >
                     <AlertTriangle size={16} color="#C72030" />
                   </span>
                   Priority & Classification
@@ -2371,18 +2668,22 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Proactive/Reactive</InputLabel>
                       <MuiSelect
                         value={formData.proactiveReactive}
-                        onChange={(e) => handleInputChange("proactiveReactive", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("proactiveReactive", e.target.value)
+                        }
                         label="Proactive/Reactive"
                         notched
                         displayEmpty
                       >
                         <MenuItem value="">
-                          <span className="text-gray-500">Select proactive/reactive</span>
+                          <span className="text-gray-500">
+                            Select proactive/reactive
+                          </span>
                         </MenuItem>
                         <MenuItem value="Proactive">Proactive</MenuItem>
                         <MenuItem value="Reactive">Reactive</MenuItem>
@@ -2396,22 +2697,29 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       fullWidth
                       variant="outlined"
                       disabled={subCategoriesLoading || !formData.categoryType}
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Sub Category Type</InputLabel>
                       <MuiSelect
                         value={formData.subCategoryType}
-                        onChange={(e) => handleInputChange("subCategoryType", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("subCategoryType", e.target.value)
+                        }
                         label="Sub Category Type"
                         notched
                         displayEmpty
                       >
                         <MenuItem value="">
-                          <span className="text-gray-500">Select Category First</span>
+                          <span className="text-gray-500">
+                            Select Category First
+                          </span>
                         </MenuItem>
                         {Array.isArray(subCategories) &&
                           subCategories.map((subCategory) => (
-                            <MenuItem key={subCategory.id} value={subCategory.id.toString()}>
+                            <MenuItem
+                              key={subCategory.id}
+                              value={subCategory.id.toString()}
+                            >
                               {subCategory.name}
                             </MenuItem>
                           ))}
@@ -2424,12 +2732,14 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Assigned To</InputLabel>
                       <MuiSelect
                         value={formData.assignTo}
-                        onChange={(e) => handleInputChange("assignTo", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("assignTo", e.target.value)
+                        }
                         label="Assigned To"
                         notched
                         displayEmpty
@@ -2453,7 +2763,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <span
+                    className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                    style={{ backgroundColor: "#E5E0D3" }}
+                  >
                     <Settings size={16} color="#C72030" />
                   </span>
                   Additional Details
@@ -2466,18 +2779,22 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Admin Priority</InputLabel>
                       <MuiSelect
                         value={formData.adminPriority}
-                        onChange={(e) => handleInputChange("adminPriority", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("adminPriority", e.target.value)
+                        }
                         label="Admin Priority"
                         notched
                         displayEmpty
                       >
                         <MenuItem value="">
-                          <span className="text-gray-500">Select admin priority</span>
+                          <span className="text-gray-500">
+                            Select admin priority
+                          </span>
                         </MenuItem>
                         <MenuItem value="P1">P1 - Critical</MenuItem>
                         <MenuItem value="P2">P2 - Very High</MenuItem>
@@ -2493,12 +2810,14 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Severity</InputLabel>
                       <MuiSelect
                         value={formData.severity}
-                        onChange={(e) => handleInputChange("severity", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("severity", e.target.value)
+                        }
                         label="Severity"
                         notched
                         displayEmpty
@@ -2517,18 +2836,22 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>External Priority</InputLabel>
                       <MuiSelect
                         value={formData.externalPriority}
-                        onChange={(e) => handleInputChange("externalPriority", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("externalPriority", e.target.value)
+                        }
                         label="External Priority"
                         notched
                         displayEmpty
                       >
                         <MenuItem value="">
-                          <span className="text-gray-500">Select external priority</span>
+                          <span className="text-gray-500">
+                            Select external priority
+                          </span>
                         </MenuItem>
                         <MenuItem value="High">High</MenuItem>
                         <MenuItem value="Medium">Medium</MenuItem>
@@ -2542,12 +2865,14 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Mode</InputLabel>
                       <MuiSelect
                         value={formData.mode}
-                        onChange={(e) => handleInputChange("mode", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("mode", e.target.value)
+                        }
                         label="Mode"
                         notched
                         displayEmpty
@@ -2569,7 +2894,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Root Cause Analysis</InputLabel>
                       <MuiSelect
@@ -2580,27 +2905,45 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                         value={getRootCauseAnalysisValues()}
                         onChange={(e) => handleRootCauseChange(e.target.value)}
                         renderValue={(selected) => {
-                          if (!selected || (Array.isArray(selected) && selected.length === 0)) {
-                            return <span style={{ color: '#aaa' }}>Select Root Cause Analysis</span>;
+                          if (
+                            !selected ||
+                            (Array.isArray(selected) && selected.length === 0)
+                          ) {
+                            return (
+                              <span style={{ color: "#aaa" }}>
+                                Select Root Cause Analysis
+                              </span>
+                            );
                           }
 
                           // Convert selected IDs back to display text
-                          const selectedIds = Array.isArray(selected) ? selected : [selected];
-                          const selectedTemplates = communicationTemplates.filter(
-                            t => selectedIds.includes(t.id)
-                          );
+                          const selectedIds = Array.isArray(selected)
+                            ? selected
+                            : [selected];
+                          const selectedTemplates =
+                            communicationTemplates.filter((t) =>
+                              selectedIds.includes(t.id)
+                            );
 
-                          return selectedTemplates.map(t => t.identifier_action).join(', ');
+                          return selectedTemplates
+                            .map((t) => t.identifier_action)
+                            .join(", ");
                         }}
                         disabled={loadingTemplates}
                       >
                         <MenuItem value="" disabled>
                           <span className="text-gray-500">
-                            {loadingTemplates ? 'Loading templates...' : 'Select Root Cause Analysis'}
+                            {loadingTemplates
+                              ? "Loading templates..."
+                              : "Select Root Cause Analysis"}
                           </span>
                         </MenuItem>
                         {communicationTemplates
-                          .filter(template => template.identifier === "Root Cause Analysis" && template?.active === true)
+                          .filter(
+                            (template) =>
+                              template.identifier === "Root Cause Analysis" &&
+                              template?.active === true
+                          )
                           .map((template) => (
                             <MenuItem key={template.id} value={template.id}>
                               {template.identifier_action}
@@ -2612,41 +2955,55 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
                   {/* Short-term Impact */}
                   <div className="space-y-1">
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                    >
                       <InputLabel shrink>Short-term Impact</InputLabel>
                       <MuiSelect
                         multiple
                         value={(() => {
                           // Use template IDs from formData to find selected template actions
-                          if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
+                          if (
+                            formData.shortTermImpactTemplateIds &&
+                            formData.shortTermImpactTemplateIds.length > 0
+                          ) {
                             return formData.shortTermImpactTemplateIds
-                              .map(id => {
-                                const template = communicationTemplates.find(t => t.id === id);
+                              .map((id) => {
+                                const template = communicationTemplates.find(
+                                  (t) => t.id === id
+                                );
                                 return template?.identifier_action || "";
                               })
-                              .filter(action => action !== "");
+                              .filter((action) => action !== "");
                           }
                           return [];
                         })()}
                         onChange={(e) => {
                           const selectedValues = e.target.value as string[];
-                          
+
                           // Find all selected templates and store their IDs
                           const selectedTemplateIds = selectedValues
-                            .map(value => {
+                            .map((value) => {
                               const template = communicationTemplates.find(
-                                t => t.identifier === "Short-term Impact" && t.identifier_action === value
+                                (t) =>
+                                  t.identifier === "Short-term Impact" &&
+                                  t.identifier_action === value
                               );
                               return template?.id;
                             })
                             .filter((id): id is number => id !== undefined);
-                          
-                          setFormData(prev => ({
+
+                          setFormData((prev) => ({
                             ...prev,
                             shortTermImpactTemplateIds: selectedTemplateIds,
-                            impact: selectedValues.join(", ")
+                            impact: selectedValues.join(", "),
                           }));
-                          console.log('📝 Short-term Impact Template IDs stored:', selectedTemplateIds);
+                          console.log(
+                            "📝 Short-term Impact Template IDs stored:",
+                            selectedTemplateIds
+                          );
                         }}
                         label="Short-term Impact"
                         notched
@@ -2655,17 +3012,28 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                         renderValue={(selected) => {
                           const selectedArray = selected as string[];
                           if (selectedArray.length === 0) {
-                            return <span className="text-gray-500">
-                              {loadingTemplates ? 'Loading templates...' : 'Select short-term impact'}
-                            </span>;
+                            return (
+                              <span className="text-gray-500">
+                                {loadingTemplates
+                                  ? "Loading templates..."
+                                  : "Select short-term impact"}
+                              </span>
+                            );
                           }
                           return selectedArray.join(", ");
                         }}
                       >
                         {communicationTemplates
-                          .filter(template => template.identifier === "Short-term Impact" && template?.active === true)
+                          .filter(
+                            (template) =>
+                              template.identifier === "Short-term Impact" &&
+                              template?.active === true
+                          )
                           .map((template) => (
-                            <MenuItem key={template.id} value={template.identifier_action}>
+                            <MenuItem
+                              key={template.id}
+                              value={template.identifier_action}
+                            >
                               {template.identifier_action}
                             </MenuItem>
                           ))}
@@ -2679,7 +3047,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       label="Correction"
                       placeholder="Enter correction"
                       value={formData.correction}
-                      onChange={(e) => handleInputChange("correction", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("correction", e.target.value)
+                      }
                       fullWidth
                       variant="outlined"
                       slotProps={{
@@ -2695,41 +3065,55 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
                   {/* Long-term Impact */}
                   <div className="space-y-1">
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                    >
                       <InputLabel shrink>Long-term Impact</InputLabel>
                       <MuiSelect
                         multiple
                         value={(() => {
                           // Use template IDs from formData to find selected template actions
-                          if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
+                          if (
+                            formData.longTermImpactTemplateIds &&
+                            formData.longTermImpactTemplateIds.length > 0
+                          ) {
                             return formData.longTermImpactTemplateIds
-                              .map(id => {
-                                const template = communicationTemplates.find(t => t.id === id);
+                              .map((id) => {
+                                const template = communicationTemplates.find(
+                                  (t) => t.id === id
+                                );
                                 return template?.identifier_action || "";
                               })
-                              .filter(action => action !== "");
+                              .filter((action) => action !== "");
                           }
                           return [];
                         })()}
                         onChange={(e) => {
                           const selectedValues = e.target.value as string[];
-                          
+
                           // Find all selected templates and store their IDs
                           const selectedTemplateIds = selectedValues
-                            .map(value => {
+                            .map((value) => {
                               const template = communicationTemplates.find(
-                                t => t.identifier === "Long-term Impact" && t.identifier_action === value
+                                (t) =>
+                                  t.identifier === "Long-term Impact" &&
+                                  t.identifier_action === value
                               );
                               return template?.id;
                             })
                             .filter((id): id is number => id !== undefined);
-                          
-                          setFormData(prev => ({
+
+                          setFormData((prev) => ({
                             ...prev,
                             longTermImpactTemplateIds: selectedTemplateIds,
-                            longTermImpact: selectedValues.join(", ")
+                            longTermImpact: selectedValues.join(", "),
                           }));
-                          console.log('📝 Long-term Impact Template IDs stored:', selectedTemplateIds);
+                          console.log(
+                            "📝 Long-term Impact Template IDs stored:",
+                            selectedTemplateIds
+                          );
                         }}
                         label="Long-term Impact"
                         notched
@@ -2738,17 +3122,28 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                         renderValue={(selected) => {
                           const selectedArray = selected as string[];
                           if (selectedArray.length === 0) {
-                            return <span className="text-gray-500">
-                              {loadingTemplates ? 'Loading templates...' : 'Select long-term impact'}
-                            </span>;
+                            return (
+                              <span className="text-gray-500">
+                                {loadingTemplates
+                                  ? "Loading templates..."
+                                  : "Select long-term impact"}
+                              </span>
+                            );
                           }
                           return selectedArray.join(", ");
                         }}
                       >
                         {communicationTemplates
-                          .filter(template => template.identifier === "Long-term Impact" && template?.active === true)
+                          .filter(
+                            (template) =>
+                              template.identifier === "Long-term Impact" &&
+                              template?.active === true
+                          )
                           .map((template) => (
-                            <MenuItem key={template.id} value={template.identifier_action}>
+                            <MenuItem
+                              key={template.id}
+                              value={template.identifier_action}
+                            >
                               {template.identifier_action}
                             </MenuItem>
                           ))}
@@ -2761,7 +3156,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       label="Reference Number"
                       placeholder="Enter reference number"
                       value={formData.refNumber}
-                      onChange={(e) => handleInputChange("refNumber", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("refNumber", e.target.value)
+                      }
                       fullWidth
                       variant="outlined"
                       slotProps={{
@@ -2775,41 +3172,55 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     />
                   </div>
                   <div className="space-y-1">
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                    >
                       <InputLabel shrink>Corrective Action</InputLabel>
                       <MuiSelect
                         multiple
                         value={(() => {
                           // Use template IDs from formData to find selected template actions
-                          if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
+                          if (
+                            formData.correctiveActionTemplateIds &&
+                            formData.correctiveActionTemplateIds.length > 0
+                          ) {
                             return formData.correctiveActionTemplateIds
-                              .map(id => {
-                                const template = communicationTemplates.find(t => t.id === id);
+                              .map((id) => {
+                                const template = communicationTemplates.find(
+                                  (t) => t.id === id
+                                );
                                 return template?.identifier_action || "";
                               })
-                              .filter(action => action !== "");
+                              .filter((action) => action !== "");
                           }
                           return [];
                         })()}
                         onChange={(e) => {
                           const selectedValues = e.target.value as string[];
-                          
+
                           // Find all selected templates and store their IDs
                           const selectedTemplateIds = selectedValues
-                            .map(value => {
+                            .map((value) => {
                               const template = communicationTemplates.find(
-                                t => t.identifier === "Corrective Action" && t.identifier_action === value
+                                (t) =>
+                                  t.identifier === "Corrective Action" &&
+                                  t.identifier_action === value
                               );
                               return template?.id;
                             })
                             .filter((id): id is number => id !== undefined);
-                          
-                          setFormData(prev => ({
+
+                          setFormData((prev) => ({
                             ...prev,
                             correctiveActionTemplateIds: selectedTemplateIds,
-                            correctiveAction: selectedValues.join(", ")
+                            correctiveAction: selectedValues.join(", "),
                           }));
-                          console.log('📝 Corrective Action Template IDs stored:', selectedTemplateIds);
+                          console.log(
+                            "📝 Corrective Action Template IDs stored:",
+                            selectedTemplateIds
+                          );
                         }}
                         label="Corrective Action"
                         notched
@@ -2818,17 +3229,28 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                         renderValue={(selected) => {
                           const selectedArray = selected as string[];
                           if (selectedArray.length === 0) {
-                            return <span className="text-gray-500">
-                              {loadingTemplates ? 'Loading templates...' : 'Select corrective action'}
-                            </span>;
+                            return (
+                              <span className="text-gray-500">
+                                {loadingTemplates
+                                  ? "Loading templates..."
+                                  : "Select corrective action"}
+                              </span>
+                            );
                           }
                           return selectedArray.join(", ");
                         }}
                       >
                         {communicationTemplates
-                          .filter(template => template.identifier === "Corrective Action" && template?.active === true)
+                          .filter(
+                            (template) =>
+                              template.identifier === "Corrective Action" &&
+                              template?.active === true
+                          )
                           .map((template) => (
-                            <MenuItem key={template.id} value={template.identifier_action}>
+                            <MenuItem
+                              key={template.id}
+                              value={template.identifier_action}
+                            >
                               {template.identifier_action}
                             </MenuItem>
                           ))}
@@ -2839,22 +3261,26 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                      sx={{ "& .MuiInputBase-root": fieldStyles }}
                     >
                       <InputLabel shrink>Service Type</InputLabel>
                       <MuiSelect
                         value={formData.serviceType}
-                        onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("serviceType", e.target.value)
+                        }
                         label="Service Type"
                         notched
                         displayEmpty
                       >
                         <MenuItem value="">
-                          <span className="text-gray-500">Select service type</span>
+                          <span className="text-gray-500">
+                            Select service type
+                          </span>
                         </MenuItem>
                         {[
-                          { id: 'product', name: 'Product' },
-                          { id: 'service', name: 'Service' }
+                          { id: "product", name: "Product" },
+                          { id: "service", name: "Service" },
                         ].map((type) => (
                           <MenuItem key={type.id} value={type.id.toString()}>
                             {type.name}
@@ -2871,7 +3297,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <span
+                    className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                    style={{ backgroundColor: "#E5E0D3" }}
+                  >
                     <MapPin size={16} color="#C72030" />
                   </span>
                   Location Details
@@ -2883,7 +3312,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                   <FormControl
                     fullWidth
                     variant="outlined"
-                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
                     <InputLabel shrink>Building</InputLabel>
                     <MuiSelect
@@ -2898,7 +3327,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                         {loadingBuildings ? "Loading..." : "Select Building"}
                       </MenuItem>
                       {buildings.map((building) => (
-                        <MenuItem key={building.id} value={building.id.toString()}>
+                        <MenuItem
+                          key={building.id}
+                          value={building.id.toString()}
+                        >
                           {building.name}
                         </MenuItem>
                       ))}
@@ -2909,7 +3341,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                   <FormControl
                     fullWidth
                     variant="outlined"
-                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
                     <InputLabel shrink>Wing</InputLabel>
                     <MuiSelect
@@ -2921,8 +3353,11 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       disabled={loadingWings || !formData.building}
                     >
                       <MenuItem value="">
-                        {loadingWings ? "Loading..." :
-                          !formData.building ? "Select Building First" : "Select Wing"}
+                        {loadingWings
+                          ? "Loading..."
+                          : !formData.building
+                            ? "Select Building First"
+                            : "Select Wing"}
                       </MenuItem>
                       {filteredWings.map((wing) => (
                         <MenuItem key={wing.id} value={wing.id.toString()}>
@@ -2936,7 +3371,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                   <FormControl
                     fullWidth
                     variant="outlined"
-                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
                     <InputLabel shrink>Area</InputLabel>
                     <MuiSelect
@@ -2948,8 +3383,11 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       disabled={loadingAreas || !formData.wing}
                     >
                       <MenuItem value="">
-                        {loadingAreas ? "Loading..." :
-                          !formData.wing ? "Select Wing First" : "Select Area"}
+                        {loadingAreas
+                          ? "Loading..."
+                          : !formData.wing
+                            ? "Select Wing First"
+                            : "Select Area"}
                       </MenuItem>
                       {filteredAreas.map((area) => (
                         <MenuItem key={area.id} value={area.id.toString()}>
@@ -2963,7 +3401,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                   <FormControl
                     fullWidth
                     variant="outlined"
-                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
                     <InputLabel shrink>Floor</InputLabel>
                     <MuiSelect
@@ -2975,8 +3413,11 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                       disabled={loadingFloors || !formData.area}
                     >
                       <MenuItem value="">
-                        {loadingFloors ? "Loading..." :
-                          !formData.area ? "Select Area First" : "Select Floor"}
+                        {loadingFloors
+                          ? "Loading..."
+                          : !formData.area
+                            ? "Select Area First"
+                            : "Select Floor"}
                       </MenuItem>
                       {filteredFloors.map((floor) => (
                         <MenuItem key={floor.id} value={floor.id.toString()}>
@@ -2990,20 +3431,25 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                   <FormControl
                     fullWidth
                     variant="outlined"
-                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
                     <InputLabel shrink>Room</InputLabel>
                     <MuiSelect
                       value={formData.room}
-                      onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, room: e.target.value })
+                      }
                       label="Room"
                       notched
                       displayEmpty
                       disabled={loadingRooms || !formData.floor}
                     >
                       <MenuItem value="">
-                        {loadingRooms ? "Loading..." :
-                          !formData.floor ? "Select Floor First" : "Select Room"}
+                        {loadingRooms
+                          ? "Loading..."
+                          : !formData.floor
+                            ? "Select Floor First"
+                            : "Select Room"}
                       </MenuItem>
                       {filteredRooms.map((room) => (
                         <MenuItem key={room.id} value={room.id.toString()}>
@@ -3020,7 +3466,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <span
+                    className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                    style={{ backgroundColor: "#E5E0D3" }}
+                  >
                     <Building size={16} color="#C72030" />
                   </span>
                   Issue Related To
@@ -3040,7 +3489,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                           name="issueRelatedTo"
                           value="Projects"
                           checked={formData.issueRelatedTo === "Projects"}
-                          onChange={(e) => handleInputChange("issueRelatedTo", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("issueRelatedTo", e.target.value)
+                          }
                           style={{
                             accentColor: "#C72030",
                             width: "16px",
@@ -3073,8 +3524,9 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
                   {/* Associated To */}
                   <div className="space-y-1">
-
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Associated To
+                    </label>
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
                       <div className="flex gap-6">
                         <label className="flex items-center gap-2">
@@ -3128,7 +3580,8 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                           <span className="text-sm text-gray-700">Service</span>
                         </label>
                       </div>
-                      {(formData.associatedTo.asset || formData.associatedTo.service) && (
+                      {(formData.associatedTo.asset ||
+                        formData.associatedTo.service) && (
                         <FormControl
                           fullWidth
                           variant="outlined"
@@ -3138,33 +3591,63 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                             ...fieldStyles,
                           }}
                         >
-                          <InputLabel shrink>{formData.associatedTo.asset ? "Select Asset" : "Select Service"}</InputLabel>
+                          <InputLabel shrink>
+                            {formData.associatedTo.asset
+                              ? "Select Asset"
+                              : "Select Service"}
+                          </InputLabel>
                           <MuiSelect
-                            value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService}
+                            value={
+                              formData.associatedTo.asset
+                                ? formData.selectedAsset
+                                : formData.selectedService
+                            }
                             onChange={(e) => {
                               if (formData.associatedTo.asset) {
-                                handleInputChange("selectedAsset", e.target.value);
+                                handleInputChange(
+                                  "selectedAsset",
+                                  e.target.value
+                                );
                               } else {
-                                handleInputChange("selectedService", e.target.value);
+                                handleInputChange(
+                                  "selectedService",
+                                  e.target.value
+                                );
                               }
                             }}
-                            label={formData.associatedTo.asset ? "Select Asset" : "Select Service"}
+                            label={
+                              formData.associatedTo.asset
+                                ? "Select Asset"
+                                : "Select Service"
+                            }
                             notched
                             displayEmpty
                             disabled={isLoadingAssets || isLoadingServices}
                           >
                             <MenuItem value="">
-                              <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
+                              <span className="text-gray-500">
+                                {isLoadingAssets || isLoadingServices
+                                  ? "Loading..."
+                                  : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}
+                              </span>
                             </MenuItem>
-                            {formData.associatedTo.asset && assetOptions.length > 0 &&
+                            {formData.associatedTo.asset &&
+                              assetOptions.length > 0 &&
                               assetOptions.map((asset) => (
-                                <MenuItem key={asset.id} value={asset.id.toString()}>
+                                <MenuItem
+                                  key={asset.id}
+                                  value={asset.id.toString()}
+                                >
                                   {asset.name}
                                 </MenuItem>
                               ))}
-                            {formData.associatedTo.service && serviceOptions.length > 0 &&
+                            {formData.associatedTo.service &&
+                              serviceOptions.length > 0 &&
                               serviceOptions.map((service) => (
-                                <MenuItem key={service.id} value={service.id.toString()}>
+                                <MenuItem
+                                  key={service.id}
+                                  value={service.id.toString()}
+                                >
                                   {service.service_name}
                                 </MenuItem>
                               ))}
@@ -3178,43 +3661,47 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                 {/* Comments Section */}
                 <div className="mt-6">
                   <div className="relative w-full">
-  <textarea
-    id="comments"
-    value={formData.comments}
-    onChange={(e) => handleInputChange("comments", e.target.value)}
-    rows={4}
-    placeholder=" "
-    className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                    <textarea
+                      id="comments"
+                      value={formData.comments}
+                      onChange={(e) =>
+                        handleInputChange("comments", e.target.value)
+                      }
+                      rows={4}
+                      placeholder=" "
+                      className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
       focus:outline-none 
       focus:border-[2px] 
       focus:border-[rgb(25,118,210)] 
       resize-vertical"
-  />
+                    />
 
-  <label
-    htmlFor="comments"
-    className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                    <label
+                      htmlFor="comments"
+                      className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
       peer-placeholder-shown:top-4
       peer-placeholder-shown:text-base
       peer-placeholder-shown:text-gray-400
       peer-focus:-top-[10px]
       peer-focus:text-sm
       peer-focus:text-[rgb(25,118,210)]"
-  >
-    Add comment
-  </label>
-</div>
+                    >
+                      Add comment
+                    </label>
+                  </div>
 
                   <div className="mt-2">
                     <label className="flex items-center">
                       <input
                         type="checkbox"
                         checked={formData.costInvolved}
-                        onChange={(e) => handleCostInvolvedChange(e.target.checked)}
+                        onChange={(e) =>
+                          handleCostInvolvedChange(e.target.checked)
+                        }
                         style={{
-                          accentColor: '#C72030',
-                          width: '12px',
-                          height: '12px',
+                          accentColor: "#C72030",
+                          width: "12px",
+                          height: "12px",
                         }}
                         className="mr-2"
                       />
@@ -3229,7 +3716,10 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <span
+                    className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3"
+                    style={{ backgroundColor: "#E5E0D3" }}
+                  >
                     <DollarSign size={16} color="#C72030" />
                   </span>
                   Cost Approval Requests
@@ -3323,7 +3813,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
                             </td>
                             <td className="px-4 py-3 text-gray-900 border-b">
                               {request.attachments &&
-                                request.attachments.length > 0 ? (
+                              request.attachments.length > 0 ? (
                                 <div className="flex flex-col gap-1 max-w-xs">
                                   {request.attachments.map(
                                     (attachment, index) => {
@@ -3442,9 +3932,7 @@ const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
                       const regex = /^\d*\.?\d{0,2}$/;
                       if (regex.test(value) && Number(value) >= 0) {
-                        setCostPopupData(prev =>
-                          ({ ...prev, cost: value })
-                        );
+                        setCostPopupData((prev) => ({ ...prev, cost: value }));
                       }
                     }}
                     placeholder="Enter Cost"

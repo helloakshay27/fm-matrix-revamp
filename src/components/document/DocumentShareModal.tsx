@@ -230,7 +230,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
       <DialogContent
         className="max-w-3xl max-h-[82vh] overflow-y-auto bg-white z-50"
         aria-describedby="document-share-dialog-description"

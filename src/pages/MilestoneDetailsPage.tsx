@@ -35,6 +35,7 @@ interface Dependency {
 interface MilestoneData {
   id?: string | number;
   title?: string;
+  description?: string;
   status?: string;
   created_by_name?: string;
   created_at?: string;
@@ -194,11 +195,13 @@ export const MilestoneDetailsPage = () => {
   const [selectedOption, setSelectedOption] = useState("Open");
   const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(false);
   const [isDependencyCollapsed, setIsDependencyCollapsed] = useState(false);
+  const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDependenciesLoading, setIsDependenciesLoading] = useState(true);
   const [projectName, setProjectName] = useState<string>('');
   const [milestoneName, setMilestoneName] = useState<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const firstContentRef = useRef<HTMLDivElement>(null);
 
   const fetchData = async () => {
     try {
@@ -298,6 +301,10 @@ export const MilestoneDetailsPage = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const toggleFirstCollapse = () => {
+    setIsFirstCollapsed(!isFirstCollapsed);
+  };
 
   const handleStatusChange = async (option: string) => {
     if (milestoneDetails.task_managements && milestoneDetails.task_managements.length > 0) {
@@ -654,6 +661,29 @@ export const MilestoneDetailsPage = () => {
               </div>
 
               <div className="border-b-[3px] border-grey my-3"></div>
+
+              <div className="rounded-[10px] shadow-md border mb-6 p-6 mt-4">
+                <div className="flex items-center gap-3 pb-4 border-b">
+                  <ChevronDownCircle
+                    color="#E95420"
+                    size={30}
+                    className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} transition-transform cursor-pointer`}
+                    onClick={toggleFirstCollapse}
+                  />
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                    Description
+                  </h3>
+                </div>
+
+                <div className="mt-4 overflow-hidden" ref={firstContentRef}>
+                  <div
+                    className="prose prose-sm max-w-none quill-content"
+                    dangerouslySetInnerHTML={{
+                      __html: milestoneDetails?.description || '<p>No description provided</p>'
+                    }}
+                  />
+                </div>
+              </div>
 
               {/* Details Section */}
               <div className="border rounded-[10px] shadow-md p-5 mb-4">

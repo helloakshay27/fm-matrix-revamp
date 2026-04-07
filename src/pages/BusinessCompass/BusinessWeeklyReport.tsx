@@ -1,6 +1,5 @@
 import React from 'react';
 import { Calendar, Info, TrendingUp, AlertCircle, Trophy, Plus, Upload, CheckSquare, Lightbulb, AlertTriangle, X, Star, Target, MessageSquare, Activity, Send, Zap, Flag, Smile, Users, User, ChevronUp, ChevronDown, Loader2, CheckCircle2 } from 'lucide-react';
-import { AdminViewEmulation } from '@/components/AdminViewEmulation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -245,7 +244,6 @@ const BusinessWeeklyReport = () => {
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto">
-            <AdminViewEmulation />
             {/* Header Section */}
             <div className="flex justify-between items-start">
                 <div>
@@ -615,7 +613,7 @@ const BusinessWeeklyReport = () => {
                         <Button 
                             onClick={handleSubmit} 
                             disabled={isSubmitting} 
-                            className="w-full bg-[#3182CE] hover:bg-[#2B6CB0] text-white h-12 rounded-[8px] font-bold text-sm shadow-lg disabled:opacity-50 transition-all"
+                            className="h-12 w-full rounded-[8px] bg-[#DA7756] text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#c9673f] disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <span className="flex items-center gap-2">

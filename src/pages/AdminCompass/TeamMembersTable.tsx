@@ -1,5 +1,4 @@
 import { ArrowUpDown } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
 
 const TeamMembersTable = () => {
   const members = [
@@ -15,57 +14,96 @@ const TeamMembersTable = () => {
     { score: 45, name: 'Kshitij Rasal', email: 'kshitij.rasal@lockated.com', department: 'Design', dailyReports: 43, dayRating: '10/10', weeklyReports: 0, weekRating: '0/10', dailyChecklist: 0, color: 'bg-orange-100' },
   ];
 
-  const getInitials = (name) => {
+  const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('');
   };
 
+  const getScoreStyles = (score: number) => {
+    if (score >= 40) return 'bg-emerald-100 text-emerald-700';
+    if (score >= 20) return 'bg-amber-100 text-amber-700';
+    return 'bg-rose-100 text-rose-700';
+  };
+
   return (
-    <div className="bg-white p-4 rounded-[10px] shadow-md border border-gray-100">
-      <h2 className="text-lg font-semibold mb-4">Team Members Overview</h2>
-      <table className="w-full text-sm text-left">
-        <thead className="text-gray-500">
-          <tr>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">Score <ArrowUpDown className="h-3 w-3" /></button></th>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">User <ArrowUpDown className="h-3 w-3" /></button></th>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">Department <ArrowUpDown className="h-3 w-3" /></button></th>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">Daily Reports <ArrowUpDown className="h-3 w-3" /></button></th>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">Day Rating <ArrowUpDown className="h-3 w-3" /></button></th>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">Weekly Reports <ArrowUpDown className="h-3 w-3" /></button></th>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">Week Rating <ArrowUpDown className="h-3 w-3" /></button></th>
-            <th className="py-2 px-4"><button className="flex items-center gap-1">Daily Checklist <ArrowUpDown className="h-3 w-3" /></button></th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((member, index) => (
-            <tr key={index} className={`${member.color} border-b border-white`}>
-              <td className="py-3 px-4">
-                <div className="bg-red-500 text-white rounded-md h-8 w-8 flex items-center justify-center font-bold">{member.score}</div>
-              </td>
-              <td className="py-3 px-4 flex items-center gap-3">
-                <div className="bg-red-600 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold">{getInitials(member.name)}</div>
-                <div>
-                  <p className="font-semibold">{member.name}</p>
-                  <p className="text-gray-500 text-xs">{member.email}</p>
-                </div>
-              </td>
-              <td className="py-3 px-4">
-                <span className="px-2 py-1 rounded-md text-xs font-medium">{member.department}</span>
-              </td>
-              <td className="py-3 px-4">
-                <div className="bg-blue-100 text-blue-600 rounded-md h-7 w-7 flex items-center justify-center font-bold">{member.dailyReports}</div>
-              </td>
-              <td className="py-3 px-4 font-semibold">{member.dayRating}</td>
-              <td className="py-3 px-4">
-                <div className="bg-blue-100 text-blue-600 rounded-md h-7 w-7 flex items-center justify-center font-bold">{member.weeklyReports}</div>
-              </td>
-              <td className="py-3 px-4 font-semibold">{member.weekRating}</td>
-              <td className="py-3 px-4">
-                <div className="bg-blue-100 text-blue-600 rounded-md h-7 w-7 flex items-center justify-center font-bold">{member.dailyChecklist}</div>
-              </td>
+    <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-neutral-900">Team Members Overview</h2>
+          <p className="mt-1 text-xs text-neutral-600">Daily and weekly performance snapshot by team member</p>
+        </div>
+        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
+          {members.length} Members
+        </span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[980px] text-sm text-left">
+          <thead>
+            <tr className="border-b border-[#DA7756]/20 text-xs uppercase tracking-wide text-neutral-500">
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">Score <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">User <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">Department <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">Daily Reports <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">Day Rating <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">Weekly Reports <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">Week Rating <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-3 py-3 font-semibold"><button className="flex items-center gap-1.5">Daily Checklist <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-[#DA7756]/15">
+            {members.map((member, index) => (
+              <tr key={index} className="bg-[#fef6f4]/90 transition-colors hover:bg-[#fef6f4]">
+                <td className="px-3 py-3">
+                  <div className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-bold tabular-nums ${getScoreStyles(member.score)}`}>
+                    {member.score}
+                  </div>
+                </td>
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#DA7756] text-xs font-bold text-white">
+                      {getInitials(member.name)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-neutral-900">{member.name}</p>
+                      <p className="text-xs text-neutral-500">{member.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-3">
+                  <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 border border-[#DA7756]/20">
+                    {member.department}
+                  </span>
+                </td>
+                <td className="px-3 py-3">
+                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-sky-100 px-2 text-xs font-bold text-sky-700 tabular-nums">
+                    {member.dailyReports}
+                  </span>
+                </td>
+                <td className="px-3 py-3">
+                  <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-neutral-700 border border-[#DA7756]/20">
+                    {member.dayRating}
+                  </span>
+                </td>
+                <td className="px-3 py-3">
+                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-sky-100 px-2 text-xs font-bold text-sky-700 tabular-nums">
+                    {member.weeklyReports}
+                  </span>
+                </td>
+                <td className="px-3 py-3">
+                  <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-neutral-700 border border-[#DA7756]/20">
+                    {member.weekRating}
+                  </span>
+                </td>
+                <td className="px-3 py-3">
+                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-violet-100 px-2 text-xs font-bold text-violet-700 tabular-nums">
+                    {member.dailyChecklist}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

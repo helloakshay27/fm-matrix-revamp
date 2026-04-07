@@ -247,7 +247,11 @@ const ChannelSidebar = () => {
                                                             : c
                                                     )
                                                 );
-                                                navigate(`/vas/channels/messages/${conversation.id}`);
+                                                if (location.pathname.startsWith("/business-compass/channels")) {
+                                                    navigate(`/business-compass/channels/messages/${conversation.id}`);
+                                                } else {
+                                                    navigate(`/vas/channels/messages/${conversation.id}`)
+                                                }
                                             }}
                                         >
                                             <span className="flex-1 truncate">{displayedName}</span>
@@ -305,7 +309,11 @@ const ChannelSidebar = () => {
                                                             : g
                                                     )
                                                 );
-                                                navigate(`/vas/channels/groups/${group.id}`);
+                                                if (location.pathname.startsWith("/business-compass/channels")) {
+                                                    navigate(`/business-compass/channels/groups/${group.id}`);
+                                                } else {
+                                                    navigate(`/vas/channels/groups/${group.id}`);
+                                                }
                                             }}
                                         >
                                             <span className="flex-1 truncate">{group.name}</span>

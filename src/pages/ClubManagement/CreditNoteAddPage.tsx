@@ -35,7 +35,7 @@ import {
     PersonAdd,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
@@ -137,7 +137,7 @@ export const CreditNoteAddPage: React.FC = () => {
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
+                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id, inter_state_tax_rate_id: item.inter_state_tax_rate_id })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -290,6 +290,19 @@ export const CreditNoteAddPage: React.FC = () => {
             .finally(() => {
                 setLoadingTaxGroups(false);
             });
+    }, []);
+
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching tax rates:", error));
     }, []);
 
     const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
@@ -900,6 +913,22 @@ export const CreditNoteAddPage: React.FC = () => {
         }
     }, [selectedTax, taxOptions, afterDiscount]);
 
+    // Re-preselect tax on all taxable items when place of supply changes
+    useEffect(() => {
+        if (!placeOfSupply) return;
+        const isMaharashtra = placeOfSupply === "Maharashtra";
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+            const matched = itemOptions.find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isMaharashtra ? "tax_group" : "tax_rate",
+                tax_group_id: isMaharashtra ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [placeOfSupply]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const selectedTaxGroups = items
         .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
         .map(item => {
@@ -911,23 +940,34 @@ export const CreditNoteAddPage: React.FC = () => {
         });
     const taxBreakdown: any[] = [];
 
+    // Tax group breakdown (Maharashtra)
     selectedTaxGroups.forEach(group => {
         group.taxRates.forEach(rate => {
             const taxAmount = (group.itemAmount * rate.rate) / 100;
-
             const existing = taxBreakdown.find(t => t.name === rate.name);
-
             if (existing) {
                 existing.amount += taxAmount;
             } else {
-                taxBreakdown.push({
-                    name: rate.name,
-                    rate: rate.rate,
-                    amount: taxAmount
-                });
+                taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
             }
         });
     });
+
+    // Tax rate breakdown (non-Maharashtra)
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find(r => r.id === item.tax_group_id);
+            if (!rate) return;
+            const rateValue = rate.rate ?? rate.percentage ?? 0;
+            const taxAmount = (item.amount * rateValue) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
+            }
+        });
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -962,9 +1002,34 @@ export const CreditNoteAddPage: React.FC = () => {
                 </div>
             )}
 
-            <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">New Credit Note</h1>
+            {/* <header className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <h1 className="text-2xl font-bold">New Credit Note</h1>
+                </div>
+            </header> */}
+
+            <header className="mb-4">
+
+                {/* Back Button - Top */}
+                <button
+                    type="button"
+                    onClick={() => navigate('/accounting/credit-note')}
+                    className="flex items-center gap-2 text-black font-medium mb-2"
+                >
+                    <ArrowLeft className="h-4 w-4 text-black" />
+                    Back to Credit Note List
+                </button>
+
+                {/* Title - Below */}
+                <h1 className="text-2xl font-bold text-black">
+                    Credit Note
+                </h1>
+
             </header>
+
 
             <div className="space-y-6">
                 {/* Customer Section */}
@@ -1238,62 +1303,63 @@ export const CreditNoteAddPage: React.FC = () => {
 
                         <div className="border border-border rounded-lg overflow-hidden">
                             <div className="w-full overflow-x-auto">
-                            <table className=" min-w-[950px] w-full ">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
-                                        {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                        <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
+                                <table className=" min-w-[950px] w-full ">
+                                    <thead className="bg-muted/50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
 
-                                    {items.map((item, index) => (
-                                        <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <Select
-                                                        value={item.name}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-                                                                // TAX HANDLING
-                                                                if (selectedItem.tax_preference === 'non_taxable') {
-                                                                    updateItem(index, 'item_tax_type', 'non_taxable');
-                                                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                        {items.map((item, index) => (
+                                            <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <FormControl fullWidth sx={{ minWidth: 250 }}>
+                                                        <Select
+                                                            value={item.name}
+                                                            onChange={(e) => {
+                                                                const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
+                                                                if (selectedItem) {
+                                                                    updateItem(index, 'name', selectedItem.name);
+                                                                    updateItem(index, 'rate', selectedItem.rate);
+                                                                    updateItem(index, 'description', selectedItem.description);
+                                                                    // TAX HANDLING
+                                                                    if (selectedItem.tax_preference === 'non_taxable') {
+                                                                        updateItem(index, 'item_tax_type', 'non_taxable');
+                                                                        updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                                                    }
+                                                                    if (selectedItem.tax_preference === 'taxable') {
+                                                                        const isMaharashtra = placeOfSupply === 'Maharashtra';
+                                                                        updateItem(index, 'item_tax_type', isMaharashtra ? 'tax_group' : 'tax_rate');
+                                                                        updateItem(index, 'tax_group_id', isMaharashtra ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
+                                                                    }
+                                                                    if (selectedItem.tax_preference === 'out_of_scope') {
+                                                                        updateItem(index, 'item_tax_type', 'out_of_scope');
+                                                                    }
+                                                                    if (selectedItem.tax_preference === 'non_gst_supply') {
+                                                                        updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                                                    }
                                                                 }
-                                                                if (selectedItem.tax_preference === 'taxable') {
-                                                                    updateItem(index, 'item_tax_type', 'tax_group');
-                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
-                                                                }
-                                                                if (selectedItem.tax_preference === 'out_of_scope') {
-                                                                    updateItem(index, 'item_tax_type', 'out_of_scope');
-                                                                }
-                                                                if (selectedItem.tax_preference === 'non_gst_supply') {
-                                                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
-                                                                }
-                                                            }
-                                                        }}
-                                                        displayEmpty
-                                                        size="small"
-                                                    >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                                {/* <TextField
+                                                            }}
+                                                            displayEmpty
+                                                            size="small"
+                                                        >
+                                                            <MenuItem value="" disabled>Select an item</MenuItem>
+                                                            {itemOptions.map((option) => (
+                                                                <MenuItem key={option.id} value={option.name}>
+                                                                    {option.name}
+                                                                </MenuItem>
+                                                            ))}
+                                                        </Select>
+                                                    </FormControl>
+                                                    {/* <TextField
                                                     fullWidth
                                                     size="small"
                                                     placeholder="Description"
@@ -1302,83 +1368,83 @@ export const CreditNoteAddPage: React.FC = () => {
                                                     sx={{ mt: 1 }}
                                                 /> */}
 
-                                                <TextField
-                                                    fullWidth
-                                                    label="Description"
-                                                    size="small"
-                                                    placeholder="Description"
-                                                    value={item.description}
-                                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 2 }}
-                                                    InputLabelProps={{ shrink: true }}
-                                                />
-                                            </td>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Description"
+                                                        size="small"
+                                                        placeholder="Description"
+                                                        value={item.description}
+                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                        sx={{ mt: 2 }}
+                                                        InputLabelProps={{ shrink: true }}
+                                                    />
+                                                </td>
 
 
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth size="small">
-                                                    <InputLabel id={`account-label-${index}`}>
-                                                        Account
-                                                    </InputLabel>
+                                                <td className="px-4 py-3">
+                                                    <FormControl fullWidth size="small">
+                                                        <InputLabel id={`account-label-${index}`}>
+                                                            Account
+                                                        </InputLabel>
 
-                                                    <Select
-                                                        labelId={`account-label-${index}`}
-                                                        value={item.account || ""}
-                                                        label="Account*"
-                                                        onChange={(e) => updateItem(index, "account", e.target.value)}
-                                                        displayEmpty
-                                                        MenuProps={{
-                                                            PaperProps: {
-                                                                style: {
-                                                                    maxHeight: 300,
-                                                                    minWidth: 250,
-                                                                    maxWidth: 350,
+                                                        <Select
+                                                            labelId={`account-label-${index}`}
+                                                            value={item.account || ""}
+                                                            label="Account*"
+                                                            onChange={(e) => updateItem(index, "account", e.target.value)}
+                                                            displayEmpty
+                                                            MenuProps={{
+                                                                PaperProps: {
+                                                                    style: {
+                                                                        maxHeight: 300,
+                                                                        minWidth: 250,
+                                                                        maxWidth: 350,
+                                                                    },
                                                                 },
-                                                            },
-                                                        }}
-                                                    >
-                                                        <MenuItem value="" disabled>
-                                                            Select Account
-                                                        </MenuItem>
+                                                            }}
+                                                        >
+                                                            <MenuItem value="" disabled>
+                                                                Select Account
+                                                            </MenuItem>
 
-                                                        {accountGroups.map((group) =>
-                                                            group.ledgers && group.ledgers.length > 0 ? [
-                                                                <ListSubheader key={`group-${group.id}`}>
-                                                                    {group.group_name}
-                                                                </ListSubheader>,
-                                                                ...group.ledgers.map((ledger) => (
-                                                                    <MenuItem key={ledger.id} value={ledger.id}>
-                                                                        {ledger.name}
-                                                                    </MenuItem>
-                                                                )),
-                                                            ] : null
-                                                        )}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 1, step: 1 }}
-                                                    sx={{ width: 80 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 0, step: 0.01 }}
-                                                    sx={{ width: 100 }}
-                                                />
-                                            </td>
+                                                            {accountGroups.map((group) =>
+                                                                group.ledgers && group.ledgers.length > 0 ? [
+                                                                    <ListSubheader key={`group-${group.id}`}>
+                                                                        {group.group_name}
+                                                                    </ListSubheader>,
+                                                                    ...group.ledgers.map((ledger) => (
+                                                                        <MenuItem key={ledger.id} value={ledger.id}>
+                                                                            {ledger.name}
+                                                                        </MenuItem>
+                                                                    )),
+                                                                ] : null
+                                                            )}
+                                                        </Select>
+                                                    </FormControl>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
+                                                        inputProps={{ min: 1, step: 1 }}
+                                                        sx={{ width: 80 }}
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.rate}
+                                                        onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                                                        inputProps={{ min: 0, step: 0.01 }}
+                                                        sx={{ width: 100 }}
+                                                    />
+                                                </td>
 
-                                            {/* <td className="px-4 py-3"> */}
-                                            {/* <div className="flex items-center gap-2">
+                                                {/* <td className="px-4 py-3"> */}
+                                                {/* <div className="flex items-center gap-2">
                                                     <TextField
                                                         type="number"
                                                         size="small"
@@ -1397,73 +1463,72 @@ export const CreditNoteAddPage: React.FC = () => {
                                                         </Select>
                                                     </FormControl>
                                                 </div> */}
-                                            {/* </td> */}
-                                            <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 200 }}>
-                                                    <Select
-                                                        //   value={item.tax_type || ""}
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
-                                                        displayEmpty
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
+                                                {/* </td> */}
+                                                <td className="px-4 py-3">
+                                                    <FormControl size="small" sx={{ width: 200 }}>
+                                                        <Select
+                                                            value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
+                                                            displayEmpty
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                const isMaharashtra = placeOfSupply === "Maharashtra";
 
-                                                            // Static tax types
-                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
-                                                                updateItem(index, "item_tax_type", value);
-                                                                updateItem(index, "tax_group_id", null);
-
-                                                                if (value === "non_taxable") {
-                                                                    setCurrentItemIndex(index);
-                                                                    setExemptionModalOpen(true);
+                                                                if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                                    updateItem(index, "item_tax_type", value);
+                                                                    updateItem(index, "tax_group_id", null);
+                                                                    if (value === "non_taxable") {
+                                                                        setCurrentItemIndex(index);
+                                                                        setExemptionModalOpen(true);
+                                                                    }
+                                                                } else {
+                                                                    updateItem(index, "item_tax_type", isMaharashtra ? "tax_group" : "tax_rate");
+                                                                    updateItem(index, "tax_group_id", value);
                                                                 }
-                                                            }
-                                                            // Tax group selected
-                                                            else {
-                                                                updateItem(index, "item_tax_type", "tax_group");
-                                                                updateItem(index, "tax_group_id", value);
-                                                            }
-                                                        }}
+                                                            }}
+                                                        >
+                                                            <MenuItem value="">Select Tax</MenuItem>
+
+                                                            {taxTypeOptions.map((opt) => (
+                                                                <MenuItem key={opt.value} value={opt.value}>
+                                                                    {opt.label}
+                                                                </MenuItem>
+                                                            ))}
+
+                                                            {placeOfSupply === "Maharashtra" ? (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                    ...taxGroups.map((group) => (
+                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                    ))
+                                                                ]
+                                                            ) : (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Rates</MenuItem>,
+                                                                    ...taxRates.map((rate) => (
+                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                    ))
+                                                                ]
+                                                            )}
+                                                        </Select>
+                                                    </FormControl>
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-semibold">
+                                                    ₹{item.amount.toFixed(2)}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => removeItem(index)}
+                                                        disabled={items.length === 1}
+                                                        color="error"
                                                     >
-                                                        <MenuItem value="">Select Tax</MenuItem>
-
-                                                        {/* Static Options */}
-                                                        {taxTypeOptions.map((opt) => (
-                                                            <MenuItem key={opt.value} value={opt.value}>
-                                                                {opt.label}
-                                                            </MenuItem>
-                                                        ))}
-
-                                                        {/* Divider */}
-                                                        <MenuItem disabled>
-                                                            Tax Groups
-                                                        </MenuItem>
-
-                                                        {/* Tax Groups */}
-                                                        {taxGroups.map((group) => (
-                                                            <MenuItem key={group.id} value={group.id}>
-                                                                {group.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-semibold">
-                                                ₹{item.amount.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => removeItem(index)}
-                                                    disabled={items.length === 1}
-                                                    color="error"
-                                                >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                        <Delete fontSize="small" />
+                                                    </IconButton>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -1773,7 +1838,7 @@ export const CreditNoteAddPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                
+
                 <Button
                     // variant="outlined"
                     onClick={() => handleSubmit(true)}
@@ -1812,7 +1877,7 @@ export const CreditNoteAddPage: React.FC = () => {
                 </Button>
                 <Button
                     // variant="outlined"
-                    onClick={() => navigate('/accounting/sales-order')}
+                    onClick={() => navigate('/accounting/credit-note')}
                     disabled={isSubmitting}
                     // sx={{
                     //     textTransform: 'none',
@@ -1826,7 +1891,7 @@ export const CreditNoteAddPage: React.FC = () => {
                     //     }
                     // }}
                     //  className="px-4 py-2 rounded"
-                     variant="outline"
+                    variant="outline"
                 >
                     Cancel
                 </Button>

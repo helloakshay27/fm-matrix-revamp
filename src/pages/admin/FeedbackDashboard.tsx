@@ -10,6 +10,8 @@ import {
   Sparkles,
   Loader2,
   AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -21,8 +23,7 @@ import {
 } from "@/utils/embeddedMode";
 
 // ─── API Endpoints ───────────────────────────────────────────────────────────
-const CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT =
-  "/api/pms/reports/customer_experience_feedback";
+const RATINGS_FEEDBACK_DASHBOARD_ENDPOINT = "/ratings/feedback_dashboard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface RatingBreakdown {
@@ -40,10 +41,32 @@ interface RecentFeedback {
   createdAt: string;
 }
 
+interface DepartmentFeedback {
+  id: string;
+  rank: number;
+  name: string;
+  count: number;
+  rating: number;
+}
+
+interface FeedbackLeaderboardItem {
+  id: string;
+  rank: number;
+  name: string;
+  designation: string;
+  count: number;
+}
+
 interface DashboardData {
   totalFeedbacks: number;
   averageRating: number;
+  activeTeam: number;
+  readRate: number | null;
+  readTrackingAvailable: boolean;
   ratingBreakdown: RatingBreakdown;
+  departments: DepartmentFeedback[];
+  mostFeedbackReceived: FeedbackLeaderboardItem[];
+  mostFeedbackGiven: FeedbackLeaderboardItem[];
   recentFeedbacks: RecentFeedback[];
 }
 
@@ -60,41 +83,26 @@ interface ApiDashboardData {
   total_feedbacks?: number;
   averageRating?: number;
   average_rating?: number;
+  activeTeam?: number;
+  active_team?: number;
+  readRate?: number | null;
+  read_rate?: number | null;
+  readTrackingAvailable?: boolean;
+  read_tracking_available?: boolean;
   ratingBreakdown?: Partial<RatingBreakdown>;
   rating_breakdown?: Partial<RatingBreakdown>;
+  feedbackByDepartment?: unknown[];
+  feedback_by_department?: unknown[];
   recentFeedbacks?: ApiRecentFeedback[];
   recent_feedbacks?: ApiRecentFeedback[];
 }
 
-interface AnalyticsBucket {
-  count?: number | string;
-  percentage?: number | string;
-}
-
-interface CustomerExperienceFeedbackAnalytics {
-  overall_summary?: Record<string, AnalyticsBucket>;
-  data?: {
-    overall_summary?: Record<string, AnalyticsBucket>;
-  };
+interface RatingsFeedbackDashboardResponse {
+  success?: boolean;
+  data?: ApiDashboardData;
 }
 
 type ApiRecord = Record<string, unknown>;
-
-const DEPARTMENTS = [
-  { rank: 1, name: "Engineering", count: 24, rating: 2.7 },
-  { rank: 2, name: "Front End", count: 18, rating: 2.7 },
-  { rank: 3, name: "Business Excellence", count: 12, rating: 2.7 },
-  { rank: 4, name: "Design", count: 11, rating: 2.7 },
-  { rank: 5, name: "QA", count: 9, rating: 2.7 },
-  { rank: 6, name: "Client Servicing", count: 8, rating: 2.7 },
-  { rank: 7, name: "Accounts", count: 7, rating: 2.7 },
-  { rank: 8, name: "Human Resources", count: 6, rating: 2.7 },
-  { rank: 9, name: "Marketing", count: 5, rating: 2.7 },
-  { rank: 10, name: "Management", count: 5, rating: 2.7 },
-  { rank: 11, name: "Sales", count: 4, rating: 2.7 },
-  { rank: 12, name: "HR", count: 3, rating: 2.7 },
-  { rank: 13, name: "Product", count: 3, rating: 2.7 },
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function StarRow({ value }: { value: number }) {
@@ -129,6 +137,90 @@ function toNumber(value: unknown, fallback = 0) {
   return Number.isFinite(num) ? num : fallback;
 }
 
+function toOptionalNumber(value: unknown): number | undefined {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : undefined;
+}
+
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function findFirstNumberDeep(
+  value: unknown,
+  keySet: Set<string>,
+  maxDepth = 6,
+  depth = 0
+): number | undefined {
+  if (value === null || value === undefined || depth > maxDepth) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFirstNumberDeep(item, keySet, maxDepth, depth + 1);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+
+  if (typeof value !== "object") {
+    return undefined;
+  }
+
+  const record = value as ApiRecord;
+  for (const [key, raw] of Object.entries(record)) {
+    if (!keySet.has(normalizeKey(key))) continue;
+    const parsed = toOptionalNumber(raw);
+    if (parsed !== undefined) return parsed;
+  }
+
+  for (const nested of Object.values(record)) {
+    const found = findFirstNumberDeep(nested, keySet, maxDepth, depth + 1);
+    if (found !== undefined) return found;
+  }
+
+  return undefined;
+}
+
+function pickFirstNumberDeep(payload: unknown, keys: string[]): number | undefined {
+  const normalizedKeySet = new Set(keys.map(normalizeKey));
+  return findFirstNumberDeep(payload, normalizedKeySet);
+}
+
+function pickFirstValue(record: ApiRecord, keys: string[]): unknown {
+  for (const key of keys) {
+    if (key in record) return record[key];
+  }
+  return undefined;
+}
+
+function pickFirstNumber(record: ApiRecord, keys: string[]): number | undefined {
+  for (const key of keys) {
+    if (!(key in record)) continue;
+    const parsed = toOptionalNumber(record[key]);
+    if (parsed !== undefined) return parsed;
+  }
+  return undefined;
+}
+
+function pickFirstNullableNumber(
+  record: ApiRecord,
+  keys: string[]
+): number | null | undefined {
+  for (const key of keys) {
+    if (!(key in record)) continue;
+
+    const value = record[key];
+    if (value === null) return null;
+
+    const parsed = toOptionalNumber(value);
+    if (parsed !== undefined) return parsed;
+  }
+
+  return undefined;
+}
+
 function toApiRecord(value: unknown): ApiRecord {
   return value && typeof value === "object" ? (value as ApiRecord) : {};
 }
@@ -137,7 +229,66 @@ function getString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-function pickList(payload: unknown, keys: string[]): unknown[] {
+function pickFirstString(record: ApiRecord, keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function toBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") {
+    if (value === 1) return true;
+    if (value === 0) return false;
+    return undefined;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "read", "viewed", "seen"].includes(normalized)) {
+      return true;
+    }
+    if (["false", "0", "no", "unread", "not_read"].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return undefined;
+}
+
+function deriveReadRateFromActivity(activityRows: unknown[]): number | undefined {
+  let read = 0;
+  let trackable = 0;
+
+  for (const row of activityRows) {
+    const item = toApiRecord(row);
+    const readState = toBoolean(
+      pickFirstValue(item, [
+        "is_read",
+        "isRead",
+        "read",
+        "read_status",
+        "is_viewed",
+        "is_seen",
+        "viewed",
+        "seen",
+      ])
+    );
+
+    if (readState === undefined) continue;
+    trackable += 1;
+    if (readState) read += 1;
+  }
+
+  if (trackable === 0) return undefined;
+  return (read / trackable) * 100;
+}
+
+function pickList(payload: unknown, keys: string[], allowAnyArray = false): unknown[] {
   if (Array.isArray(payload)) return payload;
 
   const record = toApiRecord(payload);
@@ -146,8 +297,10 @@ function pickList(payload: unknown, keys: string[]): unknown[] {
     if (Array.isArray(candidate)) return candidate;
   }
 
-  for (const value of Object.values(record)) {
-    if (Array.isArray(value) && value.length > 0) return value;
+  if (allowAnyArray) {
+    for (const value of Object.values(record)) {
+      if (Array.isArray(value) && value.length > 0) return value;
+    }
   }
 
   return [];
@@ -164,6 +317,134 @@ function buildFeedbackComment(item: ApiRecord) {
   ]
     .filter(Boolean)
     .join(" ") || "No comment provided";
+}
+
+function mapLeaderboardItems(rawList: unknown[], mode: "received" | "given") {
+  return rawList
+    .map((item, index) => {
+      const row = toApiRecord(item);
+
+      return {
+        id: String(
+          row.id ??
+            row.user_id ??
+            row.employee_id ??
+            row.staff_id ??
+            `${mode}-${index}`
+        ),
+        rank: toNumber(row.rank, index + 1),
+        name:
+          pickFirstString(row, ["name", "user_name", "employee_name", "staff_name"]) ||
+          "Unknown User",
+        designation:
+          pickFirstString(row, ["designation", "department_name", "role"]) ||
+          "No designation",
+        count: toNumber(
+          mode === "received"
+            ? row.feedback_received ??
+                row.received_count ??
+                row.total_feedback_received ??
+                row.total_received ??
+                row.count
+            : row.feedback_given ??
+                row.given_count ??
+                row.total_feedback_given ??
+                row.total_given ??
+                row.count
+        ),
+      };
+    })
+    .sort((left, right) => left.rank - right.rank)
+    .slice(0, 5);
+}
+
+function buildLeaderboardFromActivity(
+  activityRows: unknown[],
+  mode: "received" | "given"
+): FeedbackLeaderboardItem[] {
+  const byPerson = new Map<
+    string,
+    { id: string; name: string; designation: string; count: number }
+  >();
+
+  for (const activity of activityRows) {
+    const row = toApiRecord(activity);
+    const name =
+      mode === "received"
+        ? pickFirstString(row, [
+            "receiver_name",
+            "feedback_receiver_name",
+            "to_user_name",
+            "recipient_name",
+            "name",
+          ])
+        : pickFirstString(row, [
+            "giver_name",
+            "feedback_giver_name",
+            "from_user_name",
+            "sender_name",
+            "name",
+          ]);
+
+    if (!name) continue;
+
+    const designation =
+      mode === "received"
+        ? pickFirstString(row, [
+            "receiver_designation",
+            "feedback_receiver_designation",
+            "receiver_department_name",
+            "designation",
+            "department_name",
+          ])
+        : pickFirstString(row, [
+            "giver_designation",
+            "feedback_giver_designation",
+            "giver_department_name",
+            "designation",
+            "department_name",
+          ]);
+
+    const id = String(
+      (mode === "received"
+        ? row.receiver_id ?? row.feedback_receiver_id ?? row.to_user_id
+        : row.giver_id ?? row.feedback_giver_id ?? row.from_user_id) ?? name
+    );
+
+    const count = toNumber(
+      mode === "received"
+        ? row.feedback_received ?? row.received_count ?? row.count
+        : row.feedback_given ?? row.given_count ?? row.count,
+      1
+    );
+
+    const key = `${id}::${name}`;
+    const existing = byPerson.get(key);
+    if (existing) {
+      existing.count += Math.max(1, count);
+      if (!existing.designation && designation) {
+        existing.designation = designation;
+      }
+    } else {
+      byPerson.set(key, {
+        id,
+        name,
+        designation: designation || "No designation",
+        count: Math.max(1, count),
+      });
+    }
+  }
+
+  return [...byPerson.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((row, index) => ({
+      id: row.id,
+      rank: index + 1,
+      name: row.name,
+      designation: row.designation,
+      count: row.count,
+    }));
 }
 
 function mapFeedbackItem(rawItem: unknown, index: number): RecentFeedback {
@@ -209,7 +490,13 @@ function buildDashboardDataFromFeedbacks(items: RecentFeedback[]): DashboardData
   return {
     totalFeedbacks,
     averageRating,
+    activeTeam: 0,
+    readRate: null,
+    readTrackingAvailable: false,
     ratingBreakdown,
+    departments: [],
+    mostFeedbackReceived: [],
+    mostFeedbackGiven: [],
     recentFeedbacks: [...items]
       .sort(
         (a, b) =>
@@ -224,78 +511,269 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     return null;
   }
 
-  const source = raw as ApiDashboardData;
+  const wrapper = raw as RatingsFeedbackDashboardResponse;
+  const source = (wrapper.data ?? raw) as ApiDashboardData;
+  const sourceRecord = toApiRecord(source);
   const breakdown = source.ratingBreakdown ?? source.rating_breakdown ?? {};
-  const recent = source.recentFeedbacks ?? source.recent_feedbacks ?? [];
+  const recent =
+    source.recentFeedbacks ??
+    source.recent_feedbacks ??
+    pickList(source, ["recent_feedback_activity", "feedback_activity", "feedback_logs"]);
+  const departmentsRaw =
+    source.feedbackByDepartment ??
+    source.feedback_by_department ??
+    pickList(source, ["feedback_by_department"]);
+  const departments = departmentsRaw
+    .map((item, index) => {
+      const department = toApiRecord(item);
 
-  return {
-    totalFeedbacks: toNumber(source.totalFeedbacks ?? source.total_feedbacks),
-    averageRating: toNumber(source.averageRating ?? source.average_rating),
-    ratingBreakdown: {
-      "1": toNumber(breakdown["1"]),
-      "2": toNumber(breakdown["2"]),
-      "3": toNumber(breakdown["3"]),
-      "4": toNumber(breakdown["4"]),
-      "5": toNumber(breakdown["5"]),
-    },
-    recentFeedbacks: recent.map((item, index) => ({
-      id: String(item.id ?? `feedback-${index}`),
-      rating: toNumber(item.rating),
-      comment: item.comment ?? "No comment provided",
-      createdAt: item.createdAt ?? item.created_at ?? new Date().toISOString(),
-    })),
-  };
-}
+      return {
+        id: String(department.department_id ?? department.id ?? `department-${index}`),
+        rank: toNumber(department.rank, index + 1),
+        name: getString(department.department_name) || getString(department.name) || "Unknown Department",
+        count: toNumber(
+          department.feedback_received ?? department.total_feedback ?? department.count
+        ),
+        rating: toNumber(department.avg_rating ?? department.average_rating, 0),
+      };
+    })
+    .sort((left, right) => left.rank - right.rank);
 
-function formatApiDateParam(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+  const receivedLeaderboardRaw = pickList(source, [
+    "mostFeedbackReceived",
+    "most_feedback_received",
+    "feedback_received_leaderboard",
+    "top_feedback_received",
+    "feedback_received_top",
+  ]);
+  const mostFeedbackReceived =
+    receivedLeaderboardRaw.length > 0
+      ? mapLeaderboardItems(receivedLeaderboardRaw, "received")
+      : buildLeaderboardFromActivity(recent, "received");
 
-function getFeedbackDateRange() {
-  const endDate = new Date();
-  const startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+  const givenLeaderboardRaw = pickList(source, [
+    "mostFeedbackGiven",
+    "most_feedback_given",
+    "feedback_given_leaderboard",
+    "top_feedback_given",
+    "feedback_given_top",
+  ]);
+  const mostFeedbackGiven =
+    givenLeaderboardRaw.length > 0
+      ? mapLeaderboardItems(givenLeaderboardRaw, "given")
+      : buildLeaderboardFromActivity(recent, "given");
 
-  return {
-    startDate,
-    endDate,
-    start: formatApiDateParam(startDate),
-    end: formatApiDateParam(endDate),
-  };
-}
+  const recentFeedbacks = recent.map((item, index) => {
+    const recentItem = toApiRecord(item);
 
-function buildDashboardDataFromAnalytics(
-  raw: CustomerExperienceFeedbackAnalytics
-): DashboardData | null {
-  const summary = raw.data?.overall_summary ?? raw.overall_summary;
-  if (!summary || typeof summary !== "object") {
-    return null;
-  }
+    return {
+      id: String(
+        recentItem.id ??
+          (recentItem.feedback_id as string | number | undefined) ??
+          `feedback-${index}`
+      ),
+      rating: Math.min(
+        5,
+        Math.max(
+          1,
+          Math.round(toNumber(recentItem.rating ?? recentItem.avg_rating, 0)) || 1
+        )
+      ),
+      comment:
+        getString(recentItem.comment) ||
+        getString(recentItem.feedback_comment) ||
+        getString(recentItem.department_name) ||
+        "No comment provided",
+      createdAt:
+        getString(recentItem.createdAt) ||
+        getString(recentItem.created_at) ||
+        getString(recentItem.feedback_date) ||
+        new Date().toISOString(),
+    };
+  });
 
-  const excellent = toNumber(summary.excellent?.count);
-  const good = toNumber(summary.good?.count);
-  const average = toNumber(summary.average?.count);
-  const bad = toNumber(summary.bad?.count);
-  const poor = toNumber(summary.poor?.count);
+  const hasBreakdownValues = Object.values(breakdown).some(
+    (value) => toNumber(value) > 0
+  );
+  const derivedRatingBreakdown = hasBreakdownValues
+    ? {
+        "1": toNumber(breakdown["1"]),
+        "2": toNumber(breakdown["2"]),
+        "3": toNumber(breakdown["3"]),
+        "4": toNumber(breakdown["4"]),
+        "5": toNumber(breakdown["5"]),
+      }
+    : buildDashboardDataFromFeedbacks(recentFeedbacks).ratingBreakdown;
 
-  const ratingBreakdown: RatingBreakdown = {
-    "5": excellent,
-    "4": good,
-    "3": average,
-    "2": bad,
-    "1": poor,
-  };
+  const totalFeedbacksFromApi =
+    pickFirstNumber(sourceRecord, [
+      "totalFeedbacks",
+      "total_feedbacks",
+      "total",
+      "feedback_count",
+      "total_count",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "totalFeedbacks",
+      "total_feedbacks",
+      "total_feedback",
+      "feedback_count",
+      "total_count",
+      "feedbacks_count",
+    ]);
 
-  const totalFeedbacks = excellent + good + average + bad + poor;
-  const weightedScore = excellent * 5 + good * 4 + average * 3 + bad * 2 + poor;
+  const totalFeedbacksFromBreakdown = Object.values(derivedRatingBreakdown).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+  const totalFeedbacksFromDepartments = departments.reduce(
+    (sum, department) => sum + department.count,
+    0
+  );
+  const totalFeedbacks =
+    totalFeedbacksFromApi ??
+    (totalFeedbacksFromBreakdown > 0
+      ? totalFeedbacksFromBreakdown
+      : totalFeedbacksFromDepartments > 0
+      ? totalFeedbacksFromDepartments
+      : recentFeedbacks.length);
+
+  const averageRatingFromApi =
+    pickFirstNumber(sourceRecord, [
+      "averageRating",
+      "average_rating",
+      "avg_rating",
+      "avgRating",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "averageRating",
+      "average_rating",
+      "avg_rating",
+      "avgRating",
+      "overall_average_rating",
+      "overall_avg_rating",
+      "mean_rating",
+    ]);
+  const averageRatingFromRecent =
+    recentFeedbacks.length > 0
+      ? recentFeedbacks.reduce((sum, item) => sum + item.rating, 0) /
+        recentFeedbacks.length
+      : undefined;
+  const averageRatingFromBreakdown =
+    totalFeedbacksFromBreakdown > 0
+      ? (Number(derivedRatingBreakdown["1"]) * 1 +
+          Number(derivedRatingBreakdown["2"]) * 2 +
+          Number(derivedRatingBreakdown["3"]) * 3 +
+          Number(derivedRatingBreakdown["4"]) * 4 +
+          Number(derivedRatingBreakdown["5"]) * 5) /
+        totalFeedbacksFromBreakdown
+      : undefined;
+  const averageRating =
+    averageRatingFromApi ?? averageRatingFromRecent ?? averageRatingFromBreakdown ?? 0;
+
+  const activeTeamFromApi =
+    pickFirstNumber(sourceRecord, [
+      "activeTeam",
+      "active_team",
+      "active_teams",
+      "active_team_count",
+      "team_count",
+    ]) ??
+    pickFirstNumberDeep(source, [
+      "activeTeam",
+      "active_team",
+      "active_teams",
+      "active_team_count",
+      "active_users",
+      "active_users_count",
+      "team_count",
+      "member_count",
+    ]);
+  const activeTeamFromLeaderboards = new Set(
+    [...mostFeedbackReceived, ...mostFeedbackGiven].map((item) => item.id || item.name)
+  ).size;
+  const activeTeamFromDepartments = departments.filter(
+    (department) => department.count > 0
+  ).length;
+  const activeTeam =
+    activeTeamFromApi ??
+    (activeTeamFromLeaderboards > 0
+      ? activeTeamFromLeaderboards
+      : activeTeamFromDepartments > 0
+      ? activeTeamFromDepartments
+      : departments.length);
+
+  const readRateFromDirect = pickFirstNullableNumber(sourceRecord, [
+    "readRate",
+    "read_rate",
+    "read_percentage",
+    "readPercent",
+    "read_percent",
+  ]);
+  const readCountFromApi = pickFirstNumber(sourceRecord, [
+    "read_count",
+    "read_feedback_count",
+    "feedback_read_count",
+    "total_read",
+  ]);
+  const unreadCountFromApi = pickFirstNumber(sourceRecord, [
+    "unread_count",
+    "unread_feedback_count",
+    "feedback_unread_count",
+    "total_unread",
+  ]);
+  const readRateFromCounts =
+    readCountFromApi !== undefined && unreadCountFromApi !== undefined
+      ? readCountFromApi + unreadCountFromApi > 0
+        ? (readCountFromApi / (readCountFromApi + unreadCountFromApi)) * 100
+        : undefined
+      : readCountFromApi !== undefined && totalFeedbacks > 0
+      ? (readCountFromApi / totalFeedbacks) * 100
+      : undefined;
+  const readRateFromActivity = deriveReadRateFromActivity(recent);
+  const selectedReadRate =
+    readRateFromDirect ?? readRateFromCounts ?? readRateFromActivity ?? null;
+  const readRate =
+    selectedReadRate === null
+      ? null
+      : Math.max(
+          0,
+          Math.min(
+            100,
+            selectedReadRate > 0 && selectedReadRate < 1
+              ? selectedReadRate * 100
+              : selectedReadRate
+          )
+        );
+  const readTrackingFlag = pickFirstValue(sourceRecord, [
+    "readTrackingAvailable",
+    "read_tracking_available",
+    "is_read_tracking_available",
+    "readTrackingEnabled",
+    "read_tracking_enabled",
+  ]);
+  const readTrackingAvailable =
+    typeof readTrackingFlag === "boolean"
+      ? readTrackingFlag
+      : typeof readTrackingFlag === "string"
+      ? ["true", "1", "yes", "enabled"].includes(
+          readTrackingFlag.trim().toLowerCase()
+        )
+      : typeof readTrackingFlag === "number"
+      ? readTrackingFlag > 0
+      : readRate !== undefined && readRate !== null;
 
   return {
     totalFeedbacks,
-    averageRating: totalFeedbacks > 0 ? weightedScore / totalFeedbacks : 0,
-    ratingBreakdown,
-    recentFeedbacks: [],
+    averageRating,
+    activeTeam,
+    readRate: readRate ?? null,
+    readTrackingAvailable,
+    ratingBreakdown: derivedRatingBreakdown,
+    departments,
+    mostFeedbackReceived,
+    mostFeedbackGiven,
+    recentFeedbacks,
   };
 }
 
@@ -330,16 +808,6 @@ async function safeApiRequest<T>(endpoint: string): Promise<T> {
   const baseURL = await resolveFeedbackApiBaseUrl();
   const embeddedToken = getEmbeddedToken();
   const token = embeddedToken || API_CONFIG.TOKEN;
-  const { start, end } = getFeedbackDateRange();
-  const baseParams: Record<string, string | number> = {
-    _t: Date.now(),
-    start_date: start,
-    end_date: end,
-  };
-
-  if (token) {
-    baseParams.access_token = token;
-  }
 
   let requestError: unknown = null;
 
@@ -348,35 +816,16 @@ async function safeApiRequest<T>(endpoint: string): Promise<T> {
       method: "get",
       baseURL,
       url: path,
-      params: baseParams,
       timeout: 20000,
       headers: {
         Accept: "application/json",
+        ...(token ? { Authorization: getFeedbackAuthHeader() } : {}),
       },
     });
 
     return response.data;
   } catch (error) {
     requestError = error;
-    if (token) {
-      try {
-        const fallbackResponse = await axios.request<T>({
-          method: "get",
-          baseURL,
-          url: path,
-          params: { _t: Date.now() },
-          timeout: 20000,
-          headers: {
-            Accept: "application/json",
-            Authorization: getFeedbackAuthHeader(),
-          },
-        });
-
-        return fallbackResponse.data;
-      } catch (fallbackError) {
-        requestError = fallbackError;
-      }
-    }
 
     if (axios.isAxiosError(requestError)) {
       const responseData = toApiRecord(requestError.response?.data);
@@ -434,16 +883,15 @@ const FeedbackDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await safeApiRequest<CustomerExperienceFeedbackAnalytics>(
-        CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT
+      const response = await safeApiRequest<RatingsFeedbackDashboardResponse>(
+        RATINGS_FEEDBACK_DASHBOARD_ENDPOINT
       );
 
-      const payload =
-        buildDashboardDataFromAnalytics(response) ?? normalizeDashboardData(response);
+      const payload = normalizeDashboardData(response);
 
       if (!payload) {
         throw new Error(
-          `${CUSTOMER_EXPERIENCE_FEEDBACK_ENDPOINT}: Dashboard payload is empty or invalid.`
+          `${RATINGS_FEEDBACK_DASHBOARD_ENDPOINT}: Dashboard payload is empty or invalid.`
         );
       }
 
@@ -486,7 +934,7 @@ const FeedbackDashboard = () => {
           </p>
           <p className="mt-1 break-all text-xs text-red-500">{error}</p>
           <button
-            onClick={fetchDashboard}
+            onClick={() => fetchDashboard()}
             className="mt-4 rounded-lg bg-[#DA7756] px-5 py-2 text-xs font-semibold text-white hover:bg-[#DA7756]/85"
           >
             Retry
@@ -497,13 +945,23 @@ const FeedbackDashboard = () => {
   }
 
   // ── Real data from API ─────────────────────────────────────────────────────
-  const { totalFeedbacks, averageRating, ratingBreakdown, recentFeedbacks } =
-    data;
+  const {
+    totalFeedbacks,
+    averageRating,
+    activeTeam,
+    readRate,
+    readTrackingAvailable,
+    ratingBreakdown,
+    departments,
+    mostFeedbackReceived,
+    mostFeedbackGiven,
+    recentFeedbacks,
+  } = data;
 
-  const totalRatings = Object.values(ratingBreakdown).reduce(
-    (a, b) => a + b,
-    0
-  );
+  const readRateDisplay =
+    readTrackingAvailable && readRate !== null
+      ? `${Number.isInteger(readRate) ? readRate : readRate.toFixed(1)}%`
+      : "N/A";
 
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
@@ -525,7 +983,7 @@ const FeedbackDashboard = () => {
         </header>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 
           {/* Total Feedbacks — from API */}
           <Card className="rounded-2xl border-0 bg-sky-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
@@ -556,16 +1014,29 @@ const FeedbackDashboard = () => {
             </div>
           </Card>
 
-          {/* Total Ratings — derived from ratingBreakdown */}
+          {/* Active Team — from API */}
           <Card className="rounded-2xl border-0 bg-orange-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
             <div className="flex flex-col items-center text-center">
               <Users className="mb-3 h-7 w-7 text-orange-600" />
               <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                {totalRatings}
+                {activeTeam}
               </p>
               <p className="mt-1 text-xs font-medium text-neutral-600">
-                Total Ratings
+                Active Team
               </p>
+            </div>
+          </Card>
+
+          {/* Read Rate — from API */}
+          <Card className="rounded-2xl border-0 bg-emerald-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-neutral-700">Read Rate</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums text-neutral-900">
+                  {readRateDisplay}
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-emerald-600" strokeWidth={2.2} />
             </div>
           </Card>
         </div>
@@ -574,10 +1045,11 @@ const FeedbackDashboard = () => {
           <h2 className="mb-4 text-lg font-semibold text-neutral-900">
             Feedback by Department
           </h2>
-          <ul className="space-y-3">
-            {DEPARTMENTS.map((department) => (
+          {departments.length > 0 ? (
+            <ul className="space-y-3">
+              {departments.map((department) => (
               <li
-                key={department.name}
+                key={department.id}
                 className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4]/90 px-3 py-3 sm:gap-4 sm:px-4"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
@@ -590,36 +1062,83 @@ const FeedbackDashboard = () => {
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
-                  {department.rating}
+                  {department.rating > 0 ? department.rating.toFixed(1) : "N/A"}
                 </span>
               </li>
-            ))}
-          </ul>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+              Department-wise feedback is not available in the current dashboard API response.
+            </div>
+          )}
         </Card>
 
-        {/* Rating Breakdown — from API ratingBreakdown */}
-        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900">
-            Rating Breakdown
-          </h2>
-          <div className="space-y-3">
-            {(["5", "4", "3", "2", "1"] as const).map((star) => (
-              <RatingBar
-                key={star}
-                label={star}
-                count={ratingBreakdown[star]}
-                total={totalRatings}
-              />
-            ))}
-          </div>
-          <div className="mt-5 flex items-center gap-2">
-            <StarRow value={Math.round(averageRating)} />
-            <span className="text-sm text-neutral-500">
-              {averageRating.toFixed(1)} out of 5 &nbsp;·&nbsp;{totalRatings}{" "}
-              ratings
-            </span>
-          </div>
-        </Card>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <ArrowDownLeft className="h-5 w-5 text-[#DA7756]" strokeWidth={2.25} />
+              <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Received</h2>
+            </div>
+            {mostFeedbackReceived.length > 0 ? (
+              <ul className="space-y-3">
+                {mostFeedbackReceived.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
+                      {entry.rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
+                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-[#DA7756]/15 px-3 py-1 text-sm font-semibold text-[#9e4f36]">
+                      {entry.count} received
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+                No feedback-received leaderboard data in current API response.
+              </div>
+            )}
+          </Card>
+
+          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <ArrowUpRight className="h-5 w-5 text-[#b85f42]" strokeWidth={2.25} />
+              <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Given</h2>
+            </div>
+            {mostFeedbackGiven.length > 0 ? (
+              <ul className="space-y-3">
+                {mostFeedbackGiven.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#b85f42] text-sm font-bold text-white">
+                      {entry.rank}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-neutral-900">{entry.name}</p>
+                      <p className="truncate text-sm text-neutral-600">{entry.designation}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-[#b85f42]/15 px-3 py-1 text-sm font-semibold text-[#8f4a33]">
+                      {entry.count} given
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+                No feedback-given leaderboard data in current API response.
+              </div>
+            )}
+          </Card>
+        </div>
 
         {/* AI Summary */}
         <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-5 shadow-sm sm:px-6 sm:py-6">

@@ -120,7 +120,7 @@ export const RecurringBillCreatePage: React.FC = () => {
           }
         });
         if (res && res.data && Array.isArray(res.data)) {
-          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
+          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id, inter_state_tax_rate_id: item.inter_state_tax_rate_id })));
           console.log('Fetched items:', res.data);
         }
       } catch (err) {
@@ -286,6 +286,19 @@ export const RecurringBillCreatePage: React.FC = () => {
       .finally(() => {
         setLoadingTaxGroups(false);
       });
+  }, []);
+
+  const [taxRates, setTaxRates] = useState<any[]>([]);
+  useEffect(() => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const lock_account_id = localStorage.getItem('lock_account_id');
+    axios
+      .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+        headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+      })
+      .then((res) => setTaxRates(res.data || []))
+      .catch((error) => console.error("Error fetching tax rates:", error));
   }, []);
 
   const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
@@ -914,6 +927,22 @@ if (!profileName || profileName.trim() === "") {
     }
   }, [selectedTax, taxOptions, afterDiscount]);
 
+  // Re-preselect tax on all taxable items when destination changes
+  useEffect(() => {
+    if (!destinationOfSupply) return;
+    const isMaharashtra = destinationOfSupply === "Maharashtra";
+    setItems(prev => prev.map(item => {
+      if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+      const matched = itemOptions.find(opt => opt.name === item.name);
+      if (!matched) return item;
+      return {
+        ...item,
+        item_tax_type: isMaharashtra ? "tax_group" : "tax_rate",
+        tax_group_id: isMaharashtra ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+      };
+    }));
+  }, [destinationOfSupply]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const selectedTaxGroups = items
     .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
     .map(item => {
@@ -925,23 +954,35 @@ if (!profileName || profileName.trim() === "") {
     });
   const taxBreakdown: any[] = [];
 
+  // Tax group breakdown (Maharashtra)
   selectedTaxGroups.forEach(group => {
     group.taxRates.forEach(rate => {
       const taxAmount = (group.itemAmount * rate.rate) / 100;
-
       const existing = taxBreakdown.find(t => t.name === rate.name);
-
       if (existing) {
         existing.amount += taxAmount;
       } else {
-        taxBreakdown.push({
-          name: rate.name,
-          rate: rate.rate,
-          amount: taxAmount
-        });
+        taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
       }
     });
   });
+
+  // Tax rate breakdown (non-Maharashtra)
+  items
+    .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+    .forEach(item => {
+      const rate = taxRates.find(r => r.id === item.tax_group_id);
+      if (!rate) return;
+      const rateValue = rate.rate ?? rate.percentage ?? 0;
+      const taxAmount = (item.amount * rateValue) / 100;
+      const existing = taxBreakdown.find(t => t.name === rate.name);
+      if (existing) {
+        existing.amount += taxAmount;
+      } else {
+        taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
+      }
+    });
+
   // Calculate Final Total
 
   const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -1744,8 +1785,9 @@ if (!profileName || profileName.trim() === "") {
                                   updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
                                 }
                                 if (selectedItem.tax_preference === 'taxable') {
-                                  updateItem(index, 'item_tax_type', 'tax_group');
-                                  updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                  const isMaharashtra = destinationOfSupply === 'Maharashtra';
+                                  updateItem(index, 'item_tax_type', isMaharashtra ? 'tax_group' : 'tax_rate');
+                                  updateItem(index, 'tax_group_id', isMaharashtra ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
                                 }
                                 if (selectedItem.tax_preference === 'out_of_scope') {
                                   updateItem(index, 'item_tax_type', 'out_of_scope');
@@ -1836,49 +1878,48 @@ if (!profileName || profileName.trim() === "") {
                       <td className="px-4 py-3">
                         <FormControl size="small" sx={{ width: 200 }}>
                           <Select
-                            //   value={item.tax_type || ""}
-                            value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                            value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
                             displayEmpty
                             onChange={(e) => {
                               const value = e.target.value;
+                              const isMaharashtra = destinationOfSupply === "Maharashtra";
 
-                              // Static tax types
                               if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
                                 updateItem(index, "item_tax_type", value);
                                 updateItem(index, "tax_group_id", null);
-
                                 if (value === "non_taxable") {
                                   setCurrentItemIndex(index);
                                   setExemptionModalOpen(true);
                                 }
-                              }
-                              // Tax group selected
-                              else {
-                                updateItem(index, "item_tax_type", "tax_group");
+                              } else {
+                                updateItem(index, "item_tax_type", isMaharashtra ? "tax_group" : "tax_rate");
                                 updateItem(index, "tax_group_id", value);
                               }
                             }}
                           >
                             <MenuItem value="">Select Tax</MenuItem>
 
-                            {/* Static Options */}
                             {taxTypeOptions.map((opt) => (
                               <MenuItem key={opt.value} value={opt.value}>
                                 {opt.label}
                               </MenuItem>
                             ))}
 
-                            {/* Divider */}
-                            <MenuItem disabled>
-                              Tax Groups
-                            </MenuItem>
-
-                            {/* Tax Groups */}
-                            {taxGroups.map((group) => (
-                              <MenuItem key={group.id} value={group.id}>
-                                {group.name}
-                              </MenuItem>
-                            ))}
+                            {destinationOfSupply === "Maharashtra" ? (
+                              [
+                                <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                ...taxGroups.map((group) => (
+                                  <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                ))
+                              ]
+                            ) : (
+                              [
+                                <MenuItem key="__divider__" disabled>Tax Rates</MenuItem>,
+                                ...taxRates.map((rate) => (
+                                  <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                ))
+                              ]
+                            )}
                           </Select>
                         </FormControl>
                       </td>

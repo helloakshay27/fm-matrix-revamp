@@ -6,7 +6,6 @@ import TeamDirectory from '@/components/BusinessCompass/TeamDirectory';
 const DirectoryAndChat = () => {
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto">
-            <AdminViewEmulation />
             {/* Header Section */}
             <div className="flex justify-between items-start">
                 <div>

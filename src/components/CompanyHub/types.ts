@@ -24,8 +24,17 @@ export interface Comment {
   updated_at: string;
   commentor_full_name: string;
   commentor_profile_image: string | null;
-  commentor_site_name: string;
-  attachments: any[];
+  commentor_site_name?: string;
+  attachments?: any[];
+}
+
+export interface PollOption {
+  id: number;
+  name: string;
+  total_votes: number;
+  voted: string | boolean;
+  vote_percentage: number;
+  votes: any[];
 }
 
 export interface Post {
@@ -34,20 +43,27 @@ export interface Post {
   body: string;
   active: boolean;
   blocked: boolean;
+  shared_from_type?: string | null;
+  shared_from_id?: number | null;
   resource_id: number;
   resource_type: string;
   created_at: string;
   updated_at: string;
   creator_full_name: string;
-  creator_site_name: string;
+  creator_site_name: string | null;
   creator_image_url: string | null;
   resource_name: string;
   total_likes: number;
+  total_comments?: number;
+  total_votes?: number;
+  likes_with_user_names: any[];
   likes_with_emoji: Record<string, number>;
   isliked: boolean;
   attachments: Attachment[];
   comments: Comment[];
-  poll_options?: any[];
+  poll_options?: PollOption[];
+  event?: any | null;
+  notice?: any | null;
   type?: "post" | "event" | "notice" | "document";
 }
 
@@ -91,13 +107,12 @@ export interface UpcomingEvent {
 }
 
 export interface TaskStats {
-  task_count: number;
-  todo_count: number;
-  in_progress_tasks: number;
-  overdue_tasks: number;
-  on_hold_tasks: number;
-  completed_tasks: number;
-  open_tasks: number;
+  dashboard?: {
+    p1_count: number;
+    p2_count: number;
+    p3_count: number;
+    p4_count: number;
+  };
 }
 
 export interface LifeCompassStats {

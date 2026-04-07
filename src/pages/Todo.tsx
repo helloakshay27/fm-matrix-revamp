@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Check, Play, Pause, Pencil, RefreshCw, ArrowRightLeft, Focus, Calendar, Filter, GripVertical, Eye } from "lucide-react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AddToDoModal from "@/components/AddToDoModal";
 import TodoConvertModal from "@/components/TodoConvertModal";
 import TodoFilterModal, { TodoFilters } from "@/components/TodoFilterModal";
@@ -126,6 +126,7 @@ export default function Todo() {
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAddTodoModalOpen, setIsAddTodoModalOpen] = useState(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
@@ -152,6 +153,20 @@ export default function Todo() {
   });
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<any>(null);
+
+  useEffect(() => {
+    const type = searchParams.get("type");
+
+    if (type === "create") {
+      setIsAddTodoModalOpen(true);
+
+      // ✅ Remove only "type" param
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("type");
+
+      setSearchParams(newParams, { replace: true }); // 🔥 important
+    }
+  }, [searchParams, setSearchParams]);
 
   // Use React Query hook for infinite pagination
   const userIds = selectedUsers.map(u => u.value);

@@ -15,6 +15,7 @@ import {
   Bug,
   FileText,
   LineChart,
+  BarChart3,
 } from "lucide-react";
 
 // Module-based navigation structures for Admin Compass
@@ -26,6 +27,10 @@ const adminCompassNavigation: Record<string, any> = {
   "Daily Meeting": {
     icon: MessageSquare, 
     href: "/admin-compass/daily-meeting",
+  },
+  "KPI": {
+    icon: BarChart3,
+    href: "/admin-compass/kpi",
   },
   "Weekly Meetings": {
     icon: Trophy,

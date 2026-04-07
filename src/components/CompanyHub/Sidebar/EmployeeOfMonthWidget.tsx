@@ -37,7 +37,7 @@ const EmployeeOfMonthWidget: React.FC<EmployeeOfMonthWidgetProps> = ({
         <div className="w-[95%] h-px bg-[#F0F0F0] mb-5" />
 
         <div className="flex items-center justify-center gap-6 text-[13px] text-[#8A8A8A] font-medium">
-          <div className="flex items-center gap-1.5">
+          {/* <div className="flex items-center gap-1.5">
             <Heart
               className="w-[18px] h-[18px] text-[#E67E5F]"
               strokeWidth={2}
@@ -50,7 +50,7 @@ const EmployeeOfMonthWidget: React.FC<EmployeeOfMonthWidgetProps> = ({
               strokeWidth={2}
             />{" "}
             34
-          </div>
+          </div> */}
         </div>
       </div>
     </GlassCard>

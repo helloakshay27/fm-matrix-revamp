@@ -116,7 +116,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
-    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
@@ -160,9 +159,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ClubSidebar />;
     }
 
-    if (location.pathname.startsWith("/admin-compass")) {
-      console.log("✅ Rendering AdminCompassSidebar");
+    if (
+      location.pathname.startsWith("/admin-compass") ||
+      currentSection === "Admin Compass"
+    ) {
       return <AdminCompassSidebar />;
+    }
+
+    if (
+      currentSection === "Business Compass" ||
+      location.pathname.startsWith("/business-compass")
+    ) {
+      return <BusinessCompassSidebar />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -180,6 +188,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "90" ||
           org_id === "1" ||
           org_id === "84" ||
+          org_id === "34" ||
           org_id === "1" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
@@ -192,17 +201,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           return <EmployeeSidebar />;
         }
         return <EmployeeSidebarStatic />;
-      }
-
-      if (
-        currentSection === "Business Compass" ||
-        location.pathname.startsWith("/business-compass")
-      ) {
-        return <BusinessCompassSidebar />;
-      }
-
-      if (currentSection === "Admin Compass") {
-        return <AdminCompassSidebar />;
       }
 
       // For other modules (Ticket, MOM, Visitors), don't render sidebar
@@ -228,6 +226,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "90" ||
       org_id === "1" ||
       org_id === "84" ||
+      org_id === "34" ||
       org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -319,6 +318,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "90" ||
       org_id === "1" ||
       org_id === "84" ||
+      org_id === "34" ||
       org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -447,28 +447,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          org_id === "1" ||
-          org_id === "84" ||
-          org_id === "1" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ? (
-          // <EmployeeHeader />
+        selectedCompany?.id === 295 ||
+        selectedCompany?.id === 298 ||
+        selectedCompany?.id === 199 ||
+        org_id === "90" ||
+        org_id === "1" ||
+        org_id === "84" ||
+        org_id === "34" ||
+        userEmail === "ubaid.hashmat@lockated.com" ||
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           isNewEmpHubRoute ? (
             <TopNavigation
               activeNavMenu={activeNavMenu}
               setActiveNavMenu={setActiveNavMenu}
-            /> // 👈 your new header
+            />
           ) : (
             <EmployeeHeader />
           )
         ) : (
-          <EmployeeHeaderStatic />
+          <TopNavigation
+            activeNavMenu={activeNavMenu}
+            setActiveNavMenu={setActiveNavMenu}
+          />
         )
       ) : (
         <Header />
@@ -485,7 +487,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
-            isEmployeeUser && isLocalhost
+              isEmployeeUser && isLocalhost
               ? currentSection === "Project Task" ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -496,12 +498,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   : "ml-64"
                 : "ml-0" // No margin for other modules
               : // For action sidebar, add extra top padding and adjust left margin
-              isActionSidebarVisible
+                isActionSidebarVisible
                 ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
                 : isSidebarCollapsed
                   ? "ml-16"
                   : "ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+        } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

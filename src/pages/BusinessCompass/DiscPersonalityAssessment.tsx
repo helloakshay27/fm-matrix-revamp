@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Award,
@@ -19,6 +19,7 @@ import {
   User,
   Users,
   UsersRound,
+  Loader2,
 } from "lucide-react";
 import {
   Line,
@@ -45,6 +46,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { DiscAssessmentResultsModal } from "@/components/DiscAssessmentResultsModal";
+import { getToken, getBaseUrl } from "@/utils/auth";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -121,158 +123,14 @@ const MOCK_TEAM: TeamMember[] = [
   },
 ];
 
-const ASSESSMENT_QUESTIONS = [
-  {
-    id: 1,
-    question: "In a group discussion, I tend to be:",
-    options: [
-      "Direct and to the point",
-      "Enthusiastic and persuasive",
-      "Supportive and cooperative",
-      "Analytical and precise"
-    ]
-  },
-  {
-    id: 2,
-    question: "When facing a challenge, I typically:",
-    options: [
-      "Take charge and find a quick solution",
-      "Inspire others to work together",
-      "Maintain stability and harmony",
-      "Research all options before acting"
-    ]
-  },
-  {
-    id: 3,
-    question: "My communication style is best described as:",
-    options: [
-      "Bold and confident",
-      "Expressive and outgoing",
-      "Patient and good listener",
-      "Logical and detailed"
-    ]
-  },
-  {
-    id: 4,
-    question: "In team settings, I prefer to:",
-    options: [
-      "Lead the decision-making process",
-      "Motivate and energize the team",
-      "Ensure everyone feels included",
-      "Provide accurate data and analysis"
-    ]
-  },
-  {
-    id: 5,
-    question: "When under pressure, I:",
-    options: [
-      "Become more decisive and assertive",
-      "Stay optimistic and rally others",
-      "Focus on maintaining relationships",
-      "Withdraw to think through the situation"
-    ]
-  },
-  {
-    id: 6,
-    question: "My approach to problem-solving is:",
-    options: [
-      "Action-oriented and results-focused",
-      "People-oriented and collaborative",
-      "Steady and methodical",
-      "Cautious and systematic"
-    ]
-  },
-  {
-    id: 7,
-    question: "In meetings, I am most likely to:",
-    options: [
-      "Drive the agenda forward",
-      "Share ideas and build enthusiasm",
-      "Mediate conflicts and build consensus",
-      "Ask clarifying questions and take notes"
-    ]
-  },
-  {
-    id: 8,
-    question: "My work pace is typically:",
-    options: [
-      "Fast and decisive",
-      "Variable and energetic",
-      "Consistent and steady",
-      "Deliberate and careful"
-    ]
-  },
-  {
-    id: 9,
-    question: "When giving feedback, I tend to be:",
-    options: [
-      "Direct and straightforward",
-      "Encouraging and positive",
-      "Diplomatic and considerate",
-      "Thorough and specific"
-    ]
-  },
-  {
-    id: 10,
-    question: "My preferred work environment is:",
-    options: [
-      "Competitive and results-driven",
-      "Social and interactive",
-      "Supportive and harmonious",
-      "Structured and organized"
-    ]
-  },
-  {
-    id: 11,
-    question: "When delegating tasks, I:",
-    options: [
-      "Expect immediate results",
-      "Inspire ownership and enthusiasm",
-      "Provide ongoing support",
-      "Give detailed instructions"
-    ]
-  },
-  {
-    id: 12,
-    question: "My response to change is typically:",
-    options: [
-      "Quick to adapt and lead",
-      "Excited about new possibilities",
-      "Cautious but cooperative",
-      "Analytical and questioning"
-    ]
-  },
-  {
-    id: 13,
-    question: "In conflicts, I usually:",
-    options: [
-      "Address issues head-on",
-      "Focus on positive outcomes",
-      "Seek compromise and harmony",
-      "Analyze the root cause"
-    ]
-  },
-  {
-    id: 14,
-    question: "My decision-making style is:",
-    options: [
-      "Quick and confident",
-      "Intuitive and people-focused",
-      "Collaborative and inclusive",
-      "Data-driven and analytical"
-    ]
-  },
-  {
-    id: 15,
-    question: "When motivating others, I:",
-    options: [
-      "Set high standards and push for results",
-      "Use enthusiasm and vision",
-      "Provide support and encouragement",
-      "Recognize achievements with facts"
-    ]
-  }
-];
+type ApiQuestion = {
+  id: number;
+  text: string;
+  options: {
+    label: string;
+    dimension: string;
+  }[];
+};
 
 type DiscLetter = "D" | "I" | "S" | "C";
 
@@ -365,15 +223,18 @@ function patternNameFor(primary: DiscLetter, secondary: DiscLetter): string {
   return PATTERN_BY_BLEND[key] ?? `${primary}${secondary} Blend`;
 }
 
-function computeDiscResult(answers: number[]): DiscProfileResult {
+function computeDiscResult(answers: number[], questions: ApiQuestion[]): DiscProfileResult {
   const counts: Record<DiscLetter, number> = { D: 0, I: 0, S: 0, C: 0 };
-  for (let i = 0; i < ASSESSMENT_QUESTIONS.length; i++) {
+  for (let i = 0; i < questions.length; i++) {
     const idx = answers[i];
-    if (idx === undefined || idx < 0 || idx > 3) continue;
-    counts[DISC_ORDER[idx]] += 1;
+    if (idx === undefined || idx < 0 || idx >= questions[i].options.length) continue;
+    const dim = questions[i].options[idx].dimension as DiscLetter;
+    if (counts[dim] !== undefined) {
+      counts[dim] += 1;
+    }
   }
   const toScore = (n: number) =>
-    Math.max(1, Math.min(7, Math.round(1 + (n / 15) * 6)));
+    Math.max(1, Math.min(7, Math.round(1 + (n / questions.length) * 6)));
   const scores: Record<DiscLetter, number> = {
     D: toScore(counts.D),
     I: toScore(counts.I),
@@ -1035,7 +896,20 @@ function DiscProfileReport({
   );
 }
 
-function TeamMemberCard({ member }: { member: TeamMember }) {
+function TeamMemberCard({ member }: { member: any }) {
+  const avatarLetter = member.name?.[0]?.toUpperCase() || "?";
+
+  // Helper to color based on DISC type
+  const getDiscColor = (type: string) => {
+    switch (type) {
+      case 'D': return 'bg-red-500';
+      case 'I': return 'bg-amber-500';
+      case 'S': return 'bg-emerald-500';
+      case 'C': return 'bg-sky-600';
+      default: return 'bg-neutral-500';
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -1047,50 +921,45 @@ function TeamMemberCard({ member }: { member: TeamMember }) {
         <div
           className={cn(
             "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white",
-            member.avatarBg
+            getDiscColor(member.primary_type)
           )}
         >
-          {member.avatarLetter}
+          {avatarLetter}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-bold text-neutral-900">{member.name}</h3>
           <p className="mt-0.5 text-sm text-neutral-500">
-            {member.role}, {member.department}
+            {member.department}
           </p>
         </div>
       </div>
 
-      <div className={cn("mx-4 mb-4 rounded-xl px-4 py-4 text-white", member.scorePanelClass)}>
+      <div className={cn("mx-4 mb-4 rounded-xl px-4 py-4 text-white", getDiscColor(member.primary_type))}>
         <p className="text-xs font-medium text-white/80">DISC Score</p>
         <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">
-          {member.score.toLocaleString()}
+          {member.score_string || "0000"}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <span
-            className={cn(
-              "rounded-md px-2.5 py-1 text-xs font-semibold",
-              member.primaryBadge.className
-            )}
-          >
-            {member.primaryBadge.label}
-          </span>
-          <span
-            className={cn(
-              "rounded-md px-2.5 py-1 text-xs font-semibold",
-              member.secondaryBadge.className
-            )}
-          >
-            {member.secondaryBadge.label}
-          </span>
+          {member.primary_type && (
+            <span className="rounded-md bg-white/20 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+              {member.primary_type} Primary
+            </span>
+          )}
+          {member.secondary_type && (
+            <span className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+              {member.secondary_type} Secondary
+            </span>
+          )}
         </div>
         <p className="mt-3 w-fit border-b border-dotted border-white/70 text-sm font-medium text-white">
-          {member.trait}
+          {member.profile_name}
         </p>
       </div>
 
       <div className="mt-auto p-4 pt-0">
         <button
           type="button"
+          onClick={() => member.onViewReport?.(member.attempt_id)}
           className={cn(
             "flex w-full items-center justify-center gap-2 rounded-xl bg-[#DA7756]",
             "py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85"
@@ -1104,37 +973,50 @@ function TeamMemberCard({ member }: { member: TeamMember }) {
   );
 }
 
-function TeamProfilesTabContent() {
+function TeamProfilesTabContent({ members, loading, onViewReport }: { members: any[], loading: boolean, onViewReport: (id: any) => void }) {
   const [search, setSearch] = useState("");
   const [discFilter, setDiscFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
-  const [patternFilter, setPatternFilter] = useState("all");
 
   const filtered = useMemo(() => {
-    return MOCK_TEAM.filter((m) => {
+    return members.filter((m) => {
       const q = search.trim().toLowerCase();
       const matchSearch =
         !q ||
         m.name.toLowerCase().includes(q) ||
-        m.department.toLowerCase().includes(q) ||
-        m.role.toLowerCase().includes(q);
+        m.department?.toLowerCase().includes(q) ||
+        m.email?.toLowerCase().includes(q);
       const matchDisc =
-        discFilter === "all" || m.discType === discFilter;
+        discFilter === "all" || m.primary_type === discFilter;
       const matchDept =
         deptFilter === "all" || m.department === deptFilter;
-      const matchPattern =
-        patternFilter === "all" || m.pattern === patternFilter;
-      return matchSearch && matchDisc && matchDept && matchPattern;
+      return matchSearch && matchDisc && matchDept;
     });
-  }, [search, discFilter, deptFilter, patternFilter]);
+  }, [search, discFilter, deptFilter, members]);
+
+  // Unique departments for filter
+  const departments = useMemo(() => {
+    const depts = new Set<string>();
+    members.forEach(m => { if (m.department) depts.add(m.department); });
+    return Array.from(depts).sort();
+  }, [members]);
 
   const filterFieldClass =
     "space-y-1.5 min-w-0 flex-1 sm:min-w-[140px]";
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center py-20">
+        <Loader2 className="h-10 w-10 animate-spin text-[#DA7756]" />
+        <p className="mt-4 text-sm font-medium text-neutral-600">Loading team profiles...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm backdrop-blur-sm sm:p-5">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className={filterFieldClass}>
             <label className="text-xs font-medium text-neutral-500">
               Search by name
@@ -1177,23 +1059,9 @@ function TeamProfilesTabContent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="Design">Design</SelectItem>
-                <SelectItem value="Front End">Front End</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className={filterFieldClass}>
-            <label className="text-xs font-medium text-neutral-500">
-              Filter by Pattern
-            </label>
-            <Select value={patternFilter} onValueChange={setPatternFilter}>
-              <SelectTrigger className="h-11 rounded-xl border-neutral-200 bg-white">
-                <SelectValue placeholder="All Patterns" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Patterns</SelectItem>
-                <SelectItem value="SD">SD</SelectItem>
-                <SelectItem value="DC">DC</SelectItem>
+                {departments.map(dept => (
+                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -1207,8 +1075,8 @@ function TeamProfilesTabContent() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {filtered.map((member) => (
-            <TeamMemberCard key={member.id} member={member} />
+          {filtered.map((member, idx) => (
+            <TeamMemberCard key={member.attempt_id || idx} member={{ ...member, onViewReport }} />
           ))}
         </div>
       )}
@@ -1224,16 +1092,18 @@ function AssessmentInterface({
   onAnswerSelect,
   onNext,
   onPrevious,
-  onFinish
+  onFinish,
+  isSubmitting = false
 }: {
   currentQuestion: number;
   totalQuestions: number;
-  question: typeof ASSESSMENT_QUESTIONS[0];
+  question: ApiQuestion;
   selectedAnswer: number | null;
   onAnswerSelect: (answer: number) => void;
   onNext: () => void;
   onPrevious: () => void;
   onFinish: () => void;
+  isSubmitting?: boolean;
 }) {
   return (
     <div className="rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-6 shadow-sm sm:p-8">
@@ -1254,7 +1124,7 @@ function AssessmentInterface({
       {/* Question */}
       <div className="mb-8">
         <h2 className="text-xl font-bold text-neutral-900 mb-6">
-          {question.question}
+          {question.text}
         </h2>
 
         {/* Options */}
@@ -1287,7 +1157,7 @@ function AssessmentInterface({
                   "text-sm font-medium",
                   selectedAnswer === index ? "text-[#DA7756]" : "text-neutral-900"
                 )}>
-                  {option}
+                  {option.label}
                 </span>
               </div>
             </button>
@@ -1315,15 +1185,22 @@ function AssessmentInterface({
           <button
             type="button"
             onClick={onFinish}
-            disabled={selectedAnswer === null}
+            disabled={selectedAnswer === null || isSubmitting}
             className={cn(
-              "px-6 py-3 rounded-xl font-medium text-white transition-colors",
-              selectedAnswer === null
+              "px-6 py-3 rounded-xl font-medium text-white transition-colors flex items-center gap-2",
+              (selectedAnswer === null || isSubmitting)
                 ? "bg-neutral-300 cursor-not-allowed"
                 : "bg-[#DA7756] hover:bg-[#DA7756]/85"
             )}
           >
-            Finish Assessment
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Finish Assessment"
+            )}
           </button>
         ) : (
           <button
@@ -1355,8 +1232,131 @@ const DiscPersonalityAssessment = () => {
   const [savedProfile, setSavedProfile] = useState<DiscProfileResult | null>(
     null
   );
+  const [selectedMemberReport, setSelectedMemberReport] = useState<DiscProfileResult | null>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [questions, setQuestions] = useState<ApiQuestion[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [teamProfiles, setTeamProfiles] = useState<any[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+
+  useEffect(() => {
+    const fetchAssessmentData = async () => {
+      try {
+        setLoadingQuestions(true);
+        const token = getToken();
+        const baseUrl = getBaseUrl() || "https://fm-uat-api.lockated.com";
+        const headers = {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        };
+
+        const [qRes, rRes, tRes] = await Promise.all([
+          fetch(`${baseUrl}/disc_assessments/questions`, { headers }).catch(() => null),
+          fetch(`${baseUrl}/disc_assessments/my_report`, { headers }).catch(() => null),
+          fetch(`${baseUrl}/disc_assessments/team_profiles`, { headers }).catch(() => null)
+        ]);
+
+        if (qRes && qRes.ok) {
+          const qData = await qRes.json();
+          if (qData.success && qData.data && qData.data.questions) {
+            setQuestions(qData.data.questions);
+          }
+        }
+
+        if (rRes && rRes.ok) {
+          const rData = await rRes.json();
+          if (rData.success && rData.data && rData.data.report) {
+            const report = rData.data.report;
+            const counts = {
+              D: report.scores?.D || 0,
+              I: report.scores?.I || 0,
+              S: report.scores?.S || 0,
+              C: report.scores?.C || 0,
+            };
+            const toScore = (n: number) =>
+              Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
+
+            setSavedProfile({
+              counts,
+              scores: {
+                D: toScore(counts.D),
+                I: toScore(counts.I),
+                S: toScore(counts.S),
+                C: toScore(counts.C),
+              },
+              primary: report.primary_type as DiscLetter,
+              secondary: (report.secondary_type || report.primary_type) as DiscLetter,
+              patternName: report.profile_name || 'Balanced',
+              blendLabel: report.style_code || report.primary_type,
+              completedAt: report.generated_at || new Date().toISOString(),
+            });
+          }
+        }
+
+        if (tRes && tRes.ok) {
+          const tData = await tRes.json();
+          if (tData.success && tData.data && tData.data.profiles) {
+            setTeamProfiles(tData.data.profiles);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching assessment data:", error);
+      } finally {
+        setLoadingQuestions(false);
+      }
+    };
+
+    fetchAssessmentData();
+  }, []);
+
+  const fetchMemberReport = async (attemptId: number | string) => {
+    try {
+      setLoadingReport(true);
+      const token = getToken();
+      const baseUrl = getBaseUrl() || "https://fm-uat-api.lockated.com";
+      const response = await fetch(`${baseUrl}/disc_assessments/${attemptId}/report`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+      const data = await response.json();
+      if (data.success && data.data && data.data.report) {
+        const report = data.data.report;
+        const counts = {
+          D: report.scores?.D || 0,
+          I: report.scores?.I || 0,
+          S: report.scores?.S || 0,
+          C: report.scores?.C || 0,
+        };
+        const toScore = (n: number) =>
+          Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
+
+        setSelectedMemberReport({
+          counts,
+          scores: {
+            D: toScore(counts.D),
+            I: toScore(counts.I),
+            S: toScore(counts.S),
+            C: toScore(counts.C),
+          },
+          primary: report.primary_type as DiscLetter,
+          secondary: (report.secondary_type || report.primary_type) as DiscLetter,
+          patternName: report.profile_name || 'Balanced',
+          blendLabel: report.style_code || report.primary_type,
+          completedAt: report.generated_at || new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching member report:", error);
+    } finally {
+      setLoadingReport(false);
+    }
+  };
 
   const handleStartAssessment = () => {
+    if (questions.length === 0) return;
     setAssessmentStarted(true);
     setCurrentQuestion(0);
     setAnswers([]);
@@ -1369,7 +1369,7 @@ const DiscPersonalityAssessment = () => {
   };
 
   const handleNext = () => {
-    if (currentQuestion < ASSESSMENT_QUESTIONS.length - 1) {
+    if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     }
   };
@@ -1380,13 +1380,76 @@ const DiscPersonalityAssessment = () => {
     }
   };
 
-  const handleFinish = () => {
-    const allAnswered = ASSESSMENT_QUESTIONS.every(
+  const handleFinish = async () => {
+    const allAnswered = questions.every(
       (_, i) => answers[i] !== undefined && answers[i] !== null
     );
-    if (!allAnswered) return;
-    setSavedProfile(computeDiscResult(answers));
-    setShowResults(true);
+    if (!allAnswered || isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      const token = getToken();
+      const baseUrl = getBaseUrl() || "https://fm-uat-api.lockated.com";
+
+      // Map answers to the format expected by the backend: [{ question_id: X, dimension: 'D' }, ...]
+      const formattedAnswers = answers.map((answerIndex, qIndex) => ({
+        question_id: questions[qIndex].id,
+        dimension: questions[qIndex].options[answerIndex].dimension
+      }));
+
+      const response = await fetch(`${baseUrl}/disc_assessments/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ answers: formattedAnswers })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data && data.data.report) {
+        const report = data.data.report;
+        const counts = {
+          D: report.scores?.D || 0,
+          I: report.scores?.I || 0,
+          S: report.scores?.S || 0,
+          C: report.scores?.C || 0,
+        };
+        const toScore = (n: number) =>
+          Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
+
+        const result: DiscProfileResult = {
+          counts,
+          scores: {
+            D: toScore(counts.D),
+            I: toScore(counts.I),
+            S: toScore(counts.S),
+            C: toScore(counts.C),
+          },
+          primary: report.primary_type as DiscLetter,
+          secondary: (report.secondary_type || report.primary_type) as DiscLetter,
+          patternName: report.profile_name || 'Balanced',
+          blendLabel: report.style_code || report.primary_type,
+          completedAt: report.generated_at || new Date().toISOString(),
+        };
+
+        setSavedProfile(result);
+        setShowResults(true);
+      } else {
+        // Fallback to local computation if API fails but let's try to notify user
+        console.error("Submission failed:", data.message);
+        setSavedProfile(computeDiscResult(answers, questions));
+        setShowResults(true);
+      }
+    } catch (error) {
+      console.error("Error submitting assessment:", error);
+      // Fallback
+      setSavedProfile(computeDiscResult(answers, questions));
+      setShowResults(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCloseResults = () => {
@@ -1434,13 +1497,14 @@ const DiscPersonalityAssessment = () => {
 
           <AssessmentInterface
             currentQuestion={currentQuestion}
-            totalQuestions={ASSESSMENT_QUESTIONS.length}
-            question={ASSESSMENT_QUESTIONS[currentQuestion]}
+            totalQuestions={questions.length}
+            question={questions[currentQuestion]}
             selectedAnswer={answers[currentQuestion] ?? null}
             onAnswerSelect={handleAnswerSelect}
             onNext={handleNext}
             onPrevious={handlePrevious}
             onFinish={handleFinish}
+            isSubmitting={isSubmitting}
           />
 
           {/* Results Popup */}
@@ -1465,7 +1529,6 @@ const DiscPersonalityAssessment = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <AdminViewEmulation />
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
@@ -1627,11 +1690,20 @@ const DiscPersonalityAssessment = () => {
               className={cn(
                 "w-full rounded-xl bg-[#DA7756]",
                 "py-4 text-base font-bold text-white shadow-lg shadow-[#DA7756]/25",
-                "transition-transform hover:bg-[#DA7756]/85 hover:scale-[1.01] active:scale-[0.99]"
+                "transition-transform hover:bg-[#DA7756]/85 hover:scale-[1.01] active:scale-[0.99]",
+                (loadingQuestions || questions.length === 0) && "opacity-70 cursor-not-allowed"
               )}
               onClick={handleStartAssessment}
+              disabled={loadingQuestions || questions.length === 0}
             >
-              🚀 Start Assessment
+              {loadingQuestions ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Loading assessment...
+                </span>
+              ) : (
+                "🚀 Start Assessment"
+              )}
             </button>
 
             <div className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-5 shadow-sm sm:p-6">
@@ -1662,7 +1734,14 @@ const DiscPersonalityAssessment = () => {
             value="profile"
             className="mt-6 focus-visible:outline-none"
           >
-            {savedProfile ? (
+            {loadingQuestions ? (
+              <div className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+                <div className="flex min-h-[min(60vh,440px)] flex-col items-center justify-center px-6 py-16 sm:min-h-[400px] sm:px-10 sm:py-20">
+                  <Loader2 className="h-10 w-10 animate-spin text-[#DA7756]" />
+                  <p className="mt-4 text-sm font-medium text-neutral-600">Loading your profile...</p>
+                </div>
+              </div>
+            ) : savedProfile ? (
               <div
                 className={cn(
                   "rounded-2xl border border-[#DA7756]/20 p-4 shadow-sm sm:p-6",
@@ -1700,12 +1779,15 @@ const DiscPersonalityAssessment = () => {
                     <button
                       type="button"
                       onClick={handleStartAssessment}
+                      disabled={loadingQuestions || questions.length === 0}
                       className={cn(
-                        "mt-10 rounded-xl bg-[#DA7756] px-8 py-3 text-sm font-semibold text-white",
+                        "mt-10 flex items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-8 py-3 text-sm font-semibold text-white",
                         "shadow-sm transition-colors",
-                        "hover:bg-[#DA7756]/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                        "hover:bg-[#DA7756]/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                        (loadingQuestions || questions.length === 0) && "opacity-70 cursor-not-allowed"
                       )}
                     >
+                      {loadingQuestions && <Loader2 className="h-4 w-4 animate-spin" />}
                       Start assessment
                     </button>
                   </div>
@@ -1718,8 +1800,29 @@ const DiscPersonalityAssessment = () => {
             value="team"
             className="mt-6 focus-visible:outline-none"
           >
-            <TeamProfilesTabContent />
+            <TeamProfilesTabContent members={teamProfiles} loading={loadingQuestions} onViewReport={fetchMemberReport} />
           </TabsContent>
+
+          {/* Member Report Modal */}
+          {selectedMemberReport && (
+            <DiscAssessmentResultsModal
+              result={selectedMemberReport}
+              onClose={() => setSelectedMemberReport(null)}
+              onViewProfile={() => {
+                // Already viewing
+              }}
+            />
+          )}
+
+          {/* Loading Overlay */}
+          {loadingReport && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+              <div className="rounded-2xl bg-white p-6 shadow-xl">
+                <Loader2 className="h-8 w-8 animate-spin text-[#DA7756]" />
+                <p className="mt-2 text-sm font-medium text-neutral-600">Loading Report...</p>
+              </div>
+            </div>
+          )}
         </Tabs>
       </div>
     </div>
