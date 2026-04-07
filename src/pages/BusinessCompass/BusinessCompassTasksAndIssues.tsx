@@ -17,7 +17,6 @@ const BusinessCompassTasksAndIssues = () => {
         <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
             <div className="mx-auto max-w-7xl space-y-6 font-poppins text-[#1a1a1a]">
                 <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
-                <AdminViewEmulation />
 
                 {/* Header — System/SOP + WeeklyReports theme */}
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
