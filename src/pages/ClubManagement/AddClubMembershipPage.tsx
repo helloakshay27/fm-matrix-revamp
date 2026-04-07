@@ -21,6 +21,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
+import axios from 'axios';
 
 // Interfaces
 interface OccupantUserResponse {
@@ -246,13 +247,16 @@ export const AddClubMembershipPage = () => {
     accessCardId: '',
     membershipType: '',
     referredBy: '',
+    houseId: '',
   });
 
   // Health & Wellness Information
   const [hasInjuries, setHasInjuries] = useState<'yes' | 'no' | ''>('');
   const [injuryDetails, setInjuryDetails] = useState('');
   const [hasPhysicalRestrictions, setHasPhysicalRestrictions] = useState<'yes' | 'no' | ''>('');
+  const [physicalRestrictionDetails, setPhysicalRestrictionDetails] = useState('');
   const [hasCurrentMedication, setHasCurrentMedication] = useState<'yes' | 'no' | ''>('');
+  const [medicationDetails, setMedicationDetails] = useState('');
   const [pilatesExperience, setPilatesExperience] = useState('');
 
   // Activity Interests
@@ -271,6 +275,10 @@ export const AddClubMembershipPage = () => {
   const [profession, setProfession] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [corporateInterest, setCorporateInterest] = useState<'yes' | 'no' | ''>('');
+
+  // House/Flat options
+  const [flatOptions, setFlatOptions] = useState<{ id: number; name: string }[]>([]);
+  const [flatsLoading, setFlatsLoading] = useState(false);
 
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
@@ -291,6 +299,24 @@ export const AddClubMembershipPage = () => {
     loadUsers();
     loadMembershipPlans();
     loadAmenities();
+
+    const fetchFlats = async () => {
+      setFlatsLoading(true);
+      try {
+        const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/houses.json`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          }
+        });
+        const data = response.data;
+        setFlatOptions(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setFlatOptions([]);
+      } finally {
+        setFlatsLoading(false);
+      }
+    };
+    fetchFlats();
 
     // Load membership data if in edit mode
     if (isEditMode && id) {
@@ -386,15 +412,15 @@ export const AddClubMembershipPage = () => {
       // Populate form with existing data
       setSelectedUserId(data.user_id);
       setSelectedUser(data.user_id?.toString() || '');
-      setUserSelectionMode('select'); // Always use select mode for edit
-
+      setUserSelectionMode('manual'); // Default to manual mode for edit to show details
+      console.log(data)
       setFormData({
         firstName: data.user_name?.split(' ')[0] || '',
         lastName: data.user_name?.split(' ').slice(1).join(' ') || '',
         email: data.user_email || '',
         mobile: data.user_mobile || '',
-        dateOfBirth: data.date_of_birth || '',
-        gender: data.gender || '',
+        dateOfBirth: data.user.birth_date || '',
+        gender: data.user.gender || '',
         emergencyContactName: data.emergency_contact_name || '',
         address: data.user?.addresses[0].address || '',
         address_line_two: data.user?.addresses[0].address_line_two || '',
@@ -409,6 +435,7 @@ export const AddClubMembershipPage = () => {
         accessCardId: data.access_card_id || '',
         membershipType: data.membership_type || '',
         referredBy: data.referred_by || '',
+        houseId: data.society_flat_id || '',
       });
 
       // Set dates
@@ -772,7 +799,7 @@ export const AddClubMembershipPage = () => {
     answersObj['2'] = [
       {
         answer: hasPhysicalRestrictions.toUpperCase() || '',
-        comments: ''
+        comments: hasPhysicalRestrictions === 'yes' ? physicalRestrictionDetails : ''
       }
     ];
 
@@ -780,7 +807,7 @@ export const AddClubMembershipPage = () => {
     answersObj['3'] = [
       {
         answer: hasCurrentMedication.toUpperCase() || '',
-        comments: ''
+        comments: hasCurrentMedication === 'yes' ? medicationDetails : ''
       }
     ];
 
@@ -947,15 +974,15 @@ export const AddClubMembershipPage = () => {
     }
 
     if (userSelectionMode === 'manual') {
-      if (!formData.firstName || !formData.lastName) {
-        toast.error('Please enter first name and last name');
+      if (!formData.firstName) {
+        toast.error('Please enter first name');
         return;
       }
       if (!validateName(formData.firstName)) {
         toast.error('First name must contain only alphabets and be at least 2 characters');
         return;
       }
-      if (!validateName(formData.lastName)) {
+      if (formData.lastName && !validateName(formData.lastName)) {
         toast.error('Last name must contain only alphabets and be at least 2 characters');
         return;
       }
@@ -1012,7 +1039,7 @@ export const AddClubMembershipPage = () => {
       return;
     }
 
-   
+
     setIsSubmitting(true);
     try {
       const siteId = getSiteIdFromStorage();
@@ -1051,10 +1078,21 @@ export const AddClubMembershipPage = () => {
           access_card_id: cardAllocated ? formData.accessCardId : null,
           start_date: startDate ? startDate.format('YYYY-MM-DD') : null,
           end_date: endDate ? endDate.format('YYYY-MM-DD') : null,
-          membership_plan_id: selectedPlanId,
           referred_by: formData.referredBy,
           emergency_contact_name: formData.emergencyContactName,
-          member_payment_detail_attributes: {
+          society_flat_id: formData.houseId || null,
+          custom_amenities: [
+            selectedAddOns.map(addOnId => ({
+              facility_setup_id: addOnId,
+              access: "free"
+            }))
+          ]
+        };
+
+        // Only add payment details and plan ID if not in edit mode
+        if (!isEditMode) {
+          clubMemberData.membership_plan_id = selectedPlanId;
+          clubMemberData.member_payment_detail_attributes = {
             base_amount: editablePlanCost,
             discount: discountAmount.toString(),
             cgst: cgstAmount.toString(),
@@ -1065,14 +1103,8 @@ export const AddClubMembershipPage = () => {
             payment_status: "success",
             payment_mode: "online",
             membership_plan_id: selectedPlanId
-          },
-          custom_amenities: [
-            selectedAddOns.map(addOnId => ({
-              facility_setup_id: addOnId,
-              access: "free"
-            }))
-          ]
-        };
+          };
+        }
 
         // Only add file fields if they exist (new uploads)
         if (identificationImageBase64) {
@@ -1113,10 +1145,15 @@ export const AddClubMembershipPage = () => {
           access_card_id: cardAllocated ? formData.accessCardId : null,
           start_date: startDate ? startDate.format('YYYY-MM-DD') : null,
           end_date: endDate ? endDate.format('YYYY-MM-DD') : null,
-          membership_plan_id: selectedPlanId,
           referred_by: formData.referredBy,
           emergency_contact_name: formData.emergencyContactName,
-          member_payment_detail_attributes: {
+          society_flat_id: formData.houseId || null,
+        };
+
+        // Only add payment details and plan ID if not in edit mode
+        if (!isEditMode) {
+          clubMemberData.membership_plan_id = selectedPlanId;
+          clubMemberData.member_payment_detail_attributes = {
             base_amount: editablePlanCost,
             discount: discountAmount.toString(),
             cgst: cgstAmount.toString(),
@@ -1127,8 +1164,8 @@ export const AddClubMembershipPage = () => {
             payment_status: "success",
             payment_mode: "online",
             membership_plan_id: selectedPlanId
-          },
-        };
+          };
+        }
 
         // Add selected add-ons
         if (selectedAddOns.length > 0) {
@@ -1149,6 +1186,7 @@ export const AddClubMembershipPage = () => {
         payload = {
           club_member: clubMemberData,
           user: {
+            user_id: selectedUserId,
             site_id: parseInt(siteId),
             registration_source: 'Web',
             firstname: formData.firstName,
@@ -1286,15 +1324,15 @@ export const AddClubMembershipPage = () => {
     }
 
     if (userSelectionMode === 'manual') {
-      if (!formData.firstName || !formData.lastName) {
-        toast.error('Please enter first name and last name');
+      if (!formData.firstName) {
+        toast.error('Please enter first name');
         return;
       }
       if (!validateName(formData.firstName)) {
         toast.error('First name must contain only alphabets and be at least 2 characters');
         return;
       }
-      if (!validateName(formData.lastName)) {
+      if (formData.lastName && !validateName(formData.lastName)) {
         toast.error('Last name must contain only alphabets and be at least 2 characters');
         return;
       }
@@ -1357,8 +1395,8 @@ export const AddClubMembershipPage = () => {
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  console.log("currentStep:---",currentStep);
-  
+  console.log("currentStep:---", currentStep);
+
   // Handle back to step 1
   const handleBackToStep1 = () => {
     setCurrentStep(1);
@@ -1398,7 +1436,7 @@ export const AddClubMembershipPage = () => {
   useEffect(() => {
     if (startDate && formData.membershipType) {
       let newEndDate: Dayjs | null = null;
-      
+
       switch (formData.membershipType) {
         case 'Day Pass':
           newEndDate = startDate.add(1, 'day');
@@ -1418,7 +1456,7 @@ export const AddClubMembershipPage = () => {
         default:
           newEndDate = null;
       }
-      
+
       if (newEndDate) {
         setEndDate(newEndDate);
       }
@@ -1467,55 +1505,58 @@ export const AddClubMembershipPage = () => {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">User Selection</h2>
 
-                  {/* User Selection Mode */}
-                  <div className="mb-6">
-                    <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
-                      Select User Mode
-                    </FormLabel>
-                    <RadioGroup
-                      row
-                      value={userSelectionMode}
-                      onChange={(e) => {
-                        setUserSelectionMode(e.target.value as 'select' | 'manual');
-                        // Reset form when switching modes
-                        setSelectedUser('');
-                        setSelectedUserId(null);
-                        setFormData({
-                          firstName: '',
-                          lastName: '',
-                          email: '',
-                          mobile: '',
-                          dateOfBirth: '',
-                          gender: '',
-                          emergencyContactName: '',
-                          address: '',
-                          address_line_two: '',
-                          city: '',
-                          state: '',
-                          country: '',
-                          pin_code: '',
-                          address_type: 'residential',
-                          residentType: '',
-                          relationWithOwner: '',
-                          membershipNumber: '',
-                          accessCardId: '',
-                          membershipType: '',
-                          referredBy: '',
-                        });
-                      }}
-                    >
-                      <FormControlLabel
-                        value="select"
-                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                        label="Select User"
-                      />
-                      <FormControlLabel
-                        value="manual"
-                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                        label="Enter User Details"
-                      />
-                    </RadioGroup>
-                  </div>
+                  {/* User Selection Mode - Only show in add mode */}
+                  {!isEditMode && (
+                    <div className="mb-6">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
+                        Select User Mode
+                      </FormLabel>
+                      <RadioGroup
+                        row
+                        value={userSelectionMode}
+                        onChange={(e) => {
+                          setUserSelectionMode(e.target.value as 'select' | 'manual');
+                          // Reset form when switching modes
+                          setSelectedUser('');
+                          setSelectedUserId(null);
+                          setFormData({
+                            firstName: '',
+                            lastName: '',
+                            email: '',
+                            mobile: '',
+                            dateOfBirth: '',
+                            gender: '',
+                            emergencyContactName: '',
+                            address: '',
+                            address_line_two: '',
+                            city: '',
+                            state: '',
+                            country: '',
+                            pin_code: '',
+                            address_type: 'residential',
+                            residentType: '',
+                            relationWithOwner: '',
+                            membershipNumber: '',
+                            accessCardId: '',
+                            membershipType: '',
+                            referredBy: '',
+                            houseId: '',
+                          });
+                        }}
+                      >
+                        <FormControlLabel
+                          value="select"
+                          control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                          label="Select User"
+                        />
+                        <FormControlLabel
+                          value="manual"
+                          control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                          label="Enter User Details"
+                        />
+                      </RadioGroup>
+                    </div>
+                  )}
 
                   {/* User Selection Dropdown */}
                   {userSelectionMode === 'select' && (
@@ -1566,16 +1607,17 @@ export const AddClubMembershipPage = () => {
                           helperText={formData.firstName !== '' && !validateName(formData.firstName) ? 'First name must be at least 2 characters and contain only alphabets' : ''}
                         />
                         <TextField
-                          label="Last Name *"
+                          label="Last Name"
                           value={formData.lastName}
                           onChange={(e) => {
                             const value = e.target.value;
                             // Only allow alphabets and spaces
                             if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
                               setFormData({ ...formData, lastName: value });
-                            } else {
-                              toast.error('Last name should contain only alphabets');
                             }
+                            // else {
+                            //   toast.error('Last name should contain only alphabets');
+                            // }
                           }}
                           sx={fieldStyles}
                           fullWidth
@@ -1651,7 +1693,7 @@ export const AddClubMembershipPage = () => {
                           sx={fieldStyles}
                           fullWidth
                           type="tel"
-                          inputProps={{ 
+                          inputProps={{
                             maxLength: 10,
                             pattern: '[0-9]*',
                             inputMode: 'numeric'
@@ -1674,6 +1716,26 @@ export const AddClubMembershipPage = () => {
                           error={formData.email !== '' && !validateEmail(formData.email)}
                           helperText={formData.email !== '' && !validateEmail(formData.email) ? 'Please enter a valid email format (e.g., user@example.com)' : ''}
                         />
+
+                        <FormControl fullWidth sx={fieldStyles}>
+                          <InputLabel>House</InputLabel>
+                          <Select
+                            label="House"
+                            value={formData.houseId || ''}
+                            onChange={e => setFormData({ ...formData, houseId: e.target.value })}
+                          >
+                            <MenuItem value=""><em>Select House</em></MenuItem>
+                            {flatsLoading ? (
+                              <MenuItem value="" disabled>Loading...</MenuItem>
+                            ) : flatOptions.length === 0 ? (
+                              <MenuItem value="" disabled>No flats found</MenuItem>
+                            ) : (
+                              flatOptions.map(flat => (
+                                <MenuItem key={flat.id} value={flat.id}>{flat.name}</MenuItem>
+                              ))
+                            )}
+                          </Select>
+                        </FormControl>
                       </div>
                     </div>
                   )}
@@ -1850,7 +1912,7 @@ export const AddClubMembershipPage = () => {
                       placeholder='Phone Number'
                       fullWidth
                       type="tel"
-                      inputProps={{ 
+                      inputProps={{
                         maxLength: 10,
                         pattern: '[0-9]*',
                         inputMode: 'numeric'
@@ -2218,6 +2280,38 @@ export const AddClubMembershipPage = () => {
                       </RadioGroup>
                     </div>
 
+                    {/* If yes, specify physical restrictions */}
+                    {hasPhysicalRestrictions === 'yes' && (
+                      <div className="mb-6">
+                        <div className="relative w-full">
+                          <textarea
+                            id="physical-restriction-details"
+                            value={physicalRestrictionDetails}
+                            onChange={(e) => setPhysicalRestrictionDetails(e.target.value)}
+                            rows={3}
+                            placeholder=" "
+                            className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                              focus:outline-none 
+                              focus:border-[2px] 
+                              focus:border-[rgb(25,118,210)] 
+                              resize-vertical"
+                          />
+                          <label
+                            htmlFor="physical-restriction-details"
+                            className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                              peer-placeholder-shown:top-4
+                              peer-placeholder-shown:text-base
+                              peer-placeholder-shown:text-gray-400
+                              peer-focus:-top-[10px]
+                              peer-focus:text-sm
+                              peer-focus:text-[rgb(25,118,210)]"
+                          >
+                            If yes, please specify
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Question 3: Current medication */}
                     <div className="mb-6">
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
@@ -2241,8 +2335,40 @@ export const AddClubMembershipPage = () => {
                       </RadioGroup>
                     </div>
 
+                    {/* If yes, specify current medication */}
+                    {hasCurrentMedication === 'yes' && (
+                      <div className="mb-6">
+                        <div className="relative w-full">
+                          <textarea
+                            id="medication-details"
+                            value={medicationDetails}
+                            onChange={(e) => setMedicationDetails(e.target.value)}
+                            rows={3}
+                            placeholder=" "
+                            className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                              focus:outline-none 
+                              focus:border-[2px] 
+                              focus:border-[rgb(25,118,210)] 
+                              resize-vertical"
+                          />
+                          <label
+                            htmlFor="medication-details"
+                            className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                              peer-placeholder-shown:top-4
+                              peer-placeholder-shown:text-base
+                              peer-placeholder-shown:text-gray-400
+                              peer-focus:-top-[10px]
+                              peer-focus:text-sm
+                              peer-focus:text-[rgb(25,118,210)]"
+                          >
+                            If yes, please specify
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Question 4: Pilates experience */}
-                    <div className="mb-6">
+                    {/* <div className="mb-6">
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Pilates Experience
                       </FormLabel>
@@ -2280,7 +2406,7 @@ export const AddClubMembershipPage = () => {
                           <MenuItem value="Advanced">Advanced</MenuItem>
                         </Select>
                       </FormControl>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Card 6: Activity Interests */}
@@ -2313,7 +2439,7 @@ export const AddClubMembershipPage = () => {
                                 onChange={(e) => {
                                   if (e.target.checked) {
                                     setFitnessGoals([...fitnessGoals, goal]);
-                                                                                                                                                                                                                                                                     } else {
+                                  } else {
                                     setFitnessGoals(fitnessGoals.filter(g => g !== goal));
                                   }
                                 }}
@@ -2370,7 +2496,7 @@ export const AddClubMembershipPage = () => {
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Which sessions are you interested in?
                       </FormLabel>
-                                            <div className="space-y-1">
+                      <div className="space-y-1">
                         {[
                           'Group Pilates',
                           'Private / Duo Pilates',
@@ -2445,12 +2571,11 @@ export const AddClubMembershipPage = () => {
                       </div>
                     </div>
 
-                    <div>
+                    {/* <div>
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Have you practiced Pilates before?
                       </FormLabel>
                       <FormControl fullWidth sx={fieldStyles}>
-                        {/* <InputLabel>Have you practiced Pilates before?</InputLabel> */}
                         <Select
                           value={pilatesExperience}
                           onChange={(e) => setPilatesExperience(e.target.value)}
@@ -2460,7 +2585,6 @@ export const AddClubMembershipPage = () => {
                             border: "1px solid #000",
                             borderRadius: "4px",
 
-                            // Remove blue outline
                             "& .MuiOutlinedInput-notchedOutline": {
                               border: "none",
                             },
@@ -2468,7 +2592,6 @@ export const AddClubMembershipPage = () => {
                               border: "none",
                             },
 
-                            // Remove box shadow
                             "&.Mui-focused": {
                               outline: "none",
                               boxShadow: "none",
@@ -2484,7 +2607,7 @@ export const AddClubMembershipPage = () => {
                           <MenuItem value="Advanced">Advanced</MenuItem>
                         </Select>
                       </FormControl>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Card 7: Lifestyle & Communication Insights */}
@@ -2685,7 +2808,7 @@ export const AddClubMembershipPage = () => {
                     </div>
 
                     {/* Corporate Interest */}
-                    <div>
+                    {/* <div>
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Are you interested in corporate/group plans for your workplace?
                       </FormLabel>
@@ -2705,7 +2828,7 @@ export const AddClubMembershipPage = () => {
                           label="No"
                         />
                       </RadioGroup>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -2725,12 +2848,12 @@ export const AddClubMembershipPage = () => {
                   </Button> */}
 
                   <Button
-                      onClick={handleSubmit}
-                      // disabled={isSubmitting || !selectedPlanId}
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                    >
-                      {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
-                    </Button>
+                    onClick={handleSubmit}
+                    // disabled={isSubmitting || !selectedPlanId}
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                  >
+                    {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
+                  </Button>
                 </div>
               </>
             )}
@@ -2767,7 +2890,7 @@ export const AddClubMembershipPage = () => {
                               <h3 className="font-semibold text-lg text-[#1a1a1a]">{plan.name}</h3>
                               <div className="flex items-center gap-3 mt-1">
                                 <p className="text-sm text-gray-500">
-                                    {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
+                                  {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
                                 </p>
                                 {plan.user_limit && (
                                   <>
@@ -2984,7 +3107,7 @@ export const AddClubMembershipPage = () => {
                               }}
                               type="number"
                               size="small"
-                              inputProps={{ 
+                              inputProps={{
                                 min: 0,
                                 max: 100,
                                 step: 0.01
@@ -3014,14 +3137,14 @@ export const AddClubMembershipPage = () => {
                                   setSgstPercentage(value);
                                 }
                               }}
-                               onKeyDown={(e) => {
+                              onKeyDown={(e) => {
                                 if (e.key === '-' || e.key === 'e') {
                                   e.preventDefault();
                                 }
                               }}
                               type="number"
                               size="small"
-                              inputProps={{ 
+                              inputProps={{
                                 min: 0,
                                 max: 100,
                                 step: 0.01

@@ -280,7 +280,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = `/api/pms/reports/customer_experience_feedback${dateQuery}`;
+                const endpoint = `/ratings/feedback_dashboard${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });

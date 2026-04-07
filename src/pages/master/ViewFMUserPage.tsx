@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
@@ -93,6 +93,10 @@ export const ViewFMUserPage = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
+  const location = useLocation();
+
+  const isClubSite = location.pathname.includes("club-management");
+
   const navigate = useNavigate();
   const { id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
@@ -162,10 +166,10 @@ export const ViewFMUserPage = () => {
   };
 
   useEffect(() => {
-    if (id && baseUrl && token) {
+    if (id && baseUrl && token && !isClubSite) {
       fetchAttendance(1);
     }
-  }, [id, baseUrl, token])
+  }, [id, baseUrl, token, isClubSite])
 
   const userId = JSON.parse(localStorage.getItem('user'))?.id;
 
@@ -205,6 +209,7 @@ export const ViewFMUserPage = () => {
     department_id: '',
     supplier_id: '',
     profile_type: '',
+    profile_icon_url: '',
     access_to_array: [],
     urgency_email_enabled: false
   })
@@ -434,7 +439,7 @@ export const ViewFMUserPage = () => {
             navigate(`/club-management/users/fm-users/edit/${id}`)
           ) : (
             navigate(`/master/user/fm-users/edit/${id}`)
-            )}
+          )}
         >
           <Edit2 className="w-4 h-4" />
         </Button>
@@ -448,15 +453,23 @@ export const ViewFMUserPage = () => {
               {/* Profile Picture */}
               <div className="text-center">
                 <div className="w-40 h-40 mx-auto mb-4 relative">
-                  <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                    <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
-                      <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
-                        <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                        </svg>
+                  {userData.profile_icon_url ? (
+                    <img
+                      src={userData.profile_icon_url}
+                      alt="Profile"
+                      className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                      <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
+                        <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
+                          <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -484,27 +497,32 @@ export const ViewFMUserPage = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Base Unit</Label>
-                  <Select value={formData.base_unit} onValueChange={(value) => handleInputChange('base_unit', value)} disabled>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Base Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {units?.length > 0 ? (
-                        units.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id}>
-                            {unit?.building?.name} - {unit.unit_name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1 text-sm text-gray-500">
-                          No units available
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Base Unit</Label>
+                      <Select value={formData.base_unit} onValueChange={(value) => handleInputChange('base_unit', value)} disabled>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Base Unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units?.length > 0 ? (
+                            units.map((unit) => (
+                              <SelectItem key={unit.id} value={unit.id}>
+                                {unit?.building?.name} - {unit.unit_name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="px-2 py-1 text-sm text-gray-500">
+                              No units available
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                }
+
 
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">User Type</Label>
@@ -527,55 +545,68 @@ export const ViewFMUserPage = () => {
                   </Select>
                 </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Entity Name</Label>
-                  <Select value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)} disabled>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Entity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {entitiesData?.entities?.length > 0 ? (
-                        entitiesData.entities.map((entity: Entity) => (
-                          <SelectItem key={entity.id} value={entity.id}>
-                            {entity.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1 text-sm text-gray-500">
-                          No entities available
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Entity Name</Label>
+                      <Select value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)} disabled>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Entity" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {entitiesData?.entities?.length > 0 ? (
+                            entitiesData.entities.map((entity: Entity) => (
+                              <SelectItem key={entity.id} value={entity.id}>
+                                {entity.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="px-2 py-1 text-sm text-gray-500">
+                              No entities available
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                }
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Email Preference</Label>
-                  <Select value={formData.email_preference} onValueChange={(value) => handleInputChange('email_preference', value)} disabled>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Email Preference" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">All Emails</SelectItem>
-                      <SelectItem value="1">Critical Emails Only</SelectItem>
-                      <SelectItem value="2">No Emails</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Email Preference</Label>
+                      <Select value={formData.email_preference} onValueChange={(value) => handleInputChange('email_preference', value)} disabled>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Email Preference" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">All Emails</SelectItem>
+                          <SelectItem value="1">Critical Emails Only</SelectItem>
+                          <SelectItem value="2">No Emails</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                }
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Profile Type</Label>
-                  <Select value={formData.profile_type} onValueChange={(value) => handleInputChange('profile_type', value)} disabled>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Profile Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Profile">Profile Type</SelectItem>
-                      <SelectItem value="Technical">Technical</SelectItem>
-                      <SelectItem value="NonTechnical">NonTechnical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Profile Type</Label>
+                      <Select value={formData.profile_type} onValueChange={(value) => handleInputChange('profile_type', value)} disabled>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Profile Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Profile">Profile Type</SelectItem>
+                          <SelectItem value="Technical">Technical</SelectItem>
+                          <SelectItem value="NonTechnical">NonTechnical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                }
+
               </div>
             </CardContent>
           </Card>
@@ -622,21 +653,22 @@ export const ViewFMUserPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Company Cluster</Label>
-                  <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)} disabled>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Cluster" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Select Cluster" disabled>Select Cluster</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                {
+                  !isClubSite && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Company Cluster</Label>
+                      <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)} disabled>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Cluster" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Select Cluster" disabled>Select Cluster</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                }
 
-              {/* Mobile and Email */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Mobile</Label>
                   <Input
@@ -688,20 +720,22 @@ export const ViewFMUserPage = () => {
                     disabled
                   />
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Working Day</Label>
-                  <Input
-                    value={formData.last_working_day}
-                    onChange={(e) => handleInputChange('last_working_day', e.target.value)}
-                    placeholder="Last Working Day"
-                    className="w-full"
-                    disabled
-                  />
-                </div>
-              </div>
 
-              {/* Department and Designation */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {
+                  !isClubSite && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Working Day</Label>
+                      <Input
+                        value={formData.last_working_day}
+                        onChange={(e) => handleInputChange('last_working_day', e.target.value)}
+                        placeholder="Last Working Day"
+                        className="w-full"
+                        disabled
+                      />
+                    </div>
+                  )
+                }
+
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Department</Label>
                   <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)} disabled>
@@ -732,10 +766,6 @@ export const ViewFMUserPage = () => {
                     disabled
                   />
                 </div>
-              </div>
-
-              {/* Role and Vendor Company */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Role</Label>
                   <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)} disabled>
@@ -778,10 +808,6 @@ export const ViewFMUserPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* Access Level and Access */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Access Level</Label>
                   <Select value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)} disabled>
@@ -825,38 +851,42 @@ export const ViewFMUserPage = () => {
         </div>
       </div>
 
-      <div className="mt-6">
-        <EnhancedTable
-          data={attendanceData}
-          columns={attendanceColumns}
-          renderCell={renderCell}
-          hideTableSearch={true}
-          hideColumnsButton={true}
-          loading={attendanceLoading}
-        />
+      {
+        !isClubSite && (
+          <div className="mt-6">
+            <EnhancedTable
+              data={attendanceData}
+              columns={attendanceColumns}
+              renderCell={renderCell}
+              hideTableSearch={true}
+              hideColumnsButton={true}
+              loading={attendanceLoading}
+            />
 
-        {paginationData.total_pages > 1 && (
-          <div className="flex justify-center mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(Math.max(1, paginationData.current_page - 1))}
-                    className={paginationData.current_page === 1 || attendanceLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-                {renderPaginationItems()}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => handlePageChange(Math.min(paginationData.total_pages, paginationData.current_page + 1))}
-                    className={paginationData.current_page === paginationData.total_pages || attendanceLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            {paginationData.total_pages > 1 && (
+              <div className="flex justify-center mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(Math.max(1, paginationData.current_page - 1))}
+                        className={paginationData.current_page === 1 || attendanceLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems()}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(Math.min(paginationData.total_pages, paginationData.current_page + 1))}
+                        className={paginationData.current_page === paginationData.total_pages || attendanceLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        )
+      }
     </div>
   );
 };

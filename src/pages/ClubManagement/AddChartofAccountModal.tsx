@@ -11,7 +11,7 @@ import { toast } from "sonner";
 const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
-     const lock_account_id = localStorage.getItem("lock_account_id");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState({
@@ -110,6 +110,16 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
     console.log('Submitting ledger data:', ledgerData);
 
     const handleSubmit = async () => {
+        // Validation
+        if (!formData.accountTypeId) {
+            toast.error("Account Type is required");
+            return;
+        }
+
+        if (!formData.accountName || formData.accountName.trim() === "") {
+            toast.error("Account Name is required");
+            return;
+        }
         setIsSubmitting(true);
         const ledgerData = {
             lock_account_id: lock_account_id, // or get from context if dynamic
@@ -335,6 +345,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
                     </div>
                     <div className="mt-4 pt-5 flex justify-center gap-3">
                         <Button
+                            type="button"
                             onClick={handleSubmit}
                             disabled={isSubmitting}
                             style={{ backgroundColor: "#C72030" }}

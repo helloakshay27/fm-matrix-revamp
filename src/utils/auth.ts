@@ -4,6 +4,7 @@ export interface User {
   id: number;
   email: string;
   firstname: string;
+
   lastname: string;
   mobile?: string;
   phone?: string;
@@ -113,18 +114,72 @@ export const getToken = (): string | null => {
   return localStorage.getItem(AUTH_KEYS.TOKEN);
 };
 
-// Save base URL to localStorage
-export const saveBaseUrl = (baseUrl: string): void => {
-  localStorage.setItem(AUTH_KEYS.BASE_URL, baseUrl);
+/**
+ * Normalize a base URL - removes duplicate protocols and ensures clean format
+ * Handles cases like:
+ * - "https://https//domain.com" -> "https://domain.com"
+ * - "https://domain.com" -> "https://domain.com"
+ * - "domain.com" -> "https://domain.com"
+ * - "http://domain.com" -> "https://domain.com"
+ */
+export const normalizeBaseUrl = (url: string): string => {
+  if (!url) return "";
+
+  // Remove any leading/trailing whitespace
+  let normalized = url.trim();
+
+  // Remove any duplicate https:// or http:// patterns (e.g., "https://https//")
+  normalized = normalized.replace(/^(https?:\/\/)+/gi, "");
+
+  // Also handle cases like "https//" (missing colon)
+  normalized = normalized.replace(/^https\/\//gi, "");
+  normalized = normalized.replace(/^http\/\//gi, "");
+
+  // Remove any remaining leading slashes
+  normalized = normalized.replace(/^\/+/, "");
+
+  // Ensure https:// prefix
+  return `https://${normalized}`;
 };
 
-// Get base URL from localStorage
+/**
+ * Strip protocol from URL - returns just the domain
+ * Used for localStorage compatibility with legacy code that adds https:// manually
+ */
+export const stripProtocol = (url: string): string => {
+  if (!url) return "";
+  return url
+    .trim()
+    .replace(/^(https?:\/\/)+/gi, "")
+    .replace(/^\/+/, "");
+};
+
+// Save base URL to localStorage (WITHOUT protocol for backward compatibility)
+// Many existing files read from localStorage and add https:// manually
+export const saveBaseUrl = (baseUrl: string): void => {
+  // Store without protocol so legacy code that adds https:// won't double it
+  const domainOnly = stripProtocol(normalizeBaseUrl(baseUrl));
+  localStorage.setItem(AUTH_KEYS.BASE_URL, domainOnly);
+};
+
+// Get base URL from localStorage WITH https:// prefix
+// Use this for new code that expects full URL
 export const getBaseUrl = (): string | null => {
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
 
-  // Ensure the URL includes the protocol
+  // Add https:// prefix if not present
   return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
+};
+
+/**
+ * Get base URL from localStorage WITHOUT protocol
+ * For compatibility with code that adds https:// manually
+ */
+export const getBaseUrlDomain = (): string | null => {
+  const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
+  if (!savedUrl) return null;
+  return stripProtocol(savedUrl);
 };
 
 // Check if user is authenticated
@@ -142,7 +197,7 @@ export const fetchLockAccount = async (): Promise<void> => {
 
     if (!baseUrl || !token) return;
 
-    const base = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+    const base = normalizeBaseUrl(baseUrl);
     const url = `${base.replace(/\/+$/, "")}/get_lock_account.json`;
 
     const response = await fetch(url, {
@@ -178,10 +233,14 @@ const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
-  hostname.includes("lockated.gophygital.work") || hostname.includes("community.gophygital.work") || hostname === "localhost";
+  hostname.includes("lockated.gophygital.work") ||
+  hostname.includes("community.gophygital.work");
 
 const isFmSite =
-  hostname === "fm-uat.gophygital.work" || hostname === "fm.gophygital.work" || hostname === "fm-matrix.lockated.com";
+  hostname === "fm-uat.gophygital.work" ||
+  hostname === "fm.gophygital.work" ||
+  hostname === "fm-matrix.lockated.com" ||
+   hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -191,8 +250,7 @@ const isPanchshilUatSite = hostname === "pulse-uat.panchshil.com";
 
 const isPanchshilPulseProd = hostname === "pulse.panchshil.com";
 
-const isClubSite =
-  hostname.includes("club.lockated.com");
+const isClubSite = hostname.includes("club.lockated.com");
 
 const isPanchshilClubSite =
   // hostname.includes("club.lockated.com");
@@ -334,10 +392,12 @@ const ASSET_RESTRICTED_EMAILS = [
   "reception1@gmail.com",
   "reception.pune@zycus.com",
   "reception.blr@zycus.com",
-  "Reception@zycusitis.onmicrosoft.com"
+  "Reception@zycusitis.onmicrosoft.com",
 ].map((email) => email.toLowerCase());
 
-export const isAssetRestrictedUser = (user: User | null | undefined): boolean => {
+export const isAssetRestrictedUser = (
+  user: User | null | undefined
+): boolean => {
   if (!user?.email) return false;
   return ASSET_RESTRICTED_EMAILS.includes(user.email.toLowerCase());
 };
@@ -644,7 +704,8 @@ export const getOrganizationsByEmailAndAutoSelect = async (
   const isOmanSite = hostname.includes("oig.gophygital.work");
   const isViSite =
     hostname.includes("vi-web.gophygital.work") ||
-    hostname.includes("web.gophygital.work") || hostname === "localhost";
+    hostname.includes("web.gophygital.work") ||
+    hostname === "localhost";
   const isFmSite =
     hostname.includes("fm-uat.gophygital.work") ||
     hostname.includes("fm.gophygital.work") ||

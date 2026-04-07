@@ -80,6 +80,7 @@ import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksById
 import { fetchIssuesReducer, fetchIssueByIdReducer, createIssueReducer, updateIssueReducer, deleteIssueReducer, filterIssuesReducer } from './slices/issueSlice'
 import { createProjectGroupReducer, deleteProjectGroupReducer, fetchProjectGroupsReducer, updateProjectGroupReducer } from './slices/projectGroupSlice'
 import { fetchSprintsReducer, fetchSprintByIdReducer, createSprintReducer, updateSprintReducer, updateSprintStatusReducer, deleteSprintReducer, filterSprintsReducer } from './slices/sprintSlice'
+import adminViewEmulationReducer from './slices/adminViewEmulationSlice'
 
 export const store = configureStore({
   reducer: {
@@ -412,6 +413,7 @@ export const store = configureStore({
     updateSprintStatus: updateSprintStatusReducer,
     deleteSprint: deleteSprintReducer,
     filterSprints: filterSprintsReducer,
+    adminViewEmulation: adminViewEmulationReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

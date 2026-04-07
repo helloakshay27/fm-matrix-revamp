@@ -11,7 +11,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster, toast } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
-import { NotificationProvider, useNotification } from "./contexts/NotificationContext";
+import {
+  NotificationProvider,
+  useNotification,
+} from "./contexts/NotificationContext";
 import { EnhancedSelectProvider } from "./providers/EnhancedSelectProvider";
 import { initializeGlobalMUISelectSearchEnhancer } from "./utils/globalMUISelectSearchEnhancer";
 import "./styles/enhanced-select.css"; // Global enhanced select styles
@@ -33,6 +36,8 @@ import { PaymentLinksDashboard } from "./pages/PaymentLinksDashboard";
 import { RetainerInvoicesDashboard } from "./pages/RetainerInvoicesDashboard";
 import { CreateRetainerInvoicePage } from "./pages/CreateRetainerInvoicePage";
 import { ImportRetainerInvoicesPage } from "./pages/ImportRetainerInvoicesPage";
+import { BackendLayout } from "./components/BackendLayout";
+import { SmsManagementPage } from "./pages/SmsManagementPage";
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
@@ -197,8 +202,9 @@ import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
 import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
+import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
+import AnnouncementsSetup from "./pages/AnnouncementsSetup";
 import { EditPermitPage } from "./pages/EditPermitPage";
-
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -350,6 +356,7 @@ import { EmployeeCalendarPage } from "./pages/EmployeeCalendarPage";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
 import CompanyHub from "./pages/CompanyHub";
+import CompanyHubNew from "./pages/CompanyHubNew";
 import BusinessPlan from "./pages/BusinessPlan";
 import OurGroup from "./pages/OurGroup";
 import Products from "./pages/Products";
@@ -849,6 +856,9 @@ import { UsersManagementDashboard } from "./pages/admin/UsersManagementDashboard
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import { UserDetailsPage } from "./pages/admin/UserDetailsPage";
 import { AdminUsersDetails } from "./pages/admin/AdminUsersDetails";
+import FeedbackDashboard from "./pages/admin/FeedbackDashboard";
+import SystemAndSOP from "./pages/admin/SystemAndSOP";
+import DiscReport from "./pages/admin/DiscReport";
 import { DocumentManagement } from "./pages/DocumentManagement";
 import { AddDocumentDashboard } from "./pages/AddDocumentDashboard";
 import { EditDocumentPage } from "./pages/EditDocumentPage";
@@ -1031,6 +1041,7 @@ import RecurringExpensesListPage from "./pages/ClubManagement/RecurringExpensesL
 import RecurringExpenseDetailPage from "./pages/ClubManagement/RecurringExpenseDetailPage";
 import { RecurringInvoicesCreatePage } from "./pages/ClubManagement/RecurringInvoicesCreatePage";
 import { RecurringInvoicesListPage } from "./pages/ClubManagement/RecurringInvoicesListPage";
+import RecurringBillDetails from "./pages/ClubManagement/RecurringBillDetails"; // FIX: Add missing import for RecurringBillDetails
 import { RecurringJournalDashboard } from "./pages/ClubManagement/RecurringJournalDashboard";
 import { RecurringJournalDetails } from "./pages/ClubManagement/RecurringJournalDetails";
 import { SalesOrderCreatePage } from "./pages/SalesOrderCreatePage";
@@ -1048,6 +1059,16 @@ import AccountTypeTransactionsReport from "./pages/ClubManagement/AccountTypeTra
 import AccountTypeTransactionsDetailPage from "./pages/ClubManagement/AccountTypeTransactionsDetailPage";
 import AccountTransactionsDetailPage from "./pages/ClubManagement/AccountTransactionsDetailPage";
 import AccountTransactionsReport from "./pages/ClubManagement/AccountTransactionsReport";
+import ARAgingSummaryReport from "./pages/ClubManagement/ARAgingSummaryReport";
+import ARAgingDetailsReport from "./pages/ClubManagement/ARAgingDetailsReport";
+import InvoiceDetailsReport from "./pages/ClubManagement/InvoiceDetailsReport";
+import RetainerInvoiceDetailsReport from "./pages/ClubManagement/RetainerInvoiceDetailsReport";
+import SalesOrderDetailsReport from "./pages/ClubManagement/SalesOrderDetailsReport";
+import DeliveryChallanDetailsReport from "./pages/ClubManagement/DeliveryChallanDetailsReport";
+import QuoteDetailsReport from "./pages/ClubManagement/QuoteDetailsReport";
+import CustomerBalanceSummaryReport from "./pages/ClubManagement/CustomerBalanceSummaryReport";
+import ReceivableSummaryReport from "./pages/ClubManagement/ReceivableSummaryReport";
+import ReceivableDetailsReport from "./pages/ClubManagement/ReceivableDetailsReport";
 import BalanceSheetReport from "./pages/ClubManagement/BalanceSheetReport";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import BillCyclesAdd from "./pages/ClubManagement/BillCyclesAdd";
@@ -1142,20 +1163,93 @@ import { GSTPayableDetails } from "./pages/ClubManagement/GSTPayableDetails";
 import GstReceivableReport from "./pages/ClubManagement/GSTReceivableReport";
 import { GSTReceivableDetails } from "./pages/ClubManagement/GSTReceivableDetails";
 import { TaxSummaryDetails } from "./pages/ClubManagement/TaxSummaryDetails";
-import TrialBalanceReport from "./pages/ClubManagement/TrialBalanceReport";
+import TrialBalance from "./pages/ClubManagement/TrialBalance";
 import { TrialBalanceDetails } from "./pages/ClubManagement/TrialBalanceDetails";
 import { RoleDashboardVi } from "./pages/settings/RoleDashboardVi";
 import { AddRolePageVi } from "./pages/settings/AddRolePageVi";
 import GSTR7Report from "./pages/ClubManagement/GSTR-7Report";
 import GSTR3BSummary from "./pages/ClubManagement/GSTR-3BSummary";
 import GSTR3BSummaryDetails from "./pages/ClubManagement/GSTR3BSummaryDetails";
+import SummaryOfInwardSupplies from "./pages/ClubManagement/SummaryOfInwardSupplies";
+import PMT06SelfAssessmentBasis from "./pages/ClubManagement/PMT06SelfAssessmentBasis";
+import SummaryOfOutwardSuppliesGSTR1 from "./pages/ClubManagement/SummaryOfOutwardSuppliesGSTR1";
+import InvoiceFurnishingFacilityIFF from "./pages/ClubManagement/InvoiceFurnishingFacilityIFF";
+import DayBook from "./pages/ClubManagement/DayBook";
+import JournalReport from "./pages/ClubManagement/JournalReport";
+import FixedAssetReport from "./pages/ClubManagement/FixedAssetReport";
+import AccountingReportStub from "./pages/Accounting/AccountingReportStub";
+import TimesheetDetails from "./pages/Accounting/TimesheetDetails";
+import TimesheetProfitabilitySummary from "./pages/Accounting/TimesheetProfitabilitySummary";
+import ProjectSummary from "./pages/Accounting/ProjectSummary";
+import ProjectDetails from "./pages/Accounting/ProjectDetails";
+import ProjectsCostSummary from "./pages/Accounting/ProjectsCostSummary";
+import ProjectsRevenueSummary from "./pages/Accounting/ProjectsRevenueSummary";
+import ProjectsPerformanceSummary from "./pages/Accounting/ProjectsPerformanceSummary";
+import SystemMails from "./pages/ClubManagement/SystemMails";
+import ActivityLogsAuditTrail from "./pages/ClubManagement/ActivityLogsAuditTrail";
+import ExceptionReport from "./pages/ClubManagement/ExceptionReport";
+import PortalActivities from "./pages/ClubManagement/PortalActivities";
+import CustomerReviews from "./pages/ClubManagement/CustomerReviews";
+import APIUsage from "./pages/ClubManagement/APIUsage";
+import GeneralLedger from "./pages/ClubManagement/GeneralLedger";
+import DetailedGeneralLedger from "./pages/ClubManagement/DetailedGeneralLedger";
+import SelfInvoiceSummary from "./pages/ClubManagement/SelfInvoiceSummary";
+import TCSSummaryForm27EQ from "./pages/ClubManagement/TCSSummaryForm27EQ";
+import PaymentsRecievedReport from "./pages/ClubManagement/PaymentsRecievedReport";
+import PaymentsMadeReport from "./pages/Accounting/PaymentsMadeReport";
+import PayableDetailsReport from "./pages/Accounting/PayableDetailsReport";
+import APAgingDetailsReport from "./pages/Accounting/APAgingDetailsReport";
+import PayableRefundHistoryReport from "./pages/Accounting/PayableRefundHistoryReport";
+import PurchaseOrderDetailsReport from "./pages/Accounting/PurchaseOrderDetailsReport";
+import ExpenseDetailsReport from "./pages/Accounting/ExpenseDetailsReport";
+import ExpenseSummaryByCategoryReport from "./pages/Accounting/ExpenseSummaryByCategoryReport";
+import ExpensesByCustomerReport from "./pages/Accounting/ExpensesByCustomerReport";
+import ExpensesByEmployeeReport from "./pages/Accounting/ExpensesByEmployeeReport";
+import ExpensesByProjectReport from "./pages/Accounting/ExpensesByProjectReport";
+import PurchaseOrdersByVendorReport from "./pages/Accounting/PurchaseOrdersByVendorReport";
+import PurchasesByItemReport from "./pages/Accounting/PurchasesByItemReport";
+import BillableExpenseDetails from "./pages/Accounting/BillableExpenseDetails";
+import PayableSummaryReport from "./pages/Accounting/PayableSummaryReport";
+import TimeToGetPaidReport from "./pages/ClubManagement/TimeToGetPaidReport";
+import CreditNoteDetailsReport from "./pages/ClubManagement/CreditNoteDetailsReport";
+import RefundHistoryReport from "./pages/ClubManagement/RefundHistoryReport";
+import RecurringInvoiceDetailsReport from "./pages/ClubManagement/RecurringInvoiceDetailsReport";
+import VendorBalanceSummaryReport from "./pages/ClubManagement/VendorBalanceSummaryReport";
+import APAgingSummaryReport from "./pages/ClubManagement/APAgingSummaryReport";
+import BillDetailsReport from "./pages/ClubManagement/BillDetailsReport";
+import VendorCreditsDetailsReport from "./pages/ClubManagement/VendorCreditsDetailsReport";
 import GSTR9Summary from "./pages/ClubManagement/Gstr9summary";
 import CashFlowStatementReport from "./pages/ClubManagement/CashFlowStatementReport";
+import DebtorsCreditorsReport from "./pages/ClubManagement/DebitorsCreditorsReport";
+import { BusinessPerformanceRatioReport } from "./pages/ClubManagement/BusinessPerformanceRatioReport";
+import BusinessCompassProfile from "./pages/BusinessCompass/BusinessCompassProfile";
+import BusinessCompassDashboard from "./pages/BusinessCompass/BusinessCompassDashboard";
+import Feedback from "./pages/BusinessCompass/Feedback";
+import Announcement from "./pages/BusinessCompass/Announcement";
+import Leaderboard from "./pages/BusinessCompass/Leaderboard";
+import DiscPersonalityAssessment from "./pages/BusinessCompass/DiscPersonalityAssessment";
+import HelpCenter from "./pages/BusinessCompass/HelpCenter";
+import BugReports from "./pages/BusinessCompass/BugReports";
+import WeeklyReports from "./pages/BusinessCompass/WeeklyReports";
+import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompassTasksAndIssues";
+import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
+import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
+import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
+import DailyMeeting from "./pages/AdminCompass/DailyMeeting";
+import KPI from "./pages/AdminCompass/KPI";
+import ReportAnalytics from "./pages/ReportAnalytics";
+import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
+import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
+import HouseSetupPage from "./pages/HouseSetupPage";
+import HSNCodeSetup from "./pages/HSNCodeSetup";
+import DashboardUI from "./pages/DashboardUI";
 
 const queryClient = new QueryClient();
 
 // WebSocket Notification Handler Component
-const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const WebSocketNotificationInitializer: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
   const { manager: webSocketManager, connect } = useWebSocket();
   const { addNotification } = useNotification();
   const navigate = useNavigate();
@@ -1165,20 +1259,20 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Connect to WebSocket
-  useEffect(() => {
-    console.warn("🔌 WebSocket connection effect running");
+  // useEffect(() => {
+  //   console.warn("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+  //   if (token) {
+  //     console.warn("✅ Token available, connecting...");
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error("❌ No token available for WebSocket connection");
+  //   }
 
-    return () => {
-      console.warn("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect, socketUrl]);
+  //   return () => {
+  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
+  //   };
+  // }, [token, connect, socketUrl]);
 
   // Subscribe to notifications
   useEffect(() => {
@@ -1201,10 +1295,14 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
           const notification = {
             id: message.id || Date.now(),
             title: message.title || "New Notification",
-            message: message.body || message.message || "You have a new notification",
+            message:
+              message.body || message.message || "You have a new notification",
             ntype: message.ntype,
             type: message.type,
-            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
             read: false,
             payload: message.payload,
           };
@@ -1223,9 +1321,13 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
                 notif.onclick = () => {
                   window.focus();
                   if (message.ntype === "conversation") {
-                    navigate(`/vas/channels/messages/${message.conversation_id}`);
+                    navigate(
+                      `/vas/channels/messages/${message.conversation_id}`
+                    );
                   } else if (message.ntype === "projectspace") {
-                    navigate(`/vas/channels/groups/${message.project_space_id}`);
+                    navigate(
+                      `/vas/channels/groups/${message.project_space_id}`
+                    );
                   }
                 };
               }
@@ -1245,7 +1347,13 @@ const WebSocketNotificationInitializer: React.FC<{ children: React.ReactNode }> 
       console.warn("⏰ Clearing subscription timer");
       clearTimeout(subscriptionTimer);
     };
-  }, [isSubscribed, webSocketManager, currentUser?.id, navigate, addNotification]);
+  }, [
+    isSubscribed,
+    webSocketManager,
+    currentUser?.id,
+    navigate,
+    addNotification,
+  ]);
 
   return <>{children}</>;
 };
@@ -1344,7 +1452,11 @@ function App() {
         },
         onMessageNotification: (message) => {
           console.warn(message);
-          if (message.user_id !== currentUser.id) {
+          if (
+            (message.ntype === "conversation" ||
+              message.ntype === "projectspace") &&
+            message.user_id !== currentUser.id
+          ) {
             return;
           }
 
@@ -1355,7 +1467,7 @@ function App() {
 
           Notification.requestPermission().then((permission) => {
             if (permission === "granted") {
-              const notification = new Notification("New Message Received", {
+              const notification = new Notification(message.title, {
                 body: message.body,
               });
 
@@ -1407,6 +1519,22 @@ function App() {
                           element={<OnlyOfficePublicEditorPage />}
                         />
 
+                        {/* Backend Routes */}
+                        <Route
+                          path="/backend-console"
+                          element={
+                            <ProtectedRoute>
+                              <BackendLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route index element={<div className="p-8" />} />
+                          <Route
+                            path="sms-management"
+                            element={<SmsManagementPage />}
+                          />
+                        </Route>
+
                         {/* Admin Routes */}
                         <Route
                           path="/ops-console"
@@ -1456,6 +1584,18 @@ function App() {
                           <Route
                             path="admin/create-admin-user"
                             element={<CreateAdminUserPage />}
+                          />
+                          <Route
+                            path="admin/feedback-dashboard"
+                            element={<FeedbackDashboard />}
+                          />
+                          <Route
+                            path="admin/systems-sops"
+                            element={<SystemAndSOP />}
+                          />
+                          <Route
+                            path="admin/disc-report"
+                            element={<DiscReport />}
                           />
 
                           <Route
@@ -1609,7 +1749,10 @@ function App() {
                           path="/forgot-password-otp"
                           element={<ForgotPasswordOTPPage />}
                         />
-                        <Route path="/new-password" element={<NewPasswordPage />} />
+                        <Route
+                          path="/new-password"
+                          element={<NewPasswordPage />}
+                        />
                         <Route
                           path="/login-success"
                           element={<LoginSuccessPage />}
@@ -1856,15 +1999,26 @@ function App() {
                               </ProtectedRoute>
                             }
                           />
-                          <Route
+                          {/* <Route
                             path="/employee/company-hub"
                             element={
                               <ProtectedRoute>
                                 <CompanyHub />
                               </ProtectedRoute>
                             }
+                          /> */}
+                          <Route
+                            path="/employee/company-hub"
+                            element={
+                              <ProtectedRoute>
+                                <CompanyHubNew />
+                              </ProtectedRoute>
+                            }
                           />
-                          <Route path="/vas/channels" element={<ChannelsLayout />}>
+                          <Route
+                            path="/vas/channels"
+                            element={<ChannelsLayout />}
+                          >
                             <Route
                               index
                               element={
@@ -1888,12 +2042,138 @@ function App() {
                             path="/vas/channels/tasks"
                             element={<ChannelTasksAll />}
                           />
-                          <Route path="/business-card" element={<BusinessCard />} />
+                          <Route
+                            path="/business-card"
+                            element={<BusinessCard />}
+                          />
                           <Route path="/ask-ai" element={<AskAI />} />
                           <Route
                             path="/vas/channels/tasks/:id"
                             element={<ChatTaskDetailsPage />}
                           />
+                          <Route
+                            path="/business-compass/profile"
+                            element={<BusinessCompassProfile />}
+                          />
+                          <Route
+                            path="/business-compass/dashboard"
+                            element={<BusinessCompassDashboard />}
+                          />
+                          <Route
+                            path="/business-compass/daily-report"
+                            element={<BusinessCompassDailyReport />}
+                          />
+                          <Route
+                            path="/business-compass/weekly-report"
+                            element={<WeeklyReports />}
+                          />
+                          {/* <Route
+                            path="/business-compass/tasks-and-issues"
+                            element={<BusinessCompassTasksAndIssues />}
+                          /> */}
+                          <Route
+                            path="/business-compass/tasks"
+                            element={<ProjectTasksPage />}
+                          />
+                          <Route
+                            path="/business-compass/tasks/:taskId"
+                            element={<ProjectTaskDetails />}
+                          />
+                          <Route
+                            path="/business-compass/issues"
+                            element={<IssuesListPage />}
+                          />
+                          <Route
+                            path="/business-compass/issues/:id"
+                            element={<IssueDetailsPage />}
+                          />
+                          <Route
+                            path="/business-compass/channels"
+                            element={<ChannelsLayout />}
+                          >
+                            <Route
+                              index
+                              element={
+                                <div
+                                  className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                                >
+                                  Select a Chat/Group to view messages
+                                </div>
+                              }
+                            />
+                            <Route
+                              path="/business-compass/channels/messages/:id"
+                              element={<DMConversation />}
+                            />
+                            <Route
+                              path="/business-compass/channels/groups/:id"
+                              element={<GroupConversation />}
+                            />
+                          </Route>
+                          <Route
+                            path="/business-compass/directory-and-chat"
+                            element={<DirectoryAndChat />}
+                          />
+                          <Route
+                            path="/business-compass/feedback"
+                            element={<Feedback />}
+                          />
+                          <Route
+                            path="/business-compass/announcements"
+                            element={<Announcement />}
+                          />
+                          <Route
+                            path="/business-compass/leaderboard"
+                            element={<Leaderboard />}
+                          />
+                          <Route
+                            path="/business-compass/disc-personality-assessment"
+                            element={<DiscPersonalityAssessment />}
+                          />
+                          <Route
+                            path="/business-compass/help-center"
+                            element={<HelpCenter />}
+                          />
+                          <Route
+                            path="/business-compass/bug-reports"
+                            element={<BugReports />}
+                          />
+
+                          <Route
+                            path="/admin-compass/business-plan-goals"
+                            element={<BusinessPlanAndGoles />}
+                          />
+                          <Route
+                            path="/admin-compass/weekly-meetings"
+                            element={<WeeklyMeetings />}
+                          />
+                          <Route
+                            path="/admin-compass/team-dashboard"
+                            element={<TeamDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/feedback-dashboard"
+                            element={<FeedbackDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/systems-sops"
+                            element={<SystemAndSOP />}
+                          />
+                          <Route
+                            path="/admin-compass/disc-report"
+                            element={<DiscReport />}
+                          />
+
+                          <Route
+                            path="/admin-compass/daily-meeting"
+                            element={<DailyMeeting />}
+                          />
+                          <Route
+                            path="/admin-compass/kpi"
+                            element={<KPI />}
+                          />
+
+
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route
@@ -2174,7 +2454,10 @@ function App() {
                             path="/crm/occupant-users"
                             element={<CRMOccupantUsersDashboard />}
                           />
-                          <Route path="/crm/events" element={<CRMEventsPage />} />
+                          <Route
+                            path="/crm/events"
+                            element={<CRMEventsPage />}
+                          />
                           <Route
                             path="/crm/events/add"
                             element={<AddEventPage />}
@@ -2196,7 +2479,10 @@ function App() {
                             element={<BroadcastDetailsPage />}
                           />
                           <Route path="/crm/polls" element={<CRMPollsPage />} />
-                          <Route path="/crm/polls/add" element={<AddPollPage />} />
+                          <Route
+                            path="/crm/polls/add"
+                            element={<AddPollPage />}
+                          />
                           <Route
                             path="/crm/groups/details/:id"
                             element={<CRMGroupDetailsPage />}
@@ -2323,6 +2609,14 @@ function App() {
                           <Route
                             path="/settings/payment-management/:id"
                             element={<PaymentDetailPage />}
+                          />
+                          <Route
+                            path="/settings/house/setup"
+                            element={<HouseSetupPage />}
+                          />
+                          <Route
+                            path="/settings/hsn-code/setup"
+                            element={<HSNCodeSetup />}
                           />
                           <Route
                             path="/club-management/membership"
@@ -2479,6 +2773,10 @@ function App() {
                             element={<BalanceSheetReport />}
                           />
                           <Route
+                            path="/accounting/reports/business-performance"
+                            element={<BusinessPerformanceRatioReport />}
+                          />
+                          <Route
                             path="/accounting/reports/account-type-summary"
                             element={<AccountTypeSummaryReport />}
                           />
@@ -2499,8 +2797,172 @@ function App() {
                             element={<AccountTransactionsReport />}
                           />
                           <Route
+                            path="/accounting/reports/ar-aging-summary"
+                            element={<ARAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ar-aging-details"
+                            element={<ARAgingDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/invoice-details"
+                            element={<InvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/retainer-invoice-details"
+                            element={<RetainerInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/sales-order-details"
+                            element={<SalesOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/delivery-challan-details"
+                            element={<DeliveryChallanDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/quote-details"
+                            element={<QuoteDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/customer-balance-summary"
+                            element={<CustomerBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-summary"
+                            element={<ReceivableSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/receivable-details"
+                            element={<ReceivableDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payments-recieved"
+                            element={<PaymentsRecievedReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payments-made"
+                            element={<PaymentsMadeReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-details"
+                            element={<PayableDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ap-aging-details"
+                            element={<APAgingDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-refund-history"
+                            element={<PayableRefundHistoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/purchase-order-details"
+                            element={<PurchaseOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expense-details"
+                            element={<ExpenseDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expense-summary-by-category"
+                            element={<ExpenseSummaryByCategoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/purchase-orders-by-vendor"
+                            element={<PurchaseOrdersByVendorReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expenses-by-employee"
+                            element={<ExpensesByEmployeeReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/expenses-by-project"
+                            element={<ExpensesByProjectReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/billable-expense-details"
+                            element={<BillableExpenseDetails />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchase-order-details"
+                            element={<PurchaseOrderDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expense-details"
+                            element={<ExpenseDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expense-summary-by-category"
+                            element={<ExpenseSummaryByCategoryReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-customer"
+                            element={<ExpensesByCustomerReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-project"
+                            element={<ExpensesByProjectReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/expenses-by-employee"
+                            element={<ExpensesByEmployeeReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchases-by-vendor"
+                            element={<PurchaseOrdersByVendorReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/purchases-by-item"
+                            element={<PurchasesByItemReport />}
+                          />
+                          <Route
+                            path="/accounting/purchases-and-expenses/billable-expense-details"
+                            element={<BillableExpenseDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/payable-summary"
+                            element={<PayableSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/time-to-get-paid"
+                            element={<TimeToGetPaidReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/credit-note-details"
+                            element={<CreditNoteDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/refund-history"
+                            element={<RefundHistoryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/recurring-invoice-details"
+                            element={<RecurringInvoiceDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/vendor-balance-summary"
+                            element={<VendorBalanceSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/ap-aging-summary"
+                            element={<APAgingSummaryReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/bill-details"
+                            element={<BillDetailsReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/vendor-credits-details"
+                            element={<VendorCreditsDetailsReport />}
+                          />
+                          <Route
                             path="/accounting/reports/account-transactions/details"
                             element={<AccountTransactionsDetailPage />}
+                          />
+                          <Route
+                            path="/accounting/reports/debtors-creditors"
+                            element={<DebtorsCreditorsReport />}
                           />
                           <Route
                             path="/accounting/reports/cash-flow-statement"
@@ -2517,7 +2979,6 @@ function App() {
                           <Route
                             path="/accounting/reports/sales-by-item"
                             element={<SalesByItemReport />}
-
                           />
                           <Route
                             path="/accounting/reports/sales-by-item/details/:itemName"
@@ -2527,8 +2988,6 @@ function App() {
                             path="/accounting/reports/sales-by-sales-person"
                             element={<SalesBySalesPersonReport />}
                           />
-
-
                           <Route
                             path="/accounting/reports/sales-summary"
                             element={<SalesSummaryReport />}
@@ -2545,18 +3004,104 @@ function App() {
                             path="/accounting/reports/gstr-3b-summary/details"
                             element={<GSTR3BSummaryDetails />}
                           />
-                          <Route path="/accounting/reports/gstr-9" element={<GSTR9Summary />} />
-
-
+                          <Route
+                            path="/accounting/reports/summary-of-inward-supplies"
+                            element={<SummaryOfInwardSupplies />}
+                          />
+                          <Route
+                            path="/accounting/reports/pmt-06-self-assessment-basis"
+                            element={<PMT06SelfAssessmentBasis />}
+                          />
+                          <Route
+                            path="/accounting/reports/summary-of-outward-supplies-gstr-1"
+                            element={<SummaryOfOutwardSuppliesGSTR1 />}
+                          />
+                          <Route
+                            path="/accounting/reports/invoice-furnishing-facility-iff"
+                            element={<InvoiceFurnishingFacilityIFF />}
+                          />
+                          <Route
+                            path="/accounting/reports/day-book"
+                            element={<DayBook />}
+                          />
+                          <Route
+                            path="/accounting/reports/journal-report"
+                            element={<JournalReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/fixed-asset"
+                            element={<FixedAssetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/fixed-asset-register"
+                            element={<FixedAssetReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/name-of-project"
+                            element={
+                              <AccountingReportStub title="Name of Project" />
+                            }
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet"
+                            element={<TimesheetDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet-details"
+                            element={<TimesheetDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/timesheet-profitability-summary"
+                            element={<TimesheetProfitabilitySummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/project-summary"
+                            element={<ProjectSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/project-details"
+                            element={<ProjectDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-cost-summary"
+                            element={<ProjectsCostSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-revenue-summary"
+                            element={<ProjectsRevenueSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/projects-performance-summary"
+                            element={<ProjectsPerformanceSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/general-ledger"
+                            element={<GeneralLedger />}
+                          />
+                          <Route
+                            path="/accounting/reports/detailed-general-ledger"
+                            element={<DetailedGeneralLedger />}
+                          />
+                          <Route
+                            path="/accounting/reports/self-invoice-summary"
+                            element={<SelfInvoiceSummary />}
+                          />
+                          <Route
+                            path="/accounting/reports/tcs-summary-form-27eq"
+                            element={<TCSSummaryForm27EQ />}
+                          />
+                          <Route
+                            path="/accounting/reports/gstr-9"
+                            element={<GSTR9Summary />}
+                          />
                           <Route
                             path="/accounting/reports/balance-sheet/details/:id"
                             element={<BalanceSheetDetails />}
                           />
                           <Route
                             path="/accounting/reports/trial-balance"
-                            element={<TrialBalanceReport />}
+                            element={<TrialBalance />}
                           />
-
                           <Route
                             path="/accounting/reports/trial-balance/details/:id"
                             element={<TrialBalanceDetails />}
@@ -2578,6 +3123,39 @@ function App() {
                           <Route
                             path="/accounting/reports/tax-summary/details/:id"
                             element={<TaxSummaryDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/system-mails"
+                            element={<SystemMails />}
+                          />
+                          <Route
+                            path="/accounting/reports/activity"
+                            element={
+                              <Navigate
+                                to="/accounting/reports/system-mails"
+                                replace
+                              />
+                            }
+                          />
+                          <Route
+                            path="/accounting/reports/activity-logs-audit-trail"
+                            element={<ActivityLogsAuditTrail />}
+                          />
+                          <Route
+                            path="/accounting/reports/exception-report"
+                            element={<ExceptionReport />}
+                          />
+                          <Route
+                            path="/accounting/reports/portal-activities"
+                            element={<PortalActivities />}
+                          />
+                          <Route
+                            path="/accounting/reports/customer-reviews"
+                            element={<CustomerReviews />}
+                          />
+                          <Route
+                            path="/accounting/reports/api-usage"
+                            element={<APIUsage />}
                           />
                           {/* <Route */}
                           <Route
@@ -2604,7 +3182,6 @@ function App() {
                             path="/accounting/reports/gst-receivable"
                             element={<GstReceivableReport />}
                           />
-
                           <Route
                             path="/accounting/reports/gst-receivable/details/:id"
                             element={<GSTReceivableDetails />}
@@ -2788,6 +3365,10 @@ function App() {
                           <Route
                             path="/accounting/recurring-bills/create"
                             element={<RecurringBillCreatePage />}
+                          />
+                          <Route
+                            path="/accounting/recurring-bills/details/:id"
+                            element={<RecurringBillDetails />}
                           />
                           <Route
                             path="/accounting/recurring-expenses"
@@ -3197,7 +3778,10 @@ function App() {
                             path="/safety/permit/safety-check-form"
                             element={<PermitSafetyCheckForm />}
                           />
-                          <Route path="/safety/permit/vendor-form/:id?" />
+                          <Route
+                            path="/safety/permit/vendor-form/:id?"
+                            element={<VendorPermitForm />}
+                          />
                           <Route
                             path="/safety/permit/fill-form/:id?"
                             element={<FillForm />}
@@ -3341,7 +3925,9 @@ function App() {
                           />
                           <Route
                             path="/maintenance/audit/operational/master-checklists"
-                            element={<OperationalAuditMasterChecklistsDashboard />}
+                            element={
+                              <OperationalAuditMasterChecklistsDashboard />
+                            }
                           />
                           <Route
                             path="/maintenance/audit/operational/master-checklists/add"
@@ -3890,6 +4476,14 @@ function App() {
                             path="/vas/projects"
                             element={<ProjectsDashboard />}
                           />
+
+                          <Route
+                            path="/report-analytics"
+                            element={<ReportAnalytics />} />
+
+                          <Route
+                            path="/dashboard-UI"
+                            element={<DashboardUI />} />
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
@@ -3902,7 +4496,10 @@ function App() {
                             path="/vas/projects/:id/milestones/:mid/tasks"
                             element={<ProjectTasksPage />}
                           />
-                          <Route path="/vas/tasks" element={<ProjectTasksPage />} />
+                          <Route
+                            path="/vas/tasks"
+                            element={<ProjectTasksPage />}
+                          />
                           <Route
                             path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                             element={<ProjectTaskDetails />}
@@ -3911,7 +4508,10 @@ function App() {
                             path="/vas/tasks/:taskId"
                             element={<ProjectTaskDetails />}
                           />
-                          <Route path="/vas/sprint" element={<SprintDashboard />} />
+                          <Route
+                            path="/vas/sprint"
+                            element={<SprintDashboard />}
+                          />
                           <Route
                             path="/vas/sprint/details/:id"
                             element={<SprintDetailsPage />}
@@ -3925,7 +4525,10 @@ function App() {
                             element={<MilestoneDetailsPage />}
                           />
                           {/* Issues Routes */}
-                          <Route path="/vas/issues" element={<IssuesListPage />} />
+                          <Route
+                            path="/vas/issues"
+                            element={<IssuesListPage />}
+                          />
                           <Route
                             path="/vas/issues/:id"
                             element={<IssueDetailsPage />}
@@ -3955,16 +4558,21 @@ function App() {
                             path="/vas/documents"
                             element={<DocumentManagement />}
                           />
-                          <Route path="/vas/mom" element={<MinutesOfMeeting />} />
+                          <Route
+                            path="/vas/mom"
+                            element={<MinutesOfMeeting />}
+                          />
                           <Route
                             path="/vas/project-dashboard"
                             element={<SupersetDashboard />}
                           />
+
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
                           <Route
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
+
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}
@@ -4305,7 +4913,9 @@ function App() {
                           />
                           <Route
                             path="/vas/fnb"
-                            element={<RestaurantOrdersTable needPadding={true} />}
+                            element={
+                              <RestaurantOrdersTable needPadding={true} />
+                            }
                           />
                           {/* <Route path="/vas/fnb/add" element={<AddRestaurantPage />} /> */}
                           <Route
@@ -4457,7 +5067,10 @@ function App() {
                           <Route
                             path="/vas/redemonection-marketplace"
                             element={
-                              <Navigate to="/vas/redemption-marketplace" replace />
+                              <Navigate
+                                to="/vas/redemption-marketplace"
+                                replace
+                              />
                             }
                           />
                           {/* Space Management Routes */}
@@ -4905,10 +5518,18 @@ function App() {
                             path="/master/inventory-type/edit/:id"
                             element={<EditInventoryTypePage />}
                           />
-                           <Route
-                             path="/settings/company-hub/Company-setup"
-                             element={<CompanySetup />}
-                           />
+                          <Route
+                            path="/settings/company-hub/Company-setup"
+                            element={<CompanySetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/employee-of-the-month"
+                            element={<EmployeeOfTheMonthSetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/announcements"
+                            element={<AnnouncementsSetup />}
+                          />
                           <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
@@ -4988,7 +5609,10 @@ function App() {
                             path="/pulse/stepathon"
                             element={<StepathonPage />}
                           />
-                          <Route path="/pulse/events" element={<CRMEventsPage />} />
+                          <Route
+                            path="/pulse/events"
+                            element={<CRMEventsPage />}
+                          />
                           <Route
                             path="/pulse/events/add"
                             element={<AddEventPage />}
@@ -5023,7 +5647,10 @@ function App() {
                             element={<BroadcastDetailsPage />}
                           />
 
-                          <Route path="/pulse/community" element={<Communtiy />} />
+                          <Route
+                            path="/pulse/community"
+                            element={<Communtiy />}
+                          />
 
                           <Route
                             path="/pulse/community/add"
@@ -5136,7 +5763,10 @@ function App() {
                             path="/pulse/pulse-privilege/service-category/edit/:id"
                             element={<EditServiceCategoryPage />}
                           />
-                          <Route path="/pulse/amenity" element={<BookingList />} />
+                          <Route
+                            path="/pulse/amenity"
+                            element={<BookingList />}
+                          />
                           {/* Plus curated Service Routes */}
                           <Route
                             path="/pulse/curated-services/service"
@@ -5185,12 +5815,11 @@ function App() {
                             element={<CarpoolDashboard />}
                           />
 
-
                           <Route
                             path="/pulse/carpool/ride-detail"
                             element={<RideDetail />}
                           />
-                           <Route
+                          <Route
                             path="/pulse/carpool/ride-reviews"
                             element={<RideReviews />}
                           />
@@ -5520,10 +6149,16 @@ function App() {
                         />
 
                         {/* Quick Links Routes */}
-                        <Route path="/business-plan" element={<BusinessPlan />} />
+                        <Route
+                          path="/business-plan"
+                          element={<BusinessPlan />}
+                        />
                         <Route path="/our-group" element={<OurGroup />} />
                         <Route path="/products" element={<Products />} />
-                        <Route path="/document-drive" element={<DocumentDrive />} />
+                        <Route
+                          path="/document-drive"
+                          element={<DocumentDrive />}
+                        />
                         <Route path="/hr-policies" element={<HRPolicies />} />
                         <Route path="/directory" element={<Directory />} />
                         <Route path="/eployee-faq" element={<EmployeeFAQ />} />
@@ -5659,7 +6294,10 @@ function App() {
                           path="/mobile-projects/:id/milestones/:mid/tasks/:taskId"
                           element={<ProjectTaskDetailsMobile />}
                         />
-                        <Route path="/mobile-tasks" element={<TasksMobileView />} />
+                        <Route
+                          path="/mobile-tasks"
+                          element={<TasksMobileView />}
+                        />
                         <Route
                           path="/mobile-tasks/:taskId"
                           element={<TaskDetailsMobile />}
@@ -5706,7 +6344,10 @@ function App() {
                         />
                         {/* Flip Card Routes */}
                         <Route path="/flipcard" element={<FlipCard />} />
-                        <Route path="/flipcard/:gameId" element={<FlipCard />} />
+                        <Route
+                          path="/flipcard/:gameId"
+                          element={<FlipCard />}
+                        />
                         <Route
                           path="/flipcard/details/:rewardId"
                           element={<FlipCardDetails />}
@@ -5731,6 +6372,7 @@ function App() {
                             path="/mobile/channels/groups/:id"
                             element={<MobileGroupConversation />}
                           />
+
                         </Route>
                       </Routes>
                       <Toaster />

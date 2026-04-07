@@ -94,6 +94,14 @@ const navigationStructure = {
             href: "/settings/company-hub/Company-setup",
           },
           {
+            name: "Employee of the Month",
+            href: "/settings/company-hub/employee-of-the-month",
+          },
+          {
+            name: "Announcements Setup",
+            href: "/settings/company-hub/announcements",
+          },
+          {
             name: "Holiday Calendar",
 
             href: "/settings/account/holiday-calendar",
@@ -368,12 +376,15 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
         {
-          name: "Lockated Users",
+          name: "Locked Users",
           href: "/master/user/lockated-users",
           color: "text-[#1a1a1a]",
         },
-        { name: "Fte Users", href: "/master/user/vi-users", color: "text-[#1a1a1a]" },
-
+        {
+          name: "Fte Users",
+          href: "/master/user/vi-users",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
@@ -1494,6 +1505,14 @@ const modulesByPackage = {
           name: "Setup",
           href: "/settings/company-hub/Company-setup",
         },
+        {
+          name: "Employee of the Month",
+          href: "/settings/company-hub/employee-of-the-month",
+        },
+        {
+          name: "Announcements Setup",
+          href: "/settings/company-hub/announcements",
+        },
       ],
     },
   ],
@@ -1655,18 +1674,6 @@ const modulesByPackage = {
           href: "/accounting/reports/profit-and-loss",
         },
         {
-          name: "GST Payable",
-          href: "/accounting/reports/gst-payable",
-        },
-        {
-          name: "GST Receivable",
-          href: "/accounting/reports/gst-receivable",
-        },
-        {
-          name: "Tax Summary",
-          href: "/accounting/reports/tax-summary",
-        },
-        {
           name: "Account Type Summary",
           href: "/accounting/reports/account-type-summary",
         },
@@ -1677,6 +1684,232 @@ const modulesByPackage = {
         {
           name: "Account Transactions",
           href: "/accounting/reports/account-transactions",
+        },
+        {
+          name: "AR Aging System",
+          href: "/accounting/reports/ar-aging-summary",
+        },
+        {
+          name: "AR Aging Details",
+          href: "/accounting/reports/ar-aging-details",
+        },
+        {
+          name: "Invoice Details",
+          href: "/accounting/reports/invoice-details",
+        },
+        {
+          name: "Retainer Invoice Details",
+          href: "/accounting/reports/retainer-invoice-details",
+        },
+        {
+          name: "Sales Order Details",
+          href: "/accounting/reports/sales-order-details",
+        },
+        {
+          name: "Delivery Challan Details",
+          href: "/accounting/reports/delivery-challan-details",
+        },
+        {
+          name: "Quote Details",
+          href: "/accounting/reports/quote-details",
+        },
+        {
+          name: "Customer Balance Summary",
+          href: "/accounting/reports/customer-balance-summary",
+        },
+        {
+          name: "Receivable Summary",
+          href: "/accounting/reports/receivable-summary",
+        },
+        {
+          name: "Receivable Details",
+          href: "/accounting/reports/receivable-details",
+        },
+        {
+          name: "Payment Received",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "Payments Recieved",
+              href: "/accounting/reports/payments-recieved",
+            },
+            {
+              name: "Time to Get Paid",
+              href: "/accounting/reports/time-to-get-paid",
+            },
+            {
+              name: "Credit Note Details",
+              href: "/accounting/reports/credit-note-details",
+            },
+            {
+              name: "Refund History",
+              href: "/accounting/reports/refund-history",
+            },
+            {
+              name: "Recurring Invoice Details",
+              href: "/accounting/reports/recurring-invoice-details",
+            },
+          ],
+        },
+        {
+          name: "Payable",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "Vendor Balance Summary",
+              href: "/accounting/reports/vendor-balance-summary",
+            },
+            {
+              name: "Payments Made",
+              href: "/accounting/reports/payments-made",
+            },
+            {
+              name: "Payable Details",
+              href: "/accounting/reports/payable-details",
+            },
+            {
+              name: "AP Aging Details",
+              href: "/accounting/reports/ap-aging-details",
+            },
+            {
+              name: "Refund History",
+              href: "/accounting/reports/payable-refund-history",
+            },
+            {
+              name: "Purchase Order Details",
+              href: "/accounting/reports/purchase-order-details",
+            },
+            {
+              name: "Expense Details",
+              href: "/accounting/reports/expense-details",
+            },
+            {
+              name: "Expenses by Project",
+              href: "/accounting/reports/expenses-by-project",
+            },
+            {
+              name: "Expenses by Employee",
+              href: "/accounting/reports/expenses-by-employee",
+            },
+            {
+              name: "Billable Expense Details",
+              href: "/accounting/reports/billable-expense-details",
+            },
+            {
+              name: "Purchase Orders by Vendor",
+              href: "/accounting/reports/purchase-orders-by-vendor",
+            },
+            {
+              name: "Payable Summary",
+              href: "/accounting/reports/payable-summary",
+            },
+            {
+              name: "AP Aging Summary",
+              href: "/accounting/reports/ap-aging-summary",
+            },
+            {
+              name: "Bill Details",
+              href: "/accounting/reports/bill-details",
+            },
+            {
+              name: "Vendor Credits Details",
+              href: "/accounting/reports/vendor-credits-details",
+            },
+          ],
+        },
+        {
+          name: "Taxes",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "GST Payable",
+              href: "/accounting/reports/gst-payable",
+            },
+            {
+              name: "GST Receivable",
+              href: "/accounting/reports/gst-receivable",
+            },
+            {
+              name: "Tax Summary",
+              href: "/accounting/reports/tax-summary",
+            },
+          ],
+        },
+        {
+          name: "Activity",
+          icon: IndianRupee,
+          subItems: [
+            {
+              name: "System Mails",
+              href: "/accounting/reports/system-mails",
+            },
+            {
+              name: "Activity Logs & Audit Trail",
+              href: "/accounting/reports/activity-logs-audit-trail",
+            },
+            {
+              name: "Exception Report",
+              href: "/accounting/reports/exception-report",
+            },
+            {
+              name: "Portal Activities",
+              href: "/accounting/reports/portal-activities",
+            },
+            {
+              name: "Customer Reviews",
+              href: "/accounting/reports/customer-reviews",
+            },
+            {
+              name: "API Usage",
+              href: "/accounting/reports/api-usage",
+            },
+          ],
+        },
+        {
+          name: "Fixed Asset",
+          subItems: [
+            {
+              name: "Fixed Asset Register",
+              href: "/accounting/reports/fixed-asset-register",
+            },
+          ],
+        },
+        {
+          name: "Project",
+          subItems: [
+            {
+              name: "Name of Project",
+              href: "/accounting/reports/name-of-project",
+            },
+            {
+              name: "Timesheet Details",
+              href: "/accounting/reports/timesheet-details",
+            },
+            {
+              name: "Timesheet Profitability Summary",
+              href: "/accounting/reports/timesheet-profitability-summary",
+            },
+            {
+              name: "Project Summary",
+              href: "/accounting/reports/project-summary",
+            },
+            {
+              name: "Project Details",
+              href: "/accounting/reports/project-details",
+            },
+            {
+              name: "Projects Cost Summary",
+              href: "/accounting/reports/projects-cost-summary",
+            },
+            {
+              name: "Projects Revenue Summary",
+              href: "/accounting/reports/projects-revenue-summary",
+            },
+            {
+              name: "Projects Performance Summary",
+              href: "/accounting/reports/projects-performance-summary",
+            },
+          ],
         },
       ],
     },
@@ -1950,8 +2183,9 @@ export const StacticSidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
-                                }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                                nestedItem.color || "text-[#1a1a1a]"
+                              }`}
                             >
                               {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1967,8 +2201,9 @@ export const StacticSidebar = () => {
                       onClick={() =>
                         handleNavigation(subItem.href, currentSection)
                       }
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                        }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                        subItem.color || "text-[#1a1a1a]"
+                      }`}
                     >
                       {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1990,8 +2225,9 @@ export const StacticSidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-            }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+            item.color || "text-[#1a1a1a]"
+          }`}
         >
           {level === 0 && (
             <>
@@ -2070,10 +2306,11 @@ export const StacticSidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-            }`}
+          }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -2081,13 +2318,15 @@ export const StacticSidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-                }`}
+              className={`w-5 h-5 ${
+                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+              }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${3 - level
-                } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${
+                3 - level
+              } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -2106,8 +2345,9 @@ export const StacticSidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-[#D5DbDB]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-[#D5DbDB]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -2164,20 +2404,22 @@ export const StacticSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                    isActiveRoute(module.href, "prefix")
                       ? "bg-[#f0e8dc] shadow-inner"
                       : "hover:bg-[#DBC2A9]"
-                    }`}
+                  }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
+                    className={`w-5 h-5 ${
+                      isActiveRoute(module.href, "prefix")
                         ? "text-[#C72030]"
                         : "text-[#1a1a1a]"
-                      }`}
+                    }`}
                   />
                 </button>
               ))}

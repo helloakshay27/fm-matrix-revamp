@@ -2874,10 +2874,6 @@ export const EditIncidentDetailsPage = () => {
       toast.error('Please select a Sub-Sub Category');
       return false;
     }
-    if (!formData.subSubSubCategory) {
-      toast.error('Please select a Sub-Sub-Sub Category');
-      return false;
-    }
 
     if (!formData.severity) {
       toast.error('Please select Severity');
@@ -3181,7 +3177,7 @@ export const EditIncidentDetailsPage = () => {
 
               {/* Level 4: Sub Sub Sub Category */}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!formData.subSubCategory}>
-                <InputLabel shrink>Sub Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Sub Sub Sub Category</InputLabel>
                 <MuiSelect
                   label="Sub Sub Sub Category"
                   value={formData.subSubSubCategory}

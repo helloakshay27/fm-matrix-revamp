@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from "react";
+import {
+  FormControl,
+  Select as MUISelect,
+  MenuItem,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, Plus, Trash2, MoveRight, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +19,8 @@ import {
   fileToBase64,
   Category,
   CreateFolderPayload,
+  getUserFolders,
+  UserFolder,
 } from "@/services/documentService";
 
 interface NewDocument {
@@ -38,6 +45,7 @@ interface SelectedDocument {
 }
 
 const columns: ColumnConfig[] = [
+  { key: "id", label: "ID", sortable: true, defaultVisible: true },
   { key: "title", label: "Title", sortable: true, defaultVisible: true },
   {
     key: "documentCategory",
@@ -67,6 +75,8 @@ export const CreateFolderPage = () => {
   const [copyDocuments, setCopyDocuments] = useState<SelectedDocument[]>([]);
   const [newDocuments, setNewDocuments] = useState<NewDocument[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [parentFolders, setParentFolders] = useState<UserFolder[]>([]);
+  const [parentFolderId, setParentFolderId] = useState<string>("");
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
   const [selectedCommunities, setSelectedCommunities] = useState<
     { id: number; name: string }[]
@@ -74,12 +84,16 @@ export const CreateFolderPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState<string>("");
 
-  // Fetch categories on mount
+  // Fetch categories and parent folders on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const categoriesData = await getCategories();
+        const [categoriesData, foldersData] = await Promise.all([
+          getCategories(),
+          getUserFolders(1),
+        ]);
         setCategories(categoriesData);
+        setParentFolders(foldersData);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -271,8 +285,7 @@ export const CreateFolderPage = () => {
         folder: {
           name: title,
           category_id: parseInt(categoryId, 10),
-          // parent_id: 1, // Default
-          // of_phase: 'post_sale', // Default
+          parent_id: parentFolderId ? parseInt(parentFolderId, 10) : null,
         },
         permissions: [
           {
@@ -355,18 +368,58 @@ export const CreateFolderPage = () => {
               Folder Details
             </h2>
 
-            {/* Title Field */}
-            <div className="max-w-md">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Folder Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter Folder Name"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent h-[45px]"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+              {/* Folder Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Folder Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter Folder Name"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent h-[45px]"
+                />
+              </div>
+
+              {/* Parent Folder */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Parent Folder
+                </label>
+                <FormControl fullWidth size="small">
+                  <MUISelect
+                    value={parentFolderId || ""}
+                    onChange={(e) => setParentFolderId(e.target.value as string)}
+                    displayEmpty
+                    sx={{
+                      height: "45px",
+                      borderRadius: "0.375rem",
+                      backgroundColor: "white",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#d1d5db",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#d1d5db",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#C72030",
+                        borderWidth: "2px",
+                      },
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Parent Folder</em>
+                    </MenuItem>
+                    {parentFolders.map((folder) => (
+                      <MenuItem key={folder.id} value={folder.id.toString()}>
+                        {folder.name}
+                      </MenuItem>
+                    ))}
+                  </MUISelect>
+                </FormControl>
+              </div>
             </div>
           </div>
 

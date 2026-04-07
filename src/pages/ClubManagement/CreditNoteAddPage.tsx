@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
-    Button,
+    // Button,
     Autocomplete,
     FormControlLabel,
     Checkbox,
@@ -35,8 +35,10 @@ import {
     PersonAdd,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import { Button } from '@/components/ui/button';
+import { toast } from "sonner";
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -135,7 +137,7 @@ export const CreditNoteAddPage: React.FC = () => {
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
+                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id, inter_state_tax_rate_id: item.inter_state_tax_rate_id })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -290,6 +292,19 @@ export const CreditNoteAddPage: React.FC = () => {
             });
     }, []);
 
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching tax rates:", error));
+    }, []);
+
     const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
     const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
     const [selectedExemption, setSelectedExemption] = useState("");
@@ -357,6 +372,58 @@ export const CreditNoteAddPage: React.FC = () => {
         designation: '',
         department: ''
     });
+
+    // Credit Note specific fields
+    const [invoiceList, setInvoiceList] = useState<{ id: string; invoice_number: string }[]>([]);
+    const [selectedInvoice, setSelectedInvoice] = useState('');
+    const [invoiceType, setInvoiceType] = useState('');
+    const [reason, setReason] = useState('');
+
+    const invoiceTypeOptions = [
+        'Registered',
+        'Deemed Export',
+        'SEZ With Payment',
+        'SEZ Without Payment',
+        'Export With Payment',
+        'Export Without Payment',
+        'B2C (Large)',
+        'B2C Others',
+    ];
+
+    const reasonOptions = [
+        'Sales Return',
+        'Post Sale Discount',
+        'Deficiency in service',
+        'Correction in invoice',
+        'Change in POS',
+        'Finalization of Provisional assessment',
+        'Others',
+    ];
+
+    // Fetch invoices when customer changes
+    useEffect(() => {
+        if (!selectedCustomer) {
+            setInvoiceList([]);
+            setSelectedInvoice('');
+            return;
+        }
+        const fetchInvoices = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_account_invoices.json?lock_account_id=${lock_account_id}&q[lock_account_customer_id_eq]=${selectedCustomer.id}`,
+                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                );
+                const data = res.data?.data || res.data || [];
+                setInvoiceList(Array.isArray(data) ? data : []);
+            } catch {
+                setInvoiceList([]);
+            }
+        };
+        fetchInvoices();
+    }, [selectedCustomer]);
 
     // Dropdowns data
     const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
@@ -613,16 +680,38 @@ export const CreditNoteAddPage: React.FC = () => {
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!selectedCustomer) newErrors.customer = 'Customer is required';
-        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
-        if (!expectedShipmentDate) newErrors.expectedShipmentDate = 'Expected shipment date is required';
-        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+        if (!selectedCustomer) {
+            setErrors(newErrors);
+            toast.error('Customer is required');
+            return false;
+        }
 
-        const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
+        if (!placeOfSupply) {
+            setErrors(newErrors);
+            toast.error('Place of Supply is required');
+            return false;
+        }
+
+        if (!salesOrderDate) {
+            setErrors(newErrors);
+            toast.error('Credit note date is required');
+            return false;
+        }
+
+        // if (expectedShipmentDate && salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+        //     toast.error('Due date cannot be earlier than credit note date');
+        //     return false;
+        // }
+
+        const hasValidItems = items.some(item => item.name && Number(item.quantity) > 0 && Number(item.rate) > 0);
+        if (!hasValidItems) {
+            setErrors(newErrors);
+            toast.error('Please add at least one valid item');
+            return false;
+        }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return true;
     };
 
     const saleOrderPayload2 = {
@@ -673,7 +762,7 @@ export const CreditNoteAddPage: React.FC = () => {
     console.log("items:", items)
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!saveAsDraft && !validate()) {
+        if (!validate()) {
             return;
         }
 
@@ -707,14 +796,14 @@ export const CreditNoteAddPage: React.FC = () => {
             );
             formData.append('lock_account_credit_note[lock_account_customer_id]', selectedCustomer?.id || '');
             formData.append('lock_account_credit_note[reference_number]', referenceNumber);
-            formData.append('lock_account_credit_note[bill_date]', salesOrderDate);
-            formData.append('lock_account_credit_note[date]', expectedShipmentDate);
+            formData.append('lock_account_credit_note[date]', salesOrderDate);
+            // formData.append('lock_account_credit_note[date]', expectedShipmentDate);
             // formData.append('lock_account_credit_note[payment_term_id]', selectedTerm);
             // formData.append('sale_order[delivery_method]', deliveryMethod);
-            formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
+            formData.append('lock_account_credit_note[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_credit_note[customer_notes]', customerNotes);
             formData.append('lock_account_credit_note[terms_and_conditions]', termsAndConditions);
-            formData.append('lock_account_credit_note[status]', 'draft');
+            formData.append('lock_account_credit_note[status]', saveAsDraft ? 'draft' : 'open');
             formData.append('lock_account_credit_note[subject]', subject || '');
             formData.append('lock_account_credit_note[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
@@ -729,7 +818,10 @@ export const CreditNoteAddPage: React.FC = () => {
             formData.append('lock_account_credit_note[tax_type]', taxType.toLowerCase());
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
             formData.append('lock_account_credit_note[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
-            formData.append('lock_account_credit_note[place_of_supply]', placeOfSupply); //new added
+            formData.append('lock_account_credit_note[place_of_supply]', placeOfSupply);
+            formData.append('lock_account_credit_note[lock_account_invoice_id]', selectedInvoice || '');
+            formData.append('lock_account_credit_note[invoice_type]', invoiceType || '');
+            formData.append('lock_account_credit_note[reason]', reason || '');
             // Sale order items
             items.forEach((item, idx) => {
                 formData.append(`lock_account_credit_note[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
@@ -764,11 +856,11 @@ export const CreditNoteAddPage: React.FC = () => {
                 body: formData
             });
 
-            alert(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            toast.success(saveAsDraft ? 'Credit note saved as draft!' : 'Credit note saved as open!');
             navigate('/accounting/credit-note');
         } catch (error) {
-            console.error('Error submitting sales order:', error);
-            alert('Failed to create sales order');
+            console.error('Error submitting credit note:', error);
+            toast.error('Failed to create credit note.');
         } finally {
             setIsSubmitting(false);
         }
@@ -821,6 +913,22 @@ export const CreditNoteAddPage: React.FC = () => {
         }
     }, [selectedTax, taxOptions, afterDiscount]);
 
+    // Re-preselect tax on all taxable items when place of supply changes
+    useEffect(() => {
+        if (!placeOfSupply) return;
+        const isMaharashtra = placeOfSupply === "Maharashtra";
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+            const matched = itemOptions.find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isMaharashtra ? "tax_group" : "tax_rate",
+                tax_group_id: isMaharashtra ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [placeOfSupply]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const selectedTaxGroups = items
         .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
         .map(item => {
@@ -832,23 +940,34 @@ export const CreditNoteAddPage: React.FC = () => {
         });
     const taxBreakdown: any[] = [];
 
+    // Tax group breakdown (Maharashtra)
     selectedTaxGroups.forEach(group => {
         group.taxRates.forEach(rate => {
             const taxAmount = (group.itemAmount * rate.rate) / 100;
-
             const existing = taxBreakdown.find(t => t.name === rate.name);
-
             if (existing) {
                 existing.amount += taxAmount;
             } else {
-                taxBreakdown.push({
-                    name: rate.name,
-                    rate: rate.rate,
-                    amount: taxAmount
-                });
+                taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
             }
         });
     });
+
+    // Tax rate breakdown (non-Maharashtra)
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find(r => r.id === item.tax_group_id);
+            if (!rate) return;
+            const rateValue = rate.rate ?? rate.percentage ?? 0;
+            const taxAmount = (item.amount * rateValue) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
+            }
+        });
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -864,6 +983,17 @@ export const CreditNoteAddPage: React.FC = () => {
 
     }, [afterDiscount, totalTax, taxAmount2, adjustment]);
     console.log('Tax Options:', taxOptions);
+
+    const states = [
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+        "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+        "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+        "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttar Pradesh", "Uttarakhand", "West Bengal",
+        "Andaman and Nicobar Islands", "Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", "Foreign Country"
+    ];
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
@@ -872,9 +1002,34 @@ export const CreditNoteAddPage: React.FC = () => {
                 </div>
             )}
 
-            <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">New Credit Note</h1>
+            {/* <header className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <h1 className="text-2xl font-bold">New Credit Note</h1>
+                </div>
+            </header> */}
+
+            <header className="mb-4">
+
+                {/* Back Button - Top */}
+                <button
+                    type="button"
+                    onClick={() => navigate('/accounting/credit-note')}
+                    className="flex items-center gap-2 text-black font-medium mb-2"
+                >
+                    <ArrowLeft className="h-4 w-4 text-black" />
+                    Back to Credit Note List
+                </button>
+
+                {/* Title - Below */}
+                <h1 className="text-2xl font-bold text-black">
+                    Credit Note
+                </h1>
+
             </header>
+
 
             <div className="space-y-6">
                 {/* Customer Section */}
@@ -922,23 +1077,85 @@ export const CreditNoteAddPage: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
-                                        Place of Supply
+                                        Place of Supply<span className="text-red-500">*</span>
                                     </label>
-
                                     <TextField
                                         select
                                         fullWidth
                                         value={placeOfSupply}
+                                        //  displayEmpty
                                         onChange={(e) => setPlaceOfSupply(e.target.value)}
                                         sx={fieldStyles}
+                                        SelectProps={{
+                                            displayEmpty: true
+                                        }}
+
                                     >
-                                        <MenuItem value="">Select Country</MenuItem>
-                                        <MenuItem value="India">India</MenuItem>
+                                        <MenuItem value="">Select Place of Supply</MenuItem>
+                                        {/* <MenuItem value="India">India</MenuItem>
                                         <MenuItem value="United States">United States</MenuItem>
                                         <MenuItem value="United Kingdom">United Kingdom</MenuItem>
                                         <MenuItem value="Australia">Australia</MenuItem>
-                                        <MenuItem value="Canada">Canada</MenuItem>
+                                        <MenuItem value="Canada">Canada</MenuItem> */}
+                                        {states.map((state) => (
+                                            <MenuItem key={state} value={state}>
+                                                {state}
+                                            </MenuItem>
+                                        ))}
                                     </TextField>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Invoice#</label>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={selectedInvoice}
+                                            onChange={(e) => setSelectedInvoice(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="" disabled>Select Invoice</MenuItem>
+                                            {invoiceList.map((inv) => (
+                                                <MenuItem key={inv.id} value={inv.id}>
+                                                    {inv.invoice_number || inv.id}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Invoice Type</label>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={invoiceType}
+                                            onChange={(e) => setInvoiceType(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="" >Select Invoice Type</MenuItem>
+                                            {invoiceTypeOptions.map((opt) => (
+                                                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Reason</label>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={reason}
+                                            onChange={(e) => setReason(e.target.value)}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="" >Select Reason</MenuItem>
+                                            {reasonOptions.map((opt) => (
+                                                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 </div>
                             </div>
                         )}
@@ -963,34 +1180,36 @@ export const CreditNoteAddPage: React.FC = () => {
                             <label className="block text-sm font-medium mb-2">
                                 Billing Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
+                                maxLength={500}
                                 value={selectedCustomer?.billing_address?.address
                                     ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
                                     : billingAddress}
-                                onChange={(e) => setBillingAddress(e.target.value)}
+                                onChange={(e) => { if (e.target.value.length <= 500) setBillingAddress(e.target.value); }}
                                 placeholder="Enter billing address"
-                                disabled={!!selectedCustomer?.billing_address?.address}
+                                disabled={!!selectedCustomer}
                             />
+                            {!selectedCustomer && <p className="text-xs text-gray-400 text-right mt-1">{billingAddress.length}/500</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Shipping Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
+                                maxLength={500}
                                 value={selectedCustomer?.shipping_address?.address
                                     ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
                                     : shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
+                                onChange={(e) => { if (e.target.value.length <= 500) setShippingAddress(e.target.value); }}
                                 placeholder="Enter shipping address"
-                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
+                                disabled={!!selectedCustomer || sameAsBilling}
                             />
+                            {!selectedCustomer && !sameAsBilling && <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p>}
                             {/* <FormControlLabel
                                 control={
                                     <Checkbox
@@ -1058,19 +1277,18 @@ export const CreditNoteAddPage: React.FC = () => {
                             </FormControl>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium ">
+                            <label className="block text-sm font-medium mb-2">
                                 Subject
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                minRows={0}
-                                maxRows={8}
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                rows={3}
+                                maxLength={500}
                                 value={subject}
-                                onChange={e => setSubject(e.target.value)}
+                                onChange={e => { if (e.target.value.length <= 500) setSubject(e.target.value); }}
                                 placeholder="Enter subject"
-                                sx={fieldStyles}
                             />
+                            <p className="text-xs text-gray-400 text-right mt-1">{subject.length}/500</p>
                         </div>
 
                     </div>
@@ -1084,136 +1302,149 @@ export const CreditNoteAddPage: React.FC = () => {
                         )}
 
                         <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
-                                        {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                        <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
+                            <div className="w-full overflow-x-auto">
+                                <table className=" min-w-[950px] w-full ">
+                                    <thead className="bg-muted/50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
 
-                                    {items.map((item, index) => (
-                                        <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <Select
-                                                        value={item.name}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-                                                                // TAX HANDLING
-                                                                if (selectedItem.tax_preference === 'non_taxable') {
-                                                                    updateItem(index, 'item_tax_type', 'non_taxable');
-                                                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                        {items.map((item, index) => (
+                                            <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <FormControl fullWidth sx={{ minWidth: 250 }}>
+                                                        <Select
+                                                            value={item.name}
+                                                            onChange={(e) => {
+                                                                const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
+                                                                if (selectedItem) {
+                                                                    updateItem(index, 'name', selectedItem.name);
+                                                                    updateItem(index, 'rate', selectedItem.rate);
+                                                                    updateItem(index, 'description', selectedItem.description);
+                                                                    // TAX HANDLING
+                                                                    if (selectedItem.tax_preference === 'non_taxable') {
+                                                                        updateItem(index, 'item_tax_type', 'non_taxable');
+                                                                        updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                                                    }
+                                                                    if (selectedItem.tax_preference === 'taxable') {
+                                                                        const isMaharashtra = placeOfSupply === 'Maharashtra';
+                                                                        updateItem(index, 'item_tax_type', isMaharashtra ? 'tax_group' : 'tax_rate');
+                                                                        updateItem(index, 'tax_group_id', isMaharashtra ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
+                                                                    }
+                                                                    if (selectedItem.tax_preference === 'out_of_scope') {
+                                                                        updateItem(index, 'item_tax_type', 'out_of_scope');
+                                                                    }
+                                                                    if (selectedItem.tax_preference === 'non_gst_supply') {
+                                                                        updateItem(index, 'item_tax_type', 'non_gst_supply');
+                                                                    }
                                                                 }
-                                                                if (selectedItem.tax_preference === 'taxable') {
-                                                                    updateItem(index, 'item_tax_type', 'tax_group');
-                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
-                                                                }
-                                                                if (selectedItem.tax_preference === 'out_of_scope') {
-                                                                    updateItem(index, 'item_tax_type', 'out_of_scope');
-                                                                }
-                                                                if (selectedItem.tax_preference === 'non_gst_supply') {
-                                                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
-                                                                }
-                                                            }
-                                                        }}
-                                                        displayEmpty
-                                                        size="small"
-                                                    >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                                <TextField
+                                                            }}
+                                                            displayEmpty
+                                                            size="small"
+                                                        >
+                                                            <MenuItem value="" disabled>Select an item</MenuItem>
+                                                            {itemOptions.map((option) => (
+                                                                <MenuItem key={option.id} value={option.name}>
+                                                                    {option.name}
+                                                                </MenuItem>
+                                                            ))}
+                                                        </Select>
+                                                    </FormControl>
+                                                    {/* <TextField
                                                     fullWidth
                                                     size="small"
                                                     placeholder="Description"
                                                     value={item.description}
                                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
                                                     sx={{ mt: 1 }}
-                                                />
-                                            </td>
+                                                /> */}
+
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Description"
+                                                        size="small"
+                                                        placeholder="Description"
+                                                        value={item.description}
+                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                        sx={{ mt: 2 }}
+                                                        InputLabelProps={{ shrink: true }}
+                                                    />
+                                                </td>
 
 
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth size="small">
-                                                    <InputLabel id={`account-label-${index}`}>
-                                                        Account
-                                                    </InputLabel>
+                                                <td className="px-4 py-3">
+                                                    <FormControl fullWidth size="small">
+                                                        <InputLabel id={`account-label-${index}`}>
+                                                            Account
+                                                        </InputLabel>
 
-                                                    <Select
-                                                        labelId={`account-label-${index}`}
-                                                        value={item.account || ""}
-                                                        label="Account*"
-                                                        onChange={(e) => updateItem(index, "account", e.target.value)}
-                                                        displayEmpty
-                                                        MenuProps={{
-                                                            PaperProps: {
-                                                                style: {
-                                                                    maxHeight: 300,
-                                                                    minWidth: 250,
-                                                                    maxWidth: 350,
+                                                        <Select
+                                                            labelId={`account-label-${index}`}
+                                                            value={item.account || ""}
+                                                            label="Account*"
+                                                            onChange={(e) => updateItem(index, "account", e.target.value)}
+                                                            displayEmpty
+                                                            MenuProps={{
+                                                                PaperProps: {
+                                                                    style: {
+                                                                        maxHeight: 300,
+                                                                        minWidth: 250,
+                                                                        maxWidth: 350,
+                                                                    },
                                                                 },
-                                                            },
-                                                        }}
-                                                    >
-                                                        <MenuItem value="" disabled>
-                                                            Select Account
-                                                        </MenuItem>
+                                                            }}
+                                                        >
+                                                            <MenuItem value="" disabled>
+                                                                Select Account
+                                                            </MenuItem>
 
-                                                        {accountGroups.map((group) =>
-                                                            group.ledgers && group.ledgers.length > 0 ? [
-                                                                <ListSubheader key={`group-${group.id}`}>
-                                                                    {group.group_name}
-                                                                </ListSubheader>,
-                                                                ...group.ledgers.map((ledger) => (
-                                                                    <MenuItem key={ledger.id} value={ledger.id}>
-                                                                        {ledger.name}
-                                                                    </MenuItem>
-                                                                )),
-                                                            ] : null
-                                                        )}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 1, step: 1 }}
-                                                    sx={{ width: 80 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 0, step: 0.01 }}
-                                                    sx={{ width: 100 }}
-                                                />
-                                            </td>
+                                                            {accountGroups.map((group) =>
+                                                                group.ledgers && group.ledgers.length > 0 ? [
+                                                                    <ListSubheader key={`group-${group.id}`}>
+                                                                        {group.group_name}
+                                                                    </ListSubheader>,
+                                                                    ...group.ledgers.map((ledger) => (
+                                                                        <MenuItem key={ledger.id} value={ledger.id}>
+                                                                            {ledger.name}
+                                                                        </MenuItem>
+                                                                    )),
+                                                                ] : null
+                                                            )}
+                                                        </Select>
+                                                    </FormControl>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
+                                                        inputProps={{ min: 1, step: 1 }}
+                                                        sx={{ width: 80 }}
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.rate}
+                                                        onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                                                        inputProps={{ min: 0, step: 0.01 }}
+                                                        sx={{ width: 100 }}
+                                                    />
+                                                </td>
 
-                                            {/* <td className="px-4 py-3"> */}
-                                            {/* <div className="flex items-center gap-2">
+                                                {/* <td className="px-4 py-3"> */}
+                                                {/* <div className="flex items-center gap-2">
                                                     <TextField
                                                         type="number"
                                                         size="small"
@@ -1232,83 +1463,83 @@ export const CreditNoteAddPage: React.FC = () => {
                                                         </Select>
                                                     </FormControl>
                                                 </div> */}
-                                            {/* </td> */}
-                                            <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 200 }}>
-                                                    <Select
-                                                        //   value={item.tax_type || ""}
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
-                                                        displayEmpty
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
+                                                {/* </td> */}
+                                                <td className="px-4 py-3">
+                                                    <FormControl size="small" sx={{ width: 200 }}>
+                                                        <Select
+                                                            value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
+                                                            displayEmpty
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                const isMaharashtra = placeOfSupply === "Maharashtra";
 
-                                                            // Static tax types
-                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
-                                                                updateItem(index, "item_tax_type", value);
-                                                                updateItem(index, "tax_group_id", null);
-
-                                                                if (value === "non_taxable") {
-                                                                    setCurrentItemIndex(index);
-                                                                    setExemptionModalOpen(true);
+                                                                if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                                    updateItem(index, "item_tax_type", value);
+                                                                    updateItem(index, "tax_group_id", null);
+                                                                    if (value === "non_taxable") {
+                                                                        setCurrentItemIndex(index);
+                                                                        setExemptionModalOpen(true);
+                                                                    }
+                                                                } else {
+                                                                    updateItem(index, "item_tax_type", isMaharashtra ? "tax_group" : "tax_rate");
+                                                                    updateItem(index, "tax_group_id", value);
                                                                 }
-                                                            }
-                                                            // Tax group selected
-                                                            else {
-                                                                updateItem(index, "item_tax_type", "tax_group");
-                                                                updateItem(index, "tax_group_id", value);
-                                                            }
-                                                        }}
+                                                            }}
+                                                        >
+                                                            <MenuItem value="">Select Tax</MenuItem>
+
+                                                            {taxTypeOptions.map((opt) => (
+                                                                <MenuItem key={opt.value} value={opt.value}>
+                                                                    {opt.label}
+                                                                </MenuItem>
+                                                            ))}
+
+                                                            {placeOfSupply === "Maharashtra" ? (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                    ...taxGroups.map((group) => (
+                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                    ))
+                                                                ]
+                                                            ) : (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Rates</MenuItem>,
+                                                                    ...taxRates.map((rate) => (
+                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                    ))
+                                                                ]
+                                                            )}
+                                                        </Select>
+                                                    </FormControl>
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-semibold">
+                                                    ₹{item.amount.toFixed(2)}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => removeItem(index)}
+                                                        disabled={items.length === 1}
+                                                        color="error"
                                                     >
-                                                        <MenuItem value="">Select Tax</MenuItem>
-
-                                                        {/* Static Options */}
-                                                        {taxTypeOptions.map((opt) => (
-                                                            <MenuItem key={opt.value} value={opt.value}>
-                                                                {opt.label}
-                                                            </MenuItem>
-                                                        ))}
-
-                                                        {/* Divider */}
-                                                        <MenuItem disabled>
-                                                            Tax Groups
-                                                        </MenuItem>
-
-                                                        {/* Tax Groups */}
-                                                        {taxGroups.map((group) => (
-                                                            <MenuItem key={group.id} value={group.id}>
-                                                                {group.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-semibold">
-                                                ₹{item.amount.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => removeItem(index)}
-                                                    disabled={items.length === 1}
-                                                    color="error"
-                                                >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                        <Delete fontSize="small" />
+                                                    </IconButton>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <div className="flex gap-3 pt-4">
                             <Button
                                 startIcon={<Add />}
                                 onClick={addItem}
-                                variant="outlined"
+                                variant="outline"
                                 sx={{ textTransform: 'none' }}
                             >
-                                Add New Row
+                                + Add New Row
                             </Button>
                             {/* <Button
                                 variant="outlined"
@@ -1332,6 +1563,15 @@ export const CreditNoteAddPage: React.FC = () => {
                             <div className="flex justify-between items-center py-2">
                                 <span className="text-sm font-medium text-muted-foreground">Discount</span>
                                 <div className="flex items-center gap-2">
+                                    <Select
+                                        size="small"
+                                        value={discountTypeOnTotal}
+                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
+                                        sx={{ width: 120 }}
+                                    >
+                                        <MenuItem value="percentage">%</MenuItem>
+                                        <MenuItem value="amount">Amount</MenuItem>
+                                    </Select>
                                     <TextField
                                         type="number"
                                         size="small"
@@ -1340,15 +1580,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
-                                    <Select
-                                        size="small"
-                                        value={discountTypeOnTotal}
-                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
-                                        sx={{ width: 100 }}
-                                    >
-                                        <MenuItem value="percentage">%</MenuItem>
-                                        <MenuItem value="amount">Amount</MenuItem>
-                                    </Select>
+
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
@@ -1443,26 +1675,28 @@ export const CreditNoteAddPage: React.FC = () => {
 
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={3}
+                        maxLength={500}
                         value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        placeholder="Enter any notes for the customer"
+                        onChange={(e) => { if (e.target.value.length <= 500) setCustomerNotes(e.target.value); }}
+                        placeholder="Enter notes "
                     />
+                    <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
                 </Section>
 
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={4}
+                        maxLength={500}
                         value={termsAndConditions}
-                        onChange={(e) => setTermsAndConditions(e.target.value)}
+                        onChange={(e) => { if (e.target.value.length <= 500) setTermsAndConditions(e.target.value); }}
                         placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
                     />
+                    <p className="text-xs text-gray-400 text-right mt-1">{termsAndConditions.length}/500</p>
                 </Section>
 
                 {/* Attachments */}
@@ -1604,57 +1838,62 @@ export const CreditNoteAddPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
+
                 <Button
-                    variant="outlined"
-                    onClick={() => navigate('/accounting/sales-order')}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="outlined"
+                    // variant="outlined"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
-                        '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
+                    // sx={{
+                    //     textTransform: 'none',
+                    //     px: 4,
+                    //     borderColor: 'primary.main',
+                    //     color: 'primary.main',
+                    //     '&:hover': {
+                    //         borderColor: 'primary.dark',
+                    //         bgcolor: 'primary.main',
+                    //         color: 'white'
+                    //     }
+                    // }}
+                    className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    variant="contained"
+                    // variant="contained"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: 'primary.dark'
-                        },
-                        textTransform: 'none'
-                    }}
+                    // sx={{
+                    //     bgcolor: 'primary.main',
+                    //     color: 'white',
+                    //     px: 4,
+                    //     '&:hover': {
+                    //         bgcolor: 'primary.dark'
+                    //     },
+                    //     textTransform: 'none'
+                    // }}
+                    className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
                 >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    {isSubmitting ? 'Submitting...' : 'Save as Open'}
+                </Button>
+                <Button
+                    // variant="outlined"
+                    onClick={() => navigate('/accounting/credit-note')}
+                    disabled={isSubmitting}
+                    // sx={{
+                    //     textTransform: 'none',
+                    //     px: 4,
+                    //     borderColor: 'divider',
+                    //     color: 'text.secondary',
+                    //     '&:hover': {
+                    //         borderColor: 'primary.main',
+                    //         bgcolor: 'primary.main',
+                    //         color: 'white'
+                    //     }
+                    // }}
+                    //  className="px-4 py-2 rounded"
+                    variant="outline"
+                >
+                    Cancel
                 </Button>
             </div>
 

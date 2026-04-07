@@ -27,7 +27,7 @@ export const helpdeskAnalyticsAPI = {
   async getCustomerExperienceFeedback(fromDate: Date, toDate: Date): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/customer_experience_feedback?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const url = `/ratings/feedback_dashboard?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },

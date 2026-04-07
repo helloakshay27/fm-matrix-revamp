@@ -914,7 +914,26 @@ const Attachments = ({
 };
 
 // Activity Log Component
-const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
+const ActivityLog = ({ taskId }: { taskId: string }) => {
+  const baseUrl = localStorage.getItem("baseUrl") || ""
+  const token = localStorage.getItem("token") || ""
+
+  const [taskStatusLogs, setTaskStatusLogs] = useState([])
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      const response = await axios.get(`https://${baseUrl}/task_managements/${taskId}/task_system_logs.json`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      setTaskStatusLogs(response.data || [])
+    }
+
+    fetchLogs()
+  }, [taskId])
+
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -943,6 +962,52 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
     }
   };
 
+  const getActionFromLog = (log: any) => {
+    if (!log.changed_attr || Object.keys(log.changed_attr).length === 0) {
+      return log.log_type?.replace("TaskManagement", "").trim() || "updated task";
+    }
+
+    const changedFields = Object.keys(log.changed_attr);
+    const changes: string[] = [];
+
+    // Check for status change
+    if (log.changed_attr.status) {
+      const [oldStatus, newStatus] = log.changed_attr.status;
+      changes.push(`changed status from ${oldStatus} to ${newStatus}`);
+    }
+
+    // Check for description change
+    if (log.changed_attr.description) {
+      changes.push("updated the task description");
+    }
+
+    // Check for started_at change
+    if (log.changed_attr.started_at) {
+      const [oldStart, newStart] = log.changed_attr.started_at;
+      if (oldStart === "nil" || oldStart === null) {
+        changes.push("started the task");
+      } else {
+        changes.push("changed start time");
+      }
+    }
+
+    // Check for other field changes
+    const otherFields = changedFields.filter(
+      (field) => !["status", "description", "started_at", "updated_at"].includes(field)
+    );
+    if (otherFields.length > 0) {
+      otherFields.forEach((field) => {
+        const label = field
+          .replace(/_/g, " ")
+          .replace(/([A-Z])/g, " $1")
+          .trim();
+        changes.push(`updated ${label}`);
+      });
+    }
+
+    return changes.join(" and ");
+  };
+
   const calculateDuration = (start: string, end: string) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -963,8 +1028,8 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
 
   const activities = taskStatusLogs.map((log: any) => ({
     id: log.id,
-    person: log.created_by_name,
-    action: getActionFromStatus(log.status),
+    person: log.changed_by,
+    action: getActionFromLog(log),
     item: "task",
     timestamp: formatTimestamp(log.created_at),
     rawTimestamp: log.created_at,
@@ -985,7 +1050,6 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
                 <i>
                   {activity.person}{" "}
                   <span className="text-[#C72030]">{activity.action}</span>{" "}
-                  {activity.item}
                 </i>
               </span>
               <span>
@@ -1105,6 +1169,7 @@ interface TaskDetails {
   created_at?: string;
   status?: string;
   parent_task_title?: string;
+  total_allocated_hours?: number;
   responsible_person?: {
     name?: string;
   };
@@ -1454,6 +1519,23 @@ export const ProjectTaskDetails = () => {
     }
   };
 
+  function formatHours(hours: number): string {
+    console.log(hours)
+    if (hours < 1) {
+      const minutes = Math.round(hours * 60);
+      return `${minutes} min${minutes !== 1 ? 's' : ''}`;
+    }
+
+    const wholeHours = Math.floor(hours);
+    const remainingMinutes = Math.round((hours - wholeHours) * 60);
+
+    if (remainingMinutes === 0) {
+      return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''}`;
+    }
+
+    return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''} ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+  }
+
   const fetchProjectAndMilestoneNames = async () => {
     try {
       // Fetch project name
@@ -1585,7 +1667,17 @@ export const ProjectTaskDetails = () => {
           </>
         ) : (
           <>
-            <h2 className="text-[15px] p-3 px-0">
+            <h2
+              className="cursor-pointer hover:underline text-[15px] p-3 px-0"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied to clipboard!");
+                } catch (err) {
+                  console.error("Failed to copy:", err);
+                }
+              }}
+            >
               <span className="mr-3 text-[#C72030]">Task-{taskDetails.id}</span>
               <span>{taskDetails.title}</span>
             </h2>
@@ -1761,7 +1853,7 @@ export const ProjectTaskDetails = () => {
                   <div className="flex items-center justify-start gap-3">
                     <div className="text-right font-[500]">Efforts Duration:</div>
                     <div className="text-left">
-                      {taskDetails.estimated_hour || 0} hours
+                      {formatHours(taskDetails.total_allocated_hours)}
                     </div>
                   </div>
                 </div>
@@ -1868,7 +1960,7 @@ export const ProjectTaskDetails = () => {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
-                          {taskDetails.estimated_hour || 0} hours
+                          {formatHours(taskDetails.total_allocated_hours || 0)}
                         </p>
                       </div>
                     </div>
@@ -2039,7 +2131,7 @@ export const ProjectTaskDetails = () => {
           {/* Activity Log Tab */}
           {activeTab === "activity_log" && (
             <ActivityLog
-              taskStatusLogs={(taskDetails as any)?.task_status_logs}
+              taskId={taskId}
             />
           )}
 

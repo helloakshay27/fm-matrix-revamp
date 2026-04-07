@@ -32,7 +32,9 @@ import {
     Delete,
     CloudUpload,
     AttachFile,
-    ChevronRight
+    ChevronRight,
+    Search,
+    CheckCircle
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
@@ -101,6 +103,24 @@ interface Item {
     tax_exemption_id?: number | null;
 }
 
+interface BulkItem {
+    id: string;
+    inventory_name: string;
+    rate: number;
+    sku?: string;
+}
+
+interface BulkSelectedItem extends BulkItem {
+    quantity: number;
+}
+
+interface BulkItemModalProps {
+    open: boolean;
+    onClose: () => void;
+    itemOptions: BulkItem[];
+    onAddItems: (items: BulkSelectedItem[]) => void;
+}
+
 export const PurchaseOrderCreatePage: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -131,12 +151,14 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [deliveryCustomerId, setDeliveryCustomerId] = useState<string>('');
 
     // Purchase Order Details
-    const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
     const [referenceNumber, setReferenceNumber] = useState('');
     const [purchaseOrderDate, setPurchaseOrderDate] = useState('');
     const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
     const [paymentTerms, setPaymentTerms] = useState('');
     const [deliveryMethod, setDeliveryMethod] = useState('');
+    const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
+    const [loadingPONumber, setLoadingPONumber] = useState(false);
+    const [reverseCharge, setReverseCharge] = useState(false);
 
     // Items
     const [items, setItems] = useState<Item[]>([
@@ -195,7 +217,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; inventory_name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<any[]>([]);
+    const [loadingItems, setLoadingItems] = useState(false);
     const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
 
     // additional tax dropdown data (copied from QuotesAdd)
@@ -212,6 +235,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
     const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
     const [loadingExemptions, setLoadingExemptions] = useState(false);
+    const [bulkModalOpen, setBulkModalOpen] = useState(false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -223,14 +247,43 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         },
     };
 
-    // Generate auto purchase order number
     useEffect(() => {
-        const generateOrderNumber = () => {
-            const timestamp = Date.now();
-            const random = Math.floor(Math.random() * 1000);
-            setPurchaseOrderNumber(`PO-${timestamp.toString().slice(-5)}${random}`);
+        const fetchPONumber = async () => {
+            setLoadingPONumber(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+
+                const response = await axios.get(
+                    `https://${baseUrl}//pms/purchase_orders/get_po_number.json?lock_account_id=${lockAccountId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                console.log('PO Number API response:', response.data);
+
+                const poNumber =
+                    response.data?.po_number ||
+                    response.data?.next_po_number ||
+                    response.data?.purchase_order_number ||
+                    response.data?.number ||
+                    '';
+
+                setPurchaseOrderNumber(poNumber);
+            } catch (error) {
+                console.error('Error fetching PO number:', error);
+                toast.error('Failed to fetch PO number');
+            } finally {
+                setLoadingPONumber(false);
+            }
         };
-        generateOrderNumber();
+
+        fetchPONumber();
     }, []);
 
     // Fetch vendors on mount
@@ -294,16 +347,48 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
     // Fetch items, addresses & payment terms
     useEffect(() => {
-        const fetchInventories = async () => {
-            // Mock data or dispatch - restoring original logic
+        const fetchItems = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lockAccountId = localStorage.getItem('lock_account_id') || '1';
+
+            if (!baseUrl || !token) {
+                console.error('Missing baseUrl or token');
+                return;
+            }
+
+            setLoadingItems(true);
             try {
-                const response = await dispatch(
-                    getInventories({ baseUrl, token })
-                ).unwrap();
-                setItemOptions(response.inventories);
+                const response = await axios.get(
+                    `https://${baseUrl}/lock_account_items.json?lock_account_id=${lockAccountId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                const raw = response.data?.data || response.data || [];
+                const normalised = raw.map((item: any) => ({
+                    id: item.id,
+                    name: item.inventory_name || item.name || '',
+                    inventory_name: item.inventory_name || item.name || '',
+                    rate: Number(item.purchase_rate ?? item.rate ?? 0),
+                    description: item.sale_description || item.description || '',
+                    account: item.purchase_lock_account_ledger_id || '',
+                    sku: item.sku || '',
+                    tax_preference: item.tax_preference || '',
+                    tax_exemption_id: item.tax_exemption_id || null,
+                    tax_group_id: item.intra_state_tax_rate_id || item.tax_group_id || null,
+                }));
+                setItemOptions(normalised);
             } catch (error) {
-                console.log(error);
-                toast.error(error as any);
+                console.error('Error fetching lock_account_items:', error);
+                toast.error('Failed to load items');
+                setItemOptions([]);
+            } finally {
+                setLoadingItems(false);
             }
         };
 
@@ -349,7 +434,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         };
 
         fetchAddresses();
-        fetchInventories();
+        fetchItems();
         fetchPaymentTerms();
     }, []);
 
@@ -566,6 +651,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             ? (baseAmount * item.discount) / 100
             : item.discount;
         const afterDiscount = baseAmount - discountAmount;
+        if (reverseCharge) return afterDiscount;
         const taxAmount = (afterDiscount * item.taxRate) / 100;
         return afterDiscount + taxAmount;
     };
@@ -650,30 +736,19 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
     // Update taxAmount2 using percentage from selected tax option
     useEffect(() => {
-        // Recalculate afterDiscount within the effect to avoid dependency issues
-        const calcTotalDiscount = discountTypeOnTotal === 'percentage'
-            ? (subTotal * discountOnTotal) / 100
-            : discountOnTotal;
-        const calcAfterDiscount = subTotal - calcTotalDiscount;
-
         const selected = taxOptions.find(t => t.name === selectedTax);
-        // Use percentage key for calculation
         if (selected && typeof selected.percentage === 'number') {
-            // Calculate tax on afterDiscount
-            setTaxAmount2((calcAfterDiscount * selected.percentage) / 100);
+            setTaxAmount2((afterDiscount * selected.percentage) / 100);
         } else {
             setTaxAmount2(0);
         }
-    }, [selectedTax, taxOptions, subTotal, discountOnTotal, discountTypeOnTotal]);
+    }, [selectedTax, taxOptions, afterDiscount]);
 
     // Update totalAmount2 to include tax groups and adjustment
     useEffect(() => {
-        const calcTotalDiscount = discountTypeOnTotal === 'percentage'
-            ? (subTotal * discountOnTotal) / 100
-            : discountOnTotal;
-        const calcAfterDiscount = subTotal - calcTotalDiscount;
-        setTotalAmount2(calcAfterDiscount + totalTaxGroups - taxAmount2 + adjustment);
-    }, [subTotal, discountOnTotal, discountTypeOnTotal, totalTaxGroups, taxAmount2, adjustment]);
+        const total = afterDiscount + totalTaxGroups - taxAmount2 + (Number(adjustment) || 0);
+        setTotalAmount2(total);
+    }, [afterDiscount, totalTaxGroups, taxAmount2, adjustment]);
 
     // Handle file upload
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -729,6 +804,224 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         }
     };
 
+    // Handle bulk items added
+    const handleBulkItemsAdded = (bulkItems: BulkSelectedItem[]) => {
+        const currentItems = items.filter(it => it.name || it.rate > 0);
+        const newRows: Item[] = bulkItems.map(bi => ({
+            id: bi.id,
+            name: bi.inventory_name,
+            description: '',
+            quantity: bi.quantity,
+            rate: bi.rate,
+            discount: 0,
+            discountType: 'percentage' as const,
+            tax: '',
+            taxRate: 0,
+            amount: bi.quantity * bi.rate,
+            account_id: 0,
+            item_tax_type: '',
+            tax_group_id: null,
+            tax_exemption_id: null,
+        }));
+        setItems(currentItems.length > 0 ? [...currentItems, ...newRows] : newRows);
+    };
+
+    // ── BulkItemModal Component ─────────────────────────────────────────────
+    const BulkItemModal: React.FC<BulkItemModalProps> = ({ open, onClose, itemOptions, onAddItems }) => {
+        const [search, setSearch] = useState('');
+        const [selectedItems, setSelectedItems] = useState<BulkSelectedItem[]>([]);
+
+        // Reset on open
+        useEffect(() => {
+            if (open) {
+                setSearch('');
+                setSelectedItems([]);
+            }
+        }, [open]);
+
+        const filteredItems = itemOptions.filter(item => {
+            const name = (item.inventory_name || item.name || '').toString().toLowerCase();
+            const sku = (item.sku || '').toString().toLowerCase();
+            const query = search.toLowerCase();
+
+            return name.includes(query) || (sku && sku.includes(query));
+        });
+
+        const isSelected = (id: string) => selectedItems.some(i => i.id === id);
+
+        const toggleItem = (item: BulkItem) => {
+            if (isSelected(item.id)) {
+                setSelectedItems(prev => prev.filter(i => i.id !== item.id));
+            } else {
+                setSelectedItems(prev => [...prev, { ...item, quantity: 1 }]);
+            }
+        };
+
+        const updateQty = (id: string, delta: number) => {
+            setSelectedItems(prev =>
+                prev.map(i => i.id === id
+                    ? { ...i, quantity: Math.max(1, i.quantity + delta) }
+                    : i
+                )
+            );
+        };
+
+        const totalQty = selectedItems.reduce((sum, i) => sum + i.quantity, 0);
+
+        const handleAdd = () => {
+            if (selectedItems.length === 0) return;
+            onAddItems(selectedItems);
+            onClose();
+        };
+
+        return (
+            <Dialog
+                open={open}
+                onClose={onClose}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{ sx: { height: '90vh', maxHeight: 680, borderRadius: 2 } }}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-800">Add Items in Bulk</h2>
+                    <IconButton size="small" onClick={onClose} sx={{ color: 'error.main' }}>
+                        <Close fontSize="small" />
+                    </IconButton>
+                </div>
+
+                {/* Body */}
+                <div className="flex overflow-hidden" style={{ height: 'calc(100% - 120px)' }}>
+
+                    {/* LEFT – Item list */}
+                    <div className="w-[45%] border-r border-gray-200 flex flex-col overflow-hidden">
+                        {/* Search */}
+                        <div className="px-4 py-3">
+                            <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Type to search or scan the barcode of the item"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search fontSize="small" sx={{ color: 'text.secondary' }} />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#f8fafc' } }}
+                            />
+                        </div>
+
+                        {/* List */}
+                        <div className="flex-1 overflow-y-auto">
+                            {filteredItems.length === 0 ? (
+                                <div className="px-4 py-8 text-center text-gray-400 text-sm">No items found</div>
+                            ) : (
+                                filteredItems.map(item => {
+                                    const selected = isSelected(item.id);
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => toggleItem(item)}
+                                            className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <div>
+                                                <p className={`text-sm font-medium ${selected ? 'text-blue-600' : 'text-gray-800'}`}>
+                                                    {item.inventory_name}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-0.5">
+                                                    {item.sku ? `SKU: ${item.sku}  ` : ''}
+                                                    Purchase Rate: ₹{Number(item.rate).toFixed(2)}
+                                                </p>
+                                            </div>
+                                            {selected && (
+                                                <CheckCircle sx={{ color: '#22c55e', fontSize: 22 }} />
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+
+                    {/* RIGHT – Selected items */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        {/* Header row */}
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+                            <div className="flex items-center gap-2">
+                                <span className="text-base font-semibold text-gray-800">Selected Items</span>
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-sm font-bold text-gray-700">
+                                    {selectedItems.length}
+                                </span>
+                            </div>
+                            <span className="text-sm text-gray-600 font-medium">
+                                Total Quantity: {totalQty}
+                            </span>
+                        </div>
+
+                        {/* Selected list */}
+                        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
+                            {selectedItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                    <p className="text-sm mt-2">Click items on the left to add them</p>
+                                </div>
+                            ) : (
+                                selectedItems.map(item => (
+                                    <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100">
+                                        <span className="text-sm text-gray-800 font-medium flex-1 pr-4">
+                                            {item.sku ? `[${item.sku}] ` : ''}{item.inventory_name}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => updateQty(item.id, -1)}
+                                                sx={{ border: '1px solid #e2e8f0', borderRadius: 1, width: 28, height: 28 }}
+                                            >
+                                                <span style={{ fontSize: 18, lineHeight: 1 }}>−</span>
+                                            </IconButton>
+                                            <span className="w-8 text-center text-sm font-semibold text-gray-800">
+                                                {item.quantity}
+                                            </span>
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => updateQty(item.id, 1)}
+                                                sx={{ border: '1px solid #e2e8f0', borderRadius: 1, width: 28, height: 28 }}
+                                            >
+                                                <span style={{ fontSize: 18, lineHeight: 1 }}>+</span>
+                                            </IconButton>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-3 px-6 py-3 border-t border-gray-200 bg-white">
+                    <Button
+                        variant="contained"
+                        onClick={handleAdd}
+                        disabled={selectedItems.length === 0}
+                        sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, textTransform: 'none', borderRadius: 1.5, px: 3 }}
+                    >
+                        Add Items
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={onClose}
+                        sx={{ textTransform: 'none', borderRadius: 1.5, px: 3, borderColor: '#e2e8f0', color: 'text.secondary' }}
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </Dialog>
+        );
+    };
+
     // Validation
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
@@ -737,6 +1030,14 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         if (!purchaseOrderDate) newErrors.purchaseOrderDate = 'Purchase order date is required';
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+
+        if (referenceNumber && !/^\d{4,5}$/.test(referenceNumber)) {
+            newErrors.referenceNumber = 'Reference number must be 4 to 5 digits';
+        }
+
+        if (expectedDeliveryDate && purchaseOrderDate && new Date(expectedDeliveryDate) <= new Date(purchaseOrderDate)) {
+            newErrors.expectedDeliveryDate = 'Expected delivery date must be after purchase order date';
+        }
 
         const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
         if (!hasValidItems) newErrors.items = 'At least one valid item is required';
@@ -816,19 +1117,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     vendor_note: vendorNotes,
                     terms_conditions: termsAndConditions,
                     account_id: accountId,
-
                     tax_id: selectedTaxObj?.id,
                     tax_type: taxType,
                     discount: totalDiscount, // Calculated amount
                     adjustment: adjustment,
                     sub_total: subTotal,
                     tax_value: taxAmount, // This currently comes from item reduction? 
-                    // If items don't have tax, this taxAmount should probably be calculated from the global tax?
-                    // Let's assume the tax is calculated based on selectedTaxObj.rate if items don't have it?
-                    // But `taxAmount` variable is used in total calculation.
-                    // I will fix taxAmount calculation in the next step/edit if needed. 
-                    // For now, mapping what's available.
+                    
                     tax_percentage: selectedTaxObj?.rate || 0,
+                    reverse_charge: reverseCharge,
 
                     pms_po_inventories_attributes: inventoriesAttributes,
 
@@ -858,6 +1155,37 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleItemSelect = (index: number, selectedItemId: string) => {
+        const selectedItem = itemOptions.find((opt: any) => opt.id === selectedItemId);
+        if (!selectedItem) return;
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = {
+                ...newItems[index],
+                id: selectedItem.id,
+                name: selectedItem.name,
+                rate: Number(selectedItem.rate) || 0,
+                description: selectedItem.description || '',
+                account_id: selectedItem.account || '',
+                item_tax_type: (() => {
+                    if (selectedItem.tax_preference === 'non_taxable') return 'non_taxable';
+                    if (selectedItem.tax_preference === 'taxable') return 'tax_group';
+                    if (selectedItem.tax_preference === 'out_of_scope') return 'out_of_scope';
+                    if (selectedItem.tax_preference === 'non_gst_supply') return 'non_gst_supply';
+                    return '';
+                })(),
+                tax_group_id: selectedItem.tax_preference === 'taxable' ? selectedItem.tax_group_id : null,
+                tax_exemption_id: selectedItem.tax_preference === 'non_taxable' ? selectedItem.tax_exemption_id : null,
+            };
+            newItems[index].amount = calculateItemAmount(newItems[index]);
+            if (selectedItem.tax_preference === 'non_taxable') {
+                setCurrentItemIndex(index);
+                setExemptionModalOpen(true);
+            }
+            return newItems;
+        });
     };
 
     return (
@@ -1014,26 +1342,30 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 {/* Purchase Order Details */}
                 <Section title="Purchase Order Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* <div>
+                        <div>
                             <label className="block text-sm font-medium mb-2">
-                                Purchase Order #<span className="text-red-500">*</span>
+                                Purchase Order #
                             </label>
                             <TextField
                                 fullWidth
-                                value={purchaseOrderNumber}
+                                value={loadingPONumber ? 'Loading...' : purchaseOrderNumber}
                                 disabled
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input.Mui-disabled': {
+                                        WebkitTextFillColor: '#374151',
+                                        fontWeight: 600,
+                                    },
+                                }}
                                 InputProps={{
-                                    endAdornment: (
+                                    endAdornment: loadingPONumber ? (
                                         <InputAdornment position="end">
-                                            <IconButton size="small" title="Refresh">
-                                                <FileText className="w-4 h-4" />
-                                            </IconButton>
+                                            <CircularProgress size={16} />
                                         </InputAdornment>
-                                    )
+                                    ) : null,
                                 }}
                             />
-                        </div> */}
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
@@ -1042,8 +1374,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             <TextField
                                 fullWidth
                                 value={referenceNumber}
-                                onChange={(e) => setReferenceNumber(e.target.value)}
+                                onChange={(e) => {
+                                    const onlyDigits = e.target.value.replace(/\D/g, '');
+                                    setReferenceNumber(onlyDigits.slice(0, 5));
+                                }}
                                 placeholder="Enter reference number"
+                                error={!!errors.referenceNumber}
+                                helperText={errors.referenceNumber}
                                 sx={fieldStyles}
                             />
                         </div>
@@ -1077,6 +1414,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 helperText={errors.expectedDeliveryDate}
                                 sx={fieldStyles}
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{
+                                    min: purchaseOrderDate ? new Date(new Date(purchaseOrderDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined
+                                }}
                             />
                         </div>
 
@@ -1122,6 +1462,55 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 </Select>
                             </FormControl>
                         </div>
+
+                        {/* Reverse Charge */}
+                        <div className="col-span-1 md:col-span-3 mt-2">
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={reverseCharge}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setReverseCharge(checked);
+                                  setItems(prev =>
+                                    prev.map(item => {
+                                      const base = item.quantity * item.rate;
+                                      const disc = item.discountType === 'percentage'
+                                        ? (base * item.discount) / 100
+                                        : item.discount;
+                                      const after = base - disc;
+                                      return {
+                                        ...item,
+                                        taxRate: checked ? 0 : item.taxRate,
+                                        tax_group_id: checked ? null : item.tax_group_id,
+                                        item_tax_type: checked ? '' : item.item_tax_type,
+                                        tax_exemption_id: checked ? null : item.tax_exemption_id,
+                                        amount: checked
+                                          ? after
+                                          : after + (after * item.taxRate) / 100,
+                                      };
+                                    })
+                                  );
+                                }}
+                                sx={{
+                                  color: 'primary.main',
+                                  '&.Mui-checked': { color: 'primary.main' },
+                                }}
+                              />
+                            }
+                            label={
+                              <span className="text-sm font-medium">
+                                This transaction is applicable for Reverse Charge
+                              </span>
+                            }
+                          />
+                          {reverseCharge && (
+                            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-1 flex items-center gap-2">
+                              <span>ℹ️</span>
+                              Reverse Charge is applicable
+                            </p>
+                          )}
+                        </div>
                     </div>
                 </Section>
 
@@ -1151,38 +1540,35 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
                                                     <Select
-                                                        value={item.id}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.id === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'id', selectedItem.id);
-                                                                updateItem(index, 'name', selectedItem.inventory_name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                            }
-                                                        }}
+                                                        value={item.id && itemOptions.find(o => o.id === item.id) ? item.id : ''}
+                                                        onChange={(e) => handleItemSelect(index, e.target.value)}
                                                         displayEmpty
                                                         size="small"
+                                                        disabled={loadingItems}
                                                     >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
+                                                        <MenuItem value="" disabled>
+                                                            {loadingItems ? 'Loading items...' : 'Select an item'}
+                                                        </MenuItem>
+
+                                                        {itemOptions.map((option: any) => (
                                                             <MenuItem key={option.id} value={option.id}>
-                                                                {option.inventory_name}
+                                                                {option.inventory_name || option.name}
+                                                                {option.sku && ` (${option.sku})`}
                                                             </MenuItem>
                                                         ))}
                                                     </Select>
                                                 </FormControl>
-                                                {
-                                                    item.id && (
-                                                        <TextField
-                                                            fullWidth
-                                                            size="small"
-                                                            placeholder="Description"
-                                                            value={item.description}
-                                                            onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                            sx={{ mt: 1 }}
-                                                        />
-                                                    )
-                                                }
+
+                                                {item.id && (
+                                                    <TextField
+                                                        fullWidth
+                                                        size="small"
+                                                        placeholder="Description"
+                                                        value={item.description}
+                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                        sx={{ mt: 1 }}
+                                                    />
+                                                )}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
@@ -1245,11 +1631,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 200 }}>
+                                                <FormControl size="small" sx={{ width: 200 }} disabled={reverseCharge}>
                                                     <Select
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                                                        value={reverseCharge ? "" : (item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || "")}
                                                         displayEmpty
                                                         onChange={(e) => {
+                                                            if (reverseCharge) return;
                                                             const value = e.target.value;
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1288,6 +1675,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         ))}
                                                     </Select>
                                                 </FormControl>
+                                                {reverseCharge && (
+                                                    <span className="text-xs text-black-400 block mt-1">
+                                                        Tax disabled (RCM)
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-right font-semibold">
                                                 ₹{item.amount.toFixed(2)}
@@ -1317,9 +1709,16 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             >
                                 Add New Row
                             </Button>
+                            {/* <Button
+                                variant="outlined"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Add Items in Bulk
+                            </Button> */}
                             <Button
                                 variant="outlined"
                                 sx={{ textTransform: 'none' }}
+                                onClick={() => setBulkModalOpen(true)}   // 👈 only this line added
                             >
                                 Add Items in Bulk
                             </Button>
@@ -1363,16 +1762,25 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {taxBreakdown.map((tax, index) => (
-                                <div key={index} className="flex justify-between items-center py-2">
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {tax.name} ({tax.rate}%)
-                                    </span>
-                                    <span className="font-semibold text-base">
-                                        ₹{tax.amount.toFixed(2)}
-                                    </span>
-                                </div>
-                            ))}
+                            {taxBreakdown.length > 0 && (
+                                <>
+                                    <div className="flex justify-between items-center py-1">
+                                        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                            Tax Summary
+                                        </span>
+                                    </div>
+                                    {taxBreakdown.map((tax, index) => (
+                                        <div key={index} className="flex justify-between items-center py-2">
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                {tax.name} ({tax.rate}%)
+                                            </span>
+                                            <span className="font-semibold text-base">
+                                                ₹{tax.amount.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
 
                             <Divider />
 
@@ -1447,10 +1855,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                             <Divider sx={{ my: 2 }} />
 
-                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            {/* <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
                                 <span className="font-bold text-base">Total ( ₹ )</span>
                                 <span className="font-bold text-primary text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
-                            </div>
+                            </div> */}
+
+                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+    <span className="font-bold text-base text-gray-900">Total ( ₹ )</span>
+    <span className="font-bold text-gray-900 text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
+</div>
                         </div>
                     </div>
                 </Section>
@@ -1907,6 +2320,14 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 </DialogActions>
 
             </Dialog>
+
+            {/* Bulk Items Modal */}
+            <BulkItemModal
+                open={bulkModalOpen}
+                onClose={() => setBulkModalOpen(false)}
+                itemOptions={itemOptions}
+                onAddItems={handleBulkItemsAdded}
+            />
         </div>
     );
 };

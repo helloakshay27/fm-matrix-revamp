@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -173,7 +174,7 @@ export const QuotesDetails = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
-        return new Date(dateString).toLocaleDateString();
+        return format(new Date(dateString), "dd/MM/yyyy");
     };
 
     if (loading) {
@@ -333,10 +334,10 @@ export const QuotesDetails = () => {
                                         <p className="text-sm font-medium text-muted-foreground">Salesperson</p>
                                         <p className="text-base font-semibold mt-1">{quoteData.sales_person_name || "N/A"}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                                        <p className="text-base font-semibold mt-1">{quoteData.subject || "N/A"}</p>
-                                    </div>
+                                     <div>
+                                         <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                                         <p className="text-base font-semibold mt-1 break-all">{quoteData.subject || "N/A"}</p>
+                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Tax Type</p>
                                         <p className="text-base font-semibold mt-1">{quoteData.tax_type?.toUpperCase() || "N/A"}</p>
@@ -504,7 +505,7 @@ export const QuotesDetails = () => {
                                         <CardTitle className="text-base">Customer Notes</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{quoteData.customer_notes}</p>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap break-all">{quoteData.customer_notes}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -515,7 +516,7 @@ export const QuotesDetails = () => {
                                         <CardTitle className="text-base">Terms & Conditions</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{quoteData.terms_and_conditions}</p>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap break-all">{quoteData.terms_and_conditions}</p>
                                     </CardContent>
                                 </Card>
                             )}
@@ -532,10 +533,26 @@ export const QuotesDetails = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-                                    <p className="text-base font-semibold mt-1">{quoteData.customer_name || "N/A"}</p>
-                                </div>
+                                 <div>
+                                     <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+                                     <p className="text-base font-semibold mt-1 break-all">{quoteData.customer_name || "N/A"}</p>
+                                 </div>
+                                {quoteData.customer_notes && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Customer Notes</p>
+                                        <p className="text-base mt-1 break-all whitespace-pre-wrap">
+                                            {quoteData.customer_notes}
+                                        </p>
+                                    </div>
+                                )}
+                                {quoteData.terms_and_conditions && (
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Terms & Conditions</p>
+                                        <p className="text-base mt-1 break-all whitespace-pre-wrap">
+                                            {quoteData.terms_and_conditions}
+                                        </p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>

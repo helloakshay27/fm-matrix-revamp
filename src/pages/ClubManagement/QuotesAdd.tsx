@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
-    // Button,
+    Button,
     Autocomplete,
     FormControlLabel,
     Checkbox,
@@ -26,19 +26,19 @@ import {
     Chip
 } from '@mui/material';
 
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import {
     Close,
     Add,
     Delete,
     CloudUpload,
     AttachFile,
-    PersonAdd,
-    ChevronRight
+    PersonAdd
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
+import { format, parseISO } from 'date-fns';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -67,19 +67,71 @@ interface Customer {
     outstandingReceivables: number;
     unusedCredits: number;
     contactPersons: ContactPerson[];
+    billing_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    shipping_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    contact_persons?: ContactPerson[];
 }
 
-interface ContactPerson {
+interface DetailContactPerson {
     id: string;
     salutation: string;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     email: string;
-    workPhone: string;
+    work_phone: string;
     mobile: string;
-    skype: string;
+    phone: string;
     designation: string;
     department: string;
+}
+
+interface CustomerDetail {
+    company_name: string;
+    salutation: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    outstanding_receivable_amount: number;
+    unused_credits_receivable_amount: number;
+    customer_type: string;
+    currency: string;
+    payment_terms: string;
+    portal_status: string;
+    customer_language: string;
+    gst_treatment: string;
+    gstin: string;
+    pan: string;
+    place_of_supply: string;
+    tax_preference: string;
+    contact_persons: DetailContactPerson[];
+    billing_address: {
+        address: string;
+        address_line_two: string;
+        city: string;
+        state: string;
+        pin_code: string;
+        country: string;
+    };
+    shipping_address: {
+        address: string;
+        address_line_two: string;
+        city: string;
+        state: string;
+        pin_code: string;
+        country: string;
+    };
 }
 
 interface Item {
@@ -124,7 +176,7 @@ export const QuotesAdd: React.FC = () => {
                         id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
                         tax_preference: item.tax_preference,
                         tax_exemption_id: item.tax_exemption_id,
-                        tax_group_id: item.intra_state_tax_rate_id
+                        tax_group_id: Number(item.intra_state_tax_rate_id) || null
                     })));
                     console.log('Fetched items:', res.data);
                 }
@@ -208,9 +260,75 @@ export const QuotesAdd: React.FC = () => {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [loadingCustomers, setLoadingCustomers] = useState(false);
+    
+    // Customer Details Drawer State
     const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
+    const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
+    const [customerDetailLoading, setCustomerDetailLoading] = useState(false);
+    const [drawerActiveTab, setDrawerActiveTab] = useState(0);
+    const [addressExpanded, setAddressExpanded] = useState(true);
+    const [contactPersonsExpanded, setContactPersonsExpanded] = useState(true);
+
+    const fetchCustomerDetail = async (customerId: string | number) => {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        setCustomerDetailLoading(true);
+        try {
+            const response = await fetch(
+                `https://${baseUrl}/lock_account_customers/${customerId}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            const data = await response.json();
+            setCustomerDetail(data);
+            // Pre-populate address fields (user can still edit them)
+            const ba = data.billing_address;
+            if (ba) {
+                const formatted = [
+                    ba.address,
+                    ba.address_line_two,
+                    ba.city,
+                    ba.state,
+                    ba.pin_code ? `- ${ba.pin_code}` : '',
+                    ba.country
+                ].filter(Boolean).join(', ');
+                setBillingAddress(formatted);
+            }
+            const sa = data.shipping_address;
+            if (sa) {
+                const formatted = [
+                    sa.address,
+                    sa.address_line_two,
+                    sa.city,
+                    sa.state,
+                    sa.pin_code ? `- ${sa.pin_code}` : '',
+                    sa.country
+                ].filter(Boolean).join(', ');
+                setShippingAddress(formatted);
+            }
+        } catch (error) {
+            console.error("Error fetching customer details:", error);
+            toast.error("Failed to fetch customer details");
+        } finally {
+            setCustomerDetailLoading(false);
+        }
+    };
+
+    const openCustomerDrawer = () => {
+        if (!selectedCustomer?.id) {
+            toast.error("Please select a customer first");
+            return;
+        }
+        setCustomerDrawerOpen(true);
+        fetchCustomerDetail(selectedCustomer.id);
+    };
+
     // Contact persons selected for email
-    const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
+    const [selectedContactPersons, setSelectedContactPersons] = useState<string[]>([]);
 
     // Address
     const [billingAddress, setBillingAddress] = useState('');
@@ -233,9 +351,9 @@ export const QuotesAdd: React.FC = () => {
             id: Date.now().toString(),
             name: '',
             description: '',
-            quantity: 1,
-            rate: 0,
-            discount: 0,
+            quantity: 1 as number | '',
+            rate: 0 as number | '',
+            discount: 0 as number | '',
             discountType: 'percentage',
             tax: '',
             taxRate: 0,
@@ -314,7 +432,7 @@ export const QuotesAdd: React.FC = () => {
 
 
     // Summary
-    const [discountOnTotal, setDiscountOnTotal] = useState(0);
+    const [discountOnTotal, setDiscountOnTotal] = useState<number | ''>(0);
     const [discountTypeOnTotal, setDiscountTypeOnTotal] = useState<'percentage' | 'amount'>('percentage');
     const [adjustment, setAdjustment] = useState(0);
     const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
@@ -348,7 +466,7 @@ export const QuotesAdd: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description: string; tax_preference: string; tax_exemption_id: number | null; tax_group_id: number | null }[]>([]);
     const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
     const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
     const [taxOptions, setTaxOptions] = useState<any[]>([]);
@@ -444,12 +562,12 @@ export const QuotesAdd: React.FC = () => {
 
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
-        const baseAmount = item.quantity * item.rate;
+        const baseAmount = Number(item.quantity || 0) * Number(item.rate || 0);
         const discountAmount = item.discountType === 'percentage'
-            ? (baseAmount * item.discount) / 100
-            : item.discount;
+            ? (baseAmount * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
         const afterDiscount = baseAmount - discountAmount;
-        const taxAmount = (afterDiscount * item.taxRate) / 100;
+        const taxAmount = (afterDiscount * Number(item.taxRate || 0)) / 100;
         return afterDiscount + taxAmount;
     };
 
@@ -482,6 +600,23 @@ export const QuotesAdd: React.FC = () => {
         }]);
     };
 
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+    const [deleteTargetType, setDeleteTargetType] = useState<'item' | 'attachment' | null>(null);
+
+    const handleDeleteConfirm = () => {
+        if (deleteTargetIndex !== null) {
+            if (deleteTargetType === 'item') {
+                removeItem(deleteTargetIndex);
+            } else if (deleteTargetType === 'attachment') {
+                removeAttachment(deleteTargetIndex);
+            }
+        }
+        setDeleteConfirmOpen(false);
+        setDeleteTargetIndex(null);
+        setDeleteTargetType(null);
+    };
+
     // Remove item
     const removeItem = (index: number) => {
         if (items.length > 1) {
@@ -492,17 +627,17 @@ export const QuotesAdd: React.FC = () => {
     const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
-    const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    const subTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.rate || 0)), 0);
     const totalDiscount = discountTypeOnTotal === 'percentage'
-        ? (subTotal * discountOnTotal) / 100
-        : discountOnTotal;
+        ? (subTotal * (Number(discountOnTotal) || 0)) / 100
+        : (Number(discountOnTotal) || 0);
     const afterDiscount = subTotal - totalDiscount;
     const taxAmount = items.reduce((sum, item) => {
-        const itemSubtotal = item.quantity * item.rate;
+        const itemSubtotal = Number(item.quantity || 0) * Number(item.rate || 0);
         const itemDiscount = item.discountType === 'percentage'
-            ? (itemSubtotal * item.discount) / 100
-            : item.discount;
-        return sum + ((itemSubtotal - itemDiscount) * item.taxRate / 100);
+            ? (itemSubtotal * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
+        return sum + ((itemSubtotal - itemDiscount) * Number(item.taxRate || 0) / 100);
     }, 0);
     // Update totalAmount to subtract TDS/TCS (taxAmount2)
     const totalAmount = afterDiscount + adjustment - taxAmount2;
@@ -619,6 +754,11 @@ export const QuotesAdd: React.FC = () => {
         //     toast.error('Expiry is required');
         //     return false;
         // }
+
+        if (expectedShipmentDate && salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+            toast.error('Expiry Date cannot be earlier than Quote Date');
+            return false;
+        }
 
         // if (!selectedTerm) {
         //     // newErrors.paymentTerms = 'Payment terms is required';
@@ -931,8 +1071,14 @@ export const QuotesAdd: React.FC = () => {
                                     <Select
                                         value={selectedCustomer?.id || ''}
                                         onChange={(e) => {
-                                            const customer = customers.find(c => c.id === e.target.value);
+                                            const customerId = e.target.value;
+                                            const customer = customers.find(c => c.id === customerId);
                                             setSelectedCustomer(customer || null);
+                                            if (customerId) {
+                                                fetchCustomerDetail(customerId);
+                                            } else {
+                                                setCustomerDetail(null);
+                                            }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -993,16 +1139,91 @@ export const QuotesAdd: React.FC = () => {
                             </div>
                         )}
 
-                        {/* {selectedCustomer && (
-                            <Button
-                                variant="outlined"
-                                onClick={() => setCustomerDrawerOpen(true)}
-                                endIcon={<ChevronRight />}
-                                sx={{ textTransform: 'none' }}
-                            >
-                                View Customer Details
-                            </Button>
-                        )} */}
+                        {selectedCustomer && customerDetail && (
+                            <div className="mt-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-100 pt-6">
+                                    {/* Billing Address */}
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                            Billing Address
+                                        </div>
+                                        {customerDetail.billing_address?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                <div className="font-medium">{customerDetail.billing_address.address}</div>
+                                                {customerDetail.billing_address.address_line_two && (
+                                                    <div>{customerDetail.billing_address.address_line_two}</div>
+                                                )}
+                                                <div>
+                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
+                                                        .filter(Boolean)
+                                                        .join(", ")}
+                                                    {customerDetail.billing_address.pin_code ? ` - ${customerDetail.billing_address.pin_code}` : ""}
+                                                </div>
+                                                {customerDetail.billing_address.country && (
+                                                    <div>{customerDetail.billing_address.country}</div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-400 italic">No billing address provided</div>
+                                        )}
+                                    </div>
+
+                                    {/* Shipping Address */}
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                            Shipping Address
+                                        </div>
+                                        {customerDetail.shipping_address?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                <div className="font-medium">{customerDetail.shipping_address.address}</div>
+                                                {customerDetail.shipping_address.address_line_two && (
+                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
+                                                )}
+                                                <div>
+                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
+                                                        .filter(Boolean)
+                                                        .join(", ")}
+                                                    {customerDetail.shipping_address.pin_code ? ` - ${customerDetail.shipping_address.pin_code}` : ""}
+                                                </div>
+                                                {customerDetail.shipping_address.country && (
+                                                    <div>{customerDetail.shipping_address.country}</div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                                New Address
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* GST Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GST Treatment:</span>
+                                        <span className="text-gray-800">{customerDetail.gst_treatment || "Registered Business - Regular"}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GSTIN:</span>
+                                        <span className="text-gray-800 font-medium">{customerDetail.gstin || "—"}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-2">
+                                    <button
+                                        onClick={openCustomerDrawer}
+                                        className="text-[#C72030] text-sm font-medium hover:underline flex items-center gap-1"
+                                    >
+                                        View Customer Details <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {!customerDetail && selectedCustomer && customerDetailLoading && (
+                            <div className="py-4 flex justify-center">
+                                <CircularProgress size={24} color="error" />
+                            </div>
+                        )}
                     </div>
                 </Section>
 
@@ -1013,76 +1234,39 @@ export const QuotesAdd: React.FC = () => {
                             <label className="block text-sm font-medium mb-2">
                                 Billing Address
                             </label>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                multiline
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                                 rows={4}
-                                value={selectedCustomer?.billing_address?.address
-                                    ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
-                                    : billingAddress}
-                                onChange={(e) => setBillingAddress(e.target.value)}
-                                placeholder="Enter billing address"
-                                disabled={!!selectedCustomer?.billing_address?.address}
-
-                                InputLabelProps={{ shrink: true }}
-                                inputProps={{ maxLength: 500 }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-
-                                    "& .MuiInputBase-inputMultiline": {
-                                        resize: "none !important", // ✅ removes resize handle
-                                    },
+                                value={billingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setBillingAddress(e.target.value);
                                 }}
-
-                            //   helperText={
-                            //     <span style={{ textAlign: "right", display: "block" }}>
-                            //       {(billingAddress?.length || 0) + "/500 characters"}
-                            //     </span>
-                            //   }
+                                placeholder="Enter billing address (max 500 characters)"
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(billingAddress?.length || 0)}/500
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
                                 Shipping Address
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
-                                value={selectedCustomer?.shipping_address?.address
-                                    ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
-                                    : shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
-                                placeholder="Enter shipping address"
-                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
-                                InputLabelProps={{ shrink: true }}
-                                inputProps={{ maxLength: 500 }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-
-                                    "& .MuiInputBase-inputMultiline": {
-                                        resize: "none !important", // ✅ removes resize handle
-                                    },
+                                value={shippingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setShippingAddress(e.target.value);
                                 }}
-
-                            //   helperText={
-                            //     <span style={{ textAlign: "right", display: "block" }}>
-                            //       {(billingAddress?.length || 0) + "/500 characters"}
-                            //     </span>
-                            //   }
+                                placeholder="Enter shipping address (max 500 characters)"
+                                readOnly={sameAsBilling}
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(shippingAddress?.length || 0)}/500
+                            </div>
                             {/* <FormControlLabel
                                 control={
                                     <Checkbox
@@ -1126,8 +1310,20 @@ export const QuotesAdd: React.FC = () => {
                                 onChange={(e) => setSalesOrderDate(e.target.value)}
                                 error={!!errors.salesOrderDate}
                                 helperText={errors.salesOrderDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: salesOrderDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    startAdornment: salesOrderDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(salesOrderDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1142,8 +1338,21 @@ export const QuotesAdd: React.FC = () => {
                                 onChange={(e) => setExpectedShipmentDate(e.target.value)}
                                 error={!!errors.expectedShipmentDate}
                                 helperText={errors.expectedShipmentDate}
-                                sx={fieldStyles}
+                                sx={{
+                                    ...fieldStyles,
+                                    '& .MuiInputBase-input': {
+                                        color: expectedShipmentDate ? 'transparent' : 'inherit',
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
+                                inputProps={{ min: salesOrderDate }}
+                                InputProps={{
+                                    startAdornment: expectedShipmentDate ? (
+                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                            {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
+                                        </InputAdornment>
+                                    ) : null
+                                }}
                             />
                         </div>
 
@@ -1170,36 +1379,19 @@ export const QuotesAdd: React.FC = () => {
                             <label className="block text-sm font-medium ">
                                 Subject
                             </label>
-                            <TextField
-                                fullWidth
-                                multiline
-                                minRows={0}
-                                maxRows={8}
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                rows={4}
                                 value={subject}
-                                onChange={e => setSubject(e.target.value)}
-                                placeholder="Enter subject"
-                                // sx={fieldStyles}
-                                InputLabelProps={{ shrink: true }}
-                                inputProps={{ maxLength: 500 }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-
-                                    "& .MuiInputBase-inputMultiline": {
-                                        resize: "none !important", // ✅ removes resize handle
-                                    },
-
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setSubject(e.target.value);
                                 }}
-                                helperText={
-                                    <span style={{ textAlign: "right", display: "block" }}>
-                                        {(subject?.length || 0) + "/500 characters"}
-                                    </span>
-                                }
+                                placeholder="Enter subject (max 500 characters)"
+                                maxLength={500}
                             />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(subject?.length || 0)}/500
+                            </div>
                         </div>
                     </div>
                 </Section>
@@ -1285,8 +1477,16 @@ export const QuotesAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || "")}
-                                                    inputProps={{ min: 1, step: 1 }}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Quantity cannot be negative');
+                                                            updateItem(index, 'quantity', 0);
+                                                        } else {
+                                                            updateItem(index, 'quantity', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
+                                                    inputProps={{ min: 0, step: 1 }}
                                                     sx={{ width: 80 }}
                                                 />
                                             </td>
@@ -1295,7 +1495,15 @@ export const QuotesAdd: React.FC = () => {
                                                     type="number"
                                                     size="small"
                                                     value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || "")}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (val < 0) {
+                                                            toast.error('Rate cannot be negative');
+                                                            updateItem(index, 'rate', 0);
+                                                        } else {
+                                                            updateItem(index, 'rate', isNaN(val) ? "" : val);
+                                                        }
+                                                    }}
                                                     inputProps={{ min: 0, step: 0.01 }}
                                                     sx={{ width: 100 }}
                                                 />
@@ -1313,7 +1521,7 @@ export const QuotesAdd: React.FC = () => {
                                                     <FormControl size="small" sx={{ width: 80 }}>
                                                         <Select
                                                             value={item.discountType}
-                                                            onChange={(e) => updateItem(index, 'discountType', e.target.value)}
+                                                            onChange={(e) => updateItem(index, 'discountType', e.target.value as 'percentage' | 'amount')}
                                                         >
                                                             <MenuItem value="percentage">%</MenuItem>
                                                             <MenuItem value="amount">₹</MenuItem>
@@ -1329,7 +1537,7 @@ export const QuotesAdd: React.FC = () => {
                                                         value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
                                                         onChange={(e) => {
-                                                            const value = e.target.value;
+                                                            const value = String(e.target.value);
 
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1344,7 +1552,7 @@ export const QuotesAdd: React.FC = () => {
                                                             // Tax group selected
                                                             else {
                                                                 updateItem(index, "item_tax_type", "tax_group");
-                                                                updateItem(index, "tax_group_id", value);
+                                                                updateItem(index, "tax_group_id", Number(value));
                                                             }
                                                         }}
                                                     >
@@ -1377,7 +1585,11 @@ export const QuotesAdd: React.FC = () => {
                                             <td className="px-4 py-3 text-center">
                                                 <IconButton
                                                     size="small"
-                                                    onClick={() => removeItem(index)}
+                                                    onClick={() => {
+                                                        setDeleteTargetIndex(index);
+                                                        setDeleteTargetType('item');
+                                                        setDeleteConfirmOpen(true);
+                                                    }}
                                                     disabled={items.length === 1}
                                                     color="error"
                                                 >
@@ -1392,12 +1604,11 @@ export const QuotesAdd: React.FC = () => {
 
                         <div className="flex gap-3 pt-4">
                             <Button
-                                startIcon={<Add />}
+                                variant="outlined"
                                 onClick={addItem}
-                                variant="outline"
                                 sx={{ textTransform: 'none' }}
                             >
-                                Add New Row
+                                <span className="flex items-center gap-2"><Add /> Add New Row</span>
                             </Button>
                             {/* <Button
                                 variant="outlined"
@@ -1434,7 +1645,18 @@ export const QuotesAdd: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={discountOnTotal}
-                                        onChange={(e) => setDiscountOnTotal(parseFloat(e.target.value))}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Discount cannot be negative');
+                                                setDiscountOnTotal(0);
+                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                                toast.error('Discount percentage cannot exceed 100%');
+                                                setDiscountOnTotal(100);
+                                            } else {
+                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                            }
+                                        }}
                                         inputProps={{ min: 0, step: 0.01 }}
                                         sx={{ width: 80 }}
                                     />
@@ -1537,66 +1759,36 @@ export const QuotesAdd: React.FC = () => {
 
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={3}
                         value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        placeholder="Enter any notes for the customer"
-                        InputLabelProps={{ shrink: true }}
-                        inputProps={{ maxLength: 500 }}
-                        sx={{
-                            mt: 1,
-                            "& .MuiOutlinedInput-root": {
-                                height: "auto !important",
-                                padding: "2px !important",
-                                display: "flex",
-                            },
-
-                            "& .MuiInputBase-inputMultiline": {
-                                resize: "none !important", // ✅ removes resize handle
-                            },
-
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
                         }}
-                        helperText={
-                            <span style={{ textAlign: "right", display: "block" }}>
-                                {(customerNotes?.length || 0) + "/500 characters"}
-                            </span>
-                        }
+                        placeholder="Enter any notes for the customer (max 500 characters)"
+                        maxLength={500}
                     />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(customerNotes?.length || 0)}/500
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <TextField
-                        fullWidth
-                        multiline
+                    <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                         rows={4}
                         value={termsAndConditions}
-                        onChange={(e) => setTermsAndConditions(e.target.value)}
-                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
-                        InputLabelProps={{ shrink: true }}
-                        inputProps={{ maxLength: 500 }}
-                        sx={{
-                            mt: 1,
-                            "& .MuiOutlinedInput-root": {
-                                height: "auto !important",
-                                padding: "2px !important",
-                                display: "flex",
-                            },
-
-                            "& .MuiInputBase-inputMultiline": {
-                                resize: "none !important", // ✅ removes resize handle
-                            },
-
+                        onChange={(e) => {
+                            if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
                         }}
-                        helperText={
-                            <span style={{ textAlign: "right", display: "block" }}>
-                                {(termsAndConditions?.length || 0) + "/500 characters"}
-                            </span>
-                        }
+                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction (max 500 characters)"
+                        maxLength={500}
                     />
+                    <div className="text-xs text-gray-400 text-right mt-1">
+                        {(termsAndConditions?.length || 0)}/500
+                    </div>
                 </Section>
 
                 {/* Attachments */}
@@ -1633,7 +1825,11 @@ export const QuotesAdd: React.FC = () => {
                                                 ({(file.size / 1024).toFixed(2)} KB)
                                             </span>
                                         </div>
-                                        <IconButton size="small" onClick={() => removeAttachment(index)}>
+                                        <IconButton size="small" onClick={() => {
+                                            setDeleteTargetIndex(index);
+                                            setDeleteTargetType('attachment');
+                                            setDeleteConfirmOpen(true);
+                                        }}>
                                             <Close fontSize="small" />
                                         </IconButton>
                                     </div>
@@ -1667,13 +1863,13 @@ export const QuotesAdd: React.FC = () => {
                         />
 
                         {/* Contact Persons Section */}
-                        {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+                        {selectedCustomer && (selectedCustomer.contact_persons || selectedCustomer.contactPersons) && (
                             <div>
                                 <Typography variant="body2" className="font-semibold mb-2">
                                     Select contact persons to email
                                 </Typography>
                                 <div className="flex flex-col gap-2">
-                                    {selectedCustomer.contact_persons.map((person) => (
+                                    {((selectedCustomer.contact_persons || selectedCustomer.contactPersons) as any[]).map((person) => (
                                         <div key={person.id} className="flex items-center gap-2">
                                             <Checkbox
                                                 checked={selectedContactPersons.includes(person.id)}
@@ -1687,7 +1883,7 @@ export const QuotesAdd: React.FC = () => {
                                                 size="small"
                                             />
                                             <Chip
-                                                label={`${person.first_name} ${person.last_name} (${person.email})`}
+                                                label={`${person.first_name || person.firstName} ${person.last_name || person.lastName} (${person.email})`}
                                                 variant={selectedContactPersons.includes(person.id) ? "filled" : "outlined"}
                                             />
                                         </div>
@@ -1738,198 +1934,319 @@ export const QuotesAdd: React.FC = () => {
             </div>
 
             <div className="flex gap-3 mt-10 mb-10 justify-center pb-5">
-
                 <Button
-                    // variant="outlined"
+                    variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                // sx={{
-                //     textTransform: 'none',
-                //     px: 4,
-                //     borderColor: 'primary.main',
-                //     color: 'primary.main',
-                //     '&:hover': {
-                //         borderColor: 'primary.dark',
-                //         bgcolor: 'primary.main',
-                //         color: 'white'
-                //     }
-                // }}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
+                        }
+                    }}
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    // variant="contained"
+                    variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                // sx={{
-                //     bgcolor: 'primary.main',
-                //     color: 'white',
-                //     px: 4,
-                //     '&:hover': {
-                //         bgcolor: 'primary.dark'
-                //     },
-                //     textTransform: 'none'
-                // }}
+                    sx={{
+                        bgcolor: '#f8f1f1',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        px: 4,
+                        '&:hover': {
+                            bgcolor: '#f1e8e8',
+                            color: '#A01020'
+                        },
+                        textTransform: 'none'
+                    }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Save and Send'}
                 </Button>
 
                 <Button
-                    variant="outline"
-                    onClick={() => navigate('/accounting/invoices/list')}
+                    variant="outlined"
+                    onClick={() => navigate('/accounting/quotes/list')}
                     disabled={isSubmitting}
-                // sx={{
-                //     textTransform: 'none',
-                //     px: 4,
-                //     borderColor: 'divider',
-                //     color: 'text.secondary',
-                //     '&:hover': {
-                //         borderColor: 'primary.main',
-                //         bgcolor: 'primary.main',
-                //         color: 'white'
-                //     }
-                // }}
+                    sx={{
+                        textTransform: 'none',
+                        px: 4,
+                        borderColor: '#C72030',
+                        color: '#C72030',
+                        fontWeight: 600,
+                        '&:hover': {
+                            borderColor: '#A01020',
+                            bgcolor: '#f8f1f1',
+                            color: '#A01020'
+                        }
+                    }}
                 >
                     Cancel
                 </Button>
             </div>
 
             {/* Customer Details Drawer */}
-            <Drawer
-                anchor="right"
-                open={customerDrawerOpen}
-                onClose={() => setCustomerDrawerOpen(false)}
-                PaperProps={{ sx: { width: { xs: '100%', sm: 500 } } }}
-            >
-                {selectedCustomer && (
-                    <div className="p-6 space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-xl font-bold text-blue-600">
-                                        {selectedCustomer.name.charAt(0)}
-                                    </span>
-                                </div>
-                                <div>
-                                    <Typography variant="h6" className="font-bold">
-                                        {selectedCustomer.name}
-                                    </Typography>
-                                    <Typography variant="body2" className="text-gray-600">
-                                        {selectedCustomer.email}
-                                    </Typography>
-                                </div>
-                            </div>
-                            <IconButton onClick={() => setCustomerDrawerOpen(false)}>
-                                <Close />
-                            </IconButton>
+            {customerDrawerOpen && (
+                <div className="fixed inset-0 z-50 flex justify-end">
+                    <div
+                        className="absolute inset-0 bg-black/20"
+                        onClick={() => setCustomerDrawerOpen(false)}
+                    />
+                    <div className="relative w-full max-w-[450px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                        {/* Header */}
+                        <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
+                            <span className="font-semibold text-gray-800 text-lg">Customer details</span>
+                            <button
+                                onClick={() => setCustomerDrawerOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                            >
+                                ✕
+                            </button>
                         </div>
 
-                        <Divider />
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-orange-50 rounded-lg p-4 text-center">
-                                <Typography variant="h6" className="font-bold">
-                                    {/* ₹{typeof selectedCustomer.outstandingReceivables === 'number' ? selectedCustomer.outstandingReceivables.toLocaleString() : '0'} */}
-                                </Typography>
-                                <Typography variant="body2" className="text-gray-600">
-                                    Outstanding Receivables
-                                </Typography>
+                        {customerDetailLoading ? (
+                            <div className="flex-1 flex items-center justify-center">
+                                <CircularProgress size={36} />
                             </div>
-                            <div className="bg-green-50 rounded-lg p-4 text-center">
-                                <Typography variant="h6" className="font-bold">
-                                    {/* ₹{selectedCustomer.unusedCredits.toLocaleString()} */}
-                                </Typography>
-                                <Typography variant="body2" className="text-gray-600">
-                                    Unused Credits
-                                </Typography>
-                            </div>
-                        </div>
-
-                        <div>
-                            <Typography variant="subtitle1" className="font-semibold mb-3">
-                                Contact Details
-                            </Typography>
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Customer Type</span>
-                                    <span className="font-semibold">{selectedCustomer.customerType}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Currency</span>
-                                    <span className="font-semibold">{selectedCustomer.currency}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Payment Terms</span>
-                                    <span className="font-semibold">{selectedCustomer.paymentTerms}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Portal Status</span>
-                                    <span className="font-semibold">{selectedCustomer.portalStatus}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Customer Language</span>
-                                    <span className="font-semibold">{selectedCustomer.language}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <Divider />
-
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <Typography variant="subtitle1" className="font-semibold">
-                                    Contact Persons
-                                </Typography>
-                                <Button
-                                    size="small"
-                                    startIcon={<Add />}
-                                    onClick={() => setContactPersonDialogOpen(true)}
-                                    variant="outlined"
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    Add
-                                </Button>
-                            </div>
-
-                            {/* {selectedCustomer.contactPersons.length === 0 ? (
-                                <Typography variant="body2" className="text-gray-500">
-                                    No contact persons added
-                                </Typography>
-                            ) : (
-                                <div className="space-y-3">
-                                    {selectedCustomer.contactPersons.map(person => (
-                                        <div key={person.id} className="bg-gray-50 rounded-lg p-4">
-                                            <Typography variant="body1" className="font-semibold">
-                                                {person.salutation} {person.firstName} {person.lastName}
-                                            </Typography>
-                                            <Typography variant="body2" className="text-gray-600">
-                                                {person.email}
-                                            </Typography>
-                                            {person.designation && (
-                                                <Typography variant="body2" className="text-gray-600">
-                                                    {person.designation} {person.department && `- ${person.department}`}
-                                                </Typography>
-                                            )}
-                                            <div className="flex gap-3 mt-2">
-                                                {person.workPhone && (
-                                                    <Typography variant="body2" className="text-gray-600">
-                                                        Work: {person.workPhone}
-                                                    </Typography>
-                                                )}
-                                                {person.mobile && (
-                                                    <Typography variant="body2" className="text-gray-600">
-                                                        Mobile: {person.mobile}
-                                                    </Typography>
-                                                )}
-                                            </div>
+                        ) : customerDetail ? (
+                            <div className="flex-1 overflow-y-auto">
+                                {/* Customer Name + Avatar */}
+                                <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-100">
+                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
+                                        {(customerDetail.company_name || customerDetail.first_name || "?")[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-gray-800 text-base flex items-center gap-1">
+                                            {customerDetail.company_name ||
+                                                [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                                            <span className="text-blue-500 cursor-pointer text-sm">↗</span>
                                         </div>
+                                        {customerDetail.company_name && (
+                                            <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
+                                        )}
+                                        {customerDetail.email && (
+                                            <div className="text-xs text-blue-500">{customerDetail.email}</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Tabs */}
+                                <div className="flex border-b border-gray-200 px-4">
+                                    {["Details", "Activity Log"].map((t, i) => (
+                                        <button
+                                            key={t}
+                                            onClick={() => setDrawerActiveTab(i)}
+                                            className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === i
+                                                    ? "border-[#C72030] text-[#C72030]"
+                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                }`}
+                                        >
+                                            {t}
+                                        </button>
                                     ))}
                                 </div>
-                            )} */}
-                        </div>
+
+                                {drawerActiveTab === 0 && (
+                                    <div className="p-4 space-y-4">
+                                        {/* Outstanding & Credits */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
+                                                <div className="text-orange-400 text-xl mb-1">⚠</div>
+                                                <div className="text-xs text-gray-500">Outstanding Receivables</div>
+                                                <div className="font-semibold text-gray-800 text-sm mt-1">
+                                                    ₹{(customerDetail.outstanding_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
+                                                <div className="text-green-500 text-xl mb-1">●</div>
+                                                <div className="text-xs text-gray-500">Unused Credits</div>
+                                                <div className="font-semibold text-gray-800 text-sm mt-1">
+                                                    ₹{(customerDetail.unused_credits_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Contact Details */}
+                                        <div className="border border-gray-200 rounded-lg p-4">
+                                            <div className="font-semibold text-gray-700 mb-3 text-sm">Contact Details</div>
+                                            {[
+                                                ["Customer Type", customerDetail.customer_type || "—"],
+                                                ["Currency", customerDetail.currency || "INR"],
+                                                ["Payment Terms", customerDetail.payment_terms || "—"],
+                                                ["Portal Status", customerDetail.portal_status || "—"],
+                                                ["Customer Language", customerDetail.customer_language || "English"],
+                                                ["GST Treatment", customerDetail.gst_treatment || "—"],
+                                                ["GSTIN", customerDetail.gstin || "—"],
+                                                ["PAN", customerDetail.pan || "—"],
+                                                ["Place of Supply", customerDetail.place_of_supply || "Yet to be updated"],
+                                                ["Tax Preference", customerDetail.tax_preference || "—"],
+                                            ].map(([label, value]) => (
+                                                <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
+                                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                                                    <span className="text-xs text-gray-700 text-right">{value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Contact Persons */}
+                                        {customerDetail.contact_persons && customerDetail.contact_persons.length > 0 && (
+                                            <div className="border border-gray-200 rounded-lg">
+                                                <div
+                                                    className="flex items-center justify-between px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                                                    onClick={() => setContactPersonsExpanded(!contactPersonsExpanded)}
+                                                >
+                                                    <span className="font-semibold text-gray-700 text-sm">
+                                                        Contact Persons
+                                                        <span className="ml-2 bg-gray-200 text-gray-600 text-xs rounded-full px-1.5 py-0.5">
+                                                            {customerDetail.contact_persons.length}
+                                                        </span>
+                                                    </span>
+                                                    {contactPersonsExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                                </div>
+                                                {contactPersonsExpanded && (
+                                                    <div className="divide-y divide-gray-100">
+                                                        {customerDetail.contact_persons.map((cp, idx) => (
+                                                            <div key={cp.id || idx} className="px-4 py-4 flex items-start gap-3">
+                                                                <div className="relative mt-1">
+                                                                    <div className="w-8 h-8 rounded-full bg-[#EAEEF6] flex items-center justify-center text-[#7C8DAC] font-semibold text-sm shrink-0">
+                                                                        {(cp.first_name || "?")[0].toUpperCase()}
+                                                                    </div>
+                                                                    {idx === 0 && (
+                                                                        <div className="absolute -bottom-1 -right-1 w-[14px] h-[14px] bg-[#42C867] rounded-full border-[1.5px] border-white flex justify-center items-center">
+                                                                            <Star className="w-[8px] h-[8px] text-white fill-current" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="flex-1">
+                                                                    <div className="text-sm font-medium text-gray-900 mb-1">
+                                                                        {[cp.salutation, cp.first_name, cp.last_name].filter(Boolean).join(" ")}
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        {cp.email && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Mail className="w-3.5 h-3.5 text-gray-400" /> {cp.email}
+                                                                            </div>
+                                                                        )}
+                                                                        {cp.work_phone && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.work_phone}
+                                                                            </div>
+                                                                        )}
+                                                                        {!cp.work_phone && cp.phone && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.phone}
+                                                                            </div>
+                                                                        )}
+                                                                        {cp.mobile && (
+                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                                <Smartphone className="w-3.5 h-3.5 text-gray-400" /> {cp.mobile}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Address */}
+                                        <div className="border border-gray-200 rounded-lg">
+                                            <div
+                                                className="px-4 py-3 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                                                onClick={() => setAddressExpanded(!addressExpanded)}
+                                            >
+                                                <span className="font-semibold text-gray-700 text-sm">Address</span>
+                                                {addressExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                            </div>
+                                            {addressExpanded && (
+                                                <div className="p-4 space-y-3">
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                            <span>📋</span> Billing Address
+                                                        </div>
+                                                        {customerDetail.billing_address?.address ? (
+                                                            <div className="text-xs text-gray-700 leading-relaxed">
+                                                                <div>{customerDetail.billing_address.address}</div>
+                                                                {customerDetail.billing_address.address_line_two && (
+                                                                    <div>{customerDetail.billing_address.address_line_two}</div>
+                                                                )}
+                                                                <div>
+                                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
+                                                                        .filter(Boolean)
+                                                                        .join(", ")}
+                                                                    {customerDetail.billing_address.pin_code
+                                                                        ? " " + customerDetail.billing_address.pin_code
+                                                                        : ""}
+                                                                </div>
+                                                                {customerDetail.billing_address.country && (
+                                                                    <div>{customerDetail.billing_address.country}</div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-xs text-gray-400 italic">No billing address provided</div>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                            <span>🚚</span> Shipping Address
+                                                        </div>
+                                                        {customerDetail.shipping_address?.address ? (
+                                                            <div className="text-xs text-gray-700 leading-relaxed">
+                                                                <div>{customerDetail.shipping_address.address}</div>
+                                                                {customerDetail.shipping_address.address_line_two && (
+                                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
+                                                                )}
+                                                                <div>
+                                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
+                                                                        .filter(Boolean)
+                                                                        .join(", ")}
+                                                                    {customerDetail.shipping_address.pin_code
+                                                                        ? " " + customerDetail.shipping_address.pin_code
+                                                                        : ""}
+                                                                </div>
+                                                                {customerDetail.shipping_address.country && (
+                                                                    <div>{customerDetail.shipping_address.country}</div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-xs text-gray-400 italic">No shipping address provided</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {drawerActiveTab === 1 && (
+                                    <div className="p-10 text-center">
+                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <FileText className="w-8 h-8 text-gray-300" />
+                                        </div>
+                                        <div className="text-gray-500 text-sm">No activity logs found</div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-gray-400">
+                                No customer details available
+                            </div>
+                        )}
                     </div>
-                )}
-            </Drawer>
+                </div>
+            )}
 
             {/* Add External User Dialog */}
             <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -2101,6 +2418,50 @@ export const QuotesAdd: React.FC = () => {
                 </DialogActions>
 
             </Dialog>
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure about deleting this {deleteTargetType}?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            color: '#C72030',
+                            borderColor: '#C72030',
+                            '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#C72030',
+                            '&:hover': {
+                                backgroundColor: '#A01926'
+                            }
+                        }}
+                    >
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
         </div>
     );
 };
+
+export default QuotesAdd;

@@ -388,15 +388,15 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
       </div>
 
       {/* Content Area */}
-      {viewMode === "grid" &&
-        (isFileListView ? (
-          <FileGridView />
-        ) : (
-          <DocumentGridView
-            documents={sortedDocuments}
-            onViewDetails={onViewDetails}
-          />
-        ))}
+      {viewMode === "grid" && (
+        <DocumentGridView
+          documents={sortedDocuments}
+          onViewDetails={onViewDetails}
+          renderActions={renderActions}
+          selectedItems={selectedItems}
+          onSelectItem={handleSelectItem}
+        />
+      )}
 
       {viewMode === "table" && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">

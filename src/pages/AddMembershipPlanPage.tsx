@@ -108,6 +108,8 @@ export const AddMembershipPlanPage = () => {
     renewalTerms: "",
     payment_plan_id: "",
     hsnCode: "",
+    cgst: "",
+    sgst: "",
     usageLimits: "Unlimited",
     discountEligibility: "No",
     amenities: [] as string[],
@@ -118,7 +120,7 @@ export const AddMembershipPlanPage = () => {
       price: string;
       allowMultipleSlots: boolean;
       multipleSlots: string;
-    }> ,
+    }>,
   });
 
   const getAmenities = async () => {
@@ -149,11 +151,27 @@ export const AddMembershipPlanPage = () => {
     }
   }
 
-  console.log(amenities)
+  const fetchHSN = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/hsns/get_hsns.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      setFormData({
+        ...formData,
+        hsnCode: response.data[0].code || "",
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   useEffect(() => {
     getAmenities()
     getPaymentPlans()
+    fetchHSN()
   }, [])
 
   const validateForm = () => {
@@ -179,6 +197,14 @@ export const AddMembershipPlanPage = () => {
     }
     if (!formData.hsnCode) {
       toast.error("Please enter HSN Code");
+      return false;
+    }
+    if (!formData.cgst) {
+      toast.error("Please enter CGST");
+      return false;
+    }
+    if (!formData.sgst) {
+      toast.error("Please enter SGST");
       return false;
     }
     if (formData.amenities.length === 0) {
@@ -210,6 +236,8 @@ export const AddMembershipPlanPage = () => {
           renewal_terms: formData.renewalTerms,
           payment_plan_id: formData.payment_plan_id ? parseInt(formData.payment_plan_id) : null,
           hsn_code: formData.hsnCode,
+          cgst: formData.cgst ? parseFloat(formData.cgst) : 0,
+          sgst: formData.sgst ? parseFloat(formData.sgst) : 0,
           usage_limits: formData.usageLimits,
           discount_eligibility: formData.discountEligibility,
           active: true,
@@ -323,7 +351,7 @@ export const AddMembershipPlanPage = () => {
                 placeholder="0"
               />
 
-              
+
 
               <FormControl variant="outlined">
                 <InputLabel>Membership Type*</InputLabel>
@@ -367,6 +395,7 @@ export const AddMembershipPlanPage = () => {
               <TextField
                 label="HSN Code*"
                 value={formData.hsnCode}
+                disabled
                 onChange={(e) => {
                   const value = e.target.value;
                   // Allow only numbers and letters (alphanumeric)
@@ -376,6 +405,42 @@ export const AddMembershipPlanPage = () => {
                 }}
                 variant="outlined"
                 placeholder="Enter HSN Code"
+                sx={{
+                  "& .MuiInputBase-input.Mui-disabled": {
+                    WebkitTextFillColor: "#000",
+                    color: "#000",
+                  },
+                }}
+              />
+
+              <TextField
+                label="CGST*"
+                type="text"
+                value={formData.cgst}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only positive numbers with max 2 decimal places
+                  if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                    setFormData({ ...formData, cgst: value });
+                  }
+                }}
+                variant="outlined"
+                placeholder="0.00"
+              />
+
+              <TextField
+                label="SGST*"
+                type="text"
+                value={formData.sgst}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only positive numbers with max 2 decimal places
+                  if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                    setFormData({ ...formData, sgst: value });
+                  }
+                }}
+                variant="outlined"
+                placeholder="0.00"
               />
             </div>
           </div>

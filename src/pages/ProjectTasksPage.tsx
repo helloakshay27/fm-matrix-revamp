@@ -17,7 +17,7 @@ import {
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { createProjectTask, editProjectTask, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { createProjectTask, editProjectTask, resetUserAvailability, updateTaskStatus } from "@/store/slices/projectTasksSlice";
 import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
 import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
@@ -453,13 +453,27 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { shouldShow } = useDynamicPermissions();
 
     const view = localStorage.getItem("selectedView");
     const urlToken = searchParams.get("token");
     const urlOrgId = searchParams.get("org_id");
     const urlUserId = searchParams.get("user_id");
+
+    useEffect(() => {
+        const type = searchParams.get("type");
+
+        if (type === "create") {
+            setOpenTaskModal(true);
+
+            // ✅ Remove only "type" param
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete("type");
+
+            setSearchParams(newParams, { replace: true }); // 🔥 important
+        }
+    }, [searchParams, setSearchParams]);
 
     // Initialize mobile token, org_id, and user_id from URL if available
     useEffect(() => {
@@ -509,18 +523,26 @@ const ProjectTasksPage = () => {
     const [openStatusOptions, setOpenStatusOptions] = useState(false)
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
     const [statuses, setStatuses] = useState([])
-    const [taskType, setTaskType] = useState<"all" | "my">("all");
+    const [taskType, setTaskType] = useState<"all" | "my">(() => {
+        const saved = sessionStorage.getItem("taskType");
+        if (saved) {
+            return saved as "all" | "my";
+        }
+        // Fallback to path-based logic on initial load
+        const path = location.pathname;
+        if (path.includes("/projects/") && path.includes("/milestones/")) {
+            return "all";
+        } else if (path === "/vas/tasks") {
+            return "my";
+        }
+        return "all";
+    });
     const [currentPage, setCurrentPage] = useState(1);
 
+    // Save taskType to session storage whenever it changes
     useEffect(() => {
-        const path = location.pathname;
-
-        if (path.includes("/projects/") && path.includes("/milestones/")) {
-            setTaskType("all");
-        } else if (path === "/vas/tasks") {
-            setTaskType("my");
-        }
-    }, [location.pathname]);
+        sessionStorage.setItem("taskType", taskType);
+    }, [taskType]);
 
     // Sorting state
     const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -967,6 +989,7 @@ const ProjectTasksPage = () => {
 
     const handleCloseModal = () => {
         setOpenTaskModal(false);
+        dispatch(resetUserAvailability());
     };
 
     const handlePageChange = async (page: number) => {
@@ -1245,6 +1268,8 @@ const ProjectTasksPage = () => {
             navigate(`${id}`);
         } else if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
+        } else if (location.pathname.startsWith("/business-compass/tasks")) {
+            navigate(`/business-compass/tasks/${id}`);
         } else {
             navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
         }
@@ -1537,6 +1562,23 @@ const ProjectTasksPage = () => {
         }
     }
 
+    function formatHours(hours: number): string {
+        console.log(hours)
+        if (hours < 1) {
+            const minutes = Math.round(hours * 60);
+            return `${minutes} min${minutes !== 1 ? 's' : ''}`;
+        }
+
+        const wholeHours = Math.floor(hours);
+        const remainingMinutes = Math.round((hours - wholeHours) * 60);
+
+        if (remainingMinutes === 0) {
+            return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''}`;
+        }
+
+        return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''} ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+    }
+
     const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
         const renderProgressBar = (
             completed: number,
@@ -1751,7 +1793,7 @@ const ProjectTasksPage = () => {
                 return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
             }
             case "efforts_duration": {
-                return `${item.estimated_hour || 0} hours`
+                return `${formatHours(item?.total_allocated_hours || 0)}`
             }
             case "priority": {
                 return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";

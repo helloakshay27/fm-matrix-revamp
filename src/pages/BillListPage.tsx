@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
 
 // Type definitions for Bill
@@ -117,19 +115,10 @@ export const BillListPage: React.FC = () => {
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
-    const [searchTerm, setSearchTerm] = useState('');
-    const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+    const [searchQuery, setSearchQuery] = useState('');
     const [appliedFilters, setAppliedFilters] = useState<BillFilters>({});
     const [billData, setBillData] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(false);
-    const [pagination, setPagination] = useState({
-        current_page: 1,
-        per_page: 10,
-        total_pages: 1,
-        total_count: 0,
-        has_next_page: false,
-        has_prev_page: false
-    });
       const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem("lock_account_id");
@@ -213,10 +202,10 @@ export const BillListPage: React.FC = () => {
 
 
     const fetchBillData = async (
-        page = 1,
-        per_page = 10,
-        search = '',
-        filters: BillFilters = {}
+        _page = 1,
+        _per_page = 10,
+        _search = '',
+        _filters: BillFilters = {}
     ) => {
         setLoading(true);
 
@@ -244,18 +233,6 @@ export const BillListPage: React.FC = () => {
 
             setBillData(bills);
 
-            setPagination({
-                current_page: apiData?.current_page || page,
-                per_page: apiData?.per_page || per_page,
-                total_pages: apiData?.total_pages || 1,
-                total_count: apiData?.total_count || bills.length,
-                has_next_page:
-                    (apiData?.current_page || page) <
-                    (apiData?.total_pages || 1),
-                has_prev_page:
-                    (apiData?.current_page || page) > 1,
-            });
-
         } catch (error: unknown) {
             console.error("Error fetching bill data:", error);
 
@@ -271,18 +248,27 @@ export const BillListPage: React.FC = () => {
         }
     };
 
-    // Load data on component mount and when page/perPage/filters change
+    // Load data on component mount
     useEffect(() => {
-        fetchBillData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-    }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+        fetchBillData(currentPage, perPage, '', appliedFilters);
+    }, [appliedFilters]);
 
-    // Handle search
-    const handleSearch = (term: string) => {
-        setSearchTerm(term);
+    // Client-side search filter (same pattern as PaymentTermsMaster)
+    const filteredBills = billData.filter((bill) =>
+        bill.bill_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bill.vendor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bill.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bill.status?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const paginatedBills = filteredBills.slice(
+        (currentPage - 1) * perPage,
+        currentPage * perPage
+    );
+
+    const handleTableSearch = (value: string) => {
+        setSearchQuery(value);
         setCurrentPage(1);
-        if (!term.trim()) {
-            fetchBillData(1, perPage, '', appliedFilters);
-        }
     };
 
     // Handle page change
@@ -313,9 +299,8 @@ export const BillListPage: React.FC = () => {
         );
     };
 
-    const totalRecords = pagination.total_count;
-    const totalPages = pagination.total_pages;
-    const displayedData = billData;
+    const totalRecords = filteredBills.length;
+    const totalPages = Math.ceil(totalRecords / perPage);
 
     // Render row function for enhanced table
     const renderRow = (bill: Bill) => ({
@@ -395,7 +380,7 @@ export const BillListPage: React.FC = () => {
         ),
         balance_due: (
             <span className="text-sm font-medium text-gray-900">
-                {/* ₹{bill.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
+                ₹{bill.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
         )
     });
@@ -412,7 +397,7 @@ export const BillListPage: React.FC = () => {
         if (confirm('Are you sure you want to delete this bill?')) {
             toast.success('Bill deleted successfully!', {
             });
-            fetchBillData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+            fetchBillData(currentPage, perPage, '', appliedFilters);
         }
     };
 
@@ -423,15 +408,14 @@ export const BillListPage: React.FC = () => {
             </header>
 
             <EnhancedTaskTable
-                data={displayedData}
+                data={paginatedBills}
                 columns={columns}
                 renderRow={renderRow}
                 storageKey="bills-dashboard-v1"
                 hideTableExport={true}
                 hideTableSearch={false}
                 enableSearch={true}
-                searchTerm={searchTerm}
-                onSearchChange={handleSearch}
+                onSearch={handleTableSearch}
                 loading={loading}
                 leftActions={(
                     <Button

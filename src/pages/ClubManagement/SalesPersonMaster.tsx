@@ -138,7 +138,7 @@ export const SalesPersonMaster: React.FC = () => {
         setSubmitting(true);
 
         try {
-            const url = getFullUrl('/sales_persons.json?lock_account_id=${lock_account_id}');
+            const url = getFullUrl(`/sales_persons.json?lock_account_id=${lock_account_id}`);
 
             const response = await fetch(
                 url,

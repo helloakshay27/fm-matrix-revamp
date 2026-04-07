@@ -6,9 +6,6 @@ import {
   Plus,
   ChevronDown,
   X,
-  MoreHorizontal,
-  Download,
-  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast as sonnerToast } from "sonner";
@@ -66,6 +63,15 @@ interface LockPayment {
   resource_id: number;
   resource_type: string;
   sgst: string | null;
+  tds_amount: string | null;
+  tds_percentage: string | null;
+  net_amount: string | null;
+  vendor_name?: string;
+  resident_name?: string;
+  payment_date?: string;
+  payment_amount?: string | number;
+  deposit_to_ledger_name?: string;
+  bill_payments?: { formatted_number?: string; payment_date?: string }[];
 }
 
 // Internal display type for the table / detail view
@@ -81,6 +87,11 @@ interface Payment {
   bank_reference_number: string;
   paid_through_account: string;
   currency_symbol: string;
+  tds_percentage: number;
+  tds_amount: number;
+  net_amount: number;
+  bill_numbers: string;
+  deposit_to_ledger_name?: string;
 }
 
 interface PaymentFilters {
@@ -97,26 +108,37 @@ const mapLockPayment = (lp: LockPayment): Payment => {
   if (statusRaw === "paid" || statusRaw === "success") status = "PAID";
   else if (statusRaw === "void" || statusRaw === "failed") status = "VOID";
 
-  const date = lp.created_at
-    ? new Date(lp.created_at).toLocaleDateString("en-GB", {
+  const dateRaw = lp.payment_date || lp.bill_payments?.[0]?.payment_date || lp.created_at || "";
+  const date = dateRaw
+    ? new Date(dateRaw).toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       })
     : "-";
 
+  const billNums = (lp.bill_payments || [])
+    .map((b) => b.formatted_number)
+    .filter(Boolean)
+    .join(", ");
+
   return {
     id: String(lp.id),
     payment_number: lp.receipt_number || lp.order_number || String(lp.id),
-    vendor_name: lp.payment_of || "-",
+    vendor_name: lp.vendor_name || lp.resident_name || lp.payment_of || "-",
     date,
     mode: lp.payment_mode || lp.payment_method || "-",
     status,
-    amount: parseFloat(lp.total_amount || "0") || 0,
+    amount: parseFloat(String(lp.paid_amount ?? lp.payment_amount ?? lp.total_amount ?? "0")) || 0,
     unused_amount: 0,
-    bank_reference_number: lp.neft_reference || lp.pg_transaction_id || "",
-    paid_through_account: lp.payment_gateway || lp.bank_name || "-",
+    bank_reference_number: lp.neft_reference || lp.order_number || lp.pg_transaction_id || "",
+    paid_through_account: lp.deposit_to_ledger_name || lp.payment_gateway || lp.bank_name || "-",
     currency_symbol: "₹",
+    tds_percentage: parseFloat(lp.tds_percentage || "0") || 0,
+    tds_amount: parseFloat(lp.tds_amount || "0") || 0,
+    net_amount: parseFloat(lp.net_amount || "0") || 0,
+    bill_numbers: billNums || "-",
+    deposit_to_ledger_name: lp.deposit_to_ledger_name,
   };
 };
 
@@ -125,7 +147,7 @@ export const PaymentsMadePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
-    "1"
+    null
   );
 
   useEffect(() => {
@@ -163,29 +185,7 @@ export const PaymentsMadePage: React.FC = () => {
   };
   const [payments, setPayments] = useState<Payment[]>([]);
 
-  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<PaymentFilters>({});
-
-  const moreMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close menus when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        moreMenuRef.current &&
-        !moreMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsMoreMenuOpen(false);
-        setIsImportMenuOpen(false);
-        setIsExportMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const selectedPayment = payments.find((p) => p.id === selectedPaymentId);
 
@@ -210,12 +210,13 @@ export const PaymentsMadePage: React.FC = () => {
       try {
         const baseUrl = API_CONFIG.BASE_URL;
         const token = API_CONFIG.TOKEN;
-        if (!baseUrl || !token) {
+        if (!token) {
           sonnerToast.error("API not configured. Please log in.");
           return;
         }
+        // Accounting API always hits club-uat-api.lockated.com
         const url = new URL(
-          `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_payments.json`
+          "https://club-uat-api.lockated.com/lock_payments.json"
         );
         url.searchParams.append("page", String(page));
         url.searchParams.append("per_page", String(perPage));
@@ -277,7 +278,8 @@ export const PaymentsMadePage: React.FC = () => {
         payment.status.toLowerCase().includes(q) ||
         payment.date.toLowerCase().includes(q) ||
         (payment.bank_reference_number || "").toLowerCase().includes(q) ||
-        (payment.paid_through_account || "").toLowerCase().includes(q);
+        (payment.paid_through_account || "").toLowerCase().includes(q) ||
+        payment.bill_numbers.toLowerCase().includes(q);
       if (!matchesSearch) return false;
     }
     return true;
@@ -383,11 +385,17 @@ export const PaymentsMadePage: React.FC = () => {
         {payment.payment_number}
       </div>
     ),
-    reference_number: <span className="text-sm text-gray-900">-</span>,
+    reference_number: (
+      <span className="text-sm text-gray-900">
+        {payment.bank_reference_number || "-"}
+      </span>
+    ),
     vendor_name: (
       <span className="text-sm text-gray-900">{payment.vendor_name}</span>
     ),
-    bill_number: <span className="text-sm text-gray-900">-</span>,
+    bill_number: (
+      <span className="text-sm text-gray-900">{payment.bill_numbers}</span>
+    ),
     mode: <span className="text-sm text-gray-900">{payment.mode}</span>,
     status: (
       <span
@@ -429,15 +437,21 @@ export const PaymentsMadePage: React.FC = () => {
   if (viewMode === "detail") {
     return (
       <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        <PaymentDetailView
-          payments={filteredPayments}
-          selectedPaymentId={selectedPaymentId}
-          onSelectPayment={(id) => setSelectedPaymentId(id)}
-          onClose={() => {
-            setSearchParams({});
-            setViewMode("list");
-          }}
-        />
+        {loading ? (
+          <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
+          </div>
+        ) : (
+          <PaymentDetailView
+            payments={filteredPayments}
+            selectedPaymentId={selectedPaymentId}
+            onSelectPayment={(id) => setSelectedPaymentId(id)}
+            onClose={() => {
+              setSearchParams({});
+              setViewMode("list");
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -461,104 +475,7 @@ export const PaymentsMadePage: React.FC = () => {
             New
           </Button>
         }
-        rightActions={
-          <div className="flex items-center gap-2" ref={moreMenuRef}>
-            {/* Import Button */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white border-gray-300 h-9 w-9 rounded-[4px]"
-                onClick={() => {
-                  setIsImportMenuOpen(!isImportMenuOpen);
-                  setIsExportMenuOpen(false);
-                  setIsMoreMenuOpen(false);
-                }}
-              >
-                <Upload className="h-4 w-4 text-gray-600" />
-              </Button>
-              {isImportMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setIsImportMenuOpen(false);
-                      sonnerToast.info("Import Payments clicked");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Import Payments
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Export Button */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white border-gray-300 h-9 w-9 rounded-[4px]"
-                onClick={() => {
-                  setIsExportMenuOpen(!isExportMenuOpen);
-                  setIsImportMenuOpen(false);
-                  setIsMoreMenuOpen(false);
-                }}
-              >
-                <Download className="h-4 w-4 text-gray-600" />
-              </Button>
-              {isExportMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setIsExportMenuOpen(false);
-                      sonnerToast.info("Export Payments clicked");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Export Payments
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 border-gray-300 rounded-[4px]"
-                onClick={() => {
-                  setIsMoreMenuOpen(!isMoreMenuOpen);
-                  setIsImportMenuOpen(false);
-                  setIsExportMenuOpen(false);
-                }}
-              >
-                <MoreHorizontal className="h-4 w-4 text-gray-600" />
-              </Button>
-              {isMoreMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setIsMoreMenuOpen(false);
-                      sonnerToast.info("Preferences clicked");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Preferences
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsMoreMenuOpen(false);
-                      fetchPayments(currentPage);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left text-sm"
-                  >
-                    Refresh List
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        }
+        rightActions={null}
         renderRow={renderRow}
         storageKey="payments-made-dashboard-v1"
         hideTableExport={true}

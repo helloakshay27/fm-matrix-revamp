@@ -13,6 +13,7 @@ import {
   saveBaseUrl,
   fetchLockAccount,
   Organization,
+  getUser,
 } from "@/utils/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -86,6 +87,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     hostname.includes("pulse-uat.panchshil.com") ||
     hostname.includes("pulse.panchshil.com") ||
     org_id === "90";
+
+  const currentUser = getUser();
+  const userEmail = currentUser?.email || "No email";
   // Check URL for email and orgId parameters on components mount
   React.useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -217,18 +221,22 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   };
 
   const handleOrganizationSelect = (org: Organization) => {
+    const baseUrl = `${org.sub_domain}.${org.domain}`;
+
+    // Save org details
     localStorage.setItem("selectedOrg", org.name);
-    localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     localStorage.setItem("org_id", org.id.toString());
+
+    // Use saveBaseUrl for normalized URL storage
+    saveBaseUrl(baseUrl);
+
     //Session Storage For App-Level
     sessionStorage.setItem("selectedOrg", org.name);
-    sessionStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    sessionStorage.setItem("baseUrl", baseUrl); // Session storage doesn't need normalization
     sessionStorage.setItem("org_id", org.id.toString());
-    setBaseUrl(`${org.sub_domain}.${org.domain}`);
+
+    setBaseUrl(baseUrl);
     setSelectedOrganization(org);
-    // Save the base URL in the format: sub_domain.domain
-    const baseUrl = `${org.sub_domain}.${org.domain}`;
-    saveBaseUrl(baseUrl);
     setCurrentStep(3);
   };
 
@@ -408,7 +416,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         const userType = localStorage.getItem("userType");
         const isLocalhost =
           hostname.includes("lockated.gophygital.work") ||
-          hostname.includes("fm-matrix.lockated.com");
+          hostname.includes("fm-matrix.lockated.com") ||
+          userEmail === "deveshjain928@gmail.com" ||
+          userEmail === "abdul.ghaffar@lockated.com" ||
+          userEmail === "abdul.g@gophygital.work";
         const isPulseSite =
           hostname.includes("localhost") ||
           hostname.includes("pulse.lockated.com") ||

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,6 +72,21 @@ interface Site {
   name: string;
 }
 
+interface Attachment {
+  id?: number | string;
+  name?: string;
+  url?: string;
+  file_url?: string;
+  attachment_url?: string;
+}
+
+interface DeliveryAddress {
+  name?: string;
+  address?: string;
+  formatted_address?: string;
+  full_address?: string;
+}
+
 interface PurchaseOrder {
   id: number;
   external_id: string;
@@ -96,8 +111,24 @@ interface PurchaseOrder {
   created_at: string;
   updated_at: string;
   terms_conditions?: string;
-  attachments: any[];
+  payment_term?: string;
+  payment_terms?: string;
+  payment_tern?: string;
+  delivery_address?: string | DeliveryAddress;
+  attachments: Attachment[];
 }
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
+
+  return fallback;
+};
 
 export const PurchaseOrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -113,7 +144,7 @@ export const PurchaseOrderDetailPage = () => {
   const [deleting, setDeleting] = useState(false);
 
   // Fetch purchase order data from API
-  const fetchPurchaseOrderDetail = async () => {
+  const fetchPurchaseOrderDetail = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -165,18 +196,18 @@ export const PurchaseOrderDetailPage = () => {
       } else {
         setError("Invalid purchase order data received.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching purchase order detail:", error);
-      setError(error.message || "Failed to fetch purchase order details");
+      setError(getErrorMessage(error, "Failed to fetch purchase order details"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   // Load data on component mount
   useEffect(() => {
     fetchPurchaseOrderDetail();
-  }, [id]);
+  }, [fetchPurchaseOrderDetail]);
 
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
@@ -226,8 +257,8 @@ export const PurchaseOrderDetailPage = () => {
 
       sonnerToast.success("Purchase order deleted successfully");
       navigate("/accounting/purchase-order");
-    } catch (error: any) {
-      sonnerToast.error(error.message || "Failed to delete purchase order");
+    } catch (error: unknown) {
+      sonnerToast.error(getErrorMessage(error, "Failed to delete purchase order"));
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
@@ -323,6 +354,18 @@ export const PurchaseOrderDetailPage = () => {
 
   const poNumber = `PO-${String(purchaseOrder.id).padStart(5, "0")}`;
   const status = purchaseOrder.all_level_approved ? "approved" : "pending"; // Dynamic status based on all_level_approved
+  const paymentTermsDisplay =
+    purchaseOrder.payment_term ||
+    purchaseOrder.payment_tern ||
+    "N/A";
+  const deliveryAddressDisplay =
+    typeof purchaseOrder.delivery_address === "string"
+      ? purchaseOrder.delivery_address
+      : purchaseOrder.delivery_address?.formatted_address ||
+      purchaseOrder.delivery_address?.full_address ||
+      purchaseOrder.delivery_address?.address ||
+      purchaseOrder.delivery_address?.name ||
+      "N/A";
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -353,6 +396,9 @@ export const PurchaseOrderDetailPage = () => {
             <Badge className={`${getStatusColor(status)} border`}>
               {status.toUpperCase()}
             </Badge>
+            <Button variant="outline" size="sm">
+              Convert to Bill
+            </Button>
           </div>
         </div>
 
@@ -455,17 +501,17 @@ export const PurchaseOrderDetailPage = () => {
                         PO Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(purchaseOrder.po_date).toLocaleDateString()}
+                        {new Date(purchaseOrder.po_date).toLocaleDateString("en-GB")}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Site
                       </p>
                       <p className="text-base font-semibold mt-1">
                         {purchaseOrder.site?.name || "N/A"}
                       </p>
-                    </div>
+                    </div> */}
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Created By
@@ -482,6 +528,24 @@ export const PurchaseOrderDetailPage = () => {
                         {purchaseOrder.reference_number || "N/A"}
                       </p>
                     </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Payment Terms
+
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {paymentTermsDisplay}
+                      </p>
+
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Delivery Address
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {deliveryAddressDisplay}
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -493,7 +557,8 @@ export const PurchaseOrderDetailPage = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-primary" />
-                        Line Items
+                        Item Table
+
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -505,7 +570,7 @@ export const PurchaseOrderDetailPage = () => {
                               <TableHead className="text-right">
                                 Quantity
                               </TableHead>
-                              <TableHead className="text-right">Unit</TableHead>
+                              <TableHead className="text-right">Status	</TableHead>
                               <TableHead className="text-right">Rate</TableHead>
                               <TableHead className="text-right">
                                 Total Value
@@ -518,21 +583,22 @@ export const PurchaseOrderDetailPage = () => {
                                 <TableRow key={item.id}>
                                   <TableCell>
                                     <div>
-                                      <p className="font-semibold">
-                                        {item.prod_desc || "N/A"}
-                                      </p>
                                       {item.inventory?.name && (
                                         <p className="text-sm text-muted-foreground">
                                           {item.inventory.name}
                                         </p>
                                       )}
+                                      <p className="font-semibold">
+                                        {item.prod_desc || "N/A"}
+                                      </p>
+
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right">
                                     {item.quantity}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {item.unit}
+                                    {"NA"}
                                   </TableCell>
                                   <TableCell className="text-right">
                                     ₹{item.rate.toFixed(2)}
@@ -548,28 +614,28 @@ export const PurchaseOrderDetailPage = () => {
                       </div>
 
                       {/* Pricing Summary */}
-                      <div className="mt-6 flex justify-end">
+                      {/* <div className="mt-6 flex justify-end">
                         <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              Net Amount
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Sub Total
                             </span>
-                            <span className="font-semibold">
-                              ₹{purchaseOrder.net_amount_formatted || "0.00"}
+                            <span className="font-semibold text-base">
+                              ₹{purchaseOrder.net_amount_formatted || purchaseOrder.pms_po_inventories?.reduce((sum, item) => sum + item.total_value, 0).toFixed(2) || "0.00"}
                             </span>
                           </div>
-                          {purchaseOrder.total_tax_amount && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Tax</span>
-                              <span className="font-semibold">
-                                ₹{purchaseOrder.total_tax_amount.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-                          <div className="border-t pt-3 flex justify-between text-lg">
-                            <span className="font-bold">Total Amount</span>
-                            <span className="font-bold text-primary">
-                              ₹{purchaseOrder.total_amount_formatted || "0.00"}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Tax
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{(purchaseOrder.total_tax_amount || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-primary text-2xl">
+                              ₹{purchaseOrder.total_amount_formatted || purchaseOrder.amount?.toFixed(2) || "0.00"}
                             </span>
                           </div>
                           {purchaseOrder.amount_in_words && (
@@ -583,12 +649,77 @@ export const PurchaseOrderDetailPage = () => {
                             </div>
                           )}
                         </div>
+                      </div> */}
+                      {/* FIXED Pricing Summary - Matches Bill Style + Correct Logic for PO */}
+                      <div className="mt-6 flex justify-end">
+                        <div className="w-full max-w-md bg-white border border-border rounded-lg overflow-hidden">
+
+                          {/* Sub Total */}
+                          <div className="flex justify-between items-center px-6 py-3 border-b">
+                            <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                            <span className="font-semibold text-base">
+                              ₹{purchaseOrder.sub_total_amount?.toFixed(2) || purchaseOrder.net_amount_formatted }
+                            </span>
+                          </div>
+
+                          {/* Discount */}
+                          {purchaseOrder.tax?.discount && purchaseOrder.tax.discount > 0 && (
+                            <div className="flex justify-between items-center px-6 py-3 border-b">
+                              <span className="text-sm font-medium text-muted-foreground">
+                                Discount ({purchaseOrder.tax.tax_percentage || 0}%)
+                              </span>
+                              <span className="font-semibold text-base text-red-600">
+                                -₹{purchaseOrder.tax.discount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* TDS / Lock Account Tax - Shown as positive (not subtracted) */}
+                          {purchaseOrder.lock_account_tax_amount && purchaseOrder.lock_account_tax_amount > 0 && (
+                            <div className="flex justify-between items-center px-6 py-3 border-b">
+                              <span className="text-sm font-medium text-muted-foreground">
+                                {purchaseOrder.tax?.tax_type?.toUpperCase() || "TDS"}
+                              </span>
+                              <span className="font-semibold text-base">
+                                ₹{purchaseOrder.lock_account_tax_amount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Adjustment */}
+                          {purchaseOrder.tax?.adjustment && purchaseOrder.tax.adjustment !== 0 && (
+                            <div className="flex justify-between items-center px-6 py-3 border-b">
+                              <span className="text-sm font-medium text-muted-foreground">Adjustment</span>
+                              <span className="font-semibold text-base">
+                                ₹{purchaseOrder.tax.adjustment.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Grand Total - Always use backend's total_amount */}
+                          <div className="flex justify-between items-center px-6 py-4 bg-primary/5 border-t">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-black text-2xl">
+                              ₹{purchaseOrder.total_amount_formatted ||
+                                purchaseOrder.total_amount?.toFixed(2) || "0.00"}
+                            </span>
+                          </div>
+
+                          {/* Amount in Words */}
+                          {purchaseOrder.amount_in_words && (
+                            <div className="px-6 py-3 border-t bg-muted/30">
+                              <p className="text-xs text-muted-foreground">Amount in Words:</p>
+                              <p className="text-sm font-medium">{purchaseOrder.amount_in_words}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
+
                     </CardContent>
                   </Card>
                 )}
 
-              {/* Terms & Conditions */}
+
               {purchaseOrder.terms_conditions && (
                 <Card>
                   <CardHeader>
@@ -614,9 +745,9 @@ export const PurchaseOrderDetailPage = () => {
                     <CardContent>
                       <div className="space-y-2">
                         {purchaseOrder.attachments.map(
-                          (file: any, index: number) => (
+                          (file: Attachment, index: number) => (
                             <div
-                              key={index}
+                              key={file.id ?? index}
                               className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                             >
                               <div className="flex items-center gap-3">

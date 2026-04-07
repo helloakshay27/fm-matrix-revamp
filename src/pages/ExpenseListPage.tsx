@@ -16,9 +16,16 @@ interface Expense {
     paid_through_account_id: string;
     vendor_id: string | null;
     customer_id: string | null;
+    customer_name?: string | null;
     reference_number: string;
     description: string;
     amount: number;
+    billable: boolean;
+    expense_accounts: Array<{
+        id: number;
+        lock_account_ledger_id: number;
+        lock_account_name: string;
+    }>;
     transaction: {
         voucher_number: string;
         transaction_type: string;
@@ -233,9 +240,11 @@ export const ExpenseListPage: React.FC = () => {
                     filteredData = filteredData.filter(expense => {
                         const accountName = getAccountName(expense.account_id);
                         const vendorName = getVendorName(expense.vendor_id);
+                        const expenseAccountName = expense.expense_accounts?.[0]?.lock_account_name || '';
                         return (
                             accountName.toLowerCase().includes(search.toLowerCase()) ||
                             vendorName.toLowerCase().includes(search.toLowerCase()) ||
+                            expenseAccountName.toLowerCase().includes(search.toLowerCase()) ||
                             expense.reference_number.toLowerCase().includes(search.toLowerCase()) ||
                             expense.transaction?.voucher_number.toLowerCase().includes(search.toLowerCase())
                         );
@@ -312,7 +321,7 @@ export const ExpenseListPage: React.FC = () => {
                 >
                     <Eye className="h-4 w-4" />
                 </Button>
-                <Button
+                {/* <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEdit(expense.id)}
@@ -327,7 +336,7 @@ export const ExpenseListPage: React.FC = () => {
                     className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                     <Trash2 className="h-4 w-4" />
-                </Button>
+                </Button> */}
             </div>
         ),
         date: (
@@ -340,7 +349,9 @@ export const ExpenseListPage: React.FC = () => {
             </span>
         ),
         expense_account: (
-            <div className="font-medium text-blue-600">{getAccountName(expense.account_id)}</div>
+            <div className="font-medium text-blue-600">
+                {expense.expense_accounts?.[0]?.lock_account_name || getAccountName(expense.account_id)}
+            </div>
         ),
         reference_number: (
             <div className="text-sm">
@@ -355,10 +366,10 @@ export const ExpenseListPage: React.FC = () => {
             <span className="text-sm text-gray-600">{getAccountName(expense.paid_through_account_id)}</span>
         ),
         customer_name: (
-            <span className="text-sm text-gray-900">{expense.customer_id || '-'}</span>
+            <span className="text-sm text-gray-900">{expense.customer_name || '-'}</span>
         ),
         status: (
-            <span className="text-sm text-gray-600">{expense.transaction?.transaction_type || 'Expense'}</span>
+            <span className="text-sm text-gray-600">{expense.billable ? 'Unbilled' : 'Non billable'}</span>
         ),
         amount: (
             <span className="text-sm font-medium text-gray-900">

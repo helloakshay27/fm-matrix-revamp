@@ -60,6 +60,7 @@ interface VirtualizedColumnProps {
     handleLink: (sourceId: string, targetIds: string[]) => void;
     columnScrollRef?: (el: HTMLDivElement | null) => void;
     onColumnScroll?: (columnId: number, scrollTop: number) => void;
+    onSubtaskDrop?: (dragData: any, newStatus: string) => void;
 }
 
 const VirtualizedTaskColumn = ({
@@ -73,6 +74,7 @@ const VirtualizedTaskColumn = ({
     handleLink,
     columnScrollRef,
     onColumnScroll,
+    onSubtaskDrop,
 }: VirtualizedColumnProps) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -100,6 +102,26 @@ const VirtualizedTaskColumn = ({
         }
     }, [card.id, onColumnScroll]);
 
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        try {
+            const data = e.dataTransfer.getData("application/reactflow");
+            if (data) {
+                const dragData = JSON.parse(data);
+                if (dragData.type === "SUBTASK" && onSubtaskDrop) {
+                    onSubtaskDrop(dragData, cardStatus);
+                }
+            }
+        } catch (error) {
+            console.error("Error handling drop:", error);
+        }
+    };
+
     return (
         <KanbanBoard
             key={card.id}
@@ -113,6 +135,8 @@ const VirtualizedTaskColumn = ({
                 <div
                     ref={containerRef}
                     onScroll={handleScroll}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
                     style={{
                         height: "500px",
                         overflow: "auto",
@@ -679,6 +703,7 @@ const TaskManagementKanban = ({
                                         if (el) columnScrollRefs.current[card.id] = el;
                                     }}
                                     onColumnScroll={handleColumnScroll}
+                                    onSubtaskDrop={handleSubtaskStatusDrop}
                                 />
                             );
                         })}

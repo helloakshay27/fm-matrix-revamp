@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2 } from "lucide-react";
@@ -141,6 +142,17 @@ export const InvoiceDetails = () => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token") ?? "";
     const baseUrl = localStorage.getItem("baseUrl") ?? "";
+
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return "N/A";
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return format(date, "dd/MM/yyyy");
+        } catch (e) {
+            return dateString;
+        }
+    };
 
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
@@ -451,12 +463,12 @@ export const InvoiceDetails = () => {
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Invoice Date</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.invoice_date}</span>
+                        <span className="text-gray-900 font-medium">{formatDate(invoice.invoice_date)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">Posting Date</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{invoice.posting_date}</span>
+                        <span className="text-gray-900 font-medium">{formatDate(invoice.posting_date)}</span>
                     </div>
                     <div className="flex items-start">
                         <span className="text-gray-500 min-w-[180px]">ID</span>
@@ -605,38 +617,68 @@ export const InvoiceDetails = () => {
                                 const isPdf = /\.pdf$/i.test(attachment.url);
                                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
                                 const isWord = /\.(doc|docx)$/i.test(attachment.url);
-                                const isDownloadable = isPdf || isExcel || isWord;
 
                                 return (
                                     <div
                                         key={attachment.id}
                                         className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                     >
+                                        {/* Top-right action button */}
+                                        {isImage && (
+                                            <button
+                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                title="View"
+                                                onClick={() => {
+                                                    setSelectedAttachment(attachment);
+                                                    setIsPreviewModalOpen(true);
+                                                }}
+                                                type="button"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                        )}
+
+                                        {isPdf && (
+                                            <button
+                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                title="Open PDF"
+                                                onClick={() => window.open(attachment.url, '_blank', 'noopener,noreferrer')}
+                                                type="button"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                        )}
+
+                                        {(isExcel || isWord) && (
+                                            <button
+                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                title="Download"
+                                                onClick={() => {
+                                                    setSelectedAttachment(attachment);
+                                                    setIsPreviewModalOpen(true);
+                                                }}
+                                                type="button"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
+                                        )}
+
+                                        {/* Thumbnail */}
                                         {isImage ? (
-                                            <>
-                                                <button
-                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                    title="View"
-                                                    onClick={() => {
-                                                        setSelectedAttachment(attachment);
-                                                        setIsPreviewModalOpen(true);
-                                                    }}
-                                                    type="button"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                <img
-                                                    src={attachment.url}
-                                                    alt={attachment.document_name || attachment.document_file_name}
-                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                    onClick={() => {
-                                                        setSelectedAttachment(attachment);
-                                                        setIsPreviewModalOpen(true);
-                                                    }}
-                                                />
-                                            </>
+                                            <img
+                                                src={attachment.url}
+                                                alt={attachment.document_name || attachment.document_file_name}
+                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedAttachment(attachment);
+                                                    setIsPreviewModalOpen(true);
+                                                }}
+                                            />
                                         ) : isPdf ? (
-                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                            <div
+                                                className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2 cursor-pointer"
+                                                onClick={() => window.open(attachment.url, '_blank', 'noopener,noreferrer')}
+                                            >
                                                 <FileText className="w-6 h-6" />
                                             </div>
                                         ) : isExcel ? (
@@ -652,22 +694,10 @@ export const InvoiceDetails = () => {
                                                 <File className="w-6 h-6" />
                                             </div>
                                         )}
+
                                         <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                                             {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
                                         </span>
-                                        {isDownloadable && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                                onClick={() => {
-                                                    setSelectedAttachment(attachment);
-                                                    setIsPreviewModalOpen(true);
-                                                }}
-                                            >
-                                                <Download className="w-4 h-4" />
-                                            </Button>
-                                        )}
                                     </div>
                                 );
                             })}

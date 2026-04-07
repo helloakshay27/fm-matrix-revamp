@@ -354,10 +354,10 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         const normalizedBase = storedBaseUrl.startsWith("http")
           ? storedBaseUrl.replace(/\/+$/, "")
           : `https://${storedBaseUrl.replace(/\/+$/, "")}`;
-        url = `${normalizedBase}/pms/countries.json`;
+        url = `${normalizedBase}/pms/countries.json?per_page=1000`;
       } else {
         // Fallback to configured helper
-        url = getFullUrl("/pms/countries.json");
+        url = getFullUrl("/pms/countries.json?per_page=1000");
       }
 
       if (storedToken) {

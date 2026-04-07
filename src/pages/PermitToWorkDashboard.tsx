@@ -27,7 +27,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { API_CONFIG } from "@/config/apiConfig";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { PermitFilterModal } from "@/components/PermitFilterModal";
 import { AssetAnalyticsCard } from "@/components/AssetAnalyticsCard";
@@ -266,6 +267,132 @@ const getRiskColor = (risk: string) => {
   }
 };
 
+// Utility: get current site ID from localStorage or URL params
+const getCurrentSiteId = (): string => {
+  return localStorage.getItem('selectedSiteId') ||
+    new URLSearchParams(window.location.search).get('site_id') || '';
+};
+
+// Utility: format date for API calls (YYYY-MM-DD)
+const formatDateForAPI = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// API: fetch site-wise permits report (bar chart)
+const fetchSiteWisePermitsReport = async (fromDate: Date, toDate: Date) => {
+  const siteId = getCurrentSiteId();
+  const fromDateStr = formatDateForAPI(fromDate);
+  const toDateStr = formatDateForAPI(toDate);
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_report.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch site-wise permits report');
+  }
+
+  return await response.json();
+};
+
+// API: fetch permits status data (pie chart)
+const fetchPermitsStatusData = async (fromDate: Date, toDate: Date) => {
+  const siteId = getCurrentSiteId();
+  const fromDateStr = formatDateForAPI(fromDate);
+  const toDateStr = formatDateForAPI(toDate);
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_data.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch permits status data');
+  }
+
+  return await response.json();
+};
+
+// Download: site-wise permits download
+const downloadSiteWisePermits = async (fromDate: Date, toDate: Date) => {
+  const siteId = getCurrentSiteId();
+  const fromDateStr = formatDateForAPI(fromDate);
+  const toDateStr = formatDateForAPI(toDate);
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/site_wise_permits_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `site-wise-permits-${fromDateStr}-to-${toDateStr}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error downloading site-wise permits:', error);
+    throw error;
+  }
+};
+
+// Download: permits status download
+const downloadPermitsStatus = async (fromDate: Date, toDate: Date) => {
+  const siteId = getCurrentSiteId();
+  const fromDateStr = formatDateForAPI(fromDate);
+  const toDateStr = formatDateForAPI(toDate);
+  const url = `${API_CONFIG.BASE_URL}/pms/permits/permits_status_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `permits-status-${fromDateStr}-to-${toDateStr}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error downloading permits status:', error);
+    throw error;
+  }
+};
+
 // Sortable chart wrapper — same pattern as IncidentDashboard
 const SortableChartItem = ({
   id,
@@ -314,8 +441,8 @@ const SortableChartItem = ({
 
 // Analytics options for permits
 const PERMIT_ANALYTICS_OPTIONS = [
+  { value: "permitSiteWise", label: "Permit Site Wise Report" },
   { value: "permitStatus", label: "Permit Status" },
-  { value: "permitType", label: "Permit Type Distribution" },
 ];
 
 export const PermitToWorkDashboard = () => {
@@ -353,9 +480,9 @@ export const PermitToWorkDashboard = () => {
   // Analytics tab state
   const getDefaultAnalyticsDateRange = () => {
     const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setMonth(today.getMonth() - 1);
-    return { fromDate: lastMonth, toDate: today };
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
+    return { fromDate: oneYearAgo, toDate: today };
   };
   const formatDateForDisplay = (date: Date) => {
     const day = date.getDate().toString().padStart(2, "0");
@@ -373,7 +500,7 @@ export const PermitToWorkDashboard = () => {
   const [isAnalyticsDropdownOpen, setIsAnalyticsDropdownOpen] = useState(false);
 
   // Drag-and-drop for chart cards
-  const [chartOrder, setChartOrder] = useState<string[]>(["permitStatus", "permitType"]);
+  const [chartOrder, setChartOrder] = useState<string[]>(["permitSiteWise", "permitStatus"]);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -400,6 +527,101 @@ export const PermitToWorkDashboard = () => {
     setSelectedAnalyticsTypes((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
+  };
+
+  // Analytics data state — site-wise permits (bar chart)
+  const [siteWiseRefreshKey, setSiteWiseRefreshKey] = useState(0);
+  const handleRefreshSiteWise = () => setSiteWiseRefreshKey((k) => k + 1);
+
+  const [siteWisePermitsData, setSiteWisePermitsData] = useState<{ name: string; value: number }[]>([]);
+  const [siteWisePermitsInfo, setSiteWisePermitsInfo] = useState<string>("");
+  const [siteWisePermitsLoading, setSiteWisePermitsLoading] = useState(false);
+
+  // Analytics data state — permits status (pie chart)
+  const [permitsStatusRefreshKey, setPermitsStatusRefreshKey] = useState(0);
+  const handleRefreshPermitsStatus = () => setPermitsStatusRefreshKey((k) => k + 1);
+
+  const [permitsStatusData, setPermitsStatusData] = useState<{ name: string; value: number }[]>([]);
+  const [permitsStatusInfo, setPermitsStatusInfo] = useState<string>("");
+  const [permitsStatusLoading, setPermitsStatusLoading] = useState(false);
+
+  // Fetch site-wise permits report independently
+  useEffect(() => {
+    const load = async () => {
+      setSiteWisePermitsLoading(true);
+      try {
+        const result = await fetchSiteWisePermitsReport(
+          analyticsDateRange.fromDate,
+          analyticsDateRange.toDate
+        );
+        if (result.success === 1 && result.response) {
+          const chartData: { name: string; value: number }[] = [];
+          for (const [, items] of Object.entries(result.response)) {
+            if (Array.isArray(items)) {
+              for (const item of items) {
+                if (Array.isArray(item) && item.length >= 2) {
+                  chartData.push({ name: `${item[1]}`, value: item[0] as number });
+                }
+              }
+            }
+          }
+          setSiteWisePermitsData(chartData);
+          setSiteWisePermitsInfo(result.info?.info || "Site wise permits distribution");
+        }
+      } catch (err) {
+        console.error("Error fetching site-wise permits report:", err);
+      } finally {
+        setSiteWisePermitsLoading(false);
+      }
+    };
+    load();
+  }, [analyticsDateRange, siteWiseRefreshKey]);
+
+  // Fetch permits status data independently
+  useEffect(() => {
+    const load = async () => {
+      setPermitsStatusLoading(true);
+      try {
+        const result = await fetchPermitsStatusData(
+          analyticsDateRange.fromDate,
+          analyticsDateRange.toDate
+        );
+        if (result.success === 1 && result.response) {
+          const chartData: { name: string; value: number }[] = [];
+          for (const [key, val] of Object.entries(result.response)) {
+            if (key !== "Total" && typeof val === "number") {
+              chartData.push({ name: key, value: val });
+            }
+          }
+          setPermitsStatusData(chartData);
+          setPermitsStatusInfo(result.info?.info || "Distribution of permits by status");
+        }
+      } catch (err) {
+        console.error("Error fetching permits status data:", err);
+      } finally {
+        setPermitsStatusLoading(false);
+      }
+    };
+    load();
+  }, [analyticsDateRange, permitsStatusRefreshKey]);
+
+  // Download handlers for analytics charts
+  const handleSiteWisePermitsDownload = async () => {
+    try {
+      await downloadSiteWisePermits(analyticsDateRange.fromDate, analyticsDateRange.toDate);
+      toast.success("Site wise permits report downloaded successfully");
+    } catch (err) {
+      toast.error("Failed to download site wise permits report");
+    }
+  };
+
+  const handlePermitsStatusDownload = async () => {
+    try {
+      await downloadPermitsStatus(analyticsDateRange.fromDate, analyticsDateRange.toDate);
+      toast.success("Permits status report downloaded successfully");
+    } catch (err) {
+      toast.error("Failed to download permits status report");
+    }
   };
 
   // Fetch permits on component mount and when page/filters change
@@ -1237,48 +1459,34 @@ export const PermitToWorkDashboard = () => {
                 {chartOrder
                   .filter((key) => selectedAnalyticsTypes.includes(key))
                   .map((key) => {
+                    if (key === "permitSiteWise") {
+                      return (
+                        <SortableChartItem key="permitSiteWise" id="permitSiteWise">
+                          <AssetAnalyticsCard
+                            title="Permit Site Wise Report"
+                            type="groupWise"
+                            data={siteWisePermitsData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={handleSiteWisePermitsDownload}
+                            onRefresh={handleRefreshSiteWise}
+                            isLoading={siteWisePermitsLoading}
+                            info={siteWisePermitsInfo}
+                          />
+                        </SortableChartItem>
+                      );
+                    }
                     if (key === "permitStatus") {
                       return (
                         <SortableChartItem key="permitStatus" id="permitStatus">
                           <AssetAnalyticsCard
                             title="Permit Status"
-                            type="groupWise"
-                            data={[
-                              { name: 'Approved', value: permitCounts.approved },
-                              { name: 'Open', value: permitCounts.open },
-                              { name: 'Closed', value: permitCounts.closed },
-                              { name: 'Draft', value: permitCounts.draft },
-                              { name: 'Hold', value: permitCounts.hold },
-                              { name: 'Rejected', value: permitCounts.rejected },
-                              { name: 'Extended', value: permitCounts.extended },
-                              { name: 'Expired', value: permitCounts.expired },
-                            ]}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            info="Distribution of permits by current status"
-                          />
-                        </SortableChartItem>
-                      );
-                    }
-                    if (key === "permitType") {
-                      return (
-                        <SortableChartItem key="permitType" id="permitType">
-                          <AssetAnalyticsCard
-                            title="Permit Type Distribution"
                             type="categoryWise"
-                            data={permits.reduce(
-                              (acc: { name: string; value: number; color?: string }[], permit) => {
-                                const existing = acc.find((item) => item.name === permit.permit_type);
-                                if (existing) {
-                                  existing.value++;
-                                } else {
-                                  acc.push({ name: permit.permit_type, value: 1 });
-                                }
-                                return acc;
-                              },
-                              []
-                            )}
+                            data={permitsStatusData}
                             dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            info="Distribution of permits by type"
+                            onDownload={handlePermitsStatusDownload}
+                            onRefresh={handleRefreshPermitsStatus}
+                            isLoading={permitsStatusLoading}
+                            info={permitsStatusInfo}
                           />
                         </SortableChartItem>
                       );
