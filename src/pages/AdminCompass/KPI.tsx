@@ -774,10 +774,7 @@ const KPI = () => {
   }, [kpis]);
 
   return (
-    <div
-      className="mx-auto w-full max-w-7xl rounded-b-[28px] rounded-t-none border border-[rgba(218,119,86,0.16)] border-t-0 bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
-      style={{ background: C.pageBg, color: C.textMain }}
-    >
+    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6" style={{ color: C.textMain }}>
       <CreateKPIDialog
         open={createKpiOpen}
         onOpenChange={setCreateKpiOpen}
@@ -796,7 +793,7 @@ const KPI = () => {
         isLoading={isUpdating}
         onSubmit={handleUpdateKpi}
       />
-      <div className="p-6 pb-0">
+      <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-[#1a1a1a] sm:text-[40px] sm:leading-tight">
@@ -831,7 +828,7 @@ const KPI = () => {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-[rgba(218,119,86,0.22)] bg-[#fef6f4] px-5 py-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -877,7 +874,7 @@ const KPI = () => {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-1 rounded-xl border border-[rgba(218,119,86,0.15)] bg-[#eceae4] p-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.75)] overflow-x-auto">
+        <div className="flex gap-1 rounded-xl border border-[rgba(218,119,86,0.15)] bg-[#eceae4] p-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.75)] overflow-x-auto">
           {tabs.map(({ name }) => {
             const isActive = activeTab === name;
             return (
@@ -901,9 +898,6 @@ const KPI = () => {
             );
           })}
         </div>
-      </div>
-
-      <div className="px-6 pt-5 pb-2">
         {activeTab === "KPI Management" && (
           <KPIManagementTab
             kpis={kpis}
