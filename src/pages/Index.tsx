@@ -163,7 +163,7 @@ const Index = () => {
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
       isPulseSite ||
-      (isWebSite && userEmail === "deveshjain928@gmail.com") ||
+      isWebSite ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "abdul.g@gophygital.work"
     ) {

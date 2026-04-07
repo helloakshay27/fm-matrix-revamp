@@ -116,7 +116,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
-    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
@@ -189,6 +188,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "90" ||
           org_id === "1" ||
           org_id === "84" ||
+          org_id === "34" ||
           org_id === "1" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
@@ -226,6 +226,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "90" ||
       org_id === "1" ||
       org_id === "84" ||
+      org_id === "34" ||
       org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -317,6 +318,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "90" ||
       org_id === "1" ||
       org_id === "84" ||
+      org_id === "34" ||
       org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -451,22 +453,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         org_id === "90" ||
         org_id === "1" ||
         org_id === "84" ||
-        org_id === "1" ||
+        org_id === "34" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
         userEmail === "megipow156@aixind.com" ||
         userEmail === "jevosak839@cimario.com" ? (
-          <EmployeeHeader />
+          isNewEmpHubRoute ? (
+            <TopNavigation
+              activeNavMenu={activeNavMenu}
+              setActiveNavMenu={setActiveNavMenu}
+            />
+          ) : (
+            <EmployeeHeader />
+          )
         ) : (
-          // isNewEmpHubRoute ? (
-          //   <TopNavigation
-          //     activeNavMenu={activeNavMenu}
-          //     setActiveNavMenu={setActiveNavMenu}
-          //   /> // 👈 your new header
-          // ) : (
-          // <EmployeeHeader />
-          // )
-          // <EmployeeHeaderStatic />
           <TopNavigation
             activeNavMenu={activeNavMenu}
             setActiveNavMenu={setActiveNavMenu}
