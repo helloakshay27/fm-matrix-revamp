@@ -1,7 +1,7 @@
 import { AdminViewEmulation } from '@/components/AdminViewEmulation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TrendingUp } from 'lucide-react'
-import TeamPerformance from './TeamPerformance'
+import { TeamPerformance } from './TeamPerformance'
 
 const TeamDashboard = () => {
     return (
