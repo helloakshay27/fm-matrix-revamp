@@ -47,6 +47,10 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { apiClient } from '@/utils/apiClient';
+import { ENDPOINTS } from '@/config/apiConfig';
+import { getUser } from '@/utils/auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Page shell + surfaces match `SystemAndSOP.tsx`:
@@ -166,6 +170,12 @@ const WeeklyReports = () => {
     const [remarksInteracted, setRemarksInteracted] = React.useState(false);
     const remarksTextareaRef = React.useRef<HTMLTextAreaElement>(null);
 
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+    const [history, setHistory] = React.useState<any[]>([]);
+    const [editingId, setEditingId] = React.useState<number | null>(null);
+    const currentUser = getUser();
+
     const refDate = React.useMemo(() => new Date(), []);
     const weekStart = React.useMemo(
         () => startOfWeek(refDate, { weekStartsOn: 0 }),
@@ -208,6 +218,59 @@ const WeeklyReports = () => {
         return labels;
     }, [weekEnd]);
 
+    const populateForm = React.useCallback((item: any) => {
+        setEditingId(item.id);
+        setRemarksText(item.report_data?.remarks || item.description || item.report_data?.big_win || '');
+        if (item.report_data?.remark_type) {
+            setActiveRemarkChip(item.report_data.remark_type as RemarkChipId);
+        }
+        
+        // Handle wins/achievements (new and legacy)
+        const achievements = item.report_data?.achievements 
+            || item.report_data?.accomplishments?.items?.map((i: any) => i.title)
+            || item.report_data?.accomplishments?.map((i: any) => i.title)
+            || [];
+        setWins(achievements);
+
+        // Handle tasks/plans (new and legacy)
+        const tasks = item.report_data?.tasks 
+            || item.report_data?.week_plan?.map((i: any) => i.title)
+            || item.report_data?.tasks_issues?.map((i: any) => i.title)
+            || item.report_data?.tomorrow_plan?.map((i: any) => i.title)
+            || [];
+        
+        const firstDay = upcomingDays.find(d => d.canAdd)?.key;
+        if (firstDay && tasks.length > 0) {
+            setDayPlans({ [firstDay]: tasks });
+        }
+        toast.message('Report data loaded');
+    }, [upcomingDays]);
+
+    const fetchHistory = React.useCallback(async () => {
+        setIsLoadingHistory(true);
+        try {
+            // Using the specific query parameter for weekly reports
+            const response = await apiClient.get(`${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=weekly`);
+            const items = response.data || [];
+            setHistory(items);
+
+            // Auto-check if current week has a report
+            const currentWeekStart = format(weekStart, 'yyyy-MM-dd');
+            const existing = items.find((i: any) => i.start_date === currentWeekStart);
+            if (existing) {
+                populateForm(existing);
+            }
+        } catch (error) {
+            console.error('Failed to fetch weekly reports history:', error);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    }, [weekStart, populateForm]);
+
+    React.useEffect(() => {
+        fetchHistory();
+    }, [fetchHistory]);
+
     const handleAddWin = () => {
         setWins([...wins, '']);
     };
@@ -220,6 +283,66 @@ const WeeklyReports = () => {
         const newWins = [...wins];
         newWins[index] = value;
         setWins(newWins);
+    };
+
+    const handleCarryForward = () => {
+        if (history.length === 0) {
+            toast.error('No previous reports found to carry forward');
+            return;
+        }
+        // Get the latest report that isn't the current one we might be editing
+        const latest = history.find(item => item.id !== editingId);
+        if (latest) {
+            const tasks = latest.report_data?.tasks 
+                || latest.report_data?.week_plan?.map((i: any) => i.title)
+                || latest.report_data?.tasks_issues?.map((i: any) => i.title)
+                || [];
+            
+            if (tasks.length === 0) {
+                toast.info('No uncompleted tasks found in previous report');
+                return;
+            }
+
+            const firstDay = upcomingDays.find(d => d.canAdd)?.key;
+            if (firstDay) {
+                setDayPlans(prev => ({
+                    ...prev,
+                    [firstDay]: [...(prev[firstDay] || []), ...tasks]
+                }));
+                toast.success(`Carried forward ${tasks.length} tasks`);
+            }
+        }
+    };
+
+    const handleImportDailyWins = async () => {
+        try {
+            const response = await apiClient.get(`${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=daily`);
+            const dailyReports = response.data || [];
+            if (dailyReports.length === 0) {
+                toast.info('No daily reports found to import from');
+                return;
+            }
+            
+            // Collect all wins/accomplishments from daily reports of the current week
+            const currentWeekDailyWins: string[] = [];
+            dailyReports.forEach((report: any) => {
+                const reportWins = report.report_data?.achievements 
+                    || report.report_data?.accomplishments?.map((i: any) => i.title)
+                    || [];
+                currentWeekDailyWins.push(...reportWins);
+            });
+
+            if (currentWeekDailyWins.length === 0) {
+                toast.info('No wins found in daily reports');
+                return;
+            }
+
+            setWins(prev => [...prev, ...currentWeekDailyWins]);
+            toast.success(`Imported ${currentWeekDailyWins.length} daily wins`);
+        } catch (error) {
+            console.error('Failed to import daily wins:', error);
+            toast.error('Failed to import daily wins');
+        }
     };
 
     const handleAddPlan = (day: string) => {
@@ -274,6 +397,62 @@ const WeeklyReports = () => {
                 border: 'border-[#DA7756]/25',
                 bg: 'bg-white',
             };
+
+    const handleSubmit = async () => {
+        if (!currentUser?.id) {
+            toast.error('User session not found. Please log in again.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                user_id: currentUser.id,
+                journal_type: 'weekly',
+                start_date: format(weekStart, 'yyyy-MM-dd'),
+                end_date: format(weekEnd, 'yyyy-MM-dd'),
+                description: remarksText,
+                report_data: {
+                    kpi: 'weekly value',
+                    achievements: wins.filter(w => w.trim() !== ''),
+                    tasks: Object.values(dayPlans).flat().filter(t => t.trim() !== ''),
+                    past_kpis: [], // Placeholder for now
+                    total_score: 0,
+                    remarks: remarksText,
+                    remark_type: activeRemarkChip,
+                    sections: {
+                        daily_scores: [0, 0, 0, 0, 0],
+                        bonus: 0,
+                        self_rating: 0,
+                        is_absent: false
+                    },
+                    details: {
+                        self_rating: 0,
+                        is_absent: false
+                    }
+                }
+            };
+
+            const response = editingId 
+                ? await apiClient.put(`/user_journals/${editingId}.json`, payload)
+                : await apiClient.post(ENDPOINTS.USER_JOURNALS, payload);
+
+            toast.success(editingId ? 'Weekly report updated successfully' : 'Weekly report submitted successfully');
+            fetchHistory();
+        } catch (error: any) {
+            console.error('Failed to submit weekly report:', error);
+            toast.error(error.response?.data?.message || 'Failed to submit weekly report');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleViewDetails = React.useCallback((item: any) => {
+        populateForm(item);
+        const tabsList = document.querySelector('[role="tablist"]');
+        const submitTab = tabsList?.querySelector('[value="submit"]') as HTMLElement;
+        submitTab?.click();
+    }, [populateForm]);
 
     return (
         <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
@@ -381,13 +560,13 @@ const WeeklyReports = () => {
                                     </div>
                                 ))}
                                 <div className="flex flex-col gap-3 sm:flex-row">
-                                    <Select defaultValue="none">
+                                    <Select defaultValue="none" onValueChange={(val) => val === 'import' && handleImportDailyWins()}>
                                         <SelectTrigger className="h-12 flex-1 rounded-xl border-dashed border-2 border-[#DA7756]/35 bg-[#fef6f4] text-[#DA7756] hover:bg-[#fdf0eb] focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]">
                                             <SelectValue placeholder="Import Daily Wins…" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">Import Daily Wins…</SelectItem>
-                                            <SelectItem value="last">Last week&apos;s wins</SelectItem>
+                                            <SelectItem value="import">Import from Daily Reports</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <Button
@@ -401,6 +580,7 @@ const WeeklyReports = () => {
                                 </div>
                                 <Button
                                     type="button"
+                                    onClick={handleCarryForward}
                                     className={cn('h-12 w-full rounded-xl border text-sm font-semibold uppercase tracking-wide', btnOutline)}
                                 >
                                     Carry Forward Uncompleted
@@ -742,10 +922,21 @@ const WeeklyReports = () => {
 
                         <Button
                             type="button"
-                            className="h-12 w-full rounded-xl bg-[#DA7756] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#c9673f]"
+                            disabled={isSubmitting}
+                            onClick={handleSubmit}
+                            className="h-12 w-full rounded-xl bg-[#DA7756] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#c9673f] disabled:opacity-50"
                         >
-                            <Send className="mr-2 h-4 w-4" />
-                            Submit for {submitRangeLabel}
+                            {isSubmitting ? (
+                                <span className="flex items-center gap-2">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    {editingId ? 'Updating...' : 'Submitting...'}
+                                </span>
+                            ) : (
+                                <>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {editingId ? 'Update Review' : `Submit for ${submitRangeLabel}`}
+                                </>
+                            )}
                         </Button>
 
                         <div className="flex flex-col gap-3 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -779,10 +970,219 @@ const WeeklyReports = () => {
                         </p>
                     </TabsContent>
 
-                    <TabsContent value="history" className="mt-6">
-                        <Card className="rounded-2xl border border-[#DA7756]/20 bg-white p-12 text-center text-neutral-500 shadow-sm">
-                            No review history found.
-                        </Card>
+                    <TabsContent value="history" className="mt-6 space-y-6">
+                        {isLoadingHistory ? (
+                            Array(3).fill(0).map((_, i) => (
+                                <Card key={i} className="p-6 space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <Skeleton className="h-12 w-12 rounded-xl" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-40" />
+                                            <Skeleton className="h-3 w-60" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Skeleton className="h-32 rounded-xl" />
+                                        <Skeleton className="h-32 rounded-xl" />
+                                    </div>
+                                </Card>
+                            ))
+                        ) : history.length > 0 ? (
+                            history.map((item) => {
+                                const reportData = item.report_data || {};
+                                const weekNum = item.start_date ? getISOWeek(new Date(item.start_date)) : '??';
+                                const weekLabel = item.start_date && item.end_date 
+                                    ? `${format(new Date(item.start_date), 'MMM d')}-${format(new Date(item.end_date), 'd')}`
+                                    : 'Unknown Date';
+                                
+                                const achievements = reportData.achievements 
+                                    || reportData.accomplishments?.items?.map((i: any) => i.title)
+                                    || reportData.accomplishments?.map((i: any) => i.title)
+                                    || [];
+                                
+                                const tasks = reportData.tasks 
+                                    || reportData.week_plan?.map((i: any) => i.title)
+                                    || reportData.tasks_issues?.map((i: any) => i.title)
+                                    || reportData.tomorrow_plan?.map((i: any) => i.title)
+                                    || [];
+                                
+                                const stats = [
+                                    { label: 'Weekly KPIs:', value: '0/20' },
+                                    { label: 'Daily KPIs:', value: '0/10' },
+                                    { label: 'Starred Wins:', value: `0/${achievements.length || 6}` },
+                                    { label: 'Tasks/Issues:', value: '0/10' },
+                                    { label: 'Planned:', value: `${tasks.length}/20` },
+                                    { label: 'Remarks:', value: reportData.remarks ? '1/14' : '0/14' },
+                                    { label: 'SOPs:', value: '0/20' },
+                                ];
+
+                                const dayColors: Record<string, string> = {
+                                    'Mon': 'bg-[#e0e7ff] text-[#4338ca]',
+                                    'Tue': 'bg-[#dcfce7] text-[#15803d]',
+                                    'Wed': 'bg-[#fef9c3] text-[#a16207]',
+                                    'Thu': 'bg-[#f3e8ff] text-[#7e22ce]',
+                                    'Fri': 'bg-[#ffedd5] text-[#c2410c]',
+                                };
+
+                                return (
+                                    <Card key={item.id} className="overflow-hidden border border-[#DA7756]/20 bg-white shadow-md rounded-2xl">
+                                        {/* History Card Header */}
+                                        <div className="bg-[#f8fafc] border-b border-neutral-100 p-6">
+                                            <div className="flex flex-col lg:flex-row justify-between gap-6">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <h3 className="text-xl font-bold text-neutral-900">
+                                                            Wk# {weekNum}, {weekLabel}
+                                                        </h3>
+                                                        {/* <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-8 w-8 text-neutral-400 hover:text-[#DA7756]"
+                                                            onClick={() => handleViewDetails(item)}
+                                                        >
+                                                            <Plus className="h-4 w-4 rotate-45" />
+                                                        </Button> */}
+                                                    </div>
+                                                    <p className="text-sm text-neutral-500">
+                                                        {currentUser ? `${currentUser.firstname} ${currentUser.lastname}` : 'User Report'} (ID: {currentUser?.id || item.user_id})
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 flex items-center gap-1">
+                                                            <Star className="h-3 w-3 fill-white" />
+                                                            {reportData.total_score || 0}/100
+                                                        </Badge>
+                                                        <Badge variant="outline" className="text-neutral-500 border-neutral-200">
+                                                            0.0%
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-x-8 gap-y-0.5 text-[11px] text-neutral-600 font-medium">
+                                                        {stats.map((s, idx) => (
+                                                            <div key={idx} className="flex justify-between gap-4">
+                                                                <span>{s.label}</span>
+                                                                <span className="font-bold text-neutral-900 tracking-wider">{s.value}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    {/* <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="mt-2 text-[#4f46e5] border-[#4f46e5]/20 hover:bg-[#4f46e5]/5 rounded-lg h-8 px-4 font-semibold text-xs transition-colors"
+                                                        onClick={() => handleViewDetails(item)}
+                                                    >
+                                                        <Zap className="mr-2 h-3.5 w-3.5 fill-[#4f46e5]" />
+                                                        Edit
+                                                    </Button> */}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* History Card Body */}
+                                        <div className="p-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Top Wins Box */}
+                                                <div className="rounded-xl border border-emerald-500/20 bg-white overflow-hidden flex flex-col">
+                                                    <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-center gap-2">
+                                                        <Trophy className="h-5 w-5 text-emerald-500" />
+                                                        <h4 className="font-bold text-emerald-600">Top Wins</h4>
+                                                    </div>
+                                                    <div className="p-4 space-y-3 flex-1 min-h-[200px]">
+                                                        {achievements.length > 0 ? achievements.map((w: string, i: number) => (
+                                                            <div key={i} className="flex items-start gap-2.5 text-sm text-neutral-700 font-medium">
+                                                                <div className="mt-1 h-4 w-4 rounded-full border-2 border-emerald-500 flex items-center justify-center">
+                                                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                                </div>
+                                                                <span>{w}</span>
+                                                            </div>
+                                                        )) : (
+                                                            <p className="text-sm text-neutral-400 italic">No wins recorded</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Next Week's Priorities Box */}
+                                                <div className="rounded-xl border border-indigo-500/20 bg-white overflow-hidden">
+                                                    <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-center gap-2">
+                                                        <Target className="h-5 w-5 text-indigo-500" />
+                                                        <h4 className="font-bold text-indigo-600">Next Week's Priorities</h4>
+                                                    </div>
+                                                    <div className="p-4 space-y-3">
+                                                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day) => (
+                                                            <div key={day} className="space-y-2">
+                                                                <div className={cn("px-3 py-1 rounded text-[11px] font-bold uppercase tracking-wider", dayColors[day])}>
+                                                                    {day}
+                                                                </div>
+                                                                <div className="pl-2 space-y-1.5">
+                                                                    {/* This is a simple mapping for display; in a real scenario we'd match the day */}
+                                                                    {day === 'Mon' && tasks.slice(0, 2).map((t: string, i: number) => (
+                                                                        <div key={i} className="flex items-center gap-2 text-sm text-neutral-700">
+                                                                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                                                                            {t}
+                                                                        </div>
+                                                                    ))}
+                                                                    {day !== 'Mon' && <div className="h-4" />}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Tasks & Issues area */}
+                                            <div className="mt-6 space-y-4">
+                                                <div className="flex items-center gap-2 text-orange-600">
+                                                    <AlertTriangle className="h-5 w-5" />
+                                                    <h4 className="font-bold">Tasks & Issues</h4>
+                                                </div>
+                                                {reportData.tasks_issues?.length > 0 ? reportData.tasks_issues.map((ti: any, i: number) => (
+                                                    <div key={i} className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 flex items-center justify-between">
+                                                        <div className="flex items-center gap-4">
+                                                            <X className="h-4 w-4 text-neutral-400" />
+                                                            <span className="font-bold text-neutral-800">{ti.title}</span>
+                                                            <div className="flex gap-2">
+                                                                <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">Task</Badge>
+                                                                <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">{ti.status || 'open'}</Badge>
+                                                            </div>
+                                                        </div>
+                                                        <Badge className="bg-[#b45309] hover:bg-[#b45309] text-white text-[10px] font-bold uppercase h-6 px-3">
+                                                            {ti.priority || 'medium'}
+                                                        </Badge>
+                                                    </div>
+                                                )) : (
+                                                    <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 text-sm text-neutral-500 italic">
+                                                        No issues recorded
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Other Comments */}
+                                            <div className="mt-6 pt-6 border-t border-neutral-100">
+                                                <div className="flex items-center gap-2 text-neutral-500 mb-2">
+                                                    <MessageSquare className="h-4 w-4" />
+                                                    <h4 className="text-sm font-bold">Other Comments</h4>
+                                                </div>
+                                                <div className="flex items-start gap-2 text-sm text-neutral-700">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
+                                                    <p><span className="font-bold uppercase text-[10px] text-neutral-500 mr-2">REMARK:</span>{reportData.remarks || 'No overall comments'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white py-16 text-center">
+                                <div className="mb-4 rounded-full bg-neutral-50 p-4">
+                                    <BarChart3 className="h-8 w-8 text-neutral-300" />
+                                </div>
+                                <h3 className="text-lg font-bold text-neutral-900">No review history found</h3>
+                                <p className="mt-1 text-sm text-neutral-500">
+                                    You haven&apos;t submitted any weekly reports yet.
+                                </p>
+                            </div>
+                        )}
                     </TabsContent>
                 </Tabs>
             </div>
