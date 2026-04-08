@@ -175,7 +175,7 @@ export const DurationPicker = ({
     };
 
     // let hoursPerDay = shift?.[0]?.total_hour - 1 || 8;
-    let hoursPerDay = 0.5; // Default to 30 minutes (0.5 hours)
+    let hoursPerDay = 8; // Default to 30 minutes (0.5 hours)
 
     if (!Array.isArray(shift) && shift?.shift) {
         const [startTime, endTime] = shift.shift.split(" to ");
@@ -319,7 +319,7 @@ export const DurationPicker = ({
                 const allDays = getAllDays(startDate, endDate, shift);
                 setDaysList(allDays);
                 const defaultHours = allDays.map((d) =>
-                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
+                    d.isWorking ? formatTotalHours(0.5) : ""
                 );
                 setDailyHours(defaultHours);
 
@@ -344,7 +344,7 @@ export const DurationPicker = ({
                 const allDays = getAllDays(endDate, endDate, shift);
                 setDaysList(allDays);
                 const defaultHours = allDays.map((d) =>
-                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
+                    d.isWorking ? formatTotalHours(0.5) : ""
                 );
                 setDailyHours(defaultHours);
 
@@ -369,7 +369,7 @@ export const DurationPicker = ({
                 const allDays = getAllDays(startDate, startDate, shift);
                 setDaysList(allDays);
                 const defaultHours = allDays.map((d) =>
-                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
+                    d.isWorking ? formatTotalHours(0.5) : ""
                 );
                 setDailyHours(defaultHours);
 
