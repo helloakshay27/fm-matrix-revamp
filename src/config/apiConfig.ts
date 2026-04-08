@@ -311,6 +311,7 @@ export const API_CONFIG = {
     JD_DETAIL: "/job_descriptions", // Will append /:id.json
     KPIS: "/kpis.json",
     USER_SETUP: "/jobs/setup", // Will append /:user_id
+    USER_JOURNALS: "/user_journals.json",
   },
 } as const;
 

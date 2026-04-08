@@ -231,6 +231,19 @@ const JobStatusTab = ({
   const [summary, setSummary] = useState<JobStatusSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [isGroupedByDept, setIsGroupedByDept] = useState(false);
+  const [deptFilter, setDeptFilter] = useState("all");
+  const [setupStatusFilter, setSetupStatusFilter] = useState("all");
+
+  // Extract unique departments from users data
+  const departments = useMemo(() => {
+    const deptSet = new Set<string>();
+    users.forEach((user) => {
+      if (user.department) {
+        deptSet.add(user.department);
+      }
+    });
+    return Array.from(deptSet).sort();
+  }, [users]);
 
   const fetchJobStatus = useCallback(async () => {
     try {
@@ -298,6 +311,21 @@ const JobStatusTab = ({
       );
     }
 
+    if (deptFilter !== "all") {
+      result = result.filter((user) => user.department === deptFilter);
+    }
+
+    if (setupStatusFilter !== "all") {
+      result = result.filter((user) => {
+        const isComplete = user.jd && user.kpis > 0;
+        if (setupStatusFilter === "complete") {
+          return isComplete;
+        } else {
+          return !isComplete;
+        }
+      });
+    }
+
     if (isGroupedByDept) {
       result.sort((a, b) => {
         const deptA = a.department || "Z_UNASSIGNED";
@@ -307,7 +335,7 @@ const JobStatusTab = ({
     }
 
     return result;
-  }, [users, searchTerm, isGroupedByDept]);
+  }, [users, searchTerm, deptFilter, setupStatusFilter, isGroupedByDept]);
 
   // Column configuration for EnhancedTable with FM Matrix fonts
   const columns: ColumnConfig[] = [
@@ -462,27 +490,30 @@ const JobStatusTab = ({
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="w-48">
-          <Select defaultValue="all">
+          <Select value={deptFilter} onValueChange={setDeptFilter}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All Departments" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Departments</SelectItem>
-              <SelectItem value="eng">Engineering</SelectItem>
-              <SelectItem value="mkt">Marketing</SelectItem>
+              {departments.map((dept) => (
+                <SelectItem key={dept} value={dept}>
+                  {dept}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
         <div className="w-48">
-          <Select defaultValue="all">
+          <Select value={setupStatusFilter} onValueChange={setSetupStatusFilter}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All Users" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="complete">Setup Complete</SelectItem>
+              <SelectItem value="incomplete">Setup Incomplete</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -976,6 +1007,7 @@ interface JobDescriptionItem {
   status: string;
   kras_count: number;
   kpis_count: number;
+  users_count: number;
   created_at: string;
 }
 
@@ -1076,8 +1108,8 @@ const JDTab = ({
     }
   };
 
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [assignmentFilter, setAssignmentFilter] = useState("all");
+  const [userCountFilter, setUserCountFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
 
   const filteredJDs = useMemo(() => {
@@ -1088,19 +1120,26 @@ const JDTab = ({
         (jd.department?.toLowerCase().includes(searchTerm.toLowerCase()) ??
           false);
 
-      const matchesStatus =
-        statusFilter === "all" ||
-        jd.status.toLowerCase() === statusFilter.toLowerCase();
-      const matchesType =
-        typeFilter === "all" ||
-        jd.employment_type.toLowerCase() === typeFilter.toLowerCase();
+      const matchesAssignment =
+        assignmentFilter === "all" ||
+        (assignmentFilter === "assigned" && (jd.users_count || 0) > 0) ||
+        (assignmentFilter === "unassigned" && (jd.users_count || 0) === 0);
+
+      const matchesUserCount =
+        userCountFilter === "all" ||
+        (userCountFilter === "0" && (jd.users_count || 0) === 0) ||
+        (userCountFilter === "1-5" &&
+          (jd.users_count || 0) >= 1 &&
+          (jd.users_count || 0) <= 5) ||
+        (userCountFilter === "6+" && (jd.users_count || 0) >= 6);
+
       const matchesDept =
         deptFilter === "all" ||
         jd.department?.toLowerCase() === deptFilter.toLowerCase();
 
-      return matchesSearch && matchesStatus && matchesType && matchesDept;
+      return matchesSearch && matchesAssignment && matchesUserCount && matchesDept;
     });
-  }, [jds, searchTerm, statusFilter, typeFilter, deptFilter]);
+  }, [jds, searchTerm, assignmentFilter, userCountFilter, deptFilter]);
 
   // Extract unique departments for the filter
   const departments = useMemo(() => {
@@ -1313,29 +1352,28 @@ const JDTab = ({
         </div>
 
         <div className="w-48">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
+              <SelectItem value="assigned">Assigned</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="w-48">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <Select value={userCountFilter} onValueChange={setUserCountFilter}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Types" />
+              <SelectValue placeholder="All Counts" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="full_time">Full Time</SelectItem>
-              <SelectItem value="part_time">Part Time</SelectItem>
-              <SelectItem value="contract">Contract</SelectItem>
+              <SelectItem value="all">All Counts</SelectItem>
+              <SelectItem value="0">0 Users</SelectItem>
+              <SelectItem value="1-5">1-5 Users</SelectItem>
+              <SelectItem value="6+">6+ Users</SelectItem>
             </SelectContent>
           </Select>
         </div>
