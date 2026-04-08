@@ -14,12 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 import { ArrowLeft, Save, User, Shield, Lock } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
@@ -258,42 +257,44 @@ export const EditViUserPage = () => {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <Label
-                      htmlFor="roleId"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Role
-                    </Label>
-                    <Select
-                      value={formData.roleId}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, roleId: value }))
-                      }
-                    >
-                      <SelectTrigger className="w-full mt-1">
-                        <SelectValue placeholder="Select Role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {rolesLoading ? (
-                          <div className="px-2 py-1 text-sm text-gray-500">
-                            Loading roles...
-                          </div>
-                        ) : Array.isArray(viRoles) && viRoles.length > 0 ? (
+                    <FormControl fullWidth variant="outlined" size="small">
+                      <InputLabel shrink>Role</InputLabel>
+                      <MuiSelect
+                        value={formData.roleId}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            roleId: e.target.value as string,
+                          }))
+                        }
+                        label="Role"
+                        notched
+                        displayEmpty
+                        disabled={rolesLoading}
+                        sx={{
+                          backgroundColor: "#fff",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#e5e7eb",
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#C72030",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#C72030",
+                          },
+                        }}
+                      >
+                        <MenuItem value="">
+                          <em>Select Role</em>
+                        </MenuItem>
+                        {Array.isArray(viRoles) &&
                           viRoles.map((role) => (
-                            <SelectItem
-                              key={role.id}
-                              value={role.id.toString()}
-                            >
+                            <MenuItem key={role.id} value={role.id.toString()}>
                               {role.display_name || role.title || role.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="px-2 py-1 text-sm text-gray-500">
-                            No roles available
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </div>
               </CardContent>
