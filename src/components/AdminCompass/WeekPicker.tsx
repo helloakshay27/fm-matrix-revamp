@@ -5,20 +5,24 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { getWeek, format, startOfWeek, endOfWeek } from 'date-fns';
 
-export const WeekPicker = () => {
-    const [date, setDate] = useState<Date | undefined>(new Date('2026-03-23'));
+interface WeekPickerProps {
+    currentWeek: Date;
+    onWeekChange: (date: Date) => void;
+}
+
+export const WeekPicker = ({ currentWeek, onWeekChange }: WeekPickerProps) => {
     const [popoverOpen, setPopoverOpen] = useState(false);
 
     const handleDateSelect = (selectedDate: Date | undefined) => {
         if (selectedDate) {
-            setDate(selectedDate);
+            onWeekChange(selectedDate);
             setPopoverOpen(false);
         }
     };
 
-    const weekRange = date ? {
-        from: startOfWeek(date, { weekStartsOn: 0 }), // Sunday
-        to: endOfWeek(date, { weekStartsOn: 0 }),
+    const weekRange = currentWeek ? {
+        from: startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
+        to: endOfWeek(currentWeek, { weekStartsOn: 0 }),
     } : undefined;
 
     return (
@@ -26,7 +30,7 @@ export const WeekPicker = () => {
             <PopoverTrigger asChild>
                 <Button variant="outline" className="px-4 !bg-white !border-gray-200 !rounded-[8px] !text-gray-700 gap-2">
                     <CalendarIcon className="w-4 h-4 !text-gray-500" />
-                    {date ? `Week ${getWeek(date)}, ${format(date, 'yyyy')}` : 'Select Week'}
+                    {currentWeek ? `Week ${getWeek(currentWeek)}, ${format(currentWeek, 'yyyy')}` : 'Select Week'}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -34,7 +38,7 @@ export const WeekPicker = () => {
                     mode="range"
                     selected={weekRange}
                     onDayClick={handleDateSelect}
-                    defaultMonth={date}
+                    defaultMonth={currentWeek}
                     showWeekNumber
                     classNames={{
                         day_range_start: "bg-primary text-primary-foreground rounded-l-md",
@@ -47,8 +51,7 @@ export const WeekPicker = () => {
                     }}
                 />
                 <div className="flex justify-between p-2 border-t border-gray-100">
-                    <Button variant="ghost" size="sm" className="text-primary font-bold" onClick={() => { setDate(undefined); setPopoverOpen(false); }}>Clear</Button>
-                    <Button variant="ghost" size="sm" className="text-primary font-bold" onClick={() => { setDate(new Date()); setPopoverOpen(false); }}>This week</Button>
+                    <Button variant="ghost" size="sm" className="text-primary font-bold" onClick={() => { onWeekChange(new Date()); setPopoverOpen(false); }}>This week</Button>
                 </div>
             </PopoverContent>
         </Popover>

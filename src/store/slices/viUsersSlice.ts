@@ -335,16 +335,16 @@ export const fetchViRoles = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
-    const org_id = localStorage.getItem("org_id");
+    const orgId = String(localStorage.getItem("org_id") ?? "").trim();
+    const hostname = window.location.hostname?.toLowerCase();
 
     if (!baseUrl || !token) {
       return rejectWithValue("Missing authentication credentials");
     }
 
     try {
-      // Use /roles.json for web.gophygital.work with org_id 34, otherwise use /lock_roles.json
       const rolesEndpoint =
-        window.location.hostname === "web.gophygital.work" && org_id === "34"
+        hostname === "web.gophygital.work" && orgId === "34"
           ? "/roles.json"
           : "/lock_roles.json";
 
@@ -355,9 +355,6 @@ export const fetchViRoles = createAsyncThunk(
         },
       });
 
-      // Handle different API response structures
-      // /roles.json returns { roles: [...] } or array directly
-      // /lock_roles.json returns { roles: [...] }
       const data = response.data;
       if (Array.isArray(data)) {
         return data;
@@ -460,7 +457,7 @@ export const updateViUser = createAsyncThunk(
       }
 
       const response = await axios.put(
-        `https://${baseUrl}/pms/users/${userId}/update_vi_user`,
+        `https://${baseUrl}/pms/users/${userId}/update_vi_user.json`,
         formData,
         {
           headers: {
