@@ -454,7 +454,7 @@ export const updateViUser = createAsyncThunk(
       }
 
       const response = await axios.put(
-        `https://${baseUrl}/pms/users/${userId}/update_vi_user`,
+        `https://${baseUrl}/pms/users/${userId}/update_vi_user.json`,
         formData,
         {
           headers: {
