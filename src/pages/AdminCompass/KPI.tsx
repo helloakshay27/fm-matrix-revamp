@@ -17,9 +17,7 @@ import EditKPIDialog, {
   type EditKPIFormValues,
 } from "./AdminCompassComponent/EditKPIDialog";
 import {
-  getBaseUrl as ADMIN_COMPASS_BASE_URL,
   C,
-  getAuthHeaders as getAdminCompassAuthHeaders,
   kpiClass,
 } from "./AdminCompassComponent/Shared";
 import {
@@ -107,8 +105,6 @@ type RawExtraField = {
 };
 
 const KPI_UNITS_GROUP_NAME = "kpi_units_configuration";
-const KPI_UNITS_UAT_TOKEN =
-  "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
 const DEFAULT_KPI_UNITS = [
   "₹",
   "%",
@@ -134,14 +130,20 @@ const getToken = () => {
   return "";
 };
 
-const getApiBaseUrl = () => getBaseUrl() || DEFAULT_BASE_URL;
-
 const getApiBaseCandidates = () => {
   const fromAuth = getBaseUrl();
-  const candidates = [fromAuth, DEFAULT_BASE_URL].filter(
+  const candidates = [fromAuth].filter(
     (v): v is string => typeof v === "string" && v.length > 0
   );
   return Array.from(new Set(candidates));
+};
+
+const getApiBaseUrl = () => {
+  const [base] = getApiBaseCandidates();
+  if (!base) {
+    throw new Error("Base URL not found. Please login again.");
+  }
+  return base;
 };
 
 const apiHeaders = () => ({
@@ -155,20 +157,20 @@ const apiHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
-const adminCompassHeaders = () => {
-  getToken();
-  return getAdminCompassAuthHeaders();
-};
-
 const getKpiUnitsApiHeaders = () => ({
+  ...(getToken()
+    ? {}
+    : (() => {
+        throw new Error("Missing auth token. Please login again.");
+      })()),
   Accept: "application/json",
   "Content-Type": "application/json",
-  Authorization: `Bearer ${localStorage.getItem("admin_compass_uat_token") || KPI_UNITS_UAT_TOKEN}`,
+  Authorization: `Bearer ${getToken()}`,
 });
 
-const KPI_UNITS_QUERY_URLS = [
-  `${ADMIN_COMPASS_BASE_URL}/extra_fields?q[group_name_in][]=${KPI_UNITS_GROUP_NAME}&include_grouped=true`,
-  `${ADMIN_COMPASS_BASE_URL}/extra_fields?group_name=${KPI_UNITS_GROUP_NAME}`,
+const getKpiUnitsQueryUrls = (baseUrl: string) => [
+  `${baseUrl}/extra_fields?q[group_name_in][]=${KPI_UNITS_GROUP_NAME}&include_grouped=true`,
+  `${baseUrl}/extra_fields?group_name=${KPI_UNITS_GROUP_NAME}`,
 ];
 
 const withNoCacheTs = (url: string): string => {
@@ -290,37 +292,41 @@ const extractUnitValues = (json: unknown): string[] => {
 const fetchKpiUnitsConfiguration = async (): Promise<string[]> => {
   let lastError: unknown = null;
 
-  for (const url of KPI_UNITS_QUERY_URLS) {
-    try {
-      const requestUrl = withNoCacheTs(url);
-      console.warn("[KPI Units] GET extra_fields:", requestUrl);
+  const baseCandidates = getApiBaseCandidates();
 
-      const response = await fetch(requestUrl, {
-        method: "GET",
-        headers: getKpiUnitsApiHeaders(),
-        cache: "no-store",
-      });
-
-      const rawText = await response.text();
-      console.warn("[KPI Units] GET status:", response.status);
-      console.warn("[KPI Units] GET raw (first 600):", rawText.slice(0, 600));
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
-      }
-
-      let json: unknown = [];
+  for (const baseUrl of baseCandidates) {
+    for (const url of getKpiUnitsQueryUrls(baseUrl)) {
       try {
-        json = rawText ? JSON.parse(rawText) : [];
-      } catch {
-        json = [];
-      }
+        const requestUrl = withNoCacheTs(url);
+        console.warn("[KPI Units] GET extra_fields:", requestUrl);
 
-      const extracted = extractUnitValues(json);
-      if (extracted.length > 0) return extracted;
-    } catch (error) {
-      console.error("[KPI Units] GET failed:", error);
-      lastError = error;
+        const response = await fetch(requestUrl, {
+          method: "GET",
+          headers: getKpiUnitsApiHeaders(),
+          cache: "no-store",
+        });
+
+        const rawText = await response.text();
+        console.warn("[KPI Units] GET status:", response.status);
+        console.warn("[KPI Units] GET raw (first 600):", rawText.slice(0, 600));
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
+        }
+
+        let json: unknown = [];
+        try {
+          json = rawText ? JSON.parse(rawText) : [];
+        } catch {
+          json = [];
+        }
+
+        const extracted = extractUnitValues(json);
+        if (extracted.length > 0) return extracted;
+      } catch (error) {
+        console.error("[KPI Units] GET failed:", error);
+        lastError = error;
+      }
     }
   }
 
@@ -339,50 +345,61 @@ const upsertKpiUnitsConfiguration = async (values: string[]): Promise<string[]> 
 
   console.warn("[KPI Units] POST bulk_upsert payload:", payload);
 
-  const requestUrl = withNoCacheTs(`${ADMIN_COMPASS_BASE_URL}/extra_fields/bulk_upsert`);
-  console.warn("[KPI Units] POST extra_fields:", requestUrl);
+  let lastError: unknown = null;
 
-  const response = await fetch(requestUrl, {
-    method: "POST",
-    headers: getKpiUnitsApiHeaders(),
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
-
-  console.warn("[KPI Units] POST status:", response.status);
-
-  if (!response.ok) {
-    let message = `HTTP ${response.status}`;
+  for (const baseUrl of getApiBaseCandidates()) {
     try {
-      const errorData = (await response.json()) as {
-        message?: string;
-        error?: string;
-        errors?: string[];
-      };
-      const errorMessage =
-        errorData.message ??
-        errorData.error ??
-        (Array.isArray(errorData.errors) ? errorData.errors[0] : undefined);
-      if (errorMessage) {
-        message = `${message}: ${errorMessage}`;
+      const requestUrl = withNoCacheTs(`${baseUrl}/extra_fields/bulk_upsert`);
+      console.warn("[KPI Units] POST extra_fields:", requestUrl);
+
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: getKpiUnitsApiHeaders(),
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
+
+      console.warn("[KPI Units] POST status:", response.status);
+
+      if (!response.ok) {
+        let message = `HTTP ${response.status}`;
+        try {
+          const errorData = (await response.json()) as {
+            message?: string;
+            error?: string;
+            errors?: string[];
+          };
+          const errorMessage =
+            errorData.message ??
+            errorData.error ??
+            (Array.isArray(errorData.errors) ? errorData.errors[0] : undefined);
+          if (errorMessage) {
+            message = `${message}: ${errorMessage}`;
+          }
+          console.error("[KPI Units] POST error body:", errorData);
+        } catch {
+          // Ignore parse failures and fall back to status-only message.
+        }
+        throw new Error(message);
       }
-      console.error("[KPI Units] POST error body:", errorData);
-    } catch {
-      // Ignore parse failures and fall back to status-only message.
+
+      const data = await response.json();
+      console.warn("[KPI Units] POST response:", data);
+
+      const extracted = extractUnitValues(data);
+      if (extracted.length > 0) {
+        return extracted;
+      }
+
+      const refreshedValues = await fetchKpiUnitsConfiguration();
+      return refreshedValues.length > 0 ? refreshedValues : values;
+    } catch (error) {
+      console.error("[KPI Units] POST failed:", error);
+      lastError = error;
     }
-    throw new Error(message);
   }
 
-  const data = await response.json();
-  console.warn("[KPI Units] POST response:", data);
-
-  const extracted = extractUnitValues(data);
-  if (extracted.length > 0) {
-    return extracted;
-  }
-
-  const refreshedValues = await fetchKpiUnitsConfiguration();
-  return refreshedValues.length > 0 ? refreshedValues : values;
+  throw lastError ?? new Error("Failed to save KPI units configuration");
 };
 
 // ─────────────────────────────────────────────
