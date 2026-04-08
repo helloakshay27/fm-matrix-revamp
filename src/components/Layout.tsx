@@ -208,10 +208,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null;
     }
 
-    if (selectedCompany?.id === 189) {
-      return <ZxSidebar />;
-    }
-
     // Check for token-based VI access first
     const urlParams = new URLSearchParams(window.location.search);
     const hasTokenParam = urlParams.has("access_token");
@@ -239,6 +235,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
+    }
+
+    if (selectedCompany?.id === 189) {
+      return <ZxSidebar />;
     }
 
     // Domain-based logic takes precedence for backward compatibility

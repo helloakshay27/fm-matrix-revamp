@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 // KPI.tsx  —  Root component
 // ─────────────────────────────────────────────
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import Axios from "axios";
 import { BookOpen, Plus, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +30,10 @@ import { getBaseUrl, getToken as getAuthToken } from "@/utils/auth";
 // API CONFIG
 // ─────────────────────────────────────────────
 const KPI_LIST_ENDPOINTS = ["/kpis", "/api/kpis"] as const;
+const KPI_ARCHIVED_ENDPOINT =
+  "https://fm-uat-api.lockated.com/kpis/archived.json";
+const KPI_ARCHIVED_BEARER_TOKEN =
+  "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
 
 type RawKpiData = {
   id?: string | number;
@@ -46,6 +50,16 @@ type RawKpiData = {
   department_id?: number;
   assignee_id?: number;
   description?: string;
+};
+
+type RawArchivedKpiData = RawKpiData & {
+  archived_at?: string;
+  archived_on?: string;
+  archived_date?: string;
+  reason?: string;
+  archived_reason?: string;
+  deletion_reason?: string;
+  owner_name?: string;
 };
 
 type KpiPayload = {
@@ -155,6 +169,12 @@ const apiHeaders = () => ({
   Accept: "application/json",
   "Content-Type": "application/json",
   Authorization: `Bearer ${getToken()}`,
+});
+
+const archivedApiHeaders = () => ({
+  Accept: "application/json",
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${KPI_ARCHIVED_BEARER_TOKEN}`,
 });
 
 const getKpiUnitsApiHeaders = () => ({
@@ -455,6 +475,30 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
   };
 };
 
+const formatArchivedDate = (value?: string): string => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+};
+
+const normalizeArchivedKpiFromAPI = (raw: RawArchivedKpiData): ArchivedKPIEntry => {
+  const normalized = normalizeKpiFromAPI(raw);
+  const archivedSourceDate = raw.archived_at ?? raw.archived_on ?? raw.archived_date;
+  const archivedDate = formatArchivedDate(archivedSourceDate);
+
+  return {
+    ...normalized,
+    owner: raw.owner_name ?? normalized.owner,
+    archivedDate,
+    reason:
+      raw.archived_reason ??
+      raw.deletion_reason ??
+      raw.reason ??
+      "Archived",
+  };
+};
+
 const calculateStatus = (current: number, target: number): KPICardData["status"] => {
   if (!target || target === 0) return "on-target";
   const percentage = (current / target) * 100;
@@ -492,6 +536,24 @@ const fetchKpis = async (): Promise<KPICardData[]> => {
   }
 
   throw lastError ?? new Error("Failed to load KPI data from API");
+};
+
+const fetchArchivedKpis = async (): Promise<ArchivedKPIEntry[]> => {
+  const { data: json } = await Axios.get(KPI_ARCHIVED_ENDPOINT, {
+    headers: archivedApiHeaders(),
+  });
+
+  const arr = Array.isArray(json)
+    ? json
+    : (json.data?.archived_kpis ??
+        json.archived_kpis ??
+        json.data?.kpis ??
+        json.kpis ??
+        json.data ??
+        []);
+
+  if (!Array.isArray(arr)) return [];
+  return arr.map((item) => normalizeArchivedKpiFromAPI(item as RawArchivedKpiData));
 };
 
 const fetchKpiById = async (id: string | number): Promise<KPICardData | null> => {
@@ -578,6 +640,18 @@ const KPI = () => {
   const [isSavingKpiUnits, setIsSavingKpiUnits] = useState(false);
   const [archivedKpis, setArchivedKpis] = useState<ArchivedKPIEntry[]>([]);
 
+  const loadArchivedKpis = useCallback(async () => {
+    try {
+      const data = await fetchArchivedKpis();
+      setArchivedKpis(data);
+    } catch (error) {
+      const msg = getApiErrorMessage(error);
+      console.error("Failed to load archived KPIs:", msg, error);
+      toast.error(`Failed to load archived KPIs: ${msg}`);
+      setArchivedKpis([]);
+    }
+  }, []);
+
   // Fetch KPIs on component mount
   useEffect(() => {
     const loadKpis = async () => {
@@ -597,6 +671,10 @@ const KPI = () => {
 
     loadKpis();
   }, []);
+
+  useEffect(() => {
+    loadArchivedKpis();
+  }, [loadArchivedKpis]);
 
   useEffect(() => {
     const loadUsers = async () => {
