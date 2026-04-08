@@ -116,6 +116,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     hostname.includes("pulse.panchshil.com") ||
     location.pathname.startsWith("/pulse");
   const isLocalhost =
+    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com") ||
     userEmail === "ubaid.hashmat@lockated.com" ||
@@ -147,35 +148,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       isViSite,
       isOmanSite,
     });
-
-    // Check for token-based VI access first
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasTokenParam = urlParams.has("access_token");
-    const storedToken = localStorage.getItem("token");
-    const hasToken = hasTokenParam || storedToken;
-
-    if (
-      selectedCompany?.id === 300 ||
-      selectedCompany?.id === 295 ||
-      selectedCompany?.id === 298 ||
-      selectedCompany?.id === 199 ||
-      selectedCompany?.id === 307 ||
-      org_id === "90" ||
-      org_id === "1" ||
-      org_id === "84" ||
-      org_id === "34" ||
-      org_id === "1" ||
-      userEmail === "ubaid.hashmat@lockated.com" ||
-      userEmail === "besis69240@azeriom.com" ||
-      userEmail === "megipow156@aixind.com" ||
-      userEmail === "jevosak839@cimario.com" ||
-      userEmail === "deveshjain928@gmail.com" ||
-      userEmail === "abdul.ghaffar@lockated.com" ||
-      userEmail === "abdul.g@gophygital.work"
-    ) {
-      console.log("✅ Rendering ActionSidebar (company-specific)");
-      return <ActionSidebar />;
-    }
 
     if (isViSite) {
       console.warn("✅ Rendering ViSidebar");
@@ -217,7 +189,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           org_id === "90" ||
           org_id === "1" ||
           org_id === "84" ||
-          org_id === "34" ||
           org_id === "1" ||
           userEmail === "ubaid.hashmat@lockated.com" ||
           userEmail === "besis69240@azeriom.com" ||
@@ -238,6 +209,34 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     if (selectedCompany?.id === 189) {
       return <ZxSidebar />;
+    }
+
+    // Check for token-based VI access first
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasTokenParam = urlParams.has("access_token");
+    const storedToken = localStorage.getItem("token");
+    const hasToken = hasTokenParam || storedToken;
+
+    if (
+      selectedCompany?.id === 300 ||
+      selectedCompany?.id === 295 ||
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 199 ||
+      selectedCompany?.id === 307 ||
+      org_id === "90" ||
+      org_id === "1" ||
+      org_id === "84" ||
+      org_id === "1" ||
+      userEmail === "ubaid.hashmat@lockated.com" ||
+      userEmail === "besis69240@azeriom.com" ||
+      userEmail === "megipow156@aixind.com" ||
+      userEmail === "jevosak839@cimario.com" ||
+      userEmail === "deveshjain928@gmail.com" ||
+      userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "abdul.g@gophygital.work"
+    ) {
+      console.log("✅ Rendering ActionSidebar (company-specific)");
+      return <ActionSidebar />;
     }
 
     // Domain-based logic takes precedence for backward compatibility
@@ -293,8 +292,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null;
     }
 
-    // org_id 34 always gets ActionHeader (never employee view)
-    if (isEmployeeUser && isLocalhost && org_id !== "34") {
+    if (isViSite) {
+      return <ViDynamicHeader />;
+    }
+    // Check if user is in Club Management route - render StaticDynamicHeader
+    if (isClubManagementRoute) {
+      return <ClubDynamicHeader />;
+    }
+
+    // Check if user is employee (pms_occupant) - Employee layout takes priority
+    // Employees don't need dynamic header, they use EmployeeHeader instead
+    if (isEmployeeUser && isLocalhost) {
       return null; // No dynamic header for employees
     }
 
@@ -309,7 +317,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "90" ||
       org_id === "1" ||
       org_id === "84" ||
-      org_id === "34" ||
       org_id === "1" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -321,17 +328,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     ) {
       return <ActionHeader />;
     }
-
-    if (isViSite) {
-      return <ViDynamicHeader />;
-    }
-    // Check if user is in Club Management route - render StaticDynamicHeader
-    if (isClubManagementRoute) {
-      return <ClubDynamicHeader />;
-    }
-
-    // Check if user is employee (pms_occupant) - Employee layout takes priority
-    // Employees don't need dynamic header, they use EmployeeHeader instead
 
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
@@ -447,7 +443,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       />
 
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
-      {isEmbedded ? null : isEmployeeUser && isLocalhost && org_id !== "34" ? (
+      {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
         selectedCompany?.id === 295 ||
         selectedCompany?.id === 298 ||
@@ -455,19 +451,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         org_id === "90" ||
         org_id === "1" ||
         org_id === "84" ||
+        org_id === "1" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
         userEmail === "megipow156@aixind.com" ||
         userEmail === "jevosak839@cimario.com" ? (
-          isNewEmpHubRoute ? (
-            <TopNavigation
-              activeNavMenu={activeNavMenu}
-              setActiveNavMenu={setActiveNavMenu}
-            />
-          ) : (
-            <EmployeeHeader />
-          )
+          <EmployeeHeader />
         ) : (
+          // isNewEmpHubRoute ? (
+          //   <TopNavigation
+          //     activeNavMenu={activeNavMenu}
+          //     setActiveNavMenu={setActiveNavMenu}
+          //   /> // 👈 your new header
+          // ) : (
+          // <EmployeeHeader />
+          // )
+          // <EmployeeHeaderStatic />
           <TopNavigation
             activeNavMenu={activeNavMenu}
             setActiveNavMenu={setActiveNavMenu}
@@ -488,7 +487,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
-              isEmployeeUser && isLocalhost && org_id !== "34"
+              isEmployeeUser && isLocalhost
               ? currentSection === "Project Task" ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -504,7 +503,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : isSidebarCollapsed
                   ? "ml-16"
                   : "ml-64"
-        } ${isEmbedded ? "" : isEmployeeUser && isLocalhost && org_id !== "34" ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+        } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
