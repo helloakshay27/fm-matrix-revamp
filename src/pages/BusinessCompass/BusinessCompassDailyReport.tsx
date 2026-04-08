@@ -151,6 +151,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const [mergedTasksIssues, setMergedTasksIssues] = useState<any[]>([]);
+  const [selectedTasksIssues, setSelectedTasksIssues] = useState<{ [key: string]: boolean }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
@@ -596,6 +597,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       if (report.is_absent !== undefined) setIsAbsent(report.is_absent);
       if (report.description) setAbsenceReason(report.description);
       if (report.self_rating !== undefined) setSelfRating([report.self_rating]);
+      setSelectedTasksIssues({});
     } else {
       // No report found for this date, clear the form
       setCurrentReportId(null);
@@ -604,6 +606,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setReportAttachments([]);
       setPlanningItems([]);
       setKpiEntries({});
+      setSelectedTasksIssues({});
       setIsAbsent(false);
       setAbsenceReason("");
       setSelfRating([2]);
@@ -717,6 +720,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               if (existingReport.description) setAbsenceReason(existingReport.description);
               if (existingReport.self_rating !== undefined)
                 setSelfRating([existingReport.self_rating]);
+              setSelectedTasksIssues({});
             }
           } else {
             setCurrentReportId(null);
@@ -725,6 +729,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             setReportAttachments([]);
             setPlanningItems([]);
             setKpiEntries({});
+            setSelectedTasksIssues({});
             setIsAbsent(false);
             setAbsenceReason("");
             setSelfRating([2]);
@@ -826,7 +831,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                 base64: f.base64,
               })),
             },
-            tasks_issues: [], // No state for this yet in the component
+            tasks_issues: mergedTasksIssues
+              .filter(item => selectedTasksIssues[item.id])
+              .map((item) => ({
+                name: item.title,
+                status: "completed",
+              })),
             tomorrow_plan: planningItems.map((p) => ({
               title: p.text,
             })),
@@ -1519,6 +1529,16 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     : "bg-blue-50/50 border-blue-200/50"
                             )}
                           >
+                            <Checkbox
+                              checked={selectedTasksIssues[item.id] || false}
+                              onCheckedChange={(checked) => {
+                                setSelectedTasksIssues(prev => ({
+                                  ...prev,
+                                  [item.id]: checked as boolean
+                                }));
+                              }}
+                              className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
+                            />
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
                                 {item.type}
@@ -2436,6 +2456,21 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     setKpiEntries({});
                                   }
 
+                                  // Populate selected tasks/issues
+                                  if (report.report_data?.tasks_issues && report.report_data.tasks_issues.length > 0) {
+                                    const selectedTasks: { [key: string]: boolean } = {};
+                                    report.report_data.tasks_issues.forEach((task: any) => {
+                                      // Find matching task/issue in mergedTasksIssues
+                                      const matchingItem = mergedTasksIssues.find(item => item.title === task.name);
+                                      if (matchingItem) {
+                                        selectedTasks[matchingItem.id] = true;
+                                      }
+                                    });
+                                    setSelectedTasksIssues(selectedTasks);
+                                  } else {
+                                    setSelectedTasksIssues({});
+                                  }
+
                                   // Set absence and rating
                                   if (report.is_absent !== undefined) setIsAbsent(report.is_absent);
                                   if (report.description) setAbsenceReason(report.description);
@@ -2522,6 +2557,24 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   </div>
                                 );
                               })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tasks & Issues Section */}
+                        {report.report_data?.tasks_issues && report.report_data.tasks_issues.length > 0 && (
+                          <div className="bg-[#fef2f2] border border-red-200 rounded-[8px] p-4 mb-6">
+                            <div className="flex items-center gap-2 mb-3">
+                              <CheckSquare size={14} className="text-red-600" />
+                              <span className="text-xs font-bold text-slate-700">Completed Tasks & Issues</span>
+                            </div>
+                            <div className="space-y-2">
+                              {report.report_data.tasks_issues.map((item: any, idx: number) => (
+                                <div key={idx} className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2">
+                                  <span className="text-red-600 font-bold mt-0.5">✓</span>
+                                  <span className="text-sm text-gray-700">{item.name}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
