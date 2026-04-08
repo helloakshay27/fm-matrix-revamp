@@ -306,6 +306,11 @@ export const API_CONFIG = {
     PURCHASE_ORDER_SUPPLIERS: "/pms/purchase_orders/get_suppliers.json",
     RATINGS: "/ratings",
     RATINGS_SHOW: "/ratings", // Base path, will append /:id.json
+    JOB_STATUS: "/jobs/status",
+    JOB_DESCRIPTIONS: "/job_descriptions",
+    JD_DETAIL: "/job_descriptions", // Will append /:id.json
+    KPIS: "/kpis.json",
+    USER_SETUP: "/jobs/setup", // Will append /:user_id
   },
 } as const;
 

@@ -1,15 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Search,
-  Eye,
-  ChevronDown,
-  ChevronUp,
-  SlidersHorizontal,
-  Circle,
-} from "lucide-react";
+import { Eye, ArrowLeft, X } from "lucide-react";
 import { EmployeeHeader } from "@/components/EmployeeHeader";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { Button } from "@/components/ui/button";
+import { Search, SlidersHorizontal } from "lucide-react";
 
 interface Product {
   id: string;
@@ -270,17 +266,117 @@ const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Dropdown States
-  const [isProductTypeOpen, setIsProductTypeOpen] = useState(false);
+  // Filter States
   const [selectedProductType, setSelectedProductType] = useState("");
-
-  const [isIndustryOpen, setIsIndustryOpen] = useState(false);
   const [selectedIndustry, setSelectedIndustry] = useState("");
-
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
 
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // Column configuration for EnhancedTable
+  const columns: ColumnConfig[] = [
+    {
+      key: "name",
+      label: "Product Name",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "industry",
+      label: "Industry",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "champion",
+      label: "Product Champion",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "purpose",
+      label: "Product Purpose",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "objective",
+      label: "Objective",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "whoTheyServe",
+      label: "Who they Serve",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "purposeTheyServe",
+      label: "Purpose they Serve",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "quickDemo",
+      label: "Quick Demo",
+      sortable: false,
+      draggable: true,
+      defaultVisible: true,
+    },
+  ];
+
+  // Custom cell renderer
+  const renderCell = (product: Product, columnKey: string) => {
+    switch (columnKey) {
+      case "industry":
+        return (
+          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-medium border border-blue-100">
+            {product.industry}
+          </span>
+        );
+      case "purpose":
+      case "objective":
+      case "whoTheyServe":
+      case "purposeTheyServe":
+        return (
+          <span className="text-[10px] text-gray-500 leading-relaxed">
+            {product[columnKey as keyof Product]}
+          </span>
+        );
+      case "quickDemo":
+        return (
+          <span className="text-xs font-semibold text-blue-600 underline cursor-pointer hover:text-blue-800 transition-colors">
+            Watch Video
+          </span>
+        );
+      default:
+        return (
+          <span className="text-xs text-gray-900">
+            {product[columnKey as keyof Product]}
+          </span>
+        );
+    }
+  };
+
+  // Actions renderer
+  const renderActions = (product: Product) => (
+    <div className="flex items-center justify-center gap-2">
+      <Eye
+        className="w-4 h-4 cursor-pointer hover:text-blue-600 transition-colors"
+        onClick={() =>
+          navigate("/product-details", {
+            state: { productId: product.id },
+          })
+        }
+      />
+    </div>
+  );
 
   const filteredProducts = productData.filter((product) => {
     const matchesSearch =
@@ -311,6 +407,133 @@ const Products: React.FC = () => {
     return matchesSearch && matchesType && matchesIndustry && matchesStatus;
   });
 
+  // Handle filter reset
+  const handleFilterReset = () => {
+    setSearchTerm("");
+    setSelectedIndustry("");
+    setSelectedProductType("");
+    setSelectedStatus("");
+  };
+
+  // Custom filter panel
+  const FilterModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Filter Products</h3>
+          <button
+            onClick={() => setShowFilters(false)}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product Type
+              </label>
+              <select
+                value={selectedProductType}
+                onChange={(e) => setSelectedProductType(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Product Type</option>
+                {[
+                  "All Types",
+                  "Wallet Management",
+                  "CRM",
+                  "Visitor Management",
+                  "Facility Management",
+                  "Loyalty",
+                  "Pre - Sales",
+                  "Post - Sales",
+                  "Vendor Portal",
+                  "Customer Portal",
+                ].map((option) => (
+                  <option key={option} value={option === "All Types" ? "" : option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Industry Type
+              </label>
+              <select
+                value={selectedIndustry}
+                onChange={(e) => setSelectedIndustry(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Industry Type</option>
+                {["All Industries", "Residential", "Commercial", "ERP", "Others"].map(
+                  (option) => (
+                    <option
+                      key={option}
+                      value={option === "All Industries" ? "" : option}
+                    >
+                      {option}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Project Status
+              </label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Project Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+          <Button
+            onClick={() => setShowFilters(false)}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              handleFilterReset();
+              setShowFilters(false);
+            }}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Reset Filters
+          </Button>
+          <Button
+            onClick={() => setShowFilters(false)}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Apply Filters
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const [showFilters, setShowFilters] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] p-6 lg:p-10 font-sans">
       <EmployeeHeader />
@@ -340,390 +563,30 @@ const Products: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Search Bar */}
-      <div className="flex justify-center mb-8">
-        <div className="relative w-full max-w-xl">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-            <Search className="h-6 w-6 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            className="block w-full pl-12 pr-5 py-4 border-none rounded-full bg-[#E0E0E0] text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 text-lg shadow-inner whitespace-nowrap overflow-hidden text-ellipsis"
-            placeholder="Search Product Name, industry"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      {/* Enhanced Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <EnhancedTable
+          data={filteredProducts}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          storageKey="products-table"
+          enableSearch={true}
+          searchPlaceholder="Search Product Name, industry"
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          enableExport={false}
+          onFilterClick={() => setShowFilters(true)}
+          hideTableSearch={false}
+          hideTableExport={true}
+          hideColumnsButton={false}
+          emptyMessage="No products found matching your active filters."
+          className="products-table"
+        />
       </div>
 
-      {/* Filters Row */}
-      <div className="flex flex-wrap lg:flex-nowrap gap-4 items-center mb-10">
-        {/* Filter 1 */}
-        <div className="relative flex-1 min-w-[160px]">
-          <label className="absolute -top-2 left-2 bg-[#FDFBF7] px-1 text-xs font-bold text-gray-600 z-10">
-            Product Type
-          </label>
-          <div
-            className="w-full border border-gray-300 rounded-sm px-3 py-3 text-xs text-gray-500 cursor-pointer bg-transparent relative flex items-center justify-between"
-            onClick={() => setIsProductTypeOpen(!isProductTypeOpen)}
-          >
-            <span
-              className={
-                selectedProductType ? "text-gray-900" : "text-gray-400"
-              }
-            >
-              {selectedProductType || "Select Product Type"}
-            </span>
-            <ChevronDown className="w-3 h-3 text-gray-400" />
-          </div>
-
-          {isProductTypeOpen && (
-            <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-sm shadow-lg z-50 max-h-60 overflow-y-auto">
-              {[
-                "All Types",
-                "Wallet Management",
-                "CRM",
-                "Visitor Management",
-                "Facility Management",
-                "Loyalty",
-                "Pre - Sales",
-                "Post - Sales",
-                "Vendor Portal",
-                "Customer Portal",
-              ].map((option) => (
-                <div
-                  key={option}
-                  className="px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
-                  onClick={() => {
-                    setSelectedProductType(
-                      option === "All Types" ? "" : option
-                    );
-                    setIsProductTypeOpen(false);
-                  }}
-                >
-                  {option}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Filter 2 */}
-        <div className="relative flex-1 min-w-[160px]">
-          <label className="absolute -top-2 left-2 bg-[#FDFBF7] px-1 text-xs font-bold text-gray-600 z-10">
-            Industry Type
-          </label>
-          <div
-            className="w-full border border-gray-300 rounded-sm px-3 py-3 text-xs text-gray-500 cursor-pointer bg-transparent relative flex items-center justify-between"
-            onClick={() => setIsIndustryOpen(!isIndustryOpen)}
-          >
-            <span
-              className={selectedIndustry ? "text-gray-900" : "text-gray-400"}
-            >
-              {selectedIndustry || "Select Industry Type"}
-            </span>
-            <ChevronDown className="w-3 h-3 text-gray-400" />
-          </div>
-
-          {isIndustryOpen && (
-            <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-sm shadow-lg z-50">
-              {[
-                "All Industries",
-                "Residential",
-                "Commercial",
-                "ERP",
-                "Others",
-              ].map((option) => (
-                <div
-                  key={option}
-                  className="px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
-                  onClick={() => {
-                    setSelectedIndustry(
-                      option === "All Industries" ? "" : option
-                    );
-                    setIsIndustryOpen(false);
-                  }}
-                >
-                  {option}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Filter 3 */}
-        <div className="relative flex-1 min-w-[160px]">
-          <label className="absolute -top-2 left-2 bg-[#FDFBF7] px-1 text-xs font-bold text-gray-600 z-10">
-            Project Status
-          </label>
-          <div
-            className="w-full border border-gray-300 rounded-sm px-3 py-3 text-xs text-gray-500 cursor-pointer bg-transparent relative flex items-center justify-between"
-            onClick={() => setIsStatusOpen(!isStatusOpen)}
-          >
-            <span
-              className={selectedStatus ? "text-gray-900" : "text-gray-400"}
-            >
-              {selectedStatus || "Select Project Status"}
-            </span>
-            <ChevronDown className="w-3 h-3 text-gray-400" />
-          </div>
-
-          {isStatusOpen && (
-            <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-sm shadow-lg z-50">
-              {[
-                { label: "All Status", color: "text-gray-400", fill: "" },
-                {
-                  label: "Active",
-                  color: "text-green-500",
-                  fill: "fill-green-500",
-                },
-                {
-                  label: "Inactive",
-                  color: "text-red-500",
-                  fill: "fill-red-500",
-                },
-              ].map((option) => (
-                <div
-                  key={option.label}
-                  className="px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 flex items-center gap-2"
-                  onClick={() => {
-                    setSelectedStatus(
-                      option.label === "All Status" ? "" : option.label
-                    );
-                    setIsStatusOpen(false);
-                  }}
-                >
-                  {option.fill && (
-                    <Circle
-                      className={`w-2.5 h-2.5 ${option.color} ${option.fill}`}
-                    />
-                  )}
-                  {option.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Filter 4 - Search with keywords */}
-        <div className="relative flex-1 min-w-[160px]">
-          <label className="absolute -top-2 left-2 bg-[#FDFBF7] px-1 text-xs font-bold text-gray-600 z-10">
-            Search with keywords
-          </label>
-          <input
-            type="text"
-            className="w-full border border-gray-300 rounded-sm px-3 py-3 text-xs text-gray-900 bg-transparent focus:outline-none placeholder-gray-400"
-            placeholder="Type keywords"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        {/* Filter Button */}
-        <div className="flex justify-end lg:justify-start">
-          <button
-            className="p-3 border border-red-300 rounded bg-white hover:bg-red-50 text-red-500 transition-colors"
-            onClick={() => {
-              setSearchTerm("");
-              setSelectedIndustry("");
-              setSelectedProductType("");
-              setSelectedStatus("");
-            }}
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <div className="bg-white rounded shadow-sm overflow-hidden overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-[#EBE5D9]">
-            <tr>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-16"
-              >
-                Action
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Product Name
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Industry
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Product Champion
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Product Purpose
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Objective
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Who they Serve
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Purpose they Serve
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider cursor-pointer group hover:bg-[#ded6c6] transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Quick Demo
-                  <div className="flex flex-col">
-                    <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-800 -mb-1" />
-                    <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-800" />
-                  </div>
-                </div>
-              </th>
-              <th scope="col" className="px-4 py-3 w-4"></th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredProducts.map((product, index) => (
-              <tr
-                key={product.id}
-                className={
-                  index % 2 === 0
-                    ? "bg-white"
-                    : "bg-[#F9F9F9] hover:bg-gray-50 transition-colors"
-                }
-              >
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <Eye
-                      className="w-4 h-4 cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() =>
-                        navigate("/product-details", {
-                          state: { productId: product.id },
-                        })
-                      }
-                    />
-                  </div>
-                </td>
-                <td className="px-4 py-4 text-xs font-bold text-gray-900 w-32">
-                  {product.name}
-                </td>
-                <td className="px-4 py-4 text-xs text-gray-600 w-32">
-                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-medium border border-blue-100">
-                    {product.industry}
-                  </span>
-                </td>
-                <td className="px-4 py-4 text-xs text-gray-500 w-32">
-                  {product.champion}
-                </td>
-                <td className="px-4 py-4 text-[10px] text-gray-500 leading-relaxed min-w-[200px]">
-                  {product.purpose}
-                </td>
-                <td className="px-4 py-4 text-[10px] text-gray-500 leading-relaxed min-w-[200px]">
-                  {product.objective}
-                </td>
-                <td className="px-4 py-4 text-[10px] text-gray-500 leading-relaxed min-w-[150px]">
-                  {product.whoTheyServe}
-                </td>
-                <td className="px-4 py-4 text-[10px] text-gray-500 leading-relaxed min-w-[200px]">
-                  {product.purposeTheyServe}
-                </td>
-                <td className="px-4 py-4 text-center min-w-[120px]">
-                  <span className="text-xs font-semibold text-blue-600 underline cursor-pointer hover:text-blue-800 transition-colors">
-                    Watch Video
-                  </span>
-                </td>
-                <td className="px-2 py-4"></td>
-              </tr>
-            ))}
-            {filteredProducts.length === 0 && (
-              <tr>
-                <td colSpan={10} className="px-4 py-20 text-center">
-                  <div className="flex flex-col items-center gap-4">
-                    <Search className="w-12 h-12 text-gray-200" />
-                    <p className="text-gray-400 font-medium">
-                      No products found matching your active filters.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setSearchTerm("");
-                        setSelectedIndustry("");
-                        setSelectedProductType("");
-                        setSelectedStatus("");
-                      }}
-                      className="text-blue-600 text-sm font-bold hover:underline"
-                    >
-                      Clear all filters
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Filter Modal */}
+      {showFilters && <FilterModal />}
     </div>
   );
 };
