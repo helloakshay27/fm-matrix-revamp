@@ -105,6 +105,12 @@ interface DailyReport {
     };
     tomorrow_plan?: { title: string }[];
     tasks_issues?: any[];
+    past_kpis?: {
+      kpi_id: number;
+      actual_value: number | string;
+      target_value: number | string;
+      notes: string;
+    }[];
   };
   url: string;
   attachments: AttachmentFile[];
@@ -291,6 +297,57 @@ const BusinessCompassDailyReport: React.FC = () => {
 
     return { completed, open, overdue, inProgress, total: mergedTasksIssues.length };
   }, [mergedTasksIssues]);
+
+  // KPI State
+  const [kpis, setKpis] = useState<any[]>([]);
+  const [kpiLoading, setKpiLoading] = useState(false);
+  const [kpiEntries, setKpiEntries] = useState<{ [key: number]: string }>({});
+
+  // Fetch KPIs based on selected date
+  useEffect(() => {
+    const fetchKpis = async () => {
+      try {
+        setKpiLoading(true);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        if (!baseUrl || !token) {
+          console.warn('Missing baseUrl or token');
+          return;
+        }
+
+        const response = await axios.get(
+          `https://${baseUrl}/kpis/due_entries.json?date=${startDate}&journal_type=daily`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.data && response.data.success && response.data.data) {
+          setKpis(response.data.data.kpis || []);
+          // Initialize entries from existing data
+          const entries: { [key: number]: string } = {};
+          response.data.data.kpis?.forEach((kpi: any) => {
+            if (kpi.entry && kpi.entry.actual_value) {
+              entries[kpi.kpi_id] = kpi.entry.actual_value;
+            }
+          });
+          setKpiEntries(entries);
+        }
+      } catch (error) {
+        console.error('Error fetching KPIs:', error);
+      } finally {
+        setKpiLoading(false);
+      }
+    };
+
+    if (startDate) {
+      fetchKpis();
+    }
+  }, [startDate]);
 
   // Helper function to determine if file is an image
   const isImageFile = (fileName: string, contentType: string) => {
@@ -524,6 +581,17 @@ const BusinessCompassDailyReport: React.FC = () => {
         setPlanningItems([]);
       }
 
+      // Populate KPI entries
+      if (report.report_data?.past_kpis) {
+        const entries: { [key: number]: string } = {};
+        report.report_data.past_kpis.forEach((kpiEntry: any) => {
+          entries[kpiEntry.kpi_id] = kpiEntry.actual_value.toString();
+        });
+        setKpiEntries(entries);
+      } else {
+        setKpiEntries({});
+      }
+
       // Set absence and rating
       if (report.is_absent !== undefined) setIsAbsent(report.is_absent);
       if (report.description) setAbsenceReason(report.description);
@@ -535,6 +603,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setUploadedFiles([]);
       setReportAttachments([]);
       setPlanningItems([]);
+      setKpiEntries({});
       setIsAbsent(false);
       setAbsenceReason("");
       setSelfRating([2]);
@@ -634,6 +703,16 @@ const BusinessCompassDailyReport: React.FC = () => {
                 );
               }
 
+              if (rData.past_kpis) {
+                const entries: { [key: number]: string } = {};
+                rData.past_kpis.forEach((kpiEntry: any) => {
+                  entries[kpiEntry.kpi_id] = kpiEntry.actual_value.toString();
+                });
+                setKpiEntries(entries);
+              } else {
+                setKpiEntries({});
+              }
+
               if (existingReport.is_absent !== undefined) setIsAbsent(existingReport.is_absent);
               if (existingReport.description) setAbsenceReason(existingReport.description);
               if (existingReport.self_rating !== undefined)
@@ -644,6 +723,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             setAccomplishments([]);
             setUploadedFiles([]);
             setReportAttachments([]);
+            setPlanningItems([]);
+            setKpiEntries({});
             setIsAbsent(false);
             setAbsenceReason("");
             setSelfRating([2]);
@@ -748,6 +829,12 @@ const BusinessCompassDailyReport: React.FC = () => {
             tasks_issues: [], // No state for this yet in the component
             tomorrow_plan: planningItems.map((p) => ({
               title: p.text,
+            })),
+            past_kpis: kpis.map((kpi) => ({
+              kpi_id: kpi.kpi_id,
+              actual_value: kpiEntries[kpi.kpi_id] ? parseFloat(kpiEntries[kpi.kpi_id]) : 0,
+              target_value: parseFloat(kpi.target_value),
+              notes: kpi.kpi_name,
             })),
           },
         },
@@ -1046,6 +1133,57 @@ const BusinessCompassDailyReport: React.FC = () => {
 
             {!isAbsent && (
               <div className="space-y-6 animate-in fade-in duration-500">
+                {/* Daily KPIs Card */}
+                {kpis.length > 0 && (
+                  <Card className="rounded-[16px] border-2 border-[#f59e0b] overflow-hidden bg-white shadow-sm">
+                    <div className="bg-[#fffbeb] p-5 flex items-center justify-between border-b border-[#f59e0b]/10">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-white p-1 rounded-full border border-[#f59e0b]/30">
+                          <TrendingUp size={18} className="text-[#f59e0b]" />
+                        </div>
+                        <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                          Daily KPIs
+                        </h3>
+                      </div>
+                    </div>
+                    <CardContent className="p-6 space-y-4">
+                      {kpis.map((kpi) => (
+                        <div key={kpi.kpi_id} className="flex items-center gap-4 p-4 rounded-lg bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
+                                {kpi.kpi_name}
+                              </h4>
+                              {!kpi.submitted && (
+                                <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
+                                  new
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <span className="font-medium">Target: {kpi.unit} {kpi.target_value}</span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-500">{kpi.frequency_label}</span>
+                            </div>
+                          </div>
+                          <div className="w-32">
+                            <input
+                              type="number"
+                              value={kpiEntries[kpi.kpi_id] || ''}
+                              onChange={(e) => setKpiEntries(prev => ({
+                                ...prev,
+                                [kpi.kpi_id]: e.target.value
+                              }))}
+                              placeholder="0"
+                              className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-right bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Today's Accomplishments Card */}
                 <Card className="rounded-[16px] border-2 border-[#10b981] overflow-hidden bg-white shadow-sm">
                   <div className="bg-[#ecfdf5] p-5 flex items-center justify-between border-b border-[#10b981]/10">
@@ -2287,6 +2425,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     setPlanningItems([]);
                                   }
 
+                                  // Populate KPI entries
+                                  if (report.report_data?.past_kpis) {
+                                    const entries: { [key: number]: string } = {};
+                                    report.report_data.past_kpis.forEach((kpiEntry: any) => {
+                                      entries[kpiEntry.kpi_id] = kpiEntry.actual_value.toString();
+                                    });
+                                    setKpiEntries(entries);
+                                  } else {
+                                    setKpiEntries({});
+                                  }
+
                                   // Set absence and rating
                                   if (report.is_absent !== undefined) setIsAbsent(report.is_absent);
                                   if (report.description) setAbsenceReason(report.description);
@@ -2341,6 +2490,41 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           </div>
                         </div>
+
+                        {/* KPIs Section */}
+                        {report.report_data?.past_kpis && report.report_data.past_kpis.length > 0 && (
+                          <div className="bg-[#fffbeb] border border-amber-200 rounded-[8px] p-4 mb-6">
+                            <div className="flex items-center gap-2 mb-3">
+                              <TrendingUp size={14} className="text-amber-500" />
+                              <span className="text-xs font-bold text-slate-700">Daily KPIs</span>
+                            </div>
+                            <div className="space-y-3">
+                              {report.report_data.past_kpis.map((kpi: any, idx: number) => {
+                                const achievement = parseFloat(kpi.target_value) > 0
+                                  ? (parseFloat(kpi.actual_value) / parseFloat(kpi.target_value)) * 100
+                                  : 0;
+                                const displayAchievement = Math.min(achievement, 100);
+                                return (
+                                  <div key={idx} className="bg-white border border-amber-100 rounded-[6px] p-3 shadow-sm">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-sm font-semibold text-gray-800">{kpi.notes}</span>
+                                      <Badge className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
+                                        {displayAchievement.toFixed(0)}%
+                                      </Badge>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                      <div
+                                        className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full transition-all"
+                                        style={{ width: `${displayAchievement}%` }}
+                                      />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">{kpi.actual_value} / {kpi.target_value}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Bottom sections */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
