@@ -28,10 +28,10 @@ const C = {
 };
 
 // ── API base ──
-const BASE_URL = 'https://fm-uat-api.lockated.com';
-
+const BASE_URL = localStorage.getItem('baseUrl') || '';
+ 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('auth_token') || '';
+  const token = localStorage.getItem('token') || '';
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: token } : {}),
@@ -79,7 +79,7 @@ const parseBrandPromisesRecord = (json: any): { promises: BrandPromise[]; videoU
 };
 
 const fetchBrandPromisesFromApi = async (): Promise<{ promises: BrandPromise[]; videoUrl: string }> => {
-  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_brand_promises&include_grouped=true`;
+  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_brand_promises&include_grouped=true`;
   const res = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -94,7 +94,7 @@ const saveBrandPromisesToApi = async (
   const promiseKpis: Record<string, string[]> = {};
   promises.forEach((p, idx) => { promiseKpis[`item_${idx + 1}`] = p.kpis; });
   const payload = { extra_field: { group_name: 'business_plan_brand_promises', values: promises.map(p => p.text), video_url: videoUrl, promise_kpis: promiseKpis } };
-  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
   let json: any;
@@ -107,7 +107,7 @@ const saveBrandPromisesToApi = async (
 };
 
 const deleteBrandPromiseFromApi = async (id: number) => {
-  const res = await fetch(`${BASE_URL}/extra_fields/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+  const res = await fetch(`https://${BASE_URL}/extra_fields/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
   if (!res.ok) { const t = await res.text(); throw new Error(`DELETE error ${res.status}: ${t || res.statusText}`); }
   return true;
 };
@@ -129,7 +129,7 @@ const parsePurposeRecord = (json: any): { purposeText: string; videoUrl: string;
 };
 
 const fetchPurposeFromApi = async (): Promise<{ purposeText: string; videoUrl: string; recordId: number | null }> => {
-  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_purpose&include_grouped=true`;
+  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_purpose&include_grouped=true`;
   const res = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -140,13 +140,13 @@ const fetchPurposeFromApi = async (): Promise<{ purposeText: string; videoUrl: s
 
 const savePurposeToApi = async (text: string, videoUrl: string): Promise<void> => {
   const payload = { extra_field: { group_name: 'business_plan_purpose', values: [text], video_url: videoUrl } };
-  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
 };
 
 const deletePurposeFromApi = async (id: number): Promise<void> => {
-  const res = await fetch(`${BASE_URL}/extra_fields/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+  const res = await fetch(`https://${BASE_URL}/extra_fields/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
   if (!res.ok) { const t = await res.text(); throw new Error(`DELETE error ${res.status}: ${t || res.statusText}`); }
 };
 
@@ -171,7 +171,7 @@ const parseCoreValuesRecord = (json: any): { values: CoreValueRecord[]; videoUrl
 };
 
 const fetchCoreValuesFromApi = async (): Promise<{ values: CoreValueRecord[]; videoUrl: string }> => {
-  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_core_values&include_grouped=true`;
+  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_core_values&include_grouped=true`;
   const res = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -182,13 +182,13 @@ const fetchCoreValuesFromApi = async (): Promise<{ values: CoreValueRecord[]; vi
 
 const saveCoreValuesToApi = async (values: string[], videoUrl: string): Promise<void> => {
   const payload = { extra_field: { group_name: 'business_plan_core_values', values, video_url: videoUrl } };
-  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
 };
 
 const deleteCoreValueFromApi = async (id: number): Promise<void> => {
-  const res = await fetch(`${BASE_URL}/extra_fields/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+  const res = await fetch(`https://${BASE_URL}/extra_fields/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
   if (!res.ok) { const t = await res.text(); throw new Error(`DELETE error ${res.status}: ${t || res.statusText}`); }
 };
 
@@ -670,22 +670,22 @@ const BusinessPlanAndGoles = () => {
 
       {/* ── Tab Bar — exact Dashboard style (bg-[#DA7756]) ── */}
       <div
-        className="flex rounded-2xl p-1 gap-1 overflow-x-auto"
-        style={{ background: C.primary }}
+  className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto" // Yahan w-fit add kiya hai
+  style={{ background: C.primary }}
+>
+  {tabs.map(tab => {
+    const isActive = activeMainTab === tab.key;
+    return (
+      <button
+        key={tab.key}
+        onClick={() => setActiveMainTab(tab.key)}
+        className={`py-2 px-4 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap ${isActive ? 'bp-tab-active' : 'bp-tab-inactive'}`}
       >
-        {tabs.map(tab => {
-          const isActive = activeMainTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveMainTab(tab.key)}
-              className={`flex-1 py-2 px-4 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap ${isActive ? 'bp-tab-active' : 'bp-tab-inactive'}`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+        {tab.label}
+      </button>
+    );
+  })}
+</div>
 
       {/* ══════════════════════════════════════
           STRATEGIC PLAN VIEW
@@ -706,17 +706,7 @@ const BusinessPlanAndGoles = () => {
               <span className="text-[12px] font-black tracking-[0.15em] text-[#070707] uppercase">
                 Our Business Plan
               </span>
-              <button
-                onClick={() => setShowAddContent(!showAddContent)}
-                className="px-4 py-1.5 text-[11px] font-black rounded-[6px] border transition-all shadow-sm active:scale-[0.97]"
-                style={{
-                  background:  showAddContent ? '#fff3e0' : '#fff3e0',
-                  borderColor: '#ffd180',
-                  color:       '#000',
-                }}
-              >
-                Add Content
-              </button>
+              
             </div>
             <div className="flex items-center gap-2">
               <BtnIcon title="Info">

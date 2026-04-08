@@ -76,7 +76,7 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
           <h3 className="text-[12px] font-bold text-[#DA7756] tracking-tight">
             Goals
           </h3>
-          <button className="text-[10px] text-[#E67E5F] font-bold tracking-tight">
+          <button className="text-[10px] text-[#DA7756] font-bold tracking-tight">
             View All
           </button>
         </div>
@@ -102,7 +102,7 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
           <h3 className="text-[12px] font-bold text-[#DA7756] tracking-tight">
             KRAs
           </h3>
-          <button className="text-[10px] text-[#E67E5F] font-bold tracking-tight">
+          <button className="text-[10px] text-[#DA7756] font-bold tracking-tight">
             View All
           </button>
         </div>

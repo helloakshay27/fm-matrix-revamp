@@ -266,11 +266,11 @@ const WeeklyReports = () => {
     const remarkVisual = activeRemarkChip
         ? REMARK_CHIP_META[activeRemarkChip]
         : remarksInteracted
-          ? {
+            ? {
                 border: 'border-[#DA7756]',
                 bg: 'bg-[#fef6f4]/90',
             }
-          : {
+            : {
                 border: 'border-[#DA7756]/25',
                 bg: 'bg-white',
             };
@@ -279,9 +279,6 @@ const WeeklyReports = () => {
         <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
             <AddTaskOrIssueDialog open={addTaskOpen} onOpenChange={setAddTaskOpen} />
             <div className="mx-auto max-w-7xl space-y-6 font-poppins text-[#1a1a1a]">
-                {/* Same layout as BusinessCompassDailyReport: full-width Admin panel first */}
-                <AdminViewEmulation />
-
                 {/* Page title */}
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">

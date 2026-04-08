@@ -12,10 +12,10 @@ const C = {
 };
 
 // ── Base URL + Auth ──
-const BASE_URL = 'https://fm-uat-api.lockated.com';
+ const BASE_URL = localStorage.getItem('baseUrl') || '';
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('auth_token') || '';
+  const token = localStorage.getItem('token') || '';
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: token } : {}),
@@ -141,7 +141,7 @@ const mapApiGoal = (k: any): Goal => ({
 
 // ── API helpers ──
 const fetchGoalsFromApi = async (): Promise<Goal[]> => {
-  const res = await fetch(`${BASE_URL}/goals`, { method: 'GET', headers: getAuthHeaders() });
+  const res = await fetch(`https://${BASE_URL}/goals`, { method: 'GET', headers: getAuthHeaders() });
   const raw = await res.text();
   console.log('[Goals] GET status:', res.status, raw.slice(0, 400));
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 200)}`);
@@ -175,7 +175,7 @@ const createGoalInApi = async (form: GoalFormState): Promise<Goal> => {
     },
   };
   console.log('[Goals] POST payload:', JSON.stringify(payload));
-  const res = await fetch(`${BASE_URL}/goals`, {
+  const res = await fetch(`https://${BASE_URL}/goals`, {
     method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   const raw = await res.text();
@@ -203,7 +203,7 @@ const updateGoalInApi = async (id: number, form: GoalFormState): Promise<void> =
     },
   };
   console.log('[Goals] PUT /goals/' + id, JSON.stringify(payload));
-  const res = await fetch(`${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
     method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   const raw = await res.text();
@@ -214,7 +214,7 @@ const updateGoalInApi = async (id: number, form: GoalFormState): Promise<void> =
 const patchGoalProgressInApi = async (id: number, current_value: number): Promise<void> => {
   const payload = { goal: { current_value } };
   console.log('[Goals] PATCH progress /goals/' + id, JSON.stringify(payload));
-  const res = await fetch(`${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
     method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -226,7 +226,7 @@ const patchGoalProgressInApi = async (id: number, current_value: number): Promis
 const patchGoalStatusInApi = async (id: number, status: string): Promise<void> => {
   const payload = { goal: { status: formatStatus(status) } };
   console.log('[Goals] PATCH status /goals/' + id, JSON.stringify(payload));
-  const res = await fetch(`${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
     method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -237,7 +237,7 @@ const patchGoalStatusInApi = async (id: number, status: string): Promise<void> =
 
 const deleteGoalFromApi = async (id: number): Promise<void> => {
   console.log('[Goals] DELETE /goals/' + id);
-  const res = await fetch(`${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
     method: 'DELETE', headers: getAuthHeaders(),
   });
   if (!res.ok) {

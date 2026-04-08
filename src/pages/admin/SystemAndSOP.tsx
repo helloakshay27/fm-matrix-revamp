@@ -56,9 +56,10 @@ import { Textarea } from "@/components/ui/textarea";
 // ─────────────────────────────────────────────
 // API CONFIG
 // ─────────────────────────────────────────────
-const BASE_URL = "https://fm-uat-api.lockated.com";
+const BASE_URL = () => localStorage.getItem("baseUrl") || "";
 
-const getToken = () => localStorage.getItem("auth_token") || "";
+
+const getToken = () => localStorage.getItem("token") || "";
 
 // Apna current logged in user id yahan se get karein
 const getUserId = () => localStorage.getItem("user_id") || "1";
@@ -114,7 +115,7 @@ const normalizeSopFromAPI = (raw: any): SopCardData => ({
 });
 
 const fetchAllSops = async (): Promise<SopCardData[]> => {
-  const res = await fetch(`${BASE_URL}/system_sops`, { headers: apiHeaders() });
+  const res = await fetch(`https://${BASE_URL()}/system_sops`, { headers: apiHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   const arr = Array.isArray(json)
@@ -127,7 +128,7 @@ const fetchMySops = async (): Promise<SopCardData[]> => {
   const userId = getUserId();
   // Changed to assignee_id_eq so it fetches SOPs assigned to the user
   const res = await fetch(
-    `${BASE_URL}/system_sops?q[assignee_id_eq]=${userId}`,
+    `https://${BASE_URL()}/system_sops?q[assignee_id_eq]=${userId}`,
     { headers: apiHeaders() }
   );
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -139,7 +140,7 @@ const fetchMySops = async (): Promise<SopCardData[]> => {
 };
 
 const createSop = async (payload: any) => {
-  const res = await fetch(`${BASE_URL}/system_sops`, {
+  const res = await fetch(`https://${BASE_URL()}/system_sops`, {
     method: "POST",
     headers: apiHeaders(),
     body: JSON.stringify({ system_sop: payload }),
@@ -153,7 +154,7 @@ const createSop = async (payload: any) => {
 };
 
 const updateSop = async (id: string, payload: any) => {
-  const res = await fetch(`${BASE_URL}/system_sops/${id}`, {
+  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}`, {
     method: "PUT",
     headers: apiHeaders(),
     body: JSON.stringify({ system_sop: payload }),
@@ -167,7 +168,7 @@ const updateSop = async (id: string, payload: any) => {
 };
 
 const patchSopStatus = async (id: string, status: string) => {
-  const res = await fetch(`${BASE_URL}/system_sops/${id}`, {
+  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}`, {
     method: "PATCH",
     headers: apiHeaders(),
     body: JSON.stringify({ system_sop: { status } }),
@@ -177,7 +178,7 @@ const patchSopStatus = async (id: string, status: string) => {
 };
 
 const deleteSop = async (id: string) => {
-  const res = await fetch(`${BASE_URL}/system_sops/${id}`, {
+  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}`, {
     method: "DELETE",
     headers: apiHeaders(),
   });

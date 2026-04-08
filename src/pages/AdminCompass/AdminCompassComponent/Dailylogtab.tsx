@@ -9,13 +9,13 @@ import {
   ChevronDown, MessageSquare, Layers, Circle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchDailyLogsFromAPI, BASE_URL, getAuthHeaders } from "./Shared";
+import { fetchDailyLogsFromAPI, getBaseUrl, getAuthHeaders } from "./Shared";
 
 // ─────────────────────────────────────────────
 // Departments API
 // ─────────────────────────────────────────────
 const fetchMeetingsAPI = async () => {
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs`, {
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -39,7 +39,7 @@ const fetchMeetingsAPI = async () => {
 };
 
 const fetchDepartmentsAPI = async () => {
-  const res = await fetch(`${BASE_URL}/pms/departments.json`, {
+  const res = await fetch(`${getBaseUrl()}/pms/departments.json`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -60,7 +60,7 @@ const fetchDepartmentsAPI = async () => {
 // API helpers
 // ─────────────────────────────────────────────
 const createTask = async (payload) => {
-  const res = await fetch(`${BASE_URL}/tasks`, {
+  const res = await fetch(`${getBaseUrl()}/tasks`, {
     method: "POST", headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -68,7 +68,7 @@ const createTask = async (payload) => {
 };
 
 const createStuckIssue = async (payload) => {
-  const res = await fetch(`${BASE_URL}/stuck_issues`, {
+  const res = await fetch(`${getBaseUrl()}/stuck_issues`, {
     method: "POST", headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -76,7 +76,7 @@ const createStuckIssue = async (payload) => {
 };
 
 const submitFeedback = async (payload) => {
-  const res = await fetch(`${BASE_URL}/feedbacks`, {
+  const res = await fetch(`${getBaseUrl()}/feedbacks`, {
     method: "POST", headers: getAuthHeaders(), body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -93,7 +93,6 @@ const fmt = (dateStr) => {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 };
 
-// Updated Score Colors to match calendar (Vibrant Green & Red)
 const scoreColor = (s) =>
   s >= 50 ? "bg-[#2ECC71] text-white" : "bg-[#EB4A4A] text-white";
 
@@ -119,7 +118,7 @@ const AddTaskModal = ({ reportUser, reportId, onClose }) => {
         due_date: dueDate, progress: Number(progress), user_journal_id: reportId,
       });
       onClose();
-    } catch (e) { setError(e.message); } 
+    } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
 
@@ -236,14 +235,14 @@ const InlineActionInput = ({ action, reportId, onClose }) => {
       apiCall: (t) => createTask({ title: t, type: "plan", user_journal_id: reportId }),
     },
   }[action];
-  
+
   if (!cfg) return null;
 
   const handleSubmit = async () => {
     if (!text.trim()) return;
     setLoading(true); setError(null);
-    try { await cfg.apiCall(text.trim()); onClose(true); } 
-    catch (e) { setError(e.message); } 
+    try { await cfg.apiCall(text.trim()); onClose(true); }
+    catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
 
@@ -289,7 +288,7 @@ const FeedbackPanel = ({ reportId, onClose }) => {
     try {
       await submitFeedback({ rating, feedback: text.trim(), user_journal_id: reportId });
       onClose(true);
-    } catch (e) { setError(e.message); } 
+    } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
 
@@ -343,7 +342,7 @@ const ReportDetailModal = ({ log, onClose }) => {
         <div className="fixed inset-0 z-[9990] flex items-start justify-end" style={{ fontFamily: "'Poppins', sans-serif" }}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
           <div className="relative z-10 bg-white h-full w-full max-w-[600px] shadow-2xl flex flex-col overflow-hidden border-l border-[#F0EBE8] rounded-l-[32px]">
-            
+
             <div className="px-8 pt-8 pb-5 border-b border-[#F0EBE8] shrink-0 flex items-start justify-between bg-[#FCFAFA]">
               <div>
                 <h3 className="text-xl font-black text-[#1A1A1A] flex items-center gap-3">
@@ -362,7 +361,7 @@ const ReportDetailModal = ({ log, onClose }) => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
-              
+
               <div className="bg-[#FCFAFA] rounded-[20px] border border-[#F05252]/30 p-5">
                 <h4 className="flex items-center gap-2 text-[11px] uppercase tracking-widest font-black text-[#F05252] mb-4">
                   <div className="w-2 h-2 rounded-full bg-[#F05252]" /> Tasks &amp; Issues
@@ -483,8 +482,8 @@ const DailyLogTab = () => {
   const [isFetchingDepts, setIsFetchingDepts] = useState(false);
   const loadDepartments = useCallback(async () => {
     setIsFetchingDepts(true);
-    try { setDepartments(await fetchDepartmentsAPI()); } 
-    catch (err) { console.error(err); } 
+    try { setDepartments(await fetchDepartmentsAPI()); }
+    catch (err) { console.error(err); }
     finally { setIsFetchingDepts(false); }
   }, []);
   useEffect(() => { loadDepartments(); }, [loadDepartments]);
@@ -493,12 +492,12 @@ const DailyLogTab = () => {
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
   const loadMeetings = useCallback(async () => {
     setIsFetchingMeetings(true);
-    try { 
-      const data = await fetchMeetingsAPI(); 
-      setMeetings(data); 
-      if (data.length > 0) setSelectedMeetingFilter(data[0].id); 
-    } 
-    catch (err) { console.error(err); } 
+    try {
+      const data = await fetchMeetingsAPI();
+      setMeetings(data);
+      if (data.length > 0) setSelectedMeetingFilter(data[0].id);
+    }
+    catch (err) { console.error(err); }
     finally { setIsFetchingMeetings(false); }
   }, []);
   useEffect(() => { loadMeetings(); }, [loadMeetings]);
@@ -610,8 +609,8 @@ const DailyLogTab = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12    min-h-screen pt-8" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      
+    <div className="space-y-6 pb-12 min-h-screen pt-8" style={{ fontFamily: "'Poppins', sans-serif" }}>
+
       {/* Header card */}
       <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
@@ -641,7 +640,7 @@ const DailyLogTab = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Date nav */}
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => shiftDate(-1)} className="w-[42px] h-[42px] flex items-center justify-center border border-[#F0EBE8] bg-white rounded-[14px] hover:bg-gray-50 text-gray-800 transition-colors">
@@ -659,7 +658,7 @@ const DailyLogTab = () => {
 
         {/* Filter bar */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          
+
           {/* Search */}
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580]" />

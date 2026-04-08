@@ -4,19 +4,23 @@
 // ─────────────────────────────────────────────
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import {
-  FileText, Plus, MessageSquare, X, ChevronDown,
-} from "lucide-react";
+import { FileText, Plus, MessageSquare, X, ChevronDown } from "lucide-react";
 
-// ── API Configuration ──
-export const BASE_URL = "https://fm-uat-api.lockated.com";
+export const getBaseUrl = () => {
+  let url = localStorage.getItem("baseUrl") ?? "";
+  url = url.trim().replace(/\/+$/, ""); // trailing slash hatao
+  if (url && !url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`;
+  }
+  return url;
+};
 
 export const bootstrapAuthToken = (token) => {
-  if (token) localStorage.setItem("auth_token", token);
+  if (token) localStorage.setItem("token", token);
 };
 
 export const getAuthHeaders = () => {
-  const token = localStorage.getItem("auth_token");
+  const token = localStorage.getItem("token");
   if (!token) throw new Error("No Auth Token — run bootstrapAuthToken() first");
   return {
     Accept: "application/json",
@@ -25,6 +29,7 @@ export const getAuthHeaders = () => {
   };
 };
 
+// ── Normalizers ──
 export const normalizeLog = (raw) => ({
   id: raw.id ?? Math.random(),
   date: raw.date ?? raw.report_date ?? raw.created_at ?? "",
@@ -45,7 +50,7 @@ export const fetchDailyLogsFromAPI = async ({ meetingId, dateStr, isGrouped, dep
   if (departmentId) queryParams.append("department_id", departmentId);
   if (search.trim()) queryParams.append("search", search.trim());
 
-  const url = `${BASE_URL}/user_journals/daily_log?${queryParams.toString()}`;
+  const url = `${getBaseUrl()}/user_journals/daily_log?${queryParams.toString()}`;
   const response = await fetch(url, { method: "GET", headers });
   if (response.status === 404) return isGrouped ? {} : [];
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -69,7 +74,7 @@ export const fetchDailyLogsFromAPI = async ({ meetingId, dateStr, isGrouped, dep
 export const fetchDailyHistoryFromAPI = async ({ meetingId = "1", weeks = 4 }) => {
   const headers = getAuthHeaders();
   const queryParams = new URLSearchParams({ meeting_id: meetingId, weeks: String(weeks) });
-  const url = `${BASE_URL}/user_journals/daily_history?${queryParams.toString()}`;
+  const url = `${getBaseUrl()}/user_journals/daily_history?${queryParams.toString()}`;
   const response = await fetch(url, { method: "GET", headers });
   if (response.status === 404) return [];
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -79,7 +84,7 @@ export const fetchDailyHistoryFromAPI = async ({ meetingId = "1", weeks = 4 }) =
   return arr.map((entry) => ({
     id: entry.id ?? Math.random(),
     date: entry.date ?? entry.report_date ?? entry.meeting_date ?? "",
-    meetingName: entry.meeting_name ?? entry.meeting ?? entry.title ?? "HOD Huddle",
+    meetingName: entry.meeting_name ?? entry.meeting ?? entry.title ?? "",
     status: entry.status ?? entry.meeting_status ?? "completed",
     submittedAt: entry.submitted_at ?? entry.submittedAt ?? entry.created_at ?? "",
     attendees: entry.attendees_count ?? entry.attendees ?? entry.total_members ?? 0,
@@ -93,7 +98,7 @@ export const fetchDailyHistoryFromAPI = async ({ meetingId = "1", weeks = 4 }) =
 
 export const fetchMeetingReport = async ({ meetingId = "1", period = "last_7_days" }) => {
   const headers = getAuthHeaders();
-  const url = `${BASE_URL}/user_journals/daily_meeting_report?meeting_id=${meetingId}&period=${period}`;
+  const url = `${getBaseUrl()}/user_journals/daily_meeting_report?meeting_id=${meetingId}&period=${period}`;
   const res = await fetch(url, { method: "GET", headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -103,7 +108,7 @@ export const fetchMeetingReport = async ({ meetingId = "1", period = "last_7_day
 
 export const fetchAnalytics = async (period = "last_7_days") => {
   const headers = getAuthHeaders();
-  const url = `${BASE_URL}/user_journals/analytics?period=${period}`;
+  const url = `${getBaseUrl()}/user_journals/analytics?period=${period}`;
   const res = await fetch(url, { method: "GET", headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -113,7 +118,7 @@ export const fetchAnalytics = async (period = "last_7_days") => {
 
 export const fetchMeetingConfigs = async () => {
   const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs`, { method: "GET", headers });
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs`, { method: "GET", headers });
   if (res.status === 404) return [];
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
@@ -136,28 +141,28 @@ export const fetchMeetingConfigs = async () => {
 
 export const createMeetingConfig = async (payload) => {
   const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs`, { method: "POST", headers, body: JSON.stringify(payload) });
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs`, { method: "POST", headers, body: JSON.stringify(payload) });
   if (!res.ok) { const errBody = await res.text(); throw new Error(`HTTP ${res.status}: ${errBody}`); }
   return await res.json();
 };
 
 export const updateMeetingConfig = async (id, payload) => {
   const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs/${id}`, { method: "PUT", headers, body: JSON.stringify(payload) });
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs/${id}`, { method: "PUT", headers, body: JSON.stringify(payload) });
   if (!res.ok) { const errBody = await res.text(); throw new Error(`HTTP ${res.status}: ${errBody}`); }
   return await res.json();
 };
 
 export const deleteMeetingConfig = async (id) => {
   const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs/${id}`, { method: "DELETE", headers });
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs/${id}`, { method: "DELETE", headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return true;
 };
 
 export const fetchConfigMembers = async (configId) => {
   const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs/${configId}/members`, { method: "GET", headers });
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs/${configId}/members`, { method: "GET", headers });
   if (res.status === 404) return [];
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
@@ -167,7 +172,7 @@ export const fetchConfigMembers = async (configId) => {
 export const addMembersToConfig = async (configId, memberIds) => {
   if (!memberIds || memberIds.length === 0) return;
   const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs/${configId}/add_members`, {
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs/${configId}/add_members`, {
     method: "POST", headers, body: JSON.stringify({ member_ids: memberIds }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -176,12 +181,116 @@ export const addMembersToConfig = async (configId, memberIds) => {
 
 export const removeMemberFromConfig = async (configId, userId) => {
   const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs/${configId}/remove_member?user_id=${userId}`, { method: "DELETE", headers });
+  const res = await fetch(`${getBaseUrl()}/daily_meeting_configs/${configId}/remove_member?user_id=${userId}`, { method: "DELETE", headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.json();
 };
 
-// ── Constants ──
+// ── Dynamic Data Fetchers (previously static arrays) ──
+
+/** Replaces static `datesData` — fetches meeting calendar dates */
+export const fetchMeetingDates = async ({ meetingId = "1", weeks = 2 } = {}) => {
+  const headers = getAuthHeaders();
+  const url = `${getBaseUrl()}/user_journals/meeting_dates?meeting_id=${meetingId}&weeks=${weeks}`;
+  const res = await fetch(url, { method: "GET", headers });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const arr = Array.isArray(json) ? json : (json.data ?? []);
+  return arr.map((d, i) => ({
+    id: d.id ?? i + 1,
+    dateNum: d.date_num ?? d.day_number ?? new Date(d.date).getDate().toString().padStart(2, "0"),
+    day: d.day ?? d.day_name ?? new Date(d.date).toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(),
+    monthYear: d.month_year ?? new Date(d.date).toLocaleDateString("en-US", { month: "short", year: "numeric" }).replace(" ", ", "),
+    status: d.status ?? "upcoming",
+    label: d.label ?? d.status_label ?? "",
+    fullDate: d.date ?? d.full_date ?? "",
+    _raw: d,
+  }));
+};
+
+/** Replaces static `failedMembers` — fetches members who missed a meeting on a date */
+export const fetchMissedMembers = async ({ meetingId = "1", dateStr }) => {
+  const headers = getAuthHeaders();
+  const url = `${getBaseUrl()}/user_journals/missed_members?meeting_id=${meetingId}&date=${dateStr}`;
+  const res = await fetch(url, { method: "GET", headers });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const arr = Array.isArray(json) ? json : (json.data ?? []);
+  return arr.map((m) => m.name ?? m.full_name ?? m.employee_name ?? m.username ?? "Unknown");
+};
+
+/** Replaces static `departmentOptions` — fetches departments from API */
+export const fetchDepartments = async () => {
+  const headers = getAuthHeaders();
+  const res = await fetch(`${getBaseUrl()}/departments`, { method: "GET", headers });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const arr = Array.isArray(json) ? json : (json.data ?? json.departments ?? []);
+  return arr.map((d) => ({
+    id: String(d.id),
+    label: d.name ?? d.department_name ?? d.label ?? "Unnamed",
+    _raw: d,
+  }));
+};
+
+/** Replaces static `ALL_USERS` — fetches all users/employees from API */
+export const fetchAllUsers = async ({ search = "", departmentId = "" } = {}) => {
+  const headers = getAuthHeaders();
+  const queryParams = new URLSearchParams();
+  if (search.trim()) queryParams.append("search", search.trim());
+  if (departmentId) queryParams.append("department_id", departmentId);
+  const url = `${getBaseUrl()}/users?${queryParams.toString()}`;
+  const res = await fetch(url, { method: "GET", headers });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const arr = Array.isArray(json) ? json : (json.data ?? json.users ?? []);
+  return arr.map((u) => ({
+    id: u.id,
+    name: u.name ?? u.full_name ?? u.employee_name ?? u.username ?? "Unknown",
+    email: u.email ?? u.user_email ?? u.employee_email ?? "N/A",
+    department: u.department ?? u.department_name ?? "",
+    _raw: u,
+  }));
+};
+
+/** Replaces static `meetingOptions` — derived from fetchMeetingConfigs */
+export const fetchMeetingOptions = async () => {
+  const configs = await fetchMeetingConfigs();
+  return configs.map((c) => ({ id: String(c.id), label: c.name }));
+};
+
+/** Replaces static `detailedReports` — fetches a single user's detailed daily report */
+export const fetchDetailedReport = async ({ meetingId = "1", dateStr, userId }) => {
+  const headers = getAuthHeaders();
+  const queryParams = new URLSearchParams({ meeting_id: meetingId, date: dateStr });
+  if (userId) queryParams.append("user_id", userId);
+  const url = `${getBaseUrl()}/user_journals/detailed_report?${queryParams.toString()}`;
+  const res = await fetch(url, { method: "GET", headers });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const raw = json.data ?? json;
+  if (!raw) return null;
+  return {
+    id: raw.id ?? Math.random(),
+    user: raw.user ?? raw.name ?? raw.full_name ?? "Unknown",
+    email: raw.email ?? raw.user_email ?? "N/A",
+    dept: raw.dept ?? raw.department ?? raw.department_name ?? "General",
+    timestamp: raw.timestamp ?? raw.submitted_at ?? raw.created_at ?? "",
+    score: raw.score ?? raw.total_score ?? 0,
+    kpiStats: Array.isArray(raw.kpi_stats) ? raw.kpi_stats : [],
+    tasksAndIssues: Array.isArray(raw.tasks_and_issues) ? raw.tasks_and_issues : (Array.isArray(raw.tasks) ? raw.tasks : []),
+    accomplishments: Array.isArray(raw.accomplishments) ? raw.accomplishments : [],
+    plans: Array.isArray(raw.plans) ? raw.plans : (Array.isArray(raw.tomorrow_plans) ? raw.tomorrow_plans : []),
+    _raw: raw,
+  };
+};
+
+// ── UI-only Constants (not data — safe to keep) ──
 export const C = {
   primary: "#DA7756",
   primaryHov: "#c9674a",
@@ -191,7 +300,6 @@ export const C = {
   pageBg: "#f6f4ee",
 };
 
-/** Tailwind fragments — KPI module surfaces & controls (Admin Compass) */
 export const kpiClass = {
   border: "border border-[rgba(218,119,86,0.22)]",
   borderSoft: "border border-[rgba(218,119,86,0.18)]",
@@ -201,85 +309,31 @@ export const kpiClass = {
   surfacePanel: "bg-[#fef6f4]",
   focusRing: "focus:border-[#DA7756] focus:outline-none focus:ring-2 focus:ring-[#DA7756]/25",
   focusRingSm: "focus:border-[#DA7756] focus:outline-none focus:ring-1 focus:ring-[#DA7756]/25",
-  checkbox:
-    "rounded border-[rgba(218,119,86,0.42)] text-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/30 focus:ring-offset-0",
-  btnSecondary:
-    "rounded-lg border border-[rgba(218,119,86,0.3)] bg-[#fef6f4] font-semibold text-[#1a1a1a] transition-colors hover:bg-[#f3ebe8]",
-  btnIcon:
-    "rounded-lg border border-[rgba(218,119,86,0.3)] bg-[#fef6f4] text-[#DA7756] transition-colors hover:bg-[#f3ebe8]",
-  btnDanger:
-    "rounded-lg border border-red-200/80 bg-[#fff5f3] text-red-600 transition-colors hover:bg-red-100/60",
+  checkbox: "rounded border-[rgba(218,119,86,0.42)] text-[#DA7756] focus:ring-2 focus:ring-[#DA7756]/30 focus:ring-offset-0",
+  btnSecondary: "rounded-lg border border-[rgba(218,119,86,0.3)] bg-[#fef6f4] font-semibold text-[#1a1a1a] transition-colors hover:bg-[#f3ebe8]",
+  btnIcon: "rounded-lg border border-[rgba(218,119,86,0.3)] bg-[#fef6f4] text-[#DA7756] transition-colors hover:bg-[#f3ebe8]",
+  btnDanger: "rounded-lg border border-red-200/80 bg-[#fff5f3] text-red-600 transition-colors hover:bg-red-100/60",
 };
 
-export const datesData = [
-  { id: 1, dateNum: "24", day: "TUE", monthYear: "Mar, 2026", status: "missed", label: "Miss" },
-  { id: 2, dateNum: "25", day: "WED", monthYear: "Mar, 2026", status: "missed", label: "Miss" },
-  { id: 3, dateNum: "26", day: "THU", monthYear: "Mar, 2026", status: "done", label: "Done" },
-  { id: 4, dateNum: "27", day: "FRI", monthYear: "Mar, 2026", status: "done", label: "Done" },
-  { id: 5, dateNum: "28", day: "SAT", monthYear: "Mar, 2026", status: "holiday", label: "Holiday" },
-  { id: 6, dateNum: "29", day: "SUN", monthYear: "Mar, 2026", status: "holiday", label: "Holiday" },
-  { id: 7, dateNum: "30", day: "MON", monthYear: "Mar, 2026", status: "missed", label: "Miss" },
-  { id: 8, dateNum: "31", day: "TUE", monthYear: "Mar, 2026", status: "missed", label: "Miss" },
-  { id: 9, dateNum: "01", day: "WED", monthYear: "Apr, 2026", status: "upcoming", label: "" },
-  { id: 10, dateNum: "02", day: "THU", monthYear: "Apr, 2026", status: "upcoming", label: "" },
-  { id: 11, dateNum: "03", day: "FRI", monthYear: "Apr, 2026", status: "upcoming", label: "" },
-];
-
-export const failedMembers = ["Adhip Shetty", "Fatema Tashrifwala", "Akshay Shinde", "Arun Mohan"];
-
-export const detailedReports = [
-  {
-    id: 1, user: "Bilal Shaikh", email: "bilal.shaikh@lockated.com",
-    dept: "Engineering", timestamp: "Apr 1, 9:41 AM", score: 39,
-    kpiStats: [{ label: "KPI", val: "0/20" }, { label: "Tasks", val: "15/25" }],
-    tasksAndIssues: [{ id: 101, text: "Fix Banner", type: "task", done: false }],
-    accomplishments: [{ id: 201, text: "IOS Release", done: true }],
-    plans: [{ id: 301, text: "Work on Admin Module" }],
-  },
-];
-
-export const fullMonthNames = { Jan: "January", Feb: "February", Mar: "March", Apr: "April", May: "May" };
+export const fullMonthNames = {
+  Jan: "January", Feb: "February", Mar: "March", Apr: "April", May: "May",
+  Jun: "June", Jul: "July", Aug: "August", Sep: "September", Oct: "October",
+  Nov: "November", Dec: "December",
+};
 
 export const statusColors = {
-  missed: { bg: "#fee2e2", border: "#fca5a5", text: "#ef4444" },
-  done: { bg: "#dcfce7", border: "#bbf7d0", text: "#22c55e" },
-  holiday: { bg: "#ffedd5", border: "#fed7aa", text: "#f97316" },
+  missed:   { bg: "#fee2e2", border: "#fca5a5", text: "#ef4444" },
+  done:     { bg: "#dcfce7", border: "#bbf7d0", text: "#22c55e" },
+  holiday:  { bg: "#ffedd5", border: "#fed7aa", text: "#f97316" },
   upcoming: { bg: "#f3f4f6", border: "#e5e7eb", text: "#9ca3af" },
 };
 
-export const departmentOptions = [
-  { id: "1", label: "Accounts" }, { id: "2", label: "Business Excellence" },
-  { id: "3", label: "Client Servicing" }, { id: "4", label: "Design" },
-  { id: "5", label: "Engineering" }, { id: "6", label: "HR" },
-  { id: "7", label: "Product" }, { id: "8", label: "QA" }, { id: "9", label: "Sales" },
-];
-
-export const meetingOptions = [
-  { id: "1", label: "HOD Huddle" },
-  { id: "2", label: "General Standup" },
-];
-
 export const periodOptions = [
-  { value: "last_7_days", label: "Last 7 Days" },
+  { value: "last_7_days",  label: "Last 7 Days" },
   { value: "last_30_days", label: "Last 30 Days" },
   { value: "last_90_days", label: "Last 3 Months" },
-  { value: "this_month", label: "This Month" },
-  { value: "last_month", label: "Last Month" },
-];
-
-export const ALL_USERS = [
-  { id: 1, name: "Adhip Shetty", email: "adhip.shetty@lockated.com" },
-  { id: 2, name: "Akshay Shinde", email: "akshay.shinde@lockated.com" },
-  { id: 3, name: "Akshit Baid", email: "akshit.baid@lockated.com" },
-  { id: 4, name: "Arun Mohan", email: "arun.mohan@lockated.com" },
-  { id: 5, name: "Jyoti", email: "hr@lockated.com" },
-  { id: 6, name: "Kshitij Rasal", email: "kshitij.rasal@lockated.com" },
-  { id: 7, name: "Mahendra Lungare", email: "mahendra.lungare@lockated.com" },
-  { id: 8, name: "Manav Gandhi", email: "oebusinessteams1@lockated.com" },
-  { id: 9, name: "Punit Jain", email: "punit.jain@lockated.com" },
-  { id: 10, name: "Ravi Sampat", email: "ravi.sampat@lockated.com" },
-  { id: 11, name: "Sadanand Gupta", email: "sadanand.gupta@lockated.com" },
-  { id: 12, name: "Yash Rathod", email: "yash.rathod@lockated.com" },
+  { value: "this_month",   label: "This Month" },
+  { value: "last_month",   label: "Last Month" },
 ];
 
 // ── Shared UI Components ──
@@ -289,7 +343,7 @@ export const SectionCard = ({ children, className = "" }) => (
   </Card>
 );
 
-export const BtnPrimary = ({ children, onClick, className = "", type = "button" as "button" | "submit" | "reset", icon: Icon }) => (
+export const BtnPrimary = ({ children, onClick, className = "", type = "button", icon: Icon }) => (
   <button type={type} onClick={onClick} className={cn("inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#DA7756] text-white shadow-sm hover:bg-[#c9674a] active:scale-[0.97] transition-all duration-150", className)}>
     {Icon && <Icon className="w-4 h-4" />} {children}
   </button>

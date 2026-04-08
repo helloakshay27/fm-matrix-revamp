@@ -37,11 +37,11 @@ import { userService, ProfileAccountResponse, ProfileUpdateResponse } from "@/se
 import { toast } from "sonner";
 import "./BusinessCompass.css";
 
-const AdvancedDatePicker = ({ 
-  value, 
-  onChange, 
-  placeholder = "Select date", 
-  className 
+const AdvancedDatePicker = ({
+  value,
+  onChange,
+  placeholder = "Select date",
+  className
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -52,7 +52,7 @@ const AdvancedDatePicker = ({
     if (!dateString) return null;
     const parsedDate = parse(dateString, "dd/MM/yyyy", new Date());
     if (isValid(parsedDate)) return parsedDate;
-    
+
     const fallbackDate = new Date(dateString);
     return isValid(fallbackDate) ? fallbackDate : null;
   };
@@ -361,7 +361,7 @@ const BusinessCompassProfile = () => {
       try {
         setIsProfileLoading(true);
         const profileData = await userService.getAccountDetails();
-        
+
         const mappedData = mapAccountProfileToForm(formData, profileData);
         setFormData(mappedData);
         persistProfileDataLocally(mappedData);
@@ -497,8 +497,6 @@ const BusinessCompassProfile = () => {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins bg-[#F6F4EE]/30 min-h-screen">
-      <AdminViewEmulation />
-      
       {/* Header Section */}
       <div className="flex items-center gap-4 mb-8">
         <div className="bg-[#DA7756] p-2.5 rounded-[12px] text-white shadow-sm">
@@ -536,7 +534,7 @@ const BusinessCompassProfile = () => {
           ) : (
             <Button
               onClick={() => setIsEditing(true)}
-                disabled={isProfileLoading}
+              disabled={isProfileLoading}
               className="bg-[#334155] hover:bg-[#1e293b] text-white font-bold h-8 px-4 rounded-md text-[10px] tracking-wider shadow-sm uppercase"
             >
               <Edit2 size={13} className="mr-1.5" strokeWidth={3} />

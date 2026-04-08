@@ -1,12 +1,11 @@
 import { AdminViewEmulation } from '@/components/AdminViewEmulation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TrendingUp } from 'lucide-react'
-import TeamPerformance from './TeamPerformance'
+import { TeamPerformance } from './TeamPerformance'
 
 const TeamDashboard = () => {
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee] rounded-2xl border border-[rgba(218,119,86,0.18)]">
-            <AdminViewEmulation />
             {/* Header Section */}
             <div className="flex justify-between items-start">
                 <div>

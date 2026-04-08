@@ -17,18 +17,20 @@ import EditKPIDialog, {
   type EditKPIFormValues,
 } from "./AdminCompassComponent/EditKPIDialog";
 import {
-  BASE_URL as ADMIN_COMPASS_BASE_URL,
+  getBaseUrl as ADMIN_COMPASS_BASE_URL,
   C,
   getAuthHeaders as getAdminCompassAuthHeaders,
   kpiClass,
 } from "./AdminCompassComponent/Shared";
-import { type KPICardData } from "./AdminCompassComponent/kpiTypes";
+import {
+  type ArchivedKPIEntry,
+  type KPICardData,
+} from "./AdminCompassComponent/kpiTypes";
 import { getBaseUrl, getToken as getAuthToken } from "@/utils/auth";
 
 // ─────────────────────────────────────────────
 // API CONFIG
 // ─────────────────────────────────────────────
-const DEFAULT_BASE_URL = "https://fm-uat-api.lockated.com";
 const KPI_LIST_ENDPOINTS = ["/kpis", "/api/kpis"] as const;
 
 type RawKpiData = {
@@ -69,6 +71,8 @@ type KpiUpdatePayload = {
 type CompanyUser = {
   id: number;
   name: string;
+  email?: string;
+  departmentId?: number;
 };
 
 type CompanyDepartment = {
@@ -82,6 +86,11 @@ type RawCompanyUser = {
   full_name?: string;
   firstname?: string;
   lastname?: string;
+  email?: string;
+  official_email?: string;
+  work_email?: string;
+  department_id?: number | string;
+  dept_id?: number | string;
 };
 
 type RawDepartment = {
@@ -204,6 +213,13 @@ const fetchCompanyUsers = async (): Promise<CompanyUser[]> => {
         u.full_name ??
         [u.firstname, u.lastname].filter(Boolean).join(" ") ??
         `User ${u.id}`,
+      email: u.email ?? u.official_email ?? u.work_email,
+      departmentId:
+        u.department_id != null
+          ? Number(u.department_id)
+          : u.dept_id != null
+            ? Number(u.dept_id)
+            : undefined,
     }))
     .filter((u: CompanyUser) => Number.isFinite(u.id) && !!u.name);
 };
@@ -543,6 +559,7 @@ const KPI = () => {
   const [kpiUnits, setKpiUnits] = useState<string[]>(DEFAULT_KPI_UNITS);
   const [editingKpi, setEditingKpi] = useState<KPICardData | null>(null);
   const [isSavingKpiUnits, setIsSavingKpiUnits] = useState(false);
+  const [archivedKpis, setArchivedKpis] = useState<ArchivedKPIEntry[]>([]);
 
   // Fetch KPIs on component mount
   useEffect(() => {
@@ -608,15 +625,24 @@ const KPI = () => {
   }, []);
 
   const handleSaveKpiUnits = async (units: string[]) => {
+    const previousCount = kpiUnits.length;
+    const nextCount = units.length;
+
     setIsSavingKpiUnits(true);
     try {
       const savedUnits = await upsertKpiUnitsConfiguration(units);
       setKpiUnits(savedUnits);
-      toast.success("KPI unit created successfully");
+      if (nextCount < previousCount) {
+        toast.success("Deleted");
+      } else if (nextCount > previousCount) {
+        toast.success("Added");
+      } else {
+        toast.success("Saved");
+      }
     } catch (error) {
       const msg = getApiErrorMessage(error);
       console.error("Update KPI units configuration error:", msg, error);
-      toast.error(`Failed to update KPI units configuration: ${msg}`);
+      toast.error("Failed to save");
       throw error;
     } finally {
       setIsSavingKpiUnits(false);
@@ -705,6 +731,41 @@ const KPI = () => {
     }
   };
 
+  const handleArchiveSelected = (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const idSet = new Set(ids);
+    const selected = kpis.filter((k) => idSet.has(k.id));
+    if (selected.length === 0) return;
+
+    const archivedAt = new Date().toLocaleDateString();
+    const archivedEntries: ArchivedKPIEntry[] = selected.map((kpi) => ({
+      ...kpi,
+      archivedDate: archivedAt,
+      reason: "Archived manually",
+    }));
+
+    setArchivedKpis((prev) => [...archivedEntries, ...prev]);
+    setKpis((prev) => prev.filter((k) => !idSet.has(k.id)));
+    setActiveTab("Archived KPIs");
+    toast.success(`${selected.length} KPI(s) archived`);
+  };
+
+  const handleRestoreArchivedKpi = (id: string) => {
+    const target = archivedKpis.find((kpi) => kpi.id === id);
+    if (!target) return;
+
+    const { archivedDate: _archivedDate, reason: _reason, ...restoredKpi } = target;
+    setKpis((prev) => [restoredKpi, ...prev]);
+    setArchivedKpis((prev) => prev.filter((kpi) => kpi.id !== id));
+    toast.success("KPI restored to management");
+  };
+
+  const handleDeleteArchivedKpi = (id: string) => {
+    setArchivedKpis((prev) => prev.filter((kpi) => kpi.id !== id));
+    toast.success("Archived KPI removed");
+  };
+
   const { totalKPIs, onTargetCount, atRiskCount } = useMemo(() => {
     const onTargetCount = kpis.filter((k) => k.status === "on-target").length;
     const atRiskCount = kpis.filter((k) => k.status === "at-risk").length;
@@ -712,10 +773,7 @@ const KPI = () => {
   }, [kpis]);
 
   return (
-    <div
-      className="mx-auto rounded-[28px] border border-[rgba(218,119,86,0.16)] bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
-      style={{ background: C.pageBg, color: C.textMain }}
-    >
+    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6" style={{ color: C.textMain }}>
       <CreateKPIDialog
         open={createKpiOpen}
         onOpenChange={setCreateKpiOpen}
@@ -734,7 +792,7 @@ const KPI = () => {
         isLoading={isUpdating}
         onSubmit={handleUpdateKpi}
       />
-      <div className="p-6 pb-0 max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-[#1a1a1a] sm:text-[40px] sm:leading-tight">
@@ -769,7 +827,7 @@ const KPI = () => {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-[rgba(218,119,86,0.22)] bg-[#fef6f4] px-5 py-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -815,7 +873,7 @@ const KPI = () => {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-1 rounded-xl border border-[rgba(218,119,86,0.15)] bg-[#eceae4] p-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.75)] overflow-x-auto">
+        <div className="flex gap-1 rounded-xl border border-[rgba(218,119,86,0.15)] bg-[#eceae4] p-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.75)] overflow-x-auto">
           {tabs.map(({ name }) => {
             const isActive = activeTab === name;
             return (
@@ -839,20 +897,24 @@ const KPI = () => {
             );
           })}
         </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl p-6 pt-5">
         {activeTab === "KPI Management" && (
           <KPIManagementTab
             kpis={kpis}
             setKpis={setKpis}
             onDeleteKpi={handleDeleteKpi}
             onEditKpi={handleEditKpi}
+            onArchiveSelected={handleArchiveSelected}
             users={companyUsers}
             departments={companyDepartments}
           />
         )}
-        {activeTab === "Archived KPIs" && <ArchivedKPIsTab />}
+        {activeTab === "Archived KPIs" && (
+          <ArchivedKPIsTab
+            archived={archivedKpis}
+            onRestoreKpi={handleRestoreArchivedKpi}
+            onDeleteArchivedKpi={handleDeleteArchivedKpi}
+          />
+        )}
         {activeTab === "Missed Entries" && (
           <MissedEntitiesTab
             users={companyUsers}

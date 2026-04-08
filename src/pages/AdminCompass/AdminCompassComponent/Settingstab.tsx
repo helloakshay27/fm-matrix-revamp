@@ -1,6 +1,3 @@
-// ─────────────────────────────────────────────
-// SettingsTab.jsx — Unified Modern Theme
-// ─────────────────────────────────────────────
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -22,7 +19,7 @@ import {
   updateMeetingConfig,
   deleteMeetingConfig,
   getInitials,
-  BASE_URL,
+  getBaseUrl,
 } from "./Shared";
 
 // ── MeetingConfigModal ──
@@ -36,29 +33,35 @@ const MeetingConfigModal = ({
 }) => {
   const isEdit = !!existingConfig;
 
+  // Check if members come as array of objects from API
+  const initialMembers = existingConfig?.members 
+    ? existingConfig.members.map(m => Number(m.id)) 
+    : (existingConfig?.memberIds ?? []).map(Number);
+
   const [form, setForm] = useState({
     name: existingConfig?.name ?? "",
-    meeting_time: existingConfig?.meetingTime ?? "",
-    meeting_days: existingConfig?.meetingDays ?? [
+    meeting_time: existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
+    meeting_days: existingConfig?.meetingDays ?? existingConfig?.meeting_days ?? [
       "Mon",
       "Tue",
       "Wed",
       "Thu",
       "Fri",
     ],
-    meeting_head_id: existingConfig?.meetingHeadId
+    meeting_head_id: existingConfig?.meetingHead?.id
+      ? String(existingConfig.meetingHead.id)
+      : existingConfig?.meetingHeadId
       ? String(existingConfig.meetingHeadId)
       : "",
-    department_id: existingConfig?.departmentId
+    department_id: existingConfig?.department?.id
+      ? String(existingConfig.department.id)
+      : existingConfig?.departmentId
       ? String(existingConfig.departmentId)
       : "",
-    is_default: existingConfig?.isDefault ?? false,
+    is_default: existingConfig?.isDefault ?? existingConfig?.is_default ?? false,
   });
 
-  const [selectedMemberIds, setSelectedMemberIds] = useState(
-    (existingConfig?.memberIds ?? []).map(Number)
-  );
-
+  const [selectedMemberIds, setSelectedMemberIds] = useState(initialMembers);
   const [memberSearch, setMemberSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -110,10 +113,8 @@ const MeetingConfigModal = ({
 
     try {
       if (isEdit) {
-        // ✅ PUT /daily_meeting_configs/:id — same payload, same fields
         await updateMeetingConfig(existingConfig.id, payload);
       } else {
-        // ✅ POST /daily_meeting_configs
         await createMeetingConfig(payload);
       }
       onSaved();
@@ -399,13 +400,21 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
     return val;
   };
 
-  const meetingHeadName = getDisplayName(config.meetingHead) || "Unknown Head";
+  // Safe checks for meeting head
+  const meetingHeadName = getDisplayName(config.meetingHead || config.meeting_head) || "Unknown Head";
+  const meetingHeadId = config.meetingHeadId || config.meeting_head?.id;
 
-  const mappedMembers = (config.memberIds || []).map((id) => {
-    const user = allUsers.find((u) => Number(u.id) === Number(id));
+  // Ensure members list is captured correctly
+  const membersArray = config.members || []; 
+  
+  // Create an array of member names for UI
+  const mappedMembers = membersArray.map((m) => {
+    if(m && m.name) return m.name;
+    // Fallback if only IDs exist
+    const user = allUsers.find((u) => Number(u.id) === Number(m.id || m));
     return user
-      ? (user.name ?? user.full_name ?? user.username ?? `User ${id}`)
-      : `User ${id}`;
+      ? (user.name ?? user.full_name ?? user.username ?? `User ${m.id || m}`)
+      : `User ${m.id || m}`;
   });
 
   const visibleMembers = mappedMembers.slice(0, 3);
@@ -419,9 +428,12 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
 
   const meetingHeadUser = allUsers.find(
     (u) =>
-      Number(u.id) === Number(config.meetingHeadId) ||
+      Number(u.id) === Number(meetingHeadId) ||
       (u.name ?? u.full_name ?? u.username) === meetingHeadName
   );
+
+  const meetingDays = config.meetingDays || config.meeting_days || [];
+  const meetingTime = config.meetingTime || config.meeting_time || "No time set";
 
   const weekDays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -466,7 +478,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
         </h3>
         <div className="inline-flex items-center gap-1.5 bg-[#FCFAFA] border border-[#F0EBE8] text-[#1A1A1A] px-3 py-1.5 rounded-[8px] text-xs font-bold mb-4">
           <Clock className="w-3.5 h-3.5 text-[#8C8580]" />{" "}
-          {config.meetingTime || "No time set"}
+          {meetingTime}
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
@@ -474,7 +486,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
               key={day}
               className={cn(
                 "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider",
-                config.meetingDays.some((cd) => cd.startsWith(day))
+                meetingDays.some((cd) => cd.startsWith(day))
                   ? "bg-[#1A1A1A] text-white"
                   : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
               )}
@@ -510,7 +522,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
             Members
           </div>
           <div className="bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580] text-[10px] font-black px-2 py-0.5 rounded-[6px]">
-            {config.memberIds?.length ?? 0}
+            {mappedMembers.length}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -567,9 +579,9 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
         </div>
       </div>
 
-      {config.isDefault && (
+      {(config.isDefault || config.is_default) && (
         <div className="mt-5 flex">
-          <span className="bg-[#1A1A1A] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
+          <span className="bg-[#1A1A1A] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
             Default Meeting
           </span>
         </div>
@@ -592,17 +604,19 @@ const SettingsTab = () => {
   const [departments, setDepartments] = useState([]);
   const [dropdownsLoading, setDropdownsLoading] = useState(true);
 
+  const orgid = ()=> localStorage.getItem("org_id") || " ";
+
   useEffect(() => {
     const fetchDropdownData = async () => {
       setDropdownsLoading(true);
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       try {
         const [deptRes, usersRes] = await Promise.all([
-          fetch(`${BASE_URL}/pms/departments.json`, {
+          fetch(`${getBaseUrl()}/pms/departments.json`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(
-            `https://fm-uat-api.lockated.com/api/users?organization_id=88&token=${token}`
+            `https://fm-uat-api.lockated.com/api/users?organization_id=${orgid()}&token=${token}`
           ),
         ]);
         const deptData = await deptRes.json();
@@ -625,7 +639,9 @@ const SettingsTab = () => {
     setListError(null);
     try {
       const data = await fetchMeetingConfigs();
-      setConfigs(data);
+      // Ensure we extract data if API wraps it inside a data object
+      const parsedData = Array.isArray(data) ? data : data.data ? [data.data] : [];
+      setConfigs(parsedData);
     } catch (err) {
       setListError(err.message);
     } finally {
@@ -661,10 +677,10 @@ const SettingsTab = () => {
   };
 
   const filteredConfigs = configs.filter((c) => {
-    const matchesSearch = c.name
+    const matchesSearch = (c.name || "")
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const headName = getDisplayName(c.meetingHead);
+    const headName = getDisplayName(c.meetingHead || c.meeting_head);
     const matchesHead =
       headFilter === "All Heads" || headName === headFilter;
     return matchesSearch && matchesHead;
@@ -673,12 +689,12 @@ const SettingsTab = () => {
   const uniqueHeads = [
     "All Heads",
     ...new Set(
-      configs.map((c) => getDisplayName(c.meetingHead)).filter(Boolean)
+      configs.map((c) => getDisplayName(c.meetingHead || c.meeting_head)).filter(Boolean)
     ),
   ];
 
   const totalMembersCount = configs.reduce(
-    (acc, curr) => acc + (curr.memberIds?.length || 0),
+    (acc, curr) => acc + (curr.members?.length || curr.memberIds?.length || 0),
     0
   );
 
