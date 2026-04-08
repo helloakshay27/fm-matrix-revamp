@@ -335,20 +335,14 @@ export const fetchViRoles = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
-    const org_id = localStorage.getItem("org_id");
 
     if (!baseUrl || !token) {
       return rejectWithValue("Missing authentication credentials");
     }
 
     try {
-      // Use /roles.json for web.gophygital.work with org_id 34, otherwise use /lock_roles.json
-      const rolesEndpoint =
-        window.location.hostname === "web.gophygital.work" && org_id === "34"
-          ? "/roles.json"
-          : "/lock_roles.json";
-
-      const response = await axios.get(`https://${baseUrl}${rolesEndpoint}`, {
+      // Always use /lock_roles.json for role dropdown
+      const response = await axios.get(`https://${baseUrl}/lock_roles.json`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
