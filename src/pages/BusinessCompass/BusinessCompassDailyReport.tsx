@@ -817,6 +817,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           journal_type: "daily",
           start_date: startDate,
           end_date: startDate,
+          report_date: startDate,
           self_rating: selfRating[0],
           is_absent: isAbsent,
           description: isAbsent ? absenceReason : null,
