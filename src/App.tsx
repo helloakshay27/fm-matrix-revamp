@@ -204,6 +204,8 @@ import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
 import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
 import AnnouncementsSetup from "./pages/AnnouncementsSetup";
+import TeamSetup from "./pages/settings/company-hub/team-setup";
+import JobsPage from "./pages/CompanyHub/JobsPage";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
@@ -5531,6 +5533,14 @@ function App() {
                             element={<AnnouncementsSetup />}
                           />
                           <Route
+                            path="/settings/company-hub/team-setup"
+                            element={<TeamSetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/jobs"
+                            element={<JobsPage />}
+                          />
+                          <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
                           />
@@ -6161,7 +6171,7 @@ function App() {
                         />
                         <Route path="/hr-policies" element={<HRPolicies />} />
                         <Route path="/directory" element={<Directory />} />
-                        <Route path="/eployee-faq" element={<EmployeeFAQ />} />
+                        <Route path="/employee-faq" element={<EmployeeFAQ />} />
 
                         {/* Mobile Routes */}
                         <Route

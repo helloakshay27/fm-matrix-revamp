@@ -47,6 +47,18 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { apiClient } from '@/utils/apiClient';
+import { ENDPOINTS } from '@/config/apiConfig';
+import { getUser } from '@/utils/auth';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { subDays } from 'date-fns';
 
 /**
  * Page shell + surfaces match `SystemAndSOP.tsx`:
@@ -128,35 +140,20 @@ const WeeklyReports = () => {
     );
 
     const handleAchievementFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const list = e.target.files;
-        if (!list?.length) return;
-        const added: { name: string; size: number }[] = [];
-        for (let i = 0; i < list.length; i++) {
-            const f = list[i];
-            const isImage = f.type.startsWith('image/');
-            const maxBytes = isImage ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
-            if (f.size > maxBytes) {
-                toast.error(
-                    `${f.name} is too large (max ${isImage ? '2MB' : '5MB'} for ${isImage ? 'images' : 'other files'})`
-                );
-                continue;
-            }
-            added.push({ name: f.name, size: f.size });
-        }
-        if (!added.length) {
+        const newFiles = Array.from(e.target.files || []);
+        const currentCount = selectedFileNames.length;
+        
+        if (currentCount + newFiles.length > 5) {
+            toast.error(`You can only upload a maximum of 5 files. You already have ${currentCount} selected.`);
             e.target.value = '';
             return;
         }
-        setAchievementUploads((prev) => {
-            const merged = [...prev, ...added];
-            const next = merged.slice(0, 5);
-            if (merged.length > next.length) {
-                toast.message('Maximum 5 files — extra files were not added');
-            }
-            return next;
-        });
-        toast.success(added.length === 1 ? `Added ${added[0].name}` : `Added ${added.length} file(s)`);
-        e.target.value = '';
+
+        const newNames = newFiles.map(f => f.name);
+        setSelectedFileNames(prev => [...prev, ...newNames]);
+        setUploadedFilesCount(prev => prev + newFiles.length);
+        toast.success(`Added ${newFiles.length} file(s)`);
+        e.target.value = ''; // Reset input to allow selecting same file again if removed
     };
 
     const [wins, setWins] = React.useState<string[]>([]);
@@ -166,13 +163,25 @@ const WeeklyReports = () => {
     const [remarksInteracted, setRemarksInteracted] = React.useState(false);
     const remarksTextareaRef = React.useRef<HTMLTextAreaElement>(null);
 
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+    const [history, setHistory] = React.useState<any[]>([]);
+    const [editingId, setEditingId] = React.useState<number | null>(null);
+    const [showDailyWinsDialog, setShowDailyWinsDialog] = React.useState(false);
+    const [dailyReports, setDailyReports] = React.useState<any[]>([]);
+    const [isLoadingDailyReports, setIsLoadingDailyReports] = React.useState(false);
+    const [selectedDailyWins, setSelectedDailyWins] = React.useState<string[]>([]);
+    const [uploadedFilesCount, setUploadedFilesCount] = React.useState(0);
+    const [selectedFileNames, setSelectedFileNames] = React.useState<string[]>([]);
+    const currentUser = getUser();
+
     const refDate = React.useMemo(() => new Date(), []);
     const weekStart = React.useMemo(
-        () => startOfWeek(refDate, { weekStartsOn: 0 }),
+        () => startOfWeek(refDate, { weekStartsOn: 1 }),
         [refDate]
     );
     const weekEnd = React.useMemo(
-        () => endOfWeek(refDate, { weekStartsOn: 0 }),
+        () => endOfWeek(refDate, { weekStartsOn: 1 }),
         [refDate]
     );
     const monthTitle = format(refDate, 'MMM yyyy');
@@ -197,7 +206,7 @@ const WeeklyReports = () => {
                 'bg-[#f6f4ee]',
                 'bg-white/80',
             ];
-            const canAdd = i > 0 && i < 6;
+            const canAdd = i < 5;
             labels.push({
                 key,
                 short: format(d, 'EEE d MMM'),
@@ -207,6 +216,59 @@ const WeeklyReports = () => {
         }
         return labels;
     }, [weekEnd]);
+
+    const populateForm = React.useCallback((item: any) => {
+        setEditingId(item.id);
+        setRemarksText(item.report_data?.remarks || item.description || item.report_data?.big_win || '');
+        if (item.report_data?.remark_type) {
+            setActiveRemarkChip(item.report_data.remark_type as RemarkChipId);
+        }
+        
+        // Handle wins/achievements (new and legacy)
+        const achievements = item.report_data?.achievements 
+            || item.report_data?.accomplishments?.items?.map((i: any) => i.title)
+            || item.report_data?.accomplishments?.map((i: any) => i.title)
+            || [];
+        setWins(achievements);
+
+        // Handle tasks/plans (new and legacy)
+        const tasks = item.report_data?.tasks 
+            || item.report_data?.week_plan?.map((i: any) => i.title)
+            || item.report_data?.tasks_issues?.map((i: any) => i.title)
+            || item.report_data?.tomorrow_plan?.map((i: any) => i.title)
+            || [];
+        
+        const firstDay = upcomingDays.find(d => d.canAdd)?.key;
+        if (firstDay && tasks.length > 0) {
+            setDayPlans({ [firstDay]: tasks });
+        }
+        toast.message('Report data loaded');
+    }, [upcomingDays]);
+
+    const fetchHistory = React.useCallback(async () => {
+        setIsLoadingHistory(true);
+        try {
+            // Using the specific query parameter for weekly reports
+            const response = await apiClient.get(`${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=weekly`);
+            const items = response.data || [];
+            setHistory(items);
+
+            // Auto-check if current week has a report
+            const currentWeekStart = format(weekStart, 'yyyy-MM-dd');
+            const existing = items.find((i: any) => i.start_date === currentWeekStart);
+            if (existing) {
+                populateForm(existing);
+            }
+        } catch (error) {
+            console.error('Failed to fetch weekly reports history:', error);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    }, [weekStart, populateForm]);
+
+    React.useEffect(() => {
+        fetchHistory();
+    }, [fetchHistory]);
 
     const handleAddWin = () => {
         setWins([...wins, '']);
@@ -220,6 +282,68 @@ const WeeklyReports = () => {
         const newWins = [...wins];
         newWins[index] = value;
         setWins(newWins);
+    };
+
+    const handleCarryForward = () => {
+        if (history.length === 0) {
+            toast.error('No previous reports found to carry forward');
+            return;
+        }
+        // Get the latest report that isn't the current one we might be editing
+        const latest = history.find(item => item.id !== editingId);
+        if (latest) {
+            const tasks = latest.report_data?.tasks 
+                || latest.report_data?.week_plan?.map((i: any) => i.title)
+                || latest.report_data?.tasks_issues?.map((i: any) => i.title)
+                || [];
+            
+            if (tasks.length === 0) {
+                toast.info('No uncompleted tasks found in previous report');
+                return;
+            }
+
+            const firstDay = upcomingDays.find(d => d.canAdd)?.key;
+            if (firstDay) {
+                setDayPlans(prev => ({
+                    ...prev,
+                    [firstDay]: [...(prev[firstDay] || []), ...tasks]
+                }));
+                toast.success(`Carried forward ${tasks.length} tasks`);
+            }
+        }
+    };
+
+    const handleImportDailyWins = async () => {
+        setIsLoadingDailyReports(true);
+        setShowDailyWinsDialog(true);
+        try {
+            const response = await apiClient.get(`${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=daily`);
+            const allDaily = response.data || [];
+            
+            // Filter reports from the current selected week
+            const filtered = allDaily.filter((report: any) => {
+                const reportDate = new Date(report.start_date || report.created_at);
+                return reportDate >= weekStart && reportDate <= weekEnd;
+            });
+
+            setDailyReports(filtered);
+        } catch (error) {
+            console.error('Failed to fetch daily reports:', error);
+            toast.error('Failed to load daily reports');
+        } finally {
+            setIsLoadingDailyReports(false);
+        }
+    };
+
+    const confirmImportDailyWins = () => {
+        if (selectedDailyWins.length === 0) {
+            toast.info('No wins selected');
+            return;
+        }
+        setWins(prev => [...prev, ...selectedDailyWins]);
+        toast.success(`Imported ${selectedDailyWins.length} daily wins`);
+        setShowDailyWinsDialog(false);
+        setSelectedDailyWins([]);
     };
 
     const handleAddPlan = (day: string) => {
@@ -274,6 +398,69 @@ const WeeklyReports = () => {
                 border: 'border-[#DA7756]/25',
                 bg: 'bg-white',
             };
+
+    const handleSubmit = async () => {
+        if (!currentUser?.id) {
+            toast.error('User session not found. Please log in again.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                user_journal: {
+                    user_id: currentUser.id,
+                    journal_type: 'weekly',
+                    start_date: format(weekStart, 'yyyy-MM-dd'),
+                    end_date: format(weekEnd, 'yyyy-MM-dd'),
+                    week_number: getISOWeek(weekStart),
+                    year: weekStart.getFullYear(),
+                    status: 'submitted',
+                    description: remarksText,
+                    self_rating: 0,
+                    is_absent: false,
+                    report_data: {
+                        kpi: 'weekly value',
+                        achievements: wins.filter(w => w.trim() !== ''),
+                        tasks: Object.values(dayPlans).flat().filter(t => t.trim() !== ''),
+                        past_kpis: [], // Placeholder for now
+                        total_score: 0,
+                        remarks: remarksText,
+                        remark_type: activeRemarkChip,
+                        sections: {
+                            daily_scores: [0, 0, 0, 0, 0],
+                            bonus: 0,
+                            self_rating: 0,
+                            is_absent: false
+                        },
+                        details: {
+                            self_rating: 0,
+                            is_absent: false
+                        }
+                    }
+                }
+            };
+
+            const response = editingId 
+                ? await apiClient.put(`/user_journals/${editingId}.json`, payload)
+                : await apiClient.post(ENDPOINTS.USER_JOURNALS, payload);
+
+            toast.success(editingId ? 'Weekly report updated successfully' : 'Weekly report submitted successfully');
+            fetchHistory();
+        } catch (error: any) {
+            console.error('Failed to submit weekly report:', error);
+            toast.error(error.response?.data?.message || 'Failed to submit weekly report');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleViewDetails = React.useCallback((item: any) => {
+        populateForm(item);
+        const tabsList = document.querySelector('[role="tablist"]');
+        const submitTab = tabsList?.querySelector('[value="submit"]') as HTMLElement;
+        submitTab?.click();
+    }, [populateForm]);
 
     return (
         <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
@@ -361,39 +548,41 @@ const WeeklyReports = () => {
                                 {wins.map((win, index) => (
                                     <div
                                         key={index}
-                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-[#fef6f4]/70 p-4"
+                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                     >
-                                        <Checkbox className="mt-1 rounded border-[#DA7756] data-[state=checked]:bg-[#DA7756]" />
-                                        <Star className="mt-1 h-4 w-4 cursor-pointer text-[#DA7756]/35 hover:text-[#DA7756]" />
+                                        <Checkbox 
+                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500" 
+                                            defaultChecked 
+                                        />
+                                        <Star className="mt-1 h-4 w-4 cursor-pointer text-neutral-300 hover:text-yellow-400 transition-colors" />
                                         <Textarea
                                             value={win}
                                             onChange={(e) => handleWinChange(index, e.target.value)}
                                             placeholder="Describe your win…"
-                                            className="min-h-[60px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
+                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveWin(index)}
-                                            className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756]"
+                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                                         >
                                             <X className="h-4 w-4" />
                                         </button>
                                     </div>
                                 ))}
                                 <div className="flex flex-col gap-3 sm:flex-row">
-                                    <Select defaultValue="none">
-                                        <SelectTrigger className="h-12 flex-1 rounded-xl border-dashed border-2 border-[#DA7756]/35 bg-[#fef6f4] text-[#DA7756] hover:bg-[#fdf0eb] focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]">
-                                            <SelectValue placeholder="Import Daily Wins…" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Import Daily Wins…</SelectItem>
-                                            <SelectItem value="last">Last week&apos;s wins</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <button
+                                        type="button"
+                                        onClick={handleImportDailyWins}
+                                        className="h-12 flex-1 rounded-xl border-2 border-dashed border-blue-200 bg-white px-4 py-2 text-sm font-medium text-neutral-600 transition-all hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center gap-2"
+                                    >
+                                        <Plus className="h-4 w-4 text-neutral-400" />
+                                        Import Daily Wins (last week&apos;s)
+                                    </button>
                                     <Button
                                         type="button"
                                         onClick={handleAddWin}
-                                        className={cn('h-12 flex-1 rounded-xl', btnPrimary)}
+                                        className={cn('h-12 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold')}
                                     >
                                         <Plus className="mr-2 h-4 w-4" />
                                         Add Win
@@ -401,48 +590,56 @@ const WeeklyReports = () => {
                                 </div>
                                 <Button
                                     type="button"
-                                    className={cn('h-12 w-full rounded-xl border text-sm font-semibold uppercase tracking-wide', btnOutline)}
+                                    onClick={handleCarryForward}
+                                    className={cn('h-12 w-full rounded-xl bg-[#e65100] hover:bg-[#d84315] text-white font-bold tracking-wide')}
                                 >
                                     Carry Forward Uncompleted
                                 </Button>
-                                <div className="rounded-xl border-2 border-dashed border-[#DA7756]/25 bg-[#fef6f4]/65 px-6 py-8 text-center">
-                                    <input
-                                        ref={achievementFileInputRef}
-                                        type="file"
-                                        className="sr-only"
-                                        id="weekly-achievement-files"
-                                        multiple
-                                        accept="image/*,.pdf,.doc,.docx,application/pdf"
-                                        onChange={handleAchievementFiles}
-                                    />
-                                    <Upload className="mx-auto mb-2 h-8 w-8 text-[#DA7756]/70" aria-hidden />
-                                    <p className="mb-1 text-xs text-neutral-500">
-                                        Images up to 2MB · Other files up to 5MB
-                                    </p>
-                                    <p className="mb-3 text-xs font-medium text-neutral-600">
-                                        {achievementUploads.length}/5 files attached
-                                    </p>
-                                    {achievementUploads.length > 0 && (
-                                        <ul className="mb-3 max-h-24 space-y-1 overflow-y-auto text-left text-xs text-neutral-700">
-                                            {achievementUploads.map((f, i) => (
-                                                <li
-                                                    key={`${f.name}-${f.size}-${i}`}
-                                                    className="truncate"
-                                                >
-                                                    {f.name}
-                                                </li>
+                                <div className="space-y-4 pt-4 border-t border-neutral-100">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
+                                            <Info className="h-3.5 w-3.5 text-emerald-600" />
+                                            <span>Limits: Images 2MB, Others 5MB</span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-[10px] font-bold text-neutral-400">{uploadedFilesCount}/5</span>
+                                            <input
+                                                ref={achievementFileInputRef}
+                                                type="file"
+                                                className="sr-only"
+                                                id="weekly-achievement-files"
+                                                multiple
+                                                accept="image/*,.pdf,.doc,.docx,application/pdf"
+                                                onChange={handleAchievementFiles}
+                                            />
+                                            <Button
+                                                type="button"
+                                                onClick={() => achievementFileInputRef.current?.click()}
+                                                className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-6 flex items-center gap-2 text-xs"
+                                            >
+                                                <Upload className="h-3.5 w-3.5" />
+                                                File Upload
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    
+                                    {selectedFileNames.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedFileNames.map((name, i) => (
+                                                <Badge key={i} variant="secondary" className="bg-neutral-100 text-[10px] text-neutral-600 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                                    <span className="truncate max-w-[150px]">{name}</span>
+                                                    <X 
+                                                        className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                                                        onClick={() => {
+                                                            const next = selectedFileNames.filter((_, idx) => idx !== i);
+                                                            setSelectedFileNames(next);
+                                                            setUploadedFilesCount(next.length);
+                                                        }}
+                                                    />
+                                                </Badge>
                                             ))}
-                                        </ul>
+                                        </div>
                                     )}
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        className={cn('rounded-lg', btnPrimary)}
-                                        onClick={() => achievementFileInputRef.current?.click()}
-                                    >
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        File Upload
-                                    </Button>
                                 </div>
                             </div>
                         </Card>
@@ -742,10 +939,21 @@ const WeeklyReports = () => {
 
                         <Button
                             type="button"
-                            className="h-12 w-full rounded-xl bg-[#DA7756] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#c9673f]"
+                            disabled={isSubmitting}
+                            onClick={handleSubmit}
+                            className="h-12 w-full rounded-xl bg-[#DA7756] text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#c9673f] disabled:opacity-50"
                         >
-                            <Send className="mr-2 h-4 w-4" />
-                            Submit for {submitRangeLabel}
+                            {isSubmitting ? (
+                                <span className="flex items-center gap-2">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    {editingId ? 'Updating...' : 'Submitting...'}
+                                </span>
+                            ) : (
+                                <>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {editingId ? 'Update Review' : `Submit for ${submitRangeLabel}`}
+                                </>
+                            )}
                         </Button>
 
                         <div className="flex flex-col gap-3 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -779,13 +987,307 @@ const WeeklyReports = () => {
                         </p>
                     </TabsContent>
 
-                    <TabsContent value="history" className="mt-6">
-                        <Card className="rounded-2xl border border-[#DA7756]/20 bg-white p-12 text-center text-neutral-500 shadow-sm">
-                            No review history found.
-                        </Card>
+                    <TabsContent value="history" className="mt-6 space-y-6">
+                        {isLoadingHistory ? (
+                            Array(3).fill(0).map((_, i) => (
+                                <Card key={i} className="p-6 space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <Skeleton className="h-12 w-12 rounded-xl" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-40" />
+                                            <Skeleton className="h-3 w-60" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Skeleton className="h-32 rounded-xl" />
+                                        <Skeleton className="h-32 rounded-xl" />
+                                    </div>
+                                </Card>
+                            ))
+                        ) : history.length > 0 ? (
+                            history.map((item) => {
+                                const reportData = item.report_data || {};
+                                const weekNum = item.start_date ? getISOWeek(new Date(item.start_date)) : '??';
+                                const weekLabel = item.start_date && item.end_date 
+                                    ? `${format(new Date(item.start_date), 'MMM d')}-${format(new Date(item.end_date), 'd')}`
+                                    : 'Unknown Date';
+                                
+                                const achievements = reportData.achievements 
+                                    || reportData.accomplishments?.items?.map((i: any) => i.title)
+                                    || reportData.accomplishments?.map((i: any) => i.title)
+                                    || [];
+                                
+                                const tasks = reportData.tasks 
+                                    || reportData.week_plan?.map((i: any) => i.title)
+                                    || reportData.tasks_issues?.map((i: any) => i.title)
+                                    || reportData.tomorrow_plan?.map((i: any) => i.title)
+                                    || [];
+                                
+                                const stats = [
+                                    { label: 'Weekly KPIs:', value: '0/20' },
+                                    { label: 'Daily KPIs:', value: '0/10' },
+                                    { label: 'Starred Wins:', value: `0/${achievements.length || 6}` },
+                                    { label: 'Tasks/Issues:', value: '0/10' },
+                                    { label: 'Planned:', value: `${tasks.length}/20` },
+                                    { label: 'Remarks:', value: reportData.remarks ? '1/14' : '0/14' },
+                                    { label: 'SOPs:', value: '0/20' },
+                                ];
+
+                                const dayColors: Record<string, string> = {
+                                    'Mon': 'bg-[#e0e7ff] text-[#4338ca]',
+                                    'Tue': 'bg-[#dcfce7] text-[#15803d]',
+                                    'Wed': 'bg-[#fef9c3] text-[#a16207]',
+                                    'Thu': 'bg-[#f3e8ff] text-[#7e22ce]',
+                                    'Fri': 'bg-[#ffedd5] text-[#c2410c]',
+                                };
+
+                                return (
+                                    <Card key={item.id} className="overflow-hidden border border-[#DA7756]/20 bg-white shadow-md rounded-2xl">
+                                        {/* History Card Header */}
+                                        <div className="bg-[#f8fafc] border-b border-neutral-100 p-6">
+                                            <div className="flex flex-col lg:flex-row justify-between gap-6">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <h3 className="text-xl font-bold text-neutral-900">
+                                                            Wk# {weekNum}, {weekLabel}
+                                                        </h3>
+                                                        {/* <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-8 w-8 text-neutral-400 hover:text-[#DA7756]"
+                                                            onClick={() => handleViewDetails(item)}
+                                                        >
+                                                            <Plus className="h-4 w-4 rotate-45" />
+                                                        </Button> */}
+                                                    </div>
+                                                    <p className="text-sm text-neutral-500">
+                                                        {currentUser ? `${currentUser.firstname} ${currentUser.lastname}` : 'User Report'} (ID: {currentUser?.id || item.user_id})
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 flex items-center gap-1">
+                                                            <Star className="h-3 w-3 fill-white" />
+                                                            {reportData.total_score || 0}/100
+                                                        </Badge>
+                                                        <Badge variant="outline" className="text-neutral-500 border-neutral-200">
+                                                            0.0%
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-x-8 gap-y-0.5 text-[11px] text-neutral-600 font-medium">
+                                                        {stats.map((s, idx) => (
+                                                            <div key={idx} className="flex justify-between gap-4">
+                                                                <span>{s.label}</span>
+                                                                <span className="font-bold text-neutral-900 tracking-wider">{s.value}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    {/* <Button 
+                                                        variant="outline" 
+                                                        size="sm" 
+                                                        className="mt-2 text-[#4f46e5] border-[#4f46e5]/20 hover:bg-[#4f46e5]/5 rounded-lg h-8 px-4 font-semibold text-xs transition-colors"
+                                                        onClick={() => handleViewDetails(item)}
+                                                    >
+                                                        <Zap className="mr-2 h-3.5 w-3.5 fill-[#4f46e5]" />
+                                                        Edit
+                                                    </Button> */}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* History Card Body */}
+                                        <div className="p-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Top Wins Box */}
+                                                <div className="rounded-xl border border-emerald-500/20 bg-white overflow-hidden flex flex-col">
+                                                    <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-center gap-2">
+                                                        <Trophy className="h-5 w-5 text-emerald-500" />
+                                                        <h4 className="font-bold text-emerald-600">Top Wins</h4>
+                                                    </div>
+                                                    <div className="p-4 space-y-3 flex-1 min-h-[200px]">
+                                                        {achievements.length > 0 ? achievements.map((w: string, i: number) => (
+                                                            <div key={i} className="flex items-start gap-2.5 text-sm text-neutral-700 font-medium">
+                                                                <div className="mt-1 h-4 w-4 rounded-full border-2 border-emerald-500 flex items-center justify-center">
+                                                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                                </div>
+                                                                <span>{w}</span>
+                                                            </div>
+                                                        )) : (
+                                                            <p className="text-sm text-neutral-400 italic">No wins recorded</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Next Week's Priorities Box */}
+                                                <div className="rounded-xl border border-indigo-500/20 bg-white overflow-hidden">
+                                                    <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-center gap-2">
+                                                        <Target className="h-5 w-5 text-indigo-500" />
+                                                        <h4 className="font-bold text-indigo-600">Next Week's Priorities</h4>
+                                                    </div>
+                                                    <div className="p-4 space-y-3">
+                                                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day) => (
+                                                            <div key={day} className="space-y-2">
+                                                                <div className={cn("px-3 py-1 rounded text-[11px] font-bold uppercase tracking-wider", dayColors[day])}>
+                                                                    {day}
+                                                                </div>
+                                                                <div className="pl-2 space-y-1.5">
+                                                                    {/* This is a simple mapping for display; in a real scenario we'd match the day */}
+                                                                    {day === 'Mon' && tasks.slice(0, 2).map((t: string, i: number) => (
+                                                                        <div key={i} className="flex items-center gap-2 text-sm text-neutral-700">
+                                                                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                                                                            {t}
+                                                                        </div>
+                                                                    ))}
+                                                                    {day !== 'Mon' && <div className="h-4" />}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Tasks & Issues area */}
+                                            <div className="mt-6 space-y-4">
+                                                <div className="flex items-center gap-2 text-orange-600">
+                                                    <AlertTriangle className="h-5 w-5" />
+                                                    <h4 className="font-bold">Tasks & Issues</h4>
+                                                </div>
+                                                {reportData.tasks_issues?.length > 0 ? reportData.tasks_issues.map((ti: any, i: number) => (
+                                                    <div key={i} className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 flex items-center justify-between">
+                                                        <div className="flex items-center gap-4">
+                                                            <X className="h-4 w-4 text-neutral-400" />
+                                                            <span className="font-bold text-neutral-800">{ti.title}</span>
+                                                            <div className="flex gap-2">
+                                                                <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">Task</Badge>
+                                                                <Badge className="bg-white text-neutral-700 border-neutral-200 text-[10px] font-bold uppercase h-6">{ti.status || 'open'}</Badge>
+                                                            </div>
+                                                        </div>
+                                                        <Badge className="bg-[#b45309] hover:bg-[#b45309] text-white text-[10px] font-bold uppercase h-6 px-3">
+                                                            {ti.priority || 'medium'}
+                                                        </Badge>
+                                                    </div>
+                                                )) : (
+                                                    <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl p-4 text-sm text-neutral-500 italic">
+                                                        No issues recorded
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Other Comments */}
+                                            <div className="mt-6 pt-6 border-t border-neutral-100">
+                                                <div className="flex items-center gap-2 text-neutral-500 mb-2">
+                                                    <MessageSquare className="h-4 w-4" />
+                                                    <h4 className="text-sm font-bold">Other Comments</h4>
+                                                </div>
+                                                <div className="flex items-start gap-2 text-sm text-neutral-700">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-neutral-400 mt-1.5 shrink-0" />
+                                                    <p><span className="font-bold uppercase text-[10px] text-neutral-500 mr-2">REMARK:</span>{reportData.remarks || 'No overall comments'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white py-16 text-center">
+                                <div className="mb-4 rounded-full bg-neutral-50 p-4">
+                                    <BarChart3 className="h-8 w-8 text-neutral-300" />
+                                </div>
+                                <h3 className="text-lg font-bold text-neutral-900">No review history found</h3>
+                                <p className="mt-1 text-sm text-neutral-500">
+                                    You haven&apos;t submitted any weekly reports yet.
+                                </p>
+                            </div>
+                        )}
                     </TabsContent>
                 </Tabs>
             </div>
+
+            <Dialog open={showDailyWinsDialog} onOpenChange={setShowDailyWinsDialog}>
+                <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden font-poppins">
+                    <DialogHeader className="p-6 pb-2">
+                        <DialogTitle className="text-xl font-bold text-neutral-900">
+                            Select Daily Wins from Past Week
+                        </DialogTitle>
+                        <p className="text-sm text-neutral-500 mt-1">
+                            Choose accomplishments from your daily reports ({format(subDays(weekStart, 7), 'MMM d')} to {format(subDays(weekEnd, 7), 'MMM d')}) to add to this week&apos;s achievements.
+                        </p>
+                    </DialogHeader>
+
+                    <div className="max-h-[400px] overflow-y-auto p-6 pt-2 space-y-6">
+                        {isLoadingDailyReports ? (
+                            <div className="space-y-4 py-4">
+                                <Skeleton className="h-6 w-1/3" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        ) : dailyReports.length > 0 ? (
+                            dailyReports.map((report: any) => {
+                                const reportDate = new Date(report.start_date || report.created_at);
+                                const reportWins = report.report_data?.achievements 
+                                    || report.report_data?.accomplishments?.items?.map((i: any) => i.title || i)
+                                    || (Array.isArray(report.report_data?.accomplishments) ? report.report_data.accomplishments.map((i: any) => i.title || i) : [])
+                                    || [];
+                                
+                                return reportWins.length > 0 ? (
+                                    <div key={report.id} className="space-y-3">
+                                        <h4 className="text-sm font-bold text-neutral-700">
+                                            {format(reportDate, 'EEE, MMM d')}
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {reportWins.map((win: string, i: number) => (
+                                                <div key={i} className="flex items-center gap-3 p-1">
+                                                    <Checkbox 
+                                                        id={`win-${report.id}-${i}`}
+                                                        checked={selectedDailyWins.includes(win)}
+                                                        onCheckedChange={(checked) => {
+                                                            if (checked) {
+                                                                setSelectedDailyWins(prev => [...prev, win]);
+                                                            } else {
+                                                                setSelectedDailyWins(prev => prev.filter(w => w !== win));
+                                                            }
+                                                        }}
+                                                        className="rounded border-neutral-300"
+                                                    />
+                                                    <label 
+                                                        htmlFor={`win-${report.id}-${i}`}
+                                                        className="text-sm text-neutral-700 cursor-pointer"
+                                                    >
+                                                        {win}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="h-px bg-neutral-100 mt-4 mx-[-24px]" />
+                                    </div>
+                                ) : null;
+                            })
+                        ) : (
+                            <div className="py-8 text-center text-neutral-500 text-sm italic">
+                                No daily reports with wins found for the past week.
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter className="p-6 pt-2 gap-3 sm:justify-end">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setShowDailyWinsDialog(false)}
+                            className="rounded-xl border-neutral-200 text-neutral-700 font-bold px-6"
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={confirmImportDailyWins}
+                            disabled={selectedDailyWins.length === 0}
+                            className="rounded-xl bg-neutral-400 hover:bg-neutral-500 text-white font-bold px-6"
+                        >
+                            Add Selected
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

@@ -123,6 +123,7 @@ const Index = () => {
       hostname.includes("fm-matrix.lockated.com") ||
       userEmail === "deveshjain928@gmail.com" ||
       userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "mailroom2@zs.com" ||
       userEmail === "abdul.g@gophygital.work";
 
     const isPulseSite =
@@ -165,6 +166,7 @@ const Index = () => {
       isPulseSite ||
       (isWebSite && userEmail === "deveshjain928@gmail.com") ||
       userEmail === "abdul.ghaffar@lockated.com" ||
+      userEmail === "mailroom2@zs.com" ||
       userEmail === "abdul.g@gophygital.work"
     ) {
       // For these companies and domains, use dynamic routing from permissions

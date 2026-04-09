@@ -8,8 +8,87 @@ import {
   CalendarDays,
   Download,
   Filter,
+  Loader2,
   Search,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { getToken as getAuthToken } from "@/utils/auth";
+
+const KPI_EXPORT_HISTORY_ENDPOINT =
+  "https://fm-uat-api.lockated.com/kpis/export_history.json";
+const KPI_BEARER_TOKEN =
+  "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
+
+const getEffectiveToken = (): string => {
+  const adminCompassToken = localStorage.getItem("auth_token");
+  const appToken = getAuthToken();
+  return adminCompassToken || appToken || KPI_BEARER_TOKEN;
+};
+
+const downloadExportHistory = async (): Promise<void> => {
+  const token = getEffectiveToken();
+
+  const response = await fetch(KPI_EXPORT_HISTORY_ENDPOINT, {
+    headers: {
+      Accept: "*/*",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Export failed: HTTP ${response.status}`);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const json = (await response.json()) as Record<string, unknown>;
+    const downloadUrl =
+      (json.download_url as string | undefined) ??
+      (json.file_url as string | undefined) ??
+      (json.url as string | undefined);
+
+    if (downloadUrl) {
+      const fileResponse = await fetch(downloadUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!fileResponse.ok) {
+        throw new Error(`Download failed: HTTP ${fileResponse.status}`);
+      }
+
+      const fileBlob = await fileResponse.blob();
+      const fileUrl = URL.createObjectURL(fileBlob);
+      const fileAnchor = document.createElement("a");
+      fileAnchor.href = fileUrl;
+      fileAnchor.download = "kpi_history_export.xlsx";
+      document.body.appendChild(fileAnchor);
+      fileAnchor.click();
+      fileAnchor.remove();
+      URL.revokeObjectURL(fileUrl);
+      return;
+    }
+
+    throw new Error("Export endpoint returned JSON without download URL");
+  }
+
+  // Derive filename from Content-Disposition header or fall back to default
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const nameMatch = disposition.match(/filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/);
+  const filename = nameMatch?.[2]?.trim() || "kpi_history_export.xlsx";
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -21,6 +100,7 @@ import { kpiClass } from "./Shared";
 
 export interface KPIHistoryRow {
   id: string;
+  kpiId?: string;
   date: string;
   type: string;
   kpiName: string;
@@ -31,6 +111,7 @@ export interface KPIHistoryRow {
   achievement: string;
   status: string;
   notes: string;
+  frequency: string;
 }
 
 interface CompanyUserOption {
@@ -150,14 +231,17 @@ type KPIHistoryTabProps = {
   users?: CompanyUserOption[];
   departments?: CompanyDepartmentOption[];
   kpis?: KPIOption[];
+  entries?: KPIHistoryRow[];
+  onDeleteSelected?: (ids: string[]) => Promise<void>;
 };
 
 const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
   users = [],
   departments = [],
   kpis = [],
+  entries = [],
+  onDeleteSelected,
 }) => {
-  const [entries] = useState<KPIHistoryRow[]>([]);
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -167,6 +251,52 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [selectedFrequency, setSelectedFrequency] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const selectedCount = selectedIds.size;
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await downloadExportHistory();
+      toast.success("Export downloaded successfully");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Export failed";
+      toast.error(message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!onDeleteSelected) {
+      toast.error("Delete API is not configured");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Delete ${ids.length} selected KPI histor${ids.length > 1 ? "ies" : "y"}?`
+    );
+    if (!ok) return;
+
+    setIsDeleting(true);
+    try {
+      await onDeleteSelected(ids);
+      setSelectedIds(new Set());
+      toast.success("Selected KPIs deleted");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete selected KPIs";
+      toast.error(message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const departmentOptions = useMemo(
     () => Array.from(new Set(departments.map((d) => d.name).filter(Boolean))),
@@ -183,6 +313,14 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
     [kpis]
   );
 
+  const statusOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(entries.map((e) => e.status).filter((s) => s && s !== "-"))
+      ).sort(),
+    [entries]
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return entries.filter((e) => {
@@ -197,9 +335,22 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
         selectedDepartment === "all" || e.department === selectedDepartment;
       const matchesUser = selectedUser === "all" || e.user === selectedUser;
 
-      return matchesSearch && matchesKpi && matchesDepartment && matchesUser;
+      const matchesFrequency =
+        selectedFrequency === "all" ||
+        e.frequency?.toLowerCase() === selectedFrequency.toLowerCase();
+      const matchesStatus =
+        selectedStatus === "all" || e.status === selectedStatus;
+
+      return (
+        matchesSearch &&
+        matchesKpi &&
+        matchesDepartment &&
+        matchesUser &&
+        matchesFrequency &&
+        matchesStatus
+      );
     });
-  }, [entries, search, selectedDepartment, selectedKpi, selectedUser]);
+  }, [entries, search, selectedDepartment, selectedKpi, selectedUser, selectedFrequency, selectedStatus]);
 
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
@@ -271,13 +422,37 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
               KPI History Log
             </h2>
           </div>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#DA7756] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a]"
-          >
-            <Download className="h-4 w-4" />
-            Export All
-          </button>
+          <div className="flex items-center gap-2">
+            {selectedCount > 0 && (
+              <button
+                type="button"
+                onClick={handleDeleteSelected}
+                disabled={isDeleting || isExporting}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#DA7756] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                {isDeleting ? "Deleting..." : `Delete (${selectedCount})`}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={isExporting || isDeleting}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#DA7756] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {isExporting ? "Exporting…" : "Export All"}
+            </button>
+          </div>
         </div>
 
         <div className="relative mb-4">
@@ -336,8 +511,27 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
           <select className={selectClass} defaultValue="all">
             <option value="all">All Frequencies</option>
           </select>
-          <select className={selectClass} defaultValue="all">
+          <select
+            className={selectClass}
+            value={selectedFrequency}
+            onChange={(e) => setSelectedFrequency(e.target.value)}
+          >
+            <option value="all">All Frequencies</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+          </select>
+          <select
+            className={selectClass}
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
             <option value="all">All Status</option>
+            {statusOptions.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
           <HistoryDatePickerField
             id="kpi-history-from"

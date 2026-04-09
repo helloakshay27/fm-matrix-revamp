@@ -91,6 +91,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 
       <CompassSection lifeCompassStats={lifeCompassStats} />
 
+
       {/* Community Section */}
       <div className="pt-10 space-y-8">
         <h2 className="text-2xl font-black text-gray-800 tracking-tight">
