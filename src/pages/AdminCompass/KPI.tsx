@@ -902,66 +902,6 @@ const deleteHistoryEntry = async (id: string | number) => {
   throw new Error(`History delete failed for ${id}: ${getApiErrorMessage(lastError)}`);
 };
 
-const deleteKpisBulk = async (ids: string[]): Promise<void> => {
-  if (ids.length === 0) return;
-
-  const headers = archivedApiHeaders();
-  const bases = Array.from(
-    new Set([...getApiBaseCandidates(), "https://fm-uat-api.lockated.com"])
-  );
-
-  let lastError: unknown = null;
-
-  for (const base of bases) {
-    const candidates = [
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_delete.json`,
-        body: { ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_delete.json`,
-        body: { kpi_ids: ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_destroy.json`,
-        body: { ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/delete_multiple.json`,
-        body: { ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_delete.json`,
-        body: { _method: "delete", ids },
-      },
-      {
-        method: "delete" as const,
-        url: `${base}/kpis.json`,
-        body: { ids },
-      },
-    ];
-
-    for (const candidate of candidates) {
-      try {
-        if (candidate.method === "delete") {
-          await Axios.delete(candidate.url, { headers, data: candidate.body });
-        } else {
-          await Axios.post(candidate.url, candidate.body, { headers });
-        }
-        return;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-  }
-
-  throw new Error(`Bulk KPI delete failed: ${getApiErrorMessage(lastError)}`);
-};
 const tabs = [
   { name: "KPI Management" },
   { name: "Archived KPIs" },
@@ -1285,8 +1225,9 @@ const KPI = () => {
   const handleDeleteSelectedHistory = async (ids: string[]) => {
     if (ids.length === 0) return;
 
+    const selectedHistoryIds = new Set(ids.map(String));
     const selectedRows = historyKpis.filter((row) =>
-      ids.includes(String(row.id))
+      selectedHistoryIds.has(String(row.id))
     );
 
     const resolvedKpiIds = Array.from(
@@ -1300,6 +1241,23 @@ const KPI = () => {
     if (resolvedKpiIds.length === 0) {
       throw new Error("Unable to resolve KPI IDs for selected history rows");
     }
+
+    const resolvedKpiIdSet = new Set(resolvedKpiIds.map(String));
+    const resolvedKpiNames = new Set(selectedRows.map((row) => row.kpiName));
+
+    // Optimistically remove from all local views so deletion is reflected immediately.
+    setKpis((prev) => prev.filter((k) => !resolvedKpiIdSet.has(String(k.id))));
+    setArchivedKpis((prev) =>
+      prev.filter((kpi) => !resolvedKpiIdSet.has(String(kpi.id)))
+    );
+    setHistoryKpis((prev) =>
+      prev.filter((row) => {
+        if (selectedHistoryIds.has(String(row.id))) return false;
+        if (row.kpiId && resolvedKpiIdSet.has(String(row.kpiId))) return false;
+        if (!row.kpiId && resolvedKpiNames.has(row.kpiName)) return false;
+        return true;
+      })
+    );
 
     await Promise.all(resolvedKpiIds.map((kpiId) => deleteKpi(kpiId)));
 
