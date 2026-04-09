@@ -159,6 +159,7 @@ const WeeklyReports = () => {
     const [wins, setWins] = React.useState<string[]>([]);
     const [dayPlans, setDayPlans] = React.useState<Record<string, string[]>>({});
     const [remarksText, setRemarksText] = React.useState('');
+    const [remarksList, setRemarksList] = React.useState<{type: RemarkChipId | null, text: string}[]>([]);
     const [activeRemarkChip, setActiveRemarkChip] = React.useState<RemarkChipId | null>(null);
     const [remarksInteracted, setRemarksInteracted] = React.useState(false);
     const remarksTextareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -219,7 +220,19 @@ const WeeklyReports = () => {
 
     const populateForm = React.useCallback((item: any) => {
         setEditingId(item.id);
-        setRemarksText(item.report_data?.remarks || item.description || item.report_data?.big_win || '');
+        
+        const remarksData = item.report_data?.remarks;
+        if (Array.isArray(remarksData)) {
+            setRemarksList(remarksData);
+            setRemarksText('');
+        } else if (remarksData) {
+            setRemarksList([{ type: item.report_data.remark_type as RemarkChipId | null, text: remarksData }]);
+            setRemarksText('');
+        } else {
+            setRemarksList([]);
+            setRemarksText(item.description || item.report_data?.big_win || '');
+        }
+
         if (item.report_data?.remark_type) {
             setActiveRemarkChip(item.report_data.remark_type as RemarkChipId);
         }
@@ -378,6 +391,19 @@ const WeeklyReports = () => {
         setRemarksInteracted(true);
     };
 
+    const handleAddRemark = () => {
+        if (!remarksText.trim()) {
+            toast.error('Please enter a remark');
+            return;
+        }
+        setRemarksList((prev) => [...prev, { type: activeRemarkChip, text: remarksText.trim() }]);
+        setRemarksText('');
+    };
+
+    const handleRemoveRemark = (index: number) => {
+        setRemarksList((prev) => prev.filter((_, i) => i !== index));
+    };
+
     /** Focuses the remarks textarea. */
     const handleFocusRemarks = () => {
         setRemarksInteracted(true);
@@ -406,6 +432,13 @@ const WeeklyReports = () => {
 
         setIsSubmitting(true);
         try {
+            const finalRemarksList = [...remarksList];
+            if (remarksText.trim()) {
+                finalRemarksList.push({ type: activeRemarkChip, text: remarksText.trim() });
+            }
+
+            const combinedDescription = finalRemarksList.map(r => r.text).join('\n');
+
             const payload = {
                 user_journal: {
                     user_id: currentUser.id,
@@ -415,7 +448,7 @@ const WeeklyReports = () => {
                     week_number: getISOWeek(weekStart),
                     year: weekStart.getFullYear(),
                     status: 'submitted',
-                    description: remarksText,
+                    description: combinedDescription,
                     self_rating: 0,
                     is_absent: false,
                     report_data: {
@@ -424,7 +457,7 @@ const WeeklyReports = () => {
                         tasks: Object.values(dayPlans).flat().filter(t => t.trim() !== ''),
                         past_kpis: [], // Placeholder for now
                         total_score: 0,
-                        remarks: remarksText,
+                        remarks: finalRemarksList,
                         remark_type: activeRemarkChip,
                         sections: {
                             daily_scores: [0, 0, 0, 0, 0],
@@ -879,12 +912,59 @@ const WeeklyReports = () => {
                                 />
                                 <Button
                                     type="button"
-                                    onClick={handleFocusRemarks}
-                                    className="h-10 w-full rounded-xl border border-dashed border-[#DA7756]/20 text-[#DA7756] hover:bg-[#DA7756]/5"
+                                    onClick={handleAddRemark}
+                                    className="h-10 w-full rounded-xl bg-[#2563eb] text-white font-semibold hover:bg-[#1d4ed8] transition-colors"
                                 >
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Add {activeRemarkChip ? REMARK_CHIP_META[activeRemarkChip].label : 'Remarks'}
+                                    Add {activeRemarkChip ? REMARK_CHIP_META[activeRemarkChip].label : 'Remark'}
                                 </Button>
+                                
+                                {remarksList.length > 0 && (
+                                    <div className="mt-6 space-y-3 border-t border-dashed border-neutral-200 pt-6">
+                                        {remarksList.map((remark, index) => {
+                                            const isBreakdown = remark.type === 'breakdown';
+                                            const isBreakthrough = remark.type === 'breakthrough';
+                                            
+                                            // Provide specific icons and fallback colors if remark type doesn't have a special match
+                                            return (
+                                                <div 
+                                                    key={index} 
+                                                    className={cn(
+                                                        "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
+                                                        isBreakdown ? "bg-red-50 border-red-200 text-red-900" :
+                                                        isBreakthrough ? "bg-emerald-50 border-emerald-200 text-emerald-900" :
+                                                        "bg-white border-neutral-200 text-neutral-800"
+                                                    )}
+                                                >
+                                                    {remark.type === 'breakdown' ? <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" /> :
+                                                     remark.type === 'breakthrough' ? <Activity className="h-4 w-4 text-emerald-500 mt-0.5" /> :
+                                                     remark.type === 'employee' ? <User className="h-4 w-4 text-blue-500 mt-0.5" /> :
+                                                     remark.type === 'client' ? <Users className="h-4 w-4 text-purple-500 mt-0.5" /> :
+                                                     remark.type === 'empFeedback' ? <Smile className="h-4 w-4 text-orange-500 mt-0.5" /> :
+                                                     <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
+                                                    }
+                                                    
+                                                    <div className="flex-1 space-y-1">
+                                                        {remark.type && (
+                                                            <p className="text-xs font-bold">
+                                                                {REMARK_CHIP_META[remark.type as RemarkChipId]?.label || remark.type}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-sm whitespace-pre-wrap">{remark.text}</p>
+                                                    </div>
+                                                    
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveRemark(index)}
+                                                        className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
