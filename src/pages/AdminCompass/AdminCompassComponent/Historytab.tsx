@@ -17,10 +17,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBaseUrl, getAuthHeaders } from "./Shared";
+import { toast } from "sonner"; // ← ADDED: sonner toast (same as SystemAndSOP)
 
 // ─────────────────────────────────────────────
 // Compile all API data into one plain-text block
-// matching exactly what the video shows
 // ─────────────────────────────────────────────
 const compileMeetingNotes = (historyData: any): string => {
   if (!historyData) return "";
@@ -28,9 +28,6 @@ const compileMeetingNotes = (historyData: any): string => {
   const memberReports: any[] = historyData.member_reports || [];
   const missedMembers: any[] = historyData.missed_members || [];
 
-  // ── Pull meeting_notes from the submitted member's report_data ──
-  // API structure: member_reports[i].report_data.meeting_notes
-  // (meeting head ka submitted journal mein hota hai)
   const allMemberReports: any[] = historyData.member_reports || [];
   const meetingHeadUid = historyData.config?.meeting_head?.id;
   const headMemberReport =
@@ -51,7 +48,6 @@ const compileMeetingNotes = (historyData: any): string => {
   );
   const missedNamesFromNote: string[] = missedKey ? firstNote[missedKey] : [];
 
-  // Fallback to missed_members array
   const missedNames =
     missedNamesFromNote.length > 0
       ? missedNamesFromNote
@@ -59,7 +55,6 @@ const compileMeetingNotes = (historyData: any): string => {
 
   let text = "";
 
-  // Section 1: Missed + Key Discussion Points
   if (missedNames.length > 0) {
     text += `**Team Members Who Missed Report (${missedNames.length}):**\n`;
     missedNames.forEach((name: string) => {
@@ -71,7 +66,6 @@ const compileMeetingNotes = (historyData: any): string => {
   text += `**Key Discussion Points:**\n`;
   text += keyDiscussionPoints ? `${keyDiscussionPoints}\n` : "\n";
 
-  // Section 2: Per-member reports
   const submittedReports = memberReports.filter(
     (r: any) => r.status !== "pending" || !!r.daily_report
   );
@@ -116,18 +110,13 @@ const compileMeetingNotes = (historyData: any): string => {
               kpis: rd.kpis || report.kpis || {},
             };
 
-      // Member name
       text += `${report.name}\n`;
-
-      // Attendance
       text += `**Attendance:** ${source.is_absent ? "✗ Absent" : "✓ Present"}\n`;
 
-      // Self Rating
       if (source.self_rating !== null && source.self_rating !== undefined) {
         text += `**Self Rating:** ${source.self_rating}/10\n`;
       }
 
-      // KPIs
       const kpiEntries = Object.entries(source.kpis).filter(
         ([, v]) => v !== null && v !== undefined && v !== "" && v !== "0"
       );
@@ -138,7 +127,6 @@ const compileMeetingNotes = (historyData: any): string => {
         });
       }
 
-      // Accomplishments
       if (source.accomplishments.length > 0) {
         text += `**Accomplishments:**\n`;
         source.accomplishments.forEach((item: any) => {
@@ -151,7 +139,6 @@ const compileMeetingNotes = (historyData: any): string => {
         });
       }
 
-      // Tasks & Issues
       if (source.tasks_issues.length > 0) {
         text += `**Tasks & Issues:**\n`;
         source.tasks_issues.forEach((item: any) => {
@@ -159,12 +146,10 @@ const compileMeetingNotes = (historyData: any): string => {
         });
       }
 
-      // Big Win
       if (source.big_win) {
         text += `**Big Win:** ${source.big_win}\n`;
       }
 
-      // Tomorrow's Plan
       if (source.tomorrow_plan.length > 0) {
         text += `**Tomorrow's Plan:**\n`;
         source.tomorrow_plan.forEach((item: any) => {
@@ -258,20 +243,11 @@ const HistoryTab = () => {
     setSelectedDate(d.toISOString().split("T")[0]);
   };
 
-  // ── Open Edit Modal ──
-  const handleOpenEditModal = () => {
-    setMeetingNotesText(compileMeetingNotes(historyData));
-    setIsEditModalOpen(true);
-  };
-
-  // ── Get meeting journal ID from member_reports ──
-  // API response mein top-level meeting_journal_id nahi hota.
-  // Meeting head ka submitted journal_id use karo (jo meeting_notes store karta hai).
+  // ── Get meeting journal ID ──
   const getMeetingJournalId = () => {
     const allReports: any[] = historyData?.member_reports || [];
     const meetingHeadUserId = historyData?.config?.meeting_head?.id;
 
-    // Priority 1: meeting head ka submitted journal
     const headReport = allReports.find(
       (r: any) =>
         r.user_id === meetingHeadUserId &&
@@ -280,18 +256,30 @@ const HistoryTab = () => {
     );
     if (headReport) return headReport.journal_id;
 
-    // Priority 2: jo bhi submitted member ke report_data mein meeting_notes ho
     const withNotes = allReports.find(
       (r: any) =>
         r.status === "submitted" && r.report_data?.meeting_notes && r.journal_id
     );
     if (withNotes) return withNotes.journal_id;
 
-    // Priority 3: koi bhi submitted member
     const anySubmitted = allReports.find(
       (r: any) => r.status === "submitted" && r.journal_id
     );
     return anySubmitted?.journal_id || null;
+  };
+
+  // ── Open Edit Modal — with toast guard ── ← CHANGED
+  const handleOpenEditModal = () => {
+    const journalId = getMeetingJournalId();
+    if (!journalId) {
+      toast.error("Save the meeting first to edit", {
+        description: "Go to Daily tab and click 'Save Meeting' before editing.",
+        duration: 4000,
+      });
+      return;
+    }
+    setMeetingNotesText(compileMeetingNotes(historyData));
+    setIsEditModalOpen(true);
   };
 
   // ── Save Notes via PATCH ──
@@ -299,12 +287,14 @@ const HistoryTab = () => {
     const meetingJournalId = getMeetingJournalId();
 
     if (!meetingJournalId) {
-      alert("Koi submitted journal nahi mila. Pehle meeting save karo.");
+      toast.error("Save the meeting first to edit", {
+        description: "Go to Daily tab and click 'Save Meeting' before editing.",
+        duration: 4000,
+      });
       return;
     }
     setIsSaving(true);
     try {
-      // Meeting head ka report_data use karo (jisme meeting_notes hota hai)
       const allReports: any[] = historyData?.member_reports || [];
       const meetingHeadUserId = historyData?.config?.meeting_head?.id;
       const headReport =
@@ -348,11 +338,11 @@ const HistoryTab = () => {
         }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      alert("Saved successfully!");
+      toast.success("Saved successfully!");
       setIsEditModalOpen(false);
       setRefreshKey((k) => k + 1);
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setIsSaving(false);
     }
@@ -363,7 +353,7 @@ const HistoryTab = () => {
     const meetingJournalId = getMeetingJournalId();
 
     if (!meetingJournalId) {
-      alert("Koi submitted journal nahi mila delete karne ke liye.");
+      toast.error("No saved meeting found to delete.");
       return;
     }
     setIsDeleting(true);
@@ -373,12 +363,12 @@ const HistoryTab = () => {
         { method: "DELETE", headers: getAuthHeaders() }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      alert("Deleted successfully!");
+      toast.success("Deleted successfully!");
       setShowDeleteConfirm(false);
       setHistoryData(null);
       setRefreshKey((k) => k + 1);
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setIsDeleting(false);
     }
@@ -402,7 +392,6 @@ const HistoryTab = () => {
 
   const memberReports: any[] = historyData?.member_reports || [];
 
-  // submitted = actually submitted + pending with draft (jo meeting mein include hue hain)
   const submittedCount =
     memberReports.filter(
       (r: any) =>
@@ -411,13 +400,12 @@ const HistoryTab = () => {
     historyData?.submitted ||
     0;
 
-  // missed = pure pending (koi draft bhi nahi)
   const missedCount =
     memberReports.filter((r: any) => r.status === "pending" && !r.daily_report)
       .length ||
     historyData?.missed ||
     0;
-  // submitted_at = meeting head's submitted_at
+
   const meetingHeadReport =
     memberReports.find(
       (r: any) =>
@@ -465,12 +453,15 @@ const HistoryTab = () => {
               disabled={isFetchingMeetings}
               className="appearance-none bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 pl-4 pr-9 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] shadow-sm disabled:opacity-60 transition-colors"
             >
-              <option value="">All Meetings</option>
-              {meetings.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name || m.label}
-                </option>
-              ))}
+              {isFetchingMeetings ? (
+                <option value="">Loading Meetings...</option>
+              ) : (
+                meetings.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name || m.label}
+                  </option>
+                ))
+              )}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
           </div>
@@ -545,7 +536,7 @@ const HistoryTab = () => {
       {/* ── Main Card ── */}
       {!isLoading && historyData && (
         <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden">
-          {/* Purple Header */}
+          {/* Header */}
           <div className="bg-[#CE7A5A] px-6 py-5 rounded-t-[24px]">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
@@ -600,6 +591,7 @@ const HistoryTab = () => {
                 <button className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all">
                   <Sparkles className="w-4 h-4" /> Generate AI
                 </button>
+                {/* ← CHANGED: onClick now calls handleOpenEditModal which has the toast guard */}
                 <button
                   onClick={handleOpenEditModal}
                   className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all"

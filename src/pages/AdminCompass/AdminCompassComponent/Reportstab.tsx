@@ -116,7 +116,7 @@ const fetchDynamicReport = async ({ meetingId, period }) => {
   const url = new URL(
     "https://fm-uat-api.lockated.com/user_journals/daily_meeting_report"
   );
-  if (meetingId && meetingId !== "all") {
+  if (meetingId) {
     url.searchParams.append("meeting_id", meetingId);
   }
   if (period) {
@@ -144,7 +144,7 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
   );
   url.searchParams.append("date", dateStr);
 
-  if (meetingId && meetingId !== "all") {
+  if (meetingId) {
     url.searchParams.append("meeting_id", meetingId);
   }
 
@@ -156,7 +156,6 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
     if (!res.ok) return "missed";
     const json = await res.json();
 
-    // Find the exact date inside the date_row array returned by API
     const dateRow = json.data?.date_row || [];
     const targetDateObj = dateRow.find((d) => d.full_date === dateStr);
 
@@ -165,7 +164,7 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
         ? "holiday"
         : targetDateObj.status;
     }
-    return "missed"; // Fallback if date not found
+    return "missed";
   } catch (err) {
     return "missed";
   }
@@ -175,7 +174,7 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
 const ReportsTab = () => {
   // Main States
   const [dynamicMeetings, setDynamicMeetings] = useState([]);
-  const [selectedMeetingId, setSelectedMeetingId] = useState("all");
+  const [selectedMeetingId, setSelectedMeetingId] = useState("");
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("last_7_days");
 
@@ -197,6 +196,11 @@ const ReportsTab = () => {
       try {
         const fetchedList = await fetchDynamicMeetings();
         setDynamicMeetings(fetchedList);
+
+        // ✅ First meeting ko default set karo
+        if (fetchedList.length > 0) {
+          setSelectedMeetingId(fetchedList[0].id);
+        }
       } catch (err) {
         console.error("Failed to load meetings", err);
       } finally {
@@ -228,13 +232,11 @@ const ReportsTab = () => {
   const loadCalendarWeek = async () => {
     setIsCalendarLoading(true);
     try {
-      // Base date is Today minus weekOffset (e.g. if offset is 0, base is Today)
       const baseDate = new Date();
       baseDate.setDate(baseDate.getDate() - weekOffset * 7);
 
       const daysToFetch = [];
 
-      // Generate exactly 7 days ending on baseDate (i = 6 down to 0)
       for (let i = 6; i >= 0; i--) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() - i);
@@ -255,10 +257,8 @@ const ReportsTab = () => {
         });
       }
 
-      // Fetch statuses for the 7 dates concurrently
       const weekResults = await Promise.all(
         daysToFetch.map(async (dayObj) => {
-          // Automatic holiday fallback for weekends to save API calls / logic
           if (dayObj.isWeekend) {
             return { ...dayObj, status: "holiday" };
           }
@@ -281,12 +281,16 @@ const ReportsTab = () => {
 
   // Re-fetch report when dropdowns change
   useEffect(() => {
-    loadReport();
+    if (selectedMeetingId) {
+      loadReport();
+    }
   }, [selectedMeetingId, selectedPeriod]);
 
   // Re-fetch calendar when offset or meeting changes
   useEffect(() => {
-    loadCalendarWeek();
+    if (selectedMeetingId) {
+      loadCalendarWeek();
+    }
   }, [weekOffset, selectedMeetingId]);
 
   const r = report;
@@ -295,7 +299,7 @@ const ReportsTab = () => {
 
   return (
     <div
-      className="space-y-6 pb-12  min-h-screen "
+      className="space-y-6 pb-12 min-h-screen"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* Header and Controls */}
@@ -310,9 +314,7 @@ const ReportsTab = () => {
                 Meeting Reports
               </h2>
               <p className="text-[12px] font-bold text-[#8C8580] uppercase tracking-widest mt-1">
-                {selectedMeetingId === "all"
-                  ? "All Meetings Data"
-                  : r?.config?.name || "Loading..."}
+                {r?.config?.name || "Loading..."}
               </p>
             </div>
           </div>
@@ -326,16 +328,13 @@ const ReportsTab = () => {
                 className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[160px] w-full disabled:opacity-50"
               >
                 {isFetchingMeetings ? (
-                  <option value="all">Loading Meetings...</option>
+                  <option value="">Loading Meetings...</option>
                 ) : (
-                  <>
-                    <option value="all">All Meetings</option>
-                    {dynamicMeetings.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </>
+                  dynamicMeetings.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))
                 )}
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
@@ -411,7 +410,7 @@ const ReportsTab = () => {
 
       {!isLoading && r && (
         <div className="space-y-6">
-          {/* Calendar Section (Read Only - Only Past 7 Days) */}
+          {/* Calendar Section */}
           <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
               <div className="flex items-center gap-3 text-[#1A1A1A] font-black text-lg">
@@ -445,7 +444,6 @@ const ReportsTab = () => {
               </div>
             </div>
 
-            {/* Visual feedback while calendar API fetches */}
             <div
               className={cn(
                 "flex gap-[18px] overflow-x-auto pb-4 pt-1 transition-opacity duration-300",
@@ -457,7 +455,6 @@ const ReportsTab = () => {
                 let bg, textColor, labelBg, labelColor, displayLabel;
                 const status = dateItem.status;
 
-                // STRICT COLORS based on requirement
                 if (status === "missed") {
                   bg = "#F34A4A";
                   textColor = "#FFFFFF";
@@ -481,7 +478,6 @@ const ReportsTab = () => {
                   labelColor = "#FFFFFF";
                   displayLabel = "Filled";
                 } else {
-                  // Fallback for anything else in the past (treated as missed/unknown)
                   bg = "#F3F4F6";
                   textColor = "#6B7280";
                   labelBg = "#E5E7EB";
@@ -528,7 +524,6 @@ const ReportsTab = () => {
               })}
             </div>
 
-            {/* UPDATED LEGEND - No 'Upcoming' */}
             <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-4">
               <div className="flex items-center gap-2.5">
                 <span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" />{" "}
@@ -545,7 +540,7 @@ const ReportsTab = () => {
             </div>
           </div>
 
-          {/* Dynamic KPI Metrics Cards */}
+          {/* KPI Metrics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
@@ -608,7 +603,7 @@ const ReportsTab = () => {
             ))}
           </div>
 
-          {/* Dynamic Charts */}
+          {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm p-6">
               <div className="flex items-center gap-3 mb-6 text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
@@ -761,7 +756,7 @@ const ReportsTab = () => {
             ))}
           </div>
 
-          {/* Dynamic Team KPIs Accordion */}
+          {/* Team KPIs Accordion */}
           <div className="bg-white rounded-[24px] border border-[#F0EBE8] shadow-sm overflow-hidden">
             <div
               className="p-6 flex items-center justify-between cursor-pointer bg-[#FCFAFA] hover:bg-gray-50 transition-colors"

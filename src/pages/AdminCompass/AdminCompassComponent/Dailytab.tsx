@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
+import { toast } from "sonner"; // ← ADDED
 
 // ── UI Components ──
 const BtnOutline = ({ children, onClick, className = "", icon: Icon }: any) => (
@@ -264,12 +265,12 @@ const DailyTab = () => {
         if (list && list.length > 0) {
           setSelectedMeetingId(list[0].id);
         } else {
-          setSelectedMeetingId("all");
+          setSelectedMeetingId(null);
         }
       })
       .catch((err) => {
         console.error(err);
-        setSelectedMeetingId("all");
+        setSelectedMeetingId(null);
       });
 
     fetchDynamicMembers().then(setMembersList).catch(console.error);
@@ -288,7 +289,6 @@ const DailyTab = () => {
       });
       if (json.success) {
         setDailyData(json.data);
-        // meeting_journal_id API mein nahi hota — meeting head ka submitted journal_id use karo
         const reports = json.data?.member_reports || [];
         const headId = json.data?.config?.meeting_head?.id;
         const resolvedJournalId =
@@ -330,20 +330,16 @@ const DailyTab = () => {
   }, [selectedMeetingId, activeDate]);
 
   // ── PUT /user_journals/:id ──
-  // Full payload as per API spec:
-  // { user_journal: { self_rating, status, report_data: { accomplishments, tasks_issues, big_win, tomorrow_plan, kpis } } }
   const updateJournal = async (
     report: any,
     patch: { self_rating?: number; tomorrow_plan_item?: string }
   ) => {
-    // Draft member ke liye journal_id daily_report.id mein hota hai
     const journalId = report.journal_id || report.daily_report?.id;
     if (!journalId) {
-      alert("Journal ID not found for this report.");
+      toast.error("Journal ID not found for this report."); // ← CHANGED
       return false;
     }
 
-    // Source data — draft ya submitted dono handle karo
     const isPending = report.status === "pending";
     const hasDraft = !!report.daily_report;
     const rd = report.report_data || {};
@@ -405,7 +401,7 @@ const DailyTab = () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return true;
     } catch (err: any) {
-      alert("Error updating journal: " + err.message);
+      toast.error("Error updating journal: " + err.message); // ← CHANGED
       return false;
     }
   };
@@ -474,7 +470,6 @@ const DailyTab = () => {
                 is_absent: rd.is_absent ?? false,
               };
 
-        // ── FIX: Deduplicated push ──
         source.accomplishments.forEach((a: any) =>
           pushUnique(allAccomplishments, { ...a, member: report.name }, [
             "title",
@@ -589,7 +584,6 @@ const DailyTab = () => {
           member: report.name,
           email: report.email,
           department: report.department || null,
-          // backend: draft = submitted, submitted = submitted
           status: isPending && hasDraft ? "submitted" : report.status,
           journal_id: report.journal_id || report.daily_report?.id || null,
           submitted_at:
@@ -608,9 +602,10 @@ const DailyTab = () => {
     return meetingNotesArray;
   };
 
+  // ── Save Meeting ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
-      alert("Please select a specific meeting.");
+      toast.error("Please select a specific meeting."); // ← CHANGED
       return;
     }
     setIsSavingMeeting(true);
@@ -673,11 +668,11 @@ const DailyTab = () => {
         }
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
-      alert("Saved successfully!");
+      toast.success("Meeting saved successfully!"); // ← CHANGED
       setMeetingNotes("");
       loadDailyData();
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error saving meeting: " + err.message); // ← CHANGED
     } finally {
       setIsSavingMeeting(false);
     }
@@ -686,7 +681,9 @@ const DailyTab = () => {
   // ── PATCH — Update existing meeting journal ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
-      alert("No saved meeting found to update. Please save first.");
+      toast.error("No saved meeting found to update.", {
+        description: "Please save the meeting first.",
+      }); // ← CHANGED
       return;
     }
     setIsSavingMeeting(true);
@@ -748,10 +745,10 @@ const DailyTab = () => {
         }
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
-      alert("Meeting updated successfully!");
+      toast.success("Meeting updated successfully!"); // ← CHANGED
       loadDailyData();
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error updating meeting: " + err.message); // ← CHANGED
     } finally {
       setIsSavingMeeting(false);
     }
@@ -776,12 +773,17 @@ const DailyTab = () => {
     );
   }
 
+  // ── Select All with toast ── ← CHANGED
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       const allIds = memberReports.map((r: any) => r.journal_id || r.user_id);
       setSelectedReports(allIds);
+      toast.success(
+        `${allIds.length} report${allIds.length !== 1 ? "s" : ""} selected`
+      );
     } else {
       setSelectedReports([]);
+      toast("Selection cleared", { icon: "✕" });
     }
   };
 
@@ -984,11 +986,10 @@ const DailyTab = () => {
             Meeting
           </span>
           <CustomSelect
-            value={selectedMeetingId || "all"}
+            value={selectedMeetingId || ""}
             onChange={setSelectedMeetingId}
             placeholder="Loading Meetings..."
             options={[
-              { value: "all", label: "All Meetings" },
               ...meetingsList.map((m: any) => ({ value: m.id, label: m.name })),
             ]}
           />
@@ -1209,7 +1210,6 @@ const DailyTab = () => {
                             }
                           : rd;
 
-                      // draft ke liye kpis null hota hai — default 0 show karo
                       const kpis =
                         report.kpis ||
                         rd.kpis ||
@@ -1632,6 +1632,7 @@ const DailyTab = () => {
                                               }
                                             );
                                             if (ok) {
+                                              toast.success("Added to tomorrow's plan!"); // ← ADDED
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
                                               loadDailyData();
@@ -1654,6 +1655,7 @@ const DailyTab = () => {
                                               }
                                             );
                                             if (ok) {
+                                              toast.success("Added to tomorrow's plan!"); // ← ADDED
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
                                               loadDailyData();
@@ -1740,11 +1742,10 @@ const DailyTab = () => {
                                         onClick={async () => {
                                           const ok = await updateJournal(
                                             report,
-                                            {
-                                              self_rating: feedbackRating,
-                                            }
+                                            { self_rating: feedbackRating }
                                           );
                                           if (ok) {
+                                            toast.success("Feedback added!"); // ← ADDED
                                             setFeedbackOpenId(null);
                                             setFeedbackRating(0);
                                             setFeedbackMessage("");

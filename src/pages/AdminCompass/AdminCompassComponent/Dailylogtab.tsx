@@ -22,10 +22,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchDailyLogsFromAPI, getBaseUrl, getAuthHeaders } from "./Shared";
-import { toast, Toaster } from "sonner"; // Added sonner import
+import { toast, Toaster } from "sonner";
 
 // ─────────────────────────────────────────────
-// Custom Themed Select (replaces native <select>)
+// Custom Themed Select
 // ─────────────────────────────────────────────
 const CustomSelect = ({
   value,
@@ -52,7 +52,6 @@ const CustomSelect = ({
       className="relative shrink-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* Trigger Button */}
       <button
         type="button"
         disabled={disabled}
@@ -82,7 +81,6 @@ const CustomSelect = ({
         />
       </button>
 
-      {/* Dropdown Panel */}
       {open && !disabled && (
         <div
           className="absolute top-full left-0 mt-1.5 z-[999] bg-white border border-[#F0EBE8] rounded-[20px] overflow-hidden min-w-full"
@@ -111,7 +109,6 @@ const CustomSelect = ({
                       : "text-[#1A1A1A] hover:bg-[#FFF5F5] hover:text-[#D37E5F]"
                   )}
                 >
-                  {/* Dot indicator */}
                   <span
                     className={cn(
                       "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
@@ -121,7 +118,6 @@ const CustomSelect = ({
                     )}
                   />
                   <span className="truncate flex-1">{opt.label}</span>
-                  {/* Checkmark for selected */}
                   {isSelected && (
                     <span className="ml-auto shrink-0">
                       <svg
@@ -150,7 +146,7 @@ const CustomSelect = ({
 };
 
 // ─────────────────────────────────────────────
-// Departments API
+// Meetings & Departments API
 // ─────────────────────────────────────────────
 const fetchMeetingsAPI = async () => {
   const res = await fetch(`${getBaseUrl()}/daily_meeting_configs`, {
@@ -801,7 +797,7 @@ const DailyLogTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedDeptId, setSelectedDeptId] = useState("");
-  const [selectedMeetingFilter, setSelectedMeetingFilter] = useState("1");
+  const [selectedMeetingFilter, setSelectedMeetingFilter] = useState("");
   const [isGrouped, setIsGrouped] = useState(false);
 
   const [departments, setDepartments] = useState([]);
@@ -827,6 +823,7 @@ const DailyLogTab = () => {
     try {
       const data = await fetchMeetingsAPI();
       setMeetings(data);
+      // ✅ Pehli meeting ko default set karo
       if (data.length > 0) setSelectedMeetingFilter(data[0].id);
     } catch (err) {
       console.error(err);
@@ -854,6 +851,7 @@ const DailyLogTab = () => {
   }, [searchQuery]);
 
   const loadData = useCallback(async () => {
+    if (!selectedMeetingFilter) return;
     setIsLoading(true);
     setApiError(null);
     try {
@@ -1053,7 +1051,6 @@ const DailyLogTab = () => {
       className="pb-12 min-h-screen pt-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* Configure Sonner Toaster to match SystemAndSOP exactly */}
       <Toaster
         position="bottom-right"
         toastOptions={{
@@ -1148,7 +1145,7 @@ const DailyLogTab = () => {
             )}
           </div>
 
-          {/* Department CustomSelect */}
+          {/* Department CustomSelect — keeps "All Departments" option */}
           <CustomSelect
             value={selectedDeptId}
             onChange={setSelectedDeptId}
@@ -1160,16 +1157,13 @@ const DailyLogTab = () => {
             ]}
           />
 
-          {/* Meeting CustomSelect */}
+          {/* ✅ Meeting CustomSelect — "All Meetings" option removed */}
           <CustomSelect
             value={selectedMeetingFilter}
             onChange={setSelectedMeetingFilter}
             disabled={isFetchingMeetings}
             placeholder="Meeting"
-            options={[
-              { value: "", label: "All Meetings" },
-              ...meetings.map((m) => ({ value: m.id, label: m.label })),
-            ]}
+            options={meetings.map((m) => ({ value: m.id, label: m.label }))}
           />
 
           {/* Group toggle */}
