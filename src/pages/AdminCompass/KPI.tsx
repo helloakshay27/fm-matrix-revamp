@@ -201,11 +201,6 @@ const getKpiUnitsApiHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
-const getKpiUnitsQueryUrls = (baseUrl: string) => [
-  `${baseUrl}/extra_fields?q[group_name_in][]=${KPI_UNITS_GROUP_NAME}&include_grouped=true`,
-  `${baseUrl}/extra_fields?group_name=${KPI_UNITS_GROUP_NAME}`,
-];
-
 const withNoCacheTs = (url: string): string => {
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}_ts=${Date.now()}`;
@@ -365,51 +360,6 @@ const extractUnitValues = (json: unknown): string[] => {
   return [];
 };
 
-const fetchKpiUnitsConfiguration = async (): Promise<string[]> => {
-  let lastError: unknown = null;
-
-  const baseCandidates = getApiBaseCandidates();
-
-  for (const baseUrl of baseCandidates) {
-    for (const url of getKpiUnitsQueryUrls(baseUrl)) {
-      try {
-        const requestUrl = withNoCacheTs(url);
-        console.warn("[KPI Units] GET extra_fields:", requestUrl);
-
-        const response = await fetch(requestUrl, {
-          method: "GET",
-          headers: getKpiUnitsApiHeaders(),
-          cache: "no-store",
-        });
-
-        const rawText = await response.text();
-        console.warn("[KPI Units] GET status:", response.status);
-        console.warn("[KPI Units] GET raw (first 600):", rawText.slice(0, 600));
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
-        }
-
-        let json: unknown = [];
-        try {
-          json = rawText ? JSON.parse(rawText) : [];
-        } catch {
-          json = [];
-        }
-
-        const extracted = extractUnitValues(json);
-        if (extracted.length > 0) return extracted;
-      } catch (error) {
-        console.error("[KPI Units] GET failed:", error);
-        lastError = error;
-      }
-    }
-  }
-
-  if (lastError) throw lastError;
-  return [];
-};
-
 const upsertKpiUnitsConfiguration = async (values: string[]): Promise<string[]> => {
   const payload = {
     extra_field: {
@@ -556,99 +506,6 @@ const createKpiUnitConfiguration = async (unit: string): Promise<number | null> 
   }
 
   throw lastError ?? new Error("Failed to create KPI unit");
-};
-
-const readKpiUnitTextsFromRecord = (record: RawExtraField): string[] => {
-  const fromValues = Array.isArray(record.values)
-    ? record.values.filter(
-        (v): v is string => typeof v === "string" && v.trim().length > 0
-      )
-    : [];
-  if (fromValues.length > 0) return fromValues.map((v) => v.trim());
-
-  const fieldName = record.field_name ?? record.name;
-  if (typeof fieldName === "string" && fieldName.trim().length > 0) {
-    return [fieldName.trim()];
-  }
-
-  if (typeof record.field_value === "string" && record.field_value.trim().length > 0) {
-    const raw = record.field_value.trim();
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed)) {
-        return parsed.filter(
-          (v): v is string => typeof v === "string" && v.trim().length > 0
-        );
-      }
-    } catch {
-      // field_value may be plain text; use it as-is.
-    }
-    return [raw];
-  }
-
-  return [];
-};
-
-const fetchKpiUnitIdMap = async (): Promise<Record<string, number>> => {
-  let lastError: unknown = null;
-
-  for (const baseUrl of getApiBaseCandidates()) {
-    try {
-      const requestUrl = withNoCacheTs(
-        `${baseUrl}/extra_fields?group_name=${KPI_UNITS_GROUP_NAME}`
-      );
-      console.warn("[KPI Units] GET id map:", requestUrl);
-
-      const response = await fetch(requestUrl, {
-        method: "GET",
-        headers: getKpiUnitsApiHeaders(),
-        cache: "no-store",
-      });
-
-      const rawText = await response.text();
-      console.warn("[KPI Units] GET id map status:", response.status);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
-      }
-
-      let json: unknown = [];
-      try {
-        json = rawText ? JSON.parse(rawText) : [];
-      } catch {
-        json = [];
-      }
-
-      const records: RawExtraField[] = Array.isArray(json)
-        ? (json as RawExtraField[])
-        : Array.isArray((json as { extra_fields?: unknown }).extra_fields)
-          ? ((json as { extra_fields: RawExtraField[] }).extra_fields ?? [])
-          : (json as { extra_field?: RawExtraField }).extra_field
-            ? [(json as { extra_field: RawExtraField }).extra_field]
-            : [];
-
-      const idMap: Record<string, number> = {};
-      records.forEach((record) => {
-        if (record.group_name !== KPI_UNITS_GROUP_NAME) return;
-        const idValue = record.id ?? record.extra_field_id;
-        const id = Number(idValue);
-        if (!Number.isFinite(id)) return;
-
-        readKpiUnitTextsFromRecord(record).forEach((unitText) => {
-          const key = unitText.trim().toLowerCase();
-          if (key) idMap[key] = id;
-        });
-      });
-
-      return idMap;
-    } catch (error) {
-      console.error("[KPI Units] GET id map failed:", error);
-      lastError = error;
-    }
-  }
-
-  if (lastError) throw lastError;
-  return {};
 };
 
 const deleteKpiUnitConfiguration = async (unitId: number): Promise<void> => {
@@ -1218,26 +1075,6 @@ const KPI = () => {
     loadDepartments();
   }, []);
 
-  useEffect(() => {
-    const loadKpiUnits = async () => {
-      try {
-        const [fromApi, idMap] = await Promise.all([
-          fetchKpiUnitsConfiguration(),
-          fetchKpiUnitIdMap(),
-        ]);
-        setKpiUnits(fromApi.length > 0 ? fromApi : DEFAULT_KPI_UNITS);
-        setKpiUnitIdMap(idMap);
-      } catch (error) {
-        const msg = getApiErrorMessage(error);
-        console.error("Failed to load KPI units configuration:", msg, error);
-        setKpiUnits(DEFAULT_KPI_UNITS);
-        setKpiUnitIdMap({});
-      }
-    };
-
-    loadKpiUnits();
-  }, []);
-
   const handleSaveKpiUnits = async (units: string[]) => {
     const previousCount = kpiUnits.length;
     const nextCount = units.length;
@@ -1298,15 +1135,20 @@ const KPI = () => {
 
     const targetKey = target.toLowerCase();
     const unitId = kpiUnitIdMap[targetKey];
-    if (!unitId) {
-      toast.error("Unable to find unit ID. Please refresh and try again.");
-      return;
-    }
+    const nextUnits = kpiUnits.filter(
+      (u) => u.toLowerCase() !== target.toLowerCase()
+    );
 
     setIsSavingKpiUnits(true);
     try {
-      await deleteKpiUnitConfiguration(unitId);
-      setKpiUnits((prev) => prev.filter((u) => u.toLowerCase() !== target.toLowerCase()));
+      if (unitId) {
+        await deleteKpiUnitConfiguration(unitId);
+        setKpiUnits(nextUnits);
+      } else {
+        const savedUnits = await upsertKpiUnitsConfiguration(nextUnits);
+        setKpiUnits(savedUnits.length > 0 ? savedUnits : nextUnits);
+      }
+
       setKpiUnitIdMap((prev) => {
         const nextMap = { ...prev };
         delete nextMap[targetKey];
