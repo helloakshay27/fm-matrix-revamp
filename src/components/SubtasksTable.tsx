@@ -330,6 +330,44 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
         </Button>
     )
 
+    const renderChildrenRows = (children: any[], parentId: string) => {
+        return (
+            <>
+                {children.map((subtask, idx) => (
+                    <tr
+                        key={`${parentId}-subtask-${idx}`}
+                        className="bg-blue-50 hover:bg-blue-100 border-b border-gray-200"
+                    >
+                        {/* Collapse column (empty for subtasks) */}
+                        <td className="p-4 text-center w-12 min-w-12"></td>
+
+                        {/* Indented actions cell */}
+                        <td className="p-4 text-center w-16 min-w-16">
+                            <div className="flex justify-center items-center gap-2 ml-4">
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="p-1"
+                                    onClick={() => handleView(subtask.id)}
+                                    title="View Subtask Details"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </td>
+
+                        {/* Subtask data in same columns */}
+                        {subtaskColumns.map((column) => (
+                            <td key={`${parentId}-subtask-${idx}-${column.key}`} className="p-4 text-left min-w-32">
+                                {renderSubtaskCell(subtask, column.key)}
+                            </td>
+                        ))}
+                    </tr>
+                ))}
+            </>
+        );
+    };
+
     const renderEditableCell = (columnKey: string, value: any, onChange: (val: any) => void) => {
         if (columnKey === "responsible_person") {
             return (
@@ -426,6 +464,9 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
                 // canAddRow={true}
                 readonlyColumns={["id", "status", "duration"]}
                 renderEditableCell={renderEditableCell}
+                collapsible={true}
+                getChildrenKey={() => "sub_tasks_managements"}
+                renderChildrenRows={renderChildrenRows}
             />
         </div>
     )
