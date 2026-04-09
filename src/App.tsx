@@ -4434,12 +4434,12 @@ function App() {
                           />
 
                           <Route
-  path="/report-analytics"
-  element={<ReportAnalytics />}/>
+                            path="/report-analytics"
+                            element={<ReportAnalytics />} />
 
-  <Route
-  path="/dashboard-UI"
-  element={<DashboardUI/>}/>
+                          {/* <Route
+                            path="/dashboard-UI"
+                            element={<DashboardUI />} /> */}
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
@@ -4520,7 +4520,7 @@ function App() {
                           />
                           <Route
                             path="/vas/project-dashboard"
-                            element={<SupersetDashboard />}
+                            element={<DashboardUI />}
                           />
 
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
