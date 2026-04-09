@@ -51,6 +51,14 @@ import { apiClient } from '@/utils/apiClient';
 import { ENDPOINTS } from '@/config/apiConfig';
 import { getUser } from '@/utils/auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { subDays } from 'date-fns';
 
 /**
  * Page shell + surfaces match `SystemAndSOP.tsx`:
@@ -132,35 +140,20 @@ const WeeklyReports = () => {
     );
 
     const handleAchievementFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const list = e.target.files;
-        if (!list?.length) return;
-        const added: { name: string; size: number }[] = [];
-        for (let i = 0; i < list.length; i++) {
-            const f = list[i];
-            const isImage = f.type.startsWith('image/');
-            const maxBytes = isImage ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
-            if (f.size > maxBytes) {
-                toast.error(
-                    `${f.name} is too large (max ${isImage ? '2MB' : '5MB'} for ${isImage ? 'images' : 'other files'})`
-                );
-                continue;
-            }
-            added.push({ name: f.name, size: f.size });
-        }
-        if (!added.length) {
+        const newFiles = Array.from(e.target.files || []);
+        const currentCount = selectedFileNames.length;
+        
+        if (currentCount + newFiles.length > 5) {
+            toast.error(`You can only upload a maximum of 5 files. You already have ${currentCount} selected.`);
             e.target.value = '';
             return;
         }
-        setAchievementUploads((prev) => {
-            const merged = [...prev, ...added];
-            const next = merged.slice(0, 5);
-            if (merged.length > next.length) {
-                toast.message('Maximum 5 files — extra files were not added');
-            }
-            return next;
-        });
-        toast.success(added.length === 1 ? `Added ${added[0].name}` : `Added ${added.length} file(s)`);
-        e.target.value = '';
+
+        const newNames = newFiles.map(f => f.name);
+        setSelectedFileNames(prev => [...prev, ...newNames]);
+        setUploadedFilesCount(prev => prev + newFiles.length);
+        toast.success(`Added ${newFiles.length} file(s)`);
+        e.target.value = ''; // Reset input to allow selecting same file again if removed
     };
 
     const [wins, setWins] = React.useState<string[]>([]);
@@ -174,6 +167,12 @@ const WeeklyReports = () => {
     const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
     const [history, setHistory] = React.useState<any[]>([]);
     const [editingId, setEditingId] = React.useState<number | null>(null);
+    const [showDailyWinsDialog, setShowDailyWinsDialog] = React.useState(false);
+    const [dailyReports, setDailyReports] = React.useState<any[]>([]);
+    const [isLoadingDailyReports, setIsLoadingDailyReports] = React.useState(false);
+    const [selectedDailyWins, setSelectedDailyWins] = React.useState<string[]>([]);
+    const [uploadedFilesCount, setUploadedFilesCount] = React.useState(0);
+    const [selectedFileNames, setSelectedFileNames] = React.useState<string[]>([]);
     const currentUser = getUser();
 
     const refDate = React.useMemo(() => new Date(), []);
@@ -315,34 +314,36 @@ const WeeklyReports = () => {
     };
 
     const handleImportDailyWins = async () => {
+        setIsLoadingDailyReports(true);
+        setShowDailyWinsDialog(true);
         try {
             const response = await apiClient.get(`${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=daily`);
-            const dailyReports = response.data || [];
-            if (dailyReports.length === 0) {
-                toast.info('No daily reports found to import from');
-                return;
-            }
+            const allDaily = response.data || [];
             
-            // Collect all wins/accomplishments from daily reports of the current week
-            const currentWeekDailyWins: string[] = [];
-            dailyReports.forEach((report: any) => {
-                const reportWins = report.report_data?.achievements 
-                    || report.report_data?.accomplishments?.map((i: any) => i.title)
-                    || [];
-                currentWeekDailyWins.push(...reportWins);
+            // Filter reports from the current selected week
+            const filtered = allDaily.filter((report: any) => {
+                const reportDate = new Date(report.start_date || report.created_at);
+                return reportDate >= weekStart && reportDate <= weekEnd;
             });
 
-            if (currentWeekDailyWins.length === 0) {
-                toast.info('No wins found in daily reports');
-                return;
-            }
-
-            setWins(prev => [...prev, ...currentWeekDailyWins]);
-            toast.success(`Imported ${currentWeekDailyWins.length} daily wins`);
+            setDailyReports(filtered);
         } catch (error) {
-            console.error('Failed to import daily wins:', error);
-            toast.error('Failed to import daily wins');
+            console.error('Failed to fetch daily reports:', error);
+            toast.error('Failed to load daily reports');
+        } finally {
+            setIsLoadingDailyReports(false);
         }
+    };
+
+    const confirmImportDailyWins = () => {
+        if (selectedDailyWins.length === 0) {
+            toast.info('No wins selected');
+            return;
+        }
+        setWins(prev => [...prev, ...selectedDailyWins]);
+        toast.success(`Imported ${selectedDailyWins.length} daily wins`);
+        setShowDailyWinsDialog(false);
+        setSelectedDailyWins([]);
     };
 
     const handleAddPlan = (day: string) => {
@@ -407,28 +408,35 @@ const WeeklyReports = () => {
         setIsSubmitting(true);
         try {
             const payload = {
-                user_id: currentUser.id,
-                journal_type: 'weekly',
-                start_date: format(weekStart, 'yyyy-MM-dd'),
-                end_date: format(weekEnd, 'yyyy-MM-dd'),
-                description: remarksText,
-                report_data: {
-                    kpi: 'weekly value',
-                    achievements: wins.filter(w => w.trim() !== ''),
-                    tasks: Object.values(dayPlans).flat().filter(t => t.trim() !== ''),
-                    past_kpis: [], // Placeholder for now
-                    total_score: 0,
-                    remarks: remarksText,
-                    remark_type: activeRemarkChip,
-                    sections: {
-                        daily_scores: [0, 0, 0, 0, 0],
-                        bonus: 0,
-                        self_rating: 0,
-                        is_absent: false
-                    },
-                    details: {
-                        self_rating: 0,
-                        is_absent: false
+                user_journal: {
+                    user_id: currentUser.id,
+                    journal_type: 'weekly',
+                    start_date: format(weekStart, 'yyyy-MM-dd'),
+                    end_date: format(weekEnd, 'yyyy-MM-dd'),
+                    week_number: getISOWeek(weekStart),
+                    year: weekStart.getFullYear(),
+                    status: 'submitted',
+                    description: remarksText,
+                    self_rating: 0,
+                    is_absent: false,
+                    report_data: {
+                        kpi: 'weekly value',
+                        achievements: wins.filter(w => w.trim() !== ''),
+                        tasks: Object.values(dayPlans).flat().filter(t => t.trim() !== ''),
+                        past_kpis: [], // Placeholder for now
+                        total_score: 0,
+                        remarks: remarksText,
+                        remark_type: activeRemarkChip,
+                        sections: {
+                            daily_scores: [0, 0, 0, 0, 0],
+                            bonus: 0,
+                            self_rating: 0,
+                            is_absent: false
+                        },
+                        details: {
+                            self_rating: 0,
+                            is_absent: false
+                        }
                     }
                 }
             };
@@ -540,39 +548,41 @@ const WeeklyReports = () => {
                                 {wins.map((win, index) => (
                                     <div
                                         key={index}
-                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-[#fef6f4]/70 p-4"
+                                        className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                     >
-                                        <Checkbox className="mt-1 rounded border-[#DA7756] data-[state=checked]:bg-[#DA7756]" />
-                                        <Star className="mt-1 h-4 w-4 cursor-pointer text-[#DA7756]/35 hover:text-[#DA7756]" />
+                                        <Checkbox 
+                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500" 
+                                            defaultChecked 
+                                        />
+                                        <Star className="mt-1 h-4 w-4 cursor-pointer text-neutral-300 hover:text-yellow-400 transition-colors" />
                                         <Textarea
                                             value={win}
                                             onChange={(e) => handleWinChange(index, e.target.value)}
                                             placeholder="Describe your win…"
-                                            className="min-h-[60px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
+                                            className="min-h-[40px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-neutral-700 placeholder:text-neutral-400 focus-visible:ring-0"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveWin(index)}
-                                            className="rounded-md p-1 text-[#DA7756]/55 hover:bg-[#fef6f4] hover:text-[#DA7756]"
+                                            className="rounded-md p-1 text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                                         >
                                             <X className="h-4 w-4" />
                                         </button>
                                     </div>
                                 ))}
                                 <div className="flex flex-col gap-3 sm:flex-row">
-                                    <Select defaultValue="none" onValueChange={(val) => val === 'import' && handleImportDailyWins()}>
-                                        <SelectTrigger className="h-12 flex-1 rounded-xl border-dashed border-2 border-[#DA7756]/35 bg-[#fef6f4] text-[#DA7756] hover:bg-[#fdf0eb] focus:ring-2 focus:ring-[#DA7756]/20 focus:border-[#DA7756]">
-                                            <SelectValue placeholder="Import Daily Wins…" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Import Daily Wins…</SelectItem>
-                                            <SelectItem value="import">Import from Daily Reports</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <button
+                                        type="button"
+                                        onClick={handleImportDailyWins}
+                                        className="h-12 flex-1 rounded-xl border-2 border-dashed border-blue-200 bg-white px-4 py-2 text-sm font-medium text-neutral-600 transition-all hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center gap-2"
+                                    >
+                                        <Plus className="h-4 w-4 text-neutral-400" />
+                                        Import Daily Wins (last week&apos;s)
+                                    </button>
                                     <Button
                                         type="button"
                                         onClick={handleAddWin}
-                                        className={cn('h-12 flex-1 rounded-xl', btnPrimary)}
+                                        className={cn('h-12 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold')}
                                     >
                                         <Plus className="mr-2 h-4 w-4" />
                                         Add Win
@@ -581,48 +591,55 @@ const WeeklyReports = () => {
                                 <Button
                                     type="button"
                                     onClick={handleCarryForward}
-                                    className={cn('h-12 w-full rounded-xl border text-sm font-semibold uppercase tracking-wide', btnOutline)}
+                                    className={cn('h-12 w-full rounded-xl bg-[#e65100] hover:bg-[#d84315] text-white font-bold tracking-wide')}
                                 >
                                     Carry Forward Uncompleted
                                 </Button>
-                                <div className="rounded-xl border-2 border-dashed border-[#DA7756]/25 bg-[#fef6f4]/65 px-6 py-8 text-center">
-                                    <input
-                                        ref={achievementFileInputRef}
-                                        type="file"
-                                        className="sr-only"
-                                        id="weekly-achievement-files"
-                                        multiple
-                                        accept="image/*,.pdf,.doc,.docx,application/pdf"
-                                        onChange={handleAchievementFiles}
-                                    />
-                                    <Upload className="mx-auto mb-2 h-8 w-8 text-[#DA7756]/70" aria-hidden />
-                                    <p className="mb-1 text-xs text-neutral-500">
-                                        Images up to 2MB · Other files up to 5MB
-                                    </p>
-                                    <p className="mb-3 text-xs font-medium text-neutral-600">
-                                        {achievementUploads.length}/5 files attached
-                                    </p>
-                                    {achievementUploads.length > 0 && (
-                                        <ul className="mb-3 max-h-24 space-y-1 overflow-y-auto text-left text-xs text-neutral-700">
-                                            {achievementUploads.map((f, i) => (
-                                                <li
-                                                    key={`${f.name}-${f.size}-${i}`}
-                                                    className="truncate"
-                                                >
-                                                    {f.name}
-                                                </li>
+                                <div className="space-y-4 pt-4 border-t border-neutral-100">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-medium">
+                                            <Info className="h-3.5 w-3.5 text-emerald-600" />
+                                            <span>Limits: Images 2MB, Others 5MB</span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-[10px] font-bold text-neutral-400">{uploadedFilesCount}/5</span>
+                                            <input
+                                                ref={achievementFileInputRef}
+                                                type="file"
+                                                className="sr-only"
+                                                id="weekly-achievement-files"
+                                                multiple
+                                                accept="image/*,.pdf,.doc,.docx,application/pdf"
+                                                onChange={handleAchievementFiles}
+                                            />
+                                            <Button
+                                                type="button"
+                                                onClick={() => achievementFileInputRef.current?.click()}
+                                                className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-6 flex items-center gap-2 text-xs"
+                                            >
+                                                <Upload className="h-3.5 w-3.5" />
+                                                File Upload
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    
+                                    {selectedFileNames.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedFileNames.map((name, i) => (
+                                                <Badge key={i} variant="secondary" className="bg-neutral-100 text-[10px] text-neutral-600 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                                    <span className="truncate max-w-[150px]">{name}</span>
+                                                    <X 
+                                                        className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                                                        onClick={() => {
+                                                            const next = selectedFileNames.filter((_, idx) => idx !== i);
+                                                            setSelectedFileNames(next);
+                                                            setUploadedFilesCount(next.length);
+                                                        }}
+                                                    />
+                                                </Badge>
                                             ))}
-                                        </ul>
+                                        </div>
                                     )}
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        className={cn('rounded-lg', btnPrimary)}
-                                        onClick={() => achievementFileInputRef.current?.click()}
-                                    >
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        File Upload
-                                    </Button>
                                 </div>
                             </div>
                         </Card>
@@ -1186,6 +1203,91 @@ const WeeklyReports = () => {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            <Dialog open={showDailyWinsDialog} onOpenChange={setShowDailyWinsDialog}>
+                <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden font-poppins">
+                    <DialogHeader className="p-6 pb-2">
+                        <DialogTitle className="text-xl font-bold text-neutral-900">
+                            Select Daily Wins from Past Week
+                        </DialogTitle>
+                        <p className="text-sm text-neutral-500 mt-1">
+                            Choose accomplishments from your daily reports ({format(subDays(weekStart, 7), 'MMM d')} to {format(subDays(weekEnd, 7), 'MMM d')}) to add to this week&apos;s achievements.
+                        </p>
+                    </DialogHeader>
+
+                    <div className="max-h-[400px] overflow-y-auto p-6 pt-2 space-y-6">
+                        {isLoadingDailyReports ? (
+                            <div className="space-y-4 py-4">
+                                <Skeleton className="h-6 w-1/3" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        ) : dailyReports.length > 0 ? (
+                            dailyReports.map((report: any) => {
+                                const reportDate = new Date(report.start_date || report.created_at);
+                                const reportWins = report.report_data?.achievements 
+                                    || report.report_data?.accomplishments?.items?.map((i: any) => i.title || i)
+                                    || (Array.isArray(report.report_data?.accomplishments) ? report.report_data.accomplishments.map((i: any) => i.title || i) : [])
+                                    || [];
+                                
+                                return reportWins.length > 0 ? (
+                                    <div key={report.id} className="space-y-3">
+                                        <h4 className="text-sm font-bold text-neutral-700">
+                                            {format(reportDate, 'EEE, MMM d')}
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {reportWins.map((win: string, i: number) => (
+                                                <div key={i} className="flex items-center gap-3 p-1">
+                                                    <Checkbox 
+                                                        id={`win-${report.id}-${i}`}
+                                                        checked={selectedDailyWins.includes(win)}
+                                                        onCheckedChange={(checked) => {
+                                                            if (checked) {
+                                                                setSelectedDailyWins(prev => [...prev, win]);
+                                                            } else {
+                                                                setSelectedDailyWins(prev => prev.filter(w => w !== win));
+                                                            }
+                                                        }}
+                                                        className="rounded border-neutral-300"
+                                                    />
+                                                    <label 
+                                                        htmlFor={`win-${report.id}-${i}`}
+                                                        className="text-sm text-neutral-700 cursor-pointer"
+                                                    >
+                                                        {win}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="h-px bg-neutral-100 mt-4 mx-[-24px]" />
+                                    </div>
+                                ) : null;
+                            })
+                        ) : (
+                            <div className="py-8 text-center text-neutral-500 text-sm italic">
+                                No daily reports with wins found for the past week.
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter className="p-6 pt-2 gap-3 sm:justify-end">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setShowDailyWinsDialog(false)}
+                            className="rounded-xl border-neutral-200 text-neutral-700 font-bold px-6"
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={confirmImportDailyWins}
+                            disabled={selectedDailyWins.length === 0}
+                            className="rounded-xl bg-neutral-400 hover:bg-neutral-500 text-white font-bold px-6"
+                        >
+                            Add Selected
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
