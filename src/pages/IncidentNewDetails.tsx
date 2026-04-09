@@ -943,7 +943,7 @@ export const IncidentNewDetails = () => {
                         injuries.push({
                             injury_type: person.injuryType || '',
                             injury_number: person.injuryNumber || '',
-                            who_got_injured_id: person.type === 'internal' 
+                            who_got_injured_id: person.type === 'internal'
                                 ? (person.who_got_injured_id ? Number(person.who_got_injured_id) : null)
                                 : null,                    // ← FIXED: Use who_got_injured_id for internal
                             name: person.name || '',
@@ -1720,6 +1720,22 @@ export const IncidentNewDetails = () => {
                                 <label className="text-xs font-semibold text-gray-600 uppercase mb-2">Reported On</label>
                                 <p className="text-sm text-gray-900 font-medium">
                                     {incident?.created_at ? new Date(incident.created_at).toLocaleString() : '-'}
+                                </p>
+                            </div>
+                            <div className='flex flex-col'>
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">
+                                    Incident Over Time
+                                </label>
+                                <p className="text-sm text-gray-900 font-medium">
+                                    {incident?.incident_over_time
+                                        ? new Date(incident.incident_over_time).toLocaleString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })
+                                        : '-'}
                                 </p>
                             </div>
                         </div>
