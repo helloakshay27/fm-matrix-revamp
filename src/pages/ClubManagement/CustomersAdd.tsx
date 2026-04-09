@@ -474,7 +474,13 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                             value={form.gstin}
                             onChange={handleChange}
                             fullWidth
-                            inputProps={{ maxLength: 15 }}
+                            error={!!form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)}
+                            helperText={
+                                form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)
+                                    ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
+                                    : ''
+                            }
+                            inputProps={{ maxLength: 15, style: { textTransform: 'uppercase' } }}
                             placeholder="Enter 15 digit GSTIN"
                         />
 
@@ -529,7 +535,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             )}
             {/* <TextField label="PAN" fullWidth /> */}
             <TextField
-                label="PAN"
+                label="PAN NO"
                 name="pan"
                 value={form.pan}
                 onChange={handleChange}
@@ -1152,6 +1158,7 @@ const CustomersAdd = () => {
     const alphabetsOnly = (v: string) => /^[a-zA-Z\s]*$/.test(v);
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
     const phoneClean = (v: string) => v.replace(/[^0-9+]/g, '');
 
     const handleChange = (e: any) => {
@@ -1174,6 +1181,12 @@ const CustomersAdd = () => {
             value = value.toUpperCase();
             // Allow max 10 chars
             if (value.length > 10) return;
+        }
+
+        // ── GSTIN: auto-uppercase ──
+        if (name === 'gstin') {
+            value = value.toUpperCase();
+            if (value.length > 15) return;
         }
 
         // ── Opening Balance: numeric only, allow up to 2 decimal places ──
@@ -1260,6 +1273,9 @@ const CustomersAdd = () => {
         }
         if (form.pan && !panRegex.test(form.pan)) {
             submitErrors.pan = 'PAN must follow format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
+        }
+        if (form.gstin && !gstinRegex.test(form.gstin)) {
+            submitErrors.gstin = 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5';
         }
 
         if (Object.keys(submitErrors).length > 0) {
