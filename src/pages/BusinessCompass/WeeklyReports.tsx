@@ -178,11 +178,11 @@ const WeeklyReports = () => {
 
     const refDate = React.useMemo(() => new Date(), []);
     const weekStart = React.useMemo(
-        () => startOfWeek(refDate, { weekStartsOn: 0 }),
+        () => startOfWeek(refDate, { weekStartsOn: 1 }),
         [refDate]
     );
     const weekEnd = React.useMemo(
-        () => endOfWeek(refDate, { weekStartsOn: 0 }),
+        () => endOfWeek(refDate, { weekStartsOn: 1 }),
         [refDate]
     );
     const monthTitle = format(refDate, 'MMM yyyy');
@@ -207,7 +207,7 @@ const WeeklyReports = () => {
                 'bg-[#f6f4ee]',
                 'bg-white/80',
             ];
-            const canAdd = i > 0 && i < 6;
+            const canAdd = i < 5;
             labels.push({
                 key,
                 short: format(d, 'EEE d MMM'),
