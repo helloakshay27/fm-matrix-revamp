@@ -378,9 +378,8 @@ const WeeklyReports = () => {
         setRemarksInteracted(true);
     };
 
-    /** Selects the Employee Feedback chip and focuses remarks (button had no handler before). */
-    const handleAddEmployeeFeedback = () => {
-        setActiveRemarkChip('empFeedback');
+    /** Focuses the remarks textarea. */
+    const handleFocusRemarks = () => {
         setRemarksInteracted(true);
         window.requestAnimationFrame(() => {
             remarksTextareaRef.current?.focus();
@@ -875,15 +874,16 @@ const WeeklyReports = () => {
                                     value={remarksText}
                                     onChange={(e) => setRemarksText(e.target.value)}
                                     onFocus={handleRemarksAreaActivate}
-                                    placeholder="Enter at least one breakthrough, one breakdown, one employee and one client feedback…"
+                                    placeholder={activeRemarkChip ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...` : "Enter at least one breakthrough, one breakdown, one employee and one client feedback…"}
                                     className="min-h-[120px] rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-inner outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
                                 />
                                 <Button
                                     type="button"
-                                    className={cn('w-full rounded-xl', btnPrimary)}
-                                    onClick={handleAddEmployeeFeedback}
+                                    onClick={handleFocusRemarks}
+                                    className="h-10 w-full rounded-xl border border-dashed border-[#DA7756]/20 text-[#DA7756] hover:bg-[#DA7756]/5"
                                 >
-                                    <Plus className="mr-2 h-4 w-4" /> Add Employee Feedback
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add {activeRemarkChip ? REMARK_CHIP_META[activeRemarkChip].label : 'Remarks'}
                                 </Button>
                             </div>
                         </Card>
