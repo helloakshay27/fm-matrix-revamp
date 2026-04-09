@@ -783,10 +783,13 @@ async function fetchFeedbackList(
   userId: number | null
 ): Promise<FeedbackItem[]> {
   const memoryKey = getFeedbackCacheKey(direction, userId);
-  const params: Record<string, string | number> = { _t: Date.now() };
+  const params: Record<string, string | number> = {};
   if (userId) {
     if (direction === "given") params.rating_from_id = userId;
-    else params.resource_id = userId;
+    else {
+      params.resource_id = userId
+      params.resource_type = "User";
+    };
   }
 
   let lastError: AppError | null = null;
@@ -864,7 +867,7 @@ async function fetchFeedbackList(
 
 async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
   const { data } = await apiClient.get(TEAM_MEMBERS_ENDPOINT, {
-    params: { _t: Date.now() },
+    params: {},
   });
   const raw = TeamMembersListSchema.parse(data);
   return raw
@@ -882,6 +885,7 @@ interface FeedbackPayload {
   positive_closing?: string;
   rating_from_type?: string;
   rating_from_id?: number;
+  reviews?: string;
 }
 
 type FeedbackMutationVariables = {
@@ -1756,10 +1760,11 @@ function GiveFeedbackForm({
       resource_id: selectedMember.id,
       score: rating,
       rating_from_type: initialFeedback?.ratingFromType ?? "User",
-      rating_from_id: ratingFromId || undefined,
-      positive_opening: positiveOpen || undefined,
-      constructive_feedback: constructive || undefined,
-      positive_closing: positiveClose || undefined,
+      rating_from_id: ratingFromId,
+      positive_opening: positiveOpen,
+      constructive_feedback: constructive,
+      positive_closing: positiveClose,
+      reviews: context,
     };
 
     if (!isEditMode) {
