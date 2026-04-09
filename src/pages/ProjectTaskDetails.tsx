@@ -13,6 +13,7 @@ import {
   CircleCheckBig,
   Mic,
   MicOff,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -1668,18 +1669,25 @@ export const ProjectTaskDetails = () => {
         ) : (
           <>
             <h2
-              className="cursor-pointer hover:underline text-[15px] p-3 px-0"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  toast.success("Link copied to clipboard!");
-                } catch (err) {
-                  console.error("Failed to copy:", err);
-                }
-              }}
+              className="cursor-pointer text-[15px] p-3 px-0"
             >
               <span className="mr-3 text-[#C72030]">Task-{taskDetails.id}</span>
-              <span>{taskDetails.title}</span>
+              <span>
+                {taskDetails.title}
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(window.location.href);
+                      toast.success("Link copied to clipboard!");
+                    } catch (err) {
+                      console.error("Failed to copy:", err);
+                    }
+                  }}
+                >
+                  <Copy size={15} />
+                </Button>
+              </span>
             </h2>
             <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
             <div className="flex items-center justify-between my-3 text-[12px]">
