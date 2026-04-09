@@ -1245,6 +1245,7 @@ import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
 import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
+import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 
 const queryClient = new QueryClient();
 
@@ -3428,6 +3429,10 @@ function App() {
                           <Route
                             path="/accounting/payment-terms"
                             element={<PaymentTermsMaster />}
+                          />
+                           <Route
+                            path="/accounting/organisation"
+                            element={<OrganisationMaster/>}
                           />
                           {/* Club Management - Occupant Users */}
                           <Route
