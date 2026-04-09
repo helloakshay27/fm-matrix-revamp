@@ -244,7 +244,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
               ? currentMonth
               : getSelectedDateLabel()}
           </h3>
-          <div className="flex items-center gap-0.5 bg-[#F3F0E8] h-8 rounded-[8px] px-1 border border-[#E5DFD0]">
+          <div className="flex items-center gap-0.5 bg-[#F3F0E8] h-8 rounded-full px-1 border border-[#E5DFD0]">
             {["Hourly", "Weekly", "Monthly"].map((v) => (
               <button
                 key={v}
@@ -257,7 +257,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                     v.toLowerCase() === "hourly" ? new Date().getHours() : null
                   );
                 }}
-                className={`px-2.5 h-6 text-[11px] font-semibold rounded-[6px] transition-all ${
+                className={`px-2.5 h-6 text-[11px] font-semibold rounded-full transition-all ${
                   activeTimeView === v.toLowerCase()
                     ? "bg-white shadow-sm text-gray-900 border border-[#E5DFD0]"
                     : "text-gray-500 hover:text-gray-700"
@@ -277,7 +277,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
 
         {!isLoading && activeTimeView === "monthly" && (
           <div className="flex gap-4 flex-1 mt-4 overflow-hidden">
-            <div className="flex-1 rounded-xl p-1 h-full overflow-hidden">
+            <div className="flex-1 rounded-xl p-3 h-full overflow-hidden bg-[#FFF8F0] border border-[#E8D5C4]">
               <div className="grid grid-cols-7 gap-1 text-center mb-3">
                 {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((d) => (
                   <span
@@ -295,17 +295,17 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                   }
 
                   let statusClass =
-                    "bg-[#FAF9F6]/80 border-[#E8E4D9] text-gray-500 hover:border-[#DA7756]";
+                    "bg-[#FFF8F0] border-[#E8D5C4] text-gray-600 hover:border-[#FF8A65]";
 
                   if (item.isSelected) {
                     statusClass =
-                      "bg-[#DA7756] border-[#DA7756] text-white shadow-md";
+                      "bg-[#FF8A65] border-[#FF8A65] text-white shadow-md";
                   } else if (item.isToday) {
                     statusClass =
-                      "bg-red-50/50 border-red-500 text-red-500 shadow-sm";
+                      "bg-[#FFB5BA] border-[#FF6B6B] text-[#D63031] shadow-sm";
                   } else if (item.count > 0) {
                     statusClass =
-                      "bg-blue-50/50 border-blue-400 text-blue-500 shadow-sm hover:border-[#DA7756]";
+                      "bg-[#E3F2FD] border-[#90CAF9] text-[#1976D2] shadow-sm hover:border-[#FF8A65]";
                   }
 
                   return (
@@ -326,7 +326,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
               </div>
             </div>
 
-            <div className="w-[260px] bg-[#F9F7F2]/60 rounded-xl p-3 flex flex-col gap-2.5 border border-[#E8E4D9]/40 overflow-y-auto scrollbar-none">
+            <div className="w-[260px] bg-[#FFFFFF] rounded-xl p-3 flex flex-col gap-2.5 border border-[#E8D5C4] overflow-y-auto scrollbar-none">
               <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
                 {format(selectedFilterDate, "EEEE, MMMM d")}
               </div>
@@ -385,13 +385,11 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 </p>
                 <div
                   className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${
-                    item.isSelected
-                      ? "bg-[#DA7756] border-[#DA7756] text-white shadow-md"
-                      : item.isActive
-                        ? "bg-[#FFF8F5] border-[#E67E5F] text-[#E67E5F] shadow-sm"
-                        : item.count > 0
-                          ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#DA7756]"
-                          : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#DA7756]"
+                    item.isSelected || item.isActive
+                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-gray-800 shadow-sm"
+                      : item.count > 0
+                        ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#C97B6B]"
+                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#C97B6B]"
                   }`}
                 >
                   {item.count > 0
@@ -412,21 +410,23 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 className="flex flex-col items-center gap-1.5 group cursor-pointer min-w-0"
               >
                 <p
-                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${item.isSelected ? "text-[#DA7756]" : item.isToday ? "text-red-500" : item.isWeekend ? "text-[#E67E5F]" : "text-gray-400"}`}
+                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${
+                    item.isSelected || item.isToday
+                      ? "text-[#C97B6B]"
+                      : item.isWeekend
+                        ? "text-gray-600"
+                        : "text-gray-600"
+                  }`}
                 >
                   {item.label}
                 </p>
                 <div
-                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${
-                    item.isSelected
-                      ? "bg-[#DA7756] border-[#DA7756] text-white shadow-md"
-                      : item.isToday
-                        ? "bg-red-50/50 border-red-400 text-red-500 shadow-sm"
-                        : item.isWeekend
-                          ? "bg-orange-50/50 border-orange-200 text-[#E67E5F]"
-                          : item.count > 0
-                            ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#DA7756]"
-                            : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#DA7756]"
+                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] transition-all p-1 text-center leading-tight overflow-hidden ${
+                    item.isSelected || item.isToday
+                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-[#C97B6B] shadow-sm font-bold"
+                      : item.isWeekend
+                        ? "bg-white/50 border-[#E8CC9F] text-[#E8CC9F] font-medium"
+                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-500 font-medium hover:border-[#C97B6B]"
                   }`}
                 >
                   {item.isWeekend

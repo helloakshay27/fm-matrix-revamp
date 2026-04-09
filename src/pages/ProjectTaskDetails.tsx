@@ -13,6 +13,7 @@ import {
   CircleCheckBig,
   Mic,
   MicOff,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -229,7 +230,14 @@ const Comments = ({
   const [editedCommentText, setEditedCommentText] = useState("");
   const textareaRef = useRef<any>(null);
 
-  const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
+  const {
+    isListening,
+    activeId,
+    transcript,
+    supported,
+    startListening,
+    stopListening,
+  } = useSpeechToText();
   const fieldId = "task-comment-input";
   const isActive = isListening && activeId === fieldId;
 
@@ -580,7 +588,9 @@ const Comments = ({
           {supported && (
             <button
               onClick={toggleListening}
-              className={`absolute right-2 top-2 p-1 rounded-full transition-all ${isActive ? "bg-red-100 text-red-600 animate-pulse" : "text-gray-400 hover:bg-gray-200"
+              className={`absolute right-2 top-2 p-1 rounded-full transition-all ${isActive
+                ? "bg-red-100 text-red-600 animate-pulse"
+                : "text-gray-400 hover:bg-gray-200"
                 }`}
               title={isActive ? "Stop recording" : "Start voice input"}
             >
@@ -677,7 +687,11 @@ const Comments = ({
                         : "text-gray-400 hover:bg-gray-200"
                         }`}
                     >
-                      {isListening && activeId === `edit-comment-${cmt.id}` ? <Mic size={16} /> : <MicOff size={16} />}
+                      {isListening && activeId === `edit-comment-${cmt.id}` ? (
+                        <Mic size={16} />
+                      ) : (
+                        <MicOff size={16} />
+                      )}
                     </button>
                   )}
                 </div>
@@ -915,24 +929,27 @@ const Attachments = ({
 
 // Activity Log Component
 const ActivityLog = ({ taskId }: { taskId: string }) => {
-  const baseUrl = localStorage.getItem("baseUrl") || ""
-  const token = localStorage.getItem("token") || ""
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
 
-  const [taskStatusLogs, setTaskStatusLogs] = useState([])
+  const [taskStatusLogs, setTaskStatusLogs] = useState([]);
 
   useEffect(() => {
     const fetchLogs = async () => {
-      const response = await axios.get(`https://${baseUrl}/task_managements/${taskId}/task_system_logs.json`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
+      const response = await axios.get(
+        `https://${baseUrl}/task_managements/${taskId}/task_system_logs.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      })
+      );
 
-      setTaskStatusLogs(response.data || [])
-    }
+      setTaskStatusLogs(response.data || []);
+    };
 
-    fetchLogs()
-  }, [taskId])
+    fetchLogs();
+  }, [taskId]);
 
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
@@ -964,7 +981,9 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
 
   const getActionFromLog = (log: any) => {
     if (!log.changed_attr || Object.keys(log.changed_attr).length === 0) {
-      return log.log_type?.replace("TaskManagement", "").trim() || "updated task";
+      return (
+        log.log_type?.replace("TaskManagement", "").trim() || "updated task"
+      );
     }
 
     const changedFields = Object.keys(log.changed_attr);
@@ -993,7 +1012,8 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
 
     // Check for other field changes
     const otherFields = changedFields.filter(
-      (field) => !["status", "description", "started_at", "updated_at"].includes(field)
+      (field) =>
+        !["status", "description", "started_at", "updated_at"].includes(field)
     );
     if (otherFields.length > 0) {
       otherFields.forEach((field) => {
@@ -1175,7 +1195,7 @@ interface TaskDetails {
   };
   project_management: {
     name?: string;
-  }
+  };
   priority?: string;
   expected_start_date?: string;
   parent_id?: number;
@@ -1291,6 +1311,7 @@ export const ProjectTaskDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [projectName, setProjectName] = useState<string>("");
   const [milestoneName, setMilestoneName] = useState<string>("");
+  const [isSubSubtask, setIsSubSubtask] = useState(false);
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
@@ -1520,20 +1541,20 @@ export const ProjectTaskDetails = () => {
   };
 
   function formatHours(hours: number): string {
-    console.log(hours)
+    console.log(hours);
     if (hours < 1) {
       const minutes = Math.round(hours * 60);
-      return `${minutes} min${minutes !== 1 ? 's' : ''}`;
+      return `${minutes} min${minutes !== 1 ? "s" : ""}`;
     }
 
     const wholeHours = Math.floor(hours);
     const remainingMinutes = Math.round((hours - wholeHours) * 60);
 
     if (remainingMinutes === 0) {
-      return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''}`;
+      return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""}`;
     }
 
-    return `${wholeHours} hr${wholeHours !== 1 ? 's' : ''} ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+    return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""} ${remainingMinutes} min${remainingMinutes !== 1 ? "s" : ""}`;
   }
 
   const fetchProjectAndMilestoneNames = async () => {
@@ -1541,13 +1562,18 @@ export const ProjectTaskDetails = () => {
       // Fetch project name
       if (id) {
         const projectResponse = baseUrl
-          ? await axios.get(`https://${baseUrl}/project_managements/${id}.json`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+          ? await axios.get(
+            `https://${baseUrl}/project_managements/${id}.json`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
           : await axios.get(`/project_managements/${id}.json`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-        setProjectName(projectResponse.data.title || projectResponse.data.project_code || '');
+        setProjectName(
+          projectResponse.data.title || projectResponse.data.project_code || ""
+        );
       }
 
       // Fetch milestone name
@@ -1559,10 +1585,10 @@ export const ProjectTaskDetails = () => {
           : await axios.get(`/milestones/${mid}.json`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-        setMilestoneName(milestoneResponse.data.title || '');
+        setMilestoneName(milestoneResponse.data.title || "");
       }
     } catch (error) {
-      console.error('Failed to fetch project/milestone names:', error);
+      console.error("Failed to fetch project/milestone names:", error);
     }
   };
 
@@ -1585,7 +1611,9 @@ export const ProjectTaskDetails = () => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                onClick={() => navigate(`/vas/projects/${id}/milestones/${mid}`)}
+                onClick={() =>
+                  navigate(`/vas/projects/${id}/milestones/${mid}`)
+                }
                 className="cursor-pointer"
               >
                 {projectName || "Project"}
@@ -1603,7 +1631,9 @@ export const ProjectTaskDetails = () => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                onClick={() => navigate(`/vas/projects/${id}/milestones/${mid}/tasks`)}
+                onClick={() =>
+                  navigate(`/vas/projects/${id}/milestones/${mid}/tasks`)
+                }
                 className="cursor-pointer"
               >
                 Tasks
@@ -1611,20 +1641,20 @@ export const ProjectTaskDetails = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{taskDetails?.title?.split(' ').slice(0, 5).join(' ')}...</BreadcrumbPage>
+              <BreadcrumbPage>
+                {taskDetails?.title?.split(" ").slice(0, 5).join(" ")}...
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       )}
 
-      {
-        window.location.pathname === "/vas/tasks" && (
-          <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        )
-      }
+      {window.location.pathname === "/vas/tasks" && (
+        <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      )}
 
       <div className="pt-1">
         {isLoading ? (
@@ -1656,30 +1686,37 @@ export const ProjectTaskDetails = () => {
             <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
               <Skeleton className="h-[30px] w-1/4 mb-6" />
               <div className="grid grid-cols-2 gap-6">
-                {Array(8).fill(0).map((_, i) => (
-                  <div key={i} className="flex items-start">
-                    <Skeleton className="h-[20px] w-[200px] mr-4" />
-                    <Skeleton className="h-[20px] flex-1" />
-                  </div>
-                ))}
+                {Array(8)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div key={i} className="flex items-start">
+                      <Skeleton className="h-[20px] w-[200px] mr-4" />
+                      <Skeleton className="h-[20px] flex-1" />
+                    </div>
+                  ))}
               </div>
             </div>
           </>
         ) : (
           <>
-            <h2
-              className="cursor-pointer hover:underline text-[15px] p-3 px-0"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  toast.success("Link copied to clipboard!");
-                } catch (err) {
-                  console.error("Failed to copy:", err);
-                }
-              }}
-            >
+            <h2 className="cursor-pointer text-[15px] p-3 px-0">
               <span className="mr-3 text-[#C72030]">Task-{taskDetails.id}</span>
-              <span>{taskDetails.title}</span>
+              <span>
+                {taskDetails.title}
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(window.location.href);
+                      toast.success("Link copied to clipboard!");
+                    } catch (err) {
+                      console.error("Failed to copy:", err);
+                    }
+                  }}
+                >
+                  <Copy size={15} />
+                </Button>
+              </span>
             </h2>
             <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
             <div className="flex items-center justify-between my-3 text-[12px]">
@@ -1692,7 +1729,8 @@ export const ProjectTaskDetails = () => {
                 </span>
                 <span className="h-6 w-[1px] border border-gray-300"></span>
                 <span className="flex items-center gap-3">
-                  Created On: {formatToDDMMYYYY_AMPM(taskDetails.created_at || "")}
+                  Created On:{" "}
+                  {formatToDDMMYYYY_AMPM(taskDetails.created_at || "")}
                 </span>
                 <span className="h-6 w-[1px] border border-gray-300"></span>
                 <span
@@ -1747,7 +1785,9 @@ export const ProjectTaskDetails = () => {
                 <span className="h-6 w-[1px] border border-gray-300"></span>
                 <span className="cursor-pointer flex items-center gap-1">
                   <ActiveTimer
-                    activeTimeTillNow={(taskDetails as any)?.active_time_till_now}
+                    activeTimeTillNow={
+                      (taskDetails as any)?.active_time_till_now
+                    }
                     isStarted={(taskDetails as any)?.is_started}
                   />
                 </span>
@@ -1789,6 +1829,21 @@ export const ProjectTaskDetails = () => {
                     </span>
                   </>
                 )}
+                {!taskDetails.parent_id && (
+                  <>
+                    <span className="h-6 w-[1px] border border-gray-300"></span>
+                    <span
+                      className="flex items-center gap-1 cursor-pointer"
+                      onClick={() => {
+                        setIsSubSubtask(true);
+                        setOpenSubTaskModal(true);
+                      }}
+                    >
+                      <Plus size={15} />
+                      <span>Add SubSubTask</span>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
@@ -1811,7 +1866,9 @@ export const ProjectTaskDetails = () => {
                 <div
                   className="prose prose-sm max-w-none quill-content"
                   dangerouslySetInnerHTML={{
-                    __html: taskDetails?.description || '<p>No description provided</p>'
+                    __html:
+                      taskDetails?.description ||
+                      "<p>No description provided</p>",
                   }}
                 />
               </div>
@@ -1835,14 +1892,18 @@ export const ProjectTaskDetails = () => {
               {isSecondCollapsed && (
                 <div className="flex items-center gap-6 mt-4 flex-wrap text-[12px]">
                   <div className="flex items-center justify-start gap-3">
-                    <div className="text-right font-[500]">Responsible Person:</div>
+                    <div className="text-right font-[500]">
+                      Responsible Person:
+                    </div>
                     <div className="text-left">
                       {taskDetails.responsible_person.name || "-"}
                     </div>
                   </div>
                   <div className="flex items-center justify-start gap-3">
                     <div className="text-right font-[500]">Priority:</div>
-                    <div className="text-left">{taskDetails.priority || "-"}</div>
+                    <div className="text-left">
+                      {taskDetails.priority || "-"}
+                    </div>
                   </div>
                   <div className="flex items-center justify-start gap-3">
                     <div className="text-right font-[500]">End Date:</div>
@@ -1851,7 +1912,9 @@ export const ProjectTaskDetails = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-start gap-3">
-                    <div className="text-right font-[500]">Efforts Duration:</div>
+                    <div className="text-right font-[500]">
+                      Efforts Duration:
+                    </div>
                     <div className="text-left">
                       {formatHours(taskDetails.total_allocated_hours)}
                     </div>
@@ -1881,7 +1944,9 @@ export const ProjectTaskDetails = () => {
 
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
-                        <p className="text-sm font-medium text-gray-600">Project:</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          Project:
+                        </p>
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
@@ -1898,7 +1963,9 @@ export const ProjectTaskDetails = () => {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
-                          {formatToDDMMYYYY(taskDetails.expected_start_date || "")}
+                          {formatToDDMMYYYY(
+                            taskDetails.expected_start_date || ""
+                          )}
                         </p>
                       </div>
                     </div>
@@ -1920,7 +1987,9 @@ export const ProjectTaskDetails = () => {
 
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
-                        <p className="text-sm font-medium text-gray-600">End Date:</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          End Date:
+                        </p>
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
@@ -1931,7 +2000,9 @@ export const ProjectTaskDetails = () => {
 
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
-                        <p className="text-sm font-medium text-gray-600">Tags:</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          Tags:
+                        </p>
                       </div>
                       <div className="flex-1">
                         <div className="flex gap-1 flex-wrap">
@@ -1942,7 +2013,9 @@ export const ProjectTaskDetails = () => {
                                 key={index}
                                 className="px-3 py-1 bg-[#c72030] text-white rounded-full text-xs font-medium"
                               >
-                                {tag?.company_tag?.name || tag.name || "Unknown"}
+                                {tag?.company_tag?.name ||
+                                  tag.name ||
+                                  "Unknown"}
                               </span>
                             ))
                           ) : (
@@ -1967,10 +2040,13 @@ export const ProjectTaskDetails = () => {
 
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
-                        <p className="text-sm font-medium text-gray-600">Observer:</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          Observer:
+                        </p>
                       </div>
                       <div className="flex-1">
-                        {taskDetails.observers && taskDetails.observers.length > 0 ? (
+                        {taskDetails.observers &&
+                          taskDetails.observers.length > 0 ? (
                           <TooltipProvider>
                             <div className="flex gap-1">
                               {taskDetails.observers.map((observer, idx) => (
@@ -1980,7 +2056,10 @@ export const ProjectTaskDetails = () => {
                                       {getInitials(observer.user_name)}
                                     </div>
                                   </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-sm">
+                                  <TooltipContent
+                                    side="top"
+                                    className="text-sm"
+                                  >
                                     {observer.user_name}
                                   </TooltipContent>
                                 </Tooltip>
@@ -2032,7 +2111,10 @@ export const ProjectTaskDetails = () => {
                           </SelectTrigger>
                           <SelectContent>
                             {statuses.map((status: any) => (
-                              <SelectItem key={status.id} value={String(status.id)}>
+                              <SelectItem
+                                key={status.id}
+                                value={String(status.id)}
+                              >
                                 {status.status}
                               </SelectItem>
                             ))}
@@ -2042,7 +2124,9 @@ export const ProjectTaskDetails = () => {
                     </div>
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
-                        <p className="text-sm font-medium text-gray-600">Priority:</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          Priority:
+                        </p>
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
@@ -2062,6 +2146,9 @@ export const ProjectTaskDetails = () => {
         openTaskModal={openSubTaskModal}
         setOpenTaskModal={setOpenSubTaskModal}
         fetchData={fetchData}
+        isSubSubtask={isSubSubtask}
+        setIsSubSubtask={setIsSubSubtask}
+        subTasks={subtasks}
       />
 
       {/* Tabs Section */}
@@ -2129,11 +2216,7 @@ export const ProjectTaskDetails = () => {
           )}
 
           {/* Activity Log Tab */}
-          {activeTab === "activity_log" && (
-            <ActivityLog
-              taskId={taskId}
-            />
-          )}
+          {activeTab === "activity_log" && <ActivityLog taskId={taskId} />}
 
           {/* Workflow Status Log Tab */}
           {activeTab === "workflow_status_log" && (

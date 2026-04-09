@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 
-
 const columns: ColumnConfig[] = [
   {
     key: "name",
@@ -71,7 +70,9 @@ const columns: ColumnConfig[] = [
 const CuratedServiceDashboard = () => {
   const navigate = useNavigate();
   const [plusServices, setPlusServices] = useState<any[]>([]);
-  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
+  const [updatingStatus, setUpdatingStatus] = useState<{
+    [key: string]: boolean;
+  }>({});
   const [loadingData, setLoadingData] = useState(true);
 
   const fetchData = async () => {
@@ -175,10 +176,14 @@ const CuratedServiceDashboard = () => {
         )
       );
 
-      toast.success(`Service ${newStatus ? "activated" : "deactivated"} successfully`);
+      toast.success(
+        `Service ${newStatus ? "activated" : "deactivated"} successfully`
+      );
     } catch (error: any) {
       console.error("Error updating active status:", error);
-      toast.error(error.message || "Failed to update active status. Please try again.");
+      toast.error(
+        error.message || "Failed to update active status. Please try again."
+      );
     } finally {
       setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
     }
@@ -212,7 +217,9 @@ const CuratedServiceDashboard = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setPlusServices((prev) => prev.filter((service: any) => service.id !== item.id));
+      setPlusServices((prev) =>
+        prev.filter((service: any) => service.id !== item.id)
+      );
       toast.success("Plus service deleted successfully!");
     } catch (error: any) {
       console.error("Error deleting plus service:", error);
@@ -309,9 +316,7 @@ const CuratedServiceDashboard = () => {
       case "attachment":
         if (item.attachment && Object.keys(item.attachment).length > 0) {
           const attachmentUrl =
-            item.attachment.document_url ||
-            item.attachment.url ||
-            "";
+            item.attachment.document_url || item.attachment.url || "";
           const contentType =
             item.attachment.document_content_type ||
             item.attachment.content_type ||
@@ -397,9 +402,7 @@ const CuratedServiceDashboard = () => {
 
       case "email":
         return (
-          <span className="text-sm text-gray-600">
-            {item.email || "-"}
-          </span>
+          <span className="text-sm text-gray-600">{item.email || "-"}</span>
         );
 
       default:
@@ -422,7 +425,9 @@ const CuratedServiceDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => navigate(`/pulse/curated-services/service/edit/${item.id}`)}
+          onClick={() =>
+            navigate(`/pulse/curated-services/service/edit/${item.id}`)
+          }
           disabled={!item.active}
           title="Edit"
         >

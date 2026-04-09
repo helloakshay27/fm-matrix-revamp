@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 // KPI.tsx  —  Root component
 // ─────────────────────────────────────────────
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import Axios from "axios";
 import { BookOpen, Plus, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,22 +17,26 @@ import EditKPIDialog, {
   type EditKPIFormValues,
 } from "./AdminCompassComponent/EditKPIDialog";
 import {
-  BASE_URL as ADMIN_COMPASS_BASE_URL,
   C,
-  getAuthHeaders as getAdminCompassAuthHeaders,
   kpiClass,
 } from "./AdminCompassComponent/Shared";
 import {
   type ArchivedKPIEntry,
   type KPICardData,
 } from "./AdminCompassComponent/kpiTypes";
+import type { KPIHistoryRow } from "./AdminCompassComponent/KPIHistoryTab";
 import { getBaseUrl, getToken as getAuthToken } from "@/utils/auth";
 
 // ─────────────────────────────────────────────
 // API CONFIG
 // ─────────────────────────────────────────────
-const DEFAULT_BASE_URL = "https://fm-uat-api.lockated.com";
 const KPI_LIST_ENDPOINTS = ["/kpis", "/api/kpis"] as const;
+const KPI_ARCHIVED_ENDPOINT =
+  "https://fm-uat-api.lockated.com/kpis/archived.json";
+const KPI_HISTORY_ENDPOINT =
+  "https://fm-uat-api.lockated.com/kpis/history.json";
+const KPI_ARCHIVED_BEARER_TOKEN =
+  "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
 
 type RawKpiData = {
   id?: string | number;
@@ -49,6 +53,16 @@ type RawKpiData = {
   department_id?: number;
   assignee_id?: number;
   description?: string;
+};
+
+type RawArchivedKpiData = RawKpiData & {
+  archived_at?: string;
+  archived_on?: string;
+  archived_date?: string;
+  reason?: string;
+  archived_reason?: string;
+  deletion_reason?: string;
+  owner_name?: string;
 };
 
 type KpiPayload = {
@@ -108,8 +122,6 @@ type RawExtraField = {
 };
 
 const KPI_UNITS_GROUP_NAME = "kpi_units_configuration";
-const KPI_UNITS_UAT_TOKEN =
-  "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
 const DEFAULT_KPI_UNITS = [
   "₹",
   "%",
@@ -135,14 +147,20 @@ const getToken = () => {
   return "";
 };
 
-const getApiBaseUrl = () => getBaseUrl() || DEFAULT_BASE_URL;
-
 const getApiBaseCandidates = () => {
   const fromAuth = getBaseUrl();
-  const candidates = [fromAuth, DEFAULT_BASE_URL].filter(
+  const candidates = [fromAuth].filter(
     (v): v is string => typeof v === "string" && v.length > 0
   );
   return Array.from(new Set(candidates));
+};
+
+const getApiBaseUrl = () => {
+  const [base] = getApiBaseCandidates();
+  if (!base) {
+    throw new Error("Base URL not found. Please login again.");
+  }
+  return base;
 };
 
 const apiHeaders = () => ({
@@ -156,20 +174,31 @@ const apiHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
-const adminCompassHeaders = () => {
-  getToken();
-  return getAdminCompassAuthHeaders();
-};
-
-const getKpiUnitsApiHeaders = () => ({
+const archivedApiHeaders = () => ({
+  ...(getToken() || KPI_ARCHIVED_BEARER_TOKEN
+    ? {}
+    : (() => {
+        throw new Error("Missing auth token. Please login again.");
+      })()),
   Accept: "application/json",
   "Content-Type": "application/json",
-  Authorization: `Bearer ${localStorage.getItem("admin_compass_uat_token") || KPI_UNITS_UAT_TOKEN}`,
+  Authorization: `Bearer ${getToken() || KPI_ARCHIVED_BEARER_TOKEN}`,
 });
 
-const KPI_UNITS_QUERY_URLS = [
-  `${ADMIN_COMPASS_BASE_URL}/extra_fields?q[group_name_in][]=${KPI_UNITS_GROUP_NAME}&include_grouped=true`,
-  `${ADMIN_COMPASS_BASE_URL}/extra_fields?group_name=${KPI_UNITS_GROUP_NAME}`,
+const getKpiUnitsApiHeaders = () => ({
+  ...(getToken()
+    ? {}
+    : (() => {
+        throw new Error("Missing auth token. Please login again.");
+      })()),
+  Accept: "application/json",
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+});
+
+const getKpiUnitsQueryUrls = (baseUrl: string) => [
+  `${baseUrl}/extra_fields?q[group_name_in][]=${KPI_UNITS_GROUP_NAME}&include_grouped=true`,
+  `${baseUrl}/extra_fields?group_name=${KPI_UNITS_GROUP_NAME}`,
 ];
 
 const withNoCacheTs = (url: string): string => {
@@ -291,37 +320,41 @@ const extractUnitValues = (json: unknown): string[] => {
 const fetchKpiUnitsConfiguration = async (): Promise<string[]> => {
   let lastError: unknown = null;
 
-  for (const url of KPI_UNITS_QUERY_URLS) {
-    try {
-      const requestUrl = withNoCacheTs(url);
-      console.warn("[KPI Units] GET extra_fields:", requestUrl);
+  const baseCandidates = getApiBaseCandidates();
 
-      const response = await fetch(requestUrl, {
-        method: "GET",
-        headers: getKpiUnitsApiHeaders(),
-        cache: "no-store",
-      });
-
-      const rawText = await response.text();
-      console.warn("[KPI Units] GET status:", response.status);
-      console.warn("[KPI Units] GET raw (first 600):", rawText.slice(0, 600));
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
-      }
-
-      let json: unknown = [];
+  for (const baseUrl of baseCandidates) {
+    for (const url of getKpiUnitsQueryUrls(baseUrl)) {
       try {
-        json = rawText ? JSON.parse(rawText) : [];
-      } catch {
-        json = [];
-      }
+        const requestUrl = withNoCacheTs(url);
+        console.warn("[KPI Units] GET extra_fields:", requestUrl);
 
-      const extracted = extractUnitValues(json);
-      if (extracted.length > 0) return extracted;
-    } catch (error) {
-      console.error("[KPI Units] GET failed:", error);
-      lastError = error;
+        const response = await fetch(requestUrl, {
+          method: "GET",
+          headers: getKpiUnitsApiHeaders(),
+          cache: "no-store",
+        });
+
+        const rawText = await response.text();
+        console.warn("[KPI Units] GET status:", response.status);
+        console.warn("[KPI Units] GET raw (first 600):", rawText.slice(0, 600));
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
+        }
+
+        let json: unknown = [];
+        try {
+          json = rawText ? JSON.parse(rawText) : [];
+        } catch {
+          json = [];
+        }
+
+        const extracted = extractUnitValues(json);
+        if (extracted.length > 0) return extracted;
+      } catch (error) {
+        console.error("[KPI Units] GET failed:", error);
+        lastError = error;
+      }
     }
   }
 
@@ -340,50 +373,61 @@ const upsertKpiUnitsConfiguration = async (values: string[]): Promise<string[]> 
 
   console.warn("[KPI Units] POST bulk_upsert payload:", payload);
 
-  const requestUrl = withNoCacheTs(`${ADMIN_COMPASS_BASE_URL}/extra_fields/bulk_upsert`);
-  console.warn("[KPI Units] POST extra_fields:", requestUrl);
+  let lastError: unknown = null;
 
-  const response = await fetch(requestUrl, {
-    method: "POST",
-    headers: getKpiUnitsApiHeaders(),
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
-
-  console.warn("[KPI Units] POST status:", response.status);
-
-  if (!response.ok) {
-    let message = `HTTP ${response.status}`;
+  for (const baseUrl of getApiBaseCandidates()) {
     try {
-      const errorData = (await response.json()) as {
-        message?: string;
-        error?: string;
-        errors?: string[];
-      };
-      const errorMessage =
-        errorData.message ??
-        errorData.error ??
-        (Array.isArray(errorData.errors) ? errorData.errors[0] : undefined);
-      if (errorMessage) {
-        message = `${message}: ${errorMessage}`;
+      const requestUrl = withNoCacheTs(`${baseUrl}/extra_fields/bulk_upsert`);
+      console.warn("[KPI Units] POST extra_fields:", requestUrl);
+
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: getKpiUnitsApiHeaders(),
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
+
+      console.warn("[KPI Units] POST status:", response.status);
+
+      if (!response.ok) {
+        let message = `HTTP ${response.status}`;
+        try {
+          const errorData = (await response.json()) as {
+            message?: string;
+            error?: string;
+            errors?: string[];
+          };
+          const errorMessage =
+            errorData.message ??
+            errorData.error ??
+            (Array.isArray(errorData.errors) ? errorData.errors[0] : undefined);
+          if (errorMessage) {
+            message = `${message}: ${errorMessage}`;
+          }
+          console.error("[KPI Units] POST error body:", errorData);
+        } catch {
+          // Ignore parse failures and fall back to status-only message.
+        }
+        throw new Error(message);
       }
-      console.error("[KPI Units] POST error body:", errorData);
-    } catch {
-      // Ignore parse failures and fall back to status-only message.
+
+      const data = await response.json();
+      console.warn("[KPI Units] POST response:", data);
+
+      const extracted = extractUnitValues(data);
+      if (extracted.length > 0) {
+        return extracted;
+      }
+
+      const refreshedValues = await fetchKpiUnitsConfiguration();
+      return refreshedValues.length > 0 ? refreshedValues : values;
+    } catch (error) {
+      console.error("[KPI Units] POST failed:", error);
+      lastError = error;
     }
-    throw new Error(message);
   }
 
-  const data = await response.json();
-  console.warn("[KPI Units] POST response:", data);
-
-  const extracted = extractUnitValues(data);
-  if (extracted.length > 0) {
-    return extracted;
-  }
-
-  const refreshedValues = await fetchKpiUnitsConfiguration();
-  return refreshedValues.length > 0 ? refreshedValues : values;
+  throw lastError ?? new Error("Failed to save KPI units configuration");
 };
 
 // ─────────────────────────────────────────────
@@ -439,6 +483,30 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
   };
 };
 
+const formatArchivedDate = (value?: string): string => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+};
+
+const normalizeArchivedKpiFromAPI = (raw: RawArchivedKpiData): ArchivedKPIEntry => {
+  const normalized = normalizeKpiFromAPI(raw);
+  const archivedSourceDate = raw.archived_at ?? raw.archived_on ?? raw.archived_date;
+  const archivedDate = formatArchivedDate(archivedSourceDate);
+
+  return {
+    ...normalized,
+    owner: raw.owner_name ?? normalized.owner,
+    archivedDate,
+    reason:
+      raw.archived_reason ??
+      raw.deletion_reason ??
+      raw.reason ??
+      "Archived",
+  };
+};
+
 const calculateStatus = (current: number, target: number): KPICardData["status"] => {
   if (!target || target === 0) return "on-target";
   const percentage = (current / target) * 100;
@@ -476,6 +544,149 @@ const fetchKpis = async (): Promise<KPICardData[]> => {
   }
 
   throw lastError ?? new Error("Failed to load KPI data from API");
+};
+
+type RawHistoryEntry = {
+  id?: string | number;
+  kpi_id?: string | number;
+  date?: string;
+  created_at?: string;
+  entry_date?: string;
+  entry_type?: string;
+  type?: string;
+  action?: string;
+  kpi_name?: string;
+  kpi?: { id?: string | number; name?: string; kpi_name?: string };
+  department?: string;
+  department_name?: string;
+  user?: string;
+  user_name?: string;
+  assignee_name?: string;
+  target_value?: string | number;
+  planned_value?: string | number;
+  planned?: string | number;
+  actual_value?: string | number;
+  current_value?: string | number;
+  actual?: string | number;
+  achievement?: string | number;
+  achievement_percentage?: string | number;
+  status?: string;
+  notes?: string;
+  remarks?: string;
+  comment?: string;
+  frequency?: string;
+  kpi_frequency?: string;
+};
+
+const normalizeHistoryRow = (raw: RawHistoryEntry): KPIHistoryRow => {
+  const dateRaw = raw.date ?? raw.entry_date ?? raw.created_at ?? "";
+  const date = dateRaw
+    ? (() => {
+        const d = new Date(dateRaw);
+        return Number.isNaN(d.getTime()) ? dateRaw : d.toLocaleDateString();
+      })()
+    : "-";
+
+  return {
+    id: String(raw.id ?? Math.random()),
+    kpiId:
+      raw.kpi_id != null
+        ? String(raw.kpi_id)
+        : raw.kpi?.id != null
+          ? String(raw.kpi.id)
+          : undefined,
+    date,
+    type: raw.entry_type ?? raw.type ?? raw.action ?? "-",
+    kpiName:
+      raw.kpi_name ??
+      raw.kpi?.name ??
+      raw.kpi?.kpi_name ??
+      "-",
+    department: raw.department_name ?? raw.department ?? "-",
+    user: raw.user_name ?? raw.assignee_name ?? raw.user ?? "-",
+    planned: String(raw.planned_value ?? raw.target_value ?? raw.planned ?? "-"),
+    actual: String(raw.actual_value ?? raw.current_value ?? raw.actual ?? "-"),
+    achievement: String(
+      raw.achievement_percentage ?? raw.achievement ?? "-"
+    ),
+    status: raw.status ?? "-",
+    notes: raw.notes ?? raw.remarks ?? raw.comment ?? "-",
+    frequency: raw.frequency ?? raw.kpi_frequency ?? "-",
+  };
+};
+
+const fetchHistoryKpis = async (): Promise<KPIHistoryRow[]> => {
+  const { data: json } = await Axios.get(KPI_HISTORY_ENDPOINT, {
+    headers: archivedApiHeaders(),
+  });
+
+  const pickFirstArray = (value: unknown): unknown[] => {
+    if (Array.isArray(value)) return value;
+    if (!value || typeof value !== "object") return [];
+
+    const obj = value as Record<string, unknown>;
+    const preferredKeys = [
+      "history",
+      "entries",
+      "kpi_history",
+      "rows",
+      "data",
+      "items",
+      "results",
+    ];
+
+    let firstEmptyArray: unknown[] | null = null;
+
+    for (const key of preferredKeys) {
+      const candidate = obj[key];
+      if (Array.isArray(candidate)) {
+        if (candidate.length > 0) return candidate;
+        if (!firstEmptyArray) firstEmptyArray = candidate;
+        continue;
+      }
+      if (candidate && typeof candidate === "object") {
+        const nested = pickFirstArray(candidate);
+        if (nested.length > 0) return nested;
+      }
+    }
+
+    for (const candidate of Object.values(obj)) {
+      if (Array.isArray(candidate)) {
+        if (candidate.length > 0) return candidate;
+        if (!firstEmptyArray) firstEmptyArray = candidate;
+        continue;
+      }
+      if (candidate && typeof candidate === "object") {
+        const nested = pickFirstArray(candidate);
+        if (nested.length > 0) return nested;
+      }
+    }
+
+    return firstEmptyArray ?? [];
+  };
+
+  const arr = pickFirstArray(json);
+
+  if (!Array.isArray(arr)) return [];
+  return arr.map((item) => normalizeHistoryRow(item as RawHistoryEntry));
+};
+
+const fetchArchivedKpis = async (): Promise<ArchivedKPIEntry[]> => {
+  const { data: json } = await Axios.get(KPI_ARCHIVED_ENDPOINT, {
+    headers: archivedApiHeaders(),
+  });
+
+  const arr = Array.isArray(json)
+    ? json
+    : (json.data?.archived_kpis ??
+        json.archived_kpis ??
+        json.data?.kpis ??
+        json.kpis ??
+        json.data ??
+        []);
+
+  if (!Array.isArray(arr)) return [];
+  return arr.map((item) => normalizeArchivedKpiFromAPI(item as RawArchivedKpiData));
 };
 
 const fetchKpiById = async (id: string | number): Promise<KPICardData | null> => {
@@ -537,6 +748,110 @@ const deleteKpi = async (id: string | number) => {
     throw error;
   }
 };
+
+const deleteHistoryEntry = async (id: string | number) => {
+  const headers = archivedApiHeaders();
+  const bases = Array.from(
+    new Set([...getApiBaseCandidates(), "https://fm-uat-api.lockated.com"])
+  );
+
+  let lastError: unknown = null;
+
+  for (const base of bases) {
+    const candidates = [
+      { method: "delete" as const, url: `${base}/kpis/history/${id}.json` },
+      { method: "delete" as const, url: `${base}/kpis/history/${id}` },
+      {
+        method: "post" as const,
+        url: `${base}/kpis/history/${id}.json`,
+        body: { _method: "delete" },
+      },
+      {
+        method: "post" as const,
+        url: `${base}/kpis/history/${id}`,
+        body: { _method: "delete" },
+      },
+      { method: "delete" as const, url: `${base}/kpis/${id}.json` },
+      { method: "delete" as const, url: `${base}/kpis/${id}` },
+    ];
+
+    for (const candidate of candidates) {
+      try {
+        if (candidate.method === "delete") {
+          await Axios.delete(candidate.url, { headers });
+        } else {
+          await Axios.post(candidate.url, candidate.body, { headers });
+        }
+        return true;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+  }
+
+  throw new Error(`History delete failed for ${id}: ${getApiErrorMessage(lastError)}`);
+};
+
+const deleteKpisBulk = async (ids: string[]): Promise<void> => {
+  if (ids.length === 0) return;
+
+  const headers = archivedApiHeaders();
+  const bases = Array.from(
+    new Set([...getApiBaseCandidates(), "https://fm-uat-api.lockated.com"])
+  );
+
+  let lastError: unknown = null;
+
+  for (const base of bases) {
+    const candidates = [
+      {
+        method: "post" as const,
+        url: `${base}/kpis/bulk_delete.json`,
+        body: { ids },
+      },
+      {
+        method: "post" as const,
+        url: `${base}/kpis/bulk_delete.json`,
+        body: { kpi_ids: ids },
+      },
+      {
+        method: "post" as const,
+        url: `${base}/kpis/bulk_destroy.json`,
+        body: { ids },
+      },
+      {
+        method: "post" as const,
+        url: `${base}/kpis/delete_multiple.json`,
+        body: { ids },
+      },
+      {
+        method: "post" as const,
+        url: `${base}/kpis/bulk_delete.json`,
+        body: { _method: "delete", ids },
+      },
+      {
+        method: "delete" as const,
+        url: `${base}/kpis.json`,
+        body: { ids },
+      },
+    ];
+
+    for (const candidate of candidates) {
+      try {
+        if (candidate.method === "delete") {
+          await Axios.delete(candidate.url, { headers, data: candidate.body });
+        } else {
+          await Axios.post(candidate.url, candidate.body, { headers });
+        }
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+  }
+
+  throw new Error(`Bulk KPI delete failed: ${getApiErrorMessage(lastError)}`);
+};
 const tabs = [
   { name: "KPI Management" },
   { name: "Archived KPIs" },
@@ -561,6 +876,31 @@ const KPI = () => {
   const [editingKpi, setEditingKpi] = useState<KPICardData | null>(null);
   const [isSavingKpiUnits, setIsSavingKpiUnits] = useState(false);
   const [archivedKpis, setArchivedKpis] = useState<ArchivedKPIEntry[]>([]);
+  const [historyKpis, setHistoryKpis] = useState<KPIHistoryRow[]>([]);
+
+  const loadHistoryKpis = useCallback(async () => {
+    try {
+      const rows = await fetchHistoryKpis();
+      setHistoryKpis(rows);
+    } catch (error) {
+      const msg = getApiErrorMessage(error);
+      console.error("Failed to load KPI history:", msg, error);
+      toast.error(`Failed to load KPI history: ${msg}`);
+      setHistoryKpis([]);
+    }
+  }, []);
+
+  const loadArchivedKpis = useCallback(async () => {
+    try {
+      const data = await fetchArchivedKpis();
+      setArchivedKpis(data);
+    } catch (error) {
+      const msg = getApiErrorMessage(error);
+      console.error("Failed to load archived KPIs:", msg, error);
+      toast.error(`Failed to load archived KPIs: ${msg}`);
+      setArchivedKpis([]);
+    }
+  }, []);
 
   // Fetch KPIs on component mount
   useEffect(() => {
@@ -581,6 +921,20 @@ const KPI = () => {
 
     loadKpis();
   }, []);
+
+  useEffect(() => {
+    loadArchivedKpis();
+  }, [loadArchivedKpis]);
+
+  useEffect(() => {
+    loadHistoryKpis();
+  }, [loadHistoryKpis]);
+
+  useEffect(() => {
+    if (activeTab === "KPI History") {
+      loadHistoryKpis();
+    }
+  }, [activeTab, loadHistoryKpis]);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -767,6 +1121,30 @@ const KPI = () => {
     toast.success("Archived KPI removed");
   };
 
+  const handleDeleteSelectedHistory = async (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const selectedRows = historyKpis.filter((row) =>
+      ids.includes(String(row.id))
+    );
+
+    const resolvedKpiIds = Array.from(
+      new Set(
+        selectedRows
+          .map((row) => row.kpiId ?? kpis.find((k) => k.name === row.kpiName)?.id)
+          .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+      )
+    );
+
+    if (resolvedKpiIds.length === 0) {
+      throw new Error("Unable to resolve KPI IDs for selected history rows");
+    }
+
+    await Promise.all(resolvedKpiIds.map((kpiId) => deleteKpi(kpiId)));
+
+    await loadHistoryKpis();
+  };
+
   const { totalKPIs, onTargetCount, atRiskCount } = useMemo(() => {
     const onTargetCount = kpis.filter((k) => k.status === "on-target").length;
     const atRiskCount = kpis.filter((k) => k.status === "at-risk").length;
@@ -928,6 +1306,8 @@ const KPI = () => {
             users={companyUsers}
             departments={companyDepartments}
             kpis={kpis.map((kpi) => ({ id: kpi.id, name: kpi.name }))}
+            entries={historyKpis}
+            onDeleteSelected={handleDeleteSelectedHistory}
           />
         )}
         {activeTab === "Settings" && (

@@ -18,10 +18,16 @@ const C = {
   font:              "'Poppins', sans-serif",
 };
 
-const BASE_URL = 'https://fm-uat-api.lockated.com';
+const getBaseUrl = () => {
+  const raw = (localStorage.getItem('baseUrl') || '').replace(/\/$/, '');
+  if (!raw) return '';
+  return raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+};
+
+const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('auth_token') || '';
+  const token = localStorage.getItem('token') || '';
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: token } : {}),
@@ -405,7 +411,6 @@ export const CriticalNumbers = () => {
 
   const canSave = form.name.trim().length > 0;
 
-  // Skeleton shimmer
   const Shimmer = ({ w = '100%', h = 16 }: { w?: string; h?: number }) => (
     <div
       style={{
@@ -420,7 +425,7 @@ export const CriticalNumbers = () => {
     <div className="kpi-wrap" style={{ padding: '24px 0', fontFamily: C.font }}>
       <ThemeStyle />
 
-      {/* ── Header — teal bg matching BusinessPlanAndGoles ── */}
+      {/* ── Header ── */}
       <div
         style={{
           borderRadius: 8, padding: '18px 20px',
@@ -544,23 +549,20 @@ export const CriticalNumbers = () => {
                       <span style={{
                         fontSize: 11, fontWeight: 600, color: C.textMuted,
                         background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
-                        padding: '2px 8px', borderRadius: 6,
-                        fontFamily: C.font,
+                        padding: '2px 8px', borderRadius: 6, fontFamily: C.font,
                       }}>{kpi.frequency}</span>
                       {kpi.unit && (
                         <span style={{
                           fontSize: 11, fontWeight: 600, color: C.textMuted,
                           background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
-                          padding: '2px 8px', borderRadius: 6,
-                          fontFamily: C.font,
+                          padding: '2px 8px', borderRadius: 6, fontFamily: C.font,
                         }}>{kpi.unit}</span>
                       )}
                       {kpi.owner && (
                         <span style={{
                           fontSize: 11, fontWeight: 600, color: C.textMuted,
                           background: C.primaryBg, border: `1px solid ${C.primaryBord}`,
-                          padding: '2px 8px', borderRadius: 6,
-                          fontFamily: C.font,
+                          padding: '2px 8px', borderRadius: 6, fontFamily: C.font,
                         }}>{kpi.owner}</span>
                       )}
                     </div>
@@ -682,7 +684,6 @@ export const CriticalNumbers = () => {
                 </span>
               </div>
 
-              {/* hover reveal overlay for actions */}
               <style>{`.kpi-card-lift:hover .kpi-card-actions { opacity: 1 !important; }`}</style>
             </div>
           ))}
@@ -748,7 +749,6 @@ export const CriticalNumbers = () => {
             >
               {saveError && <div className="kpi-error">{saveError}</div>}
 
-              {/* KPI Name */}
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
                   KPI Name <span style={{ color: C.primary }}>*</span>
@@ -762,7 +762,6 @@ export const CriticalNumbers = () => {
                 />
               </div>
 
-              {/* Unit + Target Value */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>Unit</label>
@@ -781,7 +780,6 @@ export const CriticalNumbers = () => {
                 </div>
               </div>
 
-              {/* Department + Frequency */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
@@ -801,7 +799,6 @@ export const CriticalNumbers = () => {
                 </div>
               </div>
 
-              {/* Assign to User */}
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>Assign to User</label>
                 <select value={form.assign_to} onChange={e => setForm({ ...form, assign_to: e.target.value })} className="kpi-select">

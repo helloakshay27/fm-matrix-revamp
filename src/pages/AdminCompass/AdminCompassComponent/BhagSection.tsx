@@ -16,10 +16,10 @@ const C = {
   font:        "'Poppins', sans-serif",
 };
 
-export const BASE_URL = 'https://fm-uat-api.lockated.com';
+const BASE_URL = localStorage.getItem('baseUrl') || '';
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('auth_token') || '';
+  const token = localStorage.getItem('token') || '';
   return { 'Content-Type': 'application/json', ...(token ? { Authorization: token } : {}) };
 };
 
@@ -191,8 +191,7 @@ const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () =
 };
 
 const SkeletonCards = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pl-0 md:pl-[36px]">
-    {[1,2,3,4].map(n => (
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-3 w-full">    {[1,2,3,4].map(n => (
       <div key={n} className="bg-white/30 rounded-2xl p-4">
         <div className="st-skeleton h-4 w-3/4 mb-3"/>
         <div className="st-skeleton h-2 w-full mt-4"/>
@@ -222,14 +221,13 @@ export const BhagSection = () => {
   const fetchBhagData = useCallback(async () => {
     setIsFetching(true); setFetchError(null);
     try {
-      const res = await fetch(`${BASE_URL}/goals`, { method:'GET', headers:getAuthHeaders() });
+      const res = await fetch(`https://${BASE_URL}/goals`, { method:'GET', headers:getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const records = Array.isArray(json) ? json : (json.goals||json.data||[]);
       const bhagGoals = records.filter((g:any) => g.period==='BHAG'||(g.period&&g.period.toLowerCase().includes('bhag')));
       setInitiatives(bhagGoals.map((g:any,idx:number) => ({
-        id:g.id??idx+1, title:g.title||g.name||'Untitled', progress:Number(g.progress_percentage??g.progress??0),
-        description:g.description||'', targetValue:String(g.target_value??'1'), currentValue:String(g.current_value??'0'),
+id:g.id??idx+1, title:g.title||g.name||'Untitled', progress:clampProgress(g.progress_percentage??g.progress??0),        description:g.description||'', targetValue:String(g.target_value??'1'), currentValue:String(g.current_value??'0'),
         unit:g.unit||'days', period:g.period||'BHAG', targetDate:g.target_date||'',
         ownerName:g.owner_name||'', ownerId:g.owner_id||'', status:g.status||'On Track', updateRemarks:g.update_remarks||'',
       })));
@@ -248,7 +246,7 @@ export const BhagSection = () => {
     const clamped = clampProgress(val);
     setInitiatives(prev => prev.map(i => i.id===id ? {...i,progress:clamped} : i));
     try {
-      const res = await fetch(`${BASE_URL}/goals/${id}`, { method:'PATCH', headers:getAuthHeaders(), body:JSON.stringify({goal:{progress_percentage:clamped,current_value:clamped}}) });
+      const res = await fetch(`https://${BASE_URL}/goals/${id}`, { method:'PATCH', headers:getAuthHeaders(), body:JSON.stringify({goal:{progress_percentage:clamped,current_value:clamped}}) });
       if (!res.ok) fetchBhagData();
     } catch { fetchBhagData(); }
   };
@@ -267,7 +265,7 @@ export const BhagSection = () => {
       const payload:any = { extra_field: { group_name:'business_plan_bhag', values:[tempBhagStatement.trim()] } };
       if (tempVideoUrl.trim()) payload.extra_field.video_url = tempVideoUrl.trim();
       if (tempTargetDate.trim()) payload.extra_field.target_date = formatDateForApi(tempTargetDate.trim());
-      const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, { method:'POST', headers:getAuthHeaders(), body:JSON.stringify(payload) });
+      const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, { method:'POST', headers:getAuthHeaders(), body:JSON.stringify(payload) });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       setBhagStatement(tempBhagStatement.trim()); setBhagVideoUrl(tempVideoUrl.trim()); setBhagTargetDate(formatDateForApi(tempTargetDate.trim()));
       closeModal(); fetchBhagData();
@@ -292,8 +290,8 @@ export const BhagSection = () => {
     const payload = { goal: { title:tempGoal.title.trim(), description:tempGoal.description||'', target_value:Number(tempGoal.targetValue)||1, current_value:Number(tempGoal.currentValue)||0, progress_percentage:clampProgress(tempGoal.progress), unit:tempGoal.unit||'days', period:'BHAG', status:tempGoal.status||'On Track', owner_id:tempGoal.ownerId?Number(tempGoal.ownerId):undefined, target_date:tempGoalDate?formatDateForApi(tempGoalDate):'', update_remarks:tempGoal.updateRemarks||'' } };
     try {
       const res = editingGoalId
-        ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, { method:'PUT', headers:getAuthHeaders(), body:JSON.stringify(payload) })
-        : await fetch(`${BASE_URL}/goals`, { method:'POST', headers:getAuthHeaders(), body:JSON.stringify(payload) });
+        ? await fetch(`https://${BASE_URL}/goals/${editingGoalId}`, { method:'PUT', headers:getAuthHeaders(), body:JSON.stringify(payload) })
+        : await fetch(`https://${BASE_URL}/goals`, { method:'POST', headers:getAuthHeaders(), body:JSON.stringify(payload) });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal(); fetchBhagData();
     } catch (err:any) { setSaveError(err.message||'Error saving goal.'); }
@@ -303,7 +301,7 @@ export const BhagSection = () => {
   const deleteGoal = async (id:number) => {
     if (!window.confirm('Delete this initiative?')) return;
     try {
-      const res = await fetch(`${BASE_URL}/goals/${id}`, { method:'DELETE', headers:getAuthHeaders() });
+      const res = await fetch(`https://${BASE_URL}/goals/${id}`, { method:'DELETE', headers:getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       fetchBhagData();
     } catch (err:any) { alert('Failed to delete: ' + err.message); }
@@ -368,8 +366,7 @@ export const BhagSection = () => {
 
           {/* Cards */}
           {isFetching ? <SkeletonCards /> : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pl-0 md:pl-[36px]">
-              {initiatives.length===0&&!fetchError&&(
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-3 w-full">              {initiatives.length===0&&!fetchError&&(
                 <p className="col-span-2 text-sm italic py-2" style={{color:C.textMuted}}>No initiatives found. Add one below.</p>
               )}
               {initiatives.map(initiative => (

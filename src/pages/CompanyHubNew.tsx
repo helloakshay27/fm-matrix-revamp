@@ -61,7 +61,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     current_streak: 0,
     leaderboard_rank: 0,
   });
-  const [activeTab, setActiveTab] = useState<"dashboard" | "business">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "business">(
+    "dashboard"
+  );
 
   const tabs = [
     { key: "dashboard", label: "Dashboard" },
@@ -76,8 +78,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
   const dispatch = useDispatch();
   const [openTaskModal, setOpenTaskModal] = useState(false);
-  const [openTodoModal, setOpenTodoModal] = useState(false)
-  const [openTicketModal, setOpenTicketModal] = useState(false)
+  const [openTodoModal, setOpenTodoModal] = useState(false);
+  const [openTicketModal, setOpenTicketModal] = useState(false);
 
   const handleCloseModal = () => {
     setOpenTaskModal(false);
@@ -86,7 +88,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
   const handleCloseTodoModal = () => {
     setOpenTodoModal(false);
-  }
+  };
 
   useEffect(() => {
     setCurrentSection("Company Hub New");
@@ -119,10 +121,11 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Matrix Modal State
-  const [selectedMatrixQuadrant, setSelectedMatrixQuadrant] = useState<any>(null);
+  const [selectedMatrixQuadrant, setSelectedMatrixQuadrant] =
+    useState<any>(null);
 
   const user = React.useMemo(() => getUser(), []);
-  const userId = JSON.parse(localStorage.getItem("user") || "{}").id
+  const userId = JSON.parse(localStorage.getItem("user") || "{}").id;
   const displayName =
     userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   const companyId = String(user?.lock_role?.company_id || "116");
@@ -134,24 +137,29 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const cleanBaseUrl = baseUrl
+        .replace(/^https?:\/\//, "")
+        .replace(/\/+$/, "");
       const fullUrl = `https://${cleanBaseUrl}/communities/3/posts.json`;
 
-      const response = await axios.get(
-        fullUrl,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get(fullUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const rawPosts =
         response.data.posts ||
         response.data.data ||
         (Array.isArray(response.data) ? response.data : []);
       const postsData = rawPosts.map((post: any) => {
         // Calculate total likes if not provided by backend
-        const totalLikes = post.total_likes ?? 
-          (post.likes_with_emoji ? Object.values(post.likes_with_emoji).reduce((a: any, b: any) => a + (Number(b) || 0), 0) : 0);
-        
+        const totalLikes =
+          post.total_likes ??
+          (post.likes_with_emoji
+            ? Object.values(post.likes_with_emoji).reduce(
+                (a: any, b: any) => a + (Number(b) || 0),
+                0
+              )
+            : 0);
+
         // Identify post type
         let type: "post" | "event" | "notice" | "document" = "post";
         if (post.event) type = "event";
@@ -162,7 +170,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
           ...post,
           type,
           total_likes: totalLikes,
-          total_comments: post.total_comments ?? (Array.isArray(post.comments) ? post.comments.length : 0),
+          total_comments:
+            post.total_comments ??
+            (Array.isArray(post.comments) ? post.comments.length : 0),
           comments: Array.isArray(post.comments) ? post.comments : [],
         };
       });
@@ -193,7 +203,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         if (data && typeof data.other_config === "string") {
           try {
             data.other_config = JSON.parse(data.other_config);
-          } catch (e) { }
+          } catch (e) {}
         }
         setCompanyData(data);
 
@@ -231,7 +241,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   const p = JSON.parse(desc);
                   desc = p.description || p.content || desc;
                   active = p.isActive !== undefined ? p.isActive : true;
-                } catch (e) { }
+                } catch (e) {}
               }
               return { ...a, displayDescription: desc, isActive: active };
             })
@@ -251,8 +261,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
           if (rawEom) {
             const newest = Array.isArray(rawEom)
               ? [...rawEom].sort(
-                (a, b) => (b.extra_field_id || 0) - (a.extra_field_id || 0)
-              )[0]
+                  (a, b) => (b.extra_field_id || 0) - (a.extra_field_id || 0)
+                )[0]
               : rawEom;
             if (newest?.extra_field_id) {
               const detailRes = await axios.get(
@@ -269,7 +279,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                 parsedRec = JSON.parse(
                   rawRecRes.data?.data?.field_value || "{}"
                 );
-              } catch (e) { }
+              } catch (e) {}
               setCurrentEmployee({ ...newest, ...detail, ...parsedRec });
             }
           }
@@ -279,8 +289,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
         // 4. Stats
         const statsRes = await axios.get(
-          `${protocol}${baseUrl}/todos.json?page=1&q[user_id_eq]=${userId}`
-          ,
+          `${protocol}${baseUrl}/todos.json?page=1&q[user_id_eq]=${userId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTaskStats(statsRes.data);
@@ -393,7 +402,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const cleanBaseUrl = baseUrl
+        .replace(/^https?:\/\//, "")
+        .replace(/\/+$/, "");
       const fullUrl = `https://${cleanBaseUrl}/likes.json`;
 
       await axios.post(
@@ -422,7 +433,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const cleanBaseUrl = baseUrl
+        .replace(/^https?:\/\//, "")
+        .replace(/\/+$/, "");
       const fullUrl = `https://${cleanBaseUrl}/comments.json`;
 
       await axios.post(
@@ -533,10 +546,11 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   }
                   setActiveTab(tab.key as "dashboard" | "business");
                 }}
-                className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${activeTab === tab.key
-                  ? "bg-white shadow-xl shadow-black/5 text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
-                  }`}
+                className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${
+                  activeTab === tab.key
+                    ? "bg-white shadow-xl shadow-black/5 text-gray-900"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
               >
                 {tab.label}
               </button>
@@ -581,19 +595,19 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
       {/* Floating Bottom Bar */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1.5 backdrop-blur-sm bg-[rgba(0,0,0,0.1)] border-2 border-[rgba(255,255,255,0.4)] rounded-full p-2 shadow-[0_8px_32px_rgba(0,0,0,0.15)] ring-1 ring-white/10">
+        <div className="flex items-center gap-2 backdrop-blur-md bg-white/20 border-[1px] border-white rounded-full p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
           <button
             onClick={() => setIsQuickActionsOpen(true)}
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
           >
-            <div className="w-5 h-5 flex items-center justify-center">
+            <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:scale-110">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#DA7756"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -602,19 +616,19 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
             </div>
             Quick Actions
           </button>
-          <div className="w-px h-6 bg-gray-400/20" />
+          <div className="w-[1.5px] h-6 bg-[#DA7756]/20" />
           <button
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
             onClick={() => setIsExploreOpen(true)}
           >
-            <div className="w-5 h-5 flex items-center justify-center">
+            <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:scale-110">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#DA7756"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -624,19 +638,19 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
             </div>
             Explore
           </button>
-          <div className="w-px h-6 bg-gray-400/20" />
+          <div className="w-[1.5px] h-6 bg-[#DA7756]/20" />
           <button
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
             onClick={() => navigate("/ask-ai")}
           >
-            <div className="w-5 h-5 flex items-center justify-center">
+            <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:scale-110">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#DA7756"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >

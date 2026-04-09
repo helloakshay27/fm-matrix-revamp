@@ -1,12 +1,7 @@
-// ─────────────────────────────────────────────
-// HistoryTab.jsx — Themed to match SettingsTab
-// Edit modal: single "Meeting Notes" textarea (as shown in video)
-// ─────────────────────────────────────────────
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   History as HistoryIcon,
-  AlertTriangle,
   FileText,
   ArrowLeft,
   ArrowRight,
@@ -18,387 +13,427 @@ import {
   Sparkles,
   X,
   Loader2,
-  Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BASE_URL } from "./Shared";
+import { getBaseUrl, getAuthHeaders } from "./Shared";
+import { toast } from "sonner"; // ← ADDED: sonner toast (same as SystemAndSOP)
 
 // ─────────────────────────────────────────────
-// Auth Headers Helper
+// Compile all API data into one plain-text block
 // ─────────────────────────────────────────────
-const getHeadersWithToken = () => {
-  const token = localStorage.getItem("auth_token");
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
+const compileMeetingNotes = (historyData: any): string => {
+  if (!historyData) return "";
 
-// ─────────────────────────────────────────────
-// APIs
-// ─────────────────────────────────────────────
-const fetchMeetingsAPI = async () => {
-  const res = await fetch(`${BASE_URL}/daily_meeting_configs`, {
-    method: "GET",
-    headers: getHeadersWithToken(),
-  });
-  const raw = await res.text();
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  let json;
-  try { json = JSON.parse(raw); } catch { json = []; }
-  let list = [];
-  if (Array.isArray(json)) list = json;
-  else if (Array.isArray(json.data?.daily_meeting_configs)) list = json.data.daily_meeting_configs;
-  else if (Array.isArray(json.data?.meeting_configs)) list = json.data.meeting_configs;
-  else if (Array.isArray(json.data)) list = json.data;
-  else if (Array.isArray(json.daily_meeting_configs)) list = json.daily_meeting_configs;
-  else if (Array.isArray(json.meeting_configs)) list = json.meeting_configs;
-  return list.map((m) => ({
-    id: String(m.id),
-    label: m.name ?? m.title ?? m.label ?? `Meeting ${m.id}`,
-  }));
-};
+  const memberReports: any[] = historyData.member_reports || [];
+  const missedMembers: any[] = historyData.missed_members || [];
 
-// NEW API: Fetch daily history with weeks parameter
-const fetchDailyHistoryWithWeeks = async (meetingId, weeks) => {
-  const params = new URLSearchParams();
-  if (meetingId && meetingId !== "") params.set("meeting_id", meetingId);
-  if (weeks) params.set("weeks", weeks);
-  
-  const url = `${BASE_URL}/user_journals/daily_history?${params.toString()}`;
-  console.log("Fetching weekly URL:", url); // Debug log
-  
-  const res = await fetch(url, { 
-    method: "GET", 
-    headers: getHeadersWithToken() 
-  });
-  
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  
-  const raw = await res.text();
-  let json;
-  try { json = JSON.parse(raw); } catch { return null; }
-  return json?.data ?? json;
-};
+  const allMemberReports: any[] = historyData.member_reports || [];
+  const meetingHeadUid = historyData.config?.meeting_head?.id;
+  const headMemberReport =
+    allMemberReports.find(
+      (r: any) => r.user_id === meetingHeadUid && r.status === "submitted"
+    ) ||
+    allMemberReports.find(
+      (r: any) => r.status === "submitted" && r.report_data?.meeting_notes
+    ) ||
+    allMemberReports.find((r: any) => r.status === "submitted");
 
-const fetchDailyMeetingHistory = async (meetingId, date) => {
-  const params = new URLSearchParams({ date });
-  if (meetingId && meetingId !== "") params.set("meeting_id", meetingId);
-  const url = `${BASE_URL}/user_journals/daily_meeting?${params.toString()}`;
-  const res = await fetch(url, { method: "GET", headers: getHeadersWithToken() });
-  const raw = await res.text();
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  let json;
-  try { json = JSON.parse(raw); } catch { return null; }
-  return json?.data ?? json;
-};
+  const meetingNotesArr: any[] =
+    headMemberReport?.report_data?.meeting_notes || [];
+  const firstNote = meetingNotesArr[0] || {};
+  const keyDiscussionPoints: string = firstNote["key_discussion_points"] || "";
+  const missedKey = Object.keys(firstNote).find((k) =>
+    k.startsWith("Team Members Who Missed")
+  );
+  const missedNamesFromNote: string[] = missedKey ? firstNote[missedKey] : [];
 
-const updateMeetingNotesAPI = async (journalId, payload) => {
-  const url = `${BASE_URL}/user_journals/${journalId}`;
-  const res = await fetch(url, {
-    method: "PUT",
-    headers: getHeadersWithToken(),
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`Failed to update: HTTP ${res.status}`);
-  return await res.json();
-};
+  const missedNames =
+    missedNamesFromNote.length > 0
+      ? missedNamesFromNote
+      : missedMembers.map((m: any) => m.name || m);
 
-const deleteMeetingNotesAPI = async (journalId) => {
-  const url = `${BASE_URL}/user_journals/${journalId}`;
-  const res = await fetch(url, { method: "DELETE", headers: getHeadersWithToken() });
-  if (!res.ok) throw new Error(`Failed to delete: HTTP ${res.status}`);
-  const text = await res.text();
-  try { return text ? JSON.parse(text) : {}; } catch { return {}; }
-};
+  let text = "";
 
-// ─────────────────────────────────────────────
-// Dynamic Notes Compiler — produces the editable markdown text
-// ─────────────────────────────────────────────
-const compileDynamicNotes = (data) => {
-  if (!data) return "";
+  if (missedNames.length > 0) {
+    text += `**Team Members Who Missed Report (${missedNames.length}):**\n`;
+    missedNames.forEach((name: string) => {
+      text += `- ${name}\n`;
+    });
+    text += "\n";
+  }
 
-  let text = "**Key Discussion Points:**\n\n---\n\n## DETAILED REPORTS\n\n";
-  const reports = data.member_reports || [];
+  text += `**Key Discussion Points:**\n`;
+  text += keyDiscussionPoints ? `${keyDiscussionPoints}\n` : "\n";
 
-  if (reports.length === 0) return text + "No detailed reports submitted yet.";
+  const submittedReports = memberReports.filter(
+    (r: any) => r.status !== "pending" || !!r.daily_report
+  );
 
-  reports.forEach((r) => {
-    text += `### ${r.user?.name || r.name || "Unknown Member"}\n`;
-    text += `- **Attendance:** ${r.is_absent ? "✗ Absent" : "✓ Present"}\n`;
-    text += `- **Self Rating:** ${r.self_rating || r.score || "N/A"}/10\n`;
-    text += `- **Status:** ${r.status || "submitted"}\n\n`;
+  if (submittedReports.length > 0) {
+    text += `\n---\n\nDETAILED REPORTS\n\n`;
 
-    text += `**Accomplishments:**\n`;
-    const accomplishments = r.report_data?.accomplishments || r.accomplishments || [];
-    if (accomplishments.length === 0) text += `- None\n`;
-    accomplishments.forEach((a) => { text += `- ✓ ${a.title || a.text || a}\n`; });
+    submittedReports.forEach((report: any) => {
+      const isPending = report.status === "pending";
+      const hasDraft = !!report.daily_report;
+      const rd = report.report_data || {};
+      const draftRaw = report.daily_report?.report_data || {};
 
-    text += `\n**Tomorrow's Plan:**\n`;
-    const plans = r.report_data?.tomorrow_plan || r.plans || [];
-    if (plans.length === 0) text += `- None\n`;
-    plans.forEach((p) => { text += `- ${p.title || p.text || p}\n`; });
+      const source =
+        isPending && hasDraft
+          ? {
+              accomplishments:
+                draftRaw.accomplishments?.items ||
+                (Array.isArray(draftRaw.accomplishments)
+                  ? draftRaw.accomplishments
+                  : []),
+              tasks_issues: draftRaw.tasks_issues || [],
+              tomorrow_plan: draftRaw.tomorrow_plan || [],
+              big_win: draftRaw.big_win || "",
+              self_rating:
+                draftRaw.details?.self_rating ??
+                draftRaw.sections?.self_rating ??
+                null,
+              is_absent:
+                draftRaw.details?.is_absent ??
+                draftRaw.sections?.is_absent ??
+                false,
+              kpis: draftRaw.kpis || {},
+            }
+          : {
+              accomplishments: rd.accomplishments || [],
+              tasks_issues: rd.tasks_issues || [],
+              tomorrow_plan: rd.tomorrow_plan || [],
+              big_win: rd.big_win || "",
+              self_rating: rd.self_rating ?? null,
+              is_absent: rd.is_absent ?? false,
+              kpis: rd.kpis || report.kpis || {},
+            };
 
-    text += `\n---\n\n`;
-  });
+      text += `${report.name}\n`;
+      text += `**Attendance:** ${source.is_absent ? "✗ Absent" : "✓ Present"}\n`;
+
+      if (source.self_rating !== null && source.self_rating !== undefined) {
+        text += `**Self Rating:** ${source.self_rating}/10\n`;
+      }
+
+      const kpiEntries = Object.entries(source.kpis).filter(
+        ([, v]) => v !== null && v !== undefined && v !== "" && v !== "0"
+      );
+      if (kpiEntries.length > 0) {
+        text += `**KPIs:**\n`;
+        kpiEntries.forEach(([k, v]) => {
+          text += `${k}: ${v}\n`;
+        });
+      }
+
+      if (source.accomplishments.length > 0) {
+        text += `**Accomplishments:**\n`;
+        source.accomplishments.forEach((item: any) => {
+          const title = item.title || item;
+          const isDone =
+            item.status === "done" ||
+            item.status === "completed" ||
+            item.completed === true;
+          text += `${isDone ? "✓" : "○"} ${title}\n`;
+        });
+      }
+
+      if (source.tasks_issues.length > 0) {
+        text += `**Tasks & Issues:**\n`;
+        source.tasks_issues.forEach((item: any) => {
+          text += `[${item.status || "open"}] ${item.title || item}\n`;
+        });
+      }
+
+      if (source.big_win) {
+        text += `**Big Win:** ${source.big_win}\n`;
+      }
+
+      if (source.tomorrow_plan.length > 0) {
+        text += `**Tomorrow's Plan:**\n`;
+        source.tomorrow_plan.forEach((item: any) => {
+          text += `${item.title || item}\n`;
+        });
+      }
+
+      text += `\n---\n\n`;
+    });
+  }
 
   return text.trim();
 };
 
 // ─────────────────────────────────────────────
-// HistoryTab Component
+// HistoryTab
 // ─────────────────────────────────────────────
 const HistoryTab = () => {
   const [selectedMeetingId, setSelectedMeetingId] = useState("");
   const [selectedDate, setSelectedDate] = useState(
     () => new Date().toISOString().split("T")[0]
   );
-  const [selectedWeeks, setSelectedWeeks] = useState(4);
-  const [meetingData, setMeetingData] = useState(null);
-  const [weeklyHistory, setWeeklyHistory] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [historyData, setHistoryData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingWeekly, setIsLoadingWeekly] = useState(false);
-  const [isNotesExpanded, setIsNotesExpanded] = useState(true);
-  const [meetings, setMeetings] = useState([]);
+  const [meetings, setMeetings] = useState<any[]>([]);
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
-  const [viewMode, setViewMode] = useState("daily"); // "daily" or "weekly"
 
-  // ── Edit Modal ──
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isSavingNotes, setIsSavingNotes] = useState(false);
-  const [isDeletingNotes, setIsDeletingNotes] = useState(false);
-  const [editingJournalId, setEditingJournalId] = useState(null);
-
-  // Single textarea value
   const [meetingNotesText, setMeetingNotesText] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const loadMeetings = useCallback(async () => {
+  const [isNotesExpanded, setIsNotesExpanded] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // ── Meetings Dropdown ──
+  useEffect(() => {
     setIsFetchingMeetings(true);
-    try {
-      const data = await fetchMeetingsAPI();
-      setMeetings(data);
-      if (data.length > 0 && !selectedMeetingId) setSelectedMeetingId(data[0].id);
-    } catch (err) {
-      console.error("[Meetings] fetch error:", err);
-    } finally {
-      setIsFetchingMeetings(false);
-    }
-  }, [selectedMeetingId]);
+    fetch(`${getBaseUrl()}/daily_meeting_configs`, {
+      headers: getAuthHeaders(),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : data?.data || [];
+        setMeetings(list);
+        if (list.length > 0) setSelectedMeetingId(String(list[0].id));
+      })
+      .catch(console.error)
+      .finally(() => setIsFetchingMeetings(false));
+  }, []);
 
-  useEffect(() => { loadMeetings(); }, [loadMeetings]);
-
-  // Load weekly history using the new API
-  const loadWeeklyHistory = useCallback(async () => {
-    console.log("Loading weekly history with:", { selectedMeetingId, selectedWeeks });
-    setIsLoadingWeekly(true);
-    try {
-      const data = await fetchDailyHistoryWithWeeks(
-        selectedMeetingId || undefined,
-        selectedWeeks
-      );
-      console.log("Weekly history data:", data);
-      setWeeklyHistory(data);
-    } catch (err) {
-      console.error("Failed to load weekly history:", err);
-      setWeeklyHistory(null);
-    } finally {
-      setIsLoadingWeekly(false);
-    }
-  }, [selectedMeetingId, selectedWeeks]);
-
-  // Load daily meeting history
-  const loadDailyHistory = useCallback(async () => {
-    console.log("Loading daily history with:", { selectedMeetingId, selectedDate });
+  // ── History API ──
+  useEffect(() => {
+    if (!selectedMeetingId) return;
     setIsLoading(true);
-    try {
-      const data = await fetchDailyMeetingHistory(
-        selectedMeetingId || undefined,
-        selectedDate
-      );
-      console.log("Daily history data:", data);
-      setMeetingData(data);
-    } catch (err) {
-      console.error("Failed to load history:", err);
-      setMeetingData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedMeetingId, selectedDate]);
+    setHistoryData(null);
 
-  // Fix: Added proper dependencies to useEffect
-  useEffect(() => { 
-    if (viewMode === "daily") {
-      loadDailyHistory();
-    } else {
-      loadWeeklyHistory();
-    }
-  }, [viewMode, selectedMeetingId, selectedDate, selectedWeeks, loadDailyHistory, loadWeeklyHistory]);
+    const url = `${getBaseUrl()}/user_journals/daily_meeting?meeting_id=${selectedMeetingId}&date=${selectedDate}`;
+    console.log("Hitting History GET ->", url);
 
+    fetch(url, { method: "GET", headers: getAuthHeaders() })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((json) => {
+        const data = json?.data ?? json;
+        console.log("📦 historyData full:", JSON.stringify(data, null, 2));
+        setHistoryData(data);
+      })
+      .catch((err) => {
+        console.error("History fetch error:", err);
+        setHistoryData(null);
+      })
+      .finally(() => setIsLoading(false));
+  }, [selectedMeetingId, selectedDate, refreshKey]);
+
+  // ── Date Navigation ──
   const handlePrevDay = () => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() - 1);
     setSelectedDate(d.toISOString().split("T")[0]);
   };
-  
+
   const handleNextDay = () => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + 1);
     setSelectedDate(d.toISOString().split("T")[0]);
   };
 
-  const handleWeeksChange = (weeks) => {
-    setSelectedWeeks(weeks);
+  // ── Get meeting journal ID ──
+  const getMeetingJournalId = () => {
+    const allReports: any[] = historyData?.member_reports || [];
+    const meetingHeadUserId = historyData?.config?.meeting_head?.id;
+
+    const headReport = allReports.find(
+      (r: any) =>
+        r.user_id === meetingHeadUserId &&
+        r.status === "submitted" &&
+        r.journal_id
+    );
+    if (headReport) return headReport.journal_id;
+
+    const withNotes = allReports.find(
+      (r: any) =>
+        r.status === "submitted" && r.report_data?.meeting_notes && r.journal_id
+    );
+    if (withNotes) return withNotes.journal_id;
+
+    const anySubmitted = allReports.find(
+      (r: any) => r.status === "submitted" && r.journal_id
+    );
+    return anySubmitted?.journal_id || null;
   };
 
-  const formattedDateLabel = new Date(selectedDate).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "2-digit",
-  });
-  const formattedFullDate = new Date(selectedDate).toLocaleDateString("en-US", {
-    month: "long", day: "numeric", year: "numeric",
-  });
-
-  const selectedMeetingLabel = meetings.find((m) => m.id === selectedMeetingId)?.label ?? "All Meetings";
-
-  const missedMembers = meetingData?.missed_members || [];
-  const attendeesCount = meetingData?.submitted || 0;
-  const isMissedDay = meetingData?.date_row?.find((d) => d.full_date === selectedDate)?.status === "missed";
-
-  const compiledRawNotes = compileDynamicNotes(meetingData);
-
-  // ── Open Edit Modal — pre-fill textarea with compiled notes ──
+  // ── Open Edit Modal — with toast guard ── ← CHANGED
   const handleOpenEditModal = () => {
-    const journal = meetingData?.journal || meetingData?.user_journal || meetingData;
-    setEditingJournalId(journal?.id ?? null);
-    setMeetingNotesText(
-      journal?.meeting_notes ??
-      journal?.notes ??
-      compiledRawNotes
-    );
+    const journalId = getMeetingJournalId();
+    if (!journalId) {
+      toast.error("Save the meeting first to edit", {
+        description: "Go to Daily tab and click 'Save Meeting' before editing.",
+        duration: 4000,
+      });
+      return;
+    }
+    setMeetingNotesText(compileMeetingNotes(historyData));
     setIsEditModalOpen(true);
   };
 
-  const handleCloseEditModal = () => setIsEditModalOpen(false);
-
-  // ── Save — send meeting_notes as plain text ──
+  // ── Save Notes via PATCH ──
   const handleSaveNotes = async () => {
-    if (!editingJournalId) { alert("No journal ID found. Cannot save."); return; }
-    setIsSavingNotes(true);
+    const meetingJournalId = getMeetingJournalId();
+
+    if (!meetingJournalId) {
+      toast.error("Save the meeting first to edit", {
+        description: "Go to Daily tab and click 'Save Meeting' before editing.",
+        duration: 4000,
+      });
+      return;
+    }
+    setIsSaving(true);
     try {
+      const allReports: any[] = historyData?.member_reports || [];
+      const meetingHeadUserId = historyData?.config?.meeting_head?.id;
+      const headReport =
+        allReports.find(
+          (r: any) =>
+            r.user_id === meetingHeadUserId && r.status === "submitted"
+        ) ||
+        allReports.find(
+          (r: any) => r.status === "submitted" && r.report_data?.meeting_notes
+        ) ||
+        allReports.find((r: any) => r.status === "submitted");
+
+      const existingReportData = headReport?.report_data || {};
+      const existingMeetingNotes: any[] =
+        existingReportData.meeting_notes || [];
+
+      const updatedFirstNote = {
+        ...(existingMeetingNotes[0] || {}),
+        key_discussion_points: meetingNotesText,
+      };
+
       const payload = {
         user_journal: {
-          meeting_notes: meetingNotesText,
+          self_rating: existingReportData.self_rating ?? 0,
+          status: "submitted",
+          report_data: {
+            ...existingReportData,
+            meeting_notes: [updatedFirstNote, ...existingMeetingNotes.slice(1)],
+          },
         },
       };
-      await updateMeetingNotesAPI(editingJournalId, payload);
+
+      console.log("📦 PATCH payload:", JSON.stringify(payload, null, 2));
+
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
+        {
+          method: "PATCH",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success("Saved successfully!");
       setIsEditModalOpen(false);
-      loadDailyHistory();
-    } catch (err) {
-      alert("Error saving notes: " + err.message);
+      setRefreshKey((k) => k + 1);
+    } catch (err: any) {
+      toast.error("Error: " + err.message);
     } finally {
-      setIsSavingNotes(false);
+      setIsSaving(false);
     }
   };
 
-  // ── Delete ──
-  const handleDeleteNotes = async () => {
-    const journalId = editingJournalId || meetingData?.journal?.id || meetingData?.user_journal?.id || meetingData?.id;
-    if (!journalId) { alert("No journal ID found. Cannot delete."); return; }
-    if (!window.confirm(`Are you sure you want to delete these notes?`)) return;
-    setIsDeletingNotes(true);
+  // ── Delete meeting journal ──
+  const handleDelete = async () => {
+    const meetingJournalId = getMeetingJournalId();
+
+    if (!meetingJournalId) {
+      toast.error("No saved meeting found to delete.");
+      return;
+    }
+    setIsDeleting(true);
     try {
-      await deleteMeetingNotesAPI(journalId);
-      loadDailyHistory();
-    } catch (err) {
-      alert("Error deleting notes: " + err.message);
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/${meetingJournalId}`,
+        { method: "DELETE", headers: getAuthHeaders() }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success("Deleted successfully!");
+      setShowDeleteConfirm(false);
+      setHistoryData(null);
+      setRefreshKey((k) => k + 1);
+    } catch (err: any) {
+      toast.error("Error: " + err.message);
     } finally {
-      setIsDeletingNotes(false);
+      setIsDeleting(false);
     }
   };
 
-  // Render Weekly View
-  const renderWeeklyView = () => {
-    if (isLoadingWeekly) {
-      return (
-        <div className="flex justify-center py-20">
-          <RefreshCw className="w-6 h-6 text-[#D37E5F] animate-spin" />
-        </div>
-      );
-    }
+  // ── Derived ──
+  const selectedMeetingLabel =
+    meetings.find((m) => String(m.id) === String(selectedMeetingId))?.name ??
+    "Meeting";
 
-    if (!weeklyHistory) {
-      return (
-        <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
-          <HistoryIcon className="w-10 h-10 text-[#D37E5F] opacity-30 mx-auto mb-4" />
-          <p className="text-[#8C8580] font-bold text-sm">
-            No weekly history found for the selected filters.
-          </p>
-          <button
-            onClick={() => loadWeeklyHistory()}
-            className="mt-4 px-4 py-2 bg-[#D37E5F] text-white rounded-[16px] text-sm font-bold"
-          >
-            Retry
-          </button>
-        </div>
-      );
-    }
+  const formattedDateLabel = new Date(selectedDate).toLocaleDateString(
+    "en-GB",
+    { day: "numeric", month: "short", year: "2-digit" }
+  );
 
-    // Handle different response structures
-    let historyEntries = [];
-    if (Array.isArray(weeklyHistory)) {
-      historyEntries = weeklyHistory;
-    } else if (weeklyHistory.entries && Array.isArray(weeklyHistory.entries)) {
-      historyEntries = weeklyHistory.entries;
-    } else if (weeklyHistory.data && Array.isArray(weeklyHistory.data)) {
-      historyEntries = weeklyHistory.data;
-    } else if (typeof weeklyHistory === 'object') {
-      // If it's a single object, wrap it in an array
-      historyEntries = [weeklyHistory];
-    }
+  const formattedFullDate = new Date(selectedDate).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
-    if (historyEntries.length === 0) {
-      return (
-        <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
-          <p className="text-[#8C8580] font-bold text-sm">No entries found for the past {selectedWeeks} weeks.</p>
-        </div>
-      );
-    }
+  const memberReports: any[] = historyData?.member_reports || [];
 
-    return (
-      <div className="space-y-4">
-        {historyEntries.map((entry, index) => (
-          <div key={index} className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm overflow-hidden">
-            <div className="p-4 bg-[#FCFAFA] border-b border-[#F0EBE8]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-[#D37E5F]" />
-                  <h4 className="text-base font-black text-[#1A1A1A]">
-                    {entry.date || entry.meeting_date || `Entry ${index + 1}`}
-                  </h4>
-                </div>
-                <span className="px-3 py-1 bg-[#D37E5F]/10 text-[#D37E5F] text-xs font-bold rounded-[8px]">
-                  {entry.submitted || entry.attendees_count || 0} submitted
-                </span>
-              </div>
-            </div>
-            {entry.notes && (
-              <div className="p-4">
-                <pre className="whitespace-pre-wrap font-sans text-sm text-[#1A1A1A] leading-relaxed">
-                  {entry.notes}
-                </pre>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
+  const submittedCount =
+    memberReports.filter(
+      (r: any) =>
+        r.status === "submitted" || (r.status === "pending" && !!r.daily_report)
+    ).length ||
+    historyData?.submitted ||
+    0;
+
+  const missedCount =
+    memberReports.filter((r: any) => r.status === "pending" && !r.daily_report)
+      .length ||
+    historyData?.missed ||
+    0;
+
+  const meetingHeadReport =
+    memberReports.find(
+      (r: any) =>
+        r.user_id === historyData?.config?.meeting_head?.id &&
+        r.status === "submitted"
+    ) || memberReports.find((r: any) => r.status === "submitted");
+  const meetingSubmittedAt = meetingHeadReport?.submitted_at || null;
+
+  const compiledNotes = compileMeetingNotes(historyData);
+
+  const formatSubmittedAt = (isoStr: string | null) => {
+    if (!isoStr) return null;
+    return new Date(isoStr).toLocaleString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   return (
     <div
-      className="pb-12 space-y-6 px-4 sm:px-8 min-h-screen pt-8"
+      className="pb-12 space-y-6 min-h-screen"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* ── Header ── */}
+      {/* ── Controls Row ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-[24px] font-black text-[#1A1A1A] tracking-tight">
@@ -409,311 +444,339 @@ const HistoryTab = () => {
           </p>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* View Mode Toggle */}
-          <div className="flex gap-1 bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] p-1">
-            <button
-              onClick={() => setViewMode("daily")}
-              className={cn(
-                "px-4 py-1.5 text-sm font-bold rounded-[12px] transition-all",
-                viewMode === "daily"
-                  ? "bg-[#D37E5F] text-white"
-                  : "text-[#8C8580] hover:text-[#1A1A1A]"
-              )}
-            >
-              Daily
-            </button>
-            <button
-              onClick={() => setViewMode("weekly")}
-              className={cn(
-                "px-4 py-1.5 text-sm font-bold rounded-[12px] transition-all",
-                viewMode === "weekly"
-                  ? "bg-[#D37E5F] text-white"
-                  : "text-[#8C8580] hover:text-[#1A1A1A]"
-              )}
-            >
-              Weekly
-            </button>
-          </div>
-
-          {/* Meeting Selector - Optional now */}
+          {/* Meeting Dropdown */}
           <div className="relative">
             <select
               value={selectedMeetingId}
               onChange={(e) => setSelectedMeetingId(e.target.value)}
               disabled={isFetchingMeetings}
-              className="appearance-none bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 pl-4 pr-9 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#D37E5F] shadow-sm disabled:opacity-60 transition-colors"
+              className="appearance-none bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 pl-4 pr-9 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] shadow-sm disabled:opacity-60 transition-colors"
             >
-              <option value="">All Meetings (Optional)</option>
-              {meetings.map((m) => (
-                <option key={m.id} value={m.id}>{m.label}</option>
-              ))}
+              {isFetchingMeetings ? (
+                <option value="">Loading Meetings...</option>
+              ) : (
+                meetings.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name || m.label}
+                  </option>
+                ))
+              )}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
           </div>
 
-          {/* Conditional Controls based on view mode */}
-          {viewMode === "daily" ? (
-            <>
-              {/* Date Navigation */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={handlePrevDay}
-                  className="p-2 bg-white border border-[#F0EBE8] rounded-[12px] hover:bg-[#FCFAFA] hover:border-[#D37E5F] text-[#8C8580] hover:text-[#1A1A1A] shadow-sm transition-all"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </button>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 px-4 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#D37E5F] shadow-sm transition-colors"
-                />
-                <button
-                  onClick={handleNextDay}
-                  className="p-2 bg-white border border-[#F0EBE8] rounded-[12px] hover:bg-[#FCFAFA] hover:border-[#D37E5F] text-[#8C8580] hover:text-[#1A1A1A] shadow-sm transition-all"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Weeks Selector */}
-              <div className="relative">
-                <select
-                  value={selectedWeeks}
-                  onChange={(e) => handleWeeksChange(Number(e.target.value))}
-                  className="appearance-none bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 pl-4 pr-9 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#D37E5F] shadow-sm transition-colors"
-                >
-                  <option value={1}>Last 1 week</option>
-                  <option value={2}>Last 2 weeks</option>
-                  <option value={3}>Last 3 weeks</option>
-                  <option value={4}>Last 4 weeks</option>
-                  <option value={8}>Last 8 weeks</option>
-                  <option value={12}>Last 12 weeks</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
-              </div>
-            </>
-          )}
+          {/* Date Navigation */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handlePrevDay}
+              className="p-2 bg-white border border-[#F0EBE8] rounded-[12px] hover:bg-[#FCFAFA] text-[#8C8580] shadow-sm transition-all"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 px-4 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] shadow-sm transition-colors"
+            />
+            <button
+              onClick={handleNextDay}
+              className="p-2 bg-white border border-[#F0EBE8] rounded-[12px] hover:bg-[#FCFAFA] text-[#8C8580] shadow-sm transition-all"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
 
           {/* Refresh */}
           <button
-            onClick={() => viewMode === "daily" ? loadDailyHistory() : loadWeeklyHistory()}
+            onClick={() => setRefreshKey((k) => k + 1)}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F0EBE8] rounded-[16px] hover:bg-[#FCFAFA] shadow-sm text-sm font-bold text-[#1A1A1A] transition-all"
           >
-            <RefreshCw className={cn("w-4 h-4 text-[#8C8580]", (isLoading || isLoadingWeekly) && "animate-spin")} />
+            <RefreshCw
+              className={cn(
+                "w-4 h-4 text-[#8C8580]",
+                isLoading && "animate-spin"
+              )}
+            />
             Refresh
           </button>
         </div>
       </div>
 
-      {/* ── Content based on view mode ── */}
-      {viewMode === "weekly" ? (
-        renderWeeklyView()
-      ) : (
-        <>
-          {isLoading ? (
-            <div className="flex justify-center py-20">
-              <RefreshCw className="w-6 h-6 text-[#D37E5F] animate-spin" />
-            </div>
-          ) : !meetingData ? (
-            <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
-              <HistoryIcon className="w-10 h-10 text-[#D37E5F] opacity-30 mx-auto mb-4" />
-              <p className="text-[#8C8580] font-bold text-sm">
-                No meeting history found for the selected filters.
-              </p>
-            </div>
-          ) : isMissedDay ? (
-            <div className="bg-white border border-[#F0EBE8] rounded-[24px] p-6 shadow-sm flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-[12px] bg-[#FFF3E0] border border-[#FFE0B2] flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-[#F57C00]" />
-                </div>
-                <div>
-                  <div className="text-sm font-black text-[#1A1A1A] mb-2">
-                    Missed Meeting on {formattedFullDate}
-                  </div>
-                  <span className="inline-block px-3 py-1 bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580] text-[11px] font-bold rounded-[8px]">
-                    {selectedMeetingLabel}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 bg-[#D37E5F] text-white text-[11px] font-bold rounded-[8px]">
-                  Done: 0
-                </span>
-                <span className="px-3 py-1.5 bg-[#EB4A4A] text-white text-[11px] font-bold rounded-[8px]">
-                  Missed: 1
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm overflow-hidden">
-              {/* ── Card Header ── */}
-              <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#D37E5F] rounded-t-[24px]">
-                <div>
-                  <h3 className="text-[20px] font-black text-white mb-2 tracking-tight">
-                    {selectedMeetingLabel} — {formattedDateLabel}
-                  </h3>
-                  <div className="flex items-center gap-3 text-white/70 text-[12px] font-bold mb-1">
-                    <span className="px-3 py-1 border border-white/20 text-white text-[10px] font-black rounded-[8px] uppercase tracking-widest">
-                      Submitted
-                    </span>
-                    <span>{attendeesCount} attendees</span>
-                  </div>
-                  <div className="text-[11px] text-white/50 font-bold mt-1 uppercase tracking-widest">
-                    {formattedFullDate}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-bold rounded-[16px] transition-all">
-                    <Sparkles className="w-4 h-4" /> Generate AI
-                  </button>
-                  <button
-                    onClick={handleOpenEditModal}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-bold rounded-[16px] transition-all"
-                  >
-                    <Edit className="w-4 h-4" /> Edit
-                  </button>
-                  <button
-                    onClick={handleDeleteNotes}
-                    disabled={isDeletingNotes}
-                    className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-[#EB4A4A]/80 border border-white/20 text-white rounded-[12px] transition-all disabled:opacity-50"
-                    title="Delete Meeting Notes"
-                  >
-                    {isDeletingNotes
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <Trash className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* ── Notes Section ── */}
-              <div>
+      {/* ── Loading Skeleton ── */}
+      {isLoading && (
+        <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden">
+          <div className="h-[130px] bg-[#CE7A5A]/70 rounded-t-[24px]" />
+          <div className="p-6 space-y-3">
+            <div className="h-10 bg-[#F0EBF8] rounded-[12px]" />
+            <div className="space-y-2 p-2">
+              {[90, 75, 85, 60, 70].map((w, i) => (
                 <div
-                  className="px-6 py-4 flex items-center justify-between cursor-pointer bg-[#FCFAFA] hover:bg-[#F5F0EE] border-b border-[#F0EBE8] transition-colors"
-                  onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+                  key={i}
+                  className="h-4 bg-[#F0EBF8] rounded-full"
+                  style={{ width: `${w}%` }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── No Data ── */}
+      {!isLoading && !historyData && (
+        <div className="text-center py-24 bg-white border-2 border-dashed border-[#E0D8F0] rounded-[32px]">
+          <HistoryIcon className="w-10 h-10 text-[#CE7A5A] opacity-30 mx-auto mb-4" />
+          <p className="text-[#8C8580] font-bold text-sm">
+            No meeting history found for the selected date.
+          </p>
+        </div>
+      )}
+
+      {/* ── Main Card ── */}
+      {!isLoading && historyData && (
+        <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="bg-[#CE7A5A] px-6 py-5 rounded-t-[24px]">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div>
+                <h3
+                  className="text-[22px] font-black !text-white tracking-tight mb-2"
+                  style={{ color: "#ffffff" }}
                 >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#8C8580]" />
-                    <span className="text-sm font-black text-[#1A1A1A]">Raw Meeting Notes</span>
-                  </div>
-                  {isNotesExpanded
-                    ? <ChevronUp className="w-5 h-5 text-[#8C8580]" />
-                    : <ChevronDown className="w-5 h-5 text-[#8C8580]" />}
+                  {selectedMeetingLabel} for {formattedDateLabel}
+                </h3>
+                <div className="flex items-center gap-3 flex-wrap mb-1.5">
+                  <span className="px-3 py-1 bg-white/20 border border-white/20 !text-white text-[11px] font-black rounded-[8px] uppercase tracking-widest">
+                    completed
+                  </span>
+                  <span
+                    className="!text-white/80 text-sm font-bold"
+                    style={{ color: "rgba(255,255,255,0.8)" }}
+                  >
+                    {submittedCount} attendees
+                  </span>
+                  {missedCount > 0 && (
+                    <span
+                      className="flex items-center gap-2 text-xs font-bold"
+                      style={{ color: "rgba(255,255,255,0.7)" }}
+                    >
+                      <span className="flex items-center gap-1">
+                        Done:
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-400 text-white text-[10px] font-black">
+                          {submittedCount}
+                        </span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        Missed:
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400 text-white text-[10px] font-black">
+                          {missedCount}
+                        </span>
+                      </span>
+                    </span>
+                  )}
                 </div>
-
-                {isNotesExpanded && (
-                  <div className="p-6 space-y-6 bg-white">
-                    {/* Missed members */}
-                    <div>
-                      <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
-                        Team Members Who Missed Report ({missedMembers.length})
-                      </div>
-                      {missedMembers.length === 0 ? (
-                        <p className="text-sm font-bold text-[#8C8580] italic">No missed reports.</p>
-                      ) : (
-                        <div className="flex flex-col gap-1.5">
-                          {missedMembers.map((member) => (
-                            <span
-                              key={member.id || member.name || member}
-                              className="text-sm font-bold text-[#D37E5F] hover:underline cursor-pointer w-fit"
-                            >
-                              {member.name || member}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Compiled notes */}
-                    <div className="bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] p-5">
-                      <pre className="whitespace-pre-wrap font-sans text-sm text-[#1A1A1A] leading-relaxed font-bold">
-                        {compiledRawNotes}
-                      </pre>
-                    </div>
+                {meetingSubmittedAt && (
+                  <div
+                    className="!text-white/50 text-[11px] font-bold"
+                    style={{ color: "rgba(255,255,255,0.5)" }}
+                  >
+                    Submitted: {formatSubmittedAt(meetingSubmittedAt)}
                   </div>
                 )}
               </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all">
+                  <Sparkles className="w-4 h-4" /> Generate AI
+                </button>
+                {/* ← CHANGED: onClick now calls handleOpenEditModal which has the toast guard */}
+                <button
+                  onClick={handleOpenEditModal}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all"
+                >
+                  <Edit className="w-4 h-4" /> Edit
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-9 h-9 flex items-center justify-center bg-white/15 hover:bg-red-500/70 border border-white/20 text-white rounded-[12px] transition-all"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          )}
-        </>
+          </div>
+
+          {/* Raw Meeting Notes Toggle */}
+          <div>
+            <div
+              className="px-6 py-4 flex items-center justify-between cursor-pointer bg-[#FCFAFA] hover:bg-[#FFF3EE] border-b border-[#E0D8F0] transition-colors"
+              onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#8C8580]" />
+                <span className="text-sm font-black text-[#1A1A1A]">
+                  Raw Meeting Notes
+                </span>
+              </div>
+              {isNotesExpanded ? (
+                <ChevronUp className="w-5 h-5 text-[#8C8580]" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-[#8C8580]" />
+              )}
+            </div>
+
+            {isNotesExpanded && (
+              <div className="px-6 py-5 bg-white">
+                {compiledNotes ? (
+                  <div className="bg-[#FAFAFA] border border-[#EDEDED] rounded-[14px] px-6 py-5">
+                    <pre
+                      className="whitespace-pre-wrap text-sm text-[#1A1A1A] leading-[1.9]"
+                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                    >
+                      {compiledNotes}
+                    </pre>
+                  </div>
+                ) : (
+                  <p className="text-sm text-[#8C8580] font-bold italic text-center py-10">
+                    No meeting notes available.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* ── Edit Modal — Single textarea only (as per video) ── */}
-      {isEditModalOpen &&
+      {/* ══ Delete Confirm Modal ══ */}
+      {showDeleteConfirm &&
         createPortal(
           <div
             className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             style={{ zIndex: 9999 }}
-            onClick={handleCloseEditModal}
+            onClick={() => !isDeleting && setShowDeleteConfirm(false)}
           >
             <div
-              className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              <div className="flex items-start justify-between p-6 border-b border-[#F0EBE8] bg-[#FCFAFA]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                </div>
                 <div>
-                  <h2 className="text-[20px] font-black text-[#1A1A1A] tracking-tight">
-                    Edit Meeting — {formattedFullDate}
-                  </h2>
-                  <p className="text-[12px] font-bold text-[#8C8580] mt-1">
-                    Update the meeting notes below
+                  <h3 className="font-black text-[#1A1A1A] text-[16px]">
+                    Delete Meeting?
+                  </h3>
+                  <p className="text-xs text-[#8C8580] font-bold mt-0.5">
+                    This action cannot be undone.
                   </p>
                 </div>
-                <button
-                  onClick={handleCloseEditModal}
-                  className="text-[#8C8580] hover:text-[#1A1A1A] p-2 rounded-[12px] border border-transparent hover:border-[#F0EBE8] hover:bg-white transition-all"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
-
-              {/* Modal Body — single textarea */}
-              <div className="p-6 flex-1 overflow-y-auto bg-white">
-                <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
-                  Meeting Notes
-                </label>
-                <textarea
-                  value={meetingNotesText}
-                  onChange={(e) => setMeetingNotesText(e.target.value)}
-                  rows={16}
-                  className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#D37E5F] transition-colors resize-none font-sans leading-relaxed"
-                  placeholder="Enter meeting notes here..."
-                />
-              </div>
-
-              {/* Modal Footer */}
-              <div className="p-5 border-t border-[#F0EBE8] bg-[#FCFAFA] flex justify-end gap-3 rounded-b-[32px]">
+              <div className="flex gap-3 justify-end">
                 <button
-                  onClick={handleCloseEditModal}
-                  disabled={isSavingNotes}
-                  className="px-5 py-2.5 bg-white border border-[#F0EBE8] text-[#8C8580] rounded-[16px] text-sm font-bold hover:bg-gray-50 hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="px-5 py-2.5 bg-white border border-[#E0E0E0] text-[#555] rounded-[12px] text-sm font-bold hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleSaveNotes}
-                  disabled={isSavingNotes}
-                  className={cn(
-                    "flex items-center justify-center gap-2 min-w-[140px] px-6 py-2.5 bg-[#D37E5F] hover:bg-[#c96e50] text-white rounded-[16px] text-sm font-bold transition-colors shadow-sm",
-                    isSavingNotes && "opacity-50 pointer-events-none"
-                  )}
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-[12px] text-sm font-bold shadow-sm disabled:opacity-60 transition-colors"
                 >
-                  {isSavingNotes
-                    ? <Loader2 className="w-4 h-4 animate-spin" />
-                    : "Save Changes"}
+                  {isDeleting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash className="w-4 h-4" />
+                  )}
+                  {isDeleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
           </div>,
           document.body
         )}
+
+      {/* ══ Edit Modal ══ */}
+      {isEditModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            style={{ zIndex: 9999 }}
+            onClick={() => !isSaving && setIsEditModalOpen(false)}
+          >
+            <div
+              className="bg-white rounded-[20px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-[#EBEBEB]">
+                <h2 className="text-[18px] font-black text-[#1A1A1A]">
+                  Edit Meeting - {formattedFullDate}
+                </h2>
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  disabled={isSaving}
+                  className="text-[#8C8580] hover:text-[#1A1A1A] p-1 rounded-[8px] transition-colors disabled:opacity-50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-6 py-5 flex-1 overflow-y-auto bg-white">
+                <label className="text-sm font-bold text-[#1A1A1A] mb-3 block">
+                  Meeting Notes
+                </label>
+                <textarea
+                  value={meetingNotesText}
+                  onChange={(e) => setMeetingNotesText(e.target.value)}
+                  rows={18}
+                  className="w-full bg-white border border-[#CCCCCC] rounded-[12px] px-4 py-3 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] transition-colors resize-y leading-relaxed"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                  placeholder="Enter meeting notes here..."
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-[#EBEBEB] flex justify-end gap-3">
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  disabled={isSaving}
+                  className="px-5 py-2.5 bg-white border border-[#DDDDDD] text-[#555] rounded-[12px] text-sm font-bold hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveNotes}
+                  disabled={isSaving}
+                  className="flex items-center justify-center gap-2 min-w-[140px] px-6 py-2.5 bg-[#CE7A5A] hover:bg-[#BC6B4A] text-white rounded-[12px] text-sm font-bold transition-colors shadow-sm disabled:opacity-60"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      <style>{`
+        select option {
+          font-family: 'Poppins', sans-serif;
+          font-size: 13px;
+          color: #374151;
+          background: #ffffff;
+        }
+      `}</style>
     </div>
   );
 };

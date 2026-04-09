@@ -15,8 +15,15 @@ import {
   Lock,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  CreditCard,
+  TrendingUp,
+  User,
+  UserCheck,
+  MapPin,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 interface UserStory {
   title: string;
@@ -2145,7 +2152,7 @@ const ProductDetails: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen bg-white p-6 lg:p-10 font-sans select-none relative transition-all duration-300 ${isBlurred ? "blur-2xl" : ""}`}
+      className={`min-h-screen bg-white font-sans select-none relative transition-all duration-300 ${isBlurred ? "blur-2xl" : ""}`}
       style={
         {
           WebkitUserSelect: "none",
@@ -2190,8 +2197,8 @@ const ProductDetails: React.FC = () => {
         </div>
       )}
       {/* Header */}
-      <div className="relative mb-12 flex flex-col items-center">
-        <div className="w-full mb-8">
+      <div className="relative mb-8 flex flex-col items-center bg-white">
+        <div className="w-full max-w-7xl px-6 lg:px-10 mb-6">
           <button
             onClick={() => navigate("/products")}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors border border-blue-200 px-3 py-1.5 rounded"
@@ -2201,7 +2208,7 @@ const ProductDetails: React.FC = () => {
           </button>
         </div>
 
-        <div className="text-center w-full max-w-5xl">
+        <div className="text-center w-full max-w-7xl px-6 lg:px-10">
           <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full mb-4 tracking-[0.2em] uppercase border border-blue-100 animate-fade-in">
             {productData.industries.split(",")[0].replace(/^\d+\.\s*/, "")}
           </div>
@@ -2214,247 +2221,420 @@ const ProductDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Product Overview Section */}
-      <section className="mb-12 border border-gray-100 rounded-lg overflow-hidden">
-        <div className="bg-[#F8F6F1] px-6 py-3 flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-[#D4CFBC]"></div>
-          <h2 className="text-sm font-bold text-gray-800">Product Overview</h2>
-        </div>
-
-        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-          {/* Left Column */}
-          <div className="space-y-6">
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Product Brief
-              </h3>
-              <p className="text-[11px] text-gray-700 leading-relaxed">
-                {productData.brief}
-              </p>
-            </div>
-
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Product Description/ User Stories
-              </h3>
-              <div className="text-[11px] text-gray-700 leading-relaxed space-y-3">
-                {productData.userStories.map((section, idx) => (
-                  <div key={idx}>
-                    <p className="font-semibold mb-1">{section.title}</p>
-                    <ul className="pl-2 space-y-0.5">
-                      {section.items.map((item, i) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Applicable TG Industries
-              </h3>
-              <p className="text-[11px] text-gray-700 leading-relaxed">
-                {productData.industries}
-              </p>
-            </div>
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                USP/Differentiators (1-5)
-              </h3>
-              <ul className="text-[11px] text-gray-700 leading-relaxed space-y-0.5">
-                {productData.usps.map((usp, i) => (
-                  <li key={i}>{usp}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Inclusions
-              </h3>
-              <ul className="text-[11px] text-gray-700 leading-relaxed space-y-0.5">
-                {productData.includes.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Up Selling
-              </h3>
-              <ul className="text-[11px] text-gray-700 leading-relaxed space-y-0.5">
-                {productData.upSelling.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Integrations
-              </h3>
-              <ul className="text-[11px] text-gray-700 leading-relaxed space-y-0.5">
-                {productData.integrations.map((item, i) => (
-                  <li key={i} className="whitespace-pre-wrap">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Decision Makers
-              </h3>
-              <ul className="text-[11px] text-gray-700 leading-relaxed space-y-0.5">
-                {productData.decisionMakers.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                Key points for Decision Making/ Purchase Decision
-              </h3>
-              <ul className="text-[11px] text-gray-700 leading-relaxed space-y-0.5">
-                {productData.keyPoints.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex gap-4">
-              <h3 className="text-[11px] font-semibold text-gray-400 w-32 shrink-0">
-                ROI
-              </h3>
-              <ul className="text-[11px] text-gray-700 leading-relaxed space-y-0.5">
-                {productData.roi.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Meet The People Section */}
-      <section className="mb-12 border border-gray-100 rounded-lg overflow-hidden">
-        <div className="bg-[#F8F6F1] px-6 py-3 flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-[#D4CFBC]"></div>
-          <h2 className="text-sm font-bold text-gray-800">
-            Meet The People Behind The Product
-          </h2>
-        </div>
-        <div className="p-8">
-          <div className="flex gap-6 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-            {teamMembers.map((member, index) => (
-              <div
-                key={index}
-                className="flex-shrink-0 w-48 relative rounded-xl overflow-hidden group"
+      <div className="max-w-7xl px-6 lg:px-10">
+        <Tabs defaultValue="overview" style={{ width: "100%" }}>
+          <TabsList className="w-full mb-8">
+            <TabsTrigger
+              value="overview"
+              className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+            >
+              <svg
+                width="16"
+                height="15"
+                viewBox="0 0 16 15"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
               >
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className="w-full h-56 object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                <path
+                  d="M7.66681 11.6106C6.59669 11.5192 5.69719 11.0831 4.96831 10.3024C4.23944 9.52162 3.875 8.5875 3.875 7.5C3.875 6.35413 4.27606 5.38019 5.07819 4.57819C5.88019 3.77606 6.85413 3.375 8 3.375C9.0875 3.375 10.0216 3.73825 10.8024 4.46475C11.5831 5.19112 12.0192 6.08944 12.1106 7.15969L10.9179 6.80625C10.7557 6.13125 10.4066 5.57812 9.87031 5.14688C9.33419 4.71563 8.71075 4.5 8 4.5C7.175 4.5 6.46875 4.79375 5.88125 5.38125C5.29375 5.96875 5 6.675 5 7.5C5 8.2125 5.21681 8.8375 5.65044 9.375C6.08406 9.9125 6.636 10.2625 7.30625 10.425L7.66681 11.6106ZM8.56681 14.5946C8.47231 14.6149 8.37788 14.625 8.2835 14.625H8C7.01438 14.625 6.08812 14.438 5.22125 14.064C4.35437 13.69 3.60031 13.1824 2.95906 12.5413C2.31781 11.9002 1.81019 11.1463 1.43619 10.2795C1.06206 9.41275 0.875 8.48669 0.875 7.50131C0.875 6.51581 1.062 5.5895 1.436 4.72237C1.81 3.85525 2.31756 3.101 2.95869 2.45962C3.59981 1.81825 4.35375 1.31044 5.2205 0.936187C6.08725 0.562062 7.01331 0.375 7.99869 0.375C8.98419 0.375 9.9105 0.562062 10.7776 0.936187C11.6448 1.31019 12.399 1.81781 13.0404 2.45906C13.6818 3.10031 14.1896 3.85437 14.5638 4.72125C14.9379 5.58812 15.125 6.51438 15.125 7.5V7.77975C15.125 7.873 15.1149 7.96631 15.0946 8.05969L14 7.725V7.5C14 5.825 13.4187 4.40625 12.2563 3.24375C11.0938 2.08125 9.675 1.5 8 1.5C6.325 1.5 4.90625 2.08125 3.74375 3.24375C2.58125 4.40625 2 5.825 2 7.5C2 9.175 2.58125 10.5938 3.74375 11.7563C4.90625 12.9187 6.325 13.5 8 13.5H8.225L8.56681 14.5946ZM14.1052 14.7332L10.7043 11.325L9.88944 13.7884L8 7.5L14.2884 9.38944L11.825 10.2043L15.2332 13.6052L14.1052 14.7332Z"
+                  fill="#currentColor"
                 />
-                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <h3 className="text-white text-sm font-bold">
-                    {member.name}
-                  </h3>
-                  <p className="text-gray-300 text-[10px]">{member.role}</p>
+              </svg>
+              Product Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="details"
+              className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+            >
+              <svg
+                width="18"
+                height="19"
+                viewBox="0 0 18 19"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Detailed Information
+            </TabsTrigger>
+            <TabsTrigger
+              value="assets"
+              className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+            >
+              <svg
+                width="16"
+                height="15"
+                viewBox="0 0 16 15"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+              >
+                <path
+                  d="M7.66681 11.6106C6.59669 11.5192 5.69719 11.0831 4.96831 10.3024C4.23944 9.52162 3.875 8.5875 3.875 7.5C3.875 6.35413 4.27606 5.38019 5.07819 4.57819C5.88019 3.77606 6.85413 3.375 8 3.375C9.0875 3.375 10.0216 3.73825 10.8024 4.46475C11.5831 5.19112 12.0192 6.08944 12.1106 7.15969L10.9179 6.80625C10.7557 6.13125 10.4066 5.57812 9.87031 5.14688C9.33419 4.71563 8.71075 4.5 8 4.5C7.175 4.5 6.46875 4.79375 5.88125 5.38125C5.29375 5.96875 5 6.675 5 7.5C5 8.2125 5.21681 8.8375 5.65044 9.375C6.08406 9.9125 6.636 10.2625 7.30625 10.425L7.66681 11.6106ZM8.56681 14.5946C8.47231 14.6149 8.37788 14.625 8.2835 14.625H8C7.01438 14.625 6.08812 14.438 5.22125 14.064C4.35437 13.69 3.60031 13.1824 2.95906 12.5413C2.31781 11.9002 1.81019 11.1463 1.43619 10.2795C1.06206 9.41275 0.875 8.48669 0.875 7.50131C0.875 6.51581 1.062 5.5895 1.436 4.72237C1.81 3.85525 2.31756 3.101 2.95869 2.45962C3.59981 1.81825 4.35375 1.31044 5.2205 0.936187C6.08725 0.562062 7.01331 0.375 7.99869 0.375C8.98419 0.375 9.9105 0.562062 10.7776 0.936187C11.6448 1.31019 12.399 1.81781 13.0404 2.45906C13.6818 3.10031 14.1896 3.85437 14.5638 4.72125C14.9379 5.58812 15.125 6.51438 15.125 7.5V7.77975C15.125 7.873 15.1149 7.96631 15.0946 8.05969L14 7.725V7.5C14 5.825 13.4187 4.40625 12.2563 3.24375C11.0938 2.08125 9.675 1.5 8 1.5C6.325 1.5 4.90625 2.08125 3.74375 3.24375C2.58125 4.40625 2 5.825 2 7.5C2 9.175 2.58125 10.5938 3.74375 11.7563C4.90625 12.9187 6.325 13.5 8 13.5H8.225L8.56681 14.5946ZM14.1052 14.7332L10.7043 11.325L9.88944 13.7884L8 7.5L14.2884 9.38944L11.825 10.2043L15.2332 13.6052L14.1052 14.7332Z"
+                  fill="#currentColor"
+                />
+              </svg>
+              Assets & Credentials
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Product Overview Tab */}
+          <TabsContent value="overview" className="space-y-8">
+            <div className="w-full bg-white rounded-lg shadow-sm border">
+              {/* Header */}
+              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                  <Settings
+                    className="w-6 h-6"
+                    style={{ color: "#C72030" }}
+                  />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  Product Overview
+                </h3>
+              </div>
+
+              {/* Body */}
+              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+                  {/* Left Section - Product Info */}
+                  <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
+                    <div className="flex items-start">
+                      <span className="w-32 text-gray-500 text-sm">
+                        Product Brief
+                      </span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <span className="font-semibold text-black">
+                        {productData.brief}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="w-32 text-gray-500 text-sm">
+                        Industries
+                      </span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <span className="font-semibold text-black">
+                        {productData.industries}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="w-32 text-gray-500 text-sm">
+                        Inclusions
+                      </span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <span className="font-semibold text-black">
+                        {productData.includes.join(", ")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="w-32 text-gray-500 text-sm">
+                        Up Selling
+                      </span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <span className="font-semibold text-black">
+                        {productData.upSelling.join(", ")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="w-32 text-gray-500 text-sm">
+                        Integrations
+                      </span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <span className="font-semibold text-black">
+                        {productData.integrations.join(", ")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start">
+                      <span className="w-32 text-gray-500 text-sm">
+                        Decision Makers
+                      </span>
+                      <span className="mx-2 text-gray-500">:</span>
+                      <span className="font-semibold text-black">
+                        {productData.decisionMakers.join(", ")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right Section - Product Owner */}
+                  <div className="lg:col-span-1 flex justify-end">
+                    <div className="w-64 h-48 border border-gray-300 rounded-lg bg-white flex items-center justify-center overflow-hidden relative">
+                      {productData.ownerImage ? (
+                        <img
+                          src={productData.ownerImage}
+                          alt={productData.owner || "Product Owner"}
+                          className="max-w-full max-h-full object-contain rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget
+                              .nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+
+                      {/* Fallback when image is not available */}
+                      <div
+                        className={`absolute inset-0 ${productData.ownerImage
+                          ? "hidden"
+                          : "flex"
+                          } flex-col items-center justify-center text-gray-400 text-sm`}
+                      >
+                        <User className="w-12 h-12 mb-2" />
+                        <span>{productData.owner || "Product Owner"}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
+          </TabsContent>
 
-      {/* Product Assets Section */}
-      <section className="border border-gray-100 rounded-lg overflow-hidden">
-        <div className="bg-[#F8F6F1] px-6 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-red-400"></div>
-            <h2 className="text-sm font-bold text-gray-800">Product Assets</h2>
-            <span className="flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded border border-red-100 ml-2">
-              <Lock className="w-3 h-3" />
-              VIEW ONLY
-            </span>
-          </div>
-          <span className="text-[10px] text-gray-400 font-medium italic">
-            Downloads are strictly restricted per internal policy
-          </span>
-        </div>
-        <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {assets.map((asset, index) => (
-              <div
-                key={index}
-                className="border border-gray-100 rounded-md p-4 flex items-center gap-4 hover:shadow-sm transition-shadow"
-              >
-                <div className="p-2 bg-gray-50 rounded-lg text-gray-600">
-                  {asset.icon}
+          {/* Detailed Information Tab */}
+          <TabsContent value="details" className="space-y-8">
+            <div className="w-full bg-white rounded-lg shadow-sm border">
+              {/* Header */}
+              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                  <FileText
+                    className="w-6 h-6"
+                    style={{ color: "#C72030" }}
+                  />
                 </div>
-                <span
-                  className={`text-xs font-semibold underline cursor-pointer transition-colors ${
-                    !asset.url || asset.url === "NA" || asset.url === "#"
-                      ? "text-gray-400 hover:text-gray-300 pointer-events-none"
-                      : "text-gray-700 hover:text-blue-600"
-                  }`}
-                  onClick={() =>
-                    asset.url &&
-                    asset.url !== "NA" &&
-                    asset.url !== "#" &&
-                    window.open(asset.url, "_blank")
-                  }
-                >
-                  {asset.title}
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  User Stories & Features
+                </h3>
+              </div>
+
+              {/* Body */}
+              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* User Stories */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-black mb-4">User Stories</h4>
+                    <div className="space-y-4">
+                      {productData.userStories.map((section, idx) => (
+                        <div key={idx} className="bg-white p-4 rounded-lg border">
+                          <h5 className="font-semibold text-gray-800 mb-2">{section.title}</h5>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            {section.items.map((item, i) => (
+                              <li key={i}>• {item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-lg font-semibold text-black mb-4">USPs & Differentiators</h4>
+                      <div className="space-y-2">
+                        {productData.usps.map((usp, i) => (
+                          <div key={i} className="bg-white p-3 rounded-lg border text-sm text-gray-700">
+                            {usp}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-lg font-semibold text-black mb-4">Key Decision Points</h4>
+                      <div className="space-y-2">
+                        {productData.keyPoints.map((point, i) => (
+                          <div key={i} className="bg-white p-3 rounded-lg border text-sm text-gray-700">
+                            {point}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-lg font-semibold text-black mb-4">ROI Benefits</h4>
+                      <div className="space-y-2">
+                        {productData.roi.map((roi, i) => (
+                          <div key={i} className="bg-white p-3 rounded-lg border text-sm text-gray-700">
+                            {roi}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Assets & Credentials Tab */}
+          <TabsContent value="assets" className="space-y-8">
+            {/* Product Assets Section */}
+            <div className="w-full bg-white rounded-lg shadow-sm border">
+              {/* Header */}
+              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9] justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <CreditCard
+                      className="w-6 h-6"
+                      style={{ color: "#C72030" }}
+                    />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                    Product Assets
+                  </h3>
+                </div>
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded border border-red-100">
+                  <Lock className="w-3 h-3" />
+                  VIEW ONLY
                 </span>
               </div>
-            ))}
 
-            {credentials.map((cred, index) => (
-              <div
-                key={`cred-${index}`}
-                className="border border-gray-100 rounded-md p-4 flex gap-4 hover:shadow-sm transition-shadow"
-              >
-                <div className="p-2 bg-gray-50 rounded-lg text-gray-600 h-fit">
-                  {cred.icon}
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-gray-700 mb-1">
-                    {cred.title}
-                  </h4>
-                  <div className="text-[10px] text-gray-500 space-y-0.5">
-                    <p
-                      className={`transition-colors ${
-                        !cred.url ||
-                        cred.url === "NA" ||
-                        cred.url === "#" ||
-                        !cred.url.startsWith("http")
-                          ? "text-gray-400 hover:text-gray-300 cursor-default"
-                          : "cursor-pointer hover:text-blue-500 hover:underline text-gray-500"
-                      }`}
-                      onClick={() =>
-                        cred.url &&
-                        cred.url.startsWith("http") &&
-                        window.open(cred.url, "_blank")
-                      }
+              {/* Body */}
+              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {assets.map((asset, index) => (
+                    <div
+                      key={index}
+                      className="border border-gray-100 rounded-md p-4 flex items-center gap-4 hover:shadow-sm transition-shadow bg-white"
                     >
-                      URL : {cred.url}
-                    </p>
-                    <p>
-                      ID : {cred.id} | Password : {cred.pass}
-                    </p>
-                  </div>
+                      <div className="p-2 bg-gray-50 rounded-lg text-gray-600">
+                        {asset.icon}
+                      </div>
+                      <span
+                        className={`text-xs font-semibold underline cursor-pointer transition-colors ${
+                          !asset.url || asset.url === "NA" || asset.url === "#"
+                            ? "text-gray-400 hover:text-gray-300 pointer-events-none"
+                            : "text-gray-700 hover:text-blue-600"
+                        }`}
+                        onClick={() =>
+                          asset.url &&
+                          asset.url !== "NA" &&
+                          asset.url !== "#" &&
+                          window.open(asset.url, "_blank")
+                        }
+                      >
+                        {asset.title}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
+
+            {/* Credentials Section */}
+            <div className="w-full bg-white rounded-lg shadow-sm border">
+              {/* Header */}
+              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                  <UserCheck
+                    className="w-6 h-6"
+                    style={{ color: "#C72030" }}
+                  />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  Login Credentials
+                </h3>
+              </div>
+
+              {/* Body */}
+              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {credentials.map((cred, index) => (
+                    <div
+                      key={`cred-${index}`}
+                      className="border border-gray-100 rounded-md p-4 flex gap-4 hover:shadow-sm transition-shadow bg-white"
+                    >
+                      <div className="p-2 bg-gray-50 rounded-lg text-gray-600 h-fit">
+                        {cred.icon}
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-700 mb-1">
+                          {cred.title}
+                        </h4>
+                        <div className="text-[10px] text-gray-500 space-y-0.5">
+                          <p
+                            className={`transition-colors ${
+                              !cred.url ||
+                              cred.url === "NA" ||
+                              cred.url === "#" ||
+                              !cred.url.startsWith("http")
+                                ? "text-gray-400 hover:text-gray-300 cursor-default"
+                                : "cursor-pointer hover:text-blue-500 hover:underline text-gray-500"
+                            }`}
+                            onClick={() =>
+                              cred.url &&
+                              cred.url.startsWith("http") &&
+                              window.open(cred.url, "_blank")
+                            }
+                          >
+                            URL : {cred.url}
+                          </p>
+                          <p>
+                            ID : {cred.id} | Password : {cred.pass}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Meet The People Section */}
+            <div className="w-full bg-white rounded-lg shadow-sm border">
+              {/* Header */}
+              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                  <User
+                    className="w-6 h-6"
+                    style={{ color: "#C72030" }}
+                  />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  Meet The People Behind The Product
+                </h3>
+              </div>
+
+              {/* Body */}
+              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="flex gap-6 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                  {teamMembers.map((member, index) => (
+                    <div
+                      key={index}
+                      className="flex-shrink-0 w-48 relative rounded-xl overflow-hidden group"
+                    >
+                      <img
+                        src={member.image}
+                        alt={member.name}
+                        className="w-full h-56 object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                      />
+                      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-4">
+                        <h3 className="text-white text-sm font-bold">
+                          {member.name}
+                        </h3>
+                        <p className="text-gray-300 text-[10px]">{member.role}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
       {/* Related Products */}
-      <div className="mt-20 pt-10 border-t border-gray-100">
+      <div className="mt-20 mb-8 pt-10 border-t border-gray-100 max-w-7xl px-6 lg:px-10">
         <h2 className="text-xl font-black text-gray-900 mb-8 tracking-tight uppercase">
           Explore Other Solutions
         </h2>

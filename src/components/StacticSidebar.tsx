@@ -102,6 +102,14 @@ const navigationStructure = {
             href: "/settings/company-hub/announcements",
           },
           {
+            name: "Team Setup",
+            href: "/settings/company-hub/team-setup",
+          },
+          {
+            name: "Jobs",
+            href: "/settings/company-hub/jobs",
+          },
+          {
             name: "Holiday Calendar",
 
             href: "/settings/account/holiday-calendar",
@@ -1512,6 +1520,14 @@ const modulesByPackage = {
         {
           name: "Announcements Setup",
           href: "/settings/company-hub/announcements",
+        },
+        {
+          name: "Team Setup",
+          href: "/settings/company-hub/team-setup",
+        },
+        {
+          name: "Jobs",
+          href: "/settings/company-hub/jobs",
         },
       ],
     },

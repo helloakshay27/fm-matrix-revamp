@@ -23,10 +23,16 @@ const C = {
 };
 
 // ── API Helpers ──
-const BASE_URL = 'https://fm-uat-api.lockated.com';
+const getBaseUrl = () => {
+  const raw = (localStorage.getItem('baseUrl') || '').replace(/\/$/, '');
+  if (!raw) return '';
+  return raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+};
+
+const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('auth_token') || '';
+  const token = localStorage.getItem('token') || '';
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: token } : {}),
@@ -111,7 +117,7 @@ const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () =
   );
 };
 
-// ── Quadrant config — using BusinessPlanAndGoles palette ──
+// ── Quadrant config ──
 const CONFIG: Record<string, any> = {
   strengths: {
     title:    'Strengths',
@@ -296,8 +302,8 @@ export default function SWOTAnalysis() {
     }
   };
 
-  const handleItemChange  = (idx: number, val: string) => { const n = [...tempItems]; n[idx] = val; setTempItems(n); };
-  const handleDeleteItem  = (idx: number) => setTempItems(tempItems.filter((_, i) => i !== idx));
+  const handleItemChange = (idx: number, val: string) => { const n = [...tempItems]; n[idx] = val; setTempItems(n); };
+  const handleDeleteItem = (idx: number) => setTempItems(tempItems.filter((_, i) => i !== idx));
 
   const conf = editCategory ? CONFIG[editCategory] : null;
 
@@ -306,7 +312,7 @@ export default function SWOTAnalysis() {
     <div className="swot-wrap" style={{ padding: '24px 0', fontFamily: C.font }}>
       <ThemeStyle />
 
-      {/* ── Section header — teal bg matching BusinessPlanAndGoles ── */}
+      {/* ── Section header ── */}
       <div
         style={{
           borderRadius: 8, padding: '18px 20px',
@@ -409,7 +415,7 @@ export default function SWOTAnalysis() {
         })}
       </div>
 
-      {/* ── Edit Modal — matching bp-modal-box style ── */}
+      {/* ── Edit Modal ── */}
       {isModalOpen && editCategory && conf && (
         <Modal onClose={closeModal}>
           <div className="swot-modal-box">

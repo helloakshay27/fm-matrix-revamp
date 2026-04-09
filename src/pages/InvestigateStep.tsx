@@ -59,6 +59,8 @@ export interface PropertyDamage {
     attachments: File[];
 }
 
+
+
 interface InvestigateStepProps {
     incident: Incident | null;
     investigators: Investigator[];
@@ -214,7 +216,14 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
         setConditions(prev => prev.map(cond =>
             cond.id === id ? { ...cond, [field]: value } : cond
         ));
-    }, [setConditions]);
+
+        // Also update the subStandardConditionId and subStandardActId when selected
+        if (field === 'condition') {
+            setSubStandardConditionId(value);
+        } else if (field === 'act') {
+            setSubStandardActId(value);
+        }
+    }, [setConditions, setSubStandardConditionId, setSubStandardActId]);
 
     const removeCondition = useCallback((id: string) => {
         setConditions(prev => prev.filter(cond => cond.id !== id));
@@ -930,8 +939,8 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                     </div> */}
 
 
-                 
-                                        {/* Injury Section */}
+
+                    {/* Injury Section */}
                     <div className="border-t border-gray-300 pt-3">
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-sm font-semibold">Injury</span>
@@ -948,7 +957,7 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => setInjuredPersons(prev => 
+                                                    onClick={() => setInjuredPersons(prev =>
                                                         prev.filter(p => p.id !== person.id)
                                                     )}
                                                     className="h-6 text-red-500 hover:text-red-700"
@@ -1003,7 +1012,7 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
                                                         )}
                                                         {internalInjuryUsers.length > 0 ? (
                                                             internalInjuryUsers.map((user: any) => (
-                                                                <MenuItem 
+                                                                <MenuItem
                                                                     key={user.id ?? user.userId ?? user.full_name}
                                                                     value={String(user.id || user.userId || '')}
                                                                 >

@@ -18,10 +18,16 @@ const C = {
   font:              "'Poppins', sans-serif",
 };
 
-export const BASE_URL = "https://fm-uat-api.lockated.com";
+const getBaseUrl = () => {
+  const raw = (localStorage.getItem('baseUrl') || '').replace(/\/$/, '');
+  if (!raw) return '';
+  return raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+};
+
+export const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('auth_token') || '';
+  const token = localStorage.getItem('token') || '';
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: token } : {}),
@@ -253,7 +259,7 @@ const BtnIcon = ({ children, onClick, title = '', danger = false }: any) => (
   </button>
 );
 
-// ── Status badge — using BusinessPlan-aligned neutral palette ──
+// ── Status badge ──
 const STATUS_CONFIG: Record<string, { bg: string; color: string; border: string }> = {
   "to start": { bg: '#fef9f0', color: '#92400e', border: '#fde68a' },
   "running":  { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' },
@@ -328,16 +334,16 @@ export const KeyProcessesSection = () => {
       try { json = JSON.parse(rawText); } catch { json = []; }
       const records: any[] = Array.isArray(json) ? json : json.data || json.system_sops || [];
       const mapped: SopItem[] = records.map((r: any) => ({
-        id:               r.id,
-        name:             r.system_name || r.name || '',
-        status:           (r.status || 'to start').toLowerCase(),
-        description:      r.description || '',
-        owner:            r.assignee?.name || r.owner || null,
-        health:           r.health_score ?? 0,
-        priority:         r.priority || 'medium priority',
+        id:                r.id,
+        name:              r.system_name || r.name || '',
+        status:            (r.status || 'to start').toLowerCase(),
+        description:       r.description || '',
+        owner:             r.assignee?.name || r.owner || null,
+        health:            r.health_score ?? 0,
+        priority:          r.priority || 'medium priority',
         documentation_url: r.documentation_url || '',
-        department_id:    r.department_id || null,
-        assignee_id:      r.assignee_id || null,
+        department_id:     r.department_id || null,
+        assignee_id:       r.assignee_id || null,
       }));
       setAllSops(mapped);
       const initial = mapped.slice(0, 6);
@@ -470,7 +476,6 @@ export const KeyProcessesSection = () => {
   const selectedCount = selectIds.length;
   const isValidCount  = selectedCount >= 3 && selectedCount <= 6;
 
-  // Skeleton
   const Shimmer = ({ h = 56 }: { h?: number }) => (
     <div className="kp-skeleton" style={{ height: h }} />
   );
@@ -482,7 +487,7 @@ export const KeyProcessesSection = () => {
       {/* ── Section wrapper ── */}
       <div style={{ borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.primaryBord}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
-        {/* Header — teal banner matching BusinessPlanAndGoles ── */}
+        {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px', background: C.tealBg,
@@ -541,7 +546,6 @@ export const KeyProcessesSection = () => {
         {/* Body */}
         <div style={{ padding: 20, background: C.primaryBg }}>
 
-          {/* Fetch error */}
           {fetchError && (
             <div className="kp-error-banner" style={{ marginBottom: 16 }}>
               <span>⚠ {fetchError}</span>
@@ -552,7 +556,6 @@ export const KeyProcessesSection = () => {
             </div>
           )}
 
-          {/* Grid */}
           {isFetching ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
               {[1, 2, 3].map(n => <Shimmer key={n} />)}
@@ -606,7 +609,6 @@ export const KeyProcessesSection = () => {
         <Modal onClose={closeModal}>
           <div className="kp-modal" style={{ maxWidth: 480 }}>
 
-            {/* Header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '20px 28px 16px',
@@ -622,7 +624,6 @@ export const KeyProcessesSection = () => {
               <BtnIcon onClick={closeModal}><CloseIcon /></BtnIcon>
             </div>
 
-            {/* Body */}
             <div className="kp-modal-body" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {saveError && <div className="kp-error-banner">{saveError}</div>}
 
@@ -680,7 +681,6 @@ export const KeyProcessesSection = () => {
               </div>
             </div>
 
-            {/* Footer */}
             <div style={{
               display: 'flex', justifyContent: 'flex-end', gap: 10,
               padding: '16px 28px',
@@ -730,7 +730,6 @@ export const KeyProcessesSection = () => {
         <Modal onClose={closeModal}>
           <div className="kp-modal" style={{ maxWidth: 660 }}>
 
-            {/* Header */}
             <div style={{
               flexShrink: 0, padding: '20px 28px 16px',
               background: C.cardBg,
@@ -752,7 +751,6 @@ export const KeyProcessesSection = () => {
               </div>
             </div>
 
-            {/* Search */}
             <div style={{ padding: '14px 28px 8px', flexShrink: 0 }}>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
@@ -766,7 +764,6 @@ export const KeyProcessesSection = () => {
               </div>
             </div>
 
-            {/* Count bar */}
             <div style={{ padding: '0 28px 12px', flexShrink: 0 }}>
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -789,7 +786,6 @@ export const KeyProcessesSection = () => {
               </div>
             </div>
 
-            {/* List */}
             <div className="kp-modal-body" style={{ padding: '0 28px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {isFetching ? (
                 [1, 2, 3].map(n => <div key={n} className="kp-skeleton" style={{ height: 72 }} />)
@@ -848,7 +844,6 @@ export const KeyProcessesSection = () => {
               })}
             </div>
 
-            {/* Footer */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '14px 28px',

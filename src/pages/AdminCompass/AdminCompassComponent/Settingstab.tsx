@@ -1,6 +1,3 @@
-// ─────────────────────────────────────────────
-// SettingsTab.jsx — Unified Modern Theme
-// ─────────────────────────────────────────────
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -16,13 +13,14 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner"; // ← ADDED
 import {
   fetchMeetingConfigs,
   createMeetingConfig,
   updateMeetingConfig,
   deleteMeetingConfig,
   getInitials,
-  BASE_URL,
+  getBaseUrl,
 } from "./Shared";
 
 // ── MeetingConfigModal ──
@@ -36,29 +34,31 @@ const MeetingConfigModal = ({
 }) => {
   const isEdit = !!existingConfig;
 
+  const initialMembers = existingConfig?.members
+    ? existingConfig.members.map((m) => Number(m.id))
+    : (existingConfig?.memberIds ?? []).map(Number);
+
   const [form, setForm] = useState({
     name: existingConfig?.name ?? "",
-    meeting_time: existingConfig?.meetingTime ?? "",
-    meeting_days: existingConfig?.meetingDays ?? [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-    ],
-    meeting_head_id: existingConfig?.meetingHeadId
+    meeting_time:
+      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
+    meeting_days: existingConfig?.meetingDays ??
+      existingConfig?.meeting_days ?? ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    meeting_head_id: existingConfig?.meetingHead?.id
+      ? String(existingConfig.meetingHead.id)
+      : existingConfig?.meetingHeadId
       ? String(existingConfig.meetingHeadId)
       : "",
-    department_id: existingConfig?.departmentId
+    department_id: existingConfig?.department?.id
+      ? String(existingConfig.department.id)
+      : existingConfig?.departmentId
       ? String(existingConfig.departmentId)
       : "",
-    is_default: existingConfig?.isDefault ?? false,
+    is_default:
+      existingConfig?.isDefault ?? existingConfig?.is_default ?? false,
   });
 
-  const [selectedMemberIds, setSelectedMemberIds] = useState(
-    (existingConfig?.memberIds ?? []).map(Number)
-  );
-
+  const [selectedMemberIds, setSelectedMemberIds] = useState(initialMembers);
   const [memberSearch, setMemberSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -110,15 +110,16 @@ const MeetingConfigModal = ({
 
     try {
       if (isEdit) {
-        // ✅ PUT /daily_meeting_configs/:id — same payload, same fields
         await updateMeetingConfig(existingConfig.id, payload);
+        toast.success("Meeting configuration updated!"); // ← ADDED
       } else {
-        // ✅ POST /daily_meeting_configs
         await createMeetingConfig(payload);
+        toast.success("Meeting configuration created!"); // ← ADDED
       }
       onSaved();
     } catch (err) {
       setError(err.message || "Failed to save config.");
+      toast.error(err.message || "Failed to save config."); // ← ADDED
     } finally {
       setIsLoading(false);
     }
@@ -364,10 +365,63 @@ const MeetingConfigModal = ({
   );
 };
 
+// ── DeleteConfirmModal ── ← ADDED: custom confirm dialog instead of window.confirm
+const DeleteConfirmModal = ({ configName, onConfirm, onCancel, isDeleting }) =>
+  createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      style={{ zIndex: 99999 }}
+      onClick={() => !isDeleting && onCancel()}
+    >
+      <div
+        className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5"
+        onClick={(e) => e.stopPropagation()}
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <h3 className="font-black text-[#1A1A1A] text-[16px]">
+              Delete Meeting?
+            </h3>
+            <p className="text-xs text-[#8C8580] font-bold mt-0.5">
+              "{configName}" will be permanently removed.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="px-5 py-2.5 bg-white border border-[#E0E0E0] text-[#555] rounded-[12px] text-sm font-bold hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-[12px] text-sm font-bold shadow-sm disabled:opacity-60 transition-colors"
+          >
+            {isDeleting ? (
+              <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <Trash className="w-4 h-4" />
+            )}
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+
 // ── ConfigCard ──
 const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // ← ADDED
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -379,17 +433,18 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ← CHANGED: removed window.confirm, now uses DeleteConfirmModal
   const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete "${config.name}"?`))
-      return;
     setIsDeleting(true);
     try {
       await deleteMeetingConfig(config.id);
+      toast.success(`"${config.name}" deleted successfully.`);
       loadConfigs();
     } catch (e) {
-      alert(`Delete failed: ${e.message}`);
+      toast.error(`Delete failed: ${e.message}`);
     } finally {
       setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -399,13 +454,18 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
     return val;
   };
 
-  const meetingHeadName = getDisplayName(config.meetingHead) || "Unknown Head";
+  const meetingHeadName =
+    getDisplayName(config.meetingHead || config.meeting_head) || "Unknown Head";
+  const meetingHeadId = config.meetingHeadId || config.meeting_head?.id;
 
-  const mappedMembers = (config.memberIds || []).map((id) => {
-    const user = allUsers.find((u) => Number(u.id) === Number(id));
+  const membersArray = config.members || [];
+
+  const mappedMembers = membersArray.map((m) => {
+    if (m && m.name) return m.name;
+    const user = allUsers.find((u) => Number(u.id) === Number(m.id || m));
     return user
-      ? (user.name ?? user.full_name ?? user.username ?? `User ${id}`)
-      : `User ${id}`;
+      ? user.name ?? user.full_name ?? user.username ?? `User ${m.id || m}`
+      : `User ${m.id || m}`;
   });
 
   const visibleMembers = mappedMembers.slice(0, 3);
@@ -419,162 +479,179 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
 
   const meetingHeadUser = allUsers.find(
     (u) =>
-      Number(u.id) === Number(config.meetingHeadId) ||
+      Number(u.id) === Number(meetingHeadId) ||
       (u.name ?? u.full_name ?? u.username) === meetingHeadName
   );
+
+  const meetingDays = config.meetingDays || config.meeting_days || [];
+  const meetingTime =
+    config.meetingTime || config.meeting_time || "No time set";
 
   const weekDays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
   return (
-    <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 hover:shadow-md hover:border-[#D37E5F] transition-all relative">
-      <div className="absolute top-5 right-4" ref={menuRef}>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="p-1.5 text-[#8C8580] hover:text-[#1A1A1A] rounded-[8px] hover:bg-[#FCFAFA] transition-colors"
-        >
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
-        {menuOpen && (
-          <div className="absolute right-0 mt-1 w-36 bg-white border border-[#F0EBE8] rounded-[16px] shadow-lg py-1 z-10 overflow-hidden">
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                onEdit(config);
-              }}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#1A1A1A] hover:bg-[#FCFAFA]"
-            >
-              <Edit className="w-4 h-4 text-[#8C8580]" /> Edit
-            </button>
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                handleDelete();
-              }}
-              disabled={isDeleting}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#EB4A4A] hover:bg-[#EB4A4A]/10"
-            >
-              <Trash className="w-4 h-4 text-[#EB4A4A]" />{" "}
-              {isDeleting ? "Deleting..." : "Delete"}
-            </button>
+    <>
+      <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 hover:shadow-md hover:border-[#D37E5F] transition-all relative">
+        <div className="absolute top-5 right-4" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-1.5 text-[#8C8580] hover:text-[#1A1A1A] rounded-[8px] hover:bg-[#FCFAFA] transition-colors"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 mt-1 w-36 bg-white border border-[#F0EBE8] rounded-[16px] shadow-lg py-1 z-10 overflow-hidden">
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  onEdit(config);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#1A1A1A] hover:bg-[#FCFAFA]"
+              >
+                <Edit className="w-4 h-4 text-[#8C8580]" /> Edit
+              </button>
+              {/* ← CHANGED: opens DeleteConfirmModal instead of window.confirm */}
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setShowDeleteConfirm(true);
+                }}
+                disabled={isDeleting}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#EB4A4A] hover:bg-[#EB4A4A]/10"
+              >
+                <Trash className="w-4 h-4 text-[#EB4A4A]" />{" "}
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="mb-5 pr-8">
+          <h3 className="text-[18px] font-black text-[#1A1A1A] mb-3 leading-tight tracking-tight">
+            {config.name}
+          </h3>
+          <div className="inline-flex items-center gap-1.5 bg-[#FCFAFA] border border-[#F0EBE8] text-[#1A1A1A] px-3 py-1.5 rounded-[8px] text-xs font-bold mb-4">
+            <Clock className="w-3.5 h-3.5 text-[#8C8580]" /> {meetingTime}
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+              <div
+                key={day}
+                className={cn(
+                  "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider",
+                  meetingDays.some((cd) => cd.startsWith(day))
+                    ? "bg-[#1A1A1A] text-white"
+                    : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
+                )}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-5">
+          <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-2">
+            Meeting Head
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] text-[#D37E5F] border border-[#F6E1D7] flex items-center justify-center font-black text-sm shrink-0">
+              {getInitials(meetingHeadName)}
+            </div>
+            <div className="truncate">
+              <div className="text-sm font-black text-[#1A1A1A] truncate">
+                {meetingHeadName}
+              </div>
+              <div className="text-[11px] font-bold text-[#8C8580] truncate mt-0.5">
+                {meetingHeadUser?.email ?? "No email"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest">
+              Members
+            </div>
+            <div className="bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580] text-[10px] font-black px-2 py-0.5 rounded-[6px]">
+              {mappedMembers.length}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {mappedMembers.slice(0, 4).map((name, i) => (
+                <div
+                  key={i}
+                  className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#FCFAFA] text-[#1A1A1A] border-2 border-white relative z-10"
+                >
+                  {getInitials(name)}
+                </div>
+              ))}
+              {mappedMembers.length > 4 && (
+                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#F0EBE8] text-[#1A1A1A] border-2 border-white relative z-10">
+                  +{mappedMembers.length - 4}
+                </div>
+              )}
+            </div>
+            <div className="text-[11px] font-bold text-[#8C8580] truncate flex-1 leading-snug">
+              {membersText}
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-5 border-t border-[#F0EBE8]">
+          <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
+            This Week
+          </div>
+          <div className="flex justify-between items-center px-1 mb-4">
+            {weekDays.map((day, i) => {
+              let dotColor = "bg-[#E5E7EB]";
+              if (i < 2) dotColor = "bg-[#2ECC71]";
+              else if (i === 2) dotColor = "bg-[#EB4A4A]";
+              return (
+                <div key={day} className="flex flex-col items-center gap-2">
+                  <span className="text-[10px] font-bold text-[#8C8580]">
+                    {day}
+                  </span>
+                  <div className={cn("w-2 h-2 rounded-full", dotColor)} />
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-3 text-[10px] font-bold text-[#8C8580]">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#2ECC71]" /> Held
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#EB4A4A]" /> Missed
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" />{" "}
+              Upcoming/Off
+            </div>
+          </div>
+        </div>
+
+        {(config.isDefault || config.is_default) && (
+          <div className="mt-5 flex">
+            <span className="bg-[#1A1A1A] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
+              Default Meeting
+            </span>
           </div>
         )}
       </div>
 
-      <div className="mb-5 pr-8">
-        <h3 className="text-[18px] font-black text-[#1A1A1A] mb-3 leading-tight tracking-tight">
-          {config.name}
-        </h3>
-        <div className="inline-flex items-center gap-1.5 bg-[#FCFAFA] border border-[#F0EBE8] text-[#1A1A1A] px-3 py-1.5 rounded-[8px] text-xs font-bold mb-4">
-          <Clock className="w-3.5 h-3.5 text-[#8C8580]" />{" "}
-          {config.meetingTime || "No time set"}
-        </div>
-        <div className="flex gap-1.5 flex-wrap">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-            <div
-              key={day}
-              className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider",
-                config.meetingDays.some((cd) => cd.startsWith(day))
-                  ? "bg-[#1A1A1A] text-white"
-                  : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
-              )}
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-5">
-        <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-2">
-          Meeting Head
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] text-[#D37E5F] border border-[#F6E1D7] flex items-center justify-center font-black text-sm shrink-0">
-            {getInitials(meetingHeadName)}
-          </div>
-          <div className="truncate">
-            <div className="text-sm font-black text-[#1A1A1A] truncate">
-              {meetingHeadName}
-            </div>
-            <div className="text-[11px] font-bold text-[#8C8580] truncate mt-0.5">
-              {meetingHeadUser?.email ?? "No email"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest">
-            Members
-          </div>
-          <div className="bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580] text-[10px] font-black px-2 py-0.5 rounded-[6px]">
-            {config.memberIds?.length ?? 0}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex -space-x-2">
-            {mappedMembers.slice(0, 4).map((name, i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#FCFAFA] text-[#1A1A1A] border-2 border-white relative z-10"
-              >
-                {getInitials(name)}
-              </div>
-            ))}
-            {mappedMembers.length > 4 && (
-              <div className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#F0EBE8] text-[#1A1A1A] border-2 border-white relative z-10">
-                +{mappedMembers.length - 4}
-              </div>
-            )}
-          </div>
-          <div className="text-[11px] font-bold text-[#8C8580] truncate flex-1 leading-snug">
-            {membersText}
-          </div>
-        </div>
-      </div>
-
-      <div className="pt-5 border-t border-[#F0EBE8]">
-        <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
-          This Week
-        </div>
-        <div className="flex justify-between items-center px-1 mb-4">
-          {weekDays.map((day, i) => {
-            let dotColor = "bg-[#E5E7EB]";
-            if (i < 2) dotColor = "bg-[#2ECC71]";
-            else if (i === 2) dotColor = "bg-[#EB4A4A]";
-            return (
-              <div key={day} className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-bold text-[#8C8580]">
-                  {day}
-                </span>
-                <div className={cn("w-2 h-2 rounded-full", dotColor)} />
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-3 text-[10px] font-bold text-[#8C8580]">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#2ECC71]" /> Held
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#EB4A4A]" /> Missed
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" /> Upcoming/Off
-          </div>
-        </div>
-      </div>
-
-      {config.isDefault && (
-        <div className="mt-5 flex">
-          <span className="bg-[#1A1A1A] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
-            Default Meeting
-          </span>
-        </div>
+      {/* ← ADDED: Delete confirm modal per card */}
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          configName={config.name}
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+          isDeleting={isDeleting}
+        />
       )}
-    </div>
+    </>
   );
 };
 
@@ -592,17 +669,19 @@ const SettingsTab = () => {
   const [departments, setDepartments] = useState([]);
   const [dropdownsLoading, setDropdownsLoading] = useState(true);
 
+  const orgid = () => localStorage.getItem("org_id") || " ";
+
   useEffect(() => {
     const fetchDropdownData = async () => {
       setDropdownsLoading(true);
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       try {
         const [deptRes, usersRes] = await Promise.all([
-          fetch(`${BASE_URL}/pms/departments.json`, {
+          fetch(`${getBaseUrl()}/pms/departments.json`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(
-            `https://fm-uat-api.lockated.com/api/users?organization_id=88&token=${token}`
+            `https://fm-uat-api.lockated.com/api/users?organization_id=${orgid()}&token=${token}`
           ),
         ]);
         const deptData = await deptRes.json();
@@ -613,6 +692,7 @@ const SettingsTab = () => {
         setUsers(usersData?.users ?? usersData ?? []);
       } catch (err) {
         console.error("Failed to load dropdown data:", err);
+        toast.error("Failed to load dropdown data."); // ← ADDED
       } finally {
         setDropdownsLoading(false);
       }
@@ -625,9 +705,15 @@ const SettingsTab = () => {
     setListError(null);
     try {
       const data = await fetchMeetingConfigs();
-      setConfigs(data);
+      const parsedData = Array.isArray(data)
+        ? data
+        : data.data
+        ? [data.data]
+        : [];
+      setConfigs(parsedData);
     } catch (err) {
       setListError(err.message);
+      toast.error("Failed to load configurations: " + err.message); // ← ADDED
     } finally {
       setIsLoading(false);
     }
@@ -661,24 +747,26 @@ const SettingsTab = () => {
   };
 
   const filteredConfigs = configs.filter((c) => {
-    const matchesSearch = c.name
+    const matchesSearch = (c.name || "")
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const headName = getDisplayName(c.meetingHead);
-    const matchesHead =
-      headFilter === "All Heads" || headName === headFilter;
+    const headName = getDisplayName(c.meetingHead || c.meeting_head);
+    const matchesHead = headFilter === "All Heads" || headName === headFilter;
     return matchesSearch && matchesHead;
   });
 
   const uniqueHeads = [
     "All Heads",
     ...new Set(
-      configs.map((c) => getDisplayName(c.meetingHead)).filter(Boolean)
+      configs
+        .map((c) => getDisplayName(c.meetingHead || c.meeting_head))
+        .filter(Boolean)
     ),
   ];
 
   const totalMembersCount = configs.reduce(
-    (acc, curr) => acc + (curr.memberIds?.length || 0),
+    (acc, curr) =>
+      acc + (curr.members?.length || curr.memberIds?.length || 0),
     0
   );
 

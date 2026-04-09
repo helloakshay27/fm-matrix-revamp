@@ -204,6 +204,8 @@ import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
 import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
 import AnnouncementsSetup from "./pages/AnnouncementsSetup";
+import TeamSetup from "./pages/settings/company-hub/team-setup";
+import JobsPage from "./pages/CompanyHub/JobsPage";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
@@ -1243,6 +1245,7 @@ import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
 import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
+import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 
 const queryClient = new QueryClient();
 
@@ -3407,6 +3410,10 @@ function App() {
                             path="/accounting/payment-terms"
                             element={<PaymentTermsMaster />}
                           />
+                           <Route
+                            path="/accounting/organisation"
+                            element={<OrganisationMaster/>}
+                          />
                           {/* Club Management - Occupant Users */}
                           <Route
                             path="/club-management/users/occupant-users"
@@ -4461,9 +4468,9 @@ function App() {
                             path="/report-analytics"
                             element={<ReportAnalytics />} />
 
-                          <Route
+                          {/* <Route
                             path="/dashboard-UI"
-                            element={<DashboardUI />} />
+                            element={<DashboardUI />} /> */}
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
@@ -4544,7 +4551,7 @@ function App() {
                           />
                           <Route
                             path="/vas/project-dashboard"
-                            element={<SupersetDashboard />}
+                            element={<DashboardUI />}
                           />
 
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
@@ -5511,6 +5518,14 @@ function App() {
                             element={<AnnouncementsSetup />}
                           />
                           <Route
+                            path="/settings/company-hub/team-setup"
+                            element={<TeamSetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/jobs"
+                            element={<JobsPage />}
+                          />
+                          <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
                           />
@@ -6141,7 +6156,7 @@ function App() {
                         />
                         <Route path="/hr-policies" element={<HRPolicies />} />
                         <Route path="/directory" element={<Directory />} />
-                        <Route path="/eployee-faq" element={<EmployeeFAQ />} />
+                        <Route path="/employee-faq" element={<EmployeeFAQ />} />
 
                         {/* Mobile Routes */}
                         <Route

@@ -218,7 +218,7 @@ async function refreshAccessToken(): Promise<string> {
       { headers: { "x-skip-auth-retry": "1" } }
     )
     .then(({ data }) => {
-      setAccessToken(data.access_token);
+      // setAccessToken(data.access_token);
       return data.access_token;
     })
     .finally(() => {
@@ -321,7 +321,7 @@ async function resolveBaseUrl(): Promise<string> {
   } as AppError;
 }
 
-// Request interceptor — attach base URL, Authorization header, and access_token query param
+// Request interceptor — attach base URL and Authorization header
 apiClient.interceptors.request.use(async (config) => {
   if (!config.baseURL) {
     config.baseURL = await resolveBaseUrl();
@@ -330,10 +330,8 @@ apiClient.interceptors.request.use(async (config) => {
   // Extract raw token value (strip "Bearer " prefix if present)
   const rawToken = token?.startsWith("Bearer ") ? token.slice(7) : token;
   if (rawToken) {
-    // Set both Authorization header and access_token query param
-    // The lockated API accepts both; some routes require the query param
+    // Set Authorization header
     config.headers.Authorization = `Bearer ${rawToken}`;
-    config.params = { ...config.params, access_token: rawToken };
   }
   return config;
 });
@@ -783,10 +781,13 @@ async function fetchFeedbackList(
   userId: number | null
 ): Promise<FeedbackItem[]> {
   const memoryKey = getFeedbackCacheKey(direction, userId);
-  const params: Record<string, string | number> = { _t: Date.now() };
+  const params: Record<string, string | number> = {};
   if (userId) {
     if (direction === "given") params.rating_from_id = userId;
-    else params.resource_id = userId;
+    else {
+      params.resource_id = userId
+      params.resource_type = "User";
+    };
   }
 
   let lastError: AppError | null = null;
@@ -794,12 +795,13 @@ async function fetchFeedbackList(
   for (const endpoint of RATINGS_COLLECTION_ENDPOINTS) {
     try {
       const { data } = await apiClient.get(endpoint, {
-        params,
-        // Note: Cache-Control header removed to avoid CORS issues with oig-api
-        // The _t timestamp parameter already prevents caching
+        params
       });
 
+      console.log(data)
+
       const raw = FeedbackListSchema.parse(data);
+      console.log(raw)
       const mapped = raw.map(mapRawFeedback);
       const filtered = mapped.filter((item) => {
         if (!userId) return true;
@@ -864,7 +866,7 @@ async function fetchFeedbackList(
 
 async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
   const { data } = await apiClient.get(TEAM_MEMBERS_ENDPOINT, {
-    params: { _t: Date.now() },
+    params: {},
   });
   const raw = TeamMembersListSchema.parse(data);
   return raw
@@ -882,6 +884,7 @@ interface FeedbackPayload {
   positive_closing?: string;
   rating_from_type?: string;
   rating_from_id?: number;
+  reviews?: string;
 }
 
 type FeedbackMutationVariables = {
@@ -1359,6 +1362,8 @@ function GivenFeedbackList({
           ? lastStableItems
           : items;
 
+  console.log(sourceItems)
+
   const handleExpand = async (itemId: string) => {
     const isCollapsing = expandedId === itemId;
     setExpandedId(isCollapsing ? null : itemId);
@@ -1756,10 +1761,11 @@ function GiveFeedbackForm({
       resource_id: selectedMember.id,
       score: rating,
       rating_from_type: initialFeedback?.ratingFromType ?? "User",
-      rating_from_id: ratingFromId || undefined,
-      positive_opening: positiveOpen || undefined,
-      constructive_feedback: constructive || undefined,
-      positive_closing: positiveClose || undefined,
+      rating_from_id: ratingFromId,
+      positive_opening: positiveOpen,
+      constructive_feedback: constructive,
+      positive_closing: positiveClose,
+      reviews: context,
     };
 
     if (!isEditMode) {

@@ -345,101 +345,8 @@ const SmsManagementPage: React.FC = () => {
     });
   };
 
-  // Check if template already exists for the same organization (any priority, any type)
-  const checkExistingTemplate = async (organizationId: string) => {
-    if (!organizationId || organizationId === "") return false;
-
-    try {
-      const params = new URLSearchParams();
-      if (TOKEN) params.append("token", TOKEN);
-      params.append("q[organization_id_eq]", organizationId);
-
-      const url = `${BASE_URL}/sms_templates.json?${params.toString()}`;
-      const response = await axios.get(url, getAxiosConfig());
-      const data = response.data?.data || response.data?.sms_templates || [];
-
-      console.log(
-        `Checking existing templates for organization ${organizationId}:`,
-        data.length,
-        "templates found"
-      );
-      return data.length > 0;
-    } catch (error) {
-      console.error("Error checking existing template:", error);
-      return false;
-    }
-  };
-
-  // Check if default template already exists
-  const checkExistingDefaultTemplate = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (TOKEN) params.append("token", TOKEN);
-      params.append("q[is_default_eq]", "true");
-
-      const url = `${BASE_URL}/sms_templates.json?${params.toString()}`;
-      const response = await axios.get(url, getAxiosConfig());
-      const data = response.data?.data || response.data?.sms_templates || [];
-
-      console.log(
-        "Checking existing default templates:",
-        data.length,
-        "default templates found"
-      );
-      return data.length > 0;
-    } catch (error) {
-      console.error("Error checking existing default template:", error);
-      return false;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation
-    const requiredFields: (keyof typeof formData)[] = [
-      "module_name",
-      "function_name",
-      "priority",
-      "service_provider",
-      "template_name",
-      "dlt_template_id",
-      "template_url",
-    ];
-
-    // If not default, organization is required
-    if (!formData.is_default && !formData.organization_id) {
-      toast.error("Please select an organization");
-      return;
-    }
-
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("Please complete all required fields");
-      return;
-    }
-
-    // Check for existing template only when creating new template (not editing)
-    if (!editingId && !formData.is_default && formData.organization_id) {
-      const existingTemplate = await checkExistingTemplate(
-        formData.organization_id
-      );
-
-      if (existingTemplate) {
-        toast.error("Template for this organization already exists");
-        return;
-      }
-    }
-
-    // Check for existing default template when creating new default template
-    if (!editingId && formData.is_default) {
-      const existingDefaultTemplate = await checkExistingDefaultTemplate();
-
-      if (existingDefaultTemplate) {
-        toast.error("Default template already exists");
-        return;
-      }
-    }
 
     setIsSubmitting(true);
     try {
@@ -490,13 +397,33 @@ const SmsManagementPage: React.FC = () => {
         is_default: true,
         active: true,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving template:", error);
-      toast.error(
-        editingId
-          ? "Failed to update SMS Template"
-          : "Failed to create SMS Template"
-      );
+      
+      let errorMessage = editingId
+        ? "Failed to update SMS Template"
+        : "Failed to create SMS Template";
+
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.errors) {
+          if (Array.isArray(data.errors)) {
+            errorMessage = data.errors.join(", ");
+          } else if (typeof data.errors === "object") {
+            errorMessage = Object.entries(data.errors)
+              .map(([field, msgs]) => `${field} ${(msgs as any[]).join(", ")}`)
+              .join(" | ");
+          } else if (typeof data.errors === "string") {
+            errorMessage = data.errors;
+          }
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (typeof data === "string") {
+          errorMessage = data;
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -264,7 +264,7 @@ const DashboardUI: React.FC = () => {
   // Project dropdown (multi-select)
   const [projectsList, setProjectsList] = useState<ProjectDropdownItem[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
-  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(['269']);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [projectSearch, setProjectSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -335,7 +335,7 @@ const DashboardUI: React.FC = () => {
 
   // Open report modal
   const openReportModal = () => {
-    const initialId = selectedProjectIds.length > 0 ? selectedProjectIds[0] : '269';
+    const initialId = selectedProjectIds.length > 0 ? selectedProjectIds[0] : '';
     setReportProjectId(initialId);
     setReportOpen(true);
   };

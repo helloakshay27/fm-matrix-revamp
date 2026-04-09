@@ -42,6 +42,7 @@ export interface InjuredPerson {
     company?: string;
     role: string;
     injuryType?: string;
+    who_got_injured_id?: string | number | null;
     injuryNumber?: string;
     mobile?: string;
     injuryTypes?: string[];
@@ -78,6 +79,19 @@ export interface PreventiveAction {
     responsiblePerson: string;
     targetDate: string;
     description: string;
+}
+export interface IncidentInvestigation {
+    id?: number;
+    name?: string;
+    mobile?: string;
+    designation?: string;
+    sub_standard_condition_id?: number;
+    sub_standard_act_id?: number;
+    description?: string;
+    created_at?: string;
+    updated_at?: string;
+    sub_standard_condition?: string;
+    sub_standard_act?: string;
 }
 
 export const IncidentNewDetails = () => {
@@ -943,7 +957,7 @@ export const IncidentNewDetails = () => {
                         injuries.push({
                             injury_type: person.injuryType || '',
                             injury_number: person.injuryNumber || '',
-                            who_got_injured_id: person.type === 'internal' 
+                            who_got_injured_id: person.type === 'internal'
                                 ? (person.who_got_injured_id ? Number(person.who_got_injured_id) : null)
                                 : null,                    // ← FIXED: Use who_got_injured_id for internal
                             name: person.name || '',
@@ -1722,6 +1736,22 @@ export const IncidentNewDetails = () => {
                                     {incident?.created_at ? new Date(incident.created_at).toLocaleString() : '-'}
                                 </p>
                             </div>
+                            <div className='flex flex-col'>
+                                <label className="text-xs font-semibold text-gray-600 uppercase mb-2">
+                                    Incident Over Time
+                                </label>
+                                <p className="text-sm text-gray-900 font-medium">
+                                    {incident?.incident_over_time
+                                        ? new Date(incident.incident_over_time).toLocaleString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })
+                                        : '-'}
+                                </p>
+                            </div>
                         </div>
                         {/* Description */}
                         <div className="pt-4 border-t border-gray-200">
@@ -1780,47 +1810,95 @@ export const IncidentNewDetails = () => {
                 </div>
 
                 {/* Section 3: Investigation Details */}
-                {(Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0) ||
+                {(Array.isArray(incident?.investigator_details) && incident.investigator_details.length > 0) ||
+                    (Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0) ||
                     (Array.isArray(incident?.root_causes) && incident.root_causes.length > 0) ? (
                     <div className="bg-white rounded-md shadow-sm">
                         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
                             <SectionBadge number={3} />
                             <h3 className="text-base font-semibold text-[#BF213E] uppercase">Investigation</h3>
                         </div>
-                        <div className="p-6 space-y-6">
-                            {/* Investigators */}
-                            {Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0 && (
+
+                        <div className="p-6 space-y-8">
+
+                            {/* ==================== INVESTIGATORS TABLE ==================== */}
+                            {Array.isArray(incident?.investigator_details) && incident.investigator_details.length > 0 && (
                                 <div>
                                     <h4 className="text-sm font-semibold text-gray-900 mb-4">Investigators</h4>
-                                    <div className="space-y-3">
-                                        {incident.incident_investigations.map((inv, idx) => (
-                                            <div key={idx} className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-gray-600 uppercase mb-1">Name</label>
-                                                        <p className="text-sm text-gray-900 font-medium">{inv.name || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-gray-600 uppercase mb-1">Mobile</label>
-                                                        <p className="text-sm text-gray-900 font-medium">{inv.mobile || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-gray-600 uppercase mb-1">Designation</label>
-                                                        <p className="text-sm text-gray-900 font-medium">{inv.designation || '-'}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm border border-gray-200">
+                                            <thead>
+                                                <tr className="bg-gray-50 border-b border-gray-300">
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Name</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Role</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Type</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {incident.investigator_details.map((inv: any, idx: number) => (
+                                                    <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                                        <td className="py-3 px-4 font-medium text-gray-900">{idx + 1}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{inv.investigator_name || inv.name || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{inv.role || inv.designation || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">
+                                                            {inv.investigator_type
+                                                                ? inv.investigator_type.charAt(0).toUpperCase() + inv.investigator_type.slice(1)
+                                                                : '-'}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Root Causes */}
+                            {/* ==================== INVESTIGATION DETAILS TABLE ==================== */}
+                            {Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0 && (
+                                <div className={
+                                    Array.isArray(incident?.investigator_details) && incident.investigator_details.length > 0
+                                        ? "pt-6 border-t border-gray-200"
+                                        : ""
+                                }>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Investigation Details</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm border border-gray-200">
+                                            <thead>
+                                                <tr className="bg-gray-50 border-b border-gray-300">
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sub Standard Condition</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Sub Standard Act</th>
+
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {incident.incident_investigations.map((inv: any, idx: number) => (
+                                                    <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                                                        <td className="py-3 px-4 font-medium text-gray-900">{idx + 1}</td>
+                                                        <td className="py-3 px-4 text-gray-700">{inv.description || '-'}</td>
+
+                                                        <td className="py-3 px-4 text-gray-900">{inv.sub_standard_condition || '-'}</td>
+                                                        <td className="py-3 px-4 text-gray-900">{inv.sub_standard_act || '-'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ==================== ROOT CAUSES TABLE (Already Good) ==================== */}
                             {Array.isArray(incident?.root_causes) && incident.root_causes.length > 0 && (
-                                <div className={Array.isArray(incident?.incident_investigations) && incident.incident_investigations.length > 0 ? "pt-4 border-t border-gray-200" : ""}>
+                                <div className={
+                                    (Array.isArray(incident?.investigator_details) || Array.isArray(incident?.incident_investigations))
+                                        ? "pt-6 border-t border-gray-200"
+                                        : ""
+                                }>
                                     <h4 className="text-sm font-semibold text-gray-900 mb-4">Root Causes Analysis</h4>
                                     <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
+                                        <table className="w-full text-sm border border-gray-200">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Sr No.</th>
@@ -1829,9 +1907,9 @@ export const IncidentNewDetails = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {incident.root_causes.map((rc, idx) => (
+                                                {incident.root_causes.map((rc: any, idx: number) => (
                                                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                                                        <td className="py-3 px-4 text-gray-900 font-medium">{idx + 1}</td>
+                                                        <td className="py-3 px-4 font-medium text-gray-900">{idx + 1}</td>
                                                         <td className="py-3 px-4 text-gray-900 font-medium">{rc.category_name || rc.name || '-'}</td>
                                                         <td className="py-3 px-4 text-gray-700">{rc.description || '-'}</td>
                                                     </tr>
