@@ -218,7 +218,7 @@ async function refreshAccessToken(): Promise<string> {
       { headers: { "x-skip-auth-retry": "1" } }
     )
     .then(({ data }) => {
-      setAccessToken(data.access_token);
+      // setAccessToken(data.access_token);
       return data.access_token;
     })
     .finally(() => {
@@ -321,7 +321,7 @@ async function resolveBaseUrl(): Promise<string> {
   } as AppError;
 }
 
-// Request interceptor — attach base URL, Authorization header, and access_token query param
+// Request interceptor — attach base URL and Authorization header
 apiClient.interceptors.request.use(async (config) => {
   if (!config.baseURL) {
     config.baseURL = await resolveBaseUrl();
@@ -330,10 +330,8 @@ apiClient.interceptors.request.use(async (config) => {
   // Extract raw token value (strip "Bearer " prefix if present)
   const rawToken = token?.startsWith("Bearer ") ? token.slice(7) : token;
   if (rawToken) {
-    // Set both Authorization header and access_token query param
-    // The lockated API accepts both; some routes require the query param
+    // Set Authorization header
     config.headers.Authorization = `Bearer ${rawToken}`;
-    config.params = { ...config.params, access_token: rawToken };
   }
   return config;
 });
@@ -797,12 +795,13 @@ async function fetchFeedbackList(
   for (const endpoint of RATINGS_COLLECTION_ENDPOINTS) {
     try {
       const { data } = await apiClient.get(endpoint, {
-        params,
-        // Note: Cache-Control header removed to avoid CORS issues with oig-api
-        // The _t timestamp parameter already prevents caching
+        params
       });
 
+      console.log(data)
+
       const raw = FeedbackListSchema.parse(data);
+      console.log(raw)
       const mapped = raw.map(mapRawFeedback);
       const filtered = mapped.filter((item) => {
         if (!userId) return true;
@@ -1362,6 +1361,8 @@ function GivenFeedbackList({
         : lastStableItems.length > 0
           ? lastStableItems
           : items;
+
+  console.log(sourceItems)
 
   const handleExpand = async (itemId: string) => {
     const isCollapsing = expandedId === itemId;
