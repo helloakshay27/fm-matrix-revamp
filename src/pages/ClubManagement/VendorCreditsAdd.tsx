@@ -129,7 +129,7 @@ export const VendorCreditsAdd: React.FC = () => {
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_purchase_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -455,7 +455,7 @@ export const VendorCreditsAdd: React.FC = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=purchase&q[group_type_in][]=both`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

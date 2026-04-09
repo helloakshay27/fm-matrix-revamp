@@ -48,10 +48,14 @@ const ReportStep: React.FC<ReportStepProps> = ({
                         <DateTimePicker
                             label="Date & Time"
                             timeSteps={{ minutes: 1 }}
-                            value={incidentOverTime ? dayjs(incidentOverTime, "YYYY-MM-DD HH:mm") : null}
+                            value={incidentOverTime ? (
+                                incidentOverTime.includes('T')
+                                    ? dayjs(incidentOverTime)
+                                    : dayjs(incidentOverTime, "YYYY-MM-DD HH:mm")
+                            ) : null}
                             onChange={(newValue) => {
-                                if (newValue && dayjs.isDayjs(newValue)) {
-                                    setIncidentOverTime(newValue.format("YYYY-MM-DD HH:mm"));
+                                if (newValue && dayjs.isDayjs(newValue) && newValue.isValid()) {
+                                    setIncidentOverTime(newValue.format("YYYY-MM-DDTHH:mm:ss.SSSZ"));
                                 }
                             }}
                             slotProps={{

@@ -343,6 +343,10 @@ const modulesByPackage = {
           name: "Default Tax Preferences",
           href: "/accounting/default-tax-preferences",
         },
+         {
+          name: "Organization",
+          href: "/accounting/organisation",
+        },
         // { name: "Charges ", href: "/accounting/charge-setup" },
         // { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
       ],
