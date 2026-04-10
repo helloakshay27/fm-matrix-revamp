@@ -3890,6 +3890,10 @@ export const TicketDetailsPage = () => {
       const hasComment = log.log_comment && log.log_comment.trim() !== '';
       return hasComment;
     }
+    // For null log_type: only show if there is actual comment text
+    if (!log.log_type) {
+      return log.log_comment && log.log_comment.trim() !== '';
+    }
     return false;
   });
 
@@ -8230,7 +8234,7 @@ export const TicketDetailsPage = () => {
                                             </div>
                                           ) : (
                                             <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
-                                              <div className="font-semibold">{log.log_status || 'Updated'}</div>
+                                              <div className="font-semibold">Comment Added: <span className="font-normal">"{log.log_comment}"</span></div>
                                               {(log.log_by || log.updated_by) && (
                                                 <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
                                               )}
@@ -11368,7 +11372,7 @@ export const TicketDetailsPage = () => {
                                         </div>
                                       ) : (
                                         <div className="text-[#1A1A1A] text-[14px] leading-[20px]">
-                                          <div className="font-semibold">{log.log_status || 'Updated'}</div>
+                                          <div className="font-semibold">Comment Added: <span className="font-normal">"{log.log_comment}"</span></div>
                                           {(log.log_by || log.updated_by) && (
                                             <div className="text-[#2C2C2C]">By {log.log_by || log.updated_by}</div>
                                           )}
