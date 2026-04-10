@@ -265,6 +265,33 @@ export const CreditNoteAddPage: React.FC = () => {
         //   { value: "tax_group", label: "Tax Group" }
     ];
     const [placeOfSupply, setPlaceOfSupply] = useState("");
+    const [orgState, setOrgState] = useState<string>("");
+
+    // Fetch organisation state on mount from organisation detail API
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            // org_id stored at login, organisation_id stored by fetchLockAccount
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                // address.state holds the organisation's registered state
+                const state = org?.address?.state || '';
+                console.log('[CreditNote] Org state from API:', state);
+                setOrgState(state);
+            } catch (err) {
+                console.error('[CreditNote] Failed to fetch org state:', err);
+            }
+        };
+        fetchOrgState();
+    }, []);
     const [taxGroups, setTaxGroups] = useState<any[]>([]);
     const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
     useEffect(() => {
@@ -528,8 +555,6 @@ export const CreditNoteAddPage: React.FC = () => {
         if (selectedCustomer) {
             setBillingAddress(selectedCustomer.billingAddress);
             setShippingAddress(selectedCustomer.shippingAddress);
-            // setBillingAddress(selectedCustomer.address);
-            // setShippingAddress(selectedCustomer.address2);
             setPaymentTerms(selectedCustomer.paymentTerms);
         }
     }, [selectedCustomer]);
@@ -913,21 +938,21 @@ export const CreditNoteAddPage: React.FC = () => {
         }
     }, [selectedTax, taxOptions, afterDiscount]);
 
-    // Re-preselect tax on all taxable items when place of supply changes
+    // Re-preselect tax on all taxable items when place of supply or orgState changes
     useEffect(() => {
         if (!placeOfSupply) return;
-        const isMaharashtra = placeOfSupply === "Maharashtra";
+        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
         setItems(prev => prev.map(item => {
             if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
             const matched = itemOptions.find(opt => opt.name === item.name);
             if (!matched) return item;
             return {
                 ...item,
-                item_tax_type: isMaharashtra ? "tax_group" : "tax_rate",
-                tax_group_id: isMaharashtra ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
             };
         }));
-    }, [placeOfSupply]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [placeOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const selectedTaxGroups = items
         .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
@@ -1046,6 +1071,12 @@ export const CreditNoteAddPage: React.FC = () => {
                                         onChange={(e) => {
                                             const customer = customers.find(c => c.id === e.target.value);
                                             setSelectedCustomer(customer || null);
+                                            if (customer) {
+                                                // Use place_of_supply directly, fallback to billing_address.state
+                                                const supply = customer.place_of_supply || customer.billing_address?.state || '';
+                                                console.log('[CreditNote] Customer place of supply:', supply, '| Org state:', orgState);
+                                                setPlaceOfSupply(supply);
+                                            }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -1336,9 +1367,9 @@ export const CreditNoteAddPage: React.FC = () => {
                                                                         updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
                                                                     }
                                                                     if (selectedItem.tax_preference === 'taxable') {
-                                                                        const isMaharashtra = placeOfSupply === 'Maharashtra';
-                                                                        updateItem(index, 'item_tax_type', isMaharashtra ? 'tax_group' : 'tax_rate');
-                                                                        updateItem(index, 'tax_group_id', isMaharashtra ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
+                                                                        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                                        updateItem(index, 'item_tax_type', isSameState ? 'tax_group' : 'tax_rate');
+                                                                        updateItem(index, 'tax_group_id', isSameState ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
                                                                     }
                                                                     if (selectedItem.tax_preference === 'out_of_scope') {
                                                                         updateItem(index, 'item_tax_type', 'out_of_scope');
@@ -1471,7 +1502,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                                             displayEmpty
                                                             onChange={(e) => {
                                                                 const value = e.target.value;
-                                                                const isMaharashtra = placeOfSupply === "Maharashtra";
+                                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
                                                                 if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
                                                                     updateItem(index, "item_tax_type", value);
@@ -1481,7 +1512,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                                                         setExemptionModalOpen(true);
                                                                     }
                                                                 } else {
-                                                                    updateItem(index, "item_tax_type", isMaharashtra ? "tax_group" : "tax_rate");
+                                                                    updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
                                                                     updateItem(index, "tax_group_id", value);
                                                                 }
                                                             }}
@@ -1494,21 +1525,24 @@ export const CreditNoteAddPage: React.FC = () => {
                                                                 </MenuItem>
                                                             ))}
 
-                                                            {placeOfSupply === "Maharashtra" ? (
-                                                                [
-                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
-                                                                    ...taxGroups.map((group) => (
-                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
-                                                                    ))
-                                                                ]
-                                                            ) : (
-                                                                [
-                                                                    <MenuItem key="__divider__" disabled>Tax Rates</MenuItem>,
-                                                                    ...taxRates.map((rate) => (
-                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
-                                                                    ))
-                                                                ]
-                                                            )}
+                                                            {(() => {
+                                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                                return isSameState ? (
+                                                                    [
+                                                                        <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                        ...taxGroups.map((group) => (
+                                                                            <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                        ))
+                                                                    ]
+                                                                ) : (
+                                                                    [
+                                                                        <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                        ...taxRates.map((rate) => (
+                                                                            <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                        ))
+                                                                    ]
+                                                                );
+                                                            })()}
                                                         </Select>
                                                     </FormControl>
                                                 </td>
