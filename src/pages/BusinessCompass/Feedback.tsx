@@ -1234,7 +1234,7 @@ function AsyncBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Inline Error Panel ────────────────────────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────────
 
 function InlineError({
   error,
@@ -1272,8 +1272,6 @@ function InlineError({
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
-
 function FeedbackEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -1293,18 +1291,13 @@ function FeedbackEmptyState() {
 
 function StarRatingRow({ value }: { value: number }) {
   return (
-    <div
-      className="flex shrink-0 gap-0.5"
-      aria-label={`${value} out of 5 stars`}
-    >
+    <div className="flex shrink-0 gap-0.5" aria-label={`${value} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
           className={cn(
-            "h-4 w-4 sm:h-[18px] sm:w-[18px]",
-            i <= value
-              ? "fill-amber-400 text-amber-400"
-              : "fill-transparent text-neutral-300"
+            "h-4 w-4",
+            i <= value ? "fill-amber-400 text-amber-400" : "fill-transparent text-neutral-300"
           )}
           strokeWidth={i <= value ? 0 : 1.5}
         />
@@ -1341,11 +1334,14 @@ function GivenFeedbackList({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [detailCache, setDetailCache] = useState<Record<string, FeedbackItem>>(
     {}
   );
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const [lastStableItems, setLastStableItems] = useState<FeedbackItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!isError && items.length > 0) {
@@ -1362,8 +1358,6 @@ function GivenFeedbackList({
           ? lastStableItems
           : items;
 
-  console.log(sourceItems)
-
   const handleExpand = async (itemId: string) => {
     const isCollapsing = expandedId === itemId;
     setExpandedId(isCollapsing ? null : itemId);
@@ -1373,47 +1367,18 @@ function GivenFeedbackList({
       const detail = await fetchFeedbackDetail(itemId);
       if (detail) setDetailCache((prev) => ({ ...prev, [itemId]: detail }));
     } catch {
-      /* ignore — fallback to cached list data */
+      /* ignore */
     } finally {
       setLoadingDetailId(null);
     }
   };
 
-  const handleDelete = (item: FeedbackItem) => {
-    if (!currentUserId) {
-      window.alert("Unable to verify your account. Please log in again.");
-      return;
-    }
-
-    const hasKnownCreator = item.ratingFromId != null;
-    if (
-      hasKnownCreator &&
-      Number(item.ratingFromId) !== Number(currentUserId)
-    ) {
-      window.alert("You can only delete feedback created by your account.");
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to delete this feedback?")) {
-      return;
-    }
-
-    deleteMutation.mutate(
-      { id: item.id },
-      {
-        onSuccess: () => {
-          setLastStableItems((prev) => prev.filter((f) => f.id !== item.id));
-          setDetailCache((prev) => {
-            const next = { ...prev };
-            delete next[item.id];
-            return next;
-          });
-        },
-        onError: (error) => {
-          window.alert(error.message || "Failed to delete feedback.");
-        },
-      }
-    );
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   const filtered = useMemo(
@@ -1430,55 +1395,150 @@ function GivenFeedbackList({
           (item.detailPreview?.toLowerCase().includes(q) ?? false);
         const matchesRating =
           ratingFilter === "all" || String(item.rating) === ratingFilter;
-        return matchesSearch && matchesRating;
+        const matchesStatus =
+          statusFilter === "all" || item.status === statusFilter;
+        return matchesSearch && matchesRating && matchesStatus;
       }),
-    [sourceItems, searchQuery, ratingFilter, direction]
+    [sourceItems, searchQuery, ratingFilter, statusFilter, direction]
   );
 
+  const avgRating = filtered.length > 0
+    ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(1)
+    : "0.0";
+  const avgRatingNum = Number(avgRating);
+  let points = 0;
+  filtered.forEach((item) => {
+    if (item.rating === 1) points -= 10;
+    else if (item.rating === 2) points -= 5;
+    else if (item.rating === 4) points += 5;
+    else if (item.rating === 5) points += 10;
+  });
+
+  const allSelected = filtered.length > 0 && filtered.every(i => selectedIds.has(i.id));
+  const handleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filtered.map(i => i.id)));
+  };
+
+  const getAvatarBg = (name: string) => {
+    const colors = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4"];
+    const idx = (name.charCodeAt(0) || 0) % colors.length;
+    return colors[idx];
+  };
+
   return (
-    <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-between sm:gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name or content..."
-              className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#C72030]/25"
-            />
-          </div>
-          <Select value={ratingFilter} onValueChange={setRatingFilter}>
-            <SelectTrigger className="h-10 w-full rounded-xl border-neutral-200 bg-white sm:w-[160px] sm:shrink-0">
-              <SelectValue placeholder="All Ratings" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Ratings</SelectItem>
-              <SelectItem value="5">5 stars</SelectItem>
-              <SelectItem value="4">4 stars</SelectItem>
-              <SelectItem value="3">3 stars</SelectItem>
-              <SelectItem value="2">2 stars</SelectItem>
-              <SelectItem value="1">1 star</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="flex flex-col gap-5 pb-4">
+      <div className="px-4 py-2 bg-[#f4f5f7] border-b border-neutral-200 flex items-center gap-5">
         <button
           type="button"
-          onClick={onGiveFeedbackClick}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85 sm:px-5"
+          onClick={handleSelectAll}
+          className="flex items-center gap-2 px-3 py-1.5 rounded border border-neutral-300 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 shadow-sm"
         >
-          <Send className="h-4 w-4 text-white" strokeWidth={2} />
-          Give Feedback
+          <input
+            type="checkbox"
+            checked={allSelected}
+            readOnly
+            className="h-4 w-4 accent-[#DA7756] cursor-pointer"
+          />
+          {allSelected ? "Deselect All" : "Select All"}
         </button>
+
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-neutral-700">
+              {selectedIds.size} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (!window.confirm(`Delete ${selectedIds.size} selected feedback item${selectedIds.size > 1 ? "s" : ""}?`)) return;
+                Array.from(selectedIds).forEach((id) =>
+                  deleteMutation.mutate({ id })
+                );
+                setSelectedIds(new Set());
+              }}
+              disabled={deleteMutation.isPending}
+              className="flex items-center gap-2 rounded bg-[#EF4444] px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-600 disabled:opacity-60 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* List content */}
-      <div className="space-y-3">
+
+      <div className="mx-4 rounded-xl border border-neutral-200 bg-[#FDFBF3] px-6 py-4 grid grid-cols-3 divide-x divide-neutral-200">
+        <div className="flex flex-col gap-1 pr-6">
+          <span className="text-xs text-neutral-500 font-medium">Average Rating</span>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-amber-500">{avgRating}</span>
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star
+                  key={i}
+                  className={cn(
+                    "h-4 w-4",
+                    i <= Math.round(avgRatingNum)
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-transparent text-neutral-300"
+                  )}
+                  strokeWidth={i <= Math.round(avgRatingNum) ? 0 : 1.5}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs text-neutral-500 font-medium">Total Feedback</span>
+          <span className="text-2xl font-bold text-neutral-900">{filtered.length}</span>
+        </div>
+        <div className="flex flex-col items-end gap-1 pl-6">
+          <span className="text-xs text-neutral-500 font-medium">Points from Feedback</span>
+          <span className="text-2xl font-bold text-neutral-900">{points}</span>
+        </div>
+      </div>
+
+      <div className="px-4 flex gap-3 items-center">
+        <div className="relative flex-1">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name or content..."
+            className="h-9 w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-300"
+          />
+        </div>
+        <Select value={ratingFilter} onValueChange={setRatingFilter}>
+          <SelectTrigger className="h-9 w-[130px] rounded-lg border border-neutral-200 bg-white text-sm">
+            <SelectValue placeholder="All Ratings" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Ratings</SelectItem>
+            <SelectItem value="5">5 stars</SelectItem>
+            <SelectItem value="4">4 stars</SelectItem>
+            <SelectItem value="3">3 stars</SelectItem>
+            <SelectItem value="2">2 stars</SelectItem>
+            <SelectItem value="1">1 star</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-9 w-[90px] rounded-lg border border-neutral-200 bg-white text-sm">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="unread">Unread</SelectItem>
+            <SelectItem value="read">Read</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="px-4 space-y-3">
         {isLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
             <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
@@ -1492,169 +1552,182 @@ function GivenFeedbackList({
         ) : filtered.length === 0 ? (
           <FeedbackEmptyState />
         ) : (
-          <>
-            {filtered.map((item) => {
-              const expanded = expandedId === item.id;
-              const detail = detailCache[item.id] ?? item;
-              const isLoadingDetail = loadingDetailId === item.id;
-              const counterpartName =
-                direction === "to" ? item.recipientName : item.recipientName;
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "rounded-xl border border-neutral-200/90 bg-[#FFFDF0] p-4 shadow-sm",
-                    "transition-shadow hover:shadow-md"
-                  )}
-                >
-                  <div className="flex gap-3 sm:gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2E7D32] sm:h-12 sm:w-12">
-                      <Send className="h-5 w-5 text-white" strokeWidth={2} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        className="w-full text-left"
-                        onClick={() => handleExpand(item.id)}
-                      >
-                        <p className="font-semibold text-neutral-900">
-                          {direction === "to" ? "To" : "From"}:{" "}
-                          {counterpartName}
-                        </p>
-                        <p className="text-sm text-neutral-600">{item.date}</p>
-                        {!expanded && (
-                          <p className="mt-1 text-xs text-neutral-400">
-                            Click to expand feedback details
-                          </p>
-                        )}
-                      </button>
+          filtered.map((item) => {
+            const expanded = expandedId === item.id;
+            const detail = detailCache[item.id] ?? item;
+            const isLoadingDetail = loadingDetailId === item.id;
+            const displayName = direction === "from"
+              ? (item.ratingFromName || item.recipientName)
+              : item.recipientName;
+            const initial = (displayName || "T").charAt(0).toUpperCase();
+            const avatarBg = getAvatarBg(displayName || "T");
 
-                      {expanded &&
-                        (isLoadingDetail ? (
-                          <div className="mt-3 flex items-center gap-2 text-xs text-neutral-400">
+            return (
+              <div
+                key={item.id}
+                className={cn(
+                  "rounded-xl border bg-white transition-all",
+                  expanded
+                    ? "border-[#4A90D9] ring-1 ring-[#4A90D9]/30"
+                    : "border-neutral-200 hover:border-neutral-300"
+                )}
+              >
+                <div className="flex items-start gap-3 p-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={() => toggleSelect(item.id)}
+                    className="mt-1 h-4 w-4 accent-[#DA7756] cursor-pointer shrink-0"
+                  />
+
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                    style={{ backgroundColor: avatarBg }}
+                  >
+                    {initial}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => handleExpand(item.id)}
+                    >
+                      <p className="font-semibold text-[#1a1a1a] text-sm">
+                        {direction === "from" ? "From" : "To"}: {displayName}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <CalendarIcon className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                        <span className="text-xs text-neutral-500">{item.date}</span>
+                        <span
+                          className={cn(
+                            "rounded px-2 py-0.5 text-[10px] font-semibold",
+                            item.status === "unread"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-neutral-100 text-neutral-500"
+                          )}
+                        >
+                          {item.status === "unread" ? "Unread" : "Read"}
+                        </span>
+                      </div>
+                      {!expanded && (
+                        <p className="text-[11px] text-neutral-400 italic mt-0.5">
+                          Click to expand feedback details
+                        </p>
+                      )}
+                    </button>
+
+                    {expanded && (
+                      <div className="mt-3 space-y-3">
+                        {isLoadingDetail ? (
+                          <div className="flex items-center gap-2 text-xs text-neutral-400">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             Loading details...
                           </div>
                         ) : (
-                          <div className="mt-3 space-y-2">
+                          <>
                             {detail.positiveOpening && (
-                              <div className="border-l-2 border-[#2E7D32]/50 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2E7D32]/70">
-                                  Positive Opening
-                                </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
-                                  {detail.positiveOpening}
-                                </p>
+                              <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold text-green-700 mb-1">+ Positive Opening</p>
+                                <p className="text-sm text-neutral-700">{detail.positiveOpening}</p>
                               </div>
                             )}
                             {detail.constructiveFeedback && (
-                              <div className="border-l-2 border-orange-400/60 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500/80">
-                                  Constructive Feedback
-                                </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
-                                  {detail.constructiveFeedback}
-                                </p>
+                              <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold text-orange-600 mb-1">— Area for Growth</p>
+                                <p className="text-sm text-neutral-700">{detail.constructiveFeedback}</p>
                               </div>
                             )}
                             {detail.positiveClosing && (
-                              <div className="border-l-2 border-sky-400/60 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500/80">
-                                  Positive Closing
-                                </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
-                                  {detail.positiveClosing}
-                                </p>
+                              <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold text-sky-600 mb-1">+ Positive Closing</p>
+                                <p className="text-sm text-neutral-700">{detail.positiveClosing}</p>
                               </div>
                             )}
-                            {!detail.positiveOpening &&
-                              !detail.constructiveFeedback &&
-                              !detail.positiveClosing &&
-                              detail.detailPreview && (
-                                <p className="border-l-2 border-[#2E7D32]/40 pl-3 text-sm leading-relaxed text-neutral-700">
-                                  {detail.detailPreview}
-                                </p>
-                              )}
-                          </div>
-                        ))}
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <StarRatingRow value={item.rating} />
-                      <span
-                        className={cn(
-                          "rounded-md px-2 py-0.5 text-xs font-medium",
-                          item.status === "unread"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-neutral-200/80 text-neutral-600"
+                            {!detail.positiveOpening && !detail.constructiveFeedback && !detail.positiveClosing && detail.detailPreview && (
+                              <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                                <p className="text-sm text-neutral-700">{detail.detailPreview}</p>
+                              </div>
+                            )}
+                            <div className="mt-2">
+                              <label className="text-xs font-semibold text-neutral-600">
+                                Your Notes / Action Items <span className="font-normal text-neutral-400">(Optional)</span>
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={notes[item.id] || ""}
+                                onChange={(e) => setNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                placeholder="Add your notes about how you'll act on this feedback..."
+                                className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y"
+                              />
+                            </div>
+                            {item.status === "unread" && (
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-2 rounded-lg bg-[#2E7D32] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1B5E20] transition-colors"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                Mark as Read
+                              </button>
+                            )}
+                          </>
                         )}
-                      >
-                        {item.status === "unread" ? "Unread" : "Read"}
-                      </span>
-                      {direction === "to" && (
-                        <div className="mt-1 flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm hover:bg-neutral-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditFeedback(item);
-                            }}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            disabled={
-                              deleteMutation.isPending || !currentUserId
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <StarRatingRow value={item.rating} />
+                    <button
+                      type="button"
+                      className="rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
+                      aria-expanded={expanded}
+                      aria-label={expanded ? "Collapse" : "Expand"}
+                      onClick={() => handleExpand(item.id)}
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          expanded && "rotate-180"
+                        )}
+                      />
+                    </button>
+                    {direction === "to" && (
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="rounded p-1 text-neutral-400 hover:text-neutral-700"
+                          title="Edit"
+                          onClick={(e) => { e.stopPropagation(); onEditFeedback(item); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded p-1 text-neutral-400 hover:text-red-600"
+                          title="Delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm("Delete this feedback?")) {
+                              deleteMutation.mutate({ id: item.id });
                             }
-                            title={
-                              !currentUserId
-                                ? "Unable to verify current user for delete"
-                                : item.ratingFromId != null &&
-                                  Number(item.ratingFromId) !==
-                                  Number(currentUserId)
-                                  ? "You can only delete feedback created by you"
-                                  : undefined
-                            }
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(item);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            {deleteMutation.isPending
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="mt-1 rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
-                        aria-expanded={expanded}
-                        aria-label={expanded ? "Collapse" : "Expand"}
-                        onClick={() => handleExpand(item.id)}
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-5 w-5 transition-transform",
-                            expanded && "rotate-180"
-                          )}
-                        />
-                      </button>
-                    </div>
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
   );
 }
+
 
 // ─── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -1704,7 +1777,6 @@ function GiveFeedbackForm({
   const [positiveClose, setPositiveClose] = useState("");
   const [localError, setLocalError] = useState("");
 
-  // Pre-fill when editing existing feedback
   useEffect(() => {
     if (!initialFeedback) return;
     const recipientOption = initialFeedback.resourceId
@@ -1737,19 +1809,10 @@ function GiveFeedbackForm({
   }, []);
 
   const handleSubmit = async () => {
-    if (!recipient) {
-      setLocalError("Please select a team member to give feedback to.");
-      return;
-    }
-    if (rating === 0) {
-      setLocalError("Please select a star rating.");
-      return;
-    }
+    if (!recipient) { setLocalError("Please select a team member."); return; }
+    if (rating === 0) { setLocalError("Please select a star rating."); return; }
     const selectedMember = teamMembers.find((m) => m.value === recipient);
-    if (!selectedMember) {
-      setLocalError("Invalid recipient selected.");
-      return;
-    }
+    if (!selectedMember) { setLocalError("Invalid recipient selected."); return; }
 
     setLocalError("");
     const currentUser = getUser();
@@ -1768,17 +1831,11 @@ function GiveFeedbackForm({
       reviews: context,
     };
 
-    if (!isEditMode) {
-      payload.created_at = feedbackDate.toISOString();
-    }
+    if (!isEditMode) payload.created_at = feedbackDate.toISOString();
 
     if (isEditMode && initialFeedback?.id) {
       updateMutation.mutate(
-        {
-          id: initialFeedback.id,
-          payload,
-          recipientName: selectedMember.label,
-        },
+        { id: initialFeedback.id, payload, recipientName: selectedMember.label },
         { onSuccess: onSubmitted }
       );
     } else {
@@ -1800,8 +1857,7 @@ function GiveFeedbackForm({
             {isEditMode ? "Feedback Updated!" : "Feedback Sent!"}
           </h3>
           <p className="mt-1 text-sm text-neutral-500">
-            Your feedback has been {isEditMode ? "updated" : "submitted"}{" "}
-            successfully.
+            Your feedback has been {isEditMode ? "updated" : "submitted"} successfully.
           </p>
         </div>
         <button
@@ -1828,30 +1884,21 @@ function GiveFeedbackForm({
 
       <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-950">
         <span className="font-semibold">Sandwich technique: </span>
-        Start with something positive, share constructive feedback in the
-        middle, and close with encouragement —{" "}
+        Start with something positive, share constructive feedback in the middle,
+        and close with encouragement —{" "}
         <span className="font-medium">Positive → Constructive → Positive</span>.
       </div>
 
       {displayError && (
         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <AlertCircle
-            className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
-            strokeWidth={2}
-          />
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" strokeWidth={2} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-red-800">
-              Submission Failed
-            </p>
+            <p className="text-sm font-semibold text-red-800">Submission Failed</p>
             <p className="mt-0.5 text-sm text-red-700">{displayError}</p>
           </div>
           <button
             type="button"
-            onClick={() => {
-              setLocalError("");
-              createMutation.reset();
-              updateMutation.reset();
-            }}
+            onClick={() => { setLocalError(""); createMutation.reset(); updateMutation.reset(); }}
             className="shrink-0 rounded-md p-1 text-red-500 hover:bg-red-100"
           >
             <X className="h-4 w-4" />
@@ -1864,19 +1911,11 @@ function GiveFeedbackForm({
           <Label htmlFor="feedback-recipient" className="text-neutral-800">
             Give Feedback To <span className="text-[#DA7756]">*</span>
           </Label>
-          <Select
-            value={recipient}
-            onValueChange={setRecipient}
-            disabled={teamMembersLoading}
-          >
-            <SelectTrigger
-              id="feedback-recipient"
-              className="h-11 rounded-xl border-neutral-200 bg-white"
-            >
+          <Select value={recipient} onValueChange={setRecipient} disabled={teamMembersLoading}>
+            <SelectTrigger id="feedback-recipient" className="h-11 rounded-xl border-neutral-200 bg-white">
               {teamMembersLoading ? (
                 <span className="flex items-center gap-2 text-neutral-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading members…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading members…
                 </span>
               ) : (
                 <SelectValue placeholder="Select team member" />
@@ -1884,14 +1923,10 @@ function GiveFeedbackForm({
             </SelectTrigger>
             <SelectContent>
               {teamMembers.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-neutral-400">
-                  No members found
-                </div>
+                <div className="px-3 py-2 text-sm text-neutral-400">No members found</div>
               ) : (
                 teamMembers.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                 ))
               )}
             </SelectContent>
@@ -1899,38 +1934,23 @@ function GiveFeedbackForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="feedback-date" className="text-neutral-800">
-            Date
-          </Label>
+          <Label htmlFor="feedback-date" className="text-neutral-800">Date</Label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 id="feedback-date"
-                className={cn(
-                  "flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900",
-                  "outline-none ring-offset-2 transition-colors hover:bg-neutral-50/80",
-                  "focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                )}
+                className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900 outline-none hover:bg-neutral-50/80"
               >
                 <span className="tabular-nums">{formatDMY(feedbackDate)}</span>
-                <CalendarIcon
-                  className="h-4 w-4 shrink-0 text-neutral-500"
-                  strokeWidth={2}
-                  aria-hidden
-                />
+                <CalendarIcon className="h-4 w-4 shrink-0 text-neutral-500" strokeWidth={2} aria-hidden />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
                 selected={feedbackDate}
-                onSelect={(d) => {
-                  if (d) {
-                    setFeedbackDate(d);
-                    setDatePickerOpen(false);
-                  }
-                }}
+                onSelect={(d) => { if (d) { setFeedbackDate(d); setDatePickerOpen(false); } }}
                 initialFocus
               />
             </PopoverContent>
@@ -1940,12 +1960,8 @@ function GiveFeedbackForm({
 
       <div className="space-y-3">
         <div>
-          <Label className="text-neutral-800">
-            Star Rating <span className="text-[#DA7756]">*</span>
-          </Label>
-          <p className="mt-0.5 text-sm text-neutral-500">
-            Rate overall performance (1–5 stars)
-          </p>
+          <Label className="text-neutral-800">Star Rating <span className="text-[#DA7756]">*</span></Label>
+          <p className="mt-0.5 text-sm text-neutral-500">Rate overall performance (1–5 stars)</p>
         </div>
         <div className="flex gap-1" role="radiogroup" aria-label="Star rating">
           {[1, 2, 3, 4, 5].map((n) => (
@@ -1955,15 +1971,10 @@ function GiveFeedbackForm({
               role="radio"
               aria-checked={rating === n}
               onClick={() => setRating(n)}
-              className="rounded-md p-0.5 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C72030]/40"
+              className="rounded-md p-0.5 transition-transform hover:scale-110"
             >
               <Star
-                className={cn(
-                  "h-8 w-8 sm:h-9 sm:w-9",
-                  n <= rating
-                    ? "fill-amber-400 text-amber-400"
-                    : "fill-transparent text-neutral-300"
-                )}
+                className={cn("h-8 w-8 sm:h-9 sm:w-9", n <= rating ? "fill-amber-400 text-amber-400" : "fill-transparent text-neutral-300")}
                 strokeWidth={n <= rating ? 0 : 1.5}
               />
             </button>
@@ -1976,20 +1987,10 @@ function GiveFeedbackForm({
                 key={seg.stars}
                 type="button"
                 onClick={() => setRating(seg.stars)}
-                className={cn(
-                  "min-w-0 flex-1 px-0.5 py-2.5 text-center transition-all sm:px-1 sm:py-3",
-                  seg.bg,
-                  seg.text,
-                  rating === seg.stars &&
-                  "relative z-10 ring-2 ring-inset ring-neutral-900/80"
-                )}
+                className={cn("min-w-0 flex-1 px-0.5 py-2.5 text-center transition-all sm:px-1 sm:py-3", seg.bg, seg.text, rating === seg.stars && "relative z-10 ring-2 ring-inset ring-neutral-900/80")}
               >
-                <span className="block text-[10px] font-semibold leading-tight sm:text-xs">
-                  {seg.stars}★
-                </span>
-                <span className="mt-0.5 block text-[9px] font-medium opacity-95 sm:text-[11px]">
-                  {seg.pts}
-                </span>
+                <span className="block text-[10px] font-semibold leading-tight sm:text-xs">{seg.stars}★</span>
+                <span className="mt-0.5 block text-[9px] font-medium opacity-95 sm:text-[11px]">{seg.pts}</span>
               </button>
             ))}
           </div>
@@ -1998,8 +1999,7 @@ function GiveFeedbackForm({
 
       <div className="space-y-2">
         <Label htmlFor="feedback-context" className="text-neutral-800">
-          Context / Situation{" "}
-          <span className="font-normal text-neutral-400">(Optional)</span>
+          Context / Situation <span className="font-normal text-neutral-400">(Optional)</span>
         </Label>
         <input
           id="feedback-context"
@@ -2007,125 +2007,41 @@ function GiveFeedbackForm({
           value={context}
           onChange={(e) => setContext(e.target.value)}
           placeholder="e.g., Regarding the client presentation last week..."
-          className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#C72030]/25"
+          className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
         />
       </div>
 
       <div className="space-y-6 border-t border-neutral-100 pt-6">
         {[
-          {
-            step: 1,
-            color: "bg-[#2E7D32]",
-            title: "Positive opening",
-            desc: "Start with genuine appreciation and what they're doing well.",
-            value: positiveOpen,
-            onChange: setPositiveOpen,
-            placeholder: "Share what is working well…",
-          },
-          {
-            step: 2,
-            color: "bg-orange-500",
-            title: "Constructive feedback",
-            desc: "Provide specific, actionable feedback for improvement.",
-            value: constructive,
-            onChange: setConstructive,
-            placeholder: "Be clear and kind…",
-          },
-          {
-            step: 3,
-            color: "bg-sky-600",
-            title: "Positive closing",
-            desc: "End with encouragement and confidence in their abilities.",
-            value: positiveClose,
-            onChange: setPositiveClose,
-            placeholder: "Close on a supportive note…",
-          },
+          { step: 1, color: "bg-[#2E7D32]", title: "Positive opening", desc: "Start with genuine appreciation and what they're doing well.", value: positiveOpen, onChange: setPositiveOpen, placeholder: "Share what is working well…" },
+          { step: 2, color: "bg-orange-500", title: "Constructive feedback", desc: "Provide specific, actionable feedback for improvement.", value: constructive, onChange: setConstructive, placeholder: "Be clear and kind…" },
+          { step: 3, color: "bg-sky-600", title: "Positive closing", desc: "End with encouragement and confidence in their abilities.", value: positiveClose, onChange: setPositiveClose, placeholder: "Close on a supportive note…" },
         ].map(({ step, color, title, desc, value, onChange, placeholder }) => (
           <div key={step} className="space-y-3">
             <div className="flex gap-3">
-              <div
-                className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
-                  color
-                )}
-              >
-                {step}
-              </div>
+              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", color)}>{step}</div>
               <div>
                 <h3 className="font-semibold text-neutral-900">{title}</h3>
                 <p className="text-sm text-neutral-500">{desc}</p>
               </div>
             </div>
-            <Textarea
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              placeholder={placeholder}
-              className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
-            />
+            <Textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white text-sm" />
           </div>
         ))}
       </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-neutral-100 pt-6 sm:flex-row sm:justify-end">
         {isEditMode && (
-          <button
-            type="button"
-            onClick={onCancelEdit}
-            disabled={isPending}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <button type="button" onClick={onCancelEdit} disabled={isPending} className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:opacity-50">
             Cancel edit
           </button>
         )}
-        <button
-          type="button"
-          onClick={clearForm}
-          disabled={isPending}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <button type="button" onClick={clearForm} disabled={isPending} className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-50">
           Clear form
         </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending || teamMembersLoading}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-              {isEditMode ? "Updating…" : "Sending…"}
-            </>
-          ) : (
-            <>
-              <Send className="h-4 w-4" strokeWidth={2} />
-              {isEditMode ? "Update feedback" : "Send feedback"}
-            </>
-          )}
+        <button type="button" onClick={handleSubmit} disabled={isPending || teamMembersLoading} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60">
+          {isPending ? (<><Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />{isEditMode ? "Updating…" : "Sending…"}</>) : (<><Send className="h-4 w-4" strokeWidth={2} />{isEditMode ? "Update feedback" : "Send feedback"}</>)}
         </button>
-      </div>
-
-      <div className="rounded-2xl border border-violet-100 bg-violet-50/90 px-4 py-4 sm:px-5">
-        <div className="flex gap-3 sm:gap-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-200/80">
-            <Lightbulb className="h-5 w-5 text-violet-700" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-violet-950">
-              Feedback tips
-            </p>
-            <ul className="mt-2 list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-violet-900/90">
-              <li>Be specific — reference real situations and outcomes.</li>
-              <li>Focus on behavior and impact, not personality.</li>
-              <li>
-                Make it timely; don&apos;t wait weeks to share important input.
-              </li>
-              <li>
-                Listen openly when they respond; feedback is a conversation.
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -2158,7 +2074,6 @@ function FeedbackPage() {
   );
   const orgLine = selectedCompany?.name?.toUpperCase() ?? "YOUR ORGANIZATION";
 
-  // Both queries are already cached from the list components; no extra requests made
   const { data: givenFeedback = [] } = useFeedbackList("given", currentUserId);
   const { data: selectedReceivedFeedback = [] } = useFeedbackList(
     "received",
@@ -2173,119 +2088,30 @@ function FeedbackPage() {
     receivedView === "myself" ? currentUserName : selectedReceivedMember?.label;
 
   const receivedFeedback = useMemo(() => {
-    const merged = mergeFeedbackItems(
-      selectedReceivedFeedback,
-      allReceivedFeedback,
-      givenFeedback
-    );
-    const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
+    const merged = mergeFeedbackItems(selectedReceivedFeedback, allReceivedFeedback);
 
-    if (selectedReceivedUserId == null && !normalizedSelectedName) {
+    if (selectedReceivedUserId != null && merged.length > 0) {
       return merged;
     }
 
-    const exactMatches = merged.filter((item) => {
-      if (
-        selectedReceivedUserId != null &&
-        item.resourceId === selectedReceivedUserId
-      ) {
-        return true;
-      }
+    const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
+    if (!normalizedSelectedName) return merged;
 
-      return normalizedSelectedName
-        ? item.recipientName.toLowerCase() === normalizedSelectedName
-        : false;
-    });
+    const exactMatches = merged.filter((item) =>
+      item.recipientName.toLowerCase() === normalizedSelectedName
+    );
+    if (exactMatches.length > 0) return exactMatches;
 
-    if (exactMatches.length > 0) {
-      return exactMatches;
-    }
-
-    return normalizedSelectedName
-      ? merged.filter((item) =>
-        item.recipientName.toLowerCase().includes(normalizedSelectedName)
-      )
-      : merged;
+    return merged.filter((item) =>
+      item.recipientName.toLowerCase().includes(normalizedSelectedName)
+    );
   }, [
     selectedReceivedFeedback,
     allReceivedFeedback,
-    givenFeedback,
     selectedReceivedUserId,
     selectedReceivedName,
   ]);
 
-  const feedbackSummary = useMemo(() => {
-    const all = [...givenFeedback, ...receivedFeedback];
-    const avgRating =
-      all.length > 0
-        ? (all.reduce((sum, i) => sum + i.rating, 0) / all.length).toFixed(1)
-        : "0";
-    const unread = all.filter((f) => f.status === "unread").length;
-    let feedbackPoints = 0;
-    all.forEach((item) => {
-      if (item.rating === 1) feedbackPoints -= 10;
-      else if (item.rating === 2) feedbackPoints -= 5;
-      else if (item.rating === 4) feedbackPoints += 5;
-      else if (item.rating === 5) feedbackPoints += 10;
-    });
-
-    return {
-      received: receivedFeedback.length,
-      given: givenFeedback.length,
-      unread,
-      avg_rating: Number(avgRating),
-      feedback_points: feedbackPoints,
-    };
-  }, [givenFeedback, receivedFeedback]);
-
-  const headerSummaryStats = useMemo((): SummaryStat[] => {
-    const all = [...givenFeedback, ...receivedFeedback];
-    const avgRating =
-      feedbackSummary?.avg_rating ||
-      (all.length > 0
-        ? (all.reduce((sum, i) => sum + i.rating, 0) / all.length).toFixed(1)
-        : "0");
-
-    const feedbackPoints = feedbackSummary?.feedback_points || 0;
-
-    return [
-      {
-        label: "Received",
-        value: feedbackSummary?.received ?? receivedFeedback.length,
-        icon: Inbox,
-        bgClass: "bg-sky-100/90",
-        iconClass: "text-sky-600",
-      },
-      {
-        label: "Given",
-        value: feedbackSummary?.given ?? givenFeedback.length,
-        icon: Send,
-        bgClass: "bg-[#E3F4E8]",
-        iconClass: "text-[#2E7D32]",
-      },
-      {
-        label: "Unread",
-        value: feedbackSummary?.unread ?? 0,
-        icon: MessageSquare,
-        bgClass: "bg-orange-100/90",
-        iconClass: "text-orange-600",
-      },
-      {
-        label: "Avg Rating",
-        value: avgRating,
-        icon: TrendingUp,
-        bgClass: "bg-violet-100/90",
-        iconClass: "text-violet-600",
-      },
-      {
-        label: "Feedback Points",
-        value: feedbackPoints,
-        icon: ArrowUp,
-        bgClass: "bg-teal-100/80",
-        iconClass: "text-teal-600",
-      },
-    ];
-  }, [givenFeedback, receivedFeedback, feedbackSummary]);
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -2300,7 +2126,7 @@ function FeedbackPage() {
               onClick={() => { }}
             >
               <p className="text-sm font-semibold text-sky-950">
-                Giving & Receiving Feedback
+                Giving &amp; Receiving Feedback
               </p>
               <p className="text-xs text-sky-700/90">Click to view tips</p>
             </button>
@@ -2342,179 +2168,96 @@ function FeedbackPage() {
           </div>
         </header>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
-          {headerSummaryStats.map(
-            ({ label, value, icon: Icon, bgClass, iconClass }) => (
-              <Card
-                key={label}
+
+        <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          {/* Tab bar */}
+          <div className="flex border-b border-neutral-200">
+            {([
+              { value: "received", label: "Received", icon: Inbox, count: receivedFeedback.length },
+              { value: "given", label: "Given", icon: Send, count: givenFeedback.length },
+              { value: "give", label: "Give Feedback", icon: Pencil, count: null },
+            ] as const).map(({ value, label, icon: Icon, count }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFeedbackTab(value)}
                 className={cn(
-                  "border-0 shadow-md transition-shadow hover:shadow-lg rounded-2xl p-5",
-                  bgClass
+                  "flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2",
+                  feedbackTab === value
+                    ? "border-[#DA7756] bg-white text-neutral-900"
+                    : "border-transparent bg-[#f5f5f5] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
                 )}
               >
-                <div className="flex flex-col items-center text-center">
-                  <Icon className={cn("mb-3 h-7 w-7", iconClass)} />
-                  <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                    {value}
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-neutral-600">
-                    {label}
-                  </p>
-                </div>
-              </Card>
-            )
+                <Icon className="h-4 w-4" />
+                {label}
+                {count !== null && count > 0 && (
+                  <span className="rounded-full bg-[#C72030] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* View for: dropdown — received tab only */}
+          {feedbackTab === "received" && (
+            <div className="px-4 py-3 border-b border-neutral-100 bg-white flex items-center gap-3">
+              <span className="text-sm text-neutral-600 font-medium">View feedback for:</span>
+              <Select value={receivedView} onValueChange={setReceivedView}>
+                <SelectTrigger className="h-9 w-[200px] rounded-lg border-neutral-200 bg-white text-sm">
+                  <SelectValue placeholder={myselfLabel} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="myself">{myselfLabel}</SelectItem>
+                  {teamMembersLoading ? (
+                    <div className="px-3 py-2 text-sm text-neutral-400">Loading...</div>
+                  ) : (
+                    teamMembers
+                      .filter((member) => member.id !== currentUserId)
+                      .map((member) => (
+                        <SelectItem key={member.value} value={member.value}>
+                          {member.label}
+                        </SelectItem>
+                      ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           )}
-        </div>
 
-        <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-md">
-          <Tabs
-            value={feedbackTab}
-            onValueChange={setFeedbackTab}
-            className="w-full"
-          >
-            <TabsList
-              className={cn(
-                "h-auto w-full justify-start gap-1 rounded-none border-b border-[#DA7756]/20",
-                "bg-[#DA7756]/10 p-2"
-              )}
-            >
-              <TabsTrigger
-                value="received"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "hover:bg-[#DA7756]/10"
-                )}
-              >
-                <Inbox className="h-4 w-4" />
-                Received
-                {receivedFeedback.length > 0 && (
-                  <span className="ml-1 rounded-full bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {receivedFeedback.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="given"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "hover:bg-[#DA7756]/10"
-                )}
-              >
-                <Send className="h-4 w-4" />
-                Given
-                {givenFeedback.length > 0 && (
-                  <span className="ml-1 rounded-full bg-[#2E7D32] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {givenFeedback.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="give"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white",
-                  "data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "data-[state=inactive]:bg-transparent"
-                )}
-              >
-                <Pencil className="h-4 w-4" />
-                Give Feedback
-              </TabsTrigger>
-            </TabsList>
+          {/* Tab contents */}
+          {feedbackTab === "received" && (
+            <AsyncBoundary>
+              <GivenFeedbackList
+                key={`received-${receivedView}`}
+                onGiveFeedbackClick={() => { setEditingFeedback(null); setFeedbackTab("give"); }}
+                onEditFeedback={(item) => { setEditingFeedback(item); setFeedbackTab("give"); }}
+                direction="from"
+                filterUserId={null}
+                itemsOverride={receivedFeedback}
+              />
+            </AsyncBoundary>
+          )}
 
-            {feedbackTab === "received" && (
-              <div className="border-b border-neutral-100 bg-[#DA7756]/10 px-4 py-3 sm:px-6">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                  <span className="text-sm text-neutral-600">
-                    View feedback for:
-                  </span>
-                  <Select value={receivedView} onValueChange={setReceivedView}>
-                    <SelectTrigger className="h-10 w-full max-w-[220px] rounded-lg border-neutral-200 bg-white">
-                      <SelectValue placeholder={myselfLabel} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="myself">{myselfLabel}</SelectItem>
-                      {teamMembersLoading ? (
-                        <div className="px-3 py-2 text-sm text-neutral-400">
-                          Loading team members...
-                        </div>
-                      ) : (
-                        teamMembers
-                          .filter((member) => member.id !== currentUserId)
-                          .map((member) => (
-                            <SelectItem key={member.value} value={member.value}>
-                              {member.label}
-                            </SelectItem>
-                          ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+          {feedbackTab === "given" && (
+            <AsyncBoundary>
+              <GivenFeedbackList
+                onGiveFeedbackClick={() => { setEditingFeedback(null); setFeedbackTab("give"); }}
+                onEditFeedback={(item) => { setEditingFeedback(item); setFeedbackTab("give"); }}
+                direction="to"
+              />
+            </AsyncBoundary>
+          )}
 
-            <TabsContent
-              value="received"
-              className="m-0 focus-visible:outline-none"
-            >
-              <AsyncBoundary>
-                <GivenFeedbackList
-                  key={`received-${receivedView}`}
-                  onGiveFeedbackClick={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("give");
-                  }}
-                  onEditFeedback={(item) => {
-                    setEditingFeedback(item);
-                    setFeedbackTab("give");
-                  }}
-                  direction="from"
-                  filterUserId={null}
-                  itemsOverride={receivedFeedback}
-                />
-              </AsyncBoundary>
-            </TabsContent>
-
-            <TabsContent
-              value="given"
-              className="m-0 focus-visible:outline-none"
-            >
-              <AsyncBoundary>
-                <GivenFeedbackList
-                  onGiveFeedbackClick={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("give");
-                  }}
-                  onEditFeedback={(item) => {
-                    setEditingFeedback(item);
-                    setFeedbackTab("give");
-                  }}
-                  direction="to"
-                />
-              </AsyncBoundary>
-            </TabsContent>
-
-            <TabsContent
-              value="give"
-              className="m-0 focus-visible:outline-none"
-            >
-              <AsyncBoundary>
-                <GiveFeedbackForm
-                  initialFeedback={editingFeedback}
-                  onCancelEdit={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("given");
-                  }}
-                  onSubmitted={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("given");
-                  }}
-                />
-              </AsyncBoundary>
-            </TabsContent>
-          </Tabs>
+          {feedbackTab === "give" && (
+            <AsyncBoundary>
+              <GiveFeedbackForm
+                initialFeedback={editingFeedback}
+                onCancelEdit={() => { setEditingFeedback(null); setFeedbackTab("given"); }}
+                onSubmitted={() => { setEditingFeedback(null); setFeedbackTab("given"); }}
+              />
+            </AsyncBoundary>
+          )}
         </Card>
       </div>
     </div>
