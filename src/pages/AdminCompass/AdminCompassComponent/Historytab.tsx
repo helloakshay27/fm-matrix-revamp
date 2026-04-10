@@ -546,12 +546,16 @@ const HistoryTab = () => {
           <div className="bg-[#CE7A5A] px-6 py-5 rounded-t-[24px]">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <h3
-                  className="text-[22px] font-black !text-white tracking-tight mb-2"
-                  style={{ color: "#ffffff" }}
-                >
-                  {selectedMeetingLabel} for {formattedDateLabel}
+                {/* Fixed the color issue by wrapping text in a span with !important inline styling */}
+                <h3 className="text-[22px] font-black tracking-tight mb-2 m-0 p-0">
+                  <span
+                    className="!text-white"
+                    style={{ color: "#ffffff", display: "inline-block" }}
+                  >
+                    {selectedMeetingLabel} for {formattedDateLabel}
+                  </span>
                 </h3>
+
                 <div className="flex items-center gap-3 flex-wrap mb-1.5">
                   <span className="px-3 py-1 bg-white/20 border border-white/20 !text-white text-[11px] font-black rounded-[8px] uppercase tracking-widest">
                     completed
