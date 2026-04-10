@@ -196,7 +196,10 @@ const SmsManagementPage: React.FC = () => {
 
       if (searchTerm?.trim()) {
         const term = searchTerm.trim();
-        params.append("q[template_name_or_module_name_or_function_name_or_service_provider_cont]", term);
+        params.append(
+          "q[template_name_or_module_name_or_function_name_or_service_provider_cont]",
+          term
+        );
       }
 
       Object.entries(activeFilters).forEach(([key, value]) => {
@@ -399,14 +402,27 @@ const SmsManagementPage: React.FC = () => {
       });
     } catch (error: any) {
       console.error("Error saving template:", error);
-      
+
       let errorMessage = editingId
         ? "Failed to update SMS Template"
         : "Failed to create SMS Template";
 
       if (error.response?.data) {
         const data = error.response.data;
-        if (data.errors) {
+
+        // Specific check for organization/template existence
+        const hasTakenError =
+          data.errors &&
+          typeof data.errors === "object" &&
+          Object.values(data.errors).some(
+            (msgs: any) =>
+              Array.isArray(msgs) &&
+              msgs.some((m) => typeof m === "string" && m.includes("taken"))
+          );
+
+        if (hasTakenError) {
+          errorMessage = "Template for this organization already exist";
+        } else if (data.errors) {
           if (Array.isArray(data.errors)) {
             errorMessage = data.errors.join(", ");
           } else if (typeof data.errors === "object") {
@@ -723,7 +739,7 @@ const SmsManagementPage: React.FC = () => {
                       handleFilterChange("organization_id_eq", val.toString())
                     }
                     options={orgOptions}
-                    placeholder="Select Organization"
+                    placeholder="Search and Select Organization"
                     searchable={true}
                   />
                 </div>
@@ -733,7 +749,7 @@ const SmsManagementPage: React.FC = () => {
                     Module Name
                   </Label>
                   <Input
-                    placeholder="e.g. auth"
+                    placeholder="Enter Module Name"
                     value={filters.module_name_eq}
                     onChange={(e) =>
                       handleFilterChange("module_name_eq", e.target.value)
@@ -747,7 +763,7 @@ const SmsManagementPage: React.FC = () => {
                     Function Name
                   </Label>
                   <Input
-                    placeholder="e.g. login"
+                    placeholder="Enter Function Name"
                     value={filters.function_name_cont}
                     onChange={(e) =>
                       handleFilterChange("function_name_cont", e.target.value)
@@ -767,7 +783,7 @@ const SmsManagementPage: React.FC = () => {
                       { value: "primary", label: "Primary" },
                       { value: "secondary", label: "Secondary" },
                     ]}
-                    placeholder="Select Priority"
+                    placeholder="Select Priority Level"
                     searchable={true}
                   />
                 </div>
@@ -777,7 +793,7 @@ const SmsManagementPage: React.FC = () => {
                     Service Provider
                   </Label>
                   <Input
-                    placeholder="e.g. twilio"
+                    placeholder="Enter Service Provider name"
                     value={filters.service_provider_eq}
                     onChange={(e) =>
                       handleFilterChange("service_provider_eq", e.target.value)
@@ -791,7 +807,7 @@ const SmsManagementPage: React.FC = () => {
                     Template Name
                   </Label>
                   <Input
-                    placeholder="e.g. welcome"
+                    placeholder="Enter Template Name"
                     value={filters.template_name_cont}
                     onChange={(e) =>
                       handleFilterChange("template_name_cont", e.target.value)
@@ -805,7 +821,7 @@ const SmsManagementPage: React.FC = () => {
                     DLT Template ID
                   </Label>
                   <Input
-                    placeholder="e.g. 789"
+                    placeholder="Enter DLT Template ID"
                     value={filters.dlt_template_id_eq}
                     onChange={(e) =>
                       handleFilterChange("dlt_template_id_eq", e.target.value)
@@ -819,7 +835,7 @@ const SmsManagementPage: React.FC = () => {
                     Template URL
                   </Label>
                   <Input
-                    placeholder="e.g. https"
+                    placeholder="Enter Template URL"
                     value={filters.template_url_cont}
                     onChange={(e) =>
                       handleFilterChange("template_url_cont", e.target.value)
@@ -839,7 +855,7 @@ const SmsManagementPage: React.FC = () => {
                       { value: "true", label: "Yes" },
                       { value: "false", label: "No" },
                     ]}
-                    placeholder="Any"
+                    placeholder="Select Default Status"
                     searchable={true}
                   />
                 </div>
@@ -855,7 +871,7 @@ const SmsManagementPage: React.FC = () => {
                       { value: "true", label: "Active" },
                       { value: "false", label: "Inactive" },
                     ]}
-                    placeholder="Any"
+                    placeholder="Select Active Status"
                     searchable={true}
                   />
                 </div>
