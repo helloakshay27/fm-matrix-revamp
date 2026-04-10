@@ -78,7 +78,7 @@ const btnIcon =
 const badgePoints =
     'border-0 bg-[#DA7756] px-3 py-1 text-xs text-white hover:bg-[#DA7756]';
 
-type RemarkChipId = 'breakthrough' | 'breakdown' | 'employee' | 'client' | 'empFeedback';
+type RemarkChipId = 'breakthrough' | 'breakdown' | 'remark' | 'clientFeedback' | 'employeeFeedback';
 
 /** Remarks card border/bg + chip styles (native buttons — shadcn outline was overriding bg) */
 const REMARK_CHIP_META: Record<
@@ -95,7 +95,7 @@ const REMARK_CHIP_META: Record<
             'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#DA7756]/90',
     },
     breakdown: {
-        label: 'One Breakdown',
+        label: 'Breakdown',
         border: 'border-[#DA7756]',
         bg: 'bg-[#fef6f4]',
         chipInactive:
@@ -103,17 +103,17 @@ const REMARK_CHIP_META: Record<
         chipActive:
             'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#c9673f]',
     },
-    employee: {
-        label: 'One Employee',
+    remark: {
+        label: 'Remark',
         border: 'border-[#DA7756]',
         bg: 'bg-[#fef6f4]',
         chipInactive:
             'border-neutral-200 bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
         chipActive:
-            'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#c9673f]',
+            'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#DA7756]/90',
     },
-    client: {
-        label: 'One Client Feedback',
+    clientFeedback: {
+        label: 'Client Feedback',
         border: 'border-[#DA7756]/70',
         bg: 'bg-[#fef6f4]',
         chipInactive:
@@ -121,7 +121,7 @@ const REMARK_CHIP_META: Record<
         chipActive:
             'border-[#DA7756] bg-[#DA7756] text-white shadow-sm hover:bg-[#DA7756]/90',
     },
-    empFeedback: {
+    employeeFeedback: {
         label: 'Employee Feedback',
         border: 'border-[#DA7756]/60',
         bg: 'bg-[#fef6f4]',
@@ -142,7 +142,7 @@ const WeeklyReports = () => {
     const handleAchievementFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newFiles = Array.from(e.target.files || []);
         const currentCount = selectedFileNames.length;
-        
+
         if (currentCount + newFiles.length > 5) {
             toast.error(`You can only upload a maximum of 5 files. You already have ${currentCount} selected.`);
             e.target.value = '';
@@ -159,7 +159,7 @@ const WeeklyReports = () => {
     const [wins, setWins] = React.useState<string[]>([]);
     const [dayPlans, setDayPlans] = React.useState<Record<string, string[]>>({});
     const [remarksText, setRemarksText] = React.useState('');
-    const [remarksList, setRemarksList] = React.useState<{type: RemarkChipId | null, text: string}[]>([]);
+    const [remarksList, setRemarksList] = React.useState<{ type: RemarkChipId | null, text: string }[]>([]);
     const [activeRemarkChip, setActiveRemarkChip] = React.useState<RemarkChipId | null>(null);
     const [remarksInteracted, setRemarksInteracted] = React.useState(false);
     const remarksTextareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -220,10 +220,22 @@ const WeeklyReports = () => {
 
     const populateForm = React.useCallback((item: any) => {
         setEditingId(item.id);
-        
+
         const remarksData = item.report_data?.remarks;
         if (Array.isArray(remarksData)) {
-            setRemarksList(remarksData);
+            // Transform remarks from dynamic key format to { type, text } format
+            const transformedRemarks = remarksData.map((remark: any) => {
+                if (typeof remark === 'object' && remark !== null) {
+                    // Get the first (and typically only) key-value pair
+                    const [remarkType, remarkText] = Object.entries(remark)[0] || ['remark', ''];
+                    return {
+                        type: remarkType as RemarkChipId | null,
+                        text: typeof remarkText === 'string' ? remarkText : String(remarkText)
+                    };
+                }
+                return { type: null, text: String(remark) };
+            });
+            setRemarksList(transformedRemarks);
             setRemarksText('');
         } else if (remarksData) {
             setRemarksList([{ type: item.report_data.remark_type as RemarkChipId | null, text: remarksData }]);
@@ -236,24 +248,55 @@ const WeeklyReports = () => {
         if (item.report_data?.remark_type) {
             setActiveRemarkChip(item.report_data.remark_type as RemarkChipId);
         }
-        
+
         // Handle wins/achievements (new and legacy)
-        const achievements = item.report_data?.achievements 
+        const achievements = item.report_data?.achievements
             || item.report_data?.accomplishments?.items?.map((i: any) => i.title)
             || item.report_data?.accomplishments?.map((i: any) => i.title)
             || [];
         setWins(achievements);
 
-        // Handle tasks/plans (new and legacy)
-        const tasks = item.report_data?.tasks 
+        // Handle tasks/plans (new day-keyed format and legacy)
+        let tasks = item.report_data?.tasks
             || item.report_data?.week_plan?.map((i: any) => i.title)
             || item.report_data?.tasks_issues?.map((i: any) => i.title)
             || item.report_data?.tomorrow_plan?.map((i: any) => i.title)
             || [];
-        
-        const firstDay = upcomingDays.find(d => d.canAdd)?.key;
-        if (firstDay && tasks.length > 0) {
-            setDayPlans({ [firstDay]: tasks });
+
+        // Check if tasks is in the new day-keyed format: [{ mon: [...], tue: [...] }]
+        if (Array.isArray(tasks) && tasks.length > 0 && typeof tasks[0] === 'object' && !Array.isArray(tasks[0])) {
+            const dayKeyedObject = tasks[0];
+            const dayMapping: Record<string, string> = {
+                'mon': 'Mon',
+                'tue': 'Tue',
+                'wed': 'Wed',
+                'thu': 'Thu',
+                'fri': 'Fri',
+                'sat': 'Sat',
+                'sun': 'Sun',
+            };
+
+            const newDayPlans: Record<string, string[]> = {};
+            Object.entries(dayKeyedObject).forEach(([dayKey, dayTasks]) => {
+                const dayAbbr = dayMapping[dayKey.toLowerCase()];
+                if (dayAbbr && Array.isArray(dayTasks)) {
+                    // Find the matching upcomingDay that starts with this abbreviation
+                    const matchingDay = upcomingDays.find(d => d.short.startsWith(dayAbbr));
+                    if (matchingDay) {
+                        newDayPlans[matchingDay.key] = dayTasks;
+                    }
+                }
+            });
+
+            if (Object.keys(newDayPlans).length > 0) {
+                setDayPlans(newDayPlans);
+            }
+        } else if (tasks.length > 0) {
+            // Legacy flat array format - put all on first available day
+            const firstDay = upcomingDays.find(d => d.canAdd)?.key;
+            if (firstDay) {
+                setDayPlans({ [firstDay]: tasks });
+            }
         }
         toast.message('Report data loaded');
     }, [upcomingDays]);
@@ -305,11 +348,11 @@ const WeeklyReports = () => {
         // Get the latest report that isn't the current one we might be editing
         const latest = history.find(item => item.id !== editingId);
         if (latest) {
-            const tasks = latest.report_data?.tasks 
+            const tasks = latest.report_data?.tasks
                 || latest.report_data?.week_plan?.map((i: any) => i.title)
                 || latest.report_data?.tasks_issues?.map((i: any) => i.title)
                 || [];
-            
+
             if (tasks.length === 0) {
                 toast.info('No uncompleted tasks found in previous report');
                 return;
@@ -332,7 +375,7 @@ const WeeklyReports = () => {
         try {
             const response = await apiClient.get(`${ENDPOINTS.USER_JOURNALS}?q[:journal_type]=daily`);
             const allDaily = response.data || [];
-            
+
             // Filter reports from the current selected week
             const filtered = allDaily.filter((report: any) => {
                 const reportDate = new Date(report.start_date || report.created_at);
@@ -439,6 +482,15 @@ const WeeklyReports = () => {
 
             const combinedDescription = finalRemarksList.map(r => r.text).join('\n');
 
+            // Format remarks according to the required format
+            const formattedRemarks = finalRemarksList.map(r => {
+                if (r.type) {
+                    return { [r.type]: r.text };
+                } else {
+                    return { remark: r.text };
+                }
+            });
+
             const payload = {
                 user_journal: {
                     user_id: currentUser.id,
@@ -454,10 +506,21 @@ const WeeklyReports = () => {
                     report_data: {
                         kpi: 'weekly value',
                         achievements: wins.filter(w => w.trim() !== ''),
-                        tasks: Object.values(dayPlans).flat().filter(t => t.trim() !== ''),
+                        tasks: [{
+                            ...Object.fromEntries(
+                                Object.entries(dayPlans).map(([dayKey, tasks]) => {
+                                    // Extract day abbreviation (Mon, Tue, etc.) and convert to lowercase
+                                    const dayMatch = dayKey.match(/^(\w{3})/);
+                                    const dayAbbr = dayMatch ? dayMatch[1].toLowerCase() : dayKey.slice(0, 3).toLowerCase();
+                                    // Filter out empty tasks
+                                    const filteredTasks = tasks.filter(t => t.trim() !== '');
+                                    return [dayAbbr, filteredTasks];
+                                })
+                            )
+                        }],
                         past_kpis: [], // Placeholder for now
                         total_score: 0,
-                        remarks: finalRemarksList,
+                        remarks: formattedRemarks,
                         remark_type: activeRemarkChip,
                         sections: {
                             daily_scores: [0, 0, 0, 0, 0],
@@ -473,7 +536,7 @@ const WeeklyReports = () => {
                 }
             };
 
-            const response = editingId 
+            const response = editingId
                 ? await apiClient.put(`/user_journals/${editingId}.json`, payload)
                 : await apiClient.post(ENDPOINTS.USER_JOURNALS, payload);
 
@@ -582,9 +645,9 @@ const WeeklyReports = () => {
                                         key={index}
                                         className="group relative flex items-start gap-3 rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm"
                                     >
-                                        <Checkbox 
-                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500" 
-                                            defaultChecked 
+                                        <Checkbox
+                                            className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                            defaultChecked
                                         />
                                         <Star className="mt-1 h-4 w-4 cursor-pointer text-neutral-300 hover:text-yellow-400 transition-colors" />
                                         <Textarea
@@ -654,14 +717,14 @@ const WeeklyReports = () => {
                                             </Button>
                                         </div>
                                     </div>
-                                    
+
                                     {selectedFileNames.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {selectedFileNames.map((name, i) => (
                                                 <Badge key={i} variant="secondary" className="bg-neutral-100 text-[10px] text-neutral-600 px-2 py-0.5 rounded-lg flex items-center gap-1">
                                                     <span className="truncate max-w-[150px]">{name}</span>
-                                                    <X 
-                                                        className="h-3 w-3 cursor-pointer hover:text-red-500" 
+                                                    <X
+                                                        className="h-3 w-3 cursor-pointer hover:text-red-500"
                                                         onClick={() => {
                                                             const next = selectedFileNames.filter((_, idx) => idx !== i);
                                                             setSelectedFileNames(next);
@@ -873,7 +936,7 @@ const WeeklyReports = () => {
                                                         )}
                                                     />
                                                 )}
-                                                {id === 'employee' && (
+                                                {id === 'employeeFeedback' && (
                                                     <User
                                                         className={cn(
                                                             'mr-1.5 h-3.5 w-3.5 shrink-0',
@@ -881,7 +944,7 @@ const WeeklyReports = () => {
                                                         )}
                                                     />
                                                 )}
-                                                {id === 'client' && (
+                                                {id === 'clientFeedback' && (
                                                     <Users
                                                         className={cn(
                                                             'mr-1.5 h-3.5 w-3.5 shrink-0',
@@ -889,7 +952,7 @@ const WeeklyReports = () => {
                                                         )}
                                                     />
                                                 )}
-                                                {id === 'empFeedback' && (
+                                                {id === 'remark' && (
                                                     <Smile
                                                         className={cn(
                                                             'mr-1.5 h-3.5 w-3.5 shrink-0',
@@ -907,7 +970,7 @@ const WeeklyReports = () => {
                                     value={remarksText}
                                     onChange={(e) => setRemarksText(e.target.value)}
                                     onFocus={handleRemarksAreaActivate}
-                                    placeholder={activeRemarkChip ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...` : "Enter at least one breakthrough, one breakdown, one employee and one client feedback…"}
+                                    placeholder={activeRemarkChip ? `Add ${REMARK_CHIP_META[activeRemarkChip].label}...` : "Enter at least one breakthrough, one breakdown, one remark and one client feedback…"}
                                     className="min-h-[120px] rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-inner outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
                                 />
                                 <Button
@@ -918,32 +981,32 @@ const WeeklyReports = () => {
                                     <Plus className="mr-2 h-4 w-4" />
                                     Add {activeRemarkChip ? REMARK_CHIP_META[activeRemarkChip].label : 'Remark'}
                                 </Button>
-                                
+
                                 {remarksList.length > 0 && (
                                     <div className="mt-6 space-y-3 border-t border-dashed border-neutral-200 pt-6">
                                         {remarksList.map((remark, index) => {
                                             const isBreakdown = remark.type === 'breakdown';
                                             const isBreakthrough = remark.type === 'breakthrough';
-                                            
+
                                             // Provide specific icons and fallback colors if remark type doesn't have a special match
                                             return (
-                                                <div 
-                                                    key={index} 
+                                                <div
+                                                    key={index}
                                                     className={cn(
                                                         "relative flex items-start gap-3 rounded-xl border p-4 shadow-sm",
                                                         isBreakdown ? "bg-red-50 border-red-200 text-red-900" :
-                                                        isBreakthrough ? "bg-emerald-50 border-emerald-200 text-emerald-900" :
-                                                        "bg-white border-neutral-200 text-neutral-800"
+                                                            isBreakthrough ? "bg-emerald-50 border-emerald-200 text-emerald-900" :
+                                                                "bg-white border-neutral-200 text-neutral-800"
                                                     )}
                                                 >
                                                     {remark.type === 'breakdown' ? <TrendingUp className="h-4 w-4 text-red-500 mt-0.5" /> :
-                                                     remark.type === 'breakthrough' ? <Activity className="h-4 w-4 text-emerald-500 mt-0.5" /> :
-                                                     remark.type === 'employee' ? <User className="h-4 w-4 text-blue-500 mt-0.5" /> :
-                                                     remark.type === 'client' ? <Users className="h-4 w-4 text-purple-500 mt-0.5" /> :
-                                                     remark.type === 'empFeedback' ? <Smile className="h-4 w-4 text-orange-500 mt-0.5" /> :
-                                                     <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
+                                                        remark.type === 'breakthrough' ? <Activity className="h-4 w-4 text-emerald-500 mt-0.5" /> :
+                                                            remark.type === 'employeeFeedback' ? <User className="h-4 w-4 text-blue-500 mt-0.5" /> :
+                                                                remark.type === 'clientFeedback' ? <Users className="h-4 w-4 text-purple-500 mt-0.5" /> :
+                                                                    remark.type === 'remark' ? <Smile className="h-4 w-4 text-orange-500 mt-0.5" /> :
+                                                                        <MessageSquare className="h-4 w-4 text-neutral-500 mt-0.5" />
                                                     }
-                                                    
+
                                                     <div className="flex-1 space-y-1">
                                                         {remark.type && (
                                                             <p className="text-xs font-bold">
@@ -952,7 +1015,7 @@ const WeeklyReports = () => {
                                                         )}
                                                         <p className="text-sm whitespace-pre-wrap">{remark.text}</p>
                                                     </div>
-                                                    
+
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveRemark(index)}
@@ -1088,21 +1151,21 @@ const WeeklyReports = () => {
                             history.map((item) => {
                                 const reportData = item.report_data || {};
                                 const weekNum = item.start_date ? getISOWeek(new Date(item.start_date)) : '??';
-                                const weekLabel = item.start_date && item.end_date 
+                                const weekLabel = item.start_date && item.end_date
                                     ? `${format(new Date(item.start_date), 'MMM d')}-${format(new Date(item.end_date), 'd')}`
                                     : 'Unknown Date';
-                                
-                                const achievements = reportData.achievements 
+
+                                const achievements = reportData.achievements
                                     || reportData.accomplishments?.items?.map((i: any) => i.title)
                                     || reportData.accomplishments?.map((i: any) => i.title)
                                     || [];
-                                
-                                const tasks = reportData.tasks 
+
+                                const tasks = reportData.tasks
                                     || reportData.week_plan?.map((i: any) => i.title)
                                     || reportData.tasks_issues?.map((i: any) => i.title)
                                     || reportData.tomorrow_plan?.map((i: any) => i.title)
                                     || [];
-                                
+
                                 const stats = [
                                     { label: 'Weekly KPIs:', value: '0/20' },
                                     { label: 'Daily KPIs:', value: '0/10' },
@@ -1305,11 +1368,11 @@ const WeeklyReports = () => {
                         ) : dailyReports.length > 0 ? (
                             dailyReports.map((report: any) => {
                                 const reportDate = new Date(report.start_date || report.created_at);
-                                const reportWins = report.report_data?.achievements 
+                                const reportWins = report.report_data?.achievements
                                     || report.report_data?.accomplishments?.items?.map((i: any) => i.title || i)
                                     || (Array.isArray(report.report_data?.accomplishments) ? report.report_data.accomplishments.map((i: any) => i.title || i) : [])
                                     || [];
-                                
+
                                 return reportWins.length > 0 ? (
                                     <div key={report.id} className="space-y-3">
                                         <h4 className="text-sm font-bold text-neutral-700">
@@ -1318,7 +1381,7 @@ const WeeklyReports = () => {
                                         <div className="space-y-2">
                                             {reportWins.map((win: string, i: number) => (
                                                 <div key={i} className="flex items-center gap-3 p-1">
-                                                    <Checkbox 
+                                                    <Checkbox
                                                         id={`win-${report.id}-${i}`}
                                                         checked={selectedDailyWins.includes(win)}
                                                         onCheckedChange={(checked) => {
@@ -1330,7 +1393,7 @@ const WeeklyReports = () => {
                                                         }}
                                                         className="rounded border-neutral-300"
                                                     />
-                                                    <label 
+                                                    <label
                                                         htmlFor={`win-${report.id}-${i}`}
                                                         className="text-sm text-neutral-700 cursor-pointer"
                                                     >
@@ -1351,14 +1414,14 @@ const WeeklyReports = () => {
                     </div>
 
                     <DialogFooter className="p-6 pt-2 gap-3 sm:justify-end">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setShowDailyWinsDialog(false)}
                             className="rounded-xl border-neutral-200 text-neutral-700 font-bold px-6"
                         >
                             Cancel
                         </Button>
-                        <Button 
+                        <Button
                             onClick={confirmImportDailyWins}
                             disabled={selectedDailyWins.length === 0}
                             className="rounded-xl bg-neutral-400 hover:bg-neutral-500 text-white font-bold px-6"

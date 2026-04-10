@@ -21,8 +21,8 @@ export const WeekPicker = ({ currentWeek, onWeekChange }: WeekPickerProps) => {
     };
 
     const weekRange = currentWeek ? {
-        from: startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
-        to: endOfWeek(currentWeek, { weekStartsOn: 0 }),
+        from: startOfWeek(currentWeek, { weekStartsOn: 1 }), // Monday
+        to: endOfWeek(currentWeek, { weekStartsOn: 1 }),
     } : undefined;
 
     return (
