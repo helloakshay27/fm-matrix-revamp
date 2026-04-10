@@ -709,7 +709,25 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     "read_percentage",
     "readPercent",
     "read_percent",
+    "feedback_read_rate",
+    "read_feedback_rate",
+    "read_ratio",
+    "readratio",
+    "readRatio",
   ]);
+  const readRateFromDeep =
+    readRateFromDirect === undefined
+      ? pickFirstNumberDeep(source, [
+          "readRate",
+          "read_rate",
+          "read_percentage",
+          "readPercent",
+          "read_percent",
+          "feedback_read_rate",
+          "read_feedback_rate",
+          "read_ratio",
+        ])
+      : undefined;
   const readCountFromApi = pickFirstNumber(sourceRecord, [
     "read_count",
     "read_feedback_count",
@@ -732,7 +750,7 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       : undefined;
   const readRateFromActivity = deriveReadRateFromActivity(recent);
   const selectedReadRate =
-    readRateFromDirect ?? readRateFromCounts ?? readRateFromActivity ?? null;
+    readRateFromDirect ?? readRateFromDeep ?? readRateFromCounts ?? readRateFromActivity ?? null;
   const readRate =
     selectedReadRate === null
       ? null
@@ -959,7 +977,7 @@ const FeedbackDashboard = () => {
   } = data;
 
   const readRateDisplay =
-    readTrackingAvailable && readRate !== null
+    readRate !== null
       ? `${Number.isInteger(readRate) ? readRate : readRate.toFixed(1)}%`
       : "N/A";
 

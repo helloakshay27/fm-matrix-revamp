@@ -48,11 +48,16 @@ export const BalanceSheetDetails = () => {
 
             const rows = Array.isArray(res.data.lock_account_transaction_records)
                 ? res.data.lock_account_transaction_records.map((r: any) => ({
-                    ledger_name: r.ledger_name,
-                    created_at: r.created_at, // 👈 store date
-                    tr_type: r.tr_type, // dr / cr
+                    date: r.transaction_detail?.date || r.created_at,
+                    account: r.ledger_name || '-',
+                    transaction_details: r.transaction_detail?.description || '-',
+                    transaction_type: r.transaction_type || '-',
+                    transaction_number: r.lock_account_transaction_id || '-',
+                    reference_number: r.transaction_detail?.reference_number || '-',
+                    tr_type: r.tr_type,
                     debit: r.tr_type === "dr" ? r.amount : 0,
                     credit: r.tr_type === "cr" ? r.amount : 0,
+                    amount: r.amount || 0,
                 }))
                 : [];
 
@@ -225,58 +230,48 @@ export const BalanceSheetDetails = () => {
                     <table className="w-full border-collapse text-sm">
                         <thead>
                             <tr className="bg-[#E5E0D3]">
-                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                                    Date
-                                </th>
-                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                                    Transaction Details
-                                </th>
-                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                                    Type
-                                </th>
-                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
-                                    Debit
-                                </th>
-                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
-                                    Credit
-                                </th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Date</th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Account</th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Transaction Details</th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Transaction Type</th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Transaction#</th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Reference#</th>
+                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Debit</th>
+                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Credit</th>
+                                <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Amount</th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {transactions.length ? (
                                 transactions.map((t, i) => (
                                     <tr key={i} className="hover:bg-gray-50">
-                                        <td className="border border-gray-300 px-4 py-3">
-                                            {formatDate(t.created_at)}
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-3 text-gray-500">
-                                            {t.ledger_name || "--"}
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-3">
-                                            {t.tr_type === "dr" ? "Debit" : "Credit"}
+                                        <td className="border border-gray-300 px-4 py-3 whitespace-nowrap">{formatDate(t.date)}</td>
+                                        <td className="border border-gray-300 px-4 py-3">{t.account}</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-gray-500">{t.transaction_details}</td>
+                                        <td className="border border-gray-300 px-4 py-3">{t.transaction_type}</td>
+                                        <td className="border border-gray-300 px-4 py-3">{t.transaction_number}</td>
+                                        <td className="border border-gray-300 px-4 py-3">{t.reference_number}</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">
+                                            {t.debit ? `₹${Number(t.debit).toFixed(2)}` : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
-                                            {t.debit ? `₹${t.debit.toFixed(2)}` : "-"}
+                                            {t.credit ? `₹${Number(t.credit).toFixed(2)}` : '-'}
                                         </td>
-                                        <td className="border border-gray-300 px-4 py-3 text-right">
-                                            {t.credit ? `₹${t.credit.toFixed(2)}` : "-"}
+                                        <td className="border border-gray-300 px-4 py-3 text-right font-medium">
+                                            ₹{Number(t.amount).toFixed(2)}
                                         </td>
-                                    </tr >
+                                    </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td
-                                        colSpan={5}
-                                        className="border border-gray-300 text-center py-6 text-gray-400"
-                                    >
+                                    <td colSpan={9} className="border border-gray-300 text-center py-6 text-gray-400">
                                         No transactions found
                                     </td>
                                 </tr>
                             )}
-                        </tbody >
-                    </table >
-                </div >
+                        </tbody>
+                    </table>
+                </div>
 
             </div >
         </div >

@@ -116,6 +116,11 @@ type RawDepartment = {
 };
 
 type RawExtraField = {
+  id?: number | string;
+  extra_field_id?: number | string;
+  name?: string;
+  field_name?: string;
+  field_value?: unknown;
   group_name?: string;
   values?: unknown;
   field_description?: string;
@@ -196,11 +201,6 @@ const getKpiUnitsApiHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
-const getKpiUnitsQueryUrls = (baseUrl: string) => [
-  `${baseUrl}/extra_fields?q[group_name_in][]=${KPI_UNITS_GROUP_NAME}&include_grouped=true`,
-  `${baseUrl}/extra_fields?group_name=${KPI_UNITS_GROUP_NAME}`,
-];
-
 const withNoCacheTs = (url: string): string => {
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}_ts=${Date.now()}`;
@@ -274,16 +274,59 @@ const fetchCompanyDepartments = async (): Promise<CompanyDepartment[]> => {
 };
 
 const extractUnitValues = (json: unknown): string[] => {
+  const unique = (arr: string[]): string[] => Array.from(new Set(arr));
+
+  const readText = (value: unknown): string[] =>
+    typeof value === "string" && value.trim().length > 0 ? [value.trim()] : [];
+
   const readValues = (values: unknown): string[] =>
     Array.isArray(values)
       ? values.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
       : [];
 
+  const readFieldValue = (fieldValue: unknown): string[] => {
+    if (Array.isArray(fieldValue)) {
+      return fieldValue.filter(
+        (v): v is string => typeof v === "string" && v.trim().length > 0
+      );
+    }
+
+    if (typeof fieldValue !== "string") return [];
+
+    const trimmed = fieldValue.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (v): v is string => typeof v === "string" && v.trim().length > 0
+        );
+      }
+    } catch {
+      // If field_value is plain text, use it as-is.
+    }
+
+    return [trimmed];
+  };
+
+  const unitsFromRecord = (record?: RawExtraField): string[] => {
+    if (!record) return [];
+
+    const fromValues = readValues(record.values);
+    if (fromValues.length > 0) return fromValues;
+
+    const fromFieldName = readText(record.field_name ?? record.name);
+    if (fromFieldName.length > 0) return fromFieldName;
+
+    return readFieldValue(record.field_value);
+  };
+
   if (Array.isArray(json)) {
-    const record = (json as RawExtraField[]).find(
+    const records = (json as RawExtraField[]).filter(
       (r) => r.group_name === KPI_UNITS_GROUP_NAME
     );
-    return readValues(record?.values);
+    return unique(records.flatMap((record) => unitsFromRecord(record)));
   }
 
   if (json && typeof json === "object") {
@@ -299,66 +342,21 @@ const extractUnitValues = (json: unknown): string[] => {
     }
 
     if (Array.isArray(grouped)) {
-      const record = grouped.find((r) => r.group_name === KPI_UNITS_GROUP_NAME);
-      return readValues(record?.values);
+      const records = grouped.filter((r) => r.group_name === KPI_UNITS_GROUP_NAME);
+      return unique(records.flatMap((record) => unitsFromRecord(record)));
     }
 
     const extraField = obj.extra_field as RawExtraField | undefined;
     if (extraField?.group_name === KPI_UNITS_GROUP_NAME) {
-      return readValues(extraField.values);
+      return unique(unitsFromRecord(extraField));
     }
 
     const directRecord = obj as RawExtraField;
     if (directRecord.group_name === KPI_UNITS_GROUP_NAME) {
-      return readValues(directRecord.values);
+      return unique(unitsFromRecord(directRecord));
     }
   }
 
-  return [];
-};
-
-const fetchKpiUnitsConfiguration = async (): Promise<string[]> => {
-  let lastError: unknown = null;
-
-  const baseCandidates = getApiBaseCandidates();
-
-  for (const baseUrl of baseCandidates) {
-    for (const url of getKpiUnitsQueryUrls(baseUrl)) {
-      try {
-        const requestUrl = withNoCacheTs(url);
-        console.warn("[KPI Units] GET extra_fields:", requestUrl);
-
-        const response = await fetch(requestUrl, {
-          method: "GET",
-          headers: getKpiUnitsApiHeaders(),
-          cache: "no-store",
-        });
-
-        const rawText = await response.text();
-        console.warn("[KPI Units] GET status:", response.status);
-        console.warn("[KPI Units] GET raw (first 600):", rawText.slice(0, 600));
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
-        }
-
-        let json: unknown = [];
-        try {
-          json = rawText ? JSON.parse(rawText) : [];
-        } catch {
-          json = [];
-        }
-
-        const extracted = extractUnitValues(json);
-        if (extracted.length > 0) return extracted;
-      } catch (error) {
-        console.error("[KPI Units] GET failed:", error);
-        lastError = error;
-      }
-    }
-  }
-
-  if (lastError) throw lastError;
   return [];
 };
 
@@ -419,8 +417,7 @@ const upsertKpiUnitsConfiguration = async (values: string[]): Promise<string[]> 
         return extracted;
       }
 
-      const refreshedValues = await fetchKpiUnitsConfiguration();
-      return refreshedValues.length > 0 ? refreshedValues : values;
+      return values;
     } catch (error) {
       console.error("[KPI Units] POST failed:", error);
       lastError = error;
@@ -428,6 +425,119 @@ const upsertKpiUnitsConfiguration = async (values: string[]): Promise<string[]> 
   }
 
   throw lastError ?? new Error("Failed to save KPI units configuration");
+};
+
+const createKpiUnitConfiguration = async (unit: string): Promise<number | null> => {
+  const payload = {
+    extra_field: {
+      field_name: unit,
+      field_value: unit,
+      group_name: KPI_UNITS_GROUP_NAME,
+      field_description: "KPI unit option",
+    },
+  };
+
+  console.warn("[KPI Units] POST create payload:", payload);
+
+  let lastError: unknown = null;
+
+  for (const baseUrl of getApiBaseCandidates()) {
+    try {
+      const requestUrl = `${baseUrl}/extra_fields`;
+      console.warn("[KPI Units] POST create:", requestUrl);
+
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: getKpiUnitsApiHeaders(),
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
+
+      console.warn("[KPI Units] POST create status:", response.status);
+
+      if (!response.ok) {
+        let message = `HTTP ${response.status}`;
+        try {
+          const errorData = (await response.json()) as {
+            message?: string;
+            error?: string;
+            errors?: string[];
+          };
+          const errorMessage =
+            errorData.message ??
+            errorData.error ??
+            (Array.isArray(errorData.errors) ? errorData.errors[0] : undefined);
+          if (errorMessage) {
+            message = `${message}: ${errorMessage}`;
+          }
+          console.error("[KPI Units] POST create error body:", errorData);
+        } catch {
+          // Ignore parse failures and fall back to status-only message.
+        }
+        throw new Error(message);
+      }
+
+      let data: unknown = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      const obj = (data ?? {}) as {
+        id?: number | string;
+        extra_field?: { id?: number | string; extra_field_id?: number | string };
+        data?: { id?: number | string; extra_field_id?: number | string };
+      };
+
+      const idValue =
+        obj.id ??
+        obj.extra_field?.id ??
+        obj.extra_field?.extra_field_id ??
+        obj.data?.id ??
+        obj.data?.extra_field_id;
+
+      const id = Number(idValue);
+      return Number.isFinite(id) ? id : null;
+    } catch (error) {
+      console.error("[KPI Units] POST create failed:", error);
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error("Failed to create KPI unit");
+};
+
+const deleteKpiUnitConfiguration = async (unitId: number): Promise<void> => {
+
+  let lastError: unknown = null;
+
+  for (const baseUrl of getApiBaseCandidates()) {
+    try {
+      const requestUrl = `${baseUrl}/extra_fields/${unitId}`;
+      console.warn("[KPI Units] DELETE unit:", requestUrl);
+
+      const response = await fetch(requestUrl, {
+        method: "DELETE",
+        headers: getKpiUnitsApiHeaders(),
+        cache: "no-store",
+      });
+
+      console.warn("[KPI Units] DELETE status:", response.status);
+
+      if (!response.ok) {
+        const rawText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${rawText.slice(0, 200)}`);
+      }
+
+      return;
+    } catch (error) {
+      console.error("[KPI Units] DELETE failed:", error);
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error("Failed to delete KPI unit");
 };
 
 // ─────────────────────────────────────────────
@@ -792,66 +902,6 @@ const deleteHistoryEntry = async (id: string | number) => {
   throw new Error(`History delete failed for ${id}: ${getApiErrorMessage(lastError)}`);
 };
 
-const deleteKpisBulk = async (ids: string[]): Promise<void> => {
-  if (ids.length === 0) return;
-
-  const headers = archivedApiHeaders();
-  const bases = Array.from(
-    new Set([...getApiBaseCandidates(), "https://fm-uat-api.lockated.com"])
-  );
-
-  let lastError: unknown = null;
-
-  for (const base of bases) {
-    const candidates = [
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_delete.json`,
-        body: { ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_delete.json`,
-        body: { kpi_ids: ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_destroy.json`,
-        body: { ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/delete_multiple.json`,
-        body: { ids },
-      },
-      {
-        method: "post" as const,
-        url: `${base}/kpis/bulk_delete.json`,
-        body: { _method: "delete", ids },
-      },
-      {
-        method: "delete" as const,
-        url: `${base}/kpis.json`,
-        body: { ids },
-      },
-    ];
-
-    for (const candidate of candidates) {
-      try {
-        if (candidate.method === "delete") {
-          await Axios.delete(candidate.url, { headers, data: candidate.body });
-        } else {
-          await Axios.post(candidate.url, candidate.body, { headers });
-        }
-        return;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-  }
-
-  throw new Error(`Bulk KPI delete failed: ${getApiErrorMessage(lastError)}`);
-};
 const tabs = [
   { name: "KPI Management" },
   { name: "Archived KPIs" },
@@ -873,6 +923,7 @@ const KPI = () => {
   const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([]);
   const [companyDepartments, setCompanyDepartments] = useState<CompanyDepartment[]>([]);
   const [kpiUnits, setKpiUnits] = useState<string[]>(DEFAULT_KPI_UNITS);
+  const [kpiUnitIdMap, setKpiUnitIdMap] = useState<Record<string, number>>({});
   const [editingKpi, setEditingKpi] = useState<KPICardData | null>(null);
   const [isSavingKpiUnits, setIsSavingKpiUnits] = useState(false);
   const [archivedKpis, setArchivedKpis] = useState<ArchivedKPIEntry[]>([]);
@@ -964,21 +1015,6 @@ const KPI = () => {
     loadDepartments();
   }, []);
 
-  useEffect(() => {
-    const loadKpiUnits = async () => {
-      try {
-        const fromApi = await fetchKpiUnitsConfiguration();
-        setKpiUnits(fromApi.length > 0 ? fromApi : DEFAULT_KPI_UNITS);
-      } catch (error) {
-        const msg = getApiErrorMessage(error);
-        console.error("Failed to load KPI units configuration:", msg, error);
-        setKpiUnits(DEFAULT_KPI_UNITS);
-      }
-    };
-
-    loadKpiUnits();
-  }, []);
-
   const handleSaveKpiUnits = async (units: string[]) => {
     const previousCount = kpiUnits.length;
     const nextCount = units.length;
@@ -998,6 +1034,71 @@ const KPI = () => {
       const msg = getApiErrorMessage(error);
       console.error("Update KPI units configuration error:", msg, error);
       toast.error("Failed to save");
+      throw error;
+    } finally {
+      setIsSavingKpiUnits(false);
+    }
+  };
+
+  const handleCreateKpiUnit = async (unit: string) => {
+    const next = unit.trim();
+    if (!next) return;
+
+    setIsSavingKpiUnits(true);
+    try {
+      const createdId = await createKpiUnitConfiguration(next);
+      setKpiUnits((prev) =>
+        prev.some((u) => u.toLowerCase() === next.toLowerCase())
+          ? prev
+          : [...prev, next]
+      );
+      if (createdId) {
+        setKpiUnitIdMap((prev) => ({
+          ...prev,
+          [next.toLowerCase()]: createdId,
+        }));
+      }
+      toast.success("Added");
+    } catch (error) {
+      const msg = getApiErrorMessage(error);
+      console.error("Create KPI unit error:", msg, error);
+      toast.error("Failed to add");
+      throw error;
+    } finally {
+      setIsSavingKpiUnits(false);
+    }
+  };
+
+  const handleDeleteKpiUnit = async (unit: string) => {
+    const target = unit.trim();
+    if (!target) return;
+
+    const targetKey = target.toLowerCase();
+    const unitId = kpiUnitIdMap[targetKey];
+    const nextUnits = kpiUnits.filter(
+      (u) => u.toLowerCase() !== target.toLowerCase()
+    );
+
+    setIsSavingKpiUnits(true);
+    try {
+      if (unitId) {
+        await deleteKpiUnitConfiguration(unitId);
+        setKpiUnits(nextUnits);
+      } else {
+        const savedUnits = await upsertKpiUnitsConfiguration(nextUnits);
+        setKpiUnits(savedUnits.length > 0 ? savedUnits : nextUnits);
+      }
+
+      setKpiUnitIdMap((prev) => {
+        const nextMap = { ...prev };
+        delete nextMap[targetKey];
+        return nextMap;
+      });
+      toast.success("Deleted");
+    } catch (error) {
+      const msg = getApiErrorMessage(error);
+      console.error("Delete KPI unit error:", msg, error);
+      toast.error("Failed to delete");
       throw error;
     } finally {
       setIsSavingKpiUnits(false);
@@ -1124,8 +1225,9 @@ const KPI = () => {
   const handleDeleteSelectedHistory = async (ids: string[]) => {
     if (ids.length === 0) return;
 
+    const selectedHistoryIds = new Set(ids.map(String));
     const selectedRows = historyKpis.filter((row) =>
-      ids.includes(String(row.id))
+      selectedHistoryIds.has(String(row.id))
     );
 
     const resolvedKpiIds = Array.from(
@@ -1139,6 +1241,23 @@ const KPI = () => {
     if (resolvedKpiIds.length === 0) {
       throw new Error("Unable to resolve KPI IDs for selected history rows");
     }
+
+    const resolvedKpiIdSet = new Set(resolvedKpiIds.map(String));
+    const resolvedKpiNames = new Set(selectedRows.map((row) => row.kpiName));
+
+    // Optimistically remove from all local views so deletion is reflected immediately.
+    setKpis((prev) => prev.filter((k) => !resolvedKpiIdSet.has(String(k.id))));
+    setArchivedKpis((prev) =>
+      prev.filter((kpi) => !resolvedKpiIdSet.has(String(kpi.id)))
+    );
+    setHistoryKpis((prev) =>
+      prev.filter((row) => {
+        if (selectedHistoryIds.has(String(row.id))) return false;
+        if (row.kpiId && resolvedKpiIdSet.has(String(row.kpiId))) return false;
+        if (!row.kpiId && resolvedKpiNames.has(row.kpiName)) return false;
+        return true;
+      })
+    );
 
     await Promise.all(resolvedKpiIds.map((kpiId) => deleteKpi(kpiId)));
 
@@ -1159,6 +1278,7 @@ const KPI = () => {
         onCreated={handleCreateKpi}
         isLoading={isCreating}
         users={companyUsers}
+        departments={companyDepartments}
         units={kpiUnits}
       />
       <EditKPIDialog
@@ -1315,7 +1435,8 @@ const KPI = () => {
             units={kpiUnits}
             isSaving={isSavingKpiUnits}
             onSave={handleSaveKpiUnits}
-            onAddUnit={handleSaveKpiUnits}
+            onAddUnit={handleCreateKpiUnit}
+            onDeleteUnit={handleDeleteKpiUnit}
           />
         )}
         {activeTab === "KPI Guide" && (

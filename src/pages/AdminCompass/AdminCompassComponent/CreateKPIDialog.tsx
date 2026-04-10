@@ -55,6 +55,11 @@ type AssigneeUser = {
   name: string;
 };
 
+type DepartmentOption = {
+  id: number;
+  name: string;
+};
+
 const inputClass =
   "h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25";
 
@@ -67,6 +72,7 @@ export interface CreateKPIDialogProps {
   onCreated?: (kpi: KPICardData) => Promise<void> | void;
   isLoading?: boolean;
   users?: AssigneeUser[];
+  departments?: DepartmentOption[];
   units?: string[];
 }
 
@@ -76,6 +82,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
   onCreated,
   isLoading = false,
   users = [],
+  departments = [],
   units = DEFAULT_KPI_UNITS,
 }) => {
   const [kpiName, setKpiName] = useState("");
@@ -87,6 +94,11 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
   const [priority, setPriority] = useState<string>("medium");
   const [weight, setWeight] = useState("10");
   const [assignees, setAssignees] = useState<Record<string, boolean>>({});
+
+  const departmentOptions =
+    departments.length > 0
+      ? departments.map((d) => ({ id: String(d.id), name: d.name }))
+      : DEPARTMENTS.map((name, idx) => ({ id: `static-${idx}`, name }));
 
   useEffect(() => {
     if (!open) {
@@ -115,8 +127,14 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
 
     try {
       const selectedUsers = users.filter((u) => assignees[String(u.id)]);
+      const selectedDepartment = departmentOptions.find((d) => d.id === department);
       const owner = selectedUsers[0]?.name ?? "Unassigned";
       const assigneeId = selectedUsers[0]?.id ?? null;
+      const departmentName = selectedDepartment?.name ?? "";
+      const departmentId =
+        departments.length > 0 && selectedDepartment
+          ? Number(selectedDepartment.id)
+          : undefined;
 
       const freqLabel =
         frequency === "Weekly" || frequency === "Monthly" || frequency === "Quarterly"
@@ -135,9 +153,10 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
         frequency: freqLabel as KPICardData["frequency"],
         badge: "Active",
         color: "bg-sky-100",
-        tags: [department, "Individual"],
+        tags: [departmentName, "Individual"],
         priority: priority as KPICardData["priority"],
         description: relatedUrl || undefined,
+        departmentId,
         assigneeId,
       };
 
@@ -235,9 +254,9 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DEPARTMENTS.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
+                    {departmentOptions.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
