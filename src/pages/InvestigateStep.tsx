@@ -358,24 +358,56 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
         setInvestigationDescription(e.target.value);
     }, [setInvestigationDescription]);
 
+    // const handleInvestigatorsChange = useCallback((data: any[]) => {
+    //     const newInvestigators = data.map((inv, idx) => {
+    //         if (inv.type === 'internal' && inv.internal) {
+    //             return {
+    //                 id: inv.internal.userId || Date.now().toString() + idx,
+    //                 name: inv.internal.name || 'Unknown',
+    //                 email: inv.internal.email,
+    //                 role: inv.internal.role,
+    //                 contactNo: inv.internal.contactNo,
+    //                 type: 'internal' as const,
+    //             };
+    //         } else if (inv.type === 'external' && inv.external) {
+    //             return {
+    //                 id: Date.now().toString() + idx,
+    //                 name: inv.external.name || 'Unknown',
+    //                 email: inv.external.email,
+    //                 role: inv.external.role,
+    //                 contactNo: inv.external.contactNo,
+    //                 type: 'external' as const,
+    //                 company: inv.external.company || '',
+    //             };
+    //         }
+    //         return null;
+    //     }).filter(Boolean) as Investigator[];
+
+    //     // Replace (not append) so that remove operations correctly reflect in the list
+    //     setInvestigators(newInvestigators);
+    // }, [setInvestigators]);
+
     const handleInvestigatorsChange = useCallback((data: any[]) => {
         const newInvestigators = data.map((inv, idx) => {
             if (inv.type === 'internal' && inv.internal) {
+                const selectedUser = internalUsers.find(
+                    u => u.id.toString() === (inv.internal.userId || inv.internal.id || '').toString()
+                );
                 return {
-                    id: inv.internal.userId || Date.now().toString() + idx,
-                    name: inv.internal.name || 'Unknown',
-                    email: inv.internal.email,
-                    role: inv.internal.role,
-                    contactNo: inv.internal.contactNo,
+                    id: selectedUser?.id?.toString() || inv.internal.userId?.toString() || inv.internal.id?.toString() || '',
+                    name: selectedUser?.full_name || inv.internal.name || 'Unknown',
+                    email: selectedUser?.email || inv.internal.email || '',
+                    role: inv.internal.role || '',
+                    contactNo: inv.internal.contactNo || '',
                     type: 'internal' as const,
                 };
             } else if (inv.type === 'external' && inv.external) {
                 return {
-                    id: Date.now().toString() + idx,
+                    id: '',
                     name: inv.external.name || 'Unknown',
-                    email: inv.external.email,
-                    role: inv.external.role,
-                    contactNo: inv.external.contactNo,
+                    email: inv.external.email || '',
+                    role: inv.external.role || '',
+                    contactNo: inv.external.contactNo || '',
                     type: 'external' as const,
                     company: inv.external.company || '',
                 };
@@ -383,9 +415,8 @@ const InvestigateStep: React.FC<InvestigateStepProps> = ({
             return null;
         }).filter(Boolean) as Investigator[];
 
-        // Replace (not append) so that remove operations correctly reflect in the list
         setInvestigators(newInvestigators);
-    }, [setInvestigators]);
+    }, [setInvestigators, internalUsers]);
 
     // New states for internal injury user dropdown
     const [internalInjuryUsers, setInternalInjuryUsers] = useState<any[]>([]);
