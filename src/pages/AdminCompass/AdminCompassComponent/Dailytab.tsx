@@ -4,7 +4,6 @@ import {
   Calendar,
   FileText,
   ChevronDown,
-  ChevronUp,
   AlertTriangle,
   RefreshCw,
   X,
@@ -24,21 +23,9 @@ import { cn } from "@/lib/utils";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
-import { toast } from "sonner"; // ← ADDED
+import { toast } from "sonner";
 
 // ── UI Components ──
-const BtnOutline = ({ children, onClick, className = "", icon: Icon }: any) => (
-  <button
-    onClick={onClick}
-    className={cn(
-      "inline-flex items-center justify-center gap-2 px-6 py-2 rounded-2xl text-sm font-semibold bg-white border border-[#CE7A5A] text-[#CE7A5A] shadow-sm hover:bg-[#FFF3EE] active:scale-97 transition-all",
-      className
-    )}
-  >
-    {Icon && <Icon className="w-4 h-4" />} {children}
-  </button>
-);
-
 const BtnIcon = ({
   onClick,
   children,
@@ -219,7 +206,6 @@ const formatDateTime = (isoStr: string | null) => {
   });
 };
 
-// ── Dedup helper ──
 const pushUnique = (arr: any[], item: any, keyFields: string[]) => {
   const exists = arr.some((x) => keyFields.every((k) => x[k] === item[k]));
   if (!exists) arr.push(item);
@@ -230,19 +216,15 @@ const DailyTab = () => {
   const [activeDate, setActiveDate] = useState(
     () => new Date().toISOString().split("T")[0]
   );
-
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(
     null
   );
-
   const [membersList, setMembersList] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState("all");
-
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
@@ -250,7 +232,6 @@ const DailyTab = () => {
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [taskTitle, setTaskTitle] = useState("");
   const [quickActionOpenId, setQuickActionOpenId] = useState<any>(null);
   const [quickActionText, setQuickActionText] = useState("");
   const [feedbackOpenId, setFeedbackOpenId] = useState<any>(null);
@@ -262,24 +243,24 @@ const DailyTab = () => {
     fetchDynamicMeetings()
       .then((list) => {
         setMeetingsList(list);
-        if (list && list.length > 0) {
-          setSelectedMeetingId(list[0].id);
-        } else {
-          setSelectedMeetingId(null);
-        }
+        setSelectedMeetingId(list?.length > 0 ? list[0].id : null);
       })
       .catch((err) => {
         console.error(err);
         setSelectedMeetingId(null);
       });
-
     fetchDynamicMembers().then(setMembersList).catch(console.error);
   }, []);
 
-  // ── Load Daily Data ──
-  const loadDailyData = async () => {
+  // ─────────────────────────────────────────────────────────────────────
+  // ✅ THE CORE FIX:
+  // `skipNotesRestore` = true  → only refresh data, DON'T touch meetingNotes
+  //                              (used after add-plan / feedback / save/update)
+  // `skipNotesRestore` = false → full load including restoring saved discussion
+  //                              (used on initial load / date change / meeting change)
+  // ─────────────────────────────────────────────────────────────────────
+  const loadDailyData = async (skipNotesRestore = false) => {
     if (selectedMeetingId === null) return;
-
     setIsLoading(true);
     setApiError(null);
     try {
@@ -287,36 +268,61 @@ const DailyTab = () => {
         meetingId: selectedMeetingId,
         dateStr: activeDate,
       });
+
       if (json.success) {
         setDailyData(json.data);
-        const reports = json.data?.member_reports || [];
+        const reports: any[] = json.data?.member_reports || [];
         const headId = json.data?.config?.meeting_head?.id;
-        const resolvedJournalId =
+
+        // Find the meeting-level journal (submitted by meeting head or any member
+        // whose report_data contains meeting_notes array)
+        const meetingJournalReport =
           reports.find(
             (r: any) =>
-              r.user_id === headId && r.status === "submitted" && r.journal_id
-          )?.journal_id ||
+              r.user_id === headId &&
+              r.status === "submitted" &&
+              r.journal_id &&
+              Array.isArray(r.report_data?.meeting_notes)
+          ) ||
           reports.find(
             (r: any) =>
               r.status === "submitted" &&
-              r.report_data?.meeting_notes &&
+              Array.isArray(r.report_data?.meeting_notes) &&
               r.journal_id
-          )?.journal_id ||
-          reports.find((r: any) => r.status === "submitted" && r.journal_id)
-            ?.journal_id ||
+          ) ||
+          reports.find((r: any) => r.status === "submitted" && r.journal_id) ||
           null;
-        setMeetingJournalId(resolvedJournalId);
-        const missed = json.data?.missed_members || [];
-        if (missed.length > 0) {
-          const noteText =
-            `**Team Members Who Missed Report (${missed.length}):**\n` +
-            missed.map((m: any) => `- ${m.name}`).join("\n") +
-            `\n\n**Key Discussion Points:**\n`;
-          setMeetingNotes(noteText);
-        } else {
-          setMeetingNotes("");
+
+        setMeetingJournalId(meetingJournalReport?.journal_id ?? null);
+
+        if (!skipNotesRestore) {
+          // ✅ Pull key_discussion_points directly from the API response —
+          //    no extra fetch needed! It lives in:
+          //    report_data.meeting_notes[0].key_discussion_points
+          const savedDiscussion: string =
+            meetingJournalReport?.report_data?.meeting_notes?.[0]
+              ?.key_discussion_points || "";
+
+          if (savedDiscussion) {
+            setMeetingNotes(savedDiscussion);
+          } else {
+            // Nothing saved yet — show pre-fill template with missed members
+            const missed: any[] = json.data?.missed_members || [];
+            if (missed.length > 0) {
+              setMeetingNotes(
+                `**Team Members Who Missed Report (${missed.length}):**\n` +
+                  missed.map((m: any) => `- ${m.name}`).join("\n") +
+                  `\n\n**Key Discussion Points:**\n`
+              );
+            } else {
+              setMeetingNotes("");
+            }
+          }
         }
-      } else throw new Error(json.message || "Failed to fetch");
+        // skipNotesRestore === true → meetingNotes state stays exactly as-is ✅
+      } else {
+        throw new Error(json.message || "Failed to fetch");
+      }
     } catch (err: any) {
       setApiError(err.message);
       setDailyData(null);
@@ -325,8 +331,9 @@ const DailyTab = () => {
     }
   };
 
+  // Full restore on date / meeting change
   useEffect(() => {
-    loadDailyData();
+    loadDailyData(false);
   }, [selectedMeetingId, activeDate]);
 
   // ── PUT /user_journals/:id ──
@@ -336,7 +343,7 @@ const DailyTab = () => {
   ) => {
     const journalId = report.journal_id || report.daily_report?.id;
     if (!journalId) {
-      toast.error("Journal ID not found for this report."); // ← CHANGED
+      toast.error("Journal ID not found for this report.");
       return false;
     }
 
@@ -401,7 +408,7 @@ const DailyTab = () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return true;
     } catch (err: any) {
-      toast.error("Error updating journal: " + err.message); // ← CHANGED
+      toast.error("Error updating journal: " + err.message);
       return false;
     }
   };
@@ -417,7 +424,7 @@ const DailyTab = () => {
       p.includes(id) ? p.filter((r) => r !== id) : [...p, id]
     );
 
-  // ── Shared helper to build combined arrays (deduped) ──
+  // ── Combined data builder ──
   const buildCombinedData = (allReports: any[]) => {
     const allAccomplishments: any[] = [];
     const allTasksIssues: any[] = [];
@@ -506,20 +513,18 @@ const DailyTab = () => {
         if (report.score) combinedKpis.score += parseInt(report.score) || 0;
       });
 
-    const avgSelfRating =
-      ratingCount > 0 ? Math.round(combinedSelfRating / ratingCount) : 0;
-
     return {
       allAccomplishments,
       allTasksIssues,
       allTomorrowPlan,
       combinedBigWin,
-      avgSelfRating,
+      avgSelfRating:
+        ratingCount > 0 ? Math.round(combinedSelfRating / ratingCount) : 0,
       combinedKpis,
     };
   };
 
-  // ── Shared helper to build meetingNotesArray ──
+  // ── Meeting notes array builder ──
   const buildMeetingNotesArray = (
     allReports: any[],
     allMissed: any[],
@@ -528,13 +533,11 @@ const DailyTab = () => {
     const pureMissedNames = allReports
       .filter((r: any) => r.status === "pending" && !r.daily_report)
       .map((r: any) => r.name);
-
     allMissed.forEach((m: any) => {
       if (!pureMissedNames.includes(m.name)) pureMissedNames.push(m.name);
     });
 
     const meetingNotesArray: any[] = [];
-
     const note1: any = {};
     if (pureMissedNames.length > 0) {
       note1[`Team Members Who Missed Report (${pureMissedNames.length})`] =
@@ -602,17 +605,16 @@ const DailyTab = () => {
     return meetingNotesArray;
   };
 
-  // ── Save Meeting ──
+  // ── Save Meeting (POST) ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
-      toast.error("Please select a specific meeting."); // ← CHANGED
+      toast.error("Please select a specific meeting.");
       return;
     }
     setIsSavingMeeting(true);
     try {
       const allReports = dailyData?.member_reports || [];
       const allMissed = dailyData?.missed_members || [];
-
       const {
         allAccomplishments,
         allTasksIssues,
@@ -621,7 +623,6 @@ const DailyTab = () => {
         avgSelfRating,
         combinedKpis,
       } = buildCombinedData(allReports);
-
       const meetingNotesArray = buildMeetingNotesArray(
         allReports,
         allMissed,
@@ -658,7 +659,6 @@ const DailyTab = () => {
       };
 
       console.log("📦 Meeting Payload:", JSON.stringify(payload, null, 2));
-
       const res = await fetch(
         `${getBaseUrl()}/user_journals/submit_daily_meeting`,
         {
@@ -668,29 +668,27 @@ const DailyTab = () => {
         }
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
-      toast.success("Meeting saved successfully!"); // ← CHANGED
-      setMeetingNotes("");
-      loadDailyData();
+      toast.success("Meeting saved successfully!");
+      loadDailyData(true); // ✅ notes preserved
     } catch (err: any) {
-      toast.error("Error saving meeting: " + err.message); // ← CHANGED
+      toast.error("Error saving meeting: " + err.message);
     } finally {
       setIsSavingMeeting(false);
     }
   };
 
-  // ── PATCH — Update existing meeting journal ──
+  // ── Update Meeting (PATCH) ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.", {
         description: "Please save the meeting first.",
-      }); // ← CHANGED
+      });
       return;
     }
     setIsSavingMeeting(true);
     try {
       const allReports = dailyData?.member_reports || [];
       const allMissed = dailyData?.missed_members || [];
-
       const {
         allAccomplishments,
         allTasksIssues,
@@ -699,7 +697,6 @@ const DailyTab = () => {
         avgSelfRating,
         combinedKpis,
       } = buildCombinedData(allReports);
-
       const meetingNotesArray = buildMeetingNotesArray(
         allReports,
         allMissed,
@@ -735,7 +732,6 @@ const DailyTab = () => {
       };
 
       console.log("📦 Update Payload:", JSON.stringify(payload, null, 2));
-
       const res = await fetch(
         `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
         {
@@ -745,10 +741,10 @@ const DailyTab = () => {
         }
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
-      toast.success("Meeting updated successfully!"); // ← CHANGED
-      loadDailyData();
+      toast.success("Meeting updated successfully!");
+      loadDailyData(true); // ✅ notes preserved
     } catch (err: any) {
-      toast.error("Error updating meeting: " + err.message); // ← CHANGED
+      toast.error("Error updating meeting: " + err.message);
     } finally {
       setIsSavingMeeting(false);
     }
@@ -763,7 +759,6 @@ const DailyTab = () => {
 
   let memberReports = dailyData?.member_reports || [];
   let failedMembers = dailyData?.missed_members || [];
-
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
       (r: any) => String(r.user_id) === selectedMember
@@ -773,7 +768,6 @@ const DailyTab = () => {
     );
   }
 
-  // ── Select All with toast ── ← CHANGED
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       const allIds = memberReports.map((r: any) => r.journal_id || r.user_id);
@@ -792,9 +786,7 @@ const DailyTab = () => {
       className="space-y-5 pb-12"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      {/* ══════════════════════════════════════
-         CALENDAR CARD
-      ══════════════════════════════════════ */}
+      {/* ══ CALENDAR CARD ══ */}
       <div className="bg-[#FFF9F6] border border-[#F1E8E3] rounded-[32px] p-6 sm:p-8 shadow-sm overflow-visible">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3.5">
@@ -977,9 +969,7 @@ const DailyTab = () => {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-         FILTERS
-      ══════════════════════════════════════ */}
+      {/* ══ FILTERS ══ */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
@@ -989,12 +979,12 @@ const DailyTab = () => {
             value={selectedMeetingId || ""}
             onChange={setSelectedMeetingId}
             placeholder="Loading Meetings..."
-            options={[
-              ...meetingsList.map((m: any) => ({ value: m.id, label: m.name })),
-            ]}
+            options={meetingsList.map((m: any) => ({
+              value: m.id,
+              label: m.name,
+            }))}
           />
         </div>
-
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
             Member
@@ -1009,9 +999,8 @@ const DailyTab = () => {
             ]}
           />
         </div>
-
         <button
-          onClick={loadDailyData}
+          onClick={() => loadDailyData(false)}
           className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-neutral-600 shadow-sm hover:border-[#CE7A5A]/60 hover:text-[#CE7A5A] transition-all"
         >
           <RefreshCw
@@ -1034,27 +1023,27 @@ const DailyTab = () => {
         <div className="border border-[#F0EBE8] rounded-2xl shadow-sm overflow-hidden bg-white mt-4">
           <div className="p-4 border-b border-[#F0EBE8] flex justify-between items-center bg-[#FAFAFA] flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8]"></div>
+              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8]" />
               <div className="space-y-2">
-                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full"></div>
-                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full"></div>
+                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full" />
+                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full" />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl"></div>
-              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl"></div>
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl"></div>
+              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl" />
+              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl" />
+              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl" />
             </div>
           </div>
           <div className="p-4 space-y-6">
             <div className="border border-[#F0EBE8] rounded-2xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between p-3 border-b border-[#F0EBE8] bg-[#FAFAFA]">
-                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full"></div>
-                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8]"></div>
+                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full" />
+                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8]" />
               </div>
-              <div className="p-4 h-24 bg-white"></div>
+              <div className="p-4 h-24 bg-white" />
               <div className="p-3 border-t border-[#F0EBE8] bg-[#FAFAFA] flex justify-end">
-                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8]"></div>
+                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8]" />
               </div>
             </div>
             <div className="space-y-4">
@@ -1064,15 +1053,15 @@ const DailyTab = () => {
                   className="border border-[#F0EBE8] rounded-2xl p-4 bg-white shadow-sm flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded bg-[#F0EBE8]"></div>
-                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full"></div>
-                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto"></div>
+                    <div className="w-4 h-4 rounded bg-[#F0EBE8]" />
+                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full" />
+                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto" />
                   </div>
-                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7"></div>
+                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7" />
                   <div className="flex gap-2 ml-7">
-                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg"></div>
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg"></div>
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg"></div>
+                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg" />
+                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg" />
+                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg" />
                   </div>
                 </div>
               ))}
@@ -1081,13 +1070,10 @@ const DailyTab = () => {
         </div>
       )}
 
-      {/* ══════════════════════════════════════
-         REPORTS SECTION
-      ══════════════════════════════════════ */}
+      {/* ══ REPORTS SECTION ══ */}
       {!isLoading && dailyData && (
         <>
           <div className="border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm overflow-hidden bg-[#FFFDFB]">
-            {/* Section Header */}
             <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fef6f4]">
               <div>
                 <h3 className="font-bold text-sm text-neutral-900 flex items-center gap-2">
@@ -1119,13 +1105,16 @@ const DailyTab = () => {
 
             {memberReports.length > 0 && (
               <div className="p-4 bg-[#FFFDFB]">
-                {/* Meeting Notes */}
+                {/* Meeting Notes Box */}
                 <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm mb-6">
                   <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#FFFAF8]">
                     <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
                       <Users className="w-4 h-4 text-[#CE7A5A]" /> Meeting Notes
                     </div>
-                    <BtnIcon onClick={loadDailyData} title="Refresh">
+                    <BtnIcon
+                      onClick={() => loadDailyData(false)}
+                      title="Refresh"
+                    >
                       <RefreshCw className="w-3.5 h-3.5" />
                     </BtnIcon>
                   </div>
@@ -1173,7 +1162,7 @@ const DailyTab = () => {
                   </div>
                 </div>
 
-                {/* ── Report Cards ── */}
+                {/* Report Cards */}
                 <div className="space-y-4">
                   {memberReports
                     .filter(
@@ -1184,11 +1173,10 @@ const DailyTab = () => {
                       const rId = report.journal_id || report.user_id;
                       const isExpanded = expandedReports.includes(rId);
                       const isPending = report.status === "pending";
-
                       const hasDraft = !!report.daily_report;
                       const draftRaw = report.daily_report?.report_data || {};
-
                       const rd = report.report_data || {};
+
                       const displayRd =
                         isPending && hasDraft
                           ? {
@@ -1233,7 +1221,6 @@ const DailyTab = () => {
                               : "border-[#EAE3DF]"
                           )}
                         >
-                          {/* Card Header */}
                           <div
                             className={cn(
                               "p-4 transition-colors",
@@ -1243,7 +1230,6 @@ const DailyTab = () => {
                             )}
                             onClick={() => canExpand && toggleExpand(rId)}
                           >
-                            {/* Row 1: checkbox + name + badges */}
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <input
                                 type="checkbox"
@@ -1262,7 +1248,6 @@ const DailyTab = () => {
                               <h3 className="font-bold text-[#1A1A1A] text-[15px]">
                                 {report.name}
                               </h3>
-
                               {(report.name?.includes("HOD") ||
                                 report.name?.includes("TL")) && (
                                 <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -1275,7 +1260,6 @@ const DailyTab = () => {
                                   {report.department}
                                 </span>
                               )}
-
                               {isPending && !hasDraft ? (
                                 <span className="ml-auto text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">
                                   PENDING
@@ -1287,7 +1271,6 @@ const DailyTab = () => {
                               )}
                             </div>
 
-                            {/* Row 2: email + time */}
                             <div className="text-[12px] text-gray-400 mb-3 ml-6">
                               {report.email}
                               {report.submitted_at && (
@@ -1307,7 +1290,6 @@ const DailyTab = () => {
                                 )}
                             </div>
 
-                            {/* Row 3: KPI Pills */}
                             {(!isPending || hasDraft) && (
                               <div className="flex flex-wrap items-center gap-2 mb-3 ml-6">
                                 {report.score !== null &&
@@ -1343,7 +1325,6 @@ const DailyTab = () => {
                               </div>
                             )}
 
-                            {/* Row 4: date_row history mini cards */}
                             {(!isPending || hasDraft) && dateRow.length > 0 && (
                               <div className="flex items-center gap-1.5 ml-6 flex-wrap">
                                 {dateRow.map((d: any, i: number) => {
@@ -1386,11 +1367,9 @@ const DailyTab = () => {
                             )}
                           </div>
 
-                          {/* ── Expanded Details ── */}
                           {isExpanded && canExpand && (
                             <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                               <div className="p-5 space-y-5">
-                                {/* Self Rating + Score + Absent row */}
                                 <div className="flex flex-wrap gap-3">
                                   {displayRd.self_rating && (
                                     <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
@@ -1432,7 +1411,6 @@ const DailyTab = () => {
                                   )}
                                 </div>
 
-                                {/* Big Win */}
                                 {displayRd.big_win && (
                                   <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
                                     <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -1447,9 +1425,7 @@ const DailyTab = () => {
                                   </div>
                                 )}
 
-                                {/* 3-Col Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  {/* Accomplishments */}
                                   <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                       <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
@@ -1483,7 +1459,6 @@ const DailyTab = () => {
                                     )}
                                   </div>
 
-                                  {/* Tasks & Issues */}
                                   <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                       <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
@@ -1528,7 +1503,6 @@ const DailyTab = () => {
                                     )}
                                   </div>
 
-                                  {/* Tomorrow's Plan */}
                                   <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                       <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
@@ -1563,7 +1537,6 @@ const DailyTab = () => {
                                   </div>
                                 </div>
 
-                                {/* Action Buttons */}
                                 <div className="flex flex-wrap gap-2 pt-1">
                                   <button
                                     onClick={() => setIsTaskModalOpen(true)}
@@ -1603,7 +1576,6 @@ const DailyTab = () => {
                                   </button>
                                 </div>
 
-                                {/* Quick Actions — Add to Tomorrow's Plan */}
                                 {quickActionOpenId === rId && (
                                   <div className="border-t border-[#EAE3DF] pt-4 mt-1">
                                     <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-3">
@@ -1632,10 +1604,12 @@ const DailyTab = () => {
                                               }
                                             );
                                             if (ok) {
-                                              toast.success("Added to tomorrow's plan!"); // ← ADDED
+                                              toast.success(
+                                                "Added to tomorrow's plan!"
+                                              );
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
-                                              loadDailyData();
+                                              loadDailyData(true); // ✅ notes untouched
                                             }
                                           }
                                           if (e.key === "Escape") {
@@ -1655,10 +1629,12 @@ const DailyTab = () => {
                                               }
                                             );
                                             if (ok) {
-                                              toast.success("Added to tomorrow's plan!"); // ← ADDED
+                                              toast.success(
+                                                "Added to tomorrow's plan!"
+                                              );
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
-                                              loadDailyData();
+                                              loadDailyData(true); // ✅ notes untouched
                                             }
                                           }
                                         }}
@@ -1679,13 +1655,11 @@ const DailyTab = () => {
                                   </div>
                                 )}
 
-                                {/* Quick Actions — Feedback */}
                                 {feedbackOpenId === rId && (
                                   <div className="border-t border-[#EAE3DF] pt-4 mt-1">
                                     <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
                                       Quick Actions
                                     </p>
-
                                     <p className="text-sm font-bold text-neutral-800 mb-2">
                                       Rating (1-5 stars)
                                     </p>
@@ -1722,7 +1696,6 @@ const DailyTab = () => {
                                         </button>
                                       ))}
                                     </div>
-
                                     <p className="text-sm font-bold text-neutral-800 mb-2">
                                       Feedback Message
                                     </p>
@@ -1736,7 +1709,6 @@ const DailyTab = () => {
                                       rows={4}
                                       className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
                                     />
-
                                     <div className="flex items-center gap-3 mt-4">
                                       <button
                                         onClick={async () => {
@@ -1745,11 +1717,11 @@ const DailyTab = () => {
                                             { self_rating: feedbackRating }
                                           );
                                           if (ok) {
-                                            toast.success("Feedback added!"); // ← ADDED
+                                            toast.success("Feedback added!");
                                             setFeedbackOpenId(null);
                                             setFeedbackRating(0);
                                             setFeedbackMessage("");
-                                            loadDailyData();
+                                            loadDailyData(true); // ✅ notes untouched
                                           }
                                         }}
                                         className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
@@ -1780,7 +1752,6 @@ const DailyTab = () => {
             )}
           </div>
 
-          {/* Missed Members */}
           {failedMembers.length > 0 && (
             <div className="bg-[#fff1f2] border border-red-200 rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-2 text-red-600 font-bold text-sm mb-4">
@@ -1805,7 +1776,6 @@ const DailyTab = () => {
         </>
       )}
 
-      {/* Add Task Right-Side Drawer */}
       {isTaskModalOpen &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex">
@@ -1838,7 +1808,7 @@ const DailyTab = () => {
                   opportunityId={null}
                   onSuccess={() => {
                     setIsTaskModalOpen(false);
-                    loadDailyData();
+                    loadDailyData(true);
                   }}
                   isConversion={false}
                 />
@@ -1855,24 +1825,10 @@ const DailyTab = () => {
       />
 
       <style>{`
-        select option {
-          font-family: 'Poppins', sans-serif;
-          padding: 8px 12px;
-          font-size: 13px;
-          color: #374151;
-          background: #ffffff;
-        }
-        select option:checked,
-        select option:hover {
-          background: #FFF3EE;
-          color: #CE7A5A;
-        }
-        select:focus {
-          outline: none;
-        }
-        .calendar-row::-webkit-scrollbar {
-          display: none;
-        }
+        select option { font-family: 'Poppins', sans-serif; padding: 8px 12px; font-size: 13px; color: #374151; background: #ffffff; }
+        select option:checked, select option:hover { background: #FFF3EE; color: #CE7A5A; }
+        select:focus { outline: none; }
+        .calendar-row::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
