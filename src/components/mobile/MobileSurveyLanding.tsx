@@ -1832,7 +1832,7 @@ export const MobileSurveyLanding: React.FC = () => {
       )}
 
       {/* Header with Logo */}
-      <div className="bg-transparent py-3 px-4 relative z-10">
+      <div className="bg-transparent pt-6 pb-3 px-4 relative z-10">
         <div className="flex justify-between items-center">
           <div className="flex justify-start items-center">
             {!isFormView &&
@@ -1855,10 +1855,10 @@ export const MobileSurveyLanding: React.FC = () => {
                       moveToPreviousQuestion();
                     }
                   }}
-                  className="flex items-center bg-black/40 backdrop-blur-md px-4 py-2.5 rounded-lg text-white font-bold text-sm hover:bg-black/50 transition-all shadow-lg border-2 border-white/40"
+                  className="flex items-center bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-lg text-white font-bold text-[10px] hover:bg-black/50 transition-all shadow-lg border-[1.5px] border-white/40"
                 >
                   <svg
-                    className="w-5 h-5 mr-1.5"
+                    className="w-4 h-4 mr-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

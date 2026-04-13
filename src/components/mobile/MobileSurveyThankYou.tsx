@@ -24,10 +24,10 @@ interface SurveyData {
     id: number;
     name: string;
     questions_count: number;
-    survey_attachment?: Array<{
-      id: string;
+    survey_attachment?: {
+      id: number;
       url: string;
-    }>;
+    };
   };
 }
 
@@ -116,20 +116,21 @@ export const MobileSurveyThankYou: React.FC = () => {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-6"
-      style={{
-        backgroundImage: `url(${
-          surveyData?.snag_checklist?.survey_attachment?.[0]?.url ||
-          "/9019830 1.png"
-        })`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        filter: "brightness(0.85)",
-      }}
-    >
-      <div className="absolute top-8 right-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 relative bg-gray-50 overflow-hidden">
+      {/* Background Image Layer with Filter */}
+      {surveyData?.snag_checklist?.survey_attachment?.url && (
+        <div
+          className="absolute inset-0 w-full h-full z-0"
+          style={{
+            backgroundImage: `url('${surveyData?.snag_checklist?.survey_attachment?.url}')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            filter: "brightness(0.85)",
+          }}
+        />
+      )}
+      <div className="absolute top-8 right-6 z-10">
         <div className="w-32 h-32 sm:w-48 sm:h-32 flex items-center justify-center overflow-hidden   p-2">
           {window.location.origin === "https://oig.gophygital.work" ? (
             <img
@@ -160,7 +161,7 @@ export const MobileSurveyThankYou: React.FC = () => {
       </div>
 
       {/* Thank You Card */}
-      <div className="bg-white backdrop-blur-sm rounded-[0.20rem] p-8 text-center max-w-sm w-full shadow-xl ">
+      <div className="bg-white backdrop-blur-sm rounded-[0.20rem] p-8 text-center max-w-sm w-full shadow-xl relative z-10">
         {/* Stylized Thank You Text */}
         <div className="p-3">
           <h1
@@ -179,7 +180,7 @@ export const MobileSurveyThankYou: React.FC = () => {
         {/* Subtitle */}
         <p className="text-xs p-2 text-gray-700 font-medium">
           {state?.rating && state.rating < 4
-            ? "We regret the inconvenience and assure you that washroom services will be improved."
+            ? "Thank you for taking the time to share your feedback."
             : "Helping us to improve!"}
         </p>
       </div>
