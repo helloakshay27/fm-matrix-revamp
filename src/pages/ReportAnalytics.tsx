@@ -1391,7 +1391,31 @@ const ReportAnalytics: React.FC = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="p-4 sm:p-6 space-y-6 min-h-screen">
+    <div className="report-analytics-page p-4 sm:p-6 space-y-6 min-h-screen">
+      {/*
+        CSS force-override for EnhancedTable internals:
+        - .table-container removes horizontal scroll
+        - .enhancedTable uses fixed layout, full width, no min-w-max
+        - th / td get min-width reset so text wraps instead of scrolling
+      */}
+      <style>{`
+        .report-analytics-page .table-container {
+          overflow-x: hidden !important;
+        }
+        .report-analytics-page .enhancedTable {
+          min-width: unset !important;
+          width: 100% !important;
+          table-layout: fixed !important;
+        }
+        .report-analytics-page .enhancedTable th,
+        .report-analytics-page .enhancedTable td {
+          min-width: unset !important;
+          white-space: normal !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+        }
+      `}</style>
+
       {/* Title */}
       <div>
         <div className="text-sm text-gray-600 mb-2">Reports &gt; Analytics</div>
