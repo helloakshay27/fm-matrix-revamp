@@ -747,10 +747,10 @@ export const AddFacilityBookingClubPage = () => {
       })();
 
       // Validate complementary: only allowed if grand total is exactly 0
-      if (paymentMethod === 'complementary' && costSummary.amountFull > 0) {
-        toast.error('Complementary is only allowed for ₹0 bookings');
-        return;
-      }
+      // if (paymentMethod === 'complementary' && costSummary.amountFull > 0) {
+      //   toast.error('Complementary is only allowed for ₹0 bookings');
+      //   return;
+      // }
 
       const payload = {
         facility_booking: {
