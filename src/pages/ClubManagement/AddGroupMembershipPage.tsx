@@ -603,6 +603,8 @@ export const AddGroupMembershipPage = () => {
                         corporateInterest: '',
                     };
 
+                    console.log(newMember)
+
                     // Parse snag_answers (new format)
                     if (memberData.snag_answers && Array.isArray(memberData.snag_answers)) {
                         console.log(`Member ${index + 1} has snag_answers:`, memberData.snag_answers.length);
@@ -1036,8 +1038,21 @@ export const AddGroupMembershipPage = () => {
                 }
             }
 
-            if (cardAllocated && !member.formData.accessCardId) {
-                toast.error(`${memberLabel}: Please enter access card ID`);
+            if (cardAllocated && !member.formData.accessCardId?.trim()) {
+                toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
+                return;
+            }
+        }
+
+        // Validate for duplicate Access Card IDs if cardAllocated is true
+        if (cardAllocated) {
+            const accessCardIds = members
+                .map(m => m.formData.accessCardId?.trim().toLowerCase())
+                .filter(id => id); // Filter out empty values
+
+            const uniqueIds = new Set(accessCardIds);
+            if (uniqueIds.size !== accessCardIds.length) {
+                toast.error('All Access Card IDs must be unique. Please ensure no duplicate card IDs are assigned');
                 return;
             }
         }
@@ -1918,6 +1933,18 @@ export const AddGroupMembershipPage = () => {
                                                                 )}
                                                             </Select>
                                                         </FormControl>
+
+                                                        {cardAllocated && (
+                                                            <TextField
+                                                                label="Access Card ID"
+                                                                value={member.formData.accessCardId || ''}
+                                                                onChange={(e) => updateMember(member.id, { formData: { ...member.formData, accessCardId: e.target.value } })}
+                                                                sx={fieldStyles}
+                                                                fullWidth
+                                                                placeholder="Enter Access Card ID"
+                                                                helperText="Assign a unique access card ID for this user"
+                                                            />
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -2667,7 +2694,23 @@ export const AddGroupMembershipPage = () => {
                                             control={
                                                 <Checkbox
                                                     checked={cardAllocated}
-                                                    onChange={(e) => setCardAllocated(e.target.checked)}
+                                                    onChange={(e) => {
+                                                        const isChecked = e.target.checked;
+                                                        setCardAllocated(isChecked);
+
+                                                        // Clear all access card IDs if unchecking
+                                                        if (!isChecked) {
+                                                            setMembers(prevMembers =>
+                                                                prevMembers.map(member => ({
+                                                                    ...member,
+                                                                    formData: {
+                                                                        ...member.formData,
+                                                                        accessCardId: ''
+                                                                    }
+                                                                }))
+                                                            );
+                                                        }
+                                                    }}
                                                     sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
                                                 />
                                             }
@@ -2675,26 +2718,12 @@ export const AddGroupMembershipPage = () => {
                                         />
                                     </div>
 
-                                    {/* Access Card ID (shown only if Access Card Allocated is checked) */}
                                     {cardAllocated && (
-                                        <div className="mt-4">
-                                            <TextField
-                                                label="Enter Access Card ID"
-                                                value={members[0]?.formData.accessCardId || ''}
-                                                onChange={(e) => {
-                                                    const firstMember = members[0];
-                                                    if (firstMember) {
-                                                        updateMember(firstMember.id, {
-                                                            formData: {
-                                                                ...firstMember.formData,
-                                                                accessCardId: e.target.value
-                                                            }
-                                                        });
-                                                    }
-                                                }}
-                                                sx={fieldStyles}
-                                                fullWidth
-                                            />
+                                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-start gap-2">
+                                            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                            <p className="text-sm text-blue-800">
+                                                Access Card ID is now required for each user. Each user will have their own unique access card ID in the User Information section below.
+                                            </p>
                                         </div>
                                     )}
                                 </div>
