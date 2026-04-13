@@ -13,73 +13,356 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getToken as getAuthToken } from "@/utils/auth";
+import { getBaseUrl, getToken as getAuthToken } from "@/utils/auth";
 
 const KPI_EXPORT_HISTORY_ENDPOINT =
   "https://fm-uat-api.lockated.com/kpis/export_history.json";
+const KPI_HISTORY_API_PATH = "/kpis/history.json";
+const KPI_EXPORT_HISTORY_FALLBACK_BASE = "https://fm-uat-api.lockated.com";
 const KPI_BEARER_TOKEN =
   "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
 
-const getEffectiveToken = (): string => {
-  const adminCompassToken = localStorage.getItem("auth_token");
-  const appToken = getAuthToken();
-  return adminCompassToken || appToken || KPI_BEARER_TOKEN;
+type ExportHistoryFilters = {
+  search?: string;
+  kpiName?: string;
+  department?: string;
+  user?: string;
+  frequency?: string;
+  status?: string;
+  fromDate?: Date;
+  toDate?: Date;
 };
 
-const downloadExportHistory = async (): Promise<void> => {
-  const token = getEffectiveToken();
+type NormalizedExportHistoryFilters = {
+  search?: string;
+  kpiName?: string;
+  department?: string;
+  user?: string;
+  frequency?: string;
+  status?: string;
+  fromDate?: string;
+  toDate?: string;
+};
 
-  const response = await fetch(KPI_EXPORT_HISTORY_ENDPOINT, {
-    headers: {
-      Accept: "*/*",
-      Authorization: `Bearer ${token}`,
-    },
-  });
+const normalizeFilterValue = (value?: string): string | undefined => {
+  const v = value?.trim();
+  if (!v || v.toLowerCase() === "all") return undefined;
+  return v;
+};
 
-  if (!response.ok) {
-    throw new Error(`Export failed: HTTP ${response.status}`);
+const normalizeExportFilters = (
+  filters: ExportHistoryFilters
+): NormalizedExportHistoryFilters => ({
+  search: normalizeFilterValue(filters.search),
+  kpiName: normalizeFilterValue(filters.kpiName),
+  department: normalizeFilterValue(filters.department),
+  user: normalizeFilterValue(filters.user),
+  frequency: normalizeFilterValue(filters.frequency),
+  status: normalizeFilterValue(filters.status),
+  fromDate: filters.fromDate ? format(filters.fromDate, "yyyy-MM-dd") : undefined,
+  toDate: filters.toDate ? format(filters.toDate, "yyyy-MM-dd") : undefined,
+});
+
+const buildExportEndpoints = (): string[] => {
+  const base = KPI_EXPORT_HISTORY_ENDPOINT.replace(/\/kpis\/export_history\.json$/, "");
+  return Array.from(
+    new Set([
+      KPI_EXPORT_HISTORY_ENDPOINT,
+      `${base}/kpis/export_history`,
+      `${base}/kpis/export_history.xlsx`,
+      `${base}/kpis/history_export.json`,
+      `${base}/kpis/history_export`,
+      `${base}/kpis/history_export.xlsx`,
+    ])
+  );
+};
+
+const buildHistoryApiEndpoint = (): string => {
+  const rawBase = getBaseUrl()?.trim();
+  const base = rawBase
+    ? rawBase.startsWith("http://") || rawBase.startsWith("https://")
+      ? rawBase
+      : `https://${rawBase}`
+    : KPI_EXPORT_HISTORY_FALLBACK_BASE;
+  return `${base.replace(/\/+$/, "")}${KPI_HISTORY_API_PATH}`;
+};
+
+const buildHistoryApiEndpoints = (): string[] => {
+  const jsonEndpoint = buildHistoryApiEndpoint();
+  const plainEndpoint = jsonEndpoint.replace(/\.json$/, "");
+
+  // Prefer history_export API naming first, then fall back to history endpoints.
+  const historyExportJson = jsonEndpoint.replace("/kpis/history.json", "/kpis/history_export.json");
+  const historyExportPlain = plainEndpoint.replace("/kpis/history", "/kpis/history_export");
+
+  return Array.from(
+    new Set([historyExportJson, historyExportPlain, jsonEndpoint, plainEndpoint])
+  );
+};
+
+const buildExportQueryParams = (
+  filters: NormalizedExportHistoryFilters
+): URLSearchParams => {
+  const params = new URLSearchParams();
+
+  const search = filters.search;
+  const kpiName = filters.kpiName;
+  const department = filters.department;
+  const user = filters.user;
+  const frequency = filters.frequency;
+  const status = filters.status;
+
+  if (search) params.set("search", search);
+  if (kpiName) params.set("kpi_name", kpiName);
+  if (department) params.set("department", department);
+  if (user) params.set("user", user);
+  if (frequency) params.set("frequency", frequency);
+  if (status) params.set("status", status);
+  if (filters.fromDate) params.set("from_date", filters.fromDate);
+  if (filters.toDate) params.set("to_date", filters.toDate);
+
+  return params;
+};
+
+const buildExportPayload = (filters: NormalizedExportHistoryFilters) => {
+  const q: Record<string, string> = {};
+
+  if (filters.search) q.kpi_name_or_user_or_department_cont = filters.search;
+  if (filters.kpiName) q.kpi_name_eq = filters.kpiName;
+  if (filters.department) q.department_eq = filters.department;
+  if (filters.user) q.user_eq = filters.user;
+  if (filters.frequency) q.frequency_eq = filters.frequency;
+  if (filters.status) q.status_eq = filters.status;
+  if (filters.fromDate) q.date_gteq = filters.fromDate;
+  if (filters.toDate) q.date_lteq = filters.toDate;
+
+  return {
+    search: filters.search,
+    kpi_name: filters.kpiName,
+    department: filters.department,
+    user: filters.user,
+    frequency: filters.frequency,
+    status: filters.status,
+    from_date: filters.fromDate,
+    to_date: filters.toDate,
+    q,
+  };
+};
+
+type RawHistoryEntry = {
+  id?: string | number;
+  kpi_id?: string | number;
+  date?: string;
+  created_at?: string;
+  entry_date?: string;
+  entry_type?: string;
+  type?: string;
+  action?: string;
+  kpi_name?: string;
+  kpi?: { id?: string | number; name?: string; kpi_name?: string };
+  department?: string;
+  department_name?: string;
+  user?: string;
+  user_name?: string;
+  assignee_name?: string;
+  target_value?: string | number;
+  planned_value?: string | number;
+  planned?: string | number;
+  actual_value?: string | number;
+  current_value?: string | number;
+  actual?: string | number;
+  achievement?: string | number;
+  achievement_percentage?: string | number;
+  status?: string;
+  notes?: string;
+  remarks?: string;
+  comment?: string;
+  frequency?: string;
+  kpi_frequency?: string;
+};
+
+const normalizeHistoryRowForExport = (raw: RawHistoryEntry): KPIHistoryRow => {
+  const dateRaw = raw.date ?? raw.entry_date ?? raw.created_at ?? "";
+  const date = dateRaw
+    ? (() => {
+        const d = new Date(dateRaw);
+        return Number.isNaN(d.getTime()) ? dateRaw : d.toLocaleDateString();
+      })()
+    : "-";
+
+  return {
+    id: String(raw.id ?? Math.random()),
+    kpiId:
+      raw.kpi_id != null
+        ? String(raw.kpi_id)
+        : raw.kpi?.id != null
+          ? String(raw.kpi.id)
+          : undefined,
+    date,
+    type: raw.entry_type ?? raw.type ?? raw.action ?? "-",
+    kpiName: raw.kpi_name ?? raw.kpi?.name ?? raw.kpi?.kpi_name ?? "-",
+    department: raw.department_name ?? raw.department ?? "-",
+    user: raw.user_name ?? raw.assignee_name ?? raw.user ?? "-",
+    planned: String(raw.planned_value ?? raw.target_value ?? raw.planned ?? "-"),
+    actual: String(raw.actual_value ?? raw.current_value ?? raw.actual ?? "-"),
+    achievement: String(raw.achievement_percentage ?? raw.achievement ?? "-"),
+    status: raw.status ?? "-",
+    notes: raw.notes ?? raw.remarks ?? raw.comment ?? "-",
+    frequency: raw.frequency ?? raw.kpi_frequency ?? "-",
+  };
+};
+
+const extractFirstArray = (value: unknown): unknown[] => {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== "object") return [];
+
+  const obj = value as Record<string, unknown>;
+  const preferredKeys = [
+    "history",
+    "entries",
+    "kpi_history",
+    "rows",
+    "data",
+    "items",
+    "results",
+  ];
+
+  let firstEmptyArray: unknown[] | null = null;
+
+  for (const key of preferredKeys) {
+    const candidate = obj[key];
+    if (Array.isArray(candidate)) {
+      if (candidate.length > 0) return candidate;
+      if (!firstEmptyArray) firstEmptyArray = candidate;
+      continue;
+    }
+    if (candidate && typeof candidate === "object") {
+      const nested = extractFirstArray(candidate);
+      if (nested.length > 0) return nested;
+    }
   }
 
-  const contentType = response.headers.get("content-type") ?? "";
+  for (const candidate of Object.values(obj)) {
+    if (Array.isArray(candidate)) {
+      if (candidate.length > 0) return candidate;
+      if (!firstEmptyArray) firstEmptyArray = candidate;
+      continue;
+    }
+    if (candidate && typeof candidate === "object") {
+      const nested = extractFirstArray(candidate);
+      if (nested.length > 0) return nested;
+    }
+  }
 
-  if (contentType.includes("application/json")) {
-    const json = (await response.json()) as Record<string, unknown>;
-    const downloadUrl =
-      (json.download_url as string | undefined) ??
-      (json.file_url as string | undefined) ??
-      (json.url as string | undefined);
+  return firstEmptyArray ?? [];
+};
 
-    if (downloadUrl) {
-      const fileResponse = await fetch(downloadUrl, {
+const fetchHistoryRowsForExport = async (
+  token: string,
+  filters: NormalizedExportHistoryFilters
+): Promise<KPIHistoryRow[]> => {
+  const endpoints = buildHistoryApiEndpoints();
+  const query = buildExportQueryParams(filters);
+  const payload = buildExportPayload(filters);
+
+  let lastStatus = 0;
+  const qParams = new URLSearchParams();
+  Object.entries(payload.q).forEach(([key, value]) => {
+    qParams.set(`q[${key}]`, value);
+  });
+
+  for (const endpoint of endpoints) {
+    const attempts = [
+      query.toString() ? `${endpoint}?${query.toString()}` : endpoint,
+      qParams.toString() ? `${endpoint}?${qParams.toString()}` : endpoint,
+    ];
+
+    for (const url of attempts) {
+      const response = await fetch(url, {
+        method: "GET",
         headers: {
+          Accept: "*/*",
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!fileResponse.ok) {
-        throw new Error(`Download failed: HTTP ${fileResponse.status}`);
+
+      if (!response.ok) {
+        lastStatus = response.status;
+        continue;
       }
 
-      const fileBlob = await fileResponse.blob();
-      const fileUrl = URL.createObjectURL(fileBlob);
-      const fileAnchor = document.createElement("a");
-      fileAnchor.href = fileUrl;
-      fileAnchor.download = "kpi_history_export.xlsx";
-      document.body.appendChild(fileAnchor);
-      fileAnchor.click();
-      fileAnchor.remove();
-      URL.revokeObjectURL(fileUrl);
-      return;
-    }
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("json")) {
+        continue;
+      }
 
-    throw new Error("Export endpoint returned JSON without download URL");
+      const json = (await response.json()) as unknown;
+      const rows = extractFirstArray(json).map((item) =>
+        normalizeHistoryRowForExport(item as RawHistoryEntry)
+      );
+
+      return rows;
+    }
   }
 
-  // Derive filename from Content-Disposition header or fall back to default
-  const disposition = response.headers.get("content-disposition") ?? "";
-  const nameMatch = disposition.match(/filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/);
-  const filename = nameMatch?.[2]?.trim() || "kpi_history_export.xlsx";
+  throw new Error(`History API failed: HTTP ${lastStatus || "unknown"}`);
+};
 
-  const blob = await response.blob();
+const downloadHistoryRowsAsCsv = (rows: KPIHistoryRow[]): void => {
+  const headers = [
+    "Date",
+    "Type",
+    "KPI Name",
+    "Department",
+    "User",
+    "Planned",
+    "Actual",
+    "Achievement",
+    "Status",
+    "Notes",
+    "Frequency",
+  ];
+
+  const escapeCell = (value: string): string => {
+    const cell = value.replace(/"/g, '""');
+    return /[",\n]/.test(cell) ? `"${cell}"` : cell;
+  };
+
+  const lines = [
+    headers.join(","),
+    ...rows.map((row) =>
+      [
+        row.date,
+        row.type,
+        row.kpiName,
+        row.department,
+        row.user,
+        row.planned,
+        row.actual,
+        row.achievement,
+        row.status,
+        row.notes,
+        row.frequency,
+      ]
+        .map((v) => escapeCell(String(v ?? "")))
+        .join(",")
+    ),
+  ];
+
+  const csvBlob = new Blob([lines.join("\n")], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(csvBlob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `kpi_history_export_${format(new Date(), "yyyy-MM-dd")}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+const downloadBlob = (blob: Blob, filename: string): void => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -88,6 +371,118 @@ const downloadExportHistory = async (): Promise<void> => {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+};
+
+const requestExportHistory = async (
+  endpoints: string[],
+  token: string,
+  filters: NormalizedExportHistoryFilters
+): Promise<Response> => {
+  const query = buildExportQueryParams(filters);
+  let lastStatus = 0;
+
+  for (const endpoint of endpoints) {
+    // Match curl behavior first: GET endpoint with Authorization header.
+    const baseResponse = await fetch(endpoint, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (baseResponse.ok) return baseResponse;
+    lastStatus = baseResponse.status;
+
+    // Optional filtered GET if backend supports query params for export.
+    if (query.toString()) {
+      const queryResponse = await fetch(`${endpoint}?${query.toString()}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (queryResponse.ok) return queryResponse;
+      lastStatus = queryResponse.status;
+    }
+  }
+
+  throw new Error(`Export failed: HTTP ${lastStatus || "unknown"}`);
+};
+
+const getEffectiveToken = (): string => {
+  const adminCompassToken = localStorage.getItem("auth_token");
+  const appToken = getAuthToken();
+  return adminCompassToken || appToken || KPI_BEARER_TOKEN;
+};
+
+const downloadExportHistory = async (
+  filters: ExportHistoryFilters = {}
+): Promise<void> => {
+  const token = getEffectiveToken();
+  const normalizedFilters = normalizeExportFilters(filters);
+
+  // Force history_export API call first so export click always triggers API network request.
+  try {
+    const exportEndpoints = buildExportEndpoints();
+    const response = await requestExportHistory(
+      exportEndpoints,
+      token,
+      normalizedFilters
+    );
+
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("json")) {
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const nameMatch = disposition.match(/filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/);
+      const filename = nameMatch?.[2]?.trim() || "kpi_history_export.xlsx";
+      const blob = await response.blob();
+      downloadBlob(blob, filename);
+      return;
+    }
+
+    const json = (await response.json()) as Record<string, unknown>;
+    const downloadUrl =
+      (json.download_url as string | undefined) ??
+      (json.file_url as string | undefined) ??
+      (json.url as string | undefined);
+
+    if (downloadUrl) {
+      const resolvedDownloadUrl =
+        downloadUrl.startsWith("http://") || downloadUrl.startsWith("https://")
+          ? downloadUrl
+          : new URL(downloadUrl, response.url).toString();
+
+      const fileResponse = await fetch(resolvedDownloadUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (fileResponse.ok) {
+        const disposition = fileResponse.headers.get("content-disposition") ?? "";
+        const nameMatch = disposition.match(/filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/);
+        const filename = nameMatch?.[2]?.trim() || "kpi_history_export.xlsx";
+        const blob = await fileResponse.blob();
+        downloadBlob(blob, filename);
+        return;
+      }
+    }
+
+    const rowsFromJson = extractFirstArray(json).map((item) =>
+      normalizeHistoryRowForExport(item as RawHistoryEntry)
+    );
+    if (rowsFromJson.length > 0) {
+      downloadHistoryRowsAsCsv(rowsFromJson);
+      return;
+    }
+  } catch {
+    // Fall through to history API export.
+  }
+
+  const rows = await fetchHistoryRowsForExport(token, normalizedFilters);
+  if (rows.length === 0) {
+    throw new Error("No data found for selected filters");
+  }
+  downloadHistoryRowsAsCsv(rows);
 };
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -261,7 +656,16 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      await downloadExportHistory();
+      await downloadExportHistory({
+        search,
+        kpiName: selectedKpi,
+        department: selectedDepartment,
+        user: selectedUser,
+        frequency: selectedFrequency,
+        status: selectedStatus,
+        fromDate: dateFrom,
+        toDate: dateTo,
+      });
       toast.success("Export downloaded successfully");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Export failed";

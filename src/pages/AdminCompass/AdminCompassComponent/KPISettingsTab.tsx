@@ -31,7 +31,8 @@ type KPISettingsTabProps = {
   units?: string[];
   isSaving?: boolean;
   onSave: (units: string[]) => Promise<void> | void;
-  onAddUnit?: (units: string[]) => Promise<void> | void;
+  onAddUnit?: (unit: string) => Promise<void> | void;
+  onDeleteUnit?: (unit: string) => Promise<void> | void;
 };
 
 const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
@@ -39,6 +40,7 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
   isSaving = false,
   onSave,
   onAddUnit,
+  onDeleteUnit,
 }) => {
   const [units, setUnits] = useState<string[]>(initialUnits);
   const [draft, setDraft] = useState("");
@@ -63,9 +65,9 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
     }
 
     const nextUnits = [...units, next];
-    console.warn("[KPI Units] Add Unit clicked, calling update API", nextUnits);
+    console.warn("[KPI Units] Add Unit clicked, calling create API", next);
     if (onAddUnit) {
-      await onAddUnit(nextUnits);
+      await onAddUnit(next);
     } else {
       await onSave(nextUnits);
     }
@@ -77,8 +79,12 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
     const nextUnits = units.filter((u) => u !== unit);
     if (nextUnits.length === units.length) return;
 
-    console.warn("[KPI Units] Remove Unit clicked, calling update API", nextUnits);
-    await onSave(nextUnits);
+    console.warn("[KPI Units] Remove Unit clicked, calling delete API", unit);
+    if (onDeleteUnit) {
+      await onDeleteUnit(unit);
+    } else {
+      await onSave(nextUnits);
+    }
     setUnits(nextUnits);
   };
 

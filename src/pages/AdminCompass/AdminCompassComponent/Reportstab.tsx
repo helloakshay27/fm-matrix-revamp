@@ -75,6 +75,127 @@ const normalizeReport = (raw) => {
   };
 };
 
+// ── CUSTOM SELECT (same styling as DailyLogTab) ──
+const CustomSelect = ({
+  value,
+  onChange,
+  options,
+  placeholder = "All",
+  disabled = false,
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const selected = options.find((o) => o.value === value);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="relative shrink-0"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+        className={cn(
+          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-3 transition-all min-w-[160px]",
+          open
+            ? "border-[#EB4A4A] shadow-[0_0_0_3px_rgba(235,74,74,0.10)]"
+            : "border-[#F0EBE8] hover:border-[#EB4A4A]",
+          disabled && "opacity-60 cursor-not-allowed"
+        )}
+      >
+        <span className="flex-1 text-left text-sm font-semibold truncate">
+          {disabled ? (
+            <span className="text-[#8C8580]">Loading…</span>
+          ) : selected ? (
+            <span className="text-[#1A1A1A] font-bold">{selected.label}</span>
+          ) : (
+            <span className="text-[#8C8580]">{placeholder}</span>
+          )}
+        </span>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 transition-transform duration-200 shrink-0",
+            open ? "rotate-180 text-[#EB4A4A]" : "text-[#8C8580]"
+          )}
+        />
+      </button>
+
+      {open && !disabled && (
+        <div
+          className="absolute top-full left-0 mt-1.5 z-[999] bg-white border border-[#F0EBE8] rounded-[20px] overflow-hidden min-w-full"
+          style={{
+            maxHeight: 240,
+            overflowY: "auto",
+            boxShadow:
+              "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div className="py-1.5">
+            {options.map((opt) => {
+              const isSelected = value === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 group",
+                    isSelected
+                      ? "bg-[#FFF5F5] text-[#D37E5F]"
+                      : "text-[#1A1A1A] hover:bg-[#FFF5F5] hover:text-[#D37E5F]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
+                      isSelected
+                        ? "bg-[#D37E5F]"
+                        : "bg-transparent group-hover:bg-[#EB4A4A]/30"
+                    )}
+                  />
+                  <span className="truncate flex-1 font-semibold">
+                    {opt.label}
+                  </span>
+                  {isSelected && (
+                    <span className="ml-auto shrink-0">
+                      <svg
+                        className="w-3.5 h-3.5 text-[#EB4A4A]"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                      >
+                        <path
+                          d="M2.5 7L5.5 10L11.5 4"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── APIs FOR DYNAMIC DATA ──
 
 // 1. Fetch Dynamic Meetings Dropdown
@@ -196,8 +317,6 @@ const ReportsTab = () => {
       try {
         const fetchedList = await fetchDynamicMeetings();
         setDynamicMeetings(fetchedList);
-
-        // ✅ First meeting ko default set karo
         if (fetchedList.length > 0) {
           setSelectedMeetingId(fetchedList[0].id);
         }
@@ -320,26 +439,19 @@ const ReportsTab = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-            <div className="relative">
-              <select
-                value={selectedMeetingId}
-                onChange={(e) => setSelectedMeetingId(e.target.value)}
-                disabled={isFetchingMeetings}
-                className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[160px] w-full disabled:opacity-50"
-              >
-                {isFetchingMeetings ? (
-                  <option value="">Loading Meetings...</option>
-                ) : (
-                  dynamicMeetings.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.label}
-                    </option>
-                  ))
-                )}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
-            </div>
+            {/* ── Meeting dropdown — now uses CustomSelect ── */}
+            <CustomSelect
+              value={selectedMeetingId}
+              onChange={setSelectedMeetingId}
+              disabled={isFetchingMeetings}
+              placeholder="Select Meeting"
+              options={dynamicMeetings.map((m) => ({
+                value: m.id,
+                label: m.label,
+              }))}
+            />
 
+            {/* Period dropdown — kept as native select */}
             <div className="relative">
               <select
                 value={selectedPeriod}
@@ -384,17 +496,78 @@ const ReportsTab = () => {
         </div>
       )}
 
+      {/* ── NORMAL SKELETON LOADING UI ── */}
       {isLoading && (
-        <div className="space-y-6 animate-pulse">
-          <div className="h-36 bg-[#F0EBE8] rounded-[24px]" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-6">
+          {/* Calendar Block Skeleton */}
+          <div className="bg-white rounded-[32px] border border-[#F0EBE8] p-6 sm:p-8 animate-pulse">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex gap-3 items-center">
+                <div className="w-10 h-10 rounded-[12px] bg-[#F0EBE8]"></div>
+                <div className="w-32 h-6 rounded-md bg-[#F0EBE8]"></div>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-10 h-10 rounded-[12px] bg-[#F0EBE8]"></div>
+                <div className="w-10 h-10 rounded-[12px] bg-[#F0EBE8]"></div>
+              </div>
+            </div>
+            <div className="flex gap-[18px] overflow-hidden pb-4">
+              {[...Array(7)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-[90px] h-[110px] rounded-[16px] bg-[#F0EBE8] shrink-0"
+                ></div>
+              ))}
+            </div>
+          </div>
+
+          {/* KPI Metrics Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-[#F0EBE8] rounded-[20px]" />
+              <div
+                key={i}
+                className="rounded-[24px] p-6 border border-[#F0EBE8] bg-[#FCFAFA] h-[140px] flex flex-col justify-between"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="w-24 h-4 bg-[#E5DFDB] rounded"></div>
+                  <div className="w-10 h-10 rounded-[12px] bg-[#E5DFDB]"></div>
+                </div>
+                <div>
+                  <div className="w-16 h-8 bg-[#E5DFDB] rounded mb-2"></div>
+                  <div className="w-20 h-3 bg-[#E5DFDB] rounded"></div>
+                </div>
+              </div>
             ))}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="h-64 bg-[#F0EBE8] rounded-[24px]" />
-            <div className="h-64 bg-[#F0EBE8] rounded-[24px]" />
+
+          {/* Charts Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 h-[320px]"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 rounded-[8px] bg-[#F0EBE8]"></div>
+                  <div className="w-32 h-4 bg-[#F0EBE8] rounded"></div>
+                </div>
+                <div className="w-full h-[220px] bg-[#F9F7F6] rounded-[12px]"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Issue & KPI Sub Metrics Row Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-pulse">
+             {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-[20px] p-5 border border-[#F0EBE8] flex gap-4 items-center">
+                 <div className="w-12 h-12 rounded-[14px] bg-[#F0EBE8] shrink-0"></div>
+                 <div className="flex-1">
+                    <div className="w-20 h-3 bg-[#F0EBE8] rounded mb-2"></div>
+                    <div className="w-16 h-5 bg-[#F0EBE8] rounded mb-2"></div>
+                    <div className="w-24 h-3 bg-[#F0EBE8] rounded"></div>
+                 </div>
+              </div>
+             ))}
           </div>
         </div>
       )}

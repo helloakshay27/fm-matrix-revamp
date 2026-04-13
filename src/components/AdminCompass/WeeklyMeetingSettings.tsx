@@ -86,6 +86,7 @@ const WeeklyMeetingSettings = () => {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
     const [meetingToDelete, setMeetingToDelete] = useState<WeeklyMeeting | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [memberSearch, setMemberSearch] = useState('')
 
     // Fetch daily meeting configs on component mount
     useEffect(() => {
@@ -639,6 +640,7 @@ const WeeklyMeetingSettings = () => {
                     setSelectedDailyMeeting('')
                     setEditingMeeting(null)
                     setEditingMeetingId(null)
+                    setMemberSearch('')
                 }
             }}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white p-0">
@@ -803,6 +805,12 @@ const WeeklyMeetingSettings = () => {
                             <Label className="text-sm font-medium text-gray-700 mb-3 block">
                                 Meeting Members
                             </Label>
+                            <Input
+                                placeholder="Search members by name or email..."
+                                value={memberSearch}
+                                onChange={(e) => setMemberSearch(e.target.value)}
+                                className="w-full mb-3"
+                            />
                             <div className="border border-gray-200 rounded-lg bg-white max-h-48 overflow-y-auto">
                                 {loadingUsers ? (
                                     // Skeleton Loading State
@@ -818,28 +826,40 @@ const WeeklyMeetingSettings = () => {
                                         ))}
                                     </div>
                                 ) : (
-                                    // Actual Members List
-                                    members.map((member) => (
-                                        <div
-                                            key={member.id}
-                                            className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
-                                        >
-                                            <Checkbox
-                                                checked={member.selected}
-                                                onCheckedChange={() => handleMemberToggle(member.id)}
-                                                id={`member-${member.id}`}
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <label
-                                                    htmlFor={`member-${member.id}`}
-                                                    className="text-sm font-medium text-gray-900 cursor-pointer"
+                                    // Actual Members List - Filtered
+                                    (() => {
+                                        const filteredMembers = members.filter(member =>
+                                            member.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+                                            member.email.toLowerCase().includes(memberSearch.toLowerCase())
+                                        )
+                                        return filteredMembers.length > 0 ? (
+                                            filteredMembers.map((member) => (
+                                                <div
+                                                    key={member.id}
+                                                    className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
                                                 >
-                                                    {member.name}
-                                                </label>
-                                                <p className="text-xs text-gray-500">{member.email}</p>
+                                                    <Checkbox
+                                                        checked={member.selected}
+                                                        onCheckedChange={() => handleMemberToggle(member.id)}
+                                                        id={`member-${member.id}`}
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <label
+                                                            htmlFor={`member-${member.id}`}
+                                                            className="text-sm font-medium text-gray-900 cursor-pointer"
+                                                        >
+                                                            {member.name}
+                                                        </label>
+                                                        <p className="text-xs text-gray-500">{member.email}</p>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="flex items-center justify-center py-6 text-gray-500">
+                                                <p className="text-sm">No members found</p>
                                             </div>
-                                        </div>
-                                    ))
+                                        )
+                                    })()
                                 )}
                             </div>
                         </div>

@@ -165,7 +165,8 @@ export const AddFacilityBookingClubPage = () => {
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
-  const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
+  const [numberOfGuests, setNumberOfGuests] = useState<number>(0);
+  const [showComplimentaryWarning, setShowComplimentaryWarning] = useState(false);
   // Helper: Get max people allowed from facility details
   const maxPeople = facilityDetails?.max_people || 0;
   const [peopleTable, setPeopleTable] = useState<Array<{
@@ -283,6 +284,7 @@ export const AddFacilityBookingClubPage = () => {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
         setSelectedAccessories({}); // Reset selected accessories
+        setShowComplimentaryWarning(false); // Reset complementary warning
 
         // Extract and set available accessories from facility setup
         if (response.data.facility_setup.facility_setup_accessories && Array.isArray(response.data.facility_setup.facility_setup_accessories)) {
@@ -743,6 +745,12 @@ export const AddFacilityBookingClubPage = () => {
           amountFull
         };
       })();
+
+      // Validate complementary: only allowed if grand total is exactly 0
+      // if (paymentMethod === 'complementary' && costSummary.amountFull > 0) {
+      //   toast.error('Complementary is only allowed for ₹0 bookings');
+      //   return;
+      // }
 
       const payload = {
         facility_booking: {
@@ -1253,26 +1261,28 @@ export const AddFacilityBookingClubPage = () => {
             <p className="text-gray-500">Please select a facility to see available payment methods</p>
           )}
 
-          {/* Complementary Reason Input */}
+          {/* Complementary Reason Input and Warning */}
           {paymentMethod === 'complementary' && (
-            <div className="mt-4">
-              <TextField
-                label="Reason"
-                required
-                value={complementaryReason}
-                onChange={(e) => setComplementaryReason(e.target.value)}
-                variant="outlined"
-                fullWidth
-                InputLabelProps={{
-                  classes: {
-                    asterisk: "text-red-500",
-                  },
-                  shrink: true
-                }}
-                sx={fieldStyles}
-                placeholder="Enter reason for complementary booking"
-              />
-            </div>
+            <>
+              <div className="mt-4">
+                <TextField
+                  label="Reason"
+                  required
+                  value={complementaryReason}
+                  onChange={(e) => setComplementaryReason(e.target.value)}
+                  variant="outlined"
+                  fullWidth
+                  InputLabelProps={{
+                    classes: {
+                      asterisk: "text-red-500",
+                    },
+                    shrink: true
+                  }}
+                  sx={fieldStyles}
+                  placeholder="Enter reason for complementary booking"
+                />
+              </div>
+            </>
           )}
         </div>
 
@@ -1423,316 +1433,342 @@ export const AddFacilityBookingClubPage = () => {
           </div>
          )}  */}
 
-        {/* Cost Summary Section */}
-        {selectedUser && facilityDetails && (
+        {/* Cost Summary Section - Always visible for cost transparency */}
+        {facilityDetails && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
-            <div className="space-y-3">
-              {/* Calculate costs based on initially selected user */}
-              {(() => {
-                const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge ?? 0;
-                const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge ?? 0;
-                const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
 
-                // Use booking rule rate for members if available (even if 0), otherwise use facility charge
-                const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
+            {/* Show message if no user selected yet */}
+            {!selectedUser ? (
+              <div className="text-gray-500 text-center py-4">
+                Select a user to view cost summary
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Calculate costs based on initially selected user */}
+                {(() => {
+                  const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge ?? 0;
+                  const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge ?? 0;
+                  const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
 
-                // Number of slots selected
-                const slotsCount = selectedSlots.length;
-                const hasSlots = slotsCount > 0;
+                  // Use booking rule rate for members if available (even if 0), otherwise use facility charge
+                  const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
 
-                // Restore userCharge for use in JSX
-                const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                // Prepare slot premium details for display
-                let slotPremiumDetails = [];
-                let totalUserCharge = 0;
-                let totalGuestCharge = 0;
-                if (hasSlots) {
-                  selectedSlots.forEach((slotId) => {
-                    const slot = slots.find((s) => s.id === slotId);
-                    let memberPremium = 0;
-                    let guestPremium = 0;
-                    let slotPremiumPercent = 0;
-                    if (slot && slot.is_premium && slot.premium_percentage) {
-                      slotPremiumPercent = slot.premium_percentage;
-                      memberPremium = (memberRate * slot.premium_percentage) / 100;
-                      guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
-                    }
-                    slotPremiumDetails.push({
-                      slotLabel: slot ? slot.ampm : '',
-                      slotPremiumPercent,
-                      memberPremium,
-                      guestPremium
+                  // Number of slots selected
+                  const slotsCount = selectedSlots.length;
+                  const hasSlots = slotsCount > 0;
+
+                  // Restore userCharge for use in JSX
+                  const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+                  // Prepare slot premium details for display
+                  let slotPremiumDetails = [];
+                  let totalUserCharge = 0;
+                  let totalGuestCharge = 0;
+                  if (hasSlots) {
+                    selectedSlots.forEach((slotId) => {
+                      const slot = slots.find((s) => s.id === slotId);
+                      let memberPremium = 0;
+                      let guestPremium = 0;
+                      let slotPremiumPercent = 0;
+                      if (slot && slot.is_premium && slot.premium_percentage) {
+                        slotPremiumPercent = slot.premium_percentage;
+                        memberPremium = (memberRate * slot.premium_percentage) / 100;
+                        guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
+                      }
+                      slotPremiumDetails.push({
+                        slotLabel: slot ? slot.ampm : '',
+                        slotPremiumPercent,
+                        memberPremium,
+                        guestPremium
+                      });
+                      // Add for each slot
+                      totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
+                      totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
                     });
-                    // Add for each slot
-                    totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
-                    totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
-                  });
-                } else {
-                  // No slots selected, use base charge
-                  totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                  totalGuestCharge = numberOfGuests * adultGuestCharge;
-                }
+                  } else {
+                    // No slots selected, use base charge
+                    totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+                    totalGuestCharge = numberOfGuests * adultGuestCharge;
+                  }
 
-                const slotTotal = selectedSlots.length * perSlotCharge;
+                  const slotTotal = selectedSlots.length * perSlotCharge;
 
-                // Calculate accessory total with quantities
-                const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
-                  const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
-                  return total + ((accessory?.price || 0) * (quantity || 0));
-                }, 0);
+                  // Calculate accessory total with quantities
+                  const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
+                    const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
+                    return total + ((accessory?.price || 0) * (quantity || 0));
+                  }, 0);
 
-                // Fix: Only add guest charge for members
-                let subtotalBeforeDiscount = 0;
-                if (userType === 'occupant') {
-                  subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal + accessoryTotal;
-                } else {
-                  subtotalBeforeDiscount = totalGuestCharge + slotTotal + accessoryTotal;
-                }
-                const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-                const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+                  // Fix: Only add guest charge for members
+                  let subtotalBeforeDiscount = 0;
+                  if (userType === 'occupant') {
+                    subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal + accessoryTotal;
+                  } else {
+                    subtotalBeforeDiscount = totalGuestCharge + slotTotal + accessoryTotal;
+                  }
+                  const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
+                  const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
 
-                const gstPercentage = facilityDetails.gst || 0;
-                const sgstPercentage = facilityDetails.sgst || 0;
-                const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
-                const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-                const totalTax = gstAmount + sgstAmount;
-                const grandTotal = subtotalAfterDiscount + totalTax;
+                  const gstPercentage = facilityDetails.gst || 0;
+                  const sgstPercentage = facilityDetails.sgst || 0;
+                  const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+                  const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+                  const totalTax = gstAmount + sgstAmount;
+                  const grandTotal = subtotalAfterDiscount + totalTax;
 
-                return (
-                  <>
-                    {/* Slots Count - Only show when slots are selected */}
-                    {hasSlots && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
-                        <span className="text-gray-700 font-medium">Number of Slots Selected</span>
-                        <span className="font-semibold text-blue-600">{slotsCount}</span>
-                      </div>
-                    )}
+                  // Check if complementary is selected
+                  const isComplementary = paymentMethod === 'complementary';
 
-                    {/* Member Charge - Always show for occupant users, even if zero */}
-                    {userType === 'occupant' && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex flex-col gap-1 w-full">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-700">Member Charge</span>
-                            {hasSlots ? (
-                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
-                            ) : (
-                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
-                            )}
+                  return (
+                    <>
+                      {/* Simplified view for Complementary payment */}
+                      {isComplementary ? (
+                        <>
+                          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div>
+                              <p className="text-sm text-gray-600 italic">This is a complimentary booking</p>
+                              <p className="text-lg font-bold mt-2" style={{ color: '#8B4B8C' }}>Grand Total: ₹0</p>
+                            </div>
                           </div>
-                          {/* Show member premium calculation per slot as a table */}
+                        </>
+                      ) : (
+                        <>
+                          {/* Full Cost Summary view for other payment methods */}
+                          {/* Slots Count - Only show when slots are selected */}
                           {hasSlots && (
-                            <div className="flex justify-start">
-                              <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
-                                <thead>
-                                  <tr className="bg-gray-50">
-                                    <th className="border px-2 py-1 text-left">Slot</th>
-                                    <th className="border px-2 py-1 text-left">Premium %</th>
-                                    <th className="border px-2 py-1 text-left">Premium Amount</th>
-                                    <th className="border px-2 py-1 text-left">Total Charge</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {slotPremiumDetails.map((slot, idx) => {
-                                    const base = memberRate;
-                                    const total = base + slot.memberPremium;
-                                    return (
-                                      <tr key={idx}>
-                                        <td className="border px-2 py-1">{slot.slotLabel}</td>
-                                        <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
-                                        <td className="border px-2 py-1 text-purple-700">₹{slot.memberPremium.toFixed(2)}</td>
-                                        <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
+                              <span className="text-gray-700 font-medium">Number of Slots Selected</span>
+                              <span className="font-semibold text-blue-600">{slotsCount}</span>
                             </div>
                           )}
-                        </div>
-                        <span className="font-medium">₹{totalUserCharge.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* Guest Charge */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <div className="flex flex-col gap-1 w-full">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Guest Charge</span>
-                          <div className="flex items-center gap-1">
-                            <TextField
-                              type="number"
-                              size="small"
-                              value={numberOfGuests}
-                              onChange={(e) => {
-                                const val = Math.max(0, parseInt(e.target.value) || 0);
-                                setNumberOfGuests(val > maxPeople ? maxPeople : val);
-                              }}
-                              variant="outlined"
-                              placeholder="No. of guests"
-                              sx={{
-                                width: '100px',
-                                '& .MuiOutlinedInput-root': {
-                                  height: '36px',
-                                  '& input': {
-                                    textAlign: 'right',
-                                    padding: '8px 12px'
-                                  }
-                                }
-                              }}
-                              inputProps={{
-                                min: 0,
-                                step: 1
-                              }}
-                            />
-                            {hasSlots ? (
-                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
-                            ) : (
-                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
-                            )}
-                          </div>
-                        </div>
-                        {/* Show guest premium calculation per slot as a table */}
-                        {hasSlots && (
-                          <div className="flex justify-start">
-                            <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
-                              <thead>
-                                <tr className="bg-gray-50">
-                                  <th className="border px-2 py-1 text-left">Slot</th>
-                                  <th className="border px-2 py-1 text-left">Premium %</th>
-                                  <th className="border px-2 py-1 text-left">Premium Amount</th>
-                                  <th className="border px-2 py-1 text-left">Total Charge</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {slotPremiumDetails.map((slot, idx) => {
-                                  const base = adultGuestCharge;
-                                  const total = base + slot.guestPremium;
-                                  return (
-                                    <tr key={idx}>
-                                      <td className="border px-2 py-1">{slot.slotLabel}</td>
-                                      <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
-                                      <td className="border px-2 py-1 text-blue-700">₹{slot.guestPremium.toFixed(2)}</td>
-                                      <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                      <span className="font-medium">₹{totalGuestCharge.toFixed(2)}</span>
-                    </div>
-
-                    {/* Slot Charges */}
-                    {selectedSlots.length > 0 && perSlotCharge > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Slot Charges</span>
-                          <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
-                        </div>
-                        <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
-                      </div>
-                    )}
-
-                    {/* Accessories Total - Only show when accessories are selected */}
-                    {Object.keys(selectedAccessories).length > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-700 font-medium">Accessories Total</span>
-                            <div className="text-xs text-gray-500">
-                              ({Object.entries(selectedAccessories).map(([id, qty]) => {
-                                const acc = availableAccessories.find(a => a.id === parseInt(id));
-                                return acc ? `${acc.name} x ${qty}` : '';
-                              }).filter(Boolean).join(', ')})
+                          {/* Member Charge - Always show for occupant users, even if zero */}
+                          {userType === 'occupant' && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                              <div className="flex flex-col gap-1 w-full">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-700">Member Charge</span>
+                                  {hasSlots ? (
+                                    <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
+                                  ) : (
+                                    <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
+                                  )}
+                                </div>
+                                {/* Show member premium calculation per slot as a table */}
+                                {hasSlots && (
+                                  <div className="flex justify-start">
+                                    <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
+                                      <thead>
+                                        <tr className="bg-gray-50">
+                                          <th className="border px-2 py-1 text-left">Slot</th>
+                                          <th className="border px-2 py-1 text-left">Premium %</th>
+                                          <th className="border px-2 py-1 text-left">Premium Amount</th>
+                                          <th className="border px-2 py-1 text-left">Total Charge</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {slotPremiumDetails.map((slot, idx) => {
+                                          const base = memberRate;
+                                          const total = base + slot.memberPremium;
+                                          return (
+                                            <tr key={idx}>
+                                              <td className="border px-2 py-1">{slot.slotLabel}</td>
+                                              <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
+                                              <td className="border px-2 py-1 text-purple-700">₹{slot.memberPremium.toFixed(2)}</td>
+                                              <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                              <span className="font-medium">₹{totalUserCharge.toFixed(2)}</span>
                             </div>
+                          )}
+
+                          {/* Guest Charge */}
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <div className="flex flex-col gap-1 w-full">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-700">Guest Charge</span>
+                                <div className="flex items-center gap-1">
+                                  <TextField
+                                    type="number"
+                                    size="small"
+                                    value={numberOfGuests}
+                                    onChange={(e) => {
+                                      const val = Math.max(0, parseInt(e.target.value) || 0);
+                                      setNumberOfGuests(val > maxPeople ? maxPeople : val);
+                                    }}
+                                    variant="outlined"
+                                    placeholder="No. of guests"
+                                    sx={{
+                                      width: '100px',
+                                      '& .MuiOutlinedInput-root': {
+                                        height: '36px',
+                                        '& input': {
+                                          textAlign: 'right',
+                                          padding: '8px 12px'
+                                        }
+                                      }
+                                    }}
+                                    inputProps={{
+                                      min: 0,
+                                      step: 1
+                                    }}
+                                  />
+                                  {hasSlots ? (
+                                    <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
+                                  ) : (
+                                    <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
+                                  )}
+                                </div>
+                              </div>
+                              {/* Show guest premium calculation per slot as a table */}
+                              {hasSlots && (
+                                <div className="flex justify-start">
+                                  <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
+                                    <thead>
+                                      <tr className="bg-gray-50">
+                                        <th className="border px-2 py-1 text-left">Slot</th>
+                                        <th className="border px-2 py-1 text-left">Premium %</th>
+                                        <th className="border px-2 py-1 text-left">Premium Amount</th>
+                                        <th className="border px-2 py-1 text-left">Total Charge</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {slotPremiumDetails.map((slot, idx) => {
+                                        const base = adultGuestCharge;
+                                        const total = base + slot.guestPremium;
+                                        return (
+                                          <tr key={idx}>
+                                            <td className="border px-2 py-1">{slot.slotLabel}</td>
+                                            <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
+                                            <td className="border px-2 py-1 text-blue-700">₹{slot.guestPremium.toFixed(2)}</td>
+                                            <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                            <span className="font-medium">₹{totalGuestCharge.toFixed(2)}</span>
                           </div>
-                        </div>
-                        <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
-                      </div>
-                    )}
 
-                    {/* Subtotal Before Discount */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <span className="text-gray-700 font-medium">Subtotal</span>
-                      <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
-                    </div>
+                          {/* Slot Charges */}
+                          {selectedSlots.length > 0 && perSlotCharge > 0 && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-700">Slot Charges</span>
+                                <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                              </div>
+                              <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                            </div>
+                          )}
 
-                    {/* Discount - Editable */}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700">Discount</span>
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            type="number"
-                            size="small"
-                            value={discountPercentage}
-                            onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                            variant="outlined"
-                            sx={{
-                              width: '80px',
-                              '& .MuiOutlinedInput-root': {
-                                height: '36px',
-                                '& input': {
-                                  textAlign: 'right',
-                                  padding: '8px 12px'
-                                }
-                              }
-                            }}
-                            inputProps={{
-                              min: 0,
-                              max: 100,
-                              step: 0.1
-                            }}
-                          />
-                          <span className="text-gray-500">%</span>
-                        </div>
-                      </div>
-                      <span className="font-medium"> ₹{discountAmount.toFixed(2)}</span>
-                    </div>
+                          {/* Accessories Total - Only show when accessories are selected */}
+                          {Object.keys(selectedAccessories).length > 0 && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-700 font-medium">Accessories Total</span>
+                                  <div className="text-xs text-gray-500">
+                                    ({Object.entries(selectedAccessories).map(([id, qty]) => {
+                                      const acc = availableAccessories.find(a => a.id === parseInt(id));
+                                      return acc ? `${acc.name} x ${qty}` : '';
+                                    }).filter(Boolean).join(', ')})
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="font-medium">₹{accessoryTotal.toFixed(2)}</span>
+                            </div>
+                          )}
 
-                    {/* Subtotal After Discount */}
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <span className="text-gray-700 font-medium">Subtotal After Discount</span>
-                        <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
-                      </div>
-                    )}
+                          {/* Subtotal Before Discount */}
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <span className="text-gray-700 font-medium">Subtotal</span>
+                            <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
+                          </div>
 
-                    {/* GST */}
-                    {gstPercentage > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">CGST</span>
-                          <span className="text-sm text-gray-500">({gstPercentage}%)</span>
-                        </div>
-                        <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
-                      </div>
-                    )}
+                          {/* Discount - Editable */}
+                          <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-700">Discount</span>
+                              <div className="flex items-center gap-1">
+                                <TextField
+                                  type="number"
+                                  size="small"
+                                  value={discountPercentage}
+                                  onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                                  variant="outlined"
+                                  sx={{
+                                    width: '80px',
+                                    '& .MuiOutlinedInput-root': {
+                                      height: '36px',
+                                      '& input': {
+                                        textAlign: 'right',
+                                        padding: '8px 12px'
+                                      }
+                                    }
+                                  }}
+                                  inputProps={{
+                                    min: 0,
+                                    max: 100,
+                                    step: 0.1
+                                  }}
+                                />
+                                <span className="text-gray-500">%</span>
+                              </div>
+                            </div>
+                            <span className="font-medium"> ₹{discountAmount.toFixed(2)}</span>
+                          </div>
 
-                    {/* SGST */}
-                    {sgstPercentage > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">SGST</span>
-                          <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
-                        </div>
-                        <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
-                      </div>
-                    )}
+                          {/* Subtotal After Discount */}
+                          {discountAmount > 0 && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                              <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                              <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                            </div>
+                          )}
 
-                    {/* Grand Total */}
-                    <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
-                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
-                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
+                          {/* GST */}
+                          {gstPercentage > 0 && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-700">CGST</span>
+                                <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                              </div>
+                              <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+
+                          {/* SGST */}
+                          {sgstPercentage > 0 && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-700">SGST</span>
+                                <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                              </div>
+                              <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+
+                          {/* Grand Total */}
+                          <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                            <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
+                            <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         )}
 
