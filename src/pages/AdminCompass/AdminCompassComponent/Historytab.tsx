@@ -167,6 +167,127 @@ const compileMeetingNotes = (historyData: any): string => {
   return text.trim();
 };
 
+// ── CUSTOM SELECT (Same concept as ReportsTab, adapted for HistoryTab theme) ──
+const CustomSelect = ({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  disabled = false,
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const selected = options.find((o) => String(o.value) === String(value));
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="relative shrink-0"
+      style={{ fontFamily: "'Poppins', sans-serif", zIndex: open ? 50 : "auto" }}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+        className={cn(
+          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-2.5 transition-all min-w-[160px] shadow-sm",
+          open
+            ? "border-[#CE7A5A] shadow-[0_0_0_3px_rgba(206,122,90,0.10)]"
+            : "border-[#F0EBE8] hover:border-[#CE7A5A]",
+          disabled && "opacity-60 cursor-not-allowed"
+        )}
+      >
+        <span className="flex-1 text-left text-sm font-bold truncate">
+          {disabled ? (
+            <span className="text-[#8C8580]">Loading…</span>
+          ) : selected ? (
+            <span className="text-[#1A1A1A]">{selected.label}</span>
+          ) : (
+            <span className="text-[#8C8580]">{placeholder}</span>
+          )}
+        </span>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 transition-transform duration-200 shrink-0",
+            open ? "rotate-180 text-[#CE7A5A]" : "text-[#8C8580]"
+          )}
+        />
+      </button>
+
+      {open && !disabled && (
+        <div
+          className="absolute top-full left-0 mt-1.5 bg-white border border-[#F0EBE8] rounded-[20px] overflow-hidden min-w-full"
+          style={{
+            maxHeight: 240,
+            overflowY: "auto",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+            zIndex: 999,
+          }}
+        >
+          <div className="py-1.5">
+            {options.map((opt) => {
+              const isSelected = String(value) === String(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 group",
+                    isSelected
+                      ? "bg-[#FFF5F5] text-[#CE7A5A]"
+                      : "text-[#1A1A1A] hover:bg-[#FFF5F5] hover:text-[#CE7A5A]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
+                      isSelected
+                        ? "bg-[#CE7A5A]"
+                        : "bg-transparent group-hover:bg-[#CE7A5A]/30"
+                    )}
+                  />
+                  <span className="truncate flex-1 font-semibold">
+                    {opt.label}
+                  </span>
+                  {isSelected && (
+                    <span className="ml-auto shrink-0">
+                      <svg
+                        className="w-3.5 h-3.5 text-[#CE7A5A]"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                      >
+                        <path
+                          d="M2.5 7L5.5 10L11.5 4"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─────────────────────────────────────────────
 // HistoryTab
 // ─────────────────────────────────────────────
@@ -451,26 +572,17 @@ const HistoryTab = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Meeting Dropdown */}
-          <div className="relative">
-            <select
-              value={selectedMeetingId}
-              onChange={(e) => setSelectedMeetingId(e.target.value)}
-              disabled={isFetchingMeetings}
-              className="appearance-none bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] py-2.5 pl-4 pr-9 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] shadow-sm disabled:opacity-60 transition-colors"
-            >
-              {isFetchingMeetings ? (
-                <option value="">Loading Meetings...</option>
-              ) : (
-                meetings.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name || m.label}
-                  </option>
-                ))
-              )}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
-          </div>
+          {/* Custom Meeting Dropdown */}
+          <CustomSelect
+            value={selectedMeetingId}
+            onChange={(val) => setSelectedMeetingId(val)}
+            disabled={isFetchingMeetings}
+            placeholder="Select Meeting"
+            options={meetings.map((m) => ({
+              value: String(m.id),
+              label: m.name || m.label || `Meeting ${m.id}`,
+            }))}
+          />
 
           {/* Date Navigation */}
           <div className="flex items-center gap-1.5">
@@ -546,7 +658,6 @@ const HistoryTab = () => {
           <div className="bg-[#CE7A5A] px-6 py-5 rounded-t-[24px]">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                {/* Fixed the color issue by wrapping text in a span with !important inline styling */}
                 <h3 className="text-[22px] font-black tracking-tight mb-2 m-0 p-0">
                   <span
                     className="!text-white"
@@ -777,15 +888,6 @@ const HistoryTab = () => {
           </div>,
           document.body
         )}
-
-      <style>{`
-        select option {
-          font-family: 'Poppins', sans-serif;
-          font-size: 13px;
-          color: #374151;
-          background: #ffffff;
-        }
-      `}</style>
     </div>
   );
 };

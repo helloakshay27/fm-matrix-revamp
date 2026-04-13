@@ -312,6 +312,16 @@ export const API_CONFIG = {
     KPIS: "/kpis.json",
     USER_SETUP: "/jobs/setup", // Will append /:user_id
     USER_JOURNALS: "/user_journals.json",
+    TEAM_MEMBERS: "/business_compass/team_members",
+    BUSINESS_COMPASS_DEPARTMENTS: "/business_compass/departments",
+    BUSINESS_COMPASS_ROLES: "/business_compass/roles",
+    INVITE_USER: "/business_compass/invite_user",
+    BULK_INVITE: "/business_compass/bulk_invite",
+    PENDING_INVITATIONS: "/business_compass/pending_invitations",
+    INVITATION_HISTORY: "/business_compass/invitation_history",
+    RESEND_INVITATION: "/business_compass/resend_invitation",
+    EMAIL_LOGS: "/business_compass/email_logs",
+    WITHDRAW_INVITATION: "/business_compass/withdraw_invitation",
   },
 } as const;
 

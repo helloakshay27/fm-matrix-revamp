@@ -44,9 +44,31 @@ interface DocumentShareModalProps {
 }
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: "white",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    height: { xs: 36, sm: 40, md: 45 },
+    backgroundColor: "white",
+    "& fieldset": {
+      borderColor: "#ddd",
+    },
+    "&:hover fieldset": {
+      borderColor: "#C72030",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
+    },
+  },
   "& .MuiInputBase-input, & .MuiSelect-select": {
     padding: { xs: "8px", sm: "10px", md: "12px" },
+    color: "#1a1a1a",
+  },
+  "& .MuiInputLabel-root": {
+    color: "#666",
+    "&.Mui-focused": {
+      color: "#C72030",
+    },
   },
 };
 
@@ -232,11 +254,11 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
       <DialogContent
-        className="max-w-3xl max-h-[82vh] overflow-y-auto bg-white z-50"
+        className="max-w-3xl max-h-[82vh] overflow-y-auto bg-white z-[1001] border-none shadow-2xl p-0"
         aria-describedby="document-share-dialog-description"
       >
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4 border-b border-gray-100">
+          <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-[#C72030]" />
             SHARE DOCUMENT
           </DialogTitle>
@@ -256,9 +278,9 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-6 w-6 p-0 hover:bg-gray-100"
+              className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5 text-gray-500" />
             </Button>
           </div>
           <div id="document-share-dialog-description" className="sr-only">
@@ -267,7 +289,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="px-6 py-6 space-y-6">
           {/* Add Share Section */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">
@@ -493,17 +515,17 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
           <Button
             variant="outline"
             onClick={onClose}
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
-            className="px-6 py-2 bg-[#C72030] hover:bg-[#A01828] text-white"
+            className="px-6 py-2 bg-[#C72030] hover:bg-[#A01828] text-white shadow-lg"
           >
             Save
           </Button>

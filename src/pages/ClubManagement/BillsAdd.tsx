@@ -266,6 +266,30 @@ export const BillsAdd: React.FC = () => {
 
     const [sourceOfSupply, setSourceOfSupply] = useState("");
     const [destinationOfSupply, setDestinationOfSupply] = useState("");
+    const [orgState, setOrgState] = useState("");
+
+    // Fetch organisation state on mount
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                const state = org?.address?.state || '';
+                setOrgState(state);
+            } catch {
+                // silently fail
+            }
+        };
+        fetchOrgState();
+    }, []);
     const indianStates = [
         "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
         "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
@@ -1051,21 +1075,21 @@ export const BillsAdd: React.FC = () => {
                 taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
             }
         });
-    // Re-preselect tax on all taxable items when destination changes
+    // Re-preselect tax on all taxable items when destination or orgState changes
     useEffect(() => {
         if (!destinationOfSupply) return;
-        const isMaharashtra = destinationOfSupply === "Maharashtra";
+        const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
         setItems(prev => prev.map(item => {
             if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
             const matched = itemOptions.find(opt => opt.name === item.name);
             if (!matched) return item;
             return {
                 ...item,
-                item_tax_type: isMaharashtra ? "tax_group" : "tax_rate",
-                tax_group_id: isMaharashtra ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
             };
         }));
-    }, [destinationOfSupply]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [destinationOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Calculate Final Total
 
@@ -1137,6 +1161,11 @@ export const BillsAdd: React.FC = () => {
                                         onChange={(e) => {
                                             const customer = customers.find(c => c.id === e.target.value);
                                             setSelectedCustomer(customer || null);
+                                            // if (customer) {
+                                            //     // Preselect source of supply from vendor's state
+                                            //     const vendorState = customer.state || '';
+                                            //     if (vendorState) setSourceOfSupply(vendorState);
+                                            // }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -1493,9 +1522,9 @@ export const BillsAdd: React.FC = () => {
                                                                 }
 
                                                                 if (selectedItem.tax_preference === "taxable") {
-                                                                    const isMaharashtra = destinationOfSupply === "Maharashtra";
-                                                                    updateItem(index, "item_tax_type", isMaharashtra ? "tax_group" : "tax_rate");
-                                                                    updateItem(index, "tax_group_id", isMaharashtra ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
+                                                                    const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                                    updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
+                                                                    updateItem(index, "tax_group_id", isSameState ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
                                                                 }
 
                                                                 if (selectedItem.tax_preference === "out_of_scope") {
@@ -1682,7 +1711,7 @@ export const BillsAdd: React.FC = () => {
                                                         displayEmpty
                                                         onChange={(e) => {
                                                             const value = e.target.value;
-                                                            const isMaharashtra = destinationOfSupply === "Maharashtra";
+                                                            const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1694,9 +1723,9 @@ export const BillsAdd: React.FC = () => {
                                                                     setExemptionModalOpen(true);
                                                                 }
                                                             }
-                                                            // Tax group (Maharashtra) or tax rate (non-Maharashtra)
+                                                            // Tax group (same state) or tax rate (different state)
                                                             else {
-                                                                updateItem(index, "item_tax_type", isMaharashtra ? "tax_group" : "tax_rate");
+                                                                updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
                                                                 updateItem(index, "tax_group_id", value);
                                                             }
                                                         }}
@@ -1710,25 +1739,28 @@ export const BillsAdd: React.FC = () => {
                                                             </MenuItem>
                                                         ))}
 
-                                                        {destinationOfSupply === "Maharashtra" ? (
-                                                            [
-                                                                <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
-                                                                ...taxGroups.map((group) => (
-                                                                    <MenuItem key={group.id} value={group.id}>
-                                                                        {group.name}
-                                                                    </MenuItem>
-                                                                ))
-                                                            ]
-                                                        ) : (
-                                                            [
-                                                                <MenuItem key="__divider__" disabled>Tax Rates</MenuItem>,
-                                                                ...taxRates.map((rate) => (
-                                                                    <MenuItem key={rate.id} value={rate.id}>
-                                                                        {rate.name}
-                                                                    </MenuItem>
-                                                                ))
-                                                            ]
-                                                        )}
+                                                        {(() => {
+                                                            const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                            return isSameState ? (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                    ...taxGroups.map((group) => (
+                                                                        <MenuItem key={group.id} value={group.id}>
+                                                                            {group.name}
+                                                                        </MenuItem>
+                                                                    ))
+                                                                ]
+                                                            ) : (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                    ...taxRates.map((rate) => (
+                                                                        <MenuItem key={rate.id} value={rate.id}>
+                                                                            {rate.name}
+                                                                        </MenuItem>
+                                                                    ))
+                                                                ]
+                                                            );
+                                                        })()}
                                                     </Select>
                                                 </FormControl>
                                             </td>

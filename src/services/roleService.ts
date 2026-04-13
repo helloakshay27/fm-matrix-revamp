@@ -7,6 +7,16 @@ export interface ApiRole {
   permissions_hash: string;
 }
 
+export interface BCRole {
+  id: string;
+  name: string;
+}
+
+export interface BCRolesResponse {
+  success: boolean;
+  roles: BCRole[];
+}
+
 export interface CreateRolePayload {
   lock_role: {
     name: string;
@@ -187,6 +197,17 @@ export const roleService = {
       return response.data;
     } catch (error) {
       console.error("Error fetching roles:", error);
+      throw error;
+    }
+  },
+
+  // Fetch Business Compass roles
+  async fetchBusinessCompassRoles(): Promise<BCRole[]> {
+    try {
+      const response = await apiClient.get<BCRolesResponse>(ENDPOINTS.BUSINESS_COMPASS_ROLES);
+      return response.data.roles || [];
+    } catch (error) {
+      console.error("Error fetching BC roles:", error);
       throw error;
     }
   },

@@ -127,6 +127,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
 
     try {
       const selectedUsers = users.filter((u) => assignees[String(u.id)]);
+      const selectedAssigneeIds = selectedUsers.map((u) => Number(u.id));
       const selectedDepartment = departmentOptions.find((d) => d.id === department);
       const owner = selectedUsers[0]?.name ?? "Unassigned";
       const assigneeId = selectedUsers[0]?.id ?? null;
@@ -158,6 +159,8 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
         description: relatedUrl || undefined,
         departmentId,
         assigneeId,
+        assigneeIds: selectedAssigneeIds,
+        weight: parseFloat(weight) || 0,
       };
 
       await onCreated?.(kpiData);

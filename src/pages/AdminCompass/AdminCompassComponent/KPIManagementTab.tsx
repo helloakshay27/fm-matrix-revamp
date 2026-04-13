@@ -55,6 +55,7 @@ export interface KPIManagementTabProps {
   onDeleteKpi?: (id: string | number) => Promise<void>;
   onEditKpi?: (kpi: KPICardData) => void;
   onArchiveSelected?: (ids: string[]) => void;
+  onManageUsersSave?: (kpiIds: string[], assigneeIds: number[]) => Promise<void>;
   users?: FilterUser[];
   departments?: FilterDepartment[];
 }
@@ -304,6 +305,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   onDeleteKpi,
   onEditKpi,
   onArchiveSelected,
+  onManageUsersSave,
   users = [],
   departments = [],
 }) => {
@@ -318,6 +320,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   const [selectedManageUsers, setSelectedManageUsers] = useState<Set<number>>(
     new Set()
   );
+  const [isSavingManageUsers, setIsSavingManageUsers] = useState(false);
 
   const manageUsers = useMemo(() => {
     if (!manageKpi) return [] as FilterUser[];
@@ -356,6 +359,8 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       const matchesUser =
         selectedUser === "all" ||
         String(k.assigneeId ?? "") === selectedUser ||
+        (Array.isArray(k.assigneeIds) &&
+          k.assigneeIds.some((id) => String(id) === selectedUser)) ||
         k.owner.toLowerCase() ===
           (users.find((u) => String(u.id) === selectedUser)?.name.toLowerCase() ?? "");
 
@@ -426,6 +431,12 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setManageKpi(kpi);
     setSelectedManageUsers(() => {
       const next = new Set<number>();
+      if (Array.isArray(kpi.assigneeIds)) {
+        kpi.assigneeIds.forEach((id) => {
+          const parsed = Number(id);
+          if (Number.isFinite(parsed)) next.add(parsed);
+        });
+      }
       if (kpi.assigneeId != null) {
         next.add(Number(kpi.assigneeId));
       }
@@ -460,6 +471,12 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setManageKpi(firstSelected);
     setSelectedManageUsers(() => {
       const next = new Set<number>();
+      if (Array.isArray(firstSelected.assigneeIds)) {
+        firstSelected.assigneeIds.forEach((id) => {
+          const parsed = Number(id);
+          if (Number.isFinite(parsed)) next.add(parsed);
+        });
+      }
       if (firstSelected.assigneeId != null) {
         next.add(Number(firstSelected.assigneeId));
       }
@@ -477,6 +494,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
               ...item,
               owner: "Unassigned",
               assigneeId: null,
+              assigneeIds: [],
             }
           : item
       )
@@ -500,7 +518,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setSelectedIds(new Set());
   };
 
-  const handleSaveManageUsers = () => {
+  const handleSaveManageUsers = async () => {
     if (!manageKpi) return;
 
     const selectedUserList = users.filter((u) => selectedManageUsers.has(u.id));
@@ -508,29 +526,44 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       selectedUserList.length > 0
         ? selectedUserList.map((u) => u.name).join(", ")
         : "Unassigned";
+    const assigneeIds = selectedUserList.map((u) => Number(u.id));
     const primaryAssigneeId = selectedUserList[0]?.id ?? null;
 
     const targetIds = bulkManageIds ?? new Set([manageKpi.id]);
 
-    setKpis((prev) =>
-      prev.map((item) =>
-        targetIds.has(item.id)
-          ? {
-              ...item,
-              owner: ownerText,
-              assigneeId: primaryAssigneeId,
-            }
-          : item
-      )
-    );
+    try {
+      setIsSavingManageUsers(true);
 
-    toast.success(
-      bulkManageIds
-        ? `User assignments updated for ${targetIds.size} KPI(s)`
-        : "KPI user assignments updated"
-    );
-    setSelectedIds(new Set());
-    handleCloseManage();
+      if (onManageUsersSave) {
+        await onManageUsersSave(Array.from(targetIds), assigneeIds);
+      }
+
+      setKpis((prev) =>
+        prev.map((item) =>
+          targetIds.has(item.id)
+            ? {
+                ...item,
+                owner: ownerText,
+                assigneeId: primaryAssigneeId,
+                assigneeIds,
+              }
+            : item
+        )
+      );
+
+      toast.success(
+        bulkManageIds
+          ? `User assignments updated for ${targetIds.size} KPI(s)`
+          : "KPI user assignments updated"
+      );
+      setSelectedIds(new Set());
+      handleCloseManage();
+    } catch (error) {
+      console.error("Manage users save error:", error);
+      toast.error("Failed to save user assignments");
+    } finally {
+      setIsSavingManageUsers(false);
+    }
   };
 
   const filterSelectClass = cn(
@@ -816,6 +849,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   <button
                     type="button"
                     onClick={handleCloseManage}
+                    disabled={isSavingManageUsers}
                     className="inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50"
                   >
                     Cancel
@@ -823,9 +857,17 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   <button
                     type="button"
                     onClick={handleSaveManageUsers}
+                    disabled={isSavingManageUsers}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a]"
                   >
-                    Save Changes
+                    {isSavingManageUsers ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </button>
                 </div>
               </div>

@@ -1121,6 +1121,8 @@ const CustomersAdd = () => {
         fax: "",
     });
 
+
+
     const [shipping, setShipping] = useState({
         attention: "",
         country: "",
@@ -1285,7 +1287,7 @@ const CustomersAdd = () => {
             return;
         }
 
-        if (form.gst_preference === "regular" || form.gst_preference === "composition") {
+        if (form.gst_treatment === "registered_regular" || form.gst_treatment === "registered_composition") {
             if (!form.gstin) {
                 toast.error("GSTIN is required for Regular/Composition customers");
                 return;
@@ -1321,6 +1323,8 @@ const CustomersAdd = () => {
             mobile: form.mobile || '',
             contact_person: billing.attention || ''
         };
+
+       
 
         const shippingPayload = {
             attention: shipping.attention || '',
@@ -1371,27 +1375,26 @@ const CustomersAdd = () => {
                 enable_portal: form.enable_portal || false,
                 lock_account_ledger_id: form.lock_account_ledger_id || null,
 
-                gstin: form.gstin || null,
-                gst_preference: form.gst_preference || null,
+                // gstin: form.gstin || null,
+                gst_preference: form.gst_treatment || null,
                 tax_preference: form.tax_preference || null,
-                place_of_supply:
-                    form.gst_preference === "overseas" ? null : form.place_of_supply || null,
+                
                 tax_exemption_id:
                     form.tax_preference === "non_taxable"
                         ? form.tax_exemption_id || null
                         : null,
 
-                business_legal_name:
-                    form.gst_preference === "regular" ||
-                        form.gst_preference === "composition"
-                        ? form.business_legal_name || null
-                        : null,
+                // business_legal_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_legal_name || null
+                //         : null,
 
-                business_trade_name:
-                    form.gst_preference === "regular" ||
-                        form.gst_preference === "composition"
-                        ? form.business_trade_name || null
-                        : null,
+                // business_trade_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_trade_name || null
+                //         : null,
 
                 gst_tds_enabled:
                     form.tax_preference === "taxable"
@@ -1399,9 +1402,28 @@ const CustomersAdd = () => {
                         : false,
 
                 remarks: remarksPayload,
-                billing_address_attributes: billingPayload,
-                shipping_address_attributes: shippingPayload,
-                contact_persons_attributes: contactPersonsPayload
+                default_billing_address_attributes: billingPayload,
+                 default_shipping_address_attributes: shippingPayload,
+                contact_persons_attributes: contactPersonsPayload,
+
+                 primary_gst_detail_attributes: {
+      gstin: form.gstin || null,
+
+      business_legal_name:
+        form.gst_treatment === "registered_regular" ||
+        form.gst_treatment === "registered_composition"
+          ? form.business_legal_name || null
+          : null,
+
+          place_of_supply:
+                    form.gst_treatment === "overseas" ? null : form.place_of_supply || null,
+
+      business_trade_name:
+        form.gst_treatment === "registered_regular" ||
+        form.gst_treatment === "registered_composition"
+          ? form.business_trade_name || null
+          : null,
+    }
             }
         };
         console.log("Submitting Customer Payload:", payload);

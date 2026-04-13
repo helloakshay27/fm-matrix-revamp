@@ -14,7 +14,9 @@ export interface KPICardData {
   // Optional API fields
   departmentId?: number | null;
   assigneeId?: number | null;
+  assigneeIds?: number[];
   description?: string;
+  weight?: number;
   _raw?: any;
 }
 
