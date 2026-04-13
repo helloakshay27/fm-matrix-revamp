@@ -36,17 +36,12 @@ export const AddServicePage = () => {
 
   const [errors, setErrors] = useState({
     serviceName: false,
-    executionType: false,
-    siteId: false,
     buildingId: false,
-    wingId: false,
-    areaId: false,
-    floorId: false,
   });
 
   // Upload constraints
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-  const ALLOWED_EXTS = new Set(['pdf','jpg','jpeg','xls','xlsx']);
+  const ALLOWED_EXTS = new Set(['pdf', 'jpg', 'jpeg', 'xls', 'xlsx']);
   const getExt = (name: string) => (name.split('.').pop() || '').toLowerCase();
   const formatMB = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 
@@ -56,23 +51,8 @@ export const AddServicePage = () => {
     if (field === 'serviceName' && value.toString().trim() !== '') {
       setErrors(prev => ({ ...prev, serviceName: false }));
     }
-    if (field === 'executionType' && value !== '') {
-      setErrors(prev => ({ ...prev, executionType: false }));
-    }
-    if (field === 'siteId' && value !== null) {
-      setErrors(prev => ({ ...prev, siteId: false }));
-    }
     if (field === 'buildingId' && value !== null) {
       setErrors(prev => ({ ...prev, buildingId: false }));
-    }
-    if (field === 'wingId' && value !== null) {
-      setErrors(prev => ({ ...prev, wingId: false }));
-    }
-    if (field === 'areaId' && value !== null) {
-      setErrors(prev => ({ ...prev, areaId: false }));
-    }
-    if (field === 'floorId' && value !== null) {
-      setErrors(prev => ({ ...prev, floorId: false }));
     }
   };
 
@@ -83,11 +63,7 @@ export const AddServicePage = () => {
     }));
     setErrors(prev => ({
       ...prev,
-      siteId: location.siteId !== null ? false : prev.siteId,
       buildingId: location.buildingId !== null ? false : prev.buildingId,
-      wingId: location.wingId !== null ? false : prev.wingId,
-      areaId: location.areaId !== null ? false : prev.areaId,
-      floorId: location.floorId !== null ? false : prev.floorId,
     }));
   }, []);
 
@@ -139,40 +115,17 @@ export const AddServicePage = () => {
     setSubmittingAction(action);
 
     const hasServiceNameError = formData.serviceName.trim() === '';
-    const hasExecutionTypeError = formData.executionType === '';
-    const hasSiteIdError = formData.siteId === null;
     const hasBuildingIdError = formData.buildingId === null;
-    const hasWingIdError = formData.wingId === null;
-    const hasAreaIdError = formData.areaId === null;
-    const hasFloorIdError = formData.floorId === null;
 
-    if (
-      hasServiceNameError ||
-      hasExecutionTypeError ||
-      hasSiteIdError ||
-      hasBuildingIdError ||
-      hasWingIdError ||
-      hasAreaIdError ||
-      hasFloorIdError
-    ) {
+    if (hasServiceNameError || hasBuildingIdError) {
       setErrors({
         serviceName: hasServiceNameError,
-        executionType: hasExecutionTypeError,
-        siteId: hasSiteIdError,
         buildingId: hasBuildingIdError,
-        wingId: hasWingIdError,
-        areaId: hasAreaIdError,
-        floorId: hasFloorIdError,
       });
 
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
-      if (hasExecutionTypeError) errorFields.push('Execution Type');
-      if (hasSiteIdError) errorFields.push('Site');
       if (hasBuildingIdError) errorFields.push('Building');
-      if (hasWingIdError) errorFields.push('Wing');
-      if (hasAreaIdError) errorFields.push('Area');
-      if (hasFloorIdError) errorFields.push('Floor');
 
       toast.info(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
         duration: 5000,
@@ -185,12 +138,7 @@ export const AddServicePage = () => {
 
     setErrors({
       serviceName: false,
-      executionType: false,
-      siteId: false,
       buildingId: false,
-      wingId: false,
-      areaId: false,
-      floorId: false,
     });
 
     const sendData = new FormData();
@@ -344,11 +292,10 @@ export const AddServicePage = () => {
             <FormControl
               fullWidth
               variant="outlined"
-              error={errors.executionType}
               sx={{ '& .MuiInputBase-root': fieldStyles }}
             >
               <InputLabel shrink>
-                Execution Type<span style={{ color: '#C72030' }}>*</span>
+                Execution Type
               </InputLabel>
               <MuiSelect
                 value={formData.executionType}
@@ -362,9 +309,6 @@ export const AddServicePage = () => {
                 <MenuItem value="internal">Internal</MenuItem>
                 <MenuItem value="external">External</MenuItem>
               </MuiSelect>
-              {errors.executionType && (
-                <p className="text-red-600 text-xs mt-1">Execution Type is required</p>
-              )}
             </FormControl>
 
             {/* UOM Field (Not required, no red asterisk) */}
@@ -392,18 +336,10 @@ export const AddServicePage = () => {
             onLocationChange={handleLocationChange}
             resetTrigger={resetLocationFields}
             errors={{
-              siteId: errors.siteId,
               buildingId: errors.buildingId,
-              wingId: errors.wingId,
-              areaId: errors.areaId,
-              floorId: errors.floorId,
             }}
             helperTexts={{
-              siteId: errors.siteId ? 'Site is required' : '',
               buildingId: errors.buildingId ? 'Building is required' : '',
-              wingId: errors.wingId ? 'Wing is required' : '',
-              areaId: errors.areaId ? 'Area is required' : '',
-              floorId: errors.floorId ? 'Floor is required' : '',
             }}
             disabled={isSubmitting}
           />
