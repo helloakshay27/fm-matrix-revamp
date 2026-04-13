@@ -136,7 +136,7 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
     setRelatedUrl(kpi.description ?? "");
     setTargetValue(String(kpi.target ?? "0"));
     setPriority(kpi.priority ?? "medium");
-    setWeight("10");
+    setWeight(kpi.weight != null ? String(kpi.weight) : "10");
   }, [kpi, open, resolvedDepartment]);
 
   const handleSubmit = async (e: React.FormEvent) => {
