@@ -52,6 +52,7 @@ type RawKpiData = {
   priority?: string;
   department_id?: number;
   assignee_id?: number;
+  assignee_ids?: Array<number | string>;
   description?: string;
 };
 
@@ -75,6 +76,7 @@ type KpiPayload = {
   current_value: number;
   department_id?: number | null;
   assignee_id?: number | null;
+  assignee_ids?: number[];
 };
 
 type KpiUpdatePayload = {
@@ -564,6 +566,21 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
   const priority = (priorityMap[raw.priority?.toLowerCase() ?? "medium"] ??
     "medium") as "low" | "medium" | "high";
 
+  const assigneeIds = Array.isArray(raw.assignee_ids)
+    ? raw.assignee_ids
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id))
+    : raw.assignee_id != null
+      ? [Number(raw.assignee_id)]
+      : [];
+
+  const primaryAssigneeId =
+    assigneeIds.length > 0
+      ? assigneeIds[0]
+      : raw.assignee_id != null
+        ? Number(raw.assignee_id)
+        : undefined;
+
   return {
     id: String(raw.id ?? Math.random()),
     name: raw.name ?? raw.kpi_name ?? "Untitled KPI",
@@ -587,7 +604,8 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
     tags: [raw.category ?? categoryMap[raw.category] ?? "Operations", "Individual"],
     priority,
     departmentId: raw.department_id,
-    assigneeId: raw.assignee_id,
+    assigneeId: primaryAssigneeId,
+    assigneeIds,
     description: raw.description,
     _raw: raw,
   };
@@ -843,6 +861,33 @@ const updateKpi = async (
     return normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
   } catch (error) {
     console.error("Update KPI error:", error);
+    throw error;
+  }
+};
+
+const assignKpiUsers = async (
+  id: string | number,
+  assigneeIds: number[]
+) => {
+  try {
+    const payload = {
+      kpi: {
+        assignee_id: assigneeIds[0] ?? null,
+        assignee_ids: assigneeIds,
+      },
+    };
+
+    const { data: json } = await Axios.put(
+      `${getApiBaseUrl()}/kpis/${id}`,
+      payload,
+      {
+        headers: apiHeaders(),
+      }
+    );
+
+    return normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
+  } catch (error) {
+    console.error("Assign KPI users error:", error);
     throw error;
   }
 };
@@ -1109,6 +1154,13 @@ const KPI = () => {
     setIsCreating(true);
     try {
       // Transform form data to API format
+      const assigneeIds =
+        Array.isArray(kpiData.assigneeIds) && kpiData.assigneeIds.length > 0
+          ? kpiData.assigneeIds
+          : kpiData.assigneeId != null
+            ? [Number(kpiData.assigneeId)]
+            : [];
+
       const payload: KpiPayload = {
         name: kpiData.name,
         description: kpiData.description,
@@ -1118,7 +1170,8 @@ const KPI = () => {
         target_value: parseFloat(String(kpiData.target)) || 0,
         current_value: parseFloat(String(kpiData.value)) || 0,
         department_id: kpiData.departmentId || null,
-        assignee_id: kpiData.assigneeId || null,
+        assignee_id: assigneeIds[0] ?? null,
+        assignee_ids: assigneeIds,
       };
 
       const newKpi = await createKpi(payload);
@@ -1185,6 +1238,17 @@ const KPI = () => {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleManageUsersSave = async (kpiIds: string[], assigneeIds: number[]) => {
+    const updates = await Promise.all(
+      kpiIds.map((kpiId) => assignKpiUsers(kpiId, assigneeIds))
+    );
+
+    const byId = new Map(updates.map((kpi) => [String(kpi.id), kpi]));
+    setKpis((prev) =>
+      prev.map((kpi) => byId.get(String(kpi.id)) ?? kpi)
+    );
   };
 
   const handleArchiveSelected = (ids: string[]) => {
@@ -1403,6 +1467,7 @@ const KPI = () => {
             onDeleteKpi={handleDeleteKpi}
             onEditKpi={handleEditKpi}
             onArchiveSelected={handleArchiveSelected}
+            onManageUsersSave={handleManageUsersSave}
             users={companyUsers}
             departments={companyDepartments}
           />
