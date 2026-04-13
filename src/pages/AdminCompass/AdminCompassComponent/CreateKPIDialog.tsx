@@ -160,6 +160,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
         departmentId,
         assigneeId,
         assigneeIds: selectedAssigneeIds,
+        weight: parseFloat(weight) || 0,
       };
 
       await onCreated?.(kpiData);

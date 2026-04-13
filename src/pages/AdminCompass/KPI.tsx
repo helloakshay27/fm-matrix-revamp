@@ -54,6 +54,7 @@ type RawKpiData = {
   assignee_id?: number;
   assignee_ids?: Array<number | string>;
   description?: string;
+  weight?: number;
 };
 
 type RawArchivedKpiData = RawKpiData & {
@@ -77,12 +78,16 @@ type KpiPayload = {
   department_id?: number | null;
   assignee_id?: number | null;
   assignee_ids?: number[];
+  weight?: number;
+  priority?: string;
 };
 
 type KpiUpdatePayload = {
   current_value: number;
   target_value: number;
   frequency: "weekly" | "monthly" | "quarterly";
+  weight?: number;
+  priority?: string;
 };
 
 type CompanyUser = {
@@ -607,6 +612,7 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
     assigneeId: primaryAssigneeId,
     assigneeIds,
     description: raw.description,
+    weight: raw.weight != null ? Number(raw.weight) : undefined,
     _raw: raw,
   };
 };
@@ -860,14 +866,21 @@ const updateKpi = async (
     );
     return normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
   } catch (error) {
-    console.error("Update KPI error:", error);
+    if (Axios.isAxiosError(error)) {
+      console.error("[updateKpi] status:", error.response?.status);
+      console.error("[updateKpi] response body:", JSON.stringify(error.response?.data));
+      console.error("[updateKpi] sent payload:", JSON.stringify({ kpi: payload }));
+    } else {
+      console.error("Update KPI error:", error);
+    }
     throw error;
   }
 };
 
 const assignKpiUsers = async (
   id: string | number,
-  assigneeIds: number[]
+  assigneeIds: number[],
+  ownerName?: string
 ) => {
   try {
     const payload = {
@@ -886,11 +899,12 @@ const assignKpiUsers = async (
     );
 
     const normalized = normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
-    // Merge back the assigneeIds we sent in case the API response omits them
+    // Merge back the assigneeIds and owner we sent in case the API response omits them
     return {
       ...normalized,
       assigneeIds: normalized.assigneeIds && normalized.assigneeIds.length > 0 ? normalized.assigneeIds : assigneeIds,
       assigneeId: normalized.assigneeId ?? assigneeIds[0] ?? null,
+      owner: normalized.owner && normalized.owner !== "Unassigned" ? normalized.owner : (ownerName ?? normalized.owner),
     };
   } catch (error) {
     console.error("Assign KPI users error:", error);
@@ -1178,14 +1192,18 @@ const KPI = () => {
         department_id: kpiData.departmentId || null,
         assignee_id: assigneeIds[0] ?? null,
         assignee_ids: assigneeIds,
+        weight: kpiData.weight,
+        priority: kpiData.priority,
       };
 
       const newKpi = await createKpi(payload);
-      // Merge local assigneeIds back in case the API response omits them
+      // Merge local fields back in case the API response omits them
       const mergedKpi: KPICardData = {
         ...newKpi,
         assigneeIds: newKpi.assigneeIds && newKpi.assigneeIds.length > 0 ? newKpi.assigneeIds : assigneeIds,
         assigneeId: newKpi.assigneeId ?? assigneeIds[0] ?? null,
+        owner: newKpi.owner && newKpi.owner !== "Unassigned" ? newKpi.owner : kpiData.owner,
+        priority: (kpiData.priority as KPICardData["priority"]) ?? newKpi.priority,
       };
       setKpis((prev) => [mergedKpi, ...prev]);
       setCreateKpiOpen(false);
@@ -1233,11 +1251,18 @@ const KPI = () => {
         current_value: formValues.currentValue,
         department_id: formValues.departmentId,
         assignee_id: formValues.assigneeId ?? existing.assigneeId ?? null,
+        weight: formValues.weight ? parseFloat(formValues.weight) : undefined,
+        priority: formValues.priority,
       };
 
       const updated = await updateKpi(formValues.id, payload);
+      const mergedUpdated: KPICardData = {
+        ...updated,
+        priority: (formValues.priority as KPICardData["priority"]) ?? updated.priority,
+        weight: formValues.weight ? parseFloat(formValues.weight) : updated.weight,
+      };
       setKpis((prev) =>
-        prev.map((k) => (k.id === String(formValues.id) ? updated : k))
+        prev.map((k) => (k.id === String(formValues.id) ? mergedUpdated : k))
       );
       setEditKpiOpen(false);
       setEditingKpi(null);
@@ -1253,8 +1278,12 @@ const KPI = () => {
   };
 
   const handleManageUsersSave = async (kpiIds: string[], assigneeIds: number[]) => {
+    // Resolve the primary assignee name from companyUsers for owner display
+    const primaryUser = companyUsers.find((u) => u.id === assigneeIds[0]);
+    const ownerName = primaryUser?.name;
+
     const updates = await Promise.all(
-      kpiIds.map((kpiId) => assignKpiUsers(kpiId, assigneeIds))
+      kpiIds.map((kpiId) => assignKpiUsers(kpiId, assigneeIds, ownerName))
     );
 
     const byId = new Map(updates.map((kpi) => [String(kpi.id), kpi]));

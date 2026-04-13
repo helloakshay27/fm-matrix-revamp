@@ -16,6 +16,7 @@ export interface KPICardData {
   assigneeId?: number | null;
   assigneeIds?: number[];
   description?: string;
+  weight?: number;
   _raw?: any;
 }
 
