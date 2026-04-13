@@ -196,7 +196,10 @@ const SmsManagementPage: React.FC = () => {
 
       if (searchTerm?.trim()) {
         const term = searchTerm.trim();
-        params.append("q[template_name_or_module_name_or_function_name_or_service_provider_cont]", term);
+        params.append(
+          "q[template_name_or_module_name_or_function_name_or_service_provider_cont]",
+          term
+        );
       }
 
       Object.entries(activeFilters).forEach(([key, value]) => {
@@ -345,101 +348,8 @@ const SmsManagementPage: React.FC = () => {
     });
   };
 
-  // Check if template already exists for the same organization (any priority, any type)
-  const checkExistingTemplate = async (organizationId: string) => {
-    if (!organizationId || organizationId === "") return false;
-
-    try {
-      const params = new URLSearchParams();
-      if (TOKEN) params.append("token", TOKEN);
-      params.append("q[organization_id_eq]", organizationId);
-
-      const url = `${BASE_URL}/sms_templates.json?${params.toString()}`;
-      const response = await axios.get(url, getAxiosConfig());
-      const data = response.data?.data || response.data?.sms_templates || [];
-
-      console.log(
-        `Checking existing templates for organization ${organizationId}:`,
-        data.length,
-        "templates found"
-      );
-      return data.length > 0;
-    } catch (error) {
-      console.error("Error checking existing template:", error);
-      return false;
-    }
-  };
-
-  // Check if default template already exists
-  const checkExistingDefaultTemplate = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (TOKEN) params.append("token", TOKEN);
-      params.append("q[is_default_eq]", "true");
-
-      const url = `${BASE_URL}/sms_templates.json?${params.toString()}`;
-      const response = await axios.get(url, getAxiosConfig());
-      const data = response.data?.data || response.data?.sms_templates || [];
-
-      console.log(
-        "Checking existing default templates:",
-        data.length,
-        "default templates found"
-      );
-      return data.length > 0;
-    } catch (error) {
-      console.error("Error checking existing default template:", error);
-      return false;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation
-    const requiredFields: (keyof typeof formData)[] = [
-      "module_name",
-      "function_name",
-      "priority",
-      "service_provider",
-      "template_name",
-      "dlt_template_id",
-      "template_url",
-    ];
-
-    // If not default, organization is required
-    if (!formData.is_default && !formData.organization_id) {
-      toast.error("Please select an organization");
-      return;
-    }
-
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("Please complete all required fields");
-      return;
-    }
-
-    // Check for existing template only when creating new template (not editing)
-    if (!editingId && !formData.is_default && formData.organization_id) {
-      const existingTemplate = await checkExistingTemplate(
-        formData.organization_id
-      );
-
-      if (existingTemplate) {
-        toast.error("Template for this organization already exists");
-        return;
-      }
-    }
-
-    // Check for existing default template when creating new default template
-    if (!editingId && formData.is_default) {
-      const existingDefaultTemplate = await checkExistingDefaultTemplate();
-
-      if (existingDefaultTemplate) {
-        toast.error("Default template already exists");
-        return;
-      }
-    }
 
     setIsSubmitting(true);
     try {
@@ -490,13 +400,46 @@ const SmsManagementPage: React.FC = () => {
         is_default: true,
         active: true,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving template:", error);
-      toast.error(
-        editingId
-          ? "Failed to update SMS Template"
-          : "Failed to create SMS Template"
-      );
+
+      let errorMessage = editingId
+        ? "Failed to update SMS Template"
+        : "Failed to create SMS Template";
+
+      if (error.response?.data) {
+        const data = error.response.data;
+
+        // Specific check for organization/template existence
+        const hasTakenError =
+          data.errors &&
+          typeof data.errors === "object" &&
+          Object.values(data.errors).some(
+            (msgs: any) =>
+              Array.isArray(msgs) &&
+              msgs.some((m) => typeof m === "string" && m.includes("taken"))
+          );
+
+        if (hasTakenError) {
+          errorMessage = "Template for this organization already exist";
+        } else if (data.errors) {
+          if (Array.isArray(data.errors)) {
+            errorMessage = data.errors.join(", ");
+          } else if (typeof data.errors === "object") {
+            errorMessage = Object.entries(data.errors)
+              .map(([field, msgs]) => `${field} ${(msgs as any[]).join(", ")}`)
+              .join(" | ");
+          } else if (typeof data.errors === "string") {
+            errorMessage = data.errors;
+          }
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (typeof data === "string") {
+          errorMessage = data;
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -796,7 +739,7 @@ const SmsManagementPage: React.FC = () => {
                       handleFilterChange("organization_id_eq", val.toString())
                     }
                     options={orgOptions}
-                    placeholder="Select Organization"
+                    placeholder="Search and Select Organization"
                     searchable={true}
                   />
                 </div>
@@ -806,7 +749,7 @@ const SmsManagementPage: React.FC = () => {
                     Module Name
                   </Label>
                   <Input
-                    placeholder="e.g. auth"
+                    placeholder="Enter Module Name"
                     value={filters.module_name_eq}
                     onChange={(e) =>
                       handleFilterChange("module_name_eq", e.target.value)
@@ -820,7 +763,7 @@ const SmsManagementPage: React.FC = () => {
                     Function Name
                   </Label>
                   <Input
-                    placeholder="e.g. login"
+                    placeholder="Enter Function Name"
                     value={filters.function_name_cont}
                     onChange={(e) =>
                       handleFilterChange("function_name_cont", e.target.value)
@@ -840,7 +783,7 @@ const SmsManagementPage: React.FC = () => {
                       { value: "primary", label: "Primary" },
                       { value: "secondary", label: "Secondary" },
                     ]}
-                    placeholder="Select Priority"
+                    placeholder="Select Priority Level"
                     searchable={true}
                   />
                 </div>
@@ -850,7 +793,7 @@ const SmsManagementPage: React.FC = () => {
                     Service Provider
                   </Label>
                   <Input
-                    placeholder="e.g. twilio"
+                    placeholder="Enter Service Provider name"
                     value={filters.service_provider_eq}
                     onChange={(e) =>
                       handleFilterChange("service_provider_eq", e.target.value)
@@ -864,7 +807,7 @@ const SmsManagementPage: React.FC = () => {
                     Template Name
                   </Label>
                   <Input
-                    placeholder="e.g. welcome"
+                    placeholder="Enter Template Name"
                     value={filters.template_name_cont}
                     onChange={(e) =>
                       handleFilterChange("template_name_cont", e.target.value)
@@ -878,7 +821,7 @@ const SmsManagementPage: React.FC = () => {
                     DLT Template ID
                   </Label>
                   <Input
-                    placeholder="e.g. 789"
+                    placeholder="Enter DLT Template ID"
                     value={filters.dlt_template_id_eq}
                     onChange={(e) =>
                       handleFilterChange("dlt_template_id_eq", e.target.value)
@@ -892,7 +835,7 @@ const SmsManagementPage: React.FC = () => {
                     Template URL
                   </Label>
                   <Input
-                    placeholder="e.g. https"
+                    placeholder="Enter Template URL"
                     value={filters.template_url_cont}
                     onChange={(e) =>
                       handleFilterChange("template_url_cont", e.target.value)
@@ -912,7 +855,7 @@ const SmsManagementPage: React.FC = () => {
                       { value: "true", label: "Yes" },
                       { value: "false", label: "No" },
                     ]}
-                    placeholder="Any"
+                    placeholder="Select Default Status"
                     searchable={true}
                   />
                 </div>
@@ -928,7 +871,7 @@ const SmsManagementPage: React.FC = () => {
                       { value: "true", label: "Active" },
                       { value: "false", label: "Inactive" },
                     ]}
-                    placeholder="Any"
+                    placeholder="Select Active Status"
                     searchable={true}
                   />
                 </div>
