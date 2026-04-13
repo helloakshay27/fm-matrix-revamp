@@ -80,16 +80,19 @@ const MILESTONE_COLORS = ["#AF8260", "#E5E7EB"];
 const TASK_COLORS = ["#AF8260", "#E5E7EB"];
 
 // ── Column configs ────────────────────────────────────────────────────────────
+// NOTE: width percentages ensure columns fill the table without horizontal scroll.
+// Text wraps to multiple lines instead of overflowing.
 const MILESTONE_ACTIVITY_COLUMNS = [
-  { key: "title", label: "Milestone", sortable: true, defaultVisible: true },
-  { key: "status", label: "Status", sortable: true, defaultVisible: true },
+  { key: "title", label: "Milestone", sortable: true, defaultVisible: true, width: "40%" },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true, width: "20%" },
   {
     key: "completion_percentage",
     label: "% Completed",
     sortable: true,
     defaultVisible: true,
+    width: "20%",
   },
-  { key: "balance", label: "% Balance", sortable: true, defaultVisible: true },
+  { key: "balance", label: "% Balance", sortable: true, defaultVisible: true, width: "20%" },
 ];
 
 const ACTIVITY_COMPLETION_COLUMNS = [
@@ -98,68 +101,75 @@ const ACTIVITY_COMPLETION_COLUMNS = [
     label: "Task",
     sortable: true,
     defaultVisible: true,
-    width: "50%",
+    width: "55%",
   },
   {
     key: "progress",
     label: "% Completion",
     sortable: true,
     defaultVisible: true,
-    width: "50%",
+    width: "45%",
   },
 ];
 
 const TASK_DETAILS_COLUMNS = [
-  { key: "title", label: "Task", sortable: true, defaultVisible: true },
-  { key: "status", label: "Status", sortable: true, defaultVisible: true },
-  { key: "priority", label: "Priority", sortable: true, defaultVisible: true },
+  { key: "title", label: "Task", sortable: true, defaultVisible: true, width: "22%" },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true, width: "13%" },
+  { key: "priority", label: "Priority", sortable: true, defaultVisible: true, width: "10%" },
   {
     key: "related_to_milestone",
     label: "Milestone",
     sortable: true,
     defaultVisible: true,
+    width: "18%",
   },
   {
     key: "responsible_person",
     label: "Responsible Person",
     sortable: true,
     defaultVisible: true,
+    width: "17%",
   },
   {
     key: "completion_percentage",
     label: "% Completed",
     sortable: true,
     defaultVisible: true,
+    width: "10%",
   },
-  { key: "balance", label: "% Balance", sortable: true, defaultVisible: true },
+  { key: "balance", label: "% Balance", sortable: true, defaultVisible: true, width: "10%" },
 ];
 
 const ISSUE_DETAILS_COLUMNS = [
-  { key: "title", label: "Title", sortable: true, defaultVisible: true },
+  { key: "title", label: "Title", sortable: true, defaultVisible: true, width: "20%" },
   {
     key: "description",
     label: "Description",
     sortable: true,
     defaultVisible: true,
+    width: "25%",
   },
-  { key: "priority", label: "Priority", sortable: true, defaultVisible: true },
+  { key: "priority", label: "Priority", sortable: true, defaultVisible: true, width: "10%" },
   {
     key: "related_to_milestone",
     label: "Milestone",
     sortable: true,
     defaultVisible: true,
+    width: "18%",
   },
   {
     key: "related_to_task",
     label: "Task",
     sortable: true,
     defaultVisible: true,
+    width: "15%",
   },
   {
     key: "responsible_person",
     label: "Responsible Person",
     sortable: true,
     defaultVisible: true,
+    width: "12%",
   },
 ];
 
@@ -184,14 +194,14 @@ const renderProgressCell = (value: number | null) => {
   if (value === null || value === undefined)
     return <span className="text-gray-300 text-xs">—</span>;
   return (
-    <div className="flex items-center gap-2 min-w-[80px]">
-      <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+    <div className="flex items-center gap-2 min-w-0 w-full">
+      <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden min-w-0">
         <div
           className="h-2 rounded-full"
           style={{ width: `${Math.min(value, 100)}%`, background: "#AF8260" }}
         />
       </div>
-      <span className="text-xs font-semibold text-gray-700 w-8 text-right">
+      <span className="text-xs font-semibold text-gray-700 w-8 text-right shrink-0">
         {value}%
       </span>
     </div>
@@ -310,6 +320,7 @@ const ChartCard: React.FC<{
       </h3>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>
+    {/* overflow-hidden prevents any child from causing horizontal scroll */}
     <div className="flex-1 w-full overflow-hidden">{children}</div>
   </div>
 );
@@ -929,7 +940,6 @@ const ReportAnalytics: React.FC = () => {
         checkPage(200);
         sectionHeader(title);
 
-        // Draw on an offscreen canvas
         const SIZE = 400;
         const canvas = document.createElement("canvas");
         canvas.width = SIZE;
@@ -944,7 +954,6 @@ const ReportAnalytics: React.FC = () => {
         const total = data.reduce((s, d) => s + d.value, 0) || 1;
         let startAngle = -Math.PI / 2;
 
-        // Draw each segment
         data.forEach((d, i) => {
           if (d.value <= 0) return;
           const sweep = (d.value / total) * 2 * Math.PI;
@@ -964,15 +973,13 @@ const ReportAnalytics: React.FC = () => {
           startAngle += sweep;
         });
 
-        // Convert canvas to PNG base64 and embed in PDF
         const imgData = canvas.toDataURL("image/png");
-        const imgW = 90; // pts
+        const imgW = 90;
         const imgH = 90;
         const imgX = MARGIN + 10;
         const imgY = y;
         pdf.addImage(imgData, "PNG", imgX, imgY, imgW, imgH);
 
-        // Legend to the right of the chart
         const legendX = imgX + imgW + 16;
         const legendStartY = imgY + imgH / 2 - (data.length * 18) / 2;
         data.forEach((d, i) => {
@@ -992,13 +999,13 @@ const ReportAnalytics: React.FC = () => {
       pdf.setTextColor(107, 114, 128);
       pdf.setFont("helvetica", "normal");
       pdf.text("Reports > Analytics", MARGIN, y);
-      y += 24; // Increased space here
+      y += 24;
 
       pdf.setFontSize(18);
       pdf.setTextColor(17, 24, 39);
       pdf.setFont("helvetica", "bold");
       pdf.text("REPORT ANALYTICS", MARGIN, y);
-      y += 30; // Increased space here as well to balance below the title
+      y += 30;
 
       // ── Project banner ────────────────────────────────────────────────────
       if (project) {
@@ -1013,7 +1020,6 @@ const ReportAnalytics: React.FC = () => {
         pdf.text(`Project ID: #${project.id}`, MARGIN + 12, y + 30);
         y += 54;
 
-        // KPI cards
         const kpis = [
           { label: "Start Date", value: formatDate(project.start_date) },
           { label: "End Date", value: formatDate(project.end_date) },
@@ -1074,8 +1080,6 @@ const ReportAnalytics: React.FC = () => {
         y += 76;
       }
 
-      // ── Tables & charts ───────────────────────────────────────────────────
-
       // ── Milestone Progress + Task Wise Progress side by side ──────────────
       const showMilestone = orderedVisible.includes("milestoneProgress");
       const showTask = orderedVisible.includes("taskWiseProgress");
@@ -1085,7 +1089,6 @@ const ReportAnalytics: React.FC = () => {
 
         const HALF_W = CONTENT_W / 2 - 6;
 
-        // Helper: draw one donut panel into a specific X offset
         const drawDonutPanel = (
           panelTitle: string,
           data: { name: string; value: number }[],
@@ -1124,9 +1127,8 @@ const ReportAnalytics: React.FC = () => {
           const imgW = 70;
           const imgH = 70;
           const imgX = MARGIN + offsetX + 8;
-          const imgY = y + 26; // below section header
+          const imgY = y + 26;
 
-          // Section header for this panel
           drawRect(MARGIN + offsetX, y, HALF_W, 20, [246, 244, 238]);
           pdf.setFontSize(9);
           pdf.setTextColor(26, 26, 26);
@@ -1135,7 +1137,6 @@ const ReportAnalytics: React.FC = () => {
 
           pdf.addImage(imgData, "PNG", imgX, imgY, imgW, imgH);
 
-          // Legend
           const legendX = imgX + imgW + 12;
           const legendStartY = imgY + imgH / 2 - (data.length * 18) / 2;
           data.forEach((d, i) => {
@@ -1149,48 +1150,35 @@ const ReportAnalytics: React.FC = () => {
         };
 
         if (showMilestone && showTask) {
-          // Both side by side
           drawDonutPanel(
             "Milestone Progress",
             milestoneChartData,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
+            [[175, 130, 96], [229, 231, 235]],
             0
           );
           drawDonutPanel(
             "Task Wise Progress",
             taskChartData,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
+            [[175, 130, 96], [229, 231, 235]],
             HALF_W + 12
           );
         } else if (showMilestone) {
           drawDonutPanel(
             "Milestone Progress",
             milestoneChartData,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
+            [[175, 130, 96], [229, 231, 235]],
             0
           );
         } else if (showTask) {
           drawDonutPanel(
             "Task Wise Progress",
             taskChartData,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
+            [[175, 130, 96], [229, 231, 235]],
             0
           );
         }
 
-        y += 116; // move y past the donut row
+        y += 116;
       }
 
       if (orderedVisible.includes("milestoneActivityProgress")) {
@@ -1664,7 +1652,11 @@ const ReportAnalytics: React.FC = () => {
                       title="Milestone Activity Wise Progress"
                       action={milestoneSearchAction}
                     >
-                      <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                      {/*
+                        overflow-hidden on the wrapper prevents horizontal scroll.
+                        Vertical scroll is allowed for long lists.
+                      */}
+                      <div className="max-h-[400px] overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
                         <EnhancedTable
                           data={filteredMilestoneTableData}
                           columns={MILESTONE_ACTIVITY_COLUMNS}
@@ -1682,8 +1674,9 @@ const ReportAnalytics: React.FC = () => {
                                 </span>
                               );
                             }
+                            // whitespace-normal + break-words = text wraps, no scroll
                             return (
-                              <div className="flex items-center h-full py-1 text-xs text-gray-600 whitespace-normal break-words">
+                              <div className="flex items-center h-full py-1 text-xs text-gray-600 whitespace-normal break-words min-w-0">
                                 {item[columnKey] as string}
                               </div>
                             );
@@ -1709,18 +1702,19 @@ const ReportAnalytics: React.FC = () => {
                       title="Activity % Completion - Graphical"
                       action={taskSearchAction}
                     >
-                      <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                      <div className="max-h-[400px] overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar">
                         <EnhancedTable
                           data={filteredActivityTableData}
                           columns={ACTIVITY_COMPLETION_COLUMNS}
                           renderCell={(item, columnKey) => {
                             if (columnKey === "title")
                               return (
-                                <div
-                                  className="flex items-center h-full py-1 truncate w-[150px] sm:w-[250px] md:w-[350px] lg:w-[450px]"
-                                  title={item.title as string}
-                                >
-                                  <span className="text-sm font-medium text-gray-800">
+                                /*
+                                  Removed fixed w-[...] breakpoint widths.
+                                  w-full + whitespace-normal = fills column, wraps text.
+                                */
+                                <div className="flex items-center h-full py-1 w-full min-w-0">
+                                  <span className="text-sm font-medium text-gray-800 whitespace-normal break-words min-w-0">
                                     {item.title as string}
                                   </span>
                                 </div>
@@ -1748,43 +1742,47 @@ const ReportAnalytics: React.FC = () => {
                       title="Task Details"
                       action={taskDetailsSearchAction}
                     >
-                      <EnhancedTable
-                        data={filteredTaskDetailsData}
-                        columns={TASK_DETAILS_COLUMNS}
-                        renderCell={(item, columnKey) => {
-                          if (columnKey === "status") {
-                            const n = (item.status as string)?.replace(
-                              /_/g,
-                              " "
-                            );
+                      {/* overflow-x-hidden prevents horizontal scroll on the table */}
+                      <div className="overflow-x-hidden">
+                        <EnhancedTable
+                          data={filteredTaskDetailsData}
+                          columns={TASK_DETAILS_COLUMNS}
+                          renderCell={(item, columnKey) => {
+                            if (columnKey === "status") {
+                              const n = (item.status as string)?.replace(
+                                /_/g,
+                                " "
+                              );
+                              return (
+                                <span
+                                  className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize leading-none ${STATUS_STYLES[item.status as string] ?? "bg-gray-100 text-gray-600"}`}
+                                >
+                                  {n}
+                                </span>
+                              );
+                            }
+                            if (columnKey === "priority")
+                              return (
+                                <span
+                                  className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold leading-none ${PRIORITY_STYLES[item.priority as string] ?? "bg-gray-100 text-gray-600"}`}
+                                >
+                                  {item.priority as string}
+                                </span>
+                              );
+                            // All text cells wrap instead of overflowing
                             return (
-                              <span
-                                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize leading-none ${STATUS_STYLES[item.status as string] ?? "bg-gray-100 text-gray-600"}`}
-                              >
-                                {n}
-                              </span>
+                              <div className="flex items-center h-full py-1 text-sm text-gray-700 whitespace-normal break-words min-w-0">
+                                {item[columnKey] as string}
+                              </div>
                             );
-                          }
-                          if (columnKey === "priority")
-                            return (
-                              <span
-                                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold leading-none ${PRIORITY_STYLES[item.priority as string] ?? "bg-gray-100 text-gray-600"}`}
-                              >
-                                {item.priority as string}
-                              </span>
-                            );
-                          return (
-                            <div className="flex items-center h-full py-1 text-sm text-gray-700 whitespace-normal break-words">
-                              {item[columnKey] as string}
-                            </div>
-                          );
-                        }}
-                        hideTableSearch={true}
-                        hideTableExport={false}
-                        hideColumnsButton
-                        storageKey="task-details-table"
-                        pagination
-                      />
+                          }}
+                          hideTableSearch={true}
+                          hideTableExport={false}
+                          hideColumnsButton
+                          storageKey="task-details-table"
+                          pagination
+                        />
+                      </div>
                     </ChartCard>
                   </SortableChartItem>
                 );
@@ -1800,30 +1798,34 @@ const ReportAnalytics: React.FC = () => {
                       title="Issue Details"
                       action={issueDetailsSearchAction}
                     >
-                      <EnhancedTable
-                        data={filteredIssueDetailsData}
-                        columns={ISSUE_DETAILS_COLUMNS}
-                        renderCell={(item, columnKey) => {
-                          if (columnKey === "priority")
+                      {/* overflow-x-hidden prevents horizontal scroll on the table */}
+                      <div className="overflow-x-hidden">
+                        <EnhancedTable
+                          data={filteredIssueDetailsData}
+                          columns={ISSUE_DETAILS_COLUMNS}
+                          renderCell={(item, columnKey) => {
+                            if (columnKey === "priority")
+                              return (
+                                <span
+                                  className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold leading-none ${PRIORITY_STYLES[item.priority as string] ?? "bg-gray-100 text-gray-600"}`}
+                                >
+                                  {item.priority as string}
+                                </span>
+                              );
+                            // All text cells wrap instead of overflowing
                             return (
-                              <span
-                                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold leading-none ${PRIORITY_STYLES[item.priority as string] ?? "bg-gray-100 text-gray-600"}`}
-                              >
-                                {item.priority as string}
-                              </span>
+                              <div className="flex items-center h-full py-1 text-sm text-gray-700 whitespace-normal break-words min-w-0">
+                                {item[columnKey] as string}
+                              </div>
                             );
-                          return (
-                            <div className="flex items-center h-full py-1 text-sm text-gray-700 whitespace-normal break-words">
-                              {item[columnKey] as string}
-                            </div>
-                          );
-                        }}
-                        hideTableSearch={true}
-                        hideTableExport={false}
-                        hideColumnsButton
-                        storageKey="issue-details-table"
-                        pagination
-                      />
+                          }}
+                          hideTableSearch={true}
+                          hideTableExport={false}
+                          hideColumnsButton
+                          storageKey="issue-details-table"
+                          pagination
+                        />
+                      </div>
                     </ChartCard>
                   </SortableChartItem>
                 );
