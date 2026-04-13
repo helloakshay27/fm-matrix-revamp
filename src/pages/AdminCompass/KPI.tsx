@@ -885,7 +885,13 @@ const assignKpiUsers = async (
       }
     );
 
-    return normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
+    const normalized = normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
+    // Merge back the assigneeIds we sent in case the API response omits them
+    return {
+      ...normalized,
+      assigneeIds: normalized.assigneeIds && normalized.assigneeIds.length > 0 ? normalized.assigneeIds : assigneeIds,
+      assigneeId: normalized.assigneeId ?? assigneeIds[0] ?? null,
+    };
   } catch (error) {
     console.error("Assign KPI users error:", error);
     throw error;
@@ -1175,7 +1181,13 @@ const KPI = () => {
       };
 
       const newKpi = await createKpi(payload);
-      setKpis((prev) => [newKpi, ...prev]);
+      // Merge local assigneeIds back in case the API response omits them
+      const mergedKpi: KPICardData = {
+        ...newKpi,
+        assigneeIds: newKpi.assigneeIds && newKpi.assigneeIds.length > 0 ? newKpi.assigneeIds : assigneeIds,
+        assigneeId: newKpi.assigneeId ?? assigneeIds[0] ?? null,
+      };
+      setKpis((prev) => [mergedKpi, ...prev]);
       setCreateKpiOpen(false);
       toast.success("KPI created successfully");
     } catch (error) {
