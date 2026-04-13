@@ -245,6 +245,29 @@ export const RecurringBillCreatePage: React.FC = () => {
   ]);
   const [sourceOfSupply, setSourceOfSupply] = useState("");
   const [destinationOfSupply, setDestinationOfSupply] = useState("");
+  const [orgState, setOrgState] = useState("");
+
+  // Fetch organisation state on mount
+  useEffect(() => {
+    const fetchOrgState = async () => {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
+      const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+      if (!organisation_id || !baseUrl || !token) return;
+      try {
+        const res = await axios.get(
+          `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const org = res.data?.organization || res.data;
+        setOrgState(org?.address?.state || '');
+      } catch {
+        // silently fail
+      }
+    };
+    fetchOrgState();
+  }, []);
   const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
     "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
@@ -927,21 +950,21 @@ if (!profileName || profileName.trim() === "") {
     }
   }, [selectedTax, taxOptions, afterDiscount]);
 
-  // Re-preselect tax on all taxable items when destination changes
+  // Re-preselect tax on all taxable items when destination or orgState changes
   useEffect(() => {
     if (!destinationOfSupply) return;
-    const isMaharashtra = destinationOfSupply === "Maharashtra";
+    const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
     setItems(prev => prev.map(item => {
       if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
       const matched = itemOptions.find(opt => opt.name === item.name);
       if (!matched) return item;
       return {
         ...item,
-        item_tax_type: isMaharashtra ? "tax_group" : "tax_rate",
-        tax_group_id: isMaharashtra ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+        item_tax_type: isSameState ? "tax_group" : "tax_rate",
+        tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
       };
     }));
-  }, [destinationOfSupply]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [destinationOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedTaxGroups = items
     .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
@@ -1045,6 +1068,10 @@ if (!profileName || profileName.trim() === "") {
                     onChange={(e) => {
                       const customer = customers.find(c => c.id === e.target.value);
                       setSelectedCustomer(customer || null);
+                      // if (customer) {
+                      //   const vendorState = customer.state || '';
+                      //   if (vendorState) setSourceOfSupply(vendorState);
+                      // }
                     }}
                     displayEmpty
                     sx={fieldStyles}
@@ -1785,9 +1812,9 @@ if (!profileName || profileName.trim() === "") {
                                   updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
                                 }
                                 if (selectedItem.tax_preference === 'taxable') {
-                                  const isMaharashtra = destinationOfSupply === 'Maharashtra';
-                                  updateItem(index, 'item_tax_type', isMaharashtra ? 'tax_group' : 'tax_rate');
-                                  updateItem(index, 'tax_group_id', isMaharashtra ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
+                                  const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                  updateItem(index, 'item_tax_type', isSameState ? 'tax_group' : 'tax_rate');
+                                  updateItem(index, 'tax_group_id', isSameState ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
                                 }
                                 if (selectedItem.tax_preference === 'out_of_scope') {
                                   updateItem(index, 'item_tax_type', 'out_of_scope');
@@ -1882,7 +1909,7 @@ if (!profileName || profileName.trim() === "") {
                             displayEmpty
                             onChange={(e) => {
                               const value = e.target.value;
-                              const isMaharashtra = destinationOfSupply === "Maharashtra";
+                              const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
                               if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
                                 updateItem(index, "item_tax_type", value);
@@ -1892,7 +1919,7 @@ if (!profileName || profileName.trim() === "") {
                                   setExemptionModalOpen(true);
                                 }
                               } else {
-                                updateItem(index, "item_tax_type", isMaharashtra ? "tax_group" : "tax_rate");
+                                updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
                                 updateItem(index, "tax_group_id", value);
                               }
                             }}
@@ -1905,21 +1932,24 @@ if (!profileName || profileName.trim() === "") {
                               </MenuItem>
                             ))}
 
-                            {destinationOfSupply === "Maharashtra" ? (
-                              [
-                                <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
-                                ...taxGroups.map((group) => (
-                                  <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
-                                ))
-                              ]
-                            ) : (
-                              [
-                                <MenuItem key="__divider__" disabled>Tax Rates</MenuItem>,
-                                ...taxRates.map((rate) => (
-                                  <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
-                                ))
-                              ]
-                            )}
+                            {(() => {
+                              const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                              return isSameState ? (
+                                [
+                                  <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                  ...taxGroups.map((group) => (
+                                    <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                  ))
+                                ]
+                              ) : (
+                                [
+                                  <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                  ...taxRates.map((rate) => (
+                                    <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                  ))
+                                ]
+                              );
+                            })()}
                           </Select>
                         </FormControl>
                       </td>
