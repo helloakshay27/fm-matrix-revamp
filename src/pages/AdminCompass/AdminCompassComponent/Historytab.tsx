@@ -17,7 +17,24 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBaseUrl, getAuthHeaders } from "./Shared";
-import { toast } from "sonner"; // ← ADDED: sonner toast (same as SystemAndSOP)
+import { toast } from "sonner";
+
+// Helper to extract ONLY the Key Discussion points and ignore the detailed reports
+const cleanDiscussionPoints = (rawText: string) => {
+  if (!rawText) return "";
+  const splitMarker = "DETAILED REPORTS";
+  if (rawText.includes(splitMarker)) {
+    let cleaned = rawText.split(splitMarker)[0];
+    cleaned = cleaned.replace(/---\s*$/, "").trim();
+    return cleaned;
+  }
+  // Fallback in case user accidentally deletes "DETAILED REPORTS" text but leaves the "---" line
+  if (rawText.includes("---")) {
+    let cleaned = rawText.split("---")[0];
+    return cleaned.trim();
+  }
+  return rawText.trim();
+};
 
 // ─────────────────────────────────────────────
 // Compile all API data into one plain-text block
@@ -26,45 +43,31 @@ const compileMeetingNotes = (historyData: any): string => {
   if (!historyData) return "";
 
   const memberReports: any[] = historyData.member_reports || [];
-  const missedMembers: any[] = historyData.missed_members || [];
-
-  const allMemberReports: any[] = historyData.member_reports || [];
   const meetingHeadUid = historyData.config?.meeting_head?.id;
   const headMemberReport =
-    allMemberReports.find(
+    memberReports.find(
       (r: any) => r.user_id === meetingHeadUid && r.status === "submitted"
     ) ||
-    allMemberReports.find(
+    memberReports.find(
       (r: any) => r.status === "submitted" && r.report_data?.meeting_notes
     ) ||
-    allMemberReports.find((r: any) => r.status === "submitted");
+    memberReports.find((r: any) => r.status === "submitted");
 
   const meetingNotesArr: any[] =
     headMemberReport?.report_data?.meeting_notes || [];
   const firstNote = meetingNotesArr[0] || {};
-  const keyDiscussionPoints: string = firstNote["key_discussion_points"] || "";
-  const missedKey = Object.keys(firstNote).find((k) =>
-    k.startsWith("Team Members Who Missed")
-  );
-  const missedNamesFromNote: string[] = missedKey ? firstNote[missedKey] : [];
 
-  const missedNames =
-    missedNamesFromNote.length > 0
-      ? missedNamesFromNote
-      : missedMembers.map((m: any) => m.name || m);
+  // Extract and clean discussion points from API
+  const keyDiscussionPoints: string = cleanDiscussionPoints(
+    firstNote["key_discussion_points"] || ""
+  );
 
   let text = "";
 
-  if (missedNames.length > 0) {
-    text += `**Team Members Who Missed Report (${missedNames.length}):**\n`;
-    missedNames.forEach((name: string) => {
-      text += `- ${name}\n`;
-    });
+  if (keyDiscussionPoints) {
+    text += keyDiscussionPoints;
     text += "\n";
   }
-
-  text += `**Key Discussion Points:**\n`;
-  text += keyDiscussionPoints ? `${keyDiscussionPoints}\n` : "\n";
 
   const submittedReports = memberReports.filter(
     (r: any) => r.status !== "pending" || !!r.daily_report
@@ -220,7 +223,6 @@ const HistoryTab = () => {
       })
       .then((json) => {
         const data = json?.data ?? json;
-        console.log("📦 historyData full:", JSON.stringify(data, null, 2));
         setHistoryData(data);
       })
       .catch((err) => {
@@ -268,7 +270,7 @@ const HistoryTab = () => {
     return anySubmitted?.journal_id || null;
   };
 
-  // ── Open Edit Modal — with toast guard ── ← CHANGED
+  // ── Open Edit Modal ──
   const handleOpenEditModal = () => {
     const journalId = getMeetingJournalId();
     if (!journalId) {
@@ -278,7 +280,10 @@ const HistoryTab = () => {
       });
       return;
     }
-    setMeetingNotesText(compileMeetingNotes(historyData));
+
+    // Load the full text (including Detailed Reports) into the textarea
+    const fullCompiledNotes = compileMeetingNotes(historyData);
+    setMeetingNotesText(fullCompiledNotes);
     setIsEditModalOpen(true);
   };
 
@@ -311,9 +316,12 @@ const HistoryTab = () => {
       const existingMeetingNotes: any[] =
         existingReportData.meeting_notes || [];
 
+      // Only save the top Key Discussion Points part, ignore any edits made to DETAILED REPORTS
+      const finalDiscussionPoints = cleanDiscussionPoints(meetingNotesText);
+
       const updatedFirstNote = {
         ...(existingMeetingNotes[0] || {}),
-        key_discussion_points: meetingNotesText,
+        key_discussion_points: finalDiscussionPoints,
       };
 
       const payload = {
@@ -326,8 +334,6 @@ const HistoryTab = () => {
           },
         },
       };
-
-      console.log("📦 PATCH payload:", JSON.stringify(payload, null, 2));
 
       const res = await fetch(
         `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
@@ -540,12 +546,16 @@ const HistoryTab = () => {
           <div className="bg-[#CE7A5A] px-6 py-5 rounded-t-[24px]">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <h3
-                  className="text-[22px] font-black !text-white tracking-tight mb-2"
-                  style={{ color: "#ffffff" }}
-                >
-                  {selectedMeetingLabel} for {formattedDateLabel}
+                {/* Fixed the color issue by wrapping text in a span with !important inline styling */}
+                <h3 className="text-[22px] font-black tracking-tight mb-2 m-0 p-0">
+                  <span
+                    className="!text-white"
+                    style={{ color: "#ffffff", display: "inline-block" }}
+                  >
+                    {selectedMeetingLabel} for {formattedDateLabel}
+                  </span>
                 </h3>
+
                 <div className="flex items-center gap-3 flex-wrap mb-1.5">
                   <span className="px-3 py-1 bg-white/20 border border-white/20 !text-white text-[11px] font-black rounded-[8px] uppercase tracking-widest">
                     completed
@@ -591,7 +601,6 @@ const HistoryTab = () => {
                 <button className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all">
                   <Sparkles className="w-4 h-4" /> Generate AI
                 </button>
-                {/* ← CHANGED: onClick now calls handleOpenEditModal which has the toast guard */}
                 <button
                   onClick={handleOpenEditModal}
                   className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all"
@@ -729,7 +738,7 @@ const HistoryTab = () => {
               {/* Modal Body */}
               <div className="px-6 py-5 flex-1 overflow-y-auto bg-white">
                 <label className="text-sm font-bold text-[#1A1A1A] mb-3 block">
-                  Meeting Notes
+                  Meeting Notes & Detailed Reports
                 </label>
                 <textarea
                   value={meetingNotesText}
@@ -737,7 +746,7 @@ const HistoryTab = () => {
                   rows={18}
                   className="w-full bg-white border border-[#CCCCCC] rounded-[12px] px-4 py-3 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#CE7A5A] transition-colors resize-y leading-relaxed"
                   style={{ fontFamily: "'Poppins', sans-serif" }}
-                  placeholder="Enter meeting notes here..."
+                  placeholder="Enter key discussion points here..."
                 />
               </div>
 
