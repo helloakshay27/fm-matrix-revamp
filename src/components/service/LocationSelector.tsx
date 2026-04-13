@@ -107,7 +107,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   useEffect(() => {
     dispatch(fetchSites());
     dispatch(fetchGroups());
-    
+
     // Auto-set site based on user's current site
     const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
     if (userSiteId && !selectedSiteId) {
@@ -244,7 +244,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Wing */}
         <FormControl fullWidth variant="outlined" error={errors.wingId}>
           <InputLabel id="wing-select-label" shrink>
-            Wing<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
+            Wing
           </InputLabel>
           <MuiSelect
             labelId="wing-select-label"
@@ -275,7 +275,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Area */}
         <FormControl fullWidth variant="outlined" error={errors.areaId}>
           <InputLabel id="area-select-label" shrink>
-            Area<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
+            Area
           </InputLabel>
           <MuiSelect
             labelId="area-select-label"
@@ -306,7 +306,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Floor */}
         <FormControl fullWidth variant="outlined" error={errors.floorId}>
           <InputLabel id="floor-select-label" shrink>
-            Floor<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
+            Floor
           </InputLabel>
           <MuiSelect
             labelId="floor-select-label"
