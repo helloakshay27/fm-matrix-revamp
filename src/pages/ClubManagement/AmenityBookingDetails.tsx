@@ -457,7 +457,7 @@ export const AmenityBookingDetailsClubPage = () => {
                     <div key={index} className="flex justify-between items-center pl-4">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">{item.facility_booking_accessory.name}</span>
-                        <span className="text-xs text-gray-400">({item.facility_booking_accessory.quantity} x ₹{item.facility_booking_accessory.price.toFixed(2)})</span>
+                        <span className="text-xs text-gray-400">({item.facility_booking_accessory.quantity} x ₹{item.facility_booking_accessory?.price?.toFixed(2)})</span>
                       </div>
                       <span className="text-sm font-medium">₹{item.facility_booking_accessory.total.toFixed(2)}</span>
                     </div>
@@ -637,8 +637,8 @@ export const AmenityBookingDetailsClubPage = () => {
                           </td>
                           <td className="border border-gray-300 px-4 py-3">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${member.booked_member?.oftype === 'primary'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
                               }`}>
                               {member.booked_member?.oftype || '-'}
                             </span>

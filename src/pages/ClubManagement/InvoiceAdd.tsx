@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ItemSearchInput from '@/components/ItemSearchInput';
 import {
     TextField,
     Button,
@@ -83,6 +84,7 @@ interface ContactPerson {
 interface Item {
     id: string;
     name: string;
+    item_id?: string | null;
     description: string;
     quantity: number | '';
     rate: number | '';
@@ -554,10 +556,17 @@ export const InvoiceAdd: React.FC = () => {
         setItems(prev => {
             const newItems = [...prev];
             newItems[index] = { ...newItems[index], [field]: value };
-
-            // Recalculate amount
             newItems[index].amount = calculateItemAmount(newItems[index]);
+            return newItems;
+        });
+    };
 
+    // Update multiple fields at once (avoids multiple re-renders)
+    const updateItemFields = (index: number, fields: Partial<Item>) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], ...fields };
+            newItems[index].amount = calculateItemAmount(newItems[index]);
             return newItems;
         });
     };
@@ -567,6 +576,7 @@ export const InvoiceAdd: React.FC = () => {
         setItems(prev => [...prev, {
             id: Date.now().toString(),
             name: '',
+            item_id: null,
             description: '',
             quantity: 1,
             rate: 0,
@@ -820,13 +830,16 @@ export const InvoiceAdd: React.FC = () => {
                 const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
                 return found && found.id ? found.id : selectedTax || '';
             })(),
-            lock_account_invoice_items_attributes: items.map(item => ({
-                lock_account_item_id: itemOptions.find(opt => opt.name === item.name)?.id || item.name,
-                rate: item.rate,
-                quantity: item.quantity,
-                total_amount: item.amount,
-                description: item.description || ''
-            })),
+            lock_account_invoice_items_attributes: items.map(item => {
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                return {
+                    ...(resolvedId ? { lock_account_item_id: resolvedId } : { item_name: item.name }),
+                    rate: item.rate,
+                    quantity: item.quantity,
+                    total_amount: item.amount,
+                    description: item.description || ''
+                };
+            }),
             email_contact_persons_attributes: selectedContactPersons.map(id => ({ contact_person_id: id })),
             attachments_attributes: attachments.map(f => ({
                 document: f,
@@ -901,7 +914,12 @@ export const InvoiceAdd: React.FC = () => {
             formData.append('lock_account_invoice[place_of_supply]', placeOfSupply); //new added
             // Invoice items
             items.forEach((item, idx) => {
-                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                if (resolvedId) {
+                    formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
+                } else {
+                    formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][item_name]`, item.name);
+                }
                 formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
                 formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
                 formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
@@ -1530,46 +1548,25 @@ export const InvoiceAdd: React.FC = () => {
                                         <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <Select
+                                                    <ItemSearchInput
                                                         value={item.name}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-
-                                                                // TAX HANDLING
-                                                                if (selectedItem.tax_preference === "non_taxable") {
-                                                                    updateItem(index, "item_tax_type", "non_taxable");
-                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "taxable") {
-                                                                    const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                                    updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
-                                                                    updateItem(index, "tax_group_id", isSameState ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "out_of_scope") {
-                                                                    updateItem(index, "item_tax_type", "out_of_scope");
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "non_gst_supply") {
-                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
-                                                                }
+                                                        itemOptions={itemOptions}
+                                                        onSelect={(selected) => {
+                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                            let taxFields: Partial<Item> = {};
+                                                            if (selected.tax_preference === "non_taxable") {
+                                                                taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
+                                                            } else if (selected.tax_preference === "taxable") {
+                                                                taxFields = { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
+                                                            } else if (selected.tax_preference === "out_of_scope") {
+                                                                taxFields = { item_tax_type: "out_of_scope" };
+                                                            } else if (selected.tax_preference === "non_gst_supply") {
+                                                                taxFields = { item_tax_type: "non_gst_supply" };
                                                             }
+                                                            updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
                                                         }}
-                                                        displayEmpty
-                                                        size="small"
-                                                    >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
+                                                        onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
+                                                    />
                                                 </FormControl>
                                                 <TextField
                                                     fullWidth

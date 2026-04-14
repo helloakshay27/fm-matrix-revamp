@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Download, Pencil } from 'lucide-react';
+import { ChevronLeft, Download, Pencil, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
@@ -182,6 +182,15 @@ export const IncidentNewDetails = () => {
     });
 
     const [reportDownloadLoading, setReportDownloadLoading] = useState(false);
+
+    // Status update modal state
+    const [showStatusModal, setShowStatusModal] = useState(false);
+    const [statusUpdateValue, setStatusUpdateValue] = useState('');
+    const [statusComment, setStatusComment] = useState('');
+    const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
+    const [statusRca, setStatusRca] = useState('');
+    const [statusCorrectiveAction, setStatusCorrectiveAction] = useState('');
+    const [statusPreventiveAction, setStatusPreventiveAction] = useState('');
 
     // Fetch functions
     const fetchInternalUsers = useCallback(async () => {
@@ -1681,6 +1690,83 @@ export const IncidentNewDetails = () => {
     // ]);
 
 
+    const closeStatusModal = useCallback(() => {
+        setShowStatusModal(false);
+        setStatusUpdateValue('');
+        setStatusComment('');
+        setStatusRca('');
+        setStatusCorrectiveAction('');
+        setStatusPreventiveAction('');
+    }, []);
+
+    const handleStatusUpdate = useCallback(async () => {
+        if (!statusUpdateValue) {
+            toast.error('Please select a status');
+            return;
+        }
+        if (!statusComment.trim()) {
+            toast.error('Please enter a comment');
+            return;
+        }
+        if (statusUpdateValue === 'closed') {
+            if (!statusRca.trim()) {
+                toast.error('Please enter the RCA');
+                return;
+            }
+            if (!statusCorrectiveAction.trim()) {
+                toast.error('Please enter the corrective action');
+                return;
+            }
+            if (!statusPreventiveAction.trim()) {
+                toast.error('Please enter the preventive action');
+                return;
+            }
+        }
+        try {
+            setStatusUpdateLoading(true);
+            let baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+
+            if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+            }
+
+            const formData = new FormData();
+            formData.append('about', 'Pms::Incident');
+            formData.append('about_id', id!);
+            formData.append('current_status', statusUpdateValue);
+            formData.append('comment', statusComment.trim());
+
+            if (statusUpdateValue === 'closed') {
+                formData.append('incident[rca]', statusRca.trim());
+                formData.append('incident[corrective_action]', statusCorrectiveAction.trim());
+                formData.append('incident[preventive_action]', statusPreventiveAction.trim());
+            }
+
+            const response = await fetch(`${baseUrl}/pms_incidents_create_osr_log`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                toast.success('Status updated successfully');
+                closeStatusModal();
+                fetchIncidentDetails();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                toast.error(err?.message || 'Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            toast.error('Failed to update status. Please try again.');
+        } finally {
+            setStatusUpdateLoading(false);
+        }
+    }, [statusUpdateValue, statusComment, statusRca, statusCorrectiveAction, statusPreventiveAction, id, fetchIncidentDetails, closeStatusModal]);
+
     const steps = [
         { number: 1, label: 'Report' },
         { number: 2, label: 'Investigate' },
@@ -2012,7 +2098,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Action</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4 w-64">Action</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Target Date</th>
                                                 </tr>
@@ -2096,24 +2182,30 @@ export const IncidentNewDetails = () => {
     };
 
     const ProgressStepper = () => (
-        <div className="flex items-center justify-between px-4 py-4 bg-white border-b">
+        <div className="flex items-center justify-center px-6 py-4 bg-white border-b">
             {steps.map((step, index) => (
                 <React.Fragment key={step.number}>
-                    <div className="flex flex-col items-center flex-1">
+                    <div className="flex flex-col items-center min-w-[60px]">
                         <div
-                            className={`w-32 h-10 flex items-center justify-center text-sm font-semibold border border-gray-300 rounded-md ${currentStep === step.number
-                                ? 'bg-[#BF213E] text-white'
-                                : 'bg-white text-gray-600'
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step.number < currentStep
+                                ? 'bg-[#BF213E] text-white border-2 border-[#BF213E]'
+                                : step.number === currentStep
+                                    ? 'bg-white text-[#BF213E] border-2 border-dashed border-[#BF213E]'
+                                    : 'bg-white text-gray-400 border-2 border-gray-300'
                                 }`}
                         >
-                            {step.label}
+                            {step.number}
                         </div>
+                        <span className={`text-xs mt-1.5 font-medium text-center leading-tight ${step.number <= currentStep ? 'text-gray-800' : 'text-gray-400'
+                            }`}>
+                            {step.label}
+                        </span>
                     </div>
                     {index < steps.length - 1 && (
-                        <div
-                            className="flex-1 border-t border-dashed border-gray-300"
-                            style={{ marginBottom: '20px' }}
-                        />
+                        <div className={`flex-1 h-0.5 mx-1 mb-5 ${step.number < currentStep
+                            ? 'bg-[#BF213E]'
+                            : 'bg-transparent border-t-2 border-dashed border-gray-300'
+                            }`} />
                     )}
                 </React.Fragment>
             ))}
@@ -2121,9 +2213,113 @@ export const IncidentNewDetails = () => {
     );
 
     return (
-        <div className="flex flex-col h-screen bg-white">
+        <div className="flex flex-col h-screen bg-gray-100">
+            {/* Status Update Modal */}
+            {showStatusModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b shrink-0">
+                            <h2 className="text-base font-bold text-gray-900">Update Status</h2>
+                            <button
+                                onClick={closeStatusModal}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-5 space-y-4 overflow-y-auto">
+                            {/* Status Select */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-gray-800">Status <span className="text-[#BF213E]">*</span></label>
+                                <select
+                                    value={statusUpdateValue}
+                                    onChange={(e) => setStatusUpdateValue(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="under_investigation">Under Investigation</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="open">Open</option>
+                                    <option value="resolved">Resolved</option>
+                                </select>
+                            </div>
+
+                            {/* Closed-only fields */}
+                            {statusUpdateValue === 'closed' && (
+                                <>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-gray-800">RCA <span className="text-[#BF213E]">*</span></label>
+                                        <textarea
+                                            value={statusRca}
+                                            onChange={(e) => setStatusRca(e.target.value)}
+                                            placeholder="Enter root cause analysis..."
+                                            rows={2}
+                                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-gray-800">Corrective Action <span className="text-[#BF213E]">*</span></label>
+                                        <textarea
+                                            value={statusCorrectiveAction}
+                                            onChange={(e) => setStatusCorrectiveAction(e.target.value)}
+                                            placeholder="Enter corrective action taken..."
+                                            rows={2}
+                                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-gray-800">Preventive Action <span className="text-[#BF213E]">*</span></label>
+                                        <textarea
+                                            value={statusPreventiveAction}
+                                            onChange={(e) => setStatusPreventiveAction(e.target.value)}
+                                            placeholder="Enter preventive action to avoid recurrence..."
+                                            rows={2}
+                                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Comment */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-gray-800">Comment <span className="text-[#BF213E]">*</span></label>
+                                <textarea
+                                    value={statusComment}
+                                    onChange={(e) => setStatusComment(e.target.value)}
+                                    placeholder="Add a comment..."
+                                    rows={3}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="flex gap-3 px-5 py-4 border-t bg-gray-50 shrink-0">
+                            <button
+                                onClick={closeStatusModal}
+                                className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-md hover:bg-gray-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleStatusUpdate}
+                                disabled={statusUpdateLoading}
+                                className="flex-1 bg-[#BF213E] text-white text-sm font-semibold py-2 rounded-md hover:bg-[#9d1a32] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {statusUpdateLoading ? 'Updating...' : 'Update Status'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b">
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-white">
                 <div className="flex items-center gap-3">
                     <button onClick={handleBack}>
                         <ChevronLeft className="w-6 h-6" />
@@ -2131,7 +2327,7 @@ export const IncidentNewDetails = () => {
                     <h1 className="text-lg font-semibold">Incident Details</h1>
                 </div>
 
-                {/* ✅ Buttons wrapper */}
+                {/* Buttons wrapper */}
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
@@ -2152,6 +2348,14 @@ export const IncidentNewDetails = () => {
                     >
                         <Pencil className="w-4 h-4" />
                         Edit
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        onClick={() => setShowStatusModal(true)}
+                        className="flex items-center gap-2 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                    >
+                        Update Status
                     </Button>
                 </div>
             </div>
@@ -2271,40 +2475,54 @@ export const IncidentNewDetails = () => {
                     </div>
 
                     {/* Footer Buttons */}
-                    <div className="border-t p-4 space-y-2">
+                    <div className="border-t bg-white px-6 py-4">
                         {currentStep === 1 && (
-                            <Button
-                                className="w-full bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                                onClick={handleNext}
-                            >
-                                Next
-                            </Button>
+                            <div className="flex gap-3 max-w-xl mx-auto">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    onClick={handleSaveAsDraft}
+                                >
+                                    Save as draft
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleNext}
+                                >
+                                    Next
+                                </Button>
+                            </div>
                         )}
 
                         {currentStep === 2 && (
-                            <>
-                                <div className="flex justify-center items-center gap-3 p-4">
-                                    <Button
-                                        variant="outline"
-                                        className="w-25 mx-3"
-                                        onClick={handleSaveAsDraft}
-                                    >
-                                        Save as draft
-                                    </Button>
-                                    <Button
-                                        className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
-                                        onClick={handleSubmit}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </>
+                            <div className="flex gap-3 max-w-xl mx-auto">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    onClick={handleSaveAsDraft}
+                                >
+                                    Save as draft
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
+                            </div>
                         )}
 
                         {currentStep === 3 && (
-                            <div className="flex justify-center">
+                            <div className="flex gap-3 max-w-xl mx-auto">
                                 <Button
-                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    variant="outline"
+                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    onClick={handleSaveAsDraft}
+                                >
+                                    Save as draft
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
                                     onClick={handleSubmit}
                                 >
                                     Submit
@@ -2313,9 +2531,16 @@ export const IncidentNewDetails = () => {
                         )}
 
                         {currentStep === 4 && (
-                            <div className="flex justify-center">
+                            <div className="flex gap-3 max-w-xl mx-auto">
                                 <Button
-                                    className="w-50 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    variant="outline"
+                                    className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-50"
+                                    onClick={handleSaveAsDraft}
+                                >
+                                    Save as draft
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
                                     onClick={handleSubmit}
                                 >
                                     Submit

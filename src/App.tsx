@@ -42,6 +42,7 @@ import { SmsManagementPage } from "./pages/SmsManagementPage";
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
 import { AddInvoiceApprovalsPage } from "./pages/settings/AddInvoiceApprovalsPage";
+import { EditInvoiceApprovalsPage } from "./pages/settings/EditInvoiceApprovalsPage";
 
 // Import Asset Groups page
 import { AssetGroupsPage } from "./pages/AssetGroupsPage";
@@ -3410,9 +3411,9 @@ function App() {
                             path="/accounting/payment-terms"
                             element={<PaymentTermsMaster />}
                           />
-                           <Route
+                          <Route
                             path="/accounting/organisation"
-                            element={<OrganisationMaster/>}
+                            element={<OrganisationMaster />}
                           />
                           {/* Club Management - Occupant Users */}
                           <Route
@@ -5762,6 +5763,18 @@ function App() {
                             path="/pulse/amenity"
                             element={<BookingList />}
                           />
+                          <Route
+                            path="/pulse/amenity/add"
+                            element={<AddFacilityBookingPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/:id"
+                            element={<BookingDetailsPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/edit/:id"
+                            element={<EditFacilityBookingPage />}
+                          />
                           {/* Plus curated Service Routes */}
                           <Route
                             path="/pulse/curated-services/service"
@@ -5891,6 +5904,10 @@ function App() {
                           <Route
                             path="/settings/invoice-approvals/add"
                             element={<AddInvoiceApprovalsPage />}
+                          />
+                          <Route
+                            path="/settings/invoice-approvals/edit/:id"
+                            element={<EditInvoiceApprovalsPage />}
                           />
                           <Route
                             path="/settings/design-insights/setup"

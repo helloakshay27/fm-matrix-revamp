@@ -771,7 +771,7 @@ export const ClubGroupMembershipDashboard = () => {
           }
           // onFilterClick={() => setIsFilterOpen(true)}
           rightActions={renderRightActions()}
-          searchPlaceholder="Search Group Memberships"
+          searchPlaceholder="Search Memberships..."
           onSearchChange={handleSearch}
           hideTableExport={false}
           hideColumnsButton={true}
