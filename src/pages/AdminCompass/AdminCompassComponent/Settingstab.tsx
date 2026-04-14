@@ -681,7 +681,7 @@ const SettingsTab = () => {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(
-            `https://fm-uat-api.lockated.com/api/users?organization_id=${orgid()}&token=${token}`
+            `${getBaseUrl()}/api/users?organization_id=${orgid()}&token=${token}`
           ),
         ]);
         const deptData = await deptRes.json();

@@ -1066,7 +1066,7 @@ const DailyLogTab = () => {
       />
 
       {/* Header card */}
-      <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8">
+      <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8 mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-4">
             <div className="w-[48px] h-[48px] rounded-[14px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center shrink-0">
@@ -1205,7 +1205,7 @@ const DailyLogTab = () => {
       )}
 
       {/* Table */}
-      <div className="bg-white border border-[#F0EBE8] rounded-[32px] shadow-sm overflow-hidden">
+      <div className="bg-white border border-[#F0EBE8] rounded-[32px] shadow-sm overflow-hidden ">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead className="bg-[#FCFAFA]">

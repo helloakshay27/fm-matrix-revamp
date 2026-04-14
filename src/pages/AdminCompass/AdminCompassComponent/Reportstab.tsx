@@ -33,6 +33,9 @@ import {
 import { cn } from "@/lib/utils";
 import { periodOptions, getAuthHeaders } from "./Shared";
 
+const BASE_URL = localStorage.getItem('baseUrl') || '';
+
+
 // ── DATA NORMALIZATION & FALLBACKS ──
 const generateEmptyTrendForReport = (endDateStr, days = 7) => {
   const result = [];
@@ -201,7 +204,7 @@ const CustomSelect = ({
 // 1. Fetch Dynamic Meetings Dropdown
 const fetchDynamicMeetings = async () => {
   const res = await fetch(
-    `https://fm-uat-api.lockated.com/daily_meeting_configs`,
+    `https://${BASE_URL}/daily_meeting_configs`,
     {
       method: "GET",
       headers: getAuthHeaders(),
@@ -235,7 +238,7 @@ const fetchDynamicMeetings = async () => {
 // 2. Fetch Report Stats
 const fetchDynamicReport = async ({ meetingId, period }) => {
   const url = new URL(
-    "https://fm-uat-api.lockated.com/user_journals/daily_meeting_report"
+    `https://${BASE_URL}/user_journals/daily_meeting_report`
   );
   if (meetingId) {
     url.searchParams.append("meeting_id", meetingId);
@@ -261,7 +264,7 @@ const fetchDynamicReport = async ({ meetingId, period }) => {
 // 3. Fetch Single Date Status from Daily API
 const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
   const url = new URL(
-    "https://fm-uat-api.lockated.com/user_journals/daily_meeting"
+    `https://${BASE_URL}/user_journals/daily_meeting`
   );
   url.searchParams.append("date", dateStr);
 

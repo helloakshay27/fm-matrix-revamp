@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
-    Button,
+    // Button,
     Autocomplete,
     FormControlLabel,
     Checkbox,
@@ -38,6 +38,7 @@ import {
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -136,7 +137,7 @@ export const VendorCreditsAdd: React.FC = () => {
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
+                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id, inter_state_tax_rate_id: item.inter_state_tax_rate_id })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -260,6 +261,29 @@ export const VendorCreditsAdd: React.FC = () => {
 
     const [sourceOfSupply, setSourceOfSupply] = useState("");
     const [destinationOfSupply, setDestinationOfSupply] = useState("");
+    const [orgState, setOrgState] = useState("");
+
+    // Fetch organisation state on mount
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                setOrgState(org?.address?.state || '');
+            } catch {
+                // silently fail
+            }
+        };
+        fetchOrgState();
+    }, []);
     const indianStates = [
         "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
         "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
@@ -302,6 +326,19 @@ export const VendorCreditsAdd: React.FC = () => {
             .finally(() => {
                 setLoadingTaxGroups(false);
             });
+    }, []);
+
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching tax rates:", error));
     }, []);
 
     const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
@@ -1026,6 +1063,23 @@ export const VendorCreditsAdd: React.FC = () => {
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+
+    // Re-preselect tax type on items when destinationOfSupply or orgState changes
+    useEffect(() => {
+        if (!destinationOfSupply) return;
+        const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+            const matched = itemOptions.find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id
+            };
+        }));
+    }, [destinationOfSupply, orgState]);
+
     useEffect(() => {
         const total =
             afterDiscount +
@@ -1065,6 +1119,10 @@ export const VendorCreditsAdd: React.FC = () => {
                                         onChange={(e) => {
                                             const customer = customers.find(c => c.id === e.target.value);
                                             setSelectedCustomer(customer || null);
+                                            // if (customer) {
+                                            //     const vendorState = customer.state || '';
+                                            //     if (vendorState) setSourceOfSupply(vendorState);
+                                            // }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -1503,8 +1561,8 @@ export const VendorCreditsAdd: React.FC = () => {
                             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
+                        <div className="border border-border rounded-lg overflow-x-auto">
+                            <table className="w-full min-w-[900px]">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
@@ -1538,8 +1596,9 @@ export const VendorCreditsAdd: React.FC = () => {
                                                                     updateItem(index, 'item_tax_type', 'non_taxable');
                                                                     updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
                                                                 } else if (selectedItem.tax_preference === 'taxable') {
-                                                                    updateItem(index, 'item_tax_type', 'tax_group');
-                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
+                                                                    const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                                    updateItem(index, 'item_tax_type', isSameState ? 'tax_group' : 'tax_rate');
+                                                                    updateItem(index, 'tax_group_id', isSameState ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
                                                                 } else if (selectedItem.tax_preference === 'out_of_scope') {
                                                                     updateItem(index, 'item_tax_type', 'out_of_scope');
                                                                 } else if (selectedItem.tax_preference === 'non_gst_supply') {
@@ -1700,6 +1759,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                                         displayEmpty
                                                         onChange={(e) => {
                                                             const value = e.target.value;
+                                                            const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1711,9 +1771,9 @@ export const VendorCreditsAdd: React.FC = () => {
                                                                     setExemptionModalOpen(true);
                                                                 }
                                                             }
-                                                            // Tax group selected
+                                                            // Tax group or tax rate selected
                                                             else {
-                                                                updateItem(index, "item_tax_type", "tax_group");
+                                                                updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
                                                                 updateItem(index, "tax_group_id", value);
                                                             }
                                                         }}
@@ -1727,17 +1787,25 @@ export const VendorCreditsAdd: React.FC = () => {
                                                             </MenuItem>
                                                         ))}
 
-                                                        {/* Divider */}
-                                                        <MenuItem disabled>
-                                                            Tax Groups
-                                                        </MenuItem>
-
-                                                        {/* Tax Groups */}
-                                                        {taxGroups.map((group) => (
-                                                            <MenuItem key={group.id} value={group.id}>
-                                                                {group.name}
-                                                            </MenuItem>
-                                                        ))}
+                                                        {/* Dynamic: Tax Groups (intra-state) or Tax Rates IGST (inter-state) */}
+                                                        {(() => {
+                                                            const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                            if (isSameState) {
+                                                                return [
+                                                                    <MenuItem key="__tg_header" disabled>Tax Groups</MenuItem>,
+                                                                    ...taxGroups.map((group) => (
+                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                    ))
+                                                                ];
+                                                            } else {
+                                                                return [
+                                                                    <MenuItem key="__tr_header" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                    ...taxRates.map((rate) => (
+                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                    ))
+                                                                ];
+                                                            }
+                                                        })()}
                                                     </Select>
                                                 </FormControl>
                                             </td>
@@ -1764,7 +1832,7 @@ export const VendorCreditsAdd: React.FC = () => {
                             <Button
                                 startIcon={<Add />}
                                 onClick={addItem}
-                                variant="outlined"
+                                variant="outline"
                                 sx={{ textTransform: 'none' }}
                             >
                                 Add New Row
@@ -2080,57 +2148,14 @@ export const VendorCreditsAdd: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate('/accounting/sales-order')}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
-                >
+                <Button variant="outline" onClick={() => navigate(-1)} disabled={isSubmitting}>
                     Cancel
                 </Button>
-                <Button
-                    variant="outlined"
-                    onClick={() => handleSubmit(true)}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
-                        '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
-                    }}
-                >
+                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save as Draft'}
                 </Button>
-                <Button
-                    variant="contained"
-                    onClick={() => handleSubmit(false)}
-                    disabled={isSubmitting}
-                    sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: 'primary.dark'
-                        },
-                        textTransform: 'none'
-                    }}
-                >
-                    {isSubmitting ? 'Creating...' : 'Save and Send'}
+                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save as Open'}
                 </Button>
             </div>
 
@@ -2224,7 +2249,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                     size="small"
                                     startIcon={<Add />}
                                     onClick={() => setContactPersonDialogOpen(true)}
-                                    variant="outlined"
+                                    variant="outline"
                                     sx={{ textTransform: 'none' }}
                                 >
                                     Add
@@ -2292,8 +2317,8 @@ export const VendorCreditsAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
+                    <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
+                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleAddExternalUser}>Add</Button>
                 </DialogActions>
             </Dialog>
 
@@ -2382,8 +2407,8 @@ export const VendorCreditsAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleAddContactPerson} variant="contained">Save</Button>
+                    <Button variant="outline" onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
+                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleAddContactPerson}>Save</Button>
                 </DialogActions>
             </Dialog>
 
