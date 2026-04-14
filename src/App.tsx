@@ -42,6 +42,7 @@ import { SmsManagementPage } from "./pages/SmsManagementPage";
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
 import { AddInvoiceApprovalsPage } from "./pages/settings/AddInvoiceApprovalsPage";
+import { EditInvoiceApprovalsPage } from "./pages/settings/EditInvoiceApprovalsPage";
 
 // Import Asset Groups page
 import { AssetGroupsPage } from "./pages/AssetGroupsPage";
@@ -5923,6 +5924,10 @@ function App() {
                           <Route
                             path="/settings/invoice-approvals/add"
                             element={<AddInvoiceApprovalsPage />}
+                          />
+                          <Route
+                            path="/settings/invoice-approvals/edit/:id"
+                            element={<EditInvoiceApprovalsPage />}
                           />
                           <Route
                             path="/settings/design-insights/setup"

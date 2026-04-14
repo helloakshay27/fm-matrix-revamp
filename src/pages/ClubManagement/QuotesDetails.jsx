@@ -386,7 +386,7 @@ export const QuotesDetails = () => {
                                                                     )}
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="text-right">{item.item_unit || "N/A"}</TableCell>
+                                                            <TableCell className="text-right">{item.item_unit || "-"}</TableCell>
                                                             <TableCell className="text-right">{item.quantity || 0}</TableCell>
                                                             <TableCell className="text-right">{formatCurrency(item.rate || 0)}</TableCell>
                                                             <TableCell className="text-right">
