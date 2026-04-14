@@ -26,6 +26,10 @@ const formatDate = (isoString: string): string => {
 
 export const InvoiceApprovalsPage = () => {
   const navigate = useNavigate();
+  const baseUrl = localStorage.getItem('baseUrl') || '';
+  const lockAccountId = localStorage.getItem('lock_account_id');
+  const normalizedBaseUrl = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const shouldPassLockAccountId = normalizedBaseUrl === 'club-uat-api.lockated.com';
   const [searchTerm, setSearchTerm] = useState('');
   const [invoiceApprovals, setInvoiceApprovals] = useState<InvoiceApproval[]>([]);
   const [filteredData, setFilteredData] = useState<InvoiceApproval[]>([]);
@@ -36,7 +40,10 @@ export const InvoiceApprovalsPage = () => {
     const fetchInvoiceApprovals = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get('/pms/admin/invoice_approvals.json');
+        const listUrl = shouldPassLockAccountId
+          ? `/pms/admin/invoice_approvals.json?lock_account_id=${lockAccountId}`
+          : '/pms/admin/invoice_approvals.json';
+        const response = await apiClient.get(listUrl);
         const data = response.data;
         
         // Handle different response formats
@@ -84,34 +91,13 @@ export const InvoiceApprovalsPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">INVOICE APPROVALS</h1>
         
         <div className="flex items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
-
           {/* Action Buttons */}
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="w-4 h-4" />
-          </Button>
-          
-          <Button variant="ghost" size="icon">
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
-          
-          <Button variant="ghost" size="icon">
-            <ExternalLink className="w-4 h-4" />
-          </Button>
+         
         </div>
       </div>
 
-      {/* Add Button */}
-      <div className="flex justify-start">
+      {/* Add + Search Row */}
+      <div className="flex items-center justify-between">
         <Button 
           className="bg-purple-600 hover:bg-purple-700 text-white"
           onClick={() => navigate('/settings/invoice-approvals/add')}
@@ -119,6 +105,16 @@ export const InvoiceApprovalsPage = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10 w-64"
+          />
+        </div>
       </div>
 
       {/* Table */}
@@ -144,7 +140,12 @@ export const InvoiceApprovalsPage = () => {
               filteredData.map((item) => (
                 <TableRow key={item.id} className="hover:bg-gray-50">
                   <TableCell className="text-center">
-                    <Button variant="ghost" size="sm" className="p-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1"
+                      onClick={() => navigate(`/settings/invoice-approvals/edit/${item.id}`)}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                   </TableCell>

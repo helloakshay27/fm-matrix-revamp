@@ -343,6 +343,16 @@ const modulesByPackage = {
           name: "Default Tax Preferences",
           href: "/accounting/default-tax-preferences",
         },
+        {
+          name: "Invoice Approval",
+          subItems: [
+            {
+              name: "Approval Matrix",
+              href: "/settings/asset-setup/approval-matrix",
+            },
+           
+          ],
+        },
          {
           name: "Organization",
           href: "/accounting/organisation",
