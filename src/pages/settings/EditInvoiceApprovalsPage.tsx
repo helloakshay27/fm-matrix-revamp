@@ -52,7 +52,7 @@ export const EditInvoiceApprovalsPage = () => {
   });
 
   const functionOptions = [
-    { label: 'Quotes', value: 'quote' },
+    { label: 'Quote', value: 'quote' },
     { label: 'SaleOrder', value: 'sale_order' },
     { label: 'Invoice', value: 'invoice' },
     { label: 'CreditNote', value: 'credit_note' },
