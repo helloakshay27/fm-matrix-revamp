@@ -3430,9 +3430,9 @@ function App() {
                             path="/accounting/payment-terms"
                             element={<PaymentTermsMaster />}
                           />
-                           <Route
+                          <Route
                             path="/accounting/organisation"
-                            element={<OrganisationMaster/>}
+                            element={<OrganisationMaster />}
                           />
                           {/* Club Management - Occupant Users */}
                           <Route
@@ -5781,6 +5781,18 @@ function App() {
                           <Route
                             path="/pulse/amenity"
                             element={<BookingList />}
+                          />
+                          <Route
+                            path="/pulse/amenity/add"
+                            element={<AddFacilityBookingPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/:id"
+                            element={<BookingDetailsPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/edit/:id"
+                            element={<EditFacilityBookingPage />}
                           />
                           {/* Plus curated Service Routes */}
                           <Route

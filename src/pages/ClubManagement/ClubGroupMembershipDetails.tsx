@@ -195,7 +195,7 @@ const QUESTION_SECTIONS: { [key: string]: { title: string; questionIds: string[]
   },
   'occupation': {
     title: 'Occupation & Demographics',
-    questionIds: ['11', '12', '13']
+    questionIds: ['11', '12']
   }
 };
 
@@ -755,7 +755,7 @@ export const ClubGroupMembershipDetails = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 items-end">
-                      <Badge 
+                      <Badge
                         variant={member.club_member_enabled ? "default" : "secondary"}
                         className={member.club_member_enabled ? "bg-green-100 text-green-800 hover:bg-green-100/90" : "bg-gray-100 text-gray-600 hover:bg-gray-100/90"}
                       >
@@ -1217,7 +1217,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Face Added</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.face_added ? "default" : "secondary"}
                           className={selectedMember.face_added ? "bg-green-100 text-green-800 " : "bg-red-100 text-red-800"}
                         >
@@ -1247,7 +1247,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Club Member</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.club_member_enabled ? "default" : "secondary"}
                           className={selectedMember.club_member_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
                         >
@@ -1257,7 +1257,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Access Card</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.access_card_enabled ? "default" : "secondary"}
                           className={selectedMember.access_card_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
                         >
@@ -1415,7 +1415,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Active</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.active ? "default" : "secondary"}
                           className={selectedMember.active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
                         >
