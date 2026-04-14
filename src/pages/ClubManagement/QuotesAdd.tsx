@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
     Button,
-    Autocomplete,
     FormControlLabel,
     Checkbox,
     IconButton,
@@ -40,6 +40,158 @@ import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail
 import axios from 'axios';
 import { toast } from "sonner";
 import { format, parseISO } from 'date-fns';
+
+// Zoho-style item search input with dropdown
+const ItemSearchInput: React.FC<{
+    value: string;
+    itemOptions: any[];
+    onSelect: (item: any) => void;
+    onType: (text: string) => void;
+}> = ({ value, itemOptions, onSelect, onType }) => {
+    const [inputVal, setInputVal] = React.useState(value);
+    const [open, setOpen] = React.useState(false);
+    const [dropdownPos, setDropdownPos] = React.useState({ top: 0, left: 0, width: 0 });
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    // Sync external value changes (e.g. re-preselect effect)
+    React.useEffect(() => { setInputVal(value); }, [value]);
+
+    const filtered = itemOptions.filter(o =>
+        o?.name?.toLowerCase().includes(inputVal.toLowerCase())
+    );
+
+    const handleSelect = (opt: any) => {
+        setInputVal(opt.name);
+        setOpen(false);
+        onSelect(opt);
+    };
+
+    const openDropdown = () => {
+        if (inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect();
+            setDropdownPos({
+                top: rect.bottom + window.scrollY + 2,
+                left: rect.left + window.scrollX,
+                width: Math.max(rect.width, 280),
+            });
+        }
+        setOpen(true);
+    };
+
+    // Close on outside click
+    React.useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            const target = e.target as Node;
+            const dropdown = document.getElementById('item-search-dropdown');
+            if (
+                inputRef.current && !inputRef.current.contains(target) &&
+                dropdown && !dropdown.contains(target)
+            ) {
+                setOpen(false);
+                onType(inputVal);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [inputVal]);
+
+    return (
+        <div style={{ position: 'relative', minWidth: 250 }}>
+            <input
+                ref={inputRef}
+                type="text"
+                value={inputVal}
+                placeholder="Type or select item"
+                onFocus={openDropdown}
+                onChange={(e) => {
+                    setInputVal(e.target.value);
+                    openDropdown();
+                }}
+                onBlur={() => onType(inputVal)}
+                style={{
+                    width: '100%',
+                    padding: '6px 10px',
+                    fontSize: 13,
+                    border: '1px solid #d1d5db',
+                    borderRadius: 4,
+                    outline: 'none',
+                    background: '#fff',
+                    boxSizing: 'border-box',
+                    height: 34,
+                }}
+                onFocusCapture={(e) => (e.target.style.borderColor = '#C72030')}
+                onBlurCapture={(e) => (e.target.style.borderColor = '#d1d5db')}
+            />
+            {open && typeof document !== 'undefined' && createPortal(
+                <div
+                    id="item-search-dropdown"
+                    style={{
+                        position: 'absolute',
+                        top: dropdownPos.top,
+                        left: dropdownPos.left,
+                        width: dropdownPos.width,
+                        zIndex: 9999,
+                        background: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 6,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                        maxHeight: 240,
+                        overflowY: 'auto',
+                    }}
+                >
+                    {filtered.length === 0 ? (
+                        <div style={{ padding: '10px 14px', fontSize: 13, color: '#6b7280' }}>
+                            No results found. Try a different keyword.
+                        </div>
+                    ) : (
+                        filtered.map((opt) => (
+                            <div
+                                key={opt.id}
+                                onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
+                                style={{
+                                    padding: '8px 14px',
+                                    fontSize: 13,
+                                    cursor: 'pointer',
+                                    color: '#111827',
+                                    borderBottom: '1px solid #f3f4f6',
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+                                onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
+                            >
+                                {opt.name}
+                            </div>
+                        ))
+                    )}
+                    {/* {inputVal.trim() && !filtered.find(o => o.name.toLowerCase() === inputVal.trim().toLowerCase()) && (
+                        <div
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                onType(inputVal.trim());
+                                setOpen(false);
+                            }}
+                            style={{
+                                padding: '8px 14px',
+                                fontSize: 13,
+                                color: '#C72030',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                                borderTop: '1px solid #e5e7eb',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
+                        >
+                            + Add New Item: "{inputVal.trim()}"
+                        </div>
+                    )} */}
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+};
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -166,6 +318,7 @@ interface GstDetail {
 interface Item {
     id: string;
     name: string;
+    item_id?: string | null;
     description: string;
     quantity: number | '';
     rate: number | '';
@@ -523,6 +676,7 @@ export const QuotesAdd: React.FC = () => {
         {
             id: Date.now().toString(),
             name: '',
+            item_id: null,
             description: '',
             quantity: 1 as number | '',
             rate: 0 as number | '',
@@ -1023,6 +1177,16 @@ export const QuotesAdd: React.FC = () => {
         return afterDiscount + taxAmount;
     };
 
+    // Update multiple item fields at once (avoids double re-renders)
+    const updateItemFields = (index: number, fields: Partial<Item>) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], ...fields };
+            newItems[index].amount = calculateItemAmount(newItems[index]);
+            return newItems;
+        });
+    };
+
     // Update item
     const updateItem = (index: number, field: keyof Item, value: string | number | 'percentage' | 'amount') => {
         setItems(prev => {
@@ -1041,6 +1205,7 @@ export const QuotesAdd: React.FC = () => {
         setItems(prev => [...prev, {
             id: Date.now().toString(),
             name: '',
+            item_id: null,
             description: '',
             quantity: 1,
             rate: 0,
@@ -1261,16 +1426,19 @@ export const QuotesAdd: React.FC = () => {
                 const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
                 return found && found.id ? found.id : selectedTax || '';
             })(),
-            lock_account_invoice_items_attributes: items.map(item => ({
-                lock_account_item_id: itemOptions.find(opt => opt.name === item.name)?.id || item.name,
-                rate: item.rate,
-                quantity: item.quantity,
-                total_amount: item.amount,
-                description: item.description || '',
-                tax_type: item.item_tax_type,
-                tax_group_id: item.tax_group_id,
-                tax_exemption_id: item.tax_exemption_id
-            })),
+            lock_account_invoice_items_attributes: items.map(item => {
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                return {
+                    ...(resolvedId ? { lock_account_item_id: resolvedId } : { item_name: item.name }),
+                    rate: item.rate,
+                    quantity: item.quantity,
+                    total_amount: item.amount,
+                    description: item.description || '',
+                    tax_type: item.item_tax_type,
+                    tax_group_id: item.tax_group_id,
+                    tax_exemption_id: item.tax_exemption_id
+                };
+            }),
             email_contact_persons_attributes: selectedContactPersons.map(id => ({ contact_person_id: id })),
             attachments_attributes: attachments.map(f => ({
                 document: f,
@@ -1356,7 +1524,12 @@ export const QuotesAdd: React.FC = () => {
 
             // Quote items
             items.forEach((item, idx) => {
-                formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                if (resolvedId) {
+                    formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
+                } else {
+                    formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][item_name]`, item.name);
+                }
                 formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
                 formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
                 formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
@@ -1913,47 +2086,36 @@ export const QuotesAdd: React.FC = () => {
                                     {items.map((item, index) => (
                                         <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <Select
-                                                        value={item.name}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-                                                                // TAX HANDLING
-                                                                if (selectedItem.tax_preference === "non_taxable") {
-                                                                    updateItem(index, "item_tax_type", "non_taxable");
-                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "taxable") {
-                                                                    const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                                    updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
-                                                                    updateItem(index, "tax_group_id", isSameState ? selectedItem.tax_group_id : selectedItem.inter_state_tax_rate_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "out_of_scope") {
-                                                                    updateItem(index, "item_tax_type", "out_of_scope");
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "non_gst_supply") {
-                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
-                                                                }
-                                                            }
-                                                        }}
-                                                        displayEmpty
-                                                        size="small"
-                                                    >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
+                                                <ItemSearchInput
+                                                    value={item.name}
+                                                    itemOptions={itemOptions}
+                                                    onSelect={(selected) => {
+                                                        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                        let taxFields: Partial<Item> = {};
+                                                        if (selected.tax_preference === "non_taxable") {
+                                                            taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
+                                                        } else if (selected.tax_preference === "taxable") {
+                                                            taxFields = {
+                                                                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                                                                tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id
+                                                            };
+                                                        } else if (selected.tax_preference === "out_of_scope") {
+                                                            taxFields = { item_tax_type: "out_of_scope" };
+                                                        } else if (selected.tax_preference === "non_gst_supply") {
+                                                            taxFields = { item_tax_type: "non_gst_supply" };
+                                                        }
+                                                        updateItemFields(index, {
+                                                            item_id: String(selected.id),
+                                                            name: selected.name,
+                                                            rate: selected.rate || 0,
+                                                            description: selected.description || '',
+                                                            ...taxFields
+                                                        });
+                                                    }}
+                                                    onType={(typed) => {
+                                                        updateItemFields(index, { item_id: null, name: typed });
+                                                    }}
+                                                />
                                                 <TextField
                                                     fullWidth
                                                     label="Item Description"
@@ -2237,7 +2399,7 @@ export const QuotesAdd: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
+                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
                                         inputProps={{ step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />
