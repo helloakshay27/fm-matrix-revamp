@@ -16,10 +16,10 @@ interface CreateShiftDialogProps {
 export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: CreateShiftDialogProps) => {
   const [fromHour, setFromHour] = useState<string>("");
   const [fromMinute, setFromMinute] = useState<string>("");
-  const [fromAmPm, setFromAmPm] = useState<string>("");
+  const [fromAmPm, setFromAmPm] = useState<string>("AM");
   const [toHour, setToHour] = useState<string>("");
   const [toMinute, setToMinute] = useState<string>("");
-  const [toAmPm, setToAmPm] = useState<string>("");
+  const [toAmPm, setToAmPm] = useState<string>("PM");
   const [checkInMargin, setCheckInMargin] = useState<boolean>(false);
   const [hourMargin, setHourMargin] = useState<string>("0");
   const [minMargin, setMinMargin] = useState<string>("0");
@@ -40,18 +40,8 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
   };
 
   const validateForm = () => {
-    if (!fromHour || !fromMinute || !toHour || !toMinute) {
+    if (!fromHour || !fromMinute || !fromAmPm || !toHour || !toMinute || !toAmPm) {
       toast.error("Please fill in all time fields");
-      return false;
-    }
-
-    const fromTime24 = convertTo24Hour(fromHour, fromAmPm);
-    const toTime24 = convertTo24Hour(toHour, toAmPm);
-    const fromTimeMinutes = parseInt(fromTime24) * 60 + parseInt(fromMinute);
-    const toTimeMinutes = parseInt(toTime24) * 60 + parseInt(toMinute);
-
-    if (fromTimeMinutes >= toTimeMinutes) {
-      toast.error("End time must be after start time");
       return false;
     }
 
@@ -123,10 +113,10 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
   const resetForm = () => {
     setFromHour("");
     setFromMinute("");
-    setFromAmPm("");
+    setFromAmPm("AM");
     setToHour("");
     setToMinute("");
-    setToAmPm("");
+    setToAmPm("PM");
     setCheckInMargin(false);
     setHourMargin("0");
     setMinMargin("0");
