@@ -344,7 +344,9 @@ const BookingListDashboard = () => {
   const handleAddBooking = () => {
     const currentPath = window.location.pathname;
 
-    if (currentPath.includes("bookings")) {
+    if (currentPath.startsWith("/pulse/amenity")) {
+      navigate('/pulse/amenity/add');
+    } else if (currentPath.includes("bookings")) {
       navigate('/bookings/add');
     } else {
       navigate('/vas/booking/add');
@@ -608,11 +610,21 @@ const BookingListDashboard = () => {
   };
 
   const handleView = (id: number) => {
-    navigate(`/vas/bookings/details/${id}`);
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith("/pulse/amenity")) {
+      navigate(`/pulse/amenity/${id}`);
+    } else {
+      navigate(`/vas/bookings/details/${id}`)
+    }
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/vas/booking/edit/${id}`);
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith("/pulse/amenity")) {
+      navigate(`/pulse/amenity/edit/${id}`);
+    } else {
+      navigate(`/vas/booking/edit/${id}`);
+    }
   };
 
   const renderActions = (item: BookingData) => (

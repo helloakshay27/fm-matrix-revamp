@@ -5767,6 +5767,18 @@ function App() {
                             path="/pulse/amenity"
                             element={<BookingList />}
                           />
+                          <Route
+                            path="/pulse/amenity/add"
+                            element={<AddFacilityBookingPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/:id"
+                            element={<BookingDetailsPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/edit/:id"
+                            element={<EditFacilityBookingPage />}
+                          />
                           {/* Plus curated Service Routes */}
                           <Route
                             path="/pulse/curated-services/service"
