@@ -869,6 +869,18 @@ export const QuotesAdd: React.FC = () => {
             padding: { xs: '8px', sm: '10px', md: '12px' },
         },
     };
+    const modalPrimaryButtonSx = {
+        textTransform: 'none',
+        bgcolor: '#C72030',
+        color: '#fff',
+        '&:hover': { bgcolor: '#A01020' }
+    };
+    const modalSecondaryButtonSx = {
+        textTransform: 'none',
+        borderColor: '#C72030',
+        color: '#C72030',
+        '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1', color: '#A01020' }
+    };
 
     // Generate auto sales order number
     useEffect(() => {
@@ -1063,6 +1075,12 @@ export const QuotesAdd: React.FC = () => {
             toast.error("GSTIN and Place of Supply are required");
             return;
         }
+        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+        const normalizedGstin = String(newGstForm.gstin || '').toUpperCase().trim();
+        if (!gstinRegex.test(normalizedGstin)) {
+            toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
+            return;
+        }
 
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
@@ -1070,7 +1088,7 @@ export const QuotesAdd: React.FC = () => {
 
         const gstAttribute = {
             ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
-            gstin: newGstForm.gstin,
+            gstin: normalizedGstin,
             place_of_supply: newGstForm.place_of_supply,
             business_legal_name: newGstForm.business_legal_name || '',
             business_trade_name: newGstForm.business_trade_name || ''
@@ -1104,7 +1122,7 @@ export const QuotesAdd: React.FC = () => {
             setEditingGstDetailId(null);
             setGstManageModalOpen(false);
             toast.success(editingGstDetailId ? "Tax information updated" : "Tax information saved");
-            await fetchCustomerDetail(selectedCustomer.id, newGstForm.gstin);
+            await fetchCustomerDetail(selectedCustomer.id, normalizedGstin);
         } catch (error) {
             console.error("Error saving gst detail:", error);
             toast.error("Failed to save tax information");
@@ -2988,7 +3006,7 @@ export const QuotesAdd: React.FC = () => {
                     >
                         + New address
                     </button>
-                    <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small">Close</Button>
+                    <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small" sx={modalSecondaryButtonSx}>Close</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3088,8 +3106,8 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-start !px-6 !py-3">
-                    <Button variant="contained" onClick={handleSaveAddressForm}>Save</Button>
-                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleSaveAddressForm} sx={modalPrimaryButtonSx}>Save</Button>
+                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)} sx={modalSecondaryButtonSx}>Cancel</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3112,7 +3130,7 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-start !px-6 !pb-4">
-                    <Button variant="contained" onClick={handleUpdateGstConfig}>Update</Button>
+                    <Button variant="contained" onClick={handleUpdateGstConfig} sx={modalPrimaryButtonSx}>Update</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3138,7 +3156,7 @@ export const QuotesAdd: React.FC = () => {
                                 });
                                 setShowNewGstForm(true);
                             }}
-                            sx={{ textTransform: 'none', bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
+                            sx={modalPrimaryButtonSx}
                         >
                             Add New Tax Information
                         </Button>
@@ -3149,7 +3167,14 @@ export const QuotesAdd: React.FC = () => {
                                         label="GSTIN / UIN*"
                                         fullWidth
                                         value={newGstForm.gstin}
-                                        onChange={(e) => setNewGstForm(prev => ({ ...prev, gstin: e.target.value }))}
+                                        onChange={(e) => setNewGstForm(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
+                                        error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                                        helperText={
+                                            newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)
+                                                ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
+                                                : ''
+                                        }
+                                        inputProps={{ maxLength: 15 }}
                                         size="small"
                                     />
                                     
@@ -3186,7 +3211,7 @@ export const QuotesAdd: React.FC = () => {
                                         variant="contained"
                                         size="small"
                                         onClick={handleSaveAndSelectGst}
-                                        sx={{ textTransform: 'none', bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
+                                        sx={modalPrimaryButtonSx}
                                     >
                                         {editingGstDetailId ? 'Save' : 'Save and Select'}
                                     </Button>
@@ -3197,7 +3222,7 @@ export const QuotesAdd: React.FC = () => {
                                             setShowNewGstForm(false);
                                             setEditingGstDetailId(null);
                                         }}
-                                        sx={{ textTransform: 'none' }}
+                                        sx={modalSecondaryButtonSx}
                                     >
                                         Cancel
                                     </Button>
@@ -3257,7 +3282,7 @@ export const QuotesAdd: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!px-5 !pb-4">
-                    <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)} sx={{ textTransform: 'none' }}>Close</Button>
+                    <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)} sx={modalSecondaryButtonSx}>Close</Button>
                 </DialogActions>
             </Dialog>
 

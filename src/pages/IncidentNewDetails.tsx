@@ -2098,7 +2098,7 @@ export const IncidentNewDetails = () => {
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b border-gray-300 bg-gray-50">
-                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4">Action</th>
+                                                    <th className="text-left font-semibold text-gray-700 py-3 px-4 w-64">Action</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Description</th>
                                                     <th className="text-left font-semibold text-gray-700 py-3 px-4">Target Date</th>
                                                 </tr>
@@ -2187,28 +2187,25 @@ export const IncidentNewDetails = () => {
                 <React.Fragment key={step.number}>
                     <div className="flex flex-col items-center min-w-[60px]">
                         <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                                step.number < currentStep
-                                    ? 'bg-[#BF213E] text-white border-2 border-[#BF213E]'
-                                    : step.number === currentStep
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step.number < currentStep
+                                ? 'bg-[#BF213E] text-white border-2 border-[#BF213E]'
+                                : step.number === currentStep
                                     ? 'bg-white text-[#BF213E] border-2 border-dashed border-[#BF213E]'
                                     : 'bg-white text-gray-400 border-2 border-gray-300'
-                            }`}
+                                }`}
                         >
                             {step.number}
                         </div>
-                        <span className={`text-xs mt-1.5 font-medium text-center leading-tight ${
-                            step.number <= currentStep ? 'text-gray-800' : 'text-gray-400'
-                        }`}>
+                        <span className={`text-xs mt-1.5 font-medium text-center leading-tight ${step.number <= currentStep ? 'text-gray-800' : 'text-gray-400'
+                            }`}>
                             {step.label}
                         </span>
                     </div>
                     {index < steps.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-1 mb-5 ${
-                            step.number < currentStep
-                                ? 'bg-[#BF213E]'
-                                : 'bg-transparent border-t-2 border-dashed border-gray-300'
-                        }`} />
+                        <div className={`flex-1 h-0.5 mx-1 mb-5 ${step.number < currentStep
+                            ? 'bg-[#BF213E]'
+                            : 'bg-transparent border-t-2 border-dashed border-gray-300'
+                            }`} />
                     )}
                 </React.Fragment>
             ))}
