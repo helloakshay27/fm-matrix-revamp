@@ -571,7 +571,7 @@ export const AddGroupMembershipPage = () => {
                             address_type: userData.addresses?.[0]?.address_type || 'residential',
                             residentType: '',
                             relationWithOwner: '',
-                            houseId: memberData.house_id?.toString() || '',
+                            houseId: memberData.society_flat_id?.toString() || '',
                             membershipNumber: memberData.membership_number || '',
                             accessCardId: memberData.access_card_id?.toString() || '',
                             membershipType: '',
@@ -609,11 +609,16 @@ export const AddGroupMembershipPage = () => {
                     if (memberData.snag_answers && Array.isArray(memberData.snag_answers)) {
                         console.log(`Member ${index + 1} has snag_answers:`, memberData.snag_answers.length);
                         const snagByQ: { [key: number]: string[] } = {};
+                        const snagCommentsByQ: { [key: number]: string } = {};
                         memberData.snag_answers.forEach((a: any) => {
                             const q = Number(a.question_id);
                             if (!snagByQ[q]) snagByQ[q] = [];
                             if (a.ans_descr !== undefined && a.ans_descr !== null) {
                                 snagByQ[q].push(String(a.ans_descr));
+                            }
+                            // Also capture comments
+                            if (a.comments !== undefined && a.comments !== null && a.comments.trim()) {
+                                snagCommentsByQ[q] = a.comments;
                             }
                         });
 
@@ -621,14 +626,17 @@ export const AddGroupMembershipPage = () => {
                         if (snagByQ[1] && snagByQ[1].length > 0) {
                             const val = snagByQ[1][0].toUpperCase();
                             newMember.hasInjuries = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            if (snagCommentsByQ[1]) newMember.injuryDetails = snagCommentsByQ[1];
                         }
                         if (snagByQ[2] && snagByQ[2].length > 0) {
                             const val = snagByQ[2][0].toUpperCase();
                             newMember.hasPhysicalRestrictions = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            if (snagCommentsByQ[2]) newMember.physicalRestrictionsDetails = snagCommentsByQ[2];
                         }
                         if (snagByQ[3] && snagByQ[3].length > 0) {
                             const val = snagByQ[3][0].toUpperCase();
                             newMember.hasCurrentMedication = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            if (snagCommentsByQ[3]) newMember.medicationDetails = snagCommentsByQ[3];
                         }
                         if (snagByQ[4] && snagByQ[4].length > 0) {
                             newMember.pilatesExperience = snagByQ[4][0] || '';
