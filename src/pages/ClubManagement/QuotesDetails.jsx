@@ -553,6 +553,88 @@ export const QuotesDetails = () => {
                                         </p>
                                     </div>
                                 )}
+
+                                {/* Address Detail from quote response */}
+                                {quoteData.address_detail && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                        <div className="border rounded-lg p-3 bg-muted/20">
+                                            <p className="text-sm font-medium text-muted-foreground mb-2">Billing Address</p>
+                                            {quoteData.address_detail.billing_address ? (
+                                                <div className="text-sm space-y-0.5">
+                                                    <p>{quoteData.address_detail.billing_address.address || "—"}</p>
+                                                    {quoteData.address_detail.billing_address.address_line_two && (
+                                                        <p>{quoteData.address_detail.billing_address.address_line_two}</p>
+                                                    )}
+                                                    <p>
+                                                        {[
+                                                            quoteData.address_detail.billing_address.city,
+                                                            quoteData.address_detail.billing_address.state,
+                                                            quoteData.address_detail.billing_address.country
+                                                        ].filter(Boolean).join(", ")}
+                                                        {quoteData.address_detail.billing_address.pin_code
+                                                            ? `, ${quoteData.address_detail.billing_address.pin_code}`
+                                                            : ""}
+                                                    </p>
+                                                    {quoteData.address_detail.billing_address.contact_person && (
+                                                        <p>Contact: {quoteData.address_detail.billing_address.contact_person}</p>
+                                                    )}
+                                                    {quoteData.address_detail.billing_address.telephone_number && (
+                                                        <p>Phone: {quoteData.address_detail.billing_address.telephone_number}</p>
+                                                    )}
+                                                    {quoteData.address_detail.billing_address.fax_number && (
+                                                        <p>Fax: {quoteData.address_detail.billing_address.fax_number}</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm">N/A</p>
+                                            )}
+                                        </div>
+
+                                        <div className="border rounded-lg p-3 bg-muted/20">
+                                            <p className="text-sm font-medium text-muted-foreground mb-2">Shipping Address</p>
+                                            {quoteData.address_detail.shipping_address ? (
+                                                <div className="text-sm space-y-0.5">
+                                                    <p>{quoteData.address_detail.shipping_address.address || "—"}</p>
+                                                    {quoteData.address_detail.shipping_address.address_line_two && (
+                                                        <p>{quoteData.address_detail.shipping_address.address_line_two}</p>
+                                                    )}
+                                                    <p>
+                                                        {[
+                                                            quoteData.address_detail.shipping_address.city,
+                                                            quoteData.address_detail.shipping_address.state,
+                                                            quoteData.address_detail.shipping_address.country
+                                                        ].filter(Boolean).join(", ")}
+                                                        {quoteData.address_detail.shipping_address.pin_code
+                                                            ? `, ${quoteData.address_detail.shipping_address.pin_code}`
+                                                            : ""}
+                                                    </p>
+                                                    {quoteData.address_detail.shipping_address.contact_person && (
+                                                        <p>Contact: {quoteData.address_detail.shipping_address.contact_person}</p>
+                                                    )}
+                                                    {quoteData.address_detail.shipping_address.telephone_number && (
+                                                        <p>Phone: {quoteData.address_detail.shipping_address.telephone_number}</p>
+                                                    )}
+                                                    {quoteData.address_detail.shipping_address.fax_number && (
+                                                        <p>Fax: {quoteData.address_detail.shipping_address.fax_number}</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm">N/A</p>
+                                            )}
+                                        </div>
+
+                                        <div className="border rounded-lg p-3 bg-muted/20 md:col-span-2">
+                                            <p className="text-sm font-medium text-muted-foreground mb-2">GST Details</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                <p><span className="font-medium">GST Preference:</span> {quoteData.address_detail.gst_preference || "—"}</p>
+                                                <p><span className="font-medium">GSTIN:</span> {quoteData.address_detail.gst_detail?.gstin || "—"}</p>
+                                                <p><span className="font-medium">Place of Supply:</span> {quoteData.address_detail.gst_detail?.place_of_supply || "—"}</p>
+                                                <p><span className="font-medium">Business Legal Name:</span> {quoteData.address_detail.gst_detail?.business_legal_name || "—"}</p>
+                                                <p><span className="font-medium">Business Trade Name:</span> {quoteData.address_detail.gst_detail?.business_trade_name || "—"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
