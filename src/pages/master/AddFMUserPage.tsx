@@ -343,7 +343,7 @@ export const AddFMUserPage = () => {
         return;
       }
       toast.success("User added successfully");
-      navigate("/master/user/fm-users");
+      navigate(-1);
     } catch (error: any) {
       console.log(error);
       if (error?.companies && error?.companies.length > 0) {
