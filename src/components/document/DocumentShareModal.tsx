@@ -252,7 +252,13 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      modal={false}
+    >
       <DialogContent
         className="max-w-3xl max-h-[82vh] overflow-y-auto bg-white z-[1001] border-none shadow-2xl p-0"
         aria-describedby="document-share-dialog-description"
@@ -324,55 +330,51 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
               </button>
             </div>
 
-            {/* Internal User Selection */}
-            {shareType === "internal" && (
-              <div className="space-y-3 mt-4">
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Select User</InputLabel>
-                  <MuiSelect
-                    value={selectedUserId}
-                    onChange={(e) =>
-                      setSelectedUserId(e.target.value as number)
-                    }
-                    label="Select User"
-                    disabled={loading}
-                    displayEmpty
-                    MenuProps={selectMenuProps}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select a user</em>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {/* Internal User / External Email Input */}
+              {shareType === "internal" ? (
+                <TextField
+                  select
+                  fullWidth
+                  label="Select User"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value as number)}
+                  variant="outlined"
+                  disabled={loading}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    MenuProps: selectMenuProps,
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select a user</em>
+                  </MenuItem>
+                  {loading ? (
+                    <MenuItem disabled>
+                      <em>Loading users...</em>
                     </MenuItem>
-                    {loading ? (
-                      <MenuItem disabled>
-                        <em>Loading users...</em>
+                  ) : internalUsers.length === 0 ? (
+                    <MenuItem disabled>
+                      <em>No users found</em>
+                    </MenuItem>
+                  ) : (
+                    internalUsers.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        <div className="flex flex-col w-full">
+                          <span className="font-medium text-gray-900">
+                            {user.full_name}
+                          </span>
+                          <span className="text-xs text-gray-500 mt-0.5">
+                            {user.user_type}
+                          </span>
+                        </div>
                       </MenuItem>
-                    ) : internalUsers.length === 0 ? (
-                      <MenuItem disabled>
-                        <em>No users found</em>
-                      </MenuItem>
-                    ) : (
-                      internalUsers.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          <div className="flex flex-col w-full">
-                            <span className="font-medium text-gray-900">
-                              {user.full_name}
-                            </span>
-                            <span className="text-xs text-gray-500 mt-0.5">
-                              {user.user_type}
-                            </span>
-                          </div>
-                        </MenuItem>
-                      ))
-                    )}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-            )}
-
-            {/* External Email Input */}
-            {shareType === "external" && (
-              <div className="space-y-3 mt-4">
+                    ))
+                  )}
+                </TextField>
+              ) : (
                 <TextField
                   fullWidth
                   label="Email Address"
@@ -384,41 +386,45 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
                 />
-              </div>
-            )}
+              )}
 
-            {/* Access Level Selection */}
-            <div className="mt-4">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Access Level</InputLabel>
-                <MuiSelect
-                  value={accessLevel}
-                  onChange={(e) =>
-                    setAccessLevel(e.target.value as "viewer" | "editor")
-                  }
-                  label="Access Level"
-                  displayEmpty
-                  MenuProps={selectMenuProps}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="viewer">
-                    <div className="flex flex-col w-full">
-                      <span className="font-medium text-gray-900">Viewer</span>
-                      <span className="text-xs text-gray-500 mt-0.5">
-                        Can view and download
-                      </span>
-                    </div>
-                  </MenuItem>
-                  <MenuItem value="editor">
-                    <div className="flex flex-col w-full">
-                      <span className="font-medium text-gray-900">Editor</span>
-                      <span className="text-xs text-gray-500 mt-0.5">
-                        Can view, download, and edit
-                      </span>
-                    </div>
-                  </MenuItem>
-                </MuiSelect>
-              </FormControl>
+              {/* Access Level Selection */}
+              <TextField
+                select
+                fullWidth
+                label="Access Level"
+                value={accessLevel}
+                onChange={(e) =>
+                  setAccessLevel(e.target.value as "viewer" | "editor")
+                }
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                SelectProps={{
+                  displayEmpty: true,
+                  MenuProps: selectMenuProps,
+                }}
+              >
+                <MenuItem value="" disabled>
+                  <em>Select access level</em>
+                </MenuItem>
+                <MenuItem value="viewer">
+                  <div className="flex flex-col w-full">
+                    <span className="font-medium text-gray-900">Viewer</span>
+                    <span className="text-xs text-gray-500 mt-0.5">
+                      Can view and download
+                    </span>
+                  </div>
+                </MenuItem>
+                <MenuItem value="editor">
+                  <div className="flex flex-col w-full">
+                    <span className="font-medium text-gray-900">Editor</span>
+                    <span className="text-xs text-gray-500 mt-0.5">
+                      Can view, download, and edit
+                    </span>
+                  </div>
+                </MenuItem>
+              </TextField>
             </div>
 
             {/* Add Button */}
