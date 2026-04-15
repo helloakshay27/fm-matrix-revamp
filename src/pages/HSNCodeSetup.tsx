@@ -39,6 +39,40 @@ const HSNCodeSetup = () => {
         },
     }), [baseUrl, token]);
 
+    const getErrorMessage = (error: any): string => {
+        // Check for structured field errors
+        if (error.response?.data && typeof error.response.data === 'object') {
+            const errorData = error.response.data;
+
+            // Handle simple message field
+            if (errorData.message && typeof errorData.message === 'string') {
+                return errorData.message;
+            }
+
+            // Handle structured field errors
+            const errorMessages: string[] = [];
+            Object.entries(errorData).forEach(([field, messages]: [string, any]) => {
+                if (Array.isArray(messages)) {
+                    messages.forEach((msg: string) => {
+                        // Format: "field: error message"
+                        const fieldName = field.replace(/_/g, ' ').charAt(0).toUpperCase() + field.replace(/_/g, ' ').slice(1);
+                        errorMessages.push(`${fieldName}: ${msg}`);
+                    });
+                } else if (typeof messages === 'string') {
+                    const fieldName = field.replace(/_/g, ' ').charAt(0).toUpperCase() + field.replace(/_/g, ' ').slice(1);
+                    errorMessages.push(`${fieldName}: ${messages}`);
+                }
+            });
+
+            if (errorMessages.length > 0) {
+                return errorMessages.join(', ');
+            }
+        }
+
+        // Fallback to standard error message
+        return error.message || 'Error saving HSN code';
+    };
+
     const fetchHsnCodes = async () => {
         setLoading(true);
         try {
@@ -47,7 +81,8 @@ const HSNCodeSetup = () => {
             setHsnCodes(Array.isArray(data) ? data : (data.pms_hsns || []));
         } catch (error: any) {
             console.error('Error fetching HSN codes:', error);
-            toast.error(error.response?.data?.message || error.message || 'Error fetching HSN codes');
+            const errorMessage = getErrorMessage(error);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -104,7 +139,8 @@ const HSNCodeSetup = () => {
             fetchHsnCodes();
         } catch (error: any) {
             console.error('Error saving HSN code:', error);
-            toast.error(error.response?.data?.message || error.message || 'Error saving HSN code');
+            const errorMessage = getErrorMessage(error);
+            toast.error(errorMessage);
         }
     };
 
@@ -117,7 +153,8 @@ const HSNCodeSetup = () => {
             fetchHsnCodes();
         } catch (error: any) {
             console.error('Error deleting HSN code:', error);
-            toast.error(error.response?.data?.message || error.message || 'Error deleting HSN code');
+            const errorMessage = getErrorMessage(error);
+            toast.error(errorMessage);
         }
     };
 
@@ -135,6 +172,9 @@ const HSNCodeSetup = () => {
                     <Button variant="ghost" size="icon" onClick={() => handleOpenModal(item)}>
                         <Edit className="w-4 h-4" />
                     </Button>
+                    {/* <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
+                        <Trash2 className="w-4 h-4" />
+                    </Button> */}
                 </div>
             );
         }

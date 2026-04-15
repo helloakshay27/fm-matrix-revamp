@@ -156,7 +156,7 @@ const QUESTION_SECTIONS: { [key: string]: { title: string; questionIds: string[]
   },
   'occupation': {
     title: 'Occupation & Demographics',
-    questionIds: ['11', '12', '13']
+    questionIds: ['11', '12']
   }
 };
 

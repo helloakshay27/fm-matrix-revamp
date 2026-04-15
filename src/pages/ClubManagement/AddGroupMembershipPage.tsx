@@ -23,6 +23,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
 import axios from 'axios';
+import Invoice from '@/components/Invoice';
 
 // Interfaces
 interface OccupantUserResponse {
@@ -219,8 +220,116 @@ interface MemberData {
     communicationChannel: string[];
     profession: string;
     companyName: string;
+    companyAddress: string;
     corporateInterest: 'yes' | 'no' | '';
 }
+
+// Formatter helper: Converts API response with bills_invoice_data into Invoice-compatible format
+const formatInvoiceData = (apiResponse: any): any => {
+    // If bills_invoice_data exists, use it; otherwise fall back to allocation_payment_detail
+    const billsData = apiResponse?.bills_invoice_data;
+    const hasBillsData = billsData && Array.isArray(billsData) && billsData.length > 0;
+
+    if (hasBillsData) {
+        const firstBill = billsData[0];
+        const invoice = firstBill?.invoice || {};
+        const member = firstBill?.member || {};
+        const lineItems = firstBill?.line_items || [];
+        const totals = firstBill?.totals || {};
+
+        return {
+            // Use bills data primarily
+            id: invoice.invoice_number || invoice.id || apiResponse?.id || '1008',
+            created_at: invoice.invoice_date || apiResponse?.created_at,
+            club_members: [{
+                user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name || 'Deepak Gm',
+                user_email: member.email || apiResponse?.club_members?.[0]?.user_email || 'deepak@gmail.com',
+                user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile || '7709622211',
+            }],
+            membership_plan: apiResponse?.membership_plan || { name: 'Rain Plan' },
+            site_name: apiResponse?.site_name || 'New Site 1',
+            allocation_payment_detail: {
+                base_amount: lineItems[0]?.rate || parseFloat(String(apiResponse?.allocation_payment_detail?.base_amount)) || 5000,
+                discount: totals.discount || parseFloat(String(apiResponse?.allocation_payment_detail?.discount)) || 0,
+                cgst: totals.cgst || parseFloat(String(apiResponse?.allocation_payment_detail?.cgst)) || 400,
+                sgst: totals.sgst || parseFloat(String(apiResponse?.allocation_payment_detail?.sgst)) || 400,
+                cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per || 8,
+                sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per || 8,
+                total_tax: (totals.cgst || 0) + (totals.sgst || 0) || parseFloat(String(apiResponse?.allocation_payment_detail?.total_tax)) || 800,
+                total_amount: totals.total_amount || parseFloat(String(apiResponse?.allocation_payment_detail?.total_amount)) || 5800,
+                payment_mode: apiResponse?.allocation_payment_detail?.payment_mode,
+                payment_status: apiResponse?.allocation_payment_detail?.payment_status,
+            },
+        };
+    }
+
+    // Fall back to original data structure for backward compatibility
+    return apiResponse;
+};
+
+// Format a single bill into Invoice-compatible format
+const formatSingleBill = (billData: any, apiResponse: any, billIndex: number = 0): any => {
+    const invoice = billData?.invoice || {};
+    const member = billData?.member || {};
+    const lineItems = billData?.line_items || [];
+    const totals = billData?.totals || {};
+
+    // Ensure bill ID is always present - use bill_number as fallback
+    const billId = billData?.lock_account_bill_id || billData?.bill_id || (apiResponse?.id && `${apiResponse.id}-${billIndex}`) || `bill-${billIndex}`;
+
+    return {
+        id: invoice.invoice_number || invoice.id || apiResponse?.id || '1008',
+        bill_number: billData?.bill_number,
+        lock_account_bill_id: billId, // Include bill ID for PDF upload
+        created_at: invoice.invoice_date || apiResponse?.created_at,
+        club_members: [{
+            user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name || 'Deepak Gm',
+            user_email: member.email || apiResponse?.club_members?.[0]?.user_email || 'deepak@gmail.com',
+            user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile || '7709622211',
+        }],
+        membership_plan: apiResponse?.membership_plan || { name: 'Rain Plan' },
+        site_name: apiResponse?.site_name || 'New Site 1',
+        allocation_payment_detail: {
+            base_amount: lineItems[0]?.rate || parseFloat(String(apiResponse?.allocation_payment_detail?.base_amount)) || 5000,
+            discount: totals.discount || parseFloat(String(apiResponse?.allocation_payment_detail?.discount)) || 0,
+            cgst: totals.cgst || parseFloat(String(apiResponse?.allocation_payment_detail?.cgst)) || 400,
+            sgst: totals.sgst || parseFloat(String(apiResponse?.allocation_payment_detail?.sgst)) || 400,
+            cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per || 8,
+            sgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per || 8,
+            total_tax: (totals.cgst || 0) + (totals.sgst || 0) || parseFloat(String(apiResponse?.allocation_payment_detail?.total_tax)) || 800,
+            total_amount: totals.total_amount || parseFloat(String(apiResponse?.allocation_payment_detail?.total_amount)) || 5800,
+            payment_mode: apiResponse?.allocation_payment_detail?.payment_mode,
+            payment_status: apiResponse?.allocation_payment_detail?.payment_status,
+        },
+    };
+};
+
+// Extract all bills from response
+const extractBillsFromResponse = (apiResponse: any): any[] => {
+    const billsData = apiResponse?.bills_invoice_data;
+    if (billsData && Array.isArray(billsData) && billsData.length > 0) {
+        return billsData.map((bill: any, index: number) => {
+            // Ensure each bill has a unique ID
+            const formattedBill = formatSingleBill(bill, apiResponse, index);
+            // If lock_account_bill_id is still not set, use bill_number or fallback
+            if (!formattedBill.lock_account_bill_id) {
+                formattedBill.lock_account_bill_id = bill?.bill_number || bill?.id || `bill-${index}`;
+            }
+            return formattedBill;
+        });
+    }
+
+    // Ensure single bill response also has an ID
+    if (apiResponse?.lock_account_bill_id || apiResponse?.bill_id) {
+        return [apiResponse];
+    }
+
+    // Fallback: create ID for single response
+    return [{
+        ...apiResponse,
+        lock_account_bill_id: apiResponse?.id || apiResponse?.bill_number || 'bill-0'
+    }];
+};
 
 export const AddGroupMembershipPage = () => {
     const navigate = useNavigate();
@@ -287,6 +396,7 @@ export const AddGroupMembershipPage = () => {
             communicationChannel: [],
             profession: '',
             companyName: '',
+            companyAddress: '',
             corporateInterest: '',
         };
         return [initialMember];
@@ -361,6 +471,13 @@ export const AddGroupMembershipPage = () => {
     const [cgstPercentage, setCgstPercentage] = useState<string>('0');
     const [sgstPercentage, setSgstPercentage] = useState<string>('0');
 
+    // Invoice state for PDF generation
+    const [invoiceData, setInvoiceData] = useState<any>(null);
+    const [showInvoice, setShowInvoice] = useState(false);
+    const [autoDownloadInvoice, setAutoDownloadInvoice] = useState(false);
+    const [billsInvoiceDataArray, setBillsInvoiceDataArray] = useState<any[]>([]); // Store all bills
+    const [currentBillIndex, setCurrentBillIndex] = useState(0); // Track current bill being viewed
+
     // Add updateMember function after state declarations
     const updateMember = (memberId: string, updates: Partial<MemberData>) => {
         setMembers(prevMembers =>
@@ -383,6 +500,19 @@ export const AddGroupMembershipPage = () => {
             loadMembershipData(id);
         }
     }, [id, isEditMode]);
+
+    // Handle auto-download and bill transitions
+    useEffect(() => {
+        if (autoDownloadInvoice && invoiceData) {
+            console.log(`Auto-download enabled for bill ${invoiceData.lock_account_bill_id}`);
+            // The Invoice component will handle the auto-download and call onBase64Generated
+            // Reset flag after a short delay to prevent re-triggers
+            const timer = setTimeout(() => {
+                setAutoDownloadInvoice(false);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [autoDownloadInvoice, invoiceData]);
 
     // Load membership plans
     const loadMembershipPlans = async () => {
@@ -600,6 +730,7 @@ export const AddGroupMembershipPage = () => {
                         communicationChannel: [],
                         profession: '',
                         companyName: '',
+                        companyAddress: '',
                         corporateInterest: '',
                     };
 
@@ -666,8 +797,7 @@ export const AddGroupMembershipPage = () => {
                             newMember.companyName = snagByQ[12][0] || '';
                         }
                         if (snagByQ[13] && snagByQ[13].length > 0) {
-                            const val = snagByQ[13][0].toUpperCase();
-                            newMember.corporateInterest = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            newMember.companyAddress = snagByQ[13][0] || '';
                         }
                     }
                     // Also parse old format answers if present
@@ -980,7 +1110,7 @@ export const AddGroupMembershipPage = () => {
         // Question 13: Corporate interest
         answersObj['13'] = [
             {
-                answer: member.corporateInterest.toUpperCase() || '',
+                answer: member.companyAddress || '',
                 comments: ''
             }
         ];
@@ -1263,8 +1393,18 @@ export const AddGroupMembershipPage = () => {
             const data = await response.json();
             console.log(`Club membership ${isEditMode ? 'updated' : 'created'} successfully:`, data);
 
+            // Extract all bills from response
+            const allBills = extractBillsFromResponse(data);
+            console.log(`Extracted ${allBills.length} bills from response`, allBills);
+
+            // Store all bills and set first bill as current
+            setBillsInvoiceDataArray(allBills);
+            setCurrentBillIndex(0);
+            setInvoiceData(allBills[0]);
+            setShowInvoice(true);
+            setAutoDownloadInvoice(true);
+
             toast.success(`Club membership ${isEditMode ? 'updated' : 'added'} successfully`);
-            navigate('/club-management/membership/groups');
         } catch (error) {
             console.error('Error adding membership:', error);
             toast.error(error instanceof Error ? error.message : 'Failed to add membership');
@@ -1417,7 +1557,9 @@ export const AddGroupMembershipPage = () => {
         hasInjuries: '',
         injuryDetails: '',
         hasPhysicalRestrictions: '',
+        physicalRestrictionsDetails: '',
         hasCurrentMedication: '',
+        medicationDetails: '',
         pilatesExperience: '',
         fitnessGoals: [],
         fitnessGoalsOther: '',
@@ -1429,6 +1571,7 @@ export const AddGroupMembershipPage = () => {
         communicationChannel: [],
         profession: '',
         companyName: '',
+        companyAddress: '',
         corporateInterest: '',
     });
 
@@ -1499,6 +1642,7 @@ export const AddGroupMembershipPage = () => {
             communicationChannel: [...previousMember.communicationChannel],
             profession: previousMember.profession,
             companyName: previousMember.companyName,
+            companyAddress: previousMember.companyAddress,
             corporateInterest: previousMember.corporateInterest,
         });
         toast.success('All data copied from previous member');
@@ -1609,742 +1753,964 @@ export const AddGroupMembershipPage = () => {
         fetchFlats();
     }, []);
 
-    return (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <div className="p-6 bg-gray-50 min-h-screen">
-                {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            onClick={handleGoBack}
-                            className="hover:bg-gray-100"
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-semibold text-[#1a1a1a]">
-                                {isEditMode ? 'Edit Club Membership' : 'Add Club Membership'}
-                            </h1>
-                            <p className="text-sm text-gray-500 mt-1">
-                                {isEditMode ? 'Update membership details' : 'Create a new club membership'}
-                            </p>
-                        </div>
+    // State for PDF uploads
+    const [collectedPDFs, setCollectedPDFs] = useState<Array<{ bill_id: number; base64: string; filename: string }>>([]);
+    const [isUploadingPDFs, setIsUploadingPDFs] = useState(false);
+
+    // Handle Base64 PDF generation from Invoice component
+    const handleBase64Generated = (base64Pdf: string) => {
+        if (!invoiceData) {
+            console.warn('Invoice data is missing');
+            return;
+        }
+        console.log("Invoice Data", invoiceData);
+        console.log("Current Bill Index:", currentBillIndex, "Total Bills:", billsInvoiceDataArray.length);
+
+        // Store the PDF with bill ID - validate that billId exists
+        const billId = invoiceData.lock_account_bill_id;
+
+        // Validation: ensure billId is valid before storing
+        if (!billId) {
+            console.error('Bill ID is missing for current invoice:', invoiceData);
+            toast.error('Error: Bill ID missing. Cannot save this invoice.');
+            return;
+        }
+
+        // Check if this bill PDF has already been collected (prevent duplicates)
+        const alreadyCollected = collectedPDFs.some(pdf => pdf.bill_id === billId);
+        if (alreadyCollected) {
+            console.warn(`PDF for bill ${billId} already collected, skipping duplicate`);
+            // Move to next bill if available
+            if (currentBillIndex < billsInvoiceDataArray.length - 1) {
+                const nextIndex = currentBillIndex + 1;
+                setCurrentBillIndex(nextIndex);
+                setInvoiceData(billsInvoiceDataArray[nextIndex]);
+                setTimeout(() => {
+                    setAutoDownloadInvoice(true);
+                }, 300);
+            }
+            return;
+        }
+
+        console.log(`Storing PDF for bill ID: ${billId}`);
+        setCollectedPDFs(prev => {
+            const updated = [
+                ...prev,
+                {
+                    bill_id: billId,
+                    base64: base64Pdf,
+                    filename: `invoice_${billId}.pdf`
+                }
+            ];
+            console.log(`PDFs collected so far: ${updated.length}`);
+            return updated;
+        });
+
+        // Move to next bill if available
+        if (currentBillIndex < billsInvoiceDataArray.length - 1) {
+            const nextIndex = currentBillIndex + 1;
+            console.log(`Moving to next bill: ${nextIndex + 1} of ${billsInvoiceDataArray.length}`);
+            setCurrentBillIndex(nextIndex);
+            setInvoiceData(billsInvoiceDataArray[nextIndex]);
+
+            // Delay to ensure state updates before next render
+            setTimeout(() => {
+                setAutoDownloadInvoice(true);
+            }, 300);
+        } else {
+            console.log('All bills processed');
+        }
+    };
+
+    // Send collected PDFs to API
+    const handleUploadPDFsToAPI = async () => {
+        if (collectedPDFs.length === 0) {
+            toast.error('No PDFs to upload');
+            return;
+        }
+
+        setIsUploadingPDFs(true);
+        try {
+            const savedToken = getToken();
+
+            console.log("collected pdfs", collectedPDFs)
+
+            // Build the bills array for API
+            const billsPayload = collectedPDFs.map(pdf => ({
+                bill_id: pdf.bill_id,
+                attachment_type: 'club_member_creation',
+                filename: pdf.filename,
+                file: pdf.base64 // Contains the data:image/png;base64,... format
+            }));
+
+            console.log(billsPayload)
+
+            // Send to API
+            const response = await axios.post(
+                `${API_CONFIG.BASE_URL}/lock_account_bills/bulk_attach_invoice.json`,
+                { bills: billsPayload },
+                {
+                    headers: {
+                        Authorization: `Bearer ${savedToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            if (response.status === 200 || response.status === 201) {
+                toast.success('All invoices uploaded successfully!');
+
+                // Reset states and navigate back
+                setCollectedPDFs([]);
+                setShowInvoice(false);
+                setInvoiceData(null);
+                setBillsInvoiceDataArray([]);
+                setCurrentBillIndex(0);
+
+                // Navigate back after a short delay
+                setTimeout(() => {
+                    navigate('/club-management/membership/groups');
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('Error uploading PDFs:', error);
+            const errorMsg = axios.isAxiosError(error) ? error.response?.data?.message || error.message : 'Failed to upload invoices';
+            toast.error(errorMsg);
+        } finally {
+            setIsUploadingPDFs(false);
+        }
+    };
+
+    // Auto-upload PDFs when all are collected
+    useEffect(() => {
+        if (
+            collectedPDFs.length > 0 &&
+            billsInvoiceDataArray.length > 0 &&
+            collectedPDFs.length === billsInvoiceDataArray.length &&
+            !isUploadingPDFs &&
+            showInvoice
+        ) {
+            console.log(`All ${collectedPDFs.length} PDFs collected. Auto-uploading...`);
+
+            // Small delay to ensure all state updates are processed
+            const timer = setTimeout(() => {
+                handleUploadPDFsToAPI();
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
+    }, [collectedPDFs.length, billsInvoiceDataArray.length, isUploadingPDFs, showInvoice]);
+
+    // Close invoice preview and return to form
+    const handleCloseInvoice = () => {
+        setShowInvoice(false);
+        setInvoiceData(null);
+        setBillsInvoiceDataArray([]);
+        setCurrentBillIndex(0);
+        setCollectedPDFs([]);
+    };
+
+    // Invoice render with upload action
+    const renderInvoiceWithUpload = () => {
+        const isAllCollected = collectedPDFs.length === billsInvoiceDataArray.length;
+
+        return (
+            <div className="w-full">
+                <div className="fixed top-4 right-4 z-50 flex gap-3">
+                    {/* Progress indicator */}
+                    <div className="bg-white rounded-lg shadow-md p-3 flex items-center gap-2 border border-gray-200">
+                        <span className="text-sm font-medium text-gray-700">
+                            Bill {currentBillIndex + 1} of {billsInvoiceDataArray.length}
+                        </span>
+                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                            {collectedPDFs.length} Saved
+                        </span>
                     </div>
+
+                    {isUploadingPDFs ? (
+                        <Button
+                            disabled={true}
+                            className="bg-[#C72030] text-white"
+                        >
+                            <span className="animate-spin mr-2">⏳</span>
+                            Auto-uploading... ({collectedPDFs.length}/{billsInvoiceDataArray.length})
+                        </Button>
+                    ) : isAllCollected ? (
+                        <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
+                            <span className="text-sm font-medium text-green-700">✓ All PDFs collected</span>
+                            <span className="text-xs text-green-600">Auto-uploading in progress...</span>
+                        </div>
+                    ) : (
+                        <Button
+                            disabled={true}
+                            className="bg-gray-400 text-white"
+                        >
+                            ⏳ Collecting PDFs... ({collectedPDFs.length}/{billsInvoiceDataArray.length})
+                        </Button>
+                    )}
+
+                    <Button
+                        onClick={handleCloseInvoice}
+                        disabled={isUploadingPDFs}
+                        variant="outline"
+                    >
+                        Cancel
+                    </Button>
                 </div>
 
-                {/* Loading State */}
-                {loading ? (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 flex items-center justify-center">
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
-                            <p className="text-gray-600">Loading membership data...</p>
+                {/* Key ensures Invoice component re-mounts for each bill */}
+                <Invoice
+                    key={`invoice-${currentBillIndex}-${invoiceData?.lock_account_bill_id}`}
+                    data={invoiceData}
+                    returnBase64={true}
+                    onBase64Generated={handleBase64Generated}
+                    onClose={handleCloseInvoice}
+                    showButton={false}
+                    autoDownload={autoDownloadInvoice}
+                />
+            </div>
+        );
+    };
+
+    return (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            {showInvoice && invoiceData ? (
+                renderInvoiceWithUpload()
+            ) : (
+                <div className="p-6 bg-gray-50 min-h-screen">
+                    {/* Header */}
+                    <div className="mb-6 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <Button
+                                variant="ghost"
+                                onClick={handleGoBack}
+                                className="hover:bg-gray-100"
+                            >
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Back
+                            </Button>
+                            <div>
+                                <h1 className="text-2xl font-semibold text-[#1a1a1a]">
+                                    {isEditMode ? 'Edit Club Membership' : 'Add Club Membership'}
+                                </h1>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    {isEditMode ? 'Update membership details' : 'Create a new club membership'}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                ) : (
-                    <div className="space-y-6">
-                        {/* Step 2: Member Details Forms */}
-                        {currentStep === 2 && (
-                            <>
-                                {/* Header with Add Member Button */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h2 className="text-lg font-semibold text-[#1a1a1a]">Group Members</h2>
-                                            <p className="text-sm text-gray-500 mt-1">Add and manage all members in this group</p>
+
+                    {/* Loading State */}
+                    {loading ? (
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 flex items-center justify-center">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
+                                <p className="text-gray-600">Loading membership data...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Step 2: Member Details Forms */}
+                            {currentStep === 2 && (
+                                <>
+                                    {/* Header with Add Member Button */}
+                                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h2 className="text-lg font-semibold text-[#1a1a1a]">Group Members</h2>
+                                                <p className="text-sm text-gray-500 mt-1">Add and manage all members in this group</p>
+                                            </div>
+                                            <Button
+                                                onClick={handleAddMember}
+                                                size="sm"
+                                                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                                disabled={members.length >= userLimit}
+                                            >
+                                                <span className="mr-1">+</span> Add Member ({members.length}/{userLimit})
+                                            </Button>
                                         </div>
-                                        <Button
-                                            onClick={handleAddMember}
-                                            size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                            disabled={members.length >= userLimit}
-                                        >
-                                            <span className="mr-1">+</span> Add Member ({members.length}/{userLimit})
-                                        </Button>
                                     </div>
-                                </div>
 
-                                {/* Members List - Each member has all sections */}
-                                {members.map((member, memberIndex) => (
-                                    <div key={member.id} className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6">
-                                        {/* Member Header */}
-                                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                                            <div className="flex items-center gap-3">
-                                                <div className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold">
-                                                    {memberIndex + 1}
+                                    {/* Members List - Each member has all sections */}
+                                    {members.map((member, memberIndex) => (
+                                        <div key={member.id} className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6">
+                                            {/* Member Header */}
+                                            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold">
+                                                        {memberIndex + 1}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold text-[#1a1a1a]">
+                                                            {member.formData.firstName && member.formData.lastName
+                                                                ? `${member.formData.firstName} ${member.formData.lastName}`
+                                                                : `Member ${memberIndex + 1}`}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-500">
+                                                            {member.formData.email || 'No email provided'}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-[#1a1a1a]">
-                                                        {member.formData.firstName && member.formData.lastName
-                                                            ? `${member.formData.firstName} ${member.formData.lastName}`
-                                                            : `Member ${memberIndex + 1}`}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-500">
-                                                        {member.formData.email || 'No email provided'}
-                                                    </p>
+                                                <div className="flex items-center gap-2">
+                                                    {members.length > 1 && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveMember(member.id)}
+                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        >
+                                                            <X className="w-4 h-4 mr-1" /> Remove
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                {members.length > 1 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+
+                                            {/* Section 1: User Selection */}
+                                            <div className="mb-8">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">1</div>
+                                                    User Selection
+                                                </h4>
+
+                                                {/* User Selection Mode */}
+                                                <div className="mb-6">
+                                                    <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
+                                                        Select User Mode
+                                                    </FormLabel>
+                                                    <RadioGroup
+                                                        row
+                                                        value={member.userSelectionMode}
+                                                        onChange={(e) => {
+                                                            const mode = e.target.value as 'select' | 'manual';
+                                                            updateMember(member.id, {
+                                                                userSelectionMode: mode,
+                                                                selectedUser: '',
+                                                                selectedUserId: null,
+                                                                formData: {
+                                                                    ...member.formData,
+                                                                    firstName: '',
+                                                                    lastName: '',
+                                                                    email: '',
+                                                                    mobile: '',
+                                                                    dateOfBirth: '',
+                                                                    gender: '',
+                                                                }
+                                                            });
+                                                        }}
                                                     >
-                                                        <X className="w-4 h-4 mr-1" /> Remove
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Section 1: User Selection */}
-                                        <div className="mb-8">
-                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">1</div>
-                                                User Selection
-                                            </h4>
-
-                                            {/* User Selection Mode */}
-                                            <div className="mb-6">
-                                                <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
-                                                    Select User Mode
-                                                </FormLabel>
-                                                <RadioGroup
-                                                    row
-                                                    value={member.userSelectionMode}
-                                                    onChange={(e) => {
-                                                        const mode = e.target.value as 'select' | 'manual';
-                                                        updateMember(member.id, {
-                                                            userSelectionMode: mode,
-                                                            selectedUser: '',
-                                                            selectedUserId: null,
-                                                            formData: {
-                                                                ...member.formData,
-                                                                firstName: '',
-                                                                lastName: '',
-                                                                email: '',
-                                                                mobile: '',
-                                                                dateOfBirth: '',
-                                                                gender: '',
-                                                            }
-                                                        });
-                                                    }}
-                                                >
-                                                    {/* <FormControlLabel
+                                                        {/* <FormControlLabel
                                                         value="select"
                                                         control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
                                                         label="Select User"
                                                     /> */}
-                                                    <FormControlLabel
-                                                        value="manual"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="Enter User Details"
-                                                    />
-                                                </RadioGroup>
-                                            </div>
-
-                                            {/* User Selection Dropdown */}
-                                            {member.userSelectionMode === 'select' && (
-                                                <div className="mb-6">
-                                                    <FormControl fullWidth>
-                                                        <TextField
-                                                            select
-                                                            label="User *"
-                                                            value={member.selectedUser}
-                                                            onChange={(e) => {
-                                                                const userId = e.target.value;
-                                                                const userIdNum = parseInt(userId);
-                                                                const user = users.find(u => u.id === userIdNum);
-
-                                                                if (user) {
-                                                                    updateMember(member.id, {
-                                                                        selectedUser: userId,
-                                                                        selectedUserId: userIdNum,
-                                                                        formData: {
-                                                                            ...member.formData,
-                                                                            firstName: user.firstname,
-                                                                            lastName: user.lastname,
-                                                                            email: user.email,
-                                                                            mobile: user.mobile,
-                                                                        }
-                                                                    });
-                                                                }
-                                                            }}
-                                                            sx={fieldStyles}
-                                                            disabled={loadingUsers}
-                                                        >
-                                                            {loadingUsers ? (
-                                                                <MenuItem value="">Loading users...</MenuItem>
-                                                            ) : users.length === 0 ? (
-                                                                <MenuItem value="">No users available</MenuItem>
-                                                            ) : (
-                                                                users.map((user) => (
-                                                                    <MenuItem key={user.id} value={user.id.toString()}>
-                                                                        {user.firstname} {user.lastname} - {user.email}
-                                                                    </MenuItem>
-                                                                ))
-                                                            )}
-                                                        </TextField>
-                                                    </FormControl>
+                                                        <FormControlLabel
+                                                            value="manual"
+                                                            control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                                                            label="Enter User Details"
+                                                        />
+                                                    </RadioGroup>
                                                 </div>
-                                            )}
 
-                                            {/* Manual User Details */}
-                                            {member.userSelectionMode === 'manual' && (
-                                                <div className="space-y-4">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <TextField
-                                                            label="First Name *"
-                                                            value={member.formData.firstName}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                // Only allow alphabets and spaces
-                                                                if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
-                                                                    updateMember(member.id, { formData: { ...member.formData, firstName: value } });
-                                                                } else {
-                                                                    toast.error('First name should contain only alphabets');
-                                                                }
-                                                            }}
-                                                            sx={fieldStyles}
-                                                            fullWidth
-                                                            error={member.formData.firstName !== '' && !validateName(member.formData.firstName)}
-                                                            helperText={member.formData.firstName !== '' && !validateName(member.formData.firstName) ? 'First name must be at least 2 characters and contain only alphabets' : ''}
-                                                        />
-                                                        <TextField
-                                                            label="Last Name "
-                                                            value={member.formData.lastName}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                // Only allow alphabets and spaces
-                                                                if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
-                                                                    updateMember(member.id, { formData: { ...member.formData, lastName: value } });
-                                                                }
-                                                                // else {
-                                                                //     toast.error('Last name should contain only alphabets');
-                                                                // }
-                                                            }}
-                                                            sx={fieldStyles}
-                                                            fullWidth
-                                                            error={member.formData.lastName !== '' && !validateName(member.formData.lastName)}
-                                                            helperText={member.formData.lastName !== '' && !validateName(member.formData.lastName) ? 'Last name must be at least 2 characters and contain only alphabets' : ''}
-                                                        />
-                                                    </div>
+                                                {/* User Selection Dropdown */}
+                                                {member.userSelectionMode === 'select' && (
+                                                    <div className="mb-6">
+                                                        <FormControl fullWidth>
+                                                            <TextField
+                                                                select
+                                                                label="User *"
+                                                                value={member.selectedUser}
+                                                                onChange={(e) => {
+                                                                    const userId = e.target.value;
+                                                                    const userIdNum = parseInt(userId);
+                                                                    const user = users.find(u => u.id === userIdNum);
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <DatePicker
-                                                            label="Date of Birth"
-                                                            value={member.formData.dateOfBirth ? dayjs(member.formData.dateOfBirth, 'YYYY-MM-DD') : null}
-                                                            onChange={(newValue) => {
-                                                                if (newValue) {
-                                                                    const selectedDate = dayjs(newValue);
-                                                                    // Check if selected date is in the future
-                                                                    if (selectedDate.isAfter(dayjs())) {
-                                                                        toast.error('Date of Birth cannot be a future date');
-                                                                        return;
+                                                                    if (user) {
+                                                                        updateMember(member.id, {
+                                                                            selectedUser: userId,
+                                                                            selectedUserId: userIdNum,
+                                                                            formData: {
+                                                                                ...member.formData,
+                                                                                firstName: user.firstname,
+                                                                                lastName: user.lastname,
+                                                                                email: user.email,
+                                                                                mobile: user.mobile,
+                                                                            }
+                                                                        });
                                                                     }
-                                                                    updateMember(member.id, { formData: { ...member.formData, dateOfBirth: selectedDate.format('YYYY-MM-DD') } });
-                                                                } else {
-                                                                    updateMember(member.id, { formData: { ...member.formData, dateOfBirth: '' } });
-                                                                }
-                                                            }}
-                                                            format="DD/MM/YYYY"
-                                                            maxDate={dayjs()}
-                                                            slotProps={{
-                                                                textField: {
-                                                                    fullWidth: true,
-                                                                    sx: fieldStyles,
-                                                                },
-                                                            }}
-                                                        />
-                                                        <FormControl fullWidth sx={fieldStyles}>
-                                                            <InputLabel>Gender</InputLabel>
-                                                            <Select
-                                                                value={member.formData.gender}
-                                                                onChange={(e) => updateMember(member.id, { formData: { ...member.formData, gender: e.target.value } })}
-                                                                label="Gender"
+                                                                }}
+                                                                sx={fieldStyles}
+                                                                disabled={loadingUsers}
                                                             >
-                                                                <MenuItem value="">
-                                                                    <em>Select Gender</em>
-                                                                </MenuItem>
-                                                                {GENDER_OPTIONS.map((option) => (
-                                                                    <MenuItem key={option.value} value={option.value}>
-                                                                        {option.label}
-                                                                    </MenuItem>
-                                                                ))}
-                                                            </Select>
+                                                                {loadingUsers ? (
+                                                                    <MenuItem value="">Loading users...</MenuItem>
+                                                                ) : users.length === 0 ? (
+                                                                    <MenuItem value="">No users available</MenuItem>
+                                                                ) : (
+                                                                    users.map((user) => (
+                                                                        <MenuItem key={user.id} value={user.id.toString()}>
+                                                                            {user.firstname} {user.lastname} - {user.email}
+                                                                        </MenuItem>
+                                                                    ))
+                                                                )}
+                                                            </TextField>
                                                         </FormControl>
                                                     </div>
+                                                )}
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                                {/* Manual User Details */}
+                                                {member.userSelectionMode === 'manual' && (
+                                                    <div className="space-y-4">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <TextField
+                                                                label="First Name *"
+                                                                value={member.formData.firstName}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    // Only allow alphabets and spaces
+                                                                    if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                                                                        updateMember(member.id, { formData: { ...member.formData, firstName: value } });
+                                                                    } else {
+                                                                        toast.error('First name should contain only alphabets');
+                                                                    }
+                                                                }}
+                                                                sx={fieldStyles}
+                                                                fullWidth
+                                                                error={member.formData.firstName !== '' && !validateName(member.formData.firstName)}
+                                                                helperText={member.formData.firstName !== '' && !validateName(member.formData.firstName) ? 'First name must be at least 2 characters and contain only alphabets' : ''}
+                                                            />
+                                                            <TextField
+                                                                label="Last Name "
+                                                                value={member.formData.lastName}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    // Only allow alphabets and spaces
+                                                                    if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                                                                        updateMember(member.id, { formData: { ...member.formData, lastName: value } });
+                                                                    }
+                                                                    // else {
+                                                                    //     toast.error('Last name should contain only alphabets');
+                                                                    // }
+                                                                }}
+                                                                sx={fieldStyles}
+                                                                fullWidth
+                                                                error={member.formData.lastName !== '' && !validateName(member.formData.lastName)}
+                                                                helperText={member.formData.lastName !== '' && !validateName(member.formData.lastName) ? 'Last name must be at least 2 characters and contain only alphabets' : ''}
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <DatePicker
+                                                                label="Date of Birth"
+                                                                value={member.formData.dateOfBirth ? dayjs(member.formData.dateOfBirth, 'YYYY-MM-DD') : null}
+                                                                onChange={(newValue) => {
+                                                                    if (newValue) {
+                                                                        const selectedDate = dayjs(newValue);
+                                                                        // Check if selected date is in the future
+                                                                        if (selectedDate.isAfter(dayjs())) {
+                                                                            toast.error('Date of Birth cannot be a future date');
+                                                                            return;
+                                                                        }
+                                                                        updateMember(member.id, { formData: { ...member.formData, dateOfBirth: selectedDate.format('YYYY-MM-DD') } });
+                                                                    } else {
+                                                                        updateMember(member.id, { formData: { ...member.formData, dateOfBirth: '' } });
+                                                                    }
+                                                                }}
+                                                                format="DD/MM/YYYY"
+                                                                maxDate={dayjs()}
+                                                                slotProps={{
+                                                                    textField: {
+                                                                        fullWidth: true,
+                                                                        sx: fieldStyles,
+                                                                    },
+                                                                }}
+                                                            />
+                                                            <FormControl fullWidth sx={fieldStyles}>
+                                                                <InputLabel>Gender</InputLabel>
+                                                                <Select
+                                                                    value={member.formData.gender}
+                                                                    onChange={(e) => updateMember(member.id, { formData: { ...member.formData, gender: e.target.value } })}
+                                                                    label="Gender"
+                                                                >
+                                                                    <MenuItem value="">
+                                                                        <em>Select Gender</em>
+                                                                    </MenuItem>
+                                                                    {GENDER_OPTIONS.map((option) => (
+                                                                        <MenuItem key={option.value} value={option.value}>
+                                                                            {option.label}
+                                                                        </MenuItem>
+                                                                    ))}
+                                                                </Select>
+                                                            </FormControl>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                                            <TextField
+                                                                label="Mobile Number *"
+                                                                value={member.formData.mobile}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    // Only allow numbers and restrict to 10 digits
+                                                                    if (value === '' || /^\d{0,10}$/.test(value)) {
+                                                                        updateMember(member.id, { formData: { ...member.formData, mobile: value } });
+                                                                    } else {
+                                                                        toast.error('Mobile number should contain only digits and must be 10 digits');
+                                                                    }
+                                                                }}
+                                                                onBlur={() => {
+                                                                    if (member.formData.mobile && !validateMobile(member.formData.mobile)) {
+                                                                        toast.error('Please enter a valid 10-digit mobile number');
+                                                                    }
+                                                                }}
+                                                                sx={fieldStyles}
+                                                                fullWidth
+                                                                type="tel"
+                                                                inputProps={{
+                                                                    maxLength: 10,
+                                                                    pattern: '[0-9]*',
+                                                                    inputMode: 'numeric'
+                                                                }}
+                                                                error={member.formData.mobile !== '' && !validateMobile(member.formData.mobile)}
+                                                                helperText={member.formData.mobile !== '' && !validateMobile(member.formData.mobile) ? 'Mobile number must be exactly 10 digits' : ''}
+                                                            />
+                                                            <TextField
+                                                                label="Email Address *"
+                                                                type="email"
+                                                                value={member.formData.email}
+                                                                onChange={(e) => updateMember(member.id, { formData: { ...member.formData, email: e.target.value } })}
+                                                                onBlur={() => {
+                                                                    if (member.formData.email && !validateEmail(member.formData.email)) {
+                                                                        toast.error('Please enter a valid email address (e.g., user@example.com)');
+                                                                    }
+                                                                }}
+                                                                sx={fieldStyles}
+                                                                fullWidth
+                                                                error={member.formData.email !== '' && !validateEmail(member.formData.email)}
+                                                                helperText={member.formData.email !== '' && !validateEmail(member.formData.email) ? 'Please enter a valid email format (e.g., user@example.com)' : ''}
+                                                            />
+
+                                                            <FormControl fullWidth sx={fieldStyles}>
+                                                                <InputLabel>House</InputLabel>
+                                                                <Select
+                                                                    label="House"
+                                                                    value={member.formData.houseId || ''}
+                                                                    onChange={e => updateMember(member.id, { formData: { ...member.formData, houseId: e.target.value } })}
+                                                                >
+                                                                    <MenuItem value=""><em>Select House</em></MenuItem>
+                                                                    {flatsLoading ? (
+                                                                        <MenuItem value="" disabled>Loading...</MenuItem>
+                                                                    ) : flatOptions.length === 0 ? (
+                                                                        <MenuItem value="" disabled>No flats found</MenuItem>
+                                                                    ) : (
+                                                                        flatOptions.map(flat => (
+                                                                            <MenuItem key={flat.id} value={flat.id}>{flat.name}</MenuItem>
+                                                                        ))
+                                                                    )}
+                                                                </Select>
+                                                            </FormControl>
+
+                                                            {cardAllocated && (
+                                                                <TextField
+                                                                    label="Access Card ID"
+                                                                    value={member.formData.accessCardId || ''}
+                                                                    onChange={(e) => updateMember(member.id, { formData: { ...member.formData, accessCardId: e.target.value } })}
+                                                                    sx={fieldStyles}
+                                                                    fullWidth
+                                                                    placeholder="Enter Access Card ID"
+                                                                    helperText="Assign a unique access card ID for this user"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Section 2: Address Details */}
+                                            <div className="mb-8 pt-8 border-t border-gray-200">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h4 className="text-md font-semibold text-[#1a1a1a] flex items-center gap-2">
+                                                        <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">2</div>
+                                                        Address Details
+                                                    </h4>
+                                                    {memberIndex > 0 && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => copyAddressFromPrevious(memberIndex)}
+                                                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                        >
+                                                            <Copy className="w-4 h-4 mr-1" /> Copy from Member {memberIndex}
+                                                        </Button>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <TextField
+                                                        label="Address"
+                                                        value={member.formData.address}
+                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address: e.target.value } })}
+                                                        sx={fieldStyles}
+                                                        fullWidth
+                                                    />
+                                                    <TextField
+                                                        label="Address Line Two"
+                                                        value={member.formData.address_line_two}
+                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address_line_two: e.target.value } })}
+                                                        sx={fieldStyles}
+                                                        fullWidth
+                                                    />
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <TextField
-                                                            label="Mobile Number *"
-                                                            value={member.formData.mobile}
+                                                            label="City"
+                                                            value={member.formData.city}
+                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, city: e.target.value } })}
+                                                            sx={fieldStyles}
+                                                            fullWidth
+                                                        />
+                                                        <TextField
+                                                            label="State"
+                                                            value={member.formData.state}
+                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, state: e.target.value } })}
+                                                            sx={fieldStyles}
+                                                            fullWidth
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <TextField
+                                                            label="Country"
+                                                            value={member.formData.country}
+                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, country: e.target.value } })}
+                                                            sx={fieldStyles}
+                                                            fullWidth
+                                                        />
+                                                        <TextField
+                                                            label="Pin Code"
+                                                            value={member.formData.pin_code}
                                                             onChange={(e) => {
                                                                 const value = e.target.value;
-                                                                // Only allow numbers and restrict to 10 digits
-                                                                if (value === '' || /^\d{0,10}$/.test(value)) {
-                                                                    updateMember(member.id, { formData: { ...member.formData, mobile: value } });
-                                                                } else {
-                                                                    toast.error('Mobile number should contain only digits and must be 10 digits');
-                                                                }
-                                                            }}
-                                                            onBlur={() => {
-                                                                if (member.formData.mobile && !validateMobile(member.formData.mobile)) {
-                                                                    toast.error('Please enter a valid 10-digit mobile number');
+                                                                // Only allow numbers and limit to 6 digits
+                                                                if (value === '' || /^\d{0,6}$/.test(value)) {
+                                                                    updateMember(member.id, { formData: { ...member.formData, pin_code: value } });
                                                                 }
                                                             }}
                                                             sx={fieldStyles}
                                                             fullWidth
                                                             type="tel"
                                                             inputProps={{
-                                                                maxLength: 10,
+                                                                maxLength: 6,
                                                                 pattern: '[0-9]*',
                                                                 inputMode: 'numeric'
                                                             }}
-                                                            error={member.formData.mobile !== '' && !validateMobile(member.formData.mobile)}
-                                                            helperText={member.formData.mobile !== '' && !validateMobile(member.formData.mobile) ? 'Mobile number must be exactly 10 digits' : ''}
+                                                            error={member.formData.pin_code !== '' && !validatePinCode(member.formData.pin_code)}
+                                                            helperText={member.formData.pin_code !== '' && !validatePinCode(member.formData.pin_code) ? 'Please enter a valid 6-digit PIN code' : ''}
                                                         />
-                                                        <TextField
-                                                            label="Email Address *"
-                                                            type="email"
-                                                            value={member.formData.email}
-                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, email: e.target.value } })}
-                                                            onBlur={() => {
-                                                                if (member.formData.email && !validateEmail(member.formData.email)) {
-                                                                    toast.error('Please enter a valid email address (e.g., user@example.com)');
-                                                                }
-                                                            }}
-                                                            sx={fieldStyles}
-                                                            fullWidth
-                                                            error={member.formData.email !== '' && !validateEmail(member.formData.email)}
-                                                            helperText={member.formData.email !== '' && !validateEmail(member.formData.email) ? 'Please enter a valid email format (e.g., user@example.com)' : ''}
-                                                        />
-
-                                                        <FormControl fullWidth sx={fieldStyles}>
-                                                            <InputLabel>House</InputLabel>
-                                                            <Select
-                                                                label="House"
-                                                                value={member.formData.houseId || ''}
-                                                                onChange={e => updateMember(member.id, { formData: { ...member.formData, houseId: e.target.value } })}
-                                                            >
-                                                                <MenuItem value=""><em>Select House</em></MenuItem>
-                                                                {flatsLoading ? (
-                                                                    <MenuItem value="" disabled>Loading...</MenuItem>
-                                                                ) : flatOptions.length === 0 ? (
-                                                                    <MenuItem value="" disabled>No flats found</MenuItem>
-                                                                ) : (
-                                                                    flatOptions.map(flat => (
-                                                                        <MenuItem key={flat.id} value={flat.id}>{flat.name}</MenuItem>
-                                                                    ))
-                                                                )}
-                                                            </Select>
-                                                        </FormControl>
-
-                                                        {cardAllocated && (
-                                                            <TextField
-                                                                label="Access Card ID"
-                                                                value={member.formData.accessCardId || ''}
-                                                                onChange={(e) => updateMember(member.id, { formData: { ...member.formData, accessCardId: e.target.value } })}
-                                                                sx={fieldStyles}
-                                                                fullWidth
-                                                                placeholder="Enter Access Card ID"
-                                                                helperText="Assign a unique access card ID for this user"
-                                                            />
-                                                        )}
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
+                                            </div>
 
-                                        {/* Section 2: Address Details */}
-                                        <div className="mb-8 pt-8 border-t border-gray-200">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h4 className="text-md font-semibold text-[#1a1a1a] flex items-center gap-2">
-                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">2</div>
-                                                    Address Details
+                                            {/* Section 3: Upload Documents */}
+                                            <div className="mb-8 pt-8 border-t border-gray-200">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">3</div>
+                                                    Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
                                                 </h4>
-                                                {memberIndex > 0 && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => copyAddressFromPrevious(memberIndex)}
-                                                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        <Copy className="w-4 h-4 mr-1" /> Copy from Member {memberIndex}
-                                                    </Button>
-                                                )}
-                                            </div>
 
-                                            <div className="space-y-4">
-                                                <TextField
-                                                    label="Address"
-                                                    value={member.formData.address}
-                                                    onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address: e.target.value } })}
-                                                    sx={fieldStyles}
-                                                    fullWidth
-                                                />
-                                                <TextField
-                                                    label="Address Line Two"
-                                                    value={member.formData.address_line_two}
-                                                    onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address_line_two: e.target.value } })}
-                                                    sx={fieldStyles}
-                                                    fullWidth
-                                                />
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <TextField
-                                                        label="City"
-                                                        value={member.formData.city}
-                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, city: e.target.value } })}
-                                                        sx={fieldStyles}
-                                                        fullWidth
-                                                    />
-                                                    <TextField
-                                                        label="State"
-                                                        value={member.formData.state}
-                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, state: e.target.value } })}
-                                                        sx={fieldStyles}
-                                                        fullWidth
-                                                    />
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <TextField
-                                                        label="Country"
-                                                        value={member.formData.country}
-                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, country: e.target.value } })}
-                                                        sx={fieldStyles}
-                                                        fullWidth
-                                                    />
-                                                    <TextField
-                                                        label="Pin Code"
-                                                        value={member.formData.pin_code}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
-                                                            // Only allow numbers and limit to 6 digits
-                                                            if (value === '' || /^\d{0,6}$/.test(value)) {
-                                                                updateMember(member.id, { formData: { ...member.formData, pin_code: value } });
-                                                            }
-                                                        }}
-                                                        sx={fieldStyles}
-                                                        fullWidth
-                                                        type="tel"
-                                                        inputProps={{
-                                                            maxLength: 6,
-                                                            pattern: '[0-9]*',
-                                                            inputMode: 'numeric'
-                                                        }}
-                                                        error={member.formData.pin_code !== '' && !validatePinCode(member.formData.pin_code)}
-                                                        helperText={member.formData.pin_code !== '' && !validatePinCode(member.formData.pin_code) ? 'Please enter a valid 6-digit PIN code' : ''}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Section 3: Upload Documents */}
-                                        <div className="mb-8 pt-8 border-t border-gray-200">
-                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">3</div>
-                                                Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
-                                            </h4>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                                {/* ID Card Upload */}
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        ID Card {!isEditMode && <span className="text-red-500">*</span>}
-                                                    </label>
-                                                    <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.idCardFile || member.idCardPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
-                                                        {(member.idCardFile || member.idCardPreview) ? (
-                                                            <div>
-                                                                {member.idCardPreview && (
-                                                                    <img src={member.idCardPreview} alt="ID Card" className="max-h-40 mx-auto rounded mb-3" />
-                                                                )}
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-sm text-gray-600">{member.idCardFile?.name || 'Existing ID Card'}</span>
-                                                                    <Button variant="ghost" size="sm" onClick={() => removeIdCard(member.id)} className="text-red-600">
-                                                                        <X className="w-4 h-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div>
-                                                                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                                                <p className="text-sm text-gray-500 mb-2">Upload ID Card</p>
-                                                                <input type="file" accept="image/*" onChange={(e) => handleIdCardUpload(member.id, e)} className="hidden" id={`id-card-${member.id}`} />
-                                                                <label htmlFor={`id-card-${member.id}`}>
-                                                                    <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Member Photo Upload */}
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Member Photo {!isEditMode && <span className="text-red-500">*</span>}
-                                                    </label>
-                                                    <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.residentPhotoFile || member.residentPhotoPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
-                                                        {(member.residentPhotoFile || member.residentPhotoPreview) ? (
-                                                            <div>
-                                                                {member.residentPhotoPreview && (
-                                                                    <img src={member.residentPhotoPreview} alt="Photo" className="max-h-40 mx-auto rounded mb-3" />
-                                                                )}
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-sm text-gray-600">{member.residentPhotoFile?.name || 'Existing Photo'}</span>
-                                                                    <Button variant="ghost" size="sm" onClick={() => removeResidentPhoto(member.id)} className="text-red-600">
-                                                                        <X className="w-4 h-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div>
-                                                                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                                                <p className="text-sm text-gray-500 mb-2">Upload Photo</p>
-                                                                <input type="file" accept="image/*" onChange={(e) => handleResidentPhotoUpload(member.id, e)} className="hidden" id={`photo-${member.id}`} />
-                                                                <label htmlFor={`photo-${member.id}`}>
-                                                                    <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Other Documents - Multiple Upload */}
-                                            <div className="mb-6">
-                                                <h3 className="text-sm font-medium text-gray-700 mb-4">Other Documents</h3>
-                                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-[#C72030] transition-colors">
-                                                    <div className="text-center mb-4">
-                                                        <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                                        <p className="text-sm text-gray-500 mb-2">Upload Additional Documents</p>
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*,.pdf,.doc,.docx"
-                                                            onChange={(e) => handleAttachmentUpload(member.id, e)}
-                                                            className="hidden"
-                                                            id={`other-documents-${member.id}`}
-                                                            multiple
-                                                        />
-                                                        <label htmlFor={`other-documents-${member.id}`}>
-                                                            <Button variant="outline" className="cursor-pointer" asChild>
-                                                                <span>Choose Files</span>
-                                                            </Button>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                                    {/* ID Card Upload */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            ID Card {!isEditMode && <span className="text-red-500">*</span>}
                                                         </label>
-                                                        <p className="text-xs text-gray-400 mt-2">You can select multiple files</p>
-                                                    </div>
-
-                                                    {/* Display uploaded documents */}
-                                                    {member.attachmentFiles.length > 0 && (
-                                                        <div className="mt-4">
-                                                            <h4 className="text-sm font-medium text-gray-700 mb-3">Uploaded Documents ({member.attachmentFiles.length})</h4>
-                                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                                                {member.attachmentFiles.map((file, index) => (
-                                                                    <div key={index} className="relative border border-gray-200 rounded-lg p-2 group">
-                                                                        {/* Preview for images */}
-                                                                        {file.type.startsWith('image/') && member.attachmentPreviews[index] ? (
-                                                                            <div className="mb-2">
-                                                                                <img
-                                                                                    src={member.attachmentPreviews[index]}
-                                                                                    alt={`Document ${index + 1}`}
-                                                                                    className="w-full h-24 object-cover rounded"
-                                                                                />
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="mb-2 h-24 bg-gray-100 rounded flex items-center justify-center">
-                                                                                <div className="text-center">
-                                                                                    <Upload className="w-6 h-6 mx-auto text-gray-400 mb-1" />
-                                                                                    <span className="text-xs text-gray-500">
-                                                                                        {file.type.includes('pdf') ? 'PDF' : 'DOC'}
-                                                                                    </span>
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-                                                                        <p className="text-xs text-gray-600 truncate mb-1" title={file.name}>
-                                                                            {file.name}
-                                                                        </p>
-                                                                        <p className="text-xs text-gray-400">
-                                                                            {(file.size / 1024).toFixed(1)} KB
-                                                                        </p>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            onClick={() => removeAttachment(member.id, index)}
-                                                                            className="absolute top-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700"
-                                                                        >
-                                                                            <X className="w-3 h-3" />
+                                                        <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.idCardFile || member.idCardPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
+                                                            {(member.idCardFile || member.idCardPreview) ? (
+                                                                <div>
+                                                                    {member.idCardPreview && (
+                                                                        <img src={member.idCardPreview} alt="ID Card" className="max-h-40 mx-auto rounded mb-3" />
+                                                                    )}
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-sm text-gray-600">{member.idCardFile?.name || 'Existing ID Card'}</span>
+                                                                        <Button variant="ghost" size="sm" onClick={() => removeIdCard(member.id)} className="text-red-600">
+                                                                            <X className="w-4 h-4" />
                                                                         </Button>
                                                                     </div>
-                                                                ))}
-                                                            </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div>
+                                                                    <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                                                                    <p className="text-sm text-gray-500 mb-2">Upload ID Card</p>
+                                                                    <input type="file" accept="image/*" onChange={(e) => handleIdCardUpload(member.id, e)} className="hidden" id={`id-card-${member.id}`} />
+                                                                    <label htmlFor={`id-card-${member.id}`}>
+                                                                        <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
+                                                                    </label>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                                    </div>
 
-                                        {/* Section 4: Health & Wellness */}
-                                        <div className="mb-8 pt-8 border-t border-gray-200">
-                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">4</div>
-                                                Health & Wellness Information
-                                            </h4>
-
-                                            <div className="space-y-6">
-                                                <div>
-                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
-                                                        Do you have any existing injuries or medical conditions?
-                                                    </FormLabel>
-                                                    <RadioGroup row value={member.hasInjuries} onChange={(e) => updateMember(member.id, { hasInjuries: e.target.value as 'yes' | 'no' })}>
-                                                        <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
-                                                        <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
-                                                    </RadioGroup>
-                                                    {member.hasInjuries === 'yes' && (
-                                                        <TextField
-                                                            label="Please specify"
-                                                            value={member.injuryDetails}
-                                                            onChange={(e) => updateMember(member.id, { injuryDetails: e.target.value })}
-                                                            multiline
-                                                            rows={3}
-                                                            fullWidth
-                                                            sx={{
-                                                                "& .MuiOutlinedInput-root": {
-                                                                    height: "auto !important",
-                                                                    padding: "2px !important",
-                                                                    display: "flex",
-                                                                },
-                                                                "& .MuiInputBase-input[aria-hidden='true']": {
-                                                                    flex: 0,
-                                                                    width: 0,
-                                                                    height: 0,
-                                                                    padding: "0 !important",
-                                                                    margin: 0,
-                                                                    display: "none",
-                                                                },
-                                                                "& .MuiInputBase-input": {
-                                                                    resize: "none !important",
-                                                                },
-                                                            }}
-                                                        />
-                                                    )}
-                                                </div>
-
-                                                <div>
-                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
-                                                        Do you have any physical restrictions?
-                                                    </FormLabel>
-                                                    <RadioGroup row value={member.hasPhysicalRestrictions} onChange={(e) => updateMember(member.id, { hasPhysicalRestrictions: e.target.value as 'yes' | 'no' })}>
-                                                        <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
-                                                        <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
-                                                    </RadioGroup>
-                                                    {member.hasPhysicalRestrictions === 'yes' && (
-                                                        <TextField
-                                                            label="Please justify"
-                                                            value={member.physicalRestrictionsDetails}
-                                                            onChange={(e) => updateMember(member.id, { physicalRestrictionsDetails: e.target.value })}
-                                                            multiline
-                                                            rows={3}
-                                                            fullWidth
-                                                            sx={{
-                                                                "& .MuiOutlinedInput-root": {
-                                                                    height: "auto !important",
-                                                                    padding: "2px !important",
-                                                                    display: "flex",
-                                                                },
-                                                                "& .MuiInputBase-input[aria-hidden='true']": {
-                                                                    flex: 0,
-                                                                    width: 0,
-                                                                    height: 0,
-                                                                    padding: "0 !important",
-                                                                    margin: 0,
-                                                                    display: "none",
-                                                                },
-                                                                "& .MuiInputBase-input": {
-                                                                    resize: "none !important",
-                                                                },
-                                                            }}
-                                                        />
-                                                    )}
-                                                </div>
-
-                                                <div>
-                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
-                                                        Are you currently under medication?
-                                                    </FormLabel>
-                                                    <RadioGroup row value={member.hasCurrentMedication} onChange={(e) => updateMember(member.id, { hasCurrentMedication: e.target.value as 'yes' | 'no' })}>
-                                                        <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
-                                                        <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
-                                                    </RadioGroup>
-                                                    {member.hasCurrentMedication === 'yes' && (
-                                                        <TextField
-                                                            label="Please justify"
-                                                            value={member.medicationDetails}
-                                                            onChange={(e) => updateMember(member.id, { medicationDetails: e.target.value })}
-                                                            multiline
-                                                            rows={3}
-                                                            fullWidth
-                                                            sx={{
-                                                                "& .MuiOutlinedInput-root": {
-                                                                    height: "auto !important",
-                                                                    padding: "2px !important",
-                                                                    display: "flex",
-                                                                },
-                                                                "& .MuiInputBase-input[aria-hidden='true']": {
-                                                                    flex: 0,
-                                                                    width: 0,
-                                                                    height: 0,
-                                                                    padding: "0 !important",
-                                                                    margin: 0,
-                                                                    display: "none",
-                                                                },
-                                                                "& .MuiInputBase-input": {
-                                                                    resize: "none !important",
-                                                                },
-                                                            }}
-                                                        />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Section 5: Activity Interests */}
-                                        <div className="mb-8 pt-8 border-t border-gray-200">
-                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">5</div>
-                                                Activity Interests
-                                            </h4>
-
-                                            <div className="space-y-6">
-                                                <div>
-                                                    <FormLabel component="legend" className="text-sm font-medium mb-3">
-                                                        Primary Fitness Goals:
-                                                    </FormLabel>
-                                                    <div className="space-y-1">
-                                                        {['General Fitness', 'Strength Training', 'Pilates', 'Mobility & Flexibility', 'Weight Management', 'Stress Relief / Lifestyle Wellness'].map((goal) => (
-                                                            <FormControlLabel
-                                                                key={goal}
-                                                                control={
-                                                                    <Checkbox
-                                                                        size="small"
-                                                                        checked={member.fitnessGoals.includes(goal)}
-                                                                        onChange={(e) => {
-                                                                            if (e.target.checked) {
-                                                                                updateMember(member.id, { fitnessGoals: [...member.fitnessGoals, goal] });
-                                                                            } else {
-                                                                                updateMember(member.id, { fitnessGoals: member.fitnessGoals.filter(g => g !== goal) });
-                                                                            }
-                                                                        }}
-                                                                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                                                    />
-                                                                }
-                                                                label={<span className="text-sm">{goal}</span>}
-                                                            />
-                                                        ))}
+                                                    {/* Member Photo Upload */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Member Photo {!isEditMode && <span className="text-red-500">*</span>}
+                                                        </label>
+                                                        <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.residentPhotoFile || member.residentPhotoPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
+                                                            {(member.residentPhotoFile || member.residentPhotoPreview) ? (
+                                                                <div>
+                                                                    {member.residentPhotoPreview && (
+                                                                        <img src={member.residentPhotoPreview} alt="Photo" className="max-h-40 mx-auto rounded mb-3" />
+                                                                    )}
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-sm text-gray-600">{member.residentPhotoFile?.name || 'Existing Photo'}</span>
+                                                                        <Button variant="ghost" size="sm" onClick={() => removeResidentPhoto(member.id)} className="text-red-600">
+                                                                            <X className="w-4 h-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div>
+                                                                    <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                                                                    <p className="text-sm text-gray-500 mb-2">Upload Photo</p>
+                                                                    <input type="file" accept="image/*" onChange={(e) => handleResidentPhotoUpload(member.id, e)} className="hidden" id={`photo-${member.id}`} />
+                                                                    <label htmlFor={`photo-${member.id}`}>
+                                                                        <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
+                                                                    </label>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                {/* <div>
+                                                {/* Other Documents - Multiple Upload */}
+                                                <div className="mb-6">
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-4">Other Documents</h3>
+                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-[#C72030] transition-colors">
+                                                        <div className="text-center mb-4">
+                                                            <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                                                            <p className="text-sm text-gray-500 mb-2">Upload Additional Documents</p>
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*,.pdf,.doc,.docx"
+                                                                onChange={(e) => handleAttachmentUpload(member.id, e)}
+                                                                className="hidden"
+                                                                id={`other-documents-${member.id}`}
+                                                                multiple
+                                                            />
+                                                            <label htmlFor={`other-documents-${member.id}`}>
+                                                                <Button variant="outline" className="cursor-pointer" asChild>
+                                                                    <span>Choose Files</span>
+                                                                </Button>
+                                                            </label>
+                                                            <p className="text-xs text-gray-400 mt-2">You can select multiple files</p>
+                                                        </div>
+
+                                                        {/* Display uploaded documents */}
+                                                        {member.attachmentFiles.length > 0 && (
+                                                            <div className="mt-4">
+                                                                <h4 className="text-sm font-medium text-gray-700 mb-3">Uploaded Documents ({member.attachmentFiles.length})</h4>
+                                                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                                                    {member.attachmentFiles.map((file, index) => (
+                                                                        <div key={index} className="relative border border-gray-200 rounded-lg p-2 group">
+                                                                            {/* Preview for images */}
+                                                                            {file.type.startsWith('image/') && member.attachmentPreviews[index] ? (
+                                                                                <div className="mb-2">
+                                                                                    <img
+                                                                                        src={member.attachmentPreviews[index]}
+                                                                                        alt={`Document ${index + 1}`}
+                                                                                        className="w-full h-24 object-cover rounded"
+                                                                                    />
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="mb-2 h-24 bg-gray-100 rounded flex items-center justify-center">
+                                                                                    <div className="text-center">
+                                                                                        <Upload className="w-6 h-6 mx-auto text-gray-400 mb-1" />
+                                                                                        <span className="text-xs text-gray-500">
+                                                                                            {file.type.includes('pdf') ? 'PDF' : 'DOC'}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                            <p className="text-xs text-gray-600 truncate mb-1" title={file.name}>
+                                                                                {file.name}
+                                                                            </p>
+                                                                            <p className="text-xs text-gray-400">
+                                                                                {(file.size / 1024).toFixed(1)} KB
+                                                                            </p>
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                onClick={() => removeAttachment(member.id, index)}
+                                                                                className="absolute top-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700"
+                                                                            >
+                                                                                <X className="w-3 h-3" />
+                                                                            </Button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Section 4: Health & Wellness */}
+                                            <div className="mb-8 pt-8 border-t border-gray-200">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">4</div>
+                                                    Health & Wellness Information
+                                                </h4>
+
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                            Do you have any existing injuries or medical conditions?
+                                                        </FormLabel>
+                                                        <RadioGroup row value={member.hasInjuries} onChange={(e) => updateMember(member.id, { hasInjuries: e.target.value as 'yes' | 'no' })}>
+                                                            <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
+                                                            <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
+                                                        </RadioGroup>
+                                                        {member.hasInjuries === 'yes' && (
+                                                            <TextField
+                                                                label="Please specify"
+                                                                value={member.injuryDetails}
+                                                                onChange={(e) => updateMember(member.id, { injuryDetails: e.target.value })}
+                                                                multiline
+                                                                rows={3}
+                                                                fullWidth
+                                                                sx={{
+                                                                    "& .MuiOutlinedInput-root": {
+                                                                        height: "auto !important",
+                                                                        padding: "2px !important",
+                                                                        display: "flex",
+                                                                    },
+                                                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                                                        flex: 0,
+                                                                        width: 0,
+                                                                        height: 0,
+                                                                        padding: "0 !important",
+                                                                        margin: 0,
+                                                                        display: "none",
+                                                                    },
+                                                                    "& .MuiInputBase-input": {
+                                                                        resize: "none !important",
+                                                                    },
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                            Do you have any physical restrictions?
+                                                        </FormLabel>
+                                                        <RadioGroup row value={member.hasPhysicalRestrictions} onChange={(e) => updateMember(member.id, { hasPhysicalRestrictions: e.target.value as 'yes' | 'no' })}>
+                                                            <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
+                                                            <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
+                                                        </RadioGroup>
+                                                        {member.hasPhysicalRestrictions === 'yes' && (
+                                                            <TextField
+                                                                label="Please justify"
+                                                                value={member.physicalRestrictionsDetails}
+                                                                onChange={(e) => updateMember(member.id, { physicalRestrictionsDetails: e.target.value })}
+                                                                multiline
+                                                                rows={3}
+                                                                fullWidth
+                                                                sx={{
+                                                                    "& .MuiOutlinedInput-root": {
+                                                                        height: "auto !important",
+                                                                        padding: "2px !important",
+                                                                        display: "flex",
+                                                                    },
+                                                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                                                        flex: 0,
+                                                                        width: 0,
+                                                                        height: 0,
+                                                                        padding: "0 !important",
+                                                                        margin: 0,
+                                                                        display: "none",
+                                                                    },
+                                                                    "& .MuiInputBase-input": {
+                                                                        resize: "none !important",
+                                                                    },
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                            Are you currently under medication?
+                                                        </FormLabel>
+                                                        <RadioGroup row value={member.hasCurrentMedication} onChange={(e) => updateMember(member.id, { hasCurrentMedication: e.target.value as 'yes' | 'no' })}>
+                                                            <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
+                                                            <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
+                                                        </RadioGroup>
+                                                        {member.hasCurrentMedication === 'yes' && (
+                                                            <TextField
+                                                                label="Please justify"
+                                                                value={member.medicationDetails}
+                                                                onChange={(e) => updateMember(member.id, { medicationDetails: e.target.value })}
+                                                                multiline
+                                                                rows={3}
+                                                                fullWidth
+                                                                sx={{
+                                                                    "& .MuiOutlinedInput-root": {
+                                                                        height: "auto !important",
+                                                                        padding: "2px !important",
+                                                                        display: "flex",
+                                                                    },
+                                                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                                                        flex: 0,
+                                                                        width: 0,
+                                                                        height: 0,
+                                                                        padding: "0 !important",
+                                                                        margin: 0,
+                                                                        display: "none",
+                                                                    },
+                                                                    "& .MuiInputBase-input": {
+                                                                        resize: "none !important",
+                                                                    },
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Section 5: Activity Interests */}
+                                            <div className="mb-8 pt-8 border-t border-gray-200">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">5</div>
+                                                    Activity Interests
+                                                </h4>
+
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <FormLabel component="legend" className="text-sm font-medium mb-3">
+                                                            Primary Fitness Goals:
+                                                        </FormLabel>
+                                                        <div className="space-y-1">
+                                                            {['General Fitness', 'Strength Training', 'Pilates', 'Mobility & Flexibility', 'Weight Management', 'Stress Relief / Lifestyle Wellness'].map((goal) => (
+                                                                <FormControlLabel
+                                                                    key={goal}
+                                                                    control={
+                                                                        <Checkbox
+                                                                            size="small"
+                                                                            checked={member.fitnessGoals.includes(goal)}
+                                                                            onChange={(e) => {
+                                                                                if (e.target.checked) {
+                                                                                    updateMember(member.id, { fitnessGoals: [...member.fitnessGoals, goal] });
+                                                                                } else {
+                                                                                    updateMember(member.id, { fitnessGoals: member.fitnessGoals.filter(g => g !== goal) });
+                                                                                }
+                                                                            }}
+                                                                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                                        />
+                                                                    }
+                                                                    label={<span className="text-sm">{goal}</span>}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* <div>
                                                     <FormLabel component="legend" className="text-sm font-medium mb-3">
                                                         Have you practiced Pilates before?
                                                     </FormLabel>
@@ -2362,97 +2728,97 @@ export const AddGroupMembershipPage = () => {
                                                         </Select>
                                                     </FormControl>
                                                 </div> */}
-                                            </div>
-                                        </div>
-
-                                        {/* Section 6: Lifestyle & Communication */}
-                                        <div className="mb-8 pt-8 border-t border-gray-200">
-                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">6</div>
-                                                Lifestyle & Communication
-                                            </h4>
-
-                                            <div className="space-y-6">
-                                                <div>
-                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
-                                                        How did you hear about us?
-                                                    </FormLabel>
-                                                    <FormControl fullWidth sx={fieldStyles}>
-                                                        <Select
-                                                            value={member.heardAbout}
-                                                            onChange={(e) => updateMember(member.id, { heardAbout: e.target.value })}
-                                                            displayEmpty
-                                                        >
-                                                            <MenuItem value=""><em>Select an option</em></MenuItem>
-                                                            <MenuItem value="Instagram">Instagram</MenuItem>
-                                                            <MenuItem value="Friend / Referral">Friend / Referral</MenuItem>
-                                                            <MenuItem value="Event">Event</MenuItem>
-                                                            <MenuItem value="Other">Other</MenuItem>
-                                                        </Select>
-                                                    </FormControl>
                                                 </div>
+                                            </div>
 
-                                                <div>
-                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
-                                                        Preferred Communication Channel:
-                                                    </FormLabel>
-                                                    <div className="space-y-1">
-                                                        {['WhatsApp', 'Email', 'SMS'].map((channel) => (
-                                                            <FormControlLabel
-                                                                key={channel}
-                                                                control={
-                                                                    <Checkbox
-                                                                        size="small"
-                                                                        checked={member.communicationChannel.includes(channel)}
-                                                                        onChange={(e) => {
-                                                                            const current = member.communicationChannel;
-                                                                            if (e.target.checked) {
-                                                                                updateMember(member.id, { communicationChannel: [...current, channel] });
-                                                                            } else {
-                                                                                updateMember(member.id, { communicationChannel: current.filter(c => c !== channel) });
-                                                                            }
-                                                                        }}
-                                                                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                                                    />
-                                                                }
-                                                                label={<span className="text-sm">{channel}</span>}
-                                                            />
-                                                        ))}
+                                            {/* Section 6: Lifestyle & Communication */}
+                                            <div className="mb-8 pt-8 border-t border-gray-200">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">6</div>
+                                                    Lifestyle & Communication
+                                                </h4>
+
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                            How did you hear about us?
+                                                        </FormLabel>
+                                                        <FormControl fullWidth sx={fieldStyles}>
+                                                            <Select
+                                                                value={member.heardAbout}
+                                                                onChange={(e) => updateMember(member.id, { heardAbout: e.target.value })}
+                                                                displayEmpty
+                                                            >
+                                                                <MenuItem value=""><em>Select an option</em></MenuItem>
+                                                                <MenuItem value="Instagram">Instagram</MenuItem>
+                                                                <MenuItem value="Friend / Referral">Friend / Referral</MenuItem>
+                                                                <MenuItem value="Event">Event</MenuItem>
+                                                                <MenuItem value="Other">Other</MenuItem>
+                                                            </Select>
+                                                        </FormControl>
+                                                    </div>
+
+                                                    <div>
+                                                        <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                            Preferred Communication Channel:
+                                                        </FormLabel>
+                                                        <div className="space-y-1">
+                                                            {['WhatsApp', 'Email', 'SMS'].map((channel) => (
+                                                                <FormControlLabel
+                                                                    key={channel}
+                                                                    control={
+                                                                        <Checkbox
+                                                                            size="small"
+                                                                            checked={member.communicationChannel.includes(channel)}
+                                                                            onChange={(e) => {
+                                                                                const current = member.communicationChannel;
+                                                                                if (e.target.checked) {
+                                                                                    updateMember(member.id, { communicationChannel: [...current, channel] });
+                                                                                } else {
+                                                                                    updateMember(member.id, { communicationChannel: current.filter(c => c !== channel) });
+                                                                                }
+                                                                            }}
+                                                                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                                        />
+                                                                    }
+                                                                    label={<span className="text-sm">{channel}</span>}
+                                                                />
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Section 7: Occupation */}
-                                        <div className="pt-8 border-t border-gray-200">
-                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">7</div>
-                                                Occupation & Demographics
-                                            </h4>
+                                            {/* Section 7: Occupation */}
+                                            <div className="pt-8 border-t border-gray-200">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">7</div>
+                                                    Occupation & Demographics
+                                                </h4>
 
-                                            <div className="space-y-4">
-                                                <TextField
-                                                    label="Profession / Industry"
-                                                    value={member.profession}
-                                                    onChange={(e) => updateMember(member.id, { profession: e.target.value })}
-                                                    sx={fieldStyles}
-                                                    fullWidth
-                                                />
-                                                <TextField
-                                                    label="Company Name"
-                                                    value={member.companyName}
-                                                    onChange={(e) => updateMember(member.id, { companyName: e.target.value })}
-                                                    sx={fieldStyles}
-                                                    fullWidth
-                                                />
-                                                <TextField
-                                                    label="Company Address"
-                                                    value={member.companyAddress || ''}
-                                                    onChange={(e) => updateMember(member.id, { companyAddress: e.target.value })}
-                                                    sx={fieldStyles}
-                                                    fullWidth
-                                                />
-                                                {/* <div>
+                                                <div className="space-y-4">
+                                                    <TextField
+                                                        label="Profession / Industry"
+                                                        value={member.profession}
+                                                        onChange={(e) => updateMember(member.id, { profession: e.target.value })}
+                                                        sx={fieldStyles}
+                                                        fullWidth
+                                                    />
+                                                    <TextField
+                                                        label="Company Name"
+                                                        value={member.companyName}
+                                                        onChange={(e) => updateMember(member.id, { companyName: e.target.value })}
+                                                        sx={fieldStyles}
+                                                        fullWidth
+                                                    />
+                                                    <TextField
+                                                        label="Company Address"
+                                                        value={member.companyAddress || ''}
+                                                        onChange={(e) => updateMember(member.id, { companyAddress: e.target.value })}
+                                                        sx={fieldStyles}
+                                                        fullWidth
+                                                    />
+                                                    {/* <div>
                                                     <FormLabel component="legend" className="text-sm font-medium mb-2">
                                                         Interested in corporate/group plans?
                                                     </FormLabel>
@@ -2461,145 +2827,145 @@ export const AddGroupMembershipPage = () => {
                                                         <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
                                                     </RadioGroup>
                                                 </div> */}
+                                                </div>
                                             </div>
                                         </div>
+                                    ))}
+
+                                    {/* Submit Buttons */}
+                                    <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
+                                        <Button variant="outline" onClick={handleBackToStep1}>Back</Button>
+                                        <Button variant="outline" onClick={handleGoBack} disabled={isSubmitting}>Cancel</Button>
+                                        <Button onClick={handleSubmit} disabled={isSubmitting || !selectedPlanId} className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                                            {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
+                                        </Button>
                                     </div>
-                                ))}
+                                </>
+                            )}
 
-                                {/* Submit Buttons */}
-                                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
-                                    <Button variant="outline" onClick={handleBackToStep1}>Back</Button>
-                                    <Button variant="outline" onClick={handleGoBack} disabled={isSubmitting}>Cancel</Button>
-                                    <Button onClick={handleSubmit} disabled={isSubmitting || !selectedPlanId} className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                                        {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
-                                    </Button>
-                                </div>
-                            </>
-                        )}
+                            {/* Step 1: Membership Plan & Add-ons */}
+                            {currentStep === 1 && (
+                                <>
+                                    {/* Card 9: Membership Plan Selection */}
+                                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                        <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">Select Membership Plan</h2>
+                                        <p className="text-sm text-gray-500 mb-6">Choose a plan that suits your needs</p>
 
-                        {/* Step 1: Membership Plan & Add-ons */}
-                        {currentStep === 1 && (
-                            <>
-                                {/* Card 9: Membership Plan Selection */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">Select Membership Plan</h2>
-                                    <p className="text-sm text-gray-500 mb-6">Choose a plan that suits your needs</p>
-
-                                    {loadingPlans ? (
-                                        <div className="flex justify-center py-8">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
-                                        </div>
-                                    ) : membershipPlans.length === 0 ? (
-                                        <div className="text-center py-8">
-                                            <p className="text-gray-500">No membership plans available. Please contact administrator.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {membershipPlans.map((plan) => (
-                                                <div
-                                                    key={plan.id}
-                                                    onClick={() => setSelectedPlanId(plan.id)}
-                                                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${selectedPlanId === plan.id
-                                                        ? 'border-[#C72030] bg-red-50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div>
-                                                            <h3 className="font-semibold text-lg text-[#1a1a1a]">{plan.name}</h3>
-                                                            <div className="flex items-center gap-3 mt-1">
-                                                                <p className="text-sm text-gray-500">
-                                                                    {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
-                                                                </p>
-                                                                {plan.user_limit && (
-                                                                    <>
-                                                                        <span className="text-gray-300">•</span>
-                                                                        <p className="text-sm text-gray-500">
-                                                                            Max {plan.user_limit} {parseInt(plan.user_limit) === 1 ? 'Member' : 'Members'}
-                                                                        </p>
-                                                                    </>
-                                                                )}
+                                        {loadingPlans ? (
+                                            <div className="flex justify-center py-8">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+                                            </div>
+                                        ) : membershipPlans.length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <p className="text-gray-500">No membership plans available. Please contact administrator.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {membershipPlans.map((plan) => (
+                                                    <div
+                                                        key={plan.id}
+                                                        onClick={() => setSelectedPlanId(plan.id)}
+                                                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${selectedPlanId === plan.id
+                                                            ? 'border-[#C72030] bg-red-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div>
+                                                                <h3 className="font-semibold text-lg text-[#1a1a1a]">{plan.name}</h3>
+                                                                <div className="flex items-center gap-3 mt-1">
+                                                                    <p className="text-sm text-gray-500">
+                                                                        {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
+                                                                    </p>
+                                                                    {plan.user_limit && (
+                                                                        <>
+                                                                            <span className="text-gray-300">•</span>
+                                                                            <p className="text-sm text-gray-500">
+                                                                                Max {plan.user_limit} {parseInt(plan.user_limit) === 1 ? 'Member' : 'Members'}
+                                                                            </p>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-2xl font-bold text-[#C72030]">₹{plan.price}</p>
+                                                                <p className="text-xs text-gray-500">per {plan.renewal_terms}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="text-2xl font-bold text-[#C72030]">₹{plan.price}</p>
-                                                            <p className="text-xs text-gray-500">per {plan.renewal_terms}</p>
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Plan Amenities */}
-                                                    {plan.plan_amenities && plan.plan_amenities.length > 0 && (
-                                                        <div className="mt-3 pt-3 border-t border-gray-200">
-                                                            <p className="text-sm font-medium text-gray-700 mb-2">Included Amenities:</p>
-                                                            <div className="flex items-center gap-4 flex-wrap">
-                                                                {plan.plan_amenities.map((amenity) => (
-                                                                    <div key={amenity.id} className="flex items-center gap-2">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                        {/* Plan Amenities */}
+                                                        {plan.plan_amenities && plan.plan_amenities.length > 0 && (
+                                                            <div className="mt-3 pt-3 border-t border-gray-200">
+                                                                <p className="text-sm font-medium text-gray-700 mb-2">Included Amenities:</p>
+                                                                <div className="flex items-center gap-4 flex-wrap">
+                                                                    {plan.plan_amenities.map((amenity) => (
+                                                                        <div key={amenity.id} className="flex items-center gap-2">
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
 
-                                                                        <span className="text-sm text-gray-600">
-                                                                            {amenity.facility_setup_name || amenity.facility_setup?.name || `Amenity #${amenity.facility_setup_id}`}
-                                                                        </span>
-                                                                        <Tooltip
-                                                                            title={(
-                                                                                <div className="text-xs">
-                                                                                    {Array.isArray((amenity as any).facility_setup_assesories) && ((amenity as any).facility_setup_assesories.length > 0) && (
-                                                                                        <div className="mb-1">
-                                                                                            <div className="font-semibold">Accessories :</div>
-                                                                                            <div>
-                                                                                                {((amenity as any).facility_setup_assesories as string[]).join(', ')}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    )}
-                                                                                    {Array.isArray((amenity as any).facility_setup_accessories) && ((amenity as any).facility_setup_accessories.length > 0) && (
-                                                                                        <div className="mb-1">
-                                                                                            <div className="font-semibold">Accessories :</div>
-                                                                                            <div>
-                                                                                                {((amenity as any).facility_setup_accessories as string[]).join(', ')}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    )}
-                                                                                    {(((amenity as any).frequency) || ((amenity as any).slot_limit != null)) && (
-                                                                                        <div className="mt-1">
-                                                                                            <div className="font-semibold">Slot Limit :</div>
-                                                                                            <div>
-                                                                                                {((amenity as any).slot_limit != null && (amenity as any).frequency)
-                                                                                                    ? `${(amenity as any).slot_limit} ${(amenity as any).frequency}`
-                                                                                                    : ((amenity as any).frequency || '-')}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            )}
-                                                                            arrow
-                                                                        >
-                                                                            <span className="inline-flex items-center text-gray-500 cursor-pointer">
-                                                                                <Info className="w-3.5 h-3.5" />
+                                                                            <span className="text-sm text-gray-600">
+                                                                                {amenity.facility_setup_name || amenity.facility_setup?.name || `Amenity #${amenity.facility_setup_id}`}
                                                                             </span>
-                                                                        </Tooltip>
-                                                                    </div>
-                                                                ))}
+                                                                            <Tooltip
+                                                                                title={(
+                                                                                    <div className="text-xs">
+                                                                                        {Array.isArray((amenity as any).facility_setup_assesories) && ((amenity as any).facility_setup_assesories.length > 0) && (
+                                                                                            <div className="mb-1">
+                                                                                                <div className="font-semibold">Accessories :</div>
+                                                                                                <div>
+                                                                                                    {((amenity as any).facility_setup_assesories as string[]).join(', ')}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {Array.isArray((amenity as any).facility_setup_accessories) && ((amenity as any).facility_setup_accessories.length > 0) && (
+                                                                                            <div className="mb-1">
+                                                                                                <div className="font-semibold">Accessories :</div>
+                                                                                                <div>
+                                                                                                    {((amenity as any).facility_setup_accessories as string[]).join(', ')}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {(((amenity as any).frequency) || ((amenity as any).slot_limit != null)) && (
+                                                                                            <div className="mt-1">
+                                                                                                <div className="font-semibold">Slot Limit :</div>
+                                                                                                <div>
+                                                                                                    {((amenity as any).slot_limit != null && (amenity as any).frequency)
+                                                                                                        ? `${(amenity as any).slot_limit} ${(amenity as any).frequency}`
+                                                                                                        : ((amenity as any).frequency || '-')}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+                                                                                arrow
+                                                                            >
+                                                                                <span className="inline-flex items-center text-gray-500 cursor-pointer">
+                                                                                    <Info className="w-3.5 h-3.5" />
+                                                                                </span>
+                                                                            </Tooltip>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    )}
+                                                        )}
 
-                                                    {selectedPlanId === plan.id && (
-                                                        <div className="mt-3 flex items-center gap-2 text-[#C72030]">
-                                                            <div className="w-5 h-5 rounded-full bg-[#C72030] flex items-center justify-center">
-                                                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                                </svg>
+                                                        {selectedPlanId === plan.id && (
+                                                            <div className="mt-3 flex items-center gap-2 text-[#C72030]">
+                                                                <div className="w-5 h-5 rounded-full bg-[#C72030] flex items-center justify-center">
+                                                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                    </svg>
+                                                                </div>
+                                                                <span className="text-sm font-medium">Selected</span>
                                                             </div>
-                                                            <span className="text-sm font-medium">Selected</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                {/* Card 10: Add-on Amenities */}
-                                {/* {selectedPlanId && (
+                                    {/* Card 10: Add-on Amenities */}
+                                    {/* {selectedPlanId && (
                                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                         <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">Additional Amenities (Add-ons)</h2>
                                         <p className="text-sm text-gray-500 mb-6">Select additional amenities not included in your plan</p>
@@ -2644,212 +3010,213 @@ export const AddGroupMembershipPage = () => {
                                     </div>
                                 )} */}
 
-                                {/* Shared Membership Details */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Shared Membership Details</h2>
-
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
-                                            <DatePicker
-                                                label="Start Date *"
-                                                value={startDate}
-                                                onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
-                                                format="DD/MM/YYYY"
-                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
-                                            />
-                                            <DatePicker
-                                                label="End Date *"
-                                                value={endDate}
-                                                onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
-                                                format="DD/MM/YYYY"
-                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
-                                            />
-                                        </div>
-
-                                        <TextField
-                                            label="Emergency Contact (Optional)"
-                                            value={emergencyContactName}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                // Only allow numbers and limit to 10 digits
-                                                if (value === '' || /^\d{0,10}$/.test(value)) {
-                                                    setEmergencyContactName(value);
-                                                }
-                                            }}
-                                            onBlur={() => {
-                                                if (emergencyContactName && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)) {
-                                                    toast.warning('Emergency contact should be a valid 10-digit phone number');
-                                                }
-                                            }}
-                                            sx={fieldStyles}
-                                            fullWidth
-                                            type="tel"
-                                            placeholder="10-digit Phone Number"
-                                            inputProps={{
-                                                maxLength: 10,
-                                                pattern: '[0-9]*',
-                                                inputMode: 'numeric'
-                                            }}
-                                            error={emergencyContactName !== '' && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)}
-                                            helperText={
-                                                emergencyContactName !== '' && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)
-                                                    ? 'Emergency contact must be exactly 10 digits'
-                                                    : ''
-                                            }
-                                        />
-
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={cardAllocated}
-                                                    onChange={(e) => {
-                                                        const isChecked = e.target.checked;
-                                                        setCardAllocated(isChecked);
-
-                                                        // Clear all access card IDs if unchecking
-                                                        if (!isChecked) {
-                                                            setMembers(prevMembers =>
-                                                                prevMembers.map(member => ({
-                                                                    ...member,
-                                                                    formData: {
-                                                                        ...member.formData,
-                                                                        accessCardId: ''
-                                                                    }
-                                                                }))
-                                                            );
-                                                        }
-                                                    }}
-                                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                                />
-                                            }
-                                            label="Access Card Allocated"
-                                        />
-                                    </div>
-
-                                    {cardAllocated && (
-                                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-start gap-2">
-                                            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                                            <p className="text-sm text-blue-800">
-                                                Access Card ID is now required for each user. Each user will have their own unique access card ID in the User Information section below.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Card 11: Cost Summary */}
-                                {selectedPlanId && (
+                                    {/* Shared Membership Details */}
                                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                        <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Cost Summary</h2>
+                                        <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Shared Membership Details</h2>
 
-                                        <div className="space-y-4">
-                                            {/* Membership Plan Cost - Editable */}
-                                            <div className="pb-3">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-700">{selectedPlan?.name}</p>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            {selectedPlan?.renewal_terms && selectedPlan.renewal_terms.charAt(0).toUpperCase() + selectedPlan.renewal_terms.slice(1)} Membership
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-2xl font-bold text-[#C72030]">₹{selectedPlan?.price}</p>
-                                                        <p className="text-xs text-gray-500">per {selectedPlan?.renewal_terms}</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Discount Section */}
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <label className="text-sm text-gray-600">Discount (%):</label>
-                                                    <div className="flex items-center gap-1 flex-1">
-                                                        <TextField
-                                                            value={discountPercentage}
-                                                            onChange={(e) => {
-                                                                const value = e.target.value;
-                                                                // Only allow non-negative numbers between 0 and 100
-                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
-                                                                    setDiscountPercentage(value);
-                                                                }
-                                                            }}
-                                                            type="number"
-                                                            size="small"
-                                                            inputProps={{
-                                                                min: 0,
-                                                                max: 100,
-                                                                step: 0.01
-                                                            }}
-                                                            sx={{
-                                                                ...fieldStyles,
-                                                                width: '100px',
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    height: '40px',
-                                                                }
-                                                            }}
-                                                        />
-                                                        <span className="text-sm text-gray-600 ml-2">Amount: ₹{discountAmount.toFixed(2)}</span>
-                                                    </div>
-                                                </div>
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                                                <DatePicker
+                                                    label="Start Date *"
+                                                    value={startDate}
+                                                    onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
+                                                    format="DD/MM/YYYY"
+                                                    slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                                />
+                                                <DatePicker
+                                                    label="End Date *"
+                                                    value={endDate}
+                                                    onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
+                                                    format="DD/MM/YYYY"
+                                                    slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                                />
                                             </div>
 
-                                            {/* Subtotal */}
-                                            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-                                                <p className="text-sm font-medium text-gray-700">Subtotal</p>
-                                                <p className="text-lg font-semibold text-gray-900">₹{subtotal.toFixed(2)}</p>
-                                            </div>
+                                            <TextField
+                                                label="Emergency Contact (Optional)"
+                                                value={emergencyContactName}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Only allow numbers and limit to 10 digits
+                                                    if (value === '' || /^\d{0,10}$/.test(value)) {
+                                                        setEmergencyContactName(value);
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    if (emergencyContactName && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)) {
+                                                        toast.warning('Emergency contact should be a valid 10-digit phone number');
+                                                    }
+                                                }}
+                                                sx={fieldStyles}
+                                                fullWidth
+                                                type="tel"
+                                                placeholder="10-digit Phone Number"
+                                                inputProps={{
+                                                    maxLength: 10,
+                                                    pattern: '[0-9]*',
+                                                    inputMode: 'numeric'
+                                                }}
+                                                error={emergencyContactName !== '' && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)}
+                                                helperText={
+                                                    emergencyContactName !== '' && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)
+                                                        ? 'Emergency contact must be exactly 10 digits'
+                                                        : ''
+                                                }
+                                            />
 
-                                            {/* Tax Section */}
-                                            <div className="space-y-3 pb-3 border-b border-gray-200">
-                                                {/* CGST */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <label className="text-sm text-gray-600">CGST ({cgstPercentage}%):</label>
-                                                    </div>
-                                                    <p className="text-sm font-medium text-gray-700">₹{cgstAmount.toFixed(2)}</p>
-                                                </div>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={cardAllocated}
+                                                        onChange={(e) => {
+                                                            const isChecked = e.target.checked;
+                                                            setCardAllocated(isChecked);
 
-                                                {/* SGST */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <label className="text-sm text-gray-600">SGST ({sgstPercentage}%):</label>
-                                                    </div>
-                                                    <p className="text-sm font-medium text-gray-700">₹{sgstAmount.toFixed(2)}</p>
-                                                </div>
-                                            </div>
+                                                            // Clear all access card IDs if unchecking
+                                                            if (!isChecked) {
+                                                                setMembers(prevMembers =>
+                                                                    prevMembers.map(member => ({
+                                                                        ...member,
+                                                                        formData: {
+                                                                            ...member.formData,
+                                                                            accessCardId: ''
+                                                                        }
+                                                                    }))
+                                                                );
+                                                            }
+                                                        }}
+                                                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                    />
+                                                }
+                                                label="Access Card Allocated"
+                                            />
+                                        </div>
 
-                                            {/* Total */}
-                                            <div className="flex items-center justify-between pt-2">
-                                                <p className="text-base font-bold text-gray-900">Total Amount (Inc. Tax)</p>
-                                                <p className="text-2xl font-bold text-[#C72030]">₹{totalCost.toFixed(2)}</p>
-                                            </div>
-
-                                            {/* Renewal Info */}
-                                            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                                                <p className="text-xs text-blue-800">
-                                                    <span className="font-medium">Renewal Terms:</span> This membership will auto-renew every {selectedPlan?.renewal_terms} unless cancelled.
+                                        {cardAllocated && (
+                                            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-start gap-2">
+                                                <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                                <p className="text-sm text-blue-800">
+                                                    Access Card ID is now required for each user. Each user will have their own unique access card ID in the User Information section below.
                                                 </p>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
-                                )}
-                                {/* Submit Button */}
-                                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleGoBack}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={handleNext}
-                                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-            </div>
+
+                                    {/* Card 11: Cost Summary */}
+                                    {selectedPlanId && (
+                                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                            <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Cost Summary</h2>
+
+                                            <div className="space-y-4">
+                                                {/* Membership Plan Cost - Editable */}
+                                                <div className="pb-3">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-700">{selectedPlan?.name}</p>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {selectedPlan?.renewal_terms && selectedPlan.renewal_terms.charAt(0).toUpperCase() + selectedPlan.renewal_terms.slice(1)} Membership
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-2xl font-bold text-[#C72030]">₹{selectedPlan?.price}</p>
+                                                            <p className="text-xs text-gray-500">per {selectedPlan?.renewal_terms}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Discount Section */}
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <label className="text-sm text-gray-600">Discount (%):</label>
+                                                        <div className="flex items-center gap-1 flex-1">
+                                                            <TextField
+                                                                value={discountPercentage}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    // Only allow non-negative numbers between 0 and 100
+                                                                    if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                                                                        setDiscountPercentage(value);
+                                                                    }
+                                                                }}
+                                                                type="number"
+                                                                size="small"
+                                                                inputProps={{
+                                                                    min: 0,
+                                                                    max: 100,
+                                                                    step: 0.01
+                                                                }}
+                                                                sx={{
+                                                                    ...fieldStyles,
+                                                                    width: '100px',
+                                                                    '& .MuiOutlinedInput-root': {
+                                                                        height: '40px',
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <span className="text-sm text-gray-600 ml-2">Amount: ₹{discountAmount.toFixed(2)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Subtotal */}
+                                                <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                                                    <p className="text-sm font-medium text-gray-700">Subtotal</p>
+                                                    <p className="text-lg font-semibold text-gray-900">₹{subtotal.toFixed(2)}</p>
+                                                </div>
+
+                                                {/* Tax Section */}
+                                                <div className="space-y-3 pb-3 border-b border-gray-200">
+                                                    {/* CGST */}
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="text-sm text-gray-600">CGST ({cgstPercentage}%):</label>
+                                                        </div>
+                                                        <p className="text-sm font-medium text-gray-700">₹{cgstAmount.toFixed(2)}</p>
+                                                    </div>
+
+                                                    {/* SGST */}
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="text-sm text-gray-600">SGST ({sgstPercentage}%):</label>
+                                                        </div>
+                                                        <p className="text-sm font-medium text-gray-700">₹{sgstAmount.toFixed(2)}</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Total */}
+                                                <div className="flex items-center justify-between pt-2">
+                                                    <p className="text-base font-bold text-gray-900">Total Amount (Inc. Tax)</p>
+                                                    <p className="text-2xl font-bold text-[#C72030]">₹{totalCost.toFixed(2)}</p>
+                                                </div>
+
+                                                {/* Renewal Info */}
+                                                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                                                    <p className="text-xs text-blue-800">
+                                                        <span className="font-medium">Renewal Terms:</span> This membership will auto-renew every {selectedPlan?.renewal_terms} unless cancelled.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Submit Button */}
+                                    <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleGoBack}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            onClick={handleNext}
+                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                        >
+                                            Next
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
         </LocalizationProvider>
     );
 };
