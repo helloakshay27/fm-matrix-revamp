@@ -1311,7 +1311,19 @@ const WebSocketNotificationInitializer: React.FC<{
         },
         onMessageNotification: (message) => {
           console.warn("📨 Received notification:", message);
-          if (message.user_id !== currentUser.id) {
+          // if (message.user_id !== currentUser.id) {
+          //   return;
+          // }
+          const typeCheckMap = {
+            conversation: message.user_id,
+            projectspace: message.user_id,
+            newtaskmanagement: message.responsible_person_id,
+            newissue: message.responsible_person_id,
+          };
+
+          const relevantId = typeCheckMap[message.ntype];
+
+          if (Number(relevantId) !== Number(currentUser.id)) {
             return;
           }
 
