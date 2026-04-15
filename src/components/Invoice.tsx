@@ -37,9 +37,10 @@ interface InvoiceProps {
     showButton?: boolean;
     onBase64Generated?: (base64: string) => void;
     returnBase64?: boolean;
+    isFromDetailsPage?: boolean;
 }
 
-const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, showButton = true, onBase64Generated, returnBase64 = false }: InvoiceProps) => {
+const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, showButton = true, onBase64Generated, returnBase64 = false, isFromDetailsPage = false }: InvoiceProps) => {
     const invoiceRef = useRef<HTMLDivElement>(null);
 
     // Extract data with fallbacks
@@ -47,6 +48,9 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
     const invoiceDate = data?.created_at
         ? new Date(data.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '. ')
         : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '. ');
+
+    // Determine invoice type based on page
+    const invoiceType = isFromDetailsPage ? 'RECEIPT' : 'TAX INVOICE';
 
     const primaryMember = data?.club_members?.[0];
     const billToName = primaryMember?.user_name || 'Deepak Gm';
@@ -89,18 +93,23 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
         if (!invoiceRef.current) return;
 
         try {
+            // Generate canvas with reduced scale for smaller file size
             const canvas = await html2canvas(invoiceRef.current, {
-                scale: 2,
+                scale: 1.2, // Reduced from 2 to ~1.5x original size (40% compression)
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
+                allowTaint: true,
             });
 
-            const imgData = canvas.toDataURL('image/png');
+            // Convert to JPEG with compression instead of PNG (significantly smaller)
+            const imgData = canvas.toDataURL('image/jpeg', 0.75); // 75% quality for good balance
+
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
                 format: 'a4',
+                compress: true, // Enable PDF compression
             });
 
             const imgWidth = 210; // A4 width in mm
@@ -108,13 +117,15 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
             let heightLeft = (canvas.height * imgWidth) / canvas.width;
             let position = 0;
 
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, (canvas.height * imgWidth) / canvas.width);
+            // Add first image as JPEG (compressed)
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, (canvas.height * imgWidth) / canvas.width);
             heightLeft -= pageHeight;
 
+            // Add subsequent pages if needed
             while (heightLeft >= 0) {
                 position = heightLeft - (canvas.height * imgWidth) / canvas.width;
                 pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, (canvas.height * imgWidth) / canvas.width);
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, (canvas.height * imgWidth) / canvas.width);
                 heightLeft -= pageHeight;
             }
 
@@ -193,7 +204,7 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                                 }}
                             >
                                 <p className="text-[#1F5E2E] font-bold text-7xl">
-                                    TAX INVOICE
+                                    {invoiceType}
                                 </p>
                             </div>
                         </div>
@@ -207,7 +218,7 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                                 {/* Left: Company Details */}
                                 <div className="flex-1">
                                     <p className="text-[#1F5E2E] font-bold mb-4">
-                                        TAX INVOICE
+                                        {invoiceType}
                                     </p>
                                     <p className="text-[#1F5E2E] font-bold">
                                         PAUSE & PLAY MOVEMENT LABS

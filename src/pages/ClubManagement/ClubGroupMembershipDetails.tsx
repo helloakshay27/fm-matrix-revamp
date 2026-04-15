@@ -769,7 +769,7 @@ export const ClubGroupMembershipDetails = () => {
                     </div>
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Club Membership created successfully</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Membership Payment Successfull</h3>
                 <p className="text-gray-600 font-medium">
                   Preparing invoicing and sending mail...
                 </p>
@@ -820,6 +820,7 @@ export const ClubGroupMembershipDetails = () => {
               onClose={handleCloseInvoice}
               showButton={true}
               autoDownload={autoDownloadInvoice}
+              isFromDetailsPage={true}
             />
           </div>
         </div>
