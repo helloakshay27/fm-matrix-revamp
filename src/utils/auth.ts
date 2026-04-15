@@ -213,6 +213,26 @@ export const fetchLockAccount = async (): Promise<void> => {
     if (data?.lock_account?.id) {
       localStorage.setItem("lock_account_id", String(data.lock_account.id));
     }
+
+    // Fetch and store organisation id
+    try {
+      const orgUrl = `${base.replace(/\/+$/, "")}/organizations.json`;
+      const orgResponse = await fetch(orgUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (orgResponse.ok) {
+        const orgData = await orgResponse.json();
+        const org = Array.isArray(orgData) ? orgData[0] : orgData;
+        if (org?.id) {
+          localStorage.setItem("organisation_id", String(org.id));
+        }
+      }
+    } catch {
+      // Silently fail
+    }
   } catch {
     // Silently fail - lock_account_id is not critical for app to function
   }
@@ -260,7 +280,7 @@ export const getOrganizationsByEmail = async (
 ): Promise<Organization[]> => {
   if (isOmanSite || isFmSite) {
     const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
@@ -272,7 +292,7 @@ export const getOrganizationsByEmail = async (
 
   if (isViSite) {
     const response = await fetch(
-      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+      `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

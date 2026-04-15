@@ -1180,6 +1180,7 @@ import VendorCreditDetails from "./pages/ClubManagement/VendorCreditDetails";
 import MobileTodo from "./pages/MobileTodo";
 import { BalanceSheetDetails } from "./pages/ClubManagement/BalanceSheetDetails";
 import { ProfitAndLossDetails } from "./pages/ClubManagement/ProfitAndLossDetails";
+import { CashFlowDetails } from "./pages/ClubManagement/CashFlowDetails";
 import { GSTPayableDetails } from "./pages/ClubManagement/GSTPayableDetails";
 import GstReceivableReport from "./pages/ClubManagement/GSTReceivableReport";
 import { GSTReceivableDetails } from "./pages/ClubManagement/GSTReceivableDetails";
@@ -1297,85 +1298,85 @@ const WebSocketNotificationInitializer: React.FC<{
   // }, [token, connect, socketUrl]);
 
   // Subscribe to notifications
-  useEffect(() => {
-    const subscriptionTimer = setTimeout(() => {
-      const sub = webSocketManager.subscribeToUserNotifications({
-        onConnected: () => {
-          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Notifications connected!");
-          setIsSubscribed(true);
-          toast.success("Real-time notifications enabled!", {
-            duration: 2000,
-          });
-        },
-        onMessageNotification: (message) => {
-          console.warn("📨 Received notification:", message);
-          if (message.user_id !== currentUser.id) {
-            return;
-          }
+  // useEffect(() => {
+  //   const subscriptionTimer = setTimeout(() => {
+  //     const sub = webSocketManager.subscribeToUserNotifications({
+  //       onConnected: () => {
+  //         console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Notifications connected!");
+  //         setIsSubscribed(true);
+  //         toast.success("Real-time notifications enabled!", {
+  //           duration: 2000,
+  //         });
+  //       },
+  //       onMessageNotification: (message) => {
+  //         console.warn("📨 Received notification:", message);
+  //         if (message.user_id !== currentUser.id) {
+  //           return;
+  //         }
 
-          // Add notification to context
-          const notification = {
-            id: message.id || Date.now(),
-            title: message.title || "New Notification",
-            message:
-              message.body || message.message || "You have a new notification",
-            ntype: message.ntype,
-            type: message.type,
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            read: false,
-            payload: message.payload,
-          };
+  //         // Add notification to context
+  //         const notification = {
+  //           id: message.id || Date.now(),
+  //           title: message.title || "New Notification",
+  //           message:
+  //             message.body || message.message || "You have a new notification",
+  //           ntype: message.ntype,
+  //           type: message.type,
+  //           time: new Date().toLocaleTimeString([], {
+  //             hour: "2-digit",
+  //             minute: "2-digit",
+  //           }),
+  //           read: false,
+  //           payload: message.payload,
+  //         };
 
-          addNotification(notification);
+  //         addNotification(notification);
 
-          // Show browser notification
-          if ("Notification" in window) {
-            Notification.requestPermission().then((permission) => {
-              if (permission === "granted") {
-                const notif = new Notification(notification.title, {
-                  body: notification.message,
-                  icon: "/lovable-uploads/d49da91f-2f0a-4ecc-8d4b-0f2b84c1a96b.png",
-                });
+  //         // Show browser notification
+  //         if ("Notification" in window) {
+  //           Notification.requestPermission().then((permission) => {
+  //             if (permission === "granted") {
+  //               const notif = new Notification(notification.title, {
+  //                 body: notification.message,
+  //                 icon: "/lovable-uploads/d49da91f-2f0a-4ecc-8d4b-0f2b84c1a96b.png",
+  //               });
 
-                notif.onclick = () => {
-                  window.focus();
-                  if (message.ntype === "conversation") {
-                    navigate(
-                      `/vas/channels/messages/${message.conversation_id}`
-                    );
-                  } else if (message.ntype === "projectspace") {
-                    navigate(
-                      `/vas/channels/groups/${message.project_space_id}`
-                    );
-                  }
-                };
-              }
-            });
-          }
-        },
-        onDisconnected: () => {
-          console.warn("❌ Notification subscription disconnected");
-          setIsSubscribed(false);
-          toast.error("Real-time notifications disconnected");
-        },
-      });
-      console.warn("📋 Subscription object:", sub);
-    }, 2000); // Wait 2 seconds for connection to establish
+  //               notif.onclick = () => {
+  //                 window.focus();
+  //                 if (message.ntype === "conversation") {
+  //                   navigate(
+  //                     `/vas/channels/messages/${message.conversation_id}`
+  //                   );
+  //                 } else if (message.ntype === "projectspace") {
+  //                   navigate(
+  //                     `/vas/channels/groups/${message.project_space_id}`
+  //                   );
+  //                 }
+  //               };
+  //             }
+  //           });
+  //         }
+  //       },
+  //       onDisconnected: () => {
+  //         console.warn("❌ Notification subscription disconnected");
+  //         setIsSubscribed(false);
+  //         toast.error("Real-time notifications disconnected");
+  //       },
+  //     });
+  //     console.warn("📋 Subscription object:", sub);
+  //   }, 2000); // Wait 2 seconds for connection to establish
 
-    return () => {
-      console.warn("⏰ Clearing subscription timer");
-      clearTimeout(subscriptionTimer);
-    };
-  }, [
-    isSubscribed,
-    webSocketManager,
-    currentUser?.id,
-    navigate,
-    addNotification,
-  ]);
+  //   return () => {
+  //     console.warn("⏰ Clearing subscription timer");
+  //     clearTimeout(subscriptionTimer);
+  //   };
+  // }, [
+  //   isSubscribed,
+  //   webSocketManager,
+  //   currentUser?.id,
+  //   navigate,
+  //   addNotification,
+  // ]);
 
   return <>{children}</>;
 };
@@ -1447,77 +1448,77 @@ function App() {
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
-  useEffect(() => {
-    console.warn("🔌 WebSocket connection effect running");
+  // useEffect(() => {
+  //   console.warn("🔌 WebSocket connection effect running");
 
-    if (token) {
-      console.warn("✅ Token available, connecting...");
-      connect(token, socketUrl);
-    } else {
-      console.error("❌ No token available for WebSocket connection");
-    }
+  //   if (token) {
+  //     console.warn("✅ Token available, connecting...");
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error("❌ No token available for WebSocket connection");
+  //   }
 
-    return () => {
-      console.warn("🧹 Cleaning up WebSocket subscriptions");
-    };
-  }, [token, connect, socketUrl]);
+  //   return () => {
+  //     console.warn("🧹 Cleaning up WebSocket subscriptions");
+  //   };
+  // }, [token, connect, socketUrl]);
 
-  useEffect(() => {
-    const subscriptionTimer = setTimeout(() => {
-      const sub = webSocketManager.subscribeToUserNotifications({
-        onConnected: () => {
-          console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
-          setIsSubscribed(true);
-          toast.success("Real-time connection established!", {
-            duration: 2000,
-          });
-        },
-        onMessageNotification: (message) => {
-          console.warn(message);
-          if (
-            (message.ntype === "conversation" ||
-              message.ntype === "projectspace") &&
-            message.user_id !== currentUser.id
-          ) {
-            return;
-          }
+  // useEffect(() => {
+  //   const subscriptionTimer = setTimeout(() => {
+  //     const sub = webSocketManager.subscribeToUserNotifications({
+  //       onConnected: () => {
+  //         console.warn("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
+  //         setIsSubscribed(true);
+  //         toast.success("Real-time connection established!", {
+  //           duration: 2000,
+  //         });
+  //       },
+  //       onMessageNotification: (message) => {
+  //         console.warn(message);
+  //         if (
+  //           (message.ntype === "conversation" ||
+  //             message.ntype === "projectspace") &&
+  //           message.user_id !== currentUser.id
+  //         ) {
+  //           return;
+  //         }
 
-          if (!("Notification" in window)) {
-            toast.error("Not supported");
-            return;
-          }
+  //         if (!("Notification" in window)) {
+  //           toast.error("Not supported");
+  //           return;
+  //         }
 
-          Notification.requestPermission().then((permission) => {
-            if (permission === "granted") {
-              const notification = new Notification(message.title, {
-                body: message.body,
-              });
+  //         Notification.requestPermission().then((permission) => {
+  //           if (permission === "granted") {
+  //             const notification = new Notification(message.title, {
+  //               body: message.body,
+  //             });
 
-              notification.onclick = () => {
-                window.focus();
-                if (message.ntype === "conversation") {
-                  navigate(`/vas/channels/messages/${message.conversation_id}`);
-                } else if (message.ntype === "projectspace") {
-                  navigate(`/vas/channels/groups/${message.project_space_id}`);
-                }
-              };
-            }
-          });
-        },
-        onDisconnected: () => {
-          console.warn("❌ Chat subscription disconnected");
-          setIsSubscribed(false);
-          toast.error("Real-time chat disconnected");
-        },
-      });
-      console.warn("📋 Subscription object:", sub);
-    }, 2000); // Wait 2 seconds for connection to establish
+  //             notification.onclick = () => {
+  //               window.focus();
+  //               if (message.ntype === "conversation") {
+  //                 navigate(`/vas/channels/messages/${message.conversation_id}`);
+  //               } else if (message.ntype === "projectspace") {
+  //                 navigate(`/vas/channels/groups/${message.project_space_id}`);
+  //               }
+  //             };
+  //           }
+  //         });
+  //       },
+  //       onDisconnected: () => {
+  //         console.warn("❌ Chat subscription disconnected");
+  //         setIsSubscribed(false);
+  //         toast.error("Real-time chat disconnected");
+  //       },
+  //     });
+  //     console.warn("📋 Subscription object:", sub);
+  //   }, 2000); // Wait 2 seconds for connection to establish
 
-    return () => {
-      console.warn("⏰ Clearing subscription timer");
-      clearTimeout(subscriptionTimer);
-    };
-  }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
+  //   return () => {
+  //     console.warn("⏰ Clearing subscription timer");
+  //     clearTimeout(subscriptionTimer);
+  //   };
+  // }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
 
   return (
     <>
@@ -3136,6 +3137,10 @@ function App() {
                           <Route
                             path="/accounting/reports/profit-and-loss/details/:id"
                             element={<ProfitAndLossDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/cash-flow-statement/details/:id"
+                            element={<CashFlowDetails />}
                           />
                           {/* <Route */}
                           <Route
