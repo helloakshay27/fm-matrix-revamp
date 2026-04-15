@@ -9,19 +9,6 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -166,7 +153,7 @@ export const QuotesDashboard: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem('lock_account_id');
+                        const lock_account_id = localStorage.getItem('lock_account_id');
             const params = new URLSearchParams({
                 lock_account_id: lock_account_id,
                 // page: String(page),
@@ -296,18 +283,18 @@ export const QuotesDashboard: React.FC = () => {
                 /> */}
 
                 {/* {order.status !== "sent" && ( */}
-                <input
-                    type="checkbox"
-                    checked={selectedRows.includes(order.id)}
-                    onChange={(e) => {
-                        setSelectedRows((prev) =>
-                            e.target.checked
-                                ? [...prev, order.id]
-                                : prev.filter((id) => id !== order.id)
-                        );
-                    }}
-                    className="cursor-pointer"
-                />
+                    <input
+                        type="checkbox"
+                        checked={selectedRows.includes(order.id)}
+                        onChange={(e) => {
+                            setSelectedRows((prev) =>
+                                e.target.checked
+                                    ? [...prev, order.id]
+                                    : prev.filter((id) => id !== order.id)
+                            );
+                        }}
+                        className="cursor-pointer"
+                    />
                 {/* )} */}
                 <button
                     onClick={() => handleView(order.id)}
@@ -482,9 +469,6 @@ export const QuotesDashboard: React.FC = () => {
     //     }
     // };
 
-    const [errorModalOpen, setErrorModalOpen] = useState(false);
-    const [errorList, setErrorList] = useState<{ id: string; message: string }[]>([]);
-
     const handleUpdateStatus = async (status: string, successMsg: string, failMsg: string) => {
         if (selectedRows.length === 0) {
             toast.error("Select at least one Quote");
@@ -503,17 +487,10 @@ export const QuotesDashboard: React.FC = () => {
 
             if (response.status === 422) {
                 const { message, errors } = response.data;
-                // if (Array.isArray(errors) && errors.length > 0) {
-                //     errors.forEach((err: { id: string; message: string }) => {
-                //         toast.error(`${err.id}: ${err.message}`);
-                //     });
-                // } else {
-                //     toast.error(message || failMsg);
-                // }
-
                 if (Array.isArray(errors) && errors.length > 0) {
-                    setErrorList(errors);
-                    setErrorModalOpen(true);
+                    errors.forEach((err: { id: string; message: string }) => {
+                        toast.error(`${err.id}: ${err.message}`);
+                    });
                 } else {
                     toast.error(message || failMsg);
                 }
@@ -600,68 +577,6 @@ export const QuotesDashboard: React.FC = () => {
                     onPerPageChange={handlePerPageChange}
                 />
             )}
-
-            <Dialog
-  open={errorModalOpen}
-  onClose={() => setErrorModalOpen(false)}
-  maxWidth="sm"
-  fullWidth
-  PaperProps={{
-    sx: {
-      borderRadius: "8px",
-      boxShadow: "0px 8px 24px rgba(0,0,0,0.2)"
-    }
-  }}
->
-  {/* Header */}
-  <DialogTitle
-    sx={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      fontWeight: 600,
-      fontSize: "16px",
-      pb: 1
-    }}
-  >
-    Bulk Update Error Summary
-
-    <IconButton onClick={() => setErrorModalOpen(false)} size="small">
-      <CloseIcon fontSize="small" />
-    </IconButton>
-  </DialogTitle>
-
-  {/* Table */}
-  <DialogContent dividers sx={{ p: 0 }}>
-    <Table>
-      <TableHead>
-        <TableRow>
-          <TableCell sx={{ fontWeight: 600 }}>QUOTES</TableCell>
-          <TableCell sx={{ fontWeight: 600 }}>ERROR DETAILS</TableCell>
-        </TableRow>
-      </TableHead>
-
-      <TableBody>
-        {errorList.map((err, index) => (
-          <TableRow key={index}>
-            <TableCell>{err.id}</TableCell>
-            <TableCell>{err.message}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </DialogContent>
-
-  {/* Footer */}
-  <DialogActions sx={{ p: 2 }}>
-    <Button
-      onClick={() => setErrorModalOpen(false)}
-      className="bg-blue-500 text-white px-6"
-    >
-      OK
-    </Button>
-  </DialogActions>
-</Dialog>
         </div>
     );
 };
