@@ -11,6 +11,7 @@ const C = {
   textMain:    '#171717',
   textMuted:   '#737373',
   borderLgt:   '#ede8e5',
+  font:        "'Poppins', sans-serif",
 };
 
 // ── BASE URL ──
@@ -593,7 +594,7 @@ export const ShortTermSection = () => {
   };
 
   return (
-    <div style={{ padding: '24px 0', fontFamily: 'sans-serif' }}>
+    <div style={{ padding: '24px 0', fontFamily: C.font }}>
       <ThemeStyle />
 
       <div className="rounded-2xl overflow-hidden shadow-sm mt-6 border bg-white" style={{ borderColor: C.borderLgt }}>
