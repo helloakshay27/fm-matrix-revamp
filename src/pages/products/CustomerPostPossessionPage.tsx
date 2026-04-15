@@ -9,17 +9,16 @@ const customerPostPossessionData: ProductData = {
   brief:
     "A structured post-possession layer that drives community engagement, support efficiency, and repeat/referral outcomes through resident-first journeys and measurable adoption.",
 
-  // Keep the same overall sheet style as Customer App
-  excelLikeSummary: true,
-  excelLikeFeatures: true,
-  excelLikeMarket: true,
-  excelLikePricing: true,
-  excelLikeSwot: true,
-  excelLikeRoadmap: true,
-  excelLikeBusinessPlan: true,
-  excelLikeGtm: true,
-  excelLikeMetrics: true,
-  excelLikePostPossession: true,
+  excelLikeSummary: false,
+  excelLikeFeatures: false,
+  excelLikeMarket: false,
+  excelLikePricing: false,
+  excelLikeSwot: false,
+  excelLikeRoadmap: false,
+  excelLikeBusinessPlan: false,
+  excelLikeGtm: false,
+  excelLikeMetrics: false,
+  excelLikePostPossession: false,
   excelFeatureRowStart: 31,
 
   userStories: [
@@ -1025,7 +1024,7 @@ const customerPostPossessionData: ProductData = {
 };
 
 const CustomerPostPossessionPage: React.FC = () => {
-  return <BaseProductPage productData={customerPostPossessionData} tabsVariant="snag360" />;
+  return <BaseProductPage productData={customerPostPossessionData} />;
 };
 
 export default CustomerPostPossessionPage;

@@ -89,7 +89,7 @@ export interface ProductData {
   owner: string;
   ownerImage: string;
   extendedContent: {
-    featureSummary?: string;
+    featureSummary?: string | React.ReactNode;
     productSummaryNew: {
       identity: { field: string; detail: string }[];
       problemSolves: { painPoint: string; solution: string }[];
@@ -124,7 +124,8 @@ export interface ProductData {
       topIndustries?: { rank: string; industry: string; buyReason: string; scale: string; decisionMaker: string; dealSize: string }[];
       competitors?: { name: string; hq: string; indiaPrice: string; globalPrice: string; strength: string; weakness: string; sovereignty: string; segment: string }[];
       competitorSummary?: string;
-      targetAudience?: { segment: string; demographics: string; industry: string; painPoints: string; notSolved: string; goodEnough: string }[];
+      targetAudience?: { segment: string; demographics: string; industry: string; painPoints: string; notSolved: string; goodEnough: string; urgency?: string; primaryBuyer?: string }[];
+      companyPainPoints?: { companyType: string; pain1: string; pain2: string; pain3: string; costRisk: string }[];
       competitorMapping?: { name: string; targetCustomer: string; pricing: string; discovery: string; strongestFeatures: string; weakness: string; marketGaps: string; threats: string }[];
     };
     detailedPricing?: {
@@ -163,9 +164,12 @@ export interface ProductData {
       currentPricingMarket?: { category: string; description: string }[];
       positioningStatement?: string;
       positioning?: { category: string; description: string }[];
+      featuresVsMarket?: { area: string; standard: string; ourProduct: string; status: string; notes: string }[];
+      comparisonSummary?: { ahead: string; atPar: string; gaps: string };
+      pricingLandscape?: { category: string; details: string }[];
+      positioning?: { category: string; details: string }[];
       valueProps?: { role: string; prop: string; outcome: string; feature: string }[];
       valuePropositions?: { currentProp: string; segment: string; weakness: string; sharpened: string }[];
-      featureSummary?: { ahead: string; atPar: string; gaps: string };
     };
     detailedUseCases?: {
       industryUseCases: {
@@ -916,38 +920,60 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="overflow-x-auto border border-gray-200 rounded-b-xl shadow-lg">
-                <table className="w-full border-collapse text-[10px] bg-white">
-                  <thead>
-                    <tr className="bg-[#4169E1] text-white font-black uppercase text-center">
-                      <th className="border border-gray-200 p-3 w-[15%]">Module</th>
-                      <th className="border border-gray-200 p-3 w-[15%]">Feature</th>
-                      <th className="border border-gray-200 p-3 w-[25%]">Sub-Features</th>
-                      <th className="border border-gray-200 p-3 w-[25%]">How It Currently Works</th>
-                      <th className="border border-gray-200 p-3 w-[10%]">User Type</th>
-                      <th className="border border-gray-200 p-3 w-[10%]">USP</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productData.extendedContent?.detailedFeatures?.map((f, i) => (
-                      <tr key={i} className={`hover:bg-gray-100 transition-colors ${f.usp ? "bg-blue-50/50 font-semibold" : ""}`}>
-                        <td className="border border-gray-200 p-3 font-black text-[#1A335E] uppercase bg-gray-50/30">{f.module}</td>
-                        <td className="border border-gray-200 p-3 text-gray-800 font-bold">{f.feature}</td>
-                        <td className="border border-gray-200 p-3 text-gray-600 leading-relaxed font-medium">{f.subFeatures}</td>
-                        <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed italic">{f.works}</td>
-                        <td className="border border-gray-200 p-3 text-gray-500 font-black text-center uppercase tracking-tighter">{f.userType}</td>
-                        <td className="border border-gray-200 p-3 text-center">
-                          {f.usp && (
-                            <div className="flex items-center justify-center gap-1 text-[#4169E1] font-black">
-                              <span>* USP</span>
-                            </div>
-                          )}
-                        </td>
+              <>
+                <div className="bg-[#F0F4F8] p-3 border-x border-gray-200">
+                  <p className="text-[10px] text-gray-500 font-bold italic leading-relaxed">
+                    <span className="text-blue-600">★ USP features highlighted in blue</span> | Current scope: Projects - Tasks
+                    - Issues - Sprints - Channels - MoM - Opportunity Register - Documents - Todo - Notifications
+                  </p>
+                </div>
+                <div className="overflow-x-auto border border-gray-200 rounded-b-xl shadow-lg">
+                  <table className="w-full border-collapse text-[10px] bg-white">
+                    <thead>
+                      <tr className="bg-[#1A335E] text-white font-black uppercase text-center">
+                        <th className="border border-gray-200 p-3 w-[5%]">#</th>
+                        <th className="border border-gray-200 p-3 w-[15%] text-left">Module / Section</th>
+                        <th className="border border-gray-200 p-3 w-[15%] text-left">Feature Name</th>
+                        {productData.extendedContent?.detailedFeatures?.some((f) => f.subFeatures !== "") && (
+                          <th className="border border-gray-200 p-3 w-[20%] text-left">Sub-Features</th>
+                        )}
+                        <th className="border border-gray-200 p-3 text-left">How It Currently Works</th>
+                        {productData.extendedContent?.detailedFeatures?.some((f) => f.userType !== "All" && f.userType !== "") && (
+                          <th className="border border-gray-200 p-3 w-[10%]">User Type</th>
+                        )}
+                        <th className="border border-gray-200 p-3 w-[8%]">USP?</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {productData.extendedContent?.detailedFeatures?.map((f, i) => (
+                        <tr key={i} className={`hover:bg-gray-100 transition-colors ${f.usp ? "bg-blue-50/50 font-semibold" : ""}`}>
+                          <td className="border border-gray-200 p-3 text-center font-bold text-gray-400">{i + 1}</td>
+                          <td className="border border-gray-200 p-3 font-black text-[#1A335E] uppercase bg-gray-50/30">{f.module}</td>
+                          <td className="border border-gray-200 p-3 text-gray-800 font-bold">{f.feature}</td>
+                          {productData.extendedContent?.detailedFeatures?.some((ft) => ft.subFeatures !== "") && (
+                            <td className="border border-gray-200 p-3 text-gray-600 leading-relaxed font-medium">{f.subFeatures}</td>
+                          )}
+                          <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed italic">{f.works}</td>
+                          {productData.extendedContent?.detailedFeatures?.some(
+                            (ft) => ft.userType !== "All" && ft.userType !== ""
+                          ) && (
+                            <td className="border border-gray-200 p-3 text-gray-500 font-black text-center uppercase tracking-tighter">
+                              {f.userType}
+                            </td>
+                          )}
+                          <td className="border border-gray-200 p-3 text-center">
+                            {f.usp && (
+                              <div className="flex items-center justify-center text-[#4169E1] text-sm">
+                                <span>★</span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </TabsContent>
           {/* 3. Market */}
@@ -1160,11 +1186,13 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                         <thead>
                           <tr className="bg-[#4169E1] text-white font-black uppercase">
                             <th className="border border-gray-200 p-3 w-[15%]">Audience Segment</th>
-                            <th className="border border-gray-200 p-3 w-[20%]">Demographics</th>
+                            <th className="border border-gray-200 p-3 w-[15%]">Demographics</th>
                             <th className="border border-gray-200 p-3 w-[15%]">Industry</th>
                             <th className="border border-gray-200 p-3 w-[20%]">Pain Points (3 per segment)</th>
                             <th className="border border-gray-200 p-3 w-[15%]">What Happens If NOT Solved</th>
                             <th className="border border-gray-200 p-3 w-[15%]">What 'Good Enough' Looks Like Today</th>
+                            {productData.extendedContent.detailedMarketAnalysis.targetAudience[0]?.urgency && <th className="border border-gray-200 p-3 w-[5%]">Urgency</th>}
+                            {productData.extendedContent.detailedMarketAnalysis.targetAudience[0]?.primaryBuyer && <th className="border border-gray-200 p-3 w-[10%]">Primary Buyer</th>}
                           </tr>
                         </thead>
                         <tbody>
@@ -1176,6 +1204,42 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                               <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed italic">{t.painPoints}</td>
                               <td className="border border-gray-200 p-3 text-[#C72030] font-medium leading-relaxed">{t.notSolved}</td>
                               <td className="border border-gray-200 p-3 text-gray-500 font-medium">{t.goodEnough}</td>
+                              {t.urgency && (
+                                <td className={`border border-gray-200 p-3 font-bold text-center ${t.urgency === 'HIGH' ? 'text-green-700 bg-green-50' : 'text-gray-700'}`}>
+                                  {t.urgency}
+                                </td>
+                              )}
+                              {t.primaryBuyer && <td className="border border-gray-200 p-3 text-blue-700 font-bold">{t.primaryBuyer}</td>}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {productData.extendedContent?.detailedMarketAnalysis?.companyPainPoints && (
+                  <div className="space-y-4">
+                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase">PART A.2 — COMPANY-LEVEL PAIN POINTS (India and GCC)</div>
+                    <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-lg">
+                      <table className="w-full border-collapse text-[10px] bg-white text-left">
+                        <thead>
+                          <tr className="bg-[#4169E1] text-white font-black uppercase">
+                            <th className="border border-gray-200 p-3 w-[20%]">Company Type</th>
+                            <th className="border border-gray-200 p-3 w-[20%]">Pain 1</th>
+                            <th className="border border-gray-200 p-3 w-[20%]">Pain 2</th>
+                            <th className="border border-gray-200 p-3 w-[20%]">Pain 3</th>
+                            <th className="border border-gray-200 p-3 w-[20%]">Cost / Risk if unsolved</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {productData.extendedContent.detailedMarketAnalysis.companyPainPoints.map((c, i) => (
+                            <tr key={i} className="hover:bg-gray-50 transition-colors">
+                              <td className="border border-gray-200 p-3 font-black text-[#1A335E] bg-purple-50/30">{c.companyType}</td>
+                              <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed italic">{c.pain1}</td>
+                              <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed italic">{c.pain2}</td>
+                              <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed italic">{c.pain3}</td>
+                              <td className="border border-gray-200 p-3 text-[#C72030] font-bold leading-relaxed">{c.costRisk}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1304,7 +1368,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
           {/* 4. Pricing */}
           <TabsContent value="pricing" className="space-y-10">
             <div className="bg-[#1A335E] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
-              <h2 className="text-xl font-black uppercase tracking-tight">{productData.name} - Pricing Landscape</h2>
+              <h2 className="text-xl font-black uppercase tracking-tight">{productData.name} — Features & Pricing</h2>
             </div>
             {productData.excelLikePricing && productData.extendedContent?.detailedPricing ? (
               <div
@@ -1474,31 +1538,31 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
                 {productData.extendedContent?.detailedPricing?.featuresVsMarket && (
                   <div className="space-y-4">
-                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase italic">PART A — CURRENT FEATURES VS MARKET STANDARD</div>
+                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase italic tracking-wider">SECTION 1 — CURRENT FEATURES VS MARKET STANDARD</div>
                     <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-lg">
                       <table className="w-full border-collapse text-[10px] bg-white text-left">
                         <thead>
-                          <tr className="bg-[#4169E1] text-white font-black uppercase text-center">
+                          <tr className="bg-[#1A335E] text-white font-black uppercase text-center">
                             <th className="border border-gray-200 p-3 w-[15%] text-left">Feature Area</th>
-                            <th className="border border-gray-200 p-3 w-[25%] text-left">Market Standard (What Most Products Offer)</th>
-                            <th className="border border-gray-200 p-3 w-[25%] text-left bg-blue-900/10 text-blue-900 font-black">Our Product (Have / Roadmap / Gap)</th>
-                            <th className="border border-gray-200 p-3 w-[25%] text-left">Summary: Where Ahead / At Par / Gap That Will Cost Deals</th>
-                            <th className="border border-gray-200 p-3 w-[10%]">Status</th>
+                            <th className="border border-gray-200 p-3 w-[25%] text-left">Market Standard</th>
+                            <th className="border border-gray-200 p-3 w-[25%] text-left">Our Product</th>
+                            <th className="border border-gray-200 p-3 w-[10%] text-center">Status</th>
+                            <th className="border border-gray-200 p-3 w-[25%] text-left">Notes</th>
                           </tr>
                         </thead>
                         <tbody>
                           {productData.extendedContent.detailedPricing.featuresVsMarket.map((f, i) => (
                             <tr key={i} className="hover:bg-gray-50 transition-colors">
-                              <td className="border border-gray-200 p-3 font-bold text-[#1A335E] leading-relaxed">{f.featureArea}</td>
-                              <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed font-medium">{f.marketStandard}</td>
-                              <td className="border border-gray-200 p-3 text-blue-900 font-medium leading-relaxed bg-blue-50/30 whitespace-pre-line">{f.ourProduct}</td>
-                              <td className="border border-gray-200 p-3 text-gray-800 leading-relaxed font-medium">{f.summary}</td>
+                              <td className="border border-gray-300 p-3 font-bold text-[#1A335E] leading-relaxed">{f.area}</td>
+                              <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed font-medium">{f.standard}</td>
+                              <td className="border border-gray-200 p-3 text-blue-900 font-medium leading-relaxed bg-blue-50/20 whitespace-pre-line">{f.ourProduct}</td>
                               <td className="border border-gray-200 p-3 text-center">
-                                <span className={`px-2 py-1.5 rounded-sm font-black text-[9px] uppercase tracking-tighter block text-white shadow-sm
-                                  ${f.status === 'AHEAD' || f.status === 'SIGNIFICANTLY AHEAD' ? 'bg-[#4CAF50]' : f.status.includes('AT PAR') ? 'bg-[#FFC107] text-black' : 'bg-[#D32F2F]'}`}>
+                                <span className={`px-2 py-1.5 rounded font-black text-[9px] uppercase tracking-tighter block text-white shadow-sm
+                                  ${f.status.includes('AHEAD') ? 'bg-green-600' : f.status.includes('AT PAR') ? 'bg-yellow-500 text-black' : 'bg-red-600'}`}>
                                   {f.status}
                                 </span>
                               </td>
+                              <td className="border border-gray-200 p-3 text-gray-700 leading-relaxed italic">{f.notes}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1507,77 +1571,39 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   </div>
                 )}
 
-                {productData.extendedContent?.detailedPricing?.featureSummary && (
+                {productData.extendedContent?.detailedPricing?.comparisonSummary && (
                   <div className="space-y-4">
-                     <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-lg">
-                      <table className="w-full border-collapse text-[10px] bg-white text-left">
-                        <thead>
-                          <tr className="bg-[#4169E1] text-white font-black uppercase text-left">
-                            <th className="border border-gray-200 p-3 w-[20%]">Summary</th>
-                            <th className="border border-gray-200 p-3 w-[80%]"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="hover:bg-gray-50 transition-colors">
-                            <td className="border border-gray-200 p-3 font-black text-[#1A335E] bg-green-50 uppercase">WHERE WE ARE AHEAD OF MARKET</td>
-                            <td className="border border-gray-200 p-3 text-green-900 font-medium leading-relaxed bg-green-50">{productData.extendedContent.detailedPricing.featureSummary.ahead}</td>
-                          </tr>
-                          <tr className="hover:bg-gray-50 transition-colors">
-                            <td className="border border-gray-200 p-3 font-black text-[#1A335E] bg-gray-100 uppercase">WHERE WE ARE AT PAR</td>
-                            <td className="border border-gray-200 p-3 text-gray-800 font-medium leading-relaxed bg-gray-100">{productData.extendedContent.detailedPricing.featureSummary.atPar}</td>
-                          </tr>
-                          <tr className="hover:bg-gray-50 transition-colors">
-                            <td className="border border-gray-200 p-3 font-black text-[#1A335E] bg-red-50 uppercase">GAPS THAT WILL COST US DEALS</td>
-                            <td className="border border-gray-200 p-3 text-red-900 font-medium leading-relaxed bg-red-50">{productData.extendedContent.detailedPricing.featureSummary.gaps}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                     </div>
-                  </div>
-                )}
-
-                {/* Legacy fallback */}
-                {productData.extendedContent?.detailedPricing?.featureComparison && !productData.extendedContent?.detailedPricing?.featuresVsMarket && (
-                  <div className="space-y-4">
-                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase italic">Feature Comparison vs Top Competitors</div>
                     <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-lg">
-                      <table className="w-full border-collapse text-[10px] bg-white text-center">
-                        <thead>
-                          <tr className="bg-[#4169E1] text-white font-black uppercase text-center">
-                            <th className="border border-gray-200 p-3 text-left">Capability</th>
-                            <th className="border border-gray-200 p-3 bg-blue-900/10 text-blue-900 font-black uppercase">Our Product</th>
-                            <th className="border border-gray-200 p-3 uppercase">Status</th>
-                          </tr>
-                        </thead>
+                      <table className="w-full border-collapse text-[10px] bg-white text-left font-bold">
                         <tbody>
-                          {productData.extendedContent.detailedPricing.featureComparison.map((f, i) => (
-                            <tr key={i} className="hover:bg-gray-50 transition-colors">
-                              <td className="border border-gray-200 p-3 font-bold text-[#1A335E] text-left uppercase">{f.feature}</td>
-                              <td className="border border-gray-200 p-3 text-blue-900 font-black italic bg-blue-50/30 uppercase">{f.snag}</td>
-                              <td className="border border-gray-200 p-3">
-                                <span className={`px-3 py-1.5 rounded-sm font-black text-[9px] uppercase tracking-tighter block text-white shadow-sm
-                                  ${f.status === 'AHEAD' || f.status === 'Leader' ? 'bg-[#4CAF50]' : f.status === 'AT PAR' || f.status === 'Equal' ? 'bg-[#FFC107] text-black' : 'bg-[#D32F2F]'}`}>
-                                  {f.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
+                          <tr className="hover:bg-gray-50 transition-colors">
+                            <td className="border border-gray-200 p-4 w-[20%] font-black text-green-700 bg-green-50 uppercase">WHERE WE ARE AHEAD</td>
+                            <td className="border border-gray-200 p-4 text-green-800 leading-relaxed bg-green-50/30 whitespace-pre-line">{productData.extendedContent.detailedPricing.comparisonSummary.ahead}</td>
+                          </tr>
+                          <tr className="hover:bg-gray-50 transition-colors">
+                            <td className="border border-gray-200 p-4 w-[20%] font-black text-yellow-700 bg-yellow-50 uppercase">AT PAR</td>
+                            <td className="border border-gray-200 p-4 text-yellow-800 leading-relaxed bg-yellow-50/30 whitespace-pre-line">{productData.extendedContent.detailedPricing.comparisonSummary.atPar}</td>
+                          </tr>
+                          <tr className="hover:bg-gray-50 transition-colors">
+                            <td className="border border-gray-200 p-4 w-[20%] font-black text-red-700 bg-red-50 uppercase tracking-tighter leading-tight italic">GAPS THAT WILL COST DEALS</td>
+                            <td className="border border-gray-200 p-4 text-red-800 leading-relaxed bg-red-50/30 whitespace-pre-line">{productData.extendedContent.detailedPricing.comparisonSummary.gaps}</td>
+                          </tr>
                         </tbody>
                       </table>
                     </div>
                   </div>
                 )}
 
-                {productData.extendedContent?.detailedPricing?.currentPricingMarket && (
+                {productData.extendedContent?.detailedPricing?.pricingLandscape && (
                   <div className="space-y-4">
-                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase italic">PART B — CURRENT PRICING MARKET</div>
+                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase italic tracking-wider">SECTION 2 — PRICING LANDSCAPE</div>
                     <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-lg">
                       <table className="w-full border-collapse text-[10px] bg-white text-left">
                         <tbody>
-                          {productData.extendedContent.detailedPricing.currentPricingMarket.map((p, i) => (
-                            <tr key={i} className="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
-                              <td className="p-4 font-black text-[#1A335E] bg-[#F8FAFC] w-[30%] border-r border-gray-100">{p.category}</td>
-                              <td className="p-4 text-gray-800 leading-relaxed font-medium bg-white w-[70%] whitespace-pre-line">{p.description}</td>
+                          {productData.extendedContent.detailedPricing.pricingLandscape.map((p, i) => (
+                            <tr key={i} className="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 font-medium">
+                              <td className="p-4 font-black text-[#1A335E] bg-[#DCE6F2]/30 w-[20%] border-r border-gray-100 uppercase italic tracking-tight">{p.category}</td>
+                              <td className="p-4 text-gray-800 leading-relaxed bg-white w-[80%] whitespace-pre-line">{p.details}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1588,14 +1614,14 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
                 {productData.extendedContent?.detailedPricing?.positioning && (
                   <div className="space-y-4">
-                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase italic">PART C — POSITIONING</div>
+                    <div className="bg-[#1A335E] text-white px-4 py-2 font-bold text-sm uppercase italic tracking-wider">SECTION 3 — HOW TO POSITION OURSELVES</div>
                     <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-lg">
                       <table className="w-full border-collapse text-[10px] bg-white text-left">
                         <tbody>
                           {productData.extendedContent.detailedPricing.positioning.map((p, i) => (
-                            <tr key={i} className="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
-                              <td className="p-4 font-black text-[#1A335E] bg-[#F8FAFC] w-[30%] border-r border-gray-100">{p.category}</td>
-                              <td className="p-4 text-gray-800 leading-relaxed font-medium bg-white w-[70%] whitespace-pre-line">{p.description}</td>
+                            <tr key={i} className="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 font-medium">
+                              <td className="p-4 font-black text-[#1A335E] bg-[#DCE6F2]/30 w-[20%] border-r border-gray-100 uppercase italic tracking-tight">{p.category}</td>
+                              <td className="p-4 text-gray-800 leading-relaxed bg-white w-[80%] whitespace-pre-line">{p.details}</td>
                             </tr>
                           ))}
                         </tbody>
