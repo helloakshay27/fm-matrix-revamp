@@ -58,6 +58,8 @@ export const InvoiceDashboardDetailsPage = () => {
     const [activeTab, setActiveTab] = useState("invoice-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showApprovalLog, setShowApprovalLog] = useState(false);
+    const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -66,8 +68,64 @@ export const InvoiceDashboardDetailsPage = () => {
     useEffect(() => {
         if (id && baseUrl && token) {
             fetchInvoiceDetails();
+            fetchLockAccount();
         }
     }, [id, baseUrl, token]);
+
+    const fetchLockAccount = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const hasApproval = Array.isArray(response.data?.approvals) &&
+                response.data.approvals.some((a) => a.approval_type === "invoice" && a.active);
+            setHasInvoiceApproval(hasApproval);
+        } catch (e) {
+            console.error("Failed to fetch lock account", e);
+        }
+    };
+
+    const updateStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            const response = await axios.patch(
+                `https://${baseUrl}/lock_account_invoices/${id}.json`,
+                { lock_account_invoice: { status } },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, validateStatus: () => true }
+            );
+            if (response.status === 422) {
+                const { message, errors } = response.data;
+                const msg = Array.isArray(errors) && errors.length > 0
+                    ? errors.map((e) => `${e.id}: ${e.message}`).join(", ")
+                    : message || "Failed to update status";
+                sonnerToast.error(msg);
+                return;
+            }
+            sonnerToast.success(`Invoice ${status.replace("_", " ")} successfully`);
+            fetchInvoiceDetails();
+        } catch (error) {
+            sonnerToast.error("Failed to update status");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const updateApprovalStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            await axios.post(
+                `https://${baseUrl}/lock_account_invoices/${id}/update_approval_status.json`,
+                { status, comment: "" },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+            );
+            sonnerToast.success(`Invoice ${status.replace("_", " ")} successfully`);
+            fetchInvoiceDetails();
+        } catch (error) {
+            sonnerToast.error("Failed to update approval status");
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     const fetchInvoiceDetails = async () => {
         try {
@@ -115,13 +173,30 @@ export const InvoiceDashboardDetailsPage = () => {
     const getStatusColor = (status) => {
         const colors = {
             draft: "bg-gray-100 text-gray-800 border-gray-200",
+            sent: "bg-blue-100 text-blue-800 border-blue-200",
+            approved: "bg-green-100 text-green-800 border-green-200",
+            pending_approval: "bg-yellow-100 text-yellow-800 border-yellow-200",
             confirmed: "bg-blue-100 text-blue-800 border-blue-200",
             processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
             shipped: "bg-purple-100 text-purple-800 border-purple-200",
             delivered: "bg-green-100 text-green-800 border-green-200",
             cancelled: "bg-red-100 text-red-800 border-red-200",
+            rejected: "bg-red-100 text-red-800 border-red-200",
         };
-        return colors[status] || colors.draft;
+        return colors[status] || "bg-gray-100 text-gray-800 border-gray-200";
+    };
+
+    // Helper: returns true when the invoice is fully approved (main status OR approval_status object)
+    const isFullyApproved = (data) => {
+        if (!data) return false;
+        if (data.status === "approved") return true;
+        const approvalStatus = String(data.approval_status?.status || "").toLowerCase();
+        if (approvalStatus === "approved") return true;
+        const levels = data.approval_status?.approval_levels;
+        if (Array.isArray(levels) && levels.length > 0) {
+            return levels.every((lvl) => String(lvl?.status || "").toLowerCase() === "approved");
+        }
+        return false;
     };
 
     const getApprovalStatusBadge = (status) => {
@@ -241,9 +316,9 @@ export const InvoiceDashboardDetailsPage = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={`${getStatusColor(invoiceData.status)} border`}>
-                            {invoiceData.status.toUpperCase()}
+                            {invoiceData.status?.toUpperCase()}
                         </Badge>
 
                         {invoiceData?.approval_status?.approval_levels?.length > 0 && (
@@ -256,6 +331,74 @@ export const InvoiceDashboardDetailsPage = () => {
                                 <ClipboardList className="h-4 w-4" />
                                 Approval Log
                             </Button>
+                        )}
+
+                        {/* ── WITHOUT APPROVAL ── */}
+                        {!hasInvoiceApproval && (
+                            <>
+                                {/* Draft → Mark as Sent */}
+                                {invoiceData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+                            </>
+                        )}
+
+                        {/* ── WITH APPROVAL ── */}
+                        {hasInvoiceApproval && (
+                            <>
+                                {/* Draft → Submit for Approval */}
+                                {invoiceData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("pending_approval")}
+                                    >
+                                        Submit for Approval
+                                    </Button>
+                                )}
+
+                                {/* Pending Approval + can_approve → Approve / Reject */}
+                                {invoiceData.status === "pending_approval" && invoiceData.can_approve && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            className="bg-green-600 text-white hover:bg-green-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("approved")}
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="bg-red-600 text-white hover:bg-red-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("rejected")}
+                                        >
+                                            Reject
+                                        </Button>
+                                    </>
+                                )}
+
+                                {/* Approved → Mark as Sent */}
+                                {isFullyApproved(invoiceData) && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

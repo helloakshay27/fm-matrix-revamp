@@ -132,6 +132,8 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     const [appliedFilters, setAppliedFilters] = useState<SalesOrderFilters>({});
     const [salesOrderData, setSalesOrderData] = useState<SalesOrder[]>([]);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
+    const [errorModal, setErrorModal] = useState<{ show: boolean; errors: { id: string; message: string }[] }>({ show: false, errors: [] });
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -197,6 +199,29 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
+    // Fetch lock account to check if invoice approval is enabled
+    useEffect(() => {
+        const fetchLockAccount = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`https://${baseUrl}/get_lock_account.json`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = await response.json();
+                const invoiceApproval = Array.isArray(data?.approvals) &&
+                    data.approvals.some((a: any) => a.approval_type === 'invoice' && a.active);
+                setHasInvoiceApproval(invoiceApproval);
+            } catch (error) {
+                console.error('Error fetching lock account:', error);
+            }
+        };
+        fetchLockAccount();
+    }, []);
+
     // Handle search
     const handleSearch = (term: string) => {
         setSearchTerm(term);
@@ -243,7 +268,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
-                  {order.status !== "sent" && (
+                  {/* {order.status !== "sent" && ( */}
                 <input
                     type="checkbox"
                     checked={selectedRows.includes(order.id)}
@@ -256,7 +281,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                     }}
                     className="cursor-pointer"
                 />
-                 )}
+                 {/* )} */}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -401,68 +426,44 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         }
     };
 
-    const handleMarkAsConfirmed = async () => {
+    const handleUpdateStatus = async (status: string, successMsg: string, failMsg: string) => {
         if (selectedRows.length === 0) {
-            toast.error('Select at least one sales order');
+            toast.error('Select at least one invoice');
             return;
         }
+
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            const payload = {
-                sale_order_ids: selectedRows,
-                status: 'confirmed',
-                fulfilled: true
-            };
-            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                method: 'POST',
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
-            toast.success('Status updated successfully');
-            setSelectedRows([]);
-            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-        } catch (err) {
-            toast.error('Failed to update status');
-        }
-    };
 
-
-    const handleMarkAsSent = async () => {
-        if (selectedRows.length === 0) {
-            toast.error("Select at least one invoice");
-            return;
-        }
-
-        try {
-            const baseUrl = localStorage.getItem("baseUrl");
-            const token = localStorage.getItem("token");
-
-            await axios.post(
+            const response = await axios.post(
                 `https://${baseUrl}/lock_account_invoices/update_status.json`,
-                {
-                    invoice_ids: selectedRows,
-                },
-                {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                    },
-                }
+                { invoice_ids: selectedRows, status },
+                { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
             );
 
-            toast.success("Invoices marked as sent");
+            if (response.status === 422) {
+                const { message, errors } = response.data;
+                if (Array.isArray(errors) && errors.length > 0) {
+                    setErrorModal({ show: true, errors });
+                } else {
+                    setErrorModal({ show: true, errors: [{ id: '-', message: message || failMsg }] });
+                }
+                return;
+            }
 
+            toast.success(successMsg);
             setSelectedRows([]);
-
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to mark invoices as sent");
+            toast.error(failMsg);
         }
     };
+
+    const handleMarkAsSent = () => handleUpdateStatus('sent', 'Invoices marked as sent', 'Failed to mark invoices as sent');
+
+    const handleSubmitForApproval = () => handleUpdateStatus('pending_approval', 'Invoices submitted for approval', 'Failed to submit invoices for approval');
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
@@ -499,12 +500,21 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                         )} */}
 
                         {selectedRows.length > 0 && (
-                            <Button
-                                className="bg-blue-600 text-white hover:bg-blue-700"
-                                onClick={handleMarkAsSent}
-                            >
-                                Mark as Sent
-                            </Button>
+                            hasInvoiceApproval ? (
+                                <Button
+                                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                    onClick={handleSubmitForApproval}
+                                >
+                                    Submit for Approval
+                                </Button>
+                            ) : (
+                                <Button
+                                    className="bg-blue-600 text-white hover:bg-blue-700"
+                                    onClick={handleMarkAsSent}
+                                >
+                                    Mark as Sent
+                                </Button>
+                            )
                         )}
                     </div>
                 )}
@@ -520,6 +530,49 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                     onPageChange={handlePageChange}
                     onPerPageChange={handlePerPageChange}
                 />
+            )}
+
+            {/* Bulk Update Error Modal */}
+            {errorModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+                        <div className="flex items-center justify-between px-5 py-4 border-b">
+                            <h2 className="text-base font-semibold text-gray-800">Bulk Update Error Summary</h2>
+                            <button
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                onClick={() => setErrorModal({ show: false, errors: [] })}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="px-5 py-4 max-h-80 overflow-y-auto">
+                            <table className="w-full text-sm border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-100">
+                                        <th className="text-left px-3 py-2 border border-gray-200 font-semibold text-gray-700">INVOICE</th>
+                                        <th className="text-left px-3 py-2 border border-gray-200 font-semibold text-gray-700">ERROR DETAILS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {errorModal.errors.map((err, i) => (
+                                        <tr key={i} className="hover:bg-gray-50">
+                                            <td className="px-3 py-2 border border-gray-200 text-gray-800 font-medium">{err.id}</td>
+                                            <td className="px-3 py-2 border border-gray-200 text-black-600">{err.message}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="px-5 py-3 border-t flex justify-end">
+                            <Button
+                                className="bg-[#C72030] text-white hover:bg-[#a81a28] px-6"
+                                onClick={() => setErrorModal({ show: false, errors: [] })}
+                            >
+                                OK
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
