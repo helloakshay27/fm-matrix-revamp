@@ -854,6 +854,25 @@ export const QuotesAdd: React.FC = () => {
     const [selectedTax, setSelectedTax] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [hasQuoteApproval, setHasQuoteApproval] = useState(false);
+
+    useEffect(() => {
+        const fetchLockAccount = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined },
+                });
+                const hasApproval = Array.isArray(res.data?.approvals) &&
+                    res.data.approvals.some((a: any) => a.approval_type === 'quote' && a.active);
+                setHasQuoteApproval(hasApproval);
+            } catch (e) {
+                console.error('Failed to fetch lock account', e);
+            }
+        };
+        fetchLockAccount();
+    }, []);
     const [selectedProject, setSelectedProject] = useState<string>("");
 
     const projects = [
@@ -1671,6 +1690,18 @@ export const QuotesAdd: React.FC = () => {
             }
         });
     });
+
+    // Inter-state (IGST Tax Rates)
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find(r => String(r.id) === String(item.tax_group_id));
+            if (!rate) return;
+            const taxAmount = (item.amount * rate.rate) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) existing.amount += taxAmount;
+            else taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
+        });
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -2632,24 +2663,26 @@ export const QuotesAdd: React.FC = () => {
                 >
                     Save as Draft
                 </Button>
-                <Button
-                    variant="text"
-                    onClick={() => handleSubmit(false)}
-                    disabled={isSubmitting}
-                    sx={{
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        },
-                        textTransform: 'none'
-                    }}
-                >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
-                </Button>
+                {!hasQuoteApproval && (
+                    <Button
+                        variant="text"
+                        onClick={() => handleSubmit(false)}
+                        disabled={isSubmitting}
+                        sx={{
+                            bgcolor: '#f8f1f1',
+                            color: '#C72030',
+                            fontWeight: 600,
+                            px: 4,
+                            '&:hover': {
+                                bgcolor: '#f1e8e8',
+                                color: '#A01020'
+                            },
+                            textTransform: 'none'
+                        }}
+                    >
+                        {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    </Button>
+                )}
 
                 <Button
                     variant="outlined"

@@ -8,6 +8,7 @@ import {
   Calendar,
   LineChart,
   Users,
+  Search,
   X,
   Loader2,
 } from "lucide-react";
@@ -94,6 +95,8 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
   const [priority, setPriority] = useState<string>("medium");
   const [weight, setWeight] = useState("10");
   const [assignees, setAssignees] = useState<Record<string, boolean>>({});
+  const [assigneeSearchInput, setAssigneeSearchInput] = useState("");
+  const [assigneeSearchTerm, setAssigneeSearchTerm] = useState("");
 
   const departmentOptions =
     departments.length > 0
@@ -111,12 +114,25 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
       setPriority("medium");
       setWeight("10");
       setAssignees({});
+      setAssigneeSearchInput("");
+      setAssigneeSearchTerm("");
     }
   }, [open]);
 
   const toggleAssignee = (name: string) => {
     setAssignees((prev) => ({ ...prev, [name]: !prev[name] }));
   };
+
+  const handleSearchUsers = () => {
+    setAssigneeSearchTerm(assigneeSearchInput.trim().toLowerCase());
+  };
+
+  const filteredUsers = users.filter((user) => {
+    if (!assigneeSearchTerm) return true;
+    return user.name.toLowerCase().includes(assigneeSearchTerm);
+  });
+
+  const toIntegerString = (value: string) => value.replace(/\D/g, "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,7 +154,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
           : undefined;
 
       const freqLabel =
-        frequency === "Weekly" || frequency === "Monthly" || frequency === "Quarterly"
+        frequency === "Daily" || frequency === "Weekly" || frequency === "Monthly" || frequency === "Quarterly"
           ? frequency
           : "Weekly";
 
@@ -160,7 +176,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
         departmentId,
         assigneeId,
         assigneeIds: selectedAssigneeIds,
-        weight: parseFloat(weight) || 0,
+        weight: parseInt(weight, 10) || 0,
       };
 
       await onCreated?.(kpiData);
@@ -275,6 +291,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Daily">Daily</SelectItem>
                     <SelectItem value="Weekly">Weekly</SelectItem>
                     <SelectItem value="Monthly">Monthly</SelectItem>
                     <SelectItem value="Quarterly">Quarterly</SelectItem>
@@ -305,9 +322,9 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                 <input
                   id="kpi-target"
                   type="text"
-                  inputMode="decimal"
+                  inputMode="numeric"
                   value={targetValue}
-                  onChange={(e) => setTargetValue(e.target.value)}
+                  onChange={(e) => setTargetValue(toIntegerString(e.target.value))}
                   className={inputClass}
                 />
               </div>
@@ -333,7 +350,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                   type="text"
                   inputMode="numeric"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={(e) => setWeight(toIntegerString(e.target.value))}
                   className={inputClass}
                 />
               </div>
@@ -352,12 +369,35 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                 Assign to Users (Optional)
               </span>
             </div>
+            <div className="mb-3 flex gap-2">
+              <input
+                type="text"
+                value={assigneeSearchInput}
+                onChange={(e) => setAssigneeSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSearchUsers();
+                  }
+                }}
+                placeholder="Search user by name"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={handleSearchUsers}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-[rgba(218,119,86,0.38)] bg-white px-4 text-sm font-semibold text-[#DA7756] transition-colors hover:bg-[#fef1ec]"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </button>
+            </div>
             <div
               className={cn(
                 "max-h-52 space-y-2 overflow-y-auto rounded-xl border border-neutral-200/90 bg-[#faf9f6] p-3"
               )}
             >
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <label
                   key={user.id}
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-neutral-800 hover:bg-white/80"
@@ -374,6 +414,11 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
               {users.length === 0 && (
                 <p className="px-2 py-2 text-sm text-neutral-500">
                   No company members found.
+                </p>
+              )}
+              {users.length > 0 && filteredUsers.length === 0 && (
+                <p className="px-2 py-2 text-sm text-neutral-500">
+                  No users match your search.
                 </p>
               )}
             </div>

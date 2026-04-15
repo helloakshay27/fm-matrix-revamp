@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
+import axios from 'axios';
 
 // Type definitions for Sales Order
 interface SalesOrder {
@@ -131,6 +132,8 @@ export const SalesOrderListPage: React.FC = () => {
     const [appliedFilters, setAppliedFilters] = useState<SalesOrderFilters>({});
     const [salesOrderData, setSalesOrderData] = useState<SalesOrder[]>([]);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
+    const [errorModal, setErrorModal] = useState<{ show: boolean; errors: { id: string; message: string }[] }>({ show: false, errors: [] });
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -197,6 +200,30 @@ export const SalesOrderListPage: React.FC = () => {
         fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
+    // Fetch lock account to check if sale_order approval is enabled
+    useEffect(() => {
+        const fetchLockAccount = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`https://${baseUrl}/get_lock_account.json`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = await response.json();
+                console.log('get_lock_account response:', data);
+                const saleOrderApproval = Array.isArray(data?.approvals) &&
+                    data.approvals.some((a: any) => a.approval_type === 'sale_order' && a.active);
+                setHasSaleOrderApproval(saleOrderApproval);
+            } catch (error) {
+                console.error('Error fetching lock account:', error);
+            }
+        };
+        fetchLockAccount();
+    }, []);
+
     // Handle search
     const handleSearch = (term: string) => {
         setSearchTerm(term);
@@ -243,7 +270,7 @@ console.log('Sales Order Data:', salesOrderData);
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
-                {order.status !== 'confirmed' && (
+                {/* {order.status !== 'confirmed' && ( */}
                     <input
                         type="checkbox"
                         checked={selectedRows.includes(order.id)}
@@ -256,7 +283,7 @@ console.log('Sales Order Data:', salesOrderData);
                         }}
                         title="Select for status update"
                     />
-                )}
+                {/* )} */}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -321,7 +348,7 @@ console.log('Sales Order Data:', salesOrderData);
         status: (
             <div className="flex items-center justify-center gap-2">
                 {getStatusBadge(order.status)}
-                {order.status !== 'confirmed' && (
+                {/* {order.status !== 'confirmed' && ( */}
                     <input
                         type="checkbox"
                         checked={order.fulfilled}
@@ -329,18 +356,20 @@ console.log('Sales Order Data:', salesOrderData);
                             try {
                                 const baseUrl = localStorage.getItem('baseUrl');
                                 const token = localStorage.getItem('token');
-                                const payload = {
-                                    sale_order_ids: [order.id],
-                                    fulfilled: !order.fulfilled
-                                };
-                                await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                                    method: 'POST',
-                                    headers: {
-                                        Authorization: token ? `Bearer ${token}` : undefined,
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify(payload)
-                                });
+                                const response = await axios.post(
+                                    `https://${baseUrl}/sale_orders/update_status.json`,
+                                    { sale_order_ids: [order.id], fulfilled: !order.fulfilled },
+                                    { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+                                );
+                                if (response.status === 422) {
+                                    const { message, errors } = response.data;
+                                    if (Array.isArray(errors) && errors.length > 0) {
+                                        setErrorModal({ show: true, errors });
+                                    } else {
+                                        setErrorModal({ show: true, errors: [{ id: String(order.id), message: message || 'Failed to update fulfilled status' }] });
+                                    }
+                                    return;
+                                }
                                 fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
                             } catch (err) {
                                 toast.error('Failed to update fulfilled status');
@@ -349,7 +378,7 @@ console.log('Sales Order Data:', salesOrderData);
                         style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
                         title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
                     />
-                )}
+                {/* )} */}
             </div>
         )
     });
@@ -371,34 +400,44 @@ console.log('Sales Order Data:', salesOrderData);
         }
     };
 
-    const handleMarkAsConfirmed = async () => {
+    const handleUpdateStatus = async (status: string, successMsg: string, failMsg: string) => {
         if (selectedRows.length === 0) {
             toast.error('Select at least one sales order');
             return;
         }
+
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            const payload = {
-                sale_order_ids: selectedRows,
-                status: 'confirmed',
-                fulfilled: true
-            };
-            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                method: 'POST',
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
-            toast.success('Status updated successfully');
+
+            const response = await axios.post(
+                `https://${baseUrl}/sale_orders/update_status.json`,
+                { sale_order_ids: selectedRows, status },
+                { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+            );
+
+            if (response.status === 422) {
+                const { message, errors } = response.data;
+                if (Array.isArray(errors) && errors.length > 0) {
+                    setErrorModal({ show: true, errors });
+                } else {
+                    setErrorModal({ show: true, errors: [{ id: '-', message: message || failMsg }] });
+                }
+                return;
+            }
+
+            toast.success(successMsg);
             setSelectedRows([]);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-        } catch (err) {
-            toast.error('Failed to update status');
+        } catch (error) {
+            console.error(error);
+            toast.error(failMsg);
         }
     };
+
+    const handleMarkAsConfirmed = () => handleUpdateStatus('confirmed', 'Sales orders marked as confirmed', 'Failed to mark sales orders as confirmed');
+
+    const handleSubmitForApproval = () => handleUpdateStatus('pending_approval', 'Sales orders submitted for approval', 'Failed to submit sales orders for approval');
 
     return (
         <div className="p-6 space-y-6">
@@ -426,12 +465,21 @@ console.log('Sales Order Data:', salesOrderData);
                             <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
                         {selectedRows.length > 0 && (
-                            <Button
-                                className='bg-green-600 text-white hover:bg-green-700'
-                                onClick={handleMarkAsConfirmed}
-                            >
-                                Mark as Confirmed
-                            </Button>
+                            hasSaleOrderApproval ? (
+                                <Button
+                                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                    onClick={handleSubmitForApproval}
+                                >
+                                    Submit for Approval
+                                </Button>
+                            ) : (
+                                <Button
+                                    className="bg-green-600 text-white hover:bg-green-700"
+                                    onClick={handleMarkAsConfirmed}
+                                >
+                                    Mark as Confirmed
+                                </Button>
+                            )
                         )}
                     </div>
                 )}
@@ -447,6 +495,49 @@ console.log('Sales Order Data:', salesOrderData);
                     onPageChange={handlePageChange}
                     onPerPageChange={handlePerPageChange}
                 />
+            )}
+
+            {/* Bulk Update Error Modal */}
+            {errorModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+                        <div className="flex items-center justify-between px-5 py-4 border-b">
+                            <h2 className="text-base font-semibold text-gray-800">Bulk Update Error Summary</h2>
+                            <button
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                onClick={() => setErrorModal({ show: false, errors: [] })}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="px-5 py-4 max-h-80 overflow-y-auto">
+                            <table className="w-full text-sm border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-100">
+                                        <th className="text-left px-3 py-2 border border-gray-200 font-semibold text-gray-700">SALE ORDER</th>
+                                        <th className="text-left px-3 py-2 border border-gray-200 font-semibold text-gray-700">ERROR DETAILS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {errorModal.errors.map((err, i) => (
+                                        <tr key={i} className="hover:bg-gray-50">
+                                            <td className="px-3 py-2 border border-gray-200 text-gray-800 font-medium">{err.id}</td>
+                                            <td className="px-3 py-2 border border-gray-200 text-black-600">{err.message}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="px-5 py-3 border-t flex justify-end">
+                            <Button
+                                className="bg-[#C72030] text-white hover:bg-[#a81a28] px-6"
+                                onClick={() => setErrorModal({ show: false, errors: [] })}
+                            >
+                                OK
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -107,7 +107,6 @@ import {
   getEmbeddedToken,
   resolveBaseUrlByOrgId,
 } from "@/utils/embeddedMode";
-import apiClient from "@/utils/apiClient";
 import { getUser } from "@/utils/auth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────

@@ -265,6 +265,7 @@ export const ClubGroupMembershipDetails = () => {
   const [autoDownloadInvoice, setAutoDownloadInvoice] = useState(false);
   const [collectedPDF, setCollectedPDF] = useState<{ bill_id: number | string; base64: string; filename: string } | null>(null);
   const [isUploadingPDF, setIsUploadingPDF] = useState(false);
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
   // Payment API handler
   const handlePayment = async () => {
@@ -300,6 +301,7 @@ export const ClubGroupMembershipDetails = () => {
           console.log('Displaying invoice:', formattedInvoice);
           setInvoiceData(formattedInvoice);
           setShowInvoice(true);
+          setIsGeneratingInvoice(true);
           setAutoDownloadInvoice(true);
           setOpenPaymentModal(false);
         } else {
@@ -749,48 +751,78 @@ export const ClubGroupMembershipDetails = () => {
     <>
       {showInvoice && invoiceData ? (
         <div className="w-full">
-          <div className="fixed top-4 right-4 z-50 flex gap-3">
-            {isUploadingPDF ? (
-              <Button
-                disabled={true}
-                className="bg-blue-600 text-white"
-              >
-                <span className="animate-spin mr-2">⏳</span>
-                Uploading Invoice...
-              </Button>
-            ) : collectedPDF ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
-                <span className="text-sm font-medium text-green-700">✓ Invoice collected</span>
-                <span className="text-xs text-green-600">Uploading...</span>
+          {/* Loading Overlay while generating or uploading invoice */}
+          {(isGeneratingInvoice || isUploadingPDF) && (
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
+              <div className="bg-white rounded-lg shadow-2xl p-8 text-center max-w-sm">
+                <div className="mb-6 flex justify-center">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-spin" style={{
+                      backgroundClip: 'padding-box',
+                      padding: '3px',
+                      background: 'conic-gradient(from 0deg, #3b82f6, #1e40af)'
+                    }}>
+                      <div className="absolute inset-3 bg-white rounded-full"></div>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-2xl animate-spin">⏳</span>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Membership Payment Successfull</h3>
+                <p className="text-gray-600 font-medium">
+                  Preparing invoicing and sending mail...
+                </p>
               </div>
-            ) : (
+            </div>
+          )}
+
+          {/* Invoice Section with blur when generating or uploading */}
+          <div className={`w-full transition-all duration-300 ${isGeneratingInvoice || isUploadingPDF ? 'blur-sm opacity-50 pointer-events-none' : ''}`}>
+            <div className="fixed top-4 right-4 z-50 flex gap-3">
+              {isUploadingPDF ? (
+                <Button
+                  disabled={true}
+                  className="bg-blue-600 text-white"
+                >
+                  <span className="animate-spin mr-2">⏳</span>
+                  Uploading Invoice...
+                </Button>
+              ) : collectedPDF ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
+                  <span className="text-sm font-medium text-green-700">✓ Invoice collected</span>
+                  <span className="text-xs text-green-600">Uploading...</span>
+                </div>
+              ) : (
+                <Button
+                  disabled={true}
+                  className="bg-gray-400 text-white"
+                >
+                  ⏳ Generating Invoice...
+                </Button>
+              )}
+
               <Button
-                disabled={true}
-                className="bg-gray-400 text-white"
+                onClick={handleCloseInvoice}
+                disabled={isUploadingPDF || isGeneratingInvoice}
+                variant="outline"
+                className="bg-white"
               >
-                ⏳ Generating Invoice...
+                Back
               </Button>
-            )}
+            </div>
 
-            <Button
-              onClick={handleCloseInvoice}
-              disabled={isUploadingPDF}
-              variant="outline"
-              className="bg-white"
-            >
-              Back
-            </Button>
+            <Invoice
+              key={`invoice-${invoiceData?.bill_id}`}
+              data={invoiceData}
+              returnBase64={true}
+              onBase64Generated={handleBase64Generated}
+              onClose={handleCloseInvoice}
+              showButton={true}
+              autoDownload={autoDownloadInvoice}
+              isFromDetailsPage={true}
+            />
           </div>
-
-          <Invoice
-            key={`invoice-${invoiceData?.bill_id}`}
-            data={invoiceData}
-            returnBase64={true}
-            onBase64Generated={handleBase64Generated}
-            onClose={handleCloseInvoice}
-            showButton={true}
-            autoDownload={autoDownloadInvoice}
-          />
         </div>
       ) : (
         <div className="p-4 sm:p-6 min-h-screen">

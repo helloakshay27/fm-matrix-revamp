@@ -22,10 +22,10 @@ interface Product {
 const productData: Product[] = [
   {
     id: "1",
-    name: "Loyalty (Post Sales to Post Possession)",
+    name: "Customer App",
     industry: "Real Estate Developers",
     champion: "Kshitij Rasal",
-    slug: "loyalty",
+    slug: "customer-app",
     purpose:
       "A customer Lifecycle Management Mobile app being used by Real Estate Developers to manage their Customers across the Entire cycle from Booking to Handover and can be extended until Community Management.",
     objective:
@@ -33,6 +33,20 @@ const productData: Product[] = [
     whoTheyServe: "CRM, Referral & Loyalty",
     purposeTheyServe:
       "Customisation of Look & Feel, Data security, Partner experience, Referral Journey & Payout",
+  },
+  {
+    id: "1b",
+    name: "Customer Post Possession",
+    industry: "Real Estate Developers",
+    champion: "Kshitij Rasal",
+    slug: "customer-post-possession",
+    purpose:
+      "Post-possession customer journey modules focused on community, service, engagement, and retention—delivered in a developer-branded app experience.",
+    objective:
+      "Community modules (broadcasts, events), service workflows (helpdesk, visitors), and retention loops (loyalty/campaigns) with measurable adoption.",
+    whoTheyServe: "Community Ops, CX, Residents",
+    purposeTheyServe:
+      "Increase resident engagement, reduce support load, and build advocacy after handover.",
   },
   {
     id: "2",
