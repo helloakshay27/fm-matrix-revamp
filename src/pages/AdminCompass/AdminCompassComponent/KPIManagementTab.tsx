@@ -320,6 +320,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   const [selectedManageUsers, setSelectedManageUsers] = useState<Set<number>>(
     new Set()
   );
+  const [manageUserSearch, setManageUserSearch] = useState("");
   const [isSavingManageUsers, setIsSavingManageUsers] = useState(false);
 
   const manageUsers = useMemo(() => {
@@ -334,6 +335,17 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
     return byDepartment.length > 0 ? byDepartment : users;
   }, [users, manageKpi]);
+
+  const filteredManageUsers = useMemo(() => {
+    const query = manageUserSearch.trim().toLowerCase();
+    if (!query) return manageUsers;
+
+    return manageUsers.filter((user) => {
+      const userName = user.name.toLowerCase();
+      const userEmail = (user.email ?? "").toLowerCase();
+      return userName.includes(query) || userEmail.includes(query);
+    });
+  }, [manageUserSearch, manageUsers]);
 
   const frequencyOptions = useMemo(() => {
     const values = new Set(
@@ -429,6 +441,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   const handleOpenManage = (kpi: KPICardData) => {
     setBulkManageIds(null);
     setManageKpi(kpi);
+    setManageUserSearch("");
     setSelectedManageUsers(() => {
       const next = new Set<number>();
       if (Array.isArray(kpi.assigneeIds)) {
@@ -457,6 +470,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setManageKpi(null);
     setBulkManageIds(null);
     setSelectedManageUsers(new Set());
+    setManageUserSearch("");
   };
 
   const selectedCount = selectedIds.size;
@@ -469,6 +483,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
     setBulkManageIds(new Set(selectedIds));
     setManageKpi(firstSelected);
+    setManageUserSearch("");
     setSelectedManageUsers(() => {
       const next = new Set<number>();
       if (Array.isArray(firstSelected.assigneeIds)) {
@@ -808,13 +823,33 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
                 <p className="text-sm font-semibold text-neutral-700">Users from department:</p>
 
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    type="search"
+                    value={manageUserSearch}
+                    onChange={(e) => setManageUserSearch(e.target.value)}
+                    placeholder="Search user by name or email"
+                    className={cn(
+                      "h-11 w-full rounded-xl py-2 pl-9 pr-3 text-sm text-[#1a1a1a] shadow-sm placeholder:text-neutral-400",
+                      kpiClass.border,
+                      kpiClass.surfaceInput,
+                      kpiClass.focusRing
+                    )}
+                  />
+                </div>
+
                 <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
                   {manageUsers.length === 0 ? (
                     <div className="rounded-xl border border-neutral-200 bg-white px-4 py-5 text-sm text-neutral-500">
                       No users found for this department.
                     </div>
+                  ) : filteredManageUsers.length === 0 ? (
+                    <div className="rounded-xl border border-neutral-200 bg-white px-4 py-5 text-sm text-neutral-500">
+                      No users match your search.
+                    </div>
                   ) : (
-                    manageUsers.map((u) => {
+                    filteredManageUsers.map((u) => {
                       const checked = selectedManageUsers.has(u.id);
                       return (
                         <label

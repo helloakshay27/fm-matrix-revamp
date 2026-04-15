@@ -31,12 +31,27 @@ import { getBaseUrl, getToken as getAuthToken } from "@/utils/auth";
 // API CONFIG
 // ─────────────────────────────────────────────
 const KPI_LIST_ENDPOINTS = ["/kpis", "/api/kpis"] as const;
-const KPI_ARCHIVED_ENDPOINT =
-  "https://fm-uat-api.lockated.com/kpis/archived.json";
-const KPI_HISTORY_ENDPOINT =
-  "https://fm-uat-api.lockated.com/kpis/history.json";
+const KPI_ARCHIVED_ENDPOINT_PATHS = ["/kpis/archived.json", "/kpis/archived"] as const;
+const KPI_HISTORY_ENDPOINT_PATHS = ["/kpis/history.json", "/kpis/history"] as const;
 const KPI_ARCHIVED_BEARER_TOKEN =
   "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
+const KPI_OWNER_CACHE_KEY = "kpi_owner_name_cache_v1";
+const KPI_ARCHIVE_API_KEY_CACHE = "kpi_archive_api_key_v1";
+const KPI_ARCHIVE_API_BASE_CACHE = "kpi_archive_api_base_v1";
+const KPI_RESTORE_API_KEY_CACHE = "kpi_restore_api_key_v1";
+const KPI_RESTORE_API_BASE_CACHE = "kpi_restore_api_base_v1";
+let runtimeArchiveApiKey: string | null = null;
+let runtimeArchiveApiBase: string | null = null;
+let runtimeRestoreApiKey: string | null = null;
+let runtimeRestoreApiBase: string | null = null;
+
+type ApiMethod = "post" | "put" | "patch" | "delete";
+type ApiCandidate = {
+  key: string;
+  method: ApiMethod;
+  url: string;
+  body?: Record<string, unknown>;
+};
 
 type RawKpiData = {
   id?: string | number;
@@ -85,7 +100,7 @@ type KpiPayload = {
 type KpiUpdatePayload = {
   current_value: number;
   target_value: number;
-  frequency: "weekly" | "monthly" | "quarterly";
+  frequency: "daily" | "weekly" | "monthly" | "quarterly";
   weight?: number;
   priority?: string;
 };
@@ -595,11 +610,13 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
         ? raw.assignee
         : raw.assignee?.name ?? raw.assignee?.full_name) ??
       "Unassigned",
-    target: raw.target_value ?? 0,
-    value: raw.current_value ?? 0,
+    target: Math.trunc(Number(raw.target_value) || 0),
+    value: Math.trunc(Number(raw.current_value) || 0),
     unit: raw.unit ?? "%",
     status: calculateStatus(raw.current_value, raw.target_value),
-    frequency: (raw.frequency?.toLowerCase() === "weekly"
+    frequency: (raw.frequency?.toLowerCase() === "daily"
+      ? "Daily"
+      : raw.frequency?.toLowerCase() === "weekly"
       ? "Weekly"
       : raw.frequency?.toLowerCase() === "quarterly"
         ? "Quarterly"
@@ -612,7 +629,7 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
     assigneeId: primaryAssigneeId,
     assigneeIds,
     description: raw.description,
-    weight: raw.weight != null ? Number(raw.weight) : undefined,
+    weight: raw.weight != null ? Math.trunc(Number(raw.weight) || 0) : undefined,
     _raw: raw,
   };
 };
@@ -750,9 +767,34 @@ const normalizeHistoryRow = (raw: RawHistoryEntry): KPIHistoryRow => {
 };
 
 const fetchHistoryKpis = async (): Promise<KPIHistoryRow[]> => {
-  const { data: json } = await Axios.get(KPI_HISTORY_ENDPOINT, {
-    headers: archivedApiHeaders(),
-  });
+  const headers = archivedApiHeaders();
+  const bases = Array.from(
+    new Set([...getApiBaseCandidates(), "https://fm-uat-api.lockated.com"])
+  );
+
+  let json: unknown;
+  let lastError: unknown = null;
+
+  for (const base of bases) {
+    for (const path of KPI_HISTORY_ENDPOINT_PATHS) {
+      try {
+        const { data } = await Axios.get(withNoCacheTs(`${base}${path}`), {
+          headers,
+        });
+        json = data;
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (json !== undefined) break;
+  }
+
+  if (json === undefined) {
+    throw lastError ?? new Error("Failed to load KPI history from API");
+  }
 
   const pickFirstArray = (value: unknown): unknown[] => {
     if (Array.isArray(value)) return value;
@@ -806,18 +848,51 @@ const fetchHistoryKpis = async (): Promise<KPIHistoryRow[]> => {
 };
 
 const fetchArchivedKpis = async (): Promise<ArchivedKPIEntry[]> => {
-  const { data: json } = await Axios.get(KPI_ARCHIVED_ENDPOINT, {
-    headers: archivedApiHeaders(),
-  });
+  const headers = archivedApiHeaders();
+  const bases = Array.from(
+    new Set([...getApiBaseCandidates(), "https://fm-uat-api.lockated.com"])
+  );
+
+  let json: unknown;
+  let lastError: unknown = null;
+
+  for (const base of bases) {
+    for (const path of KPI_ARCHIVED_ENDPOINT_PATHS) {
+      try {
+        const { data } = await Axios.get(withNoCacheTs(`${base}${path}`), {
+          headers,
+        });
+        json = data;
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (json !== undefined) break;
+  }
+
+  if (json === undefined) {
+    throw lastError ?? new Error("Failed to load archived KPIs from API");
+  }
+
+  const parsed = (json ?? {}) as {
+    data?: { archived_kpis?: unknown; kpis?: unknown } | unknown;
+    archived_kpis?: unknown;
+    kpis?: unknown;
+  };
 
   const arr = Array.isArray(json)
     ? json
-    : (json.data?.archived_kpis ??
-        json.archived_kpis ??
-        json.data?.kpis ??
-        json.kpis ??
-        json.data ??
-        []);
+    : (parsed.data as { archived_kpis?: unknown; kpis?: unknown } | undefined)
+          ?.archived_kpis ??
+      parsed.archived_kpis ??
+      (parsed.data as { archived_kpis?: unknown; kpis?: unknown } | undefined)
+        ?.kpis ??
+      parsed.kpis ??
+      parsed.data ??
+      [];
 
   if (!Array.isArray(arr)) return [];
   return arr.map((item) => normalizeArchivedKpiFromAPI(item as RawArchivedKpiData));
@@ -852,29 +927,65 @@ const createKpi = async (payload: KpiPayload) => {
   }
 };
 
+const cleanKpiUpdatePayload = (
+  payload: Partial<KpiPayload> & Partial<KpiUpdatePayload>
+): Partial<KpiPayload> & Partial<KpiUpdatePayload> => {
+  return Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => value !== undefined && value !== null)
+  ) as Partial<KpiPayload> & Partial<KpiUpdatePayload>;
+};
+
 const updateKpi = async (
   id: string | number,
   payload: Partial<KpiPayload> & KpiUpdatePayload
 ) => {
-  try {
-    const { data: json } = await Axios.put(
-      `${getApiBaseUrl()}/kpis/${id}`,
-      { kpi: payload },
-      {
-        headers: apiHeaders(),
+  const fullPayload = cleanKpiUpdatePayload(payload);
+  const fallbackPayload = cleanKpiUpdatePayload({
+    name: payload.name,
+    unit: payload.unit,
+    frequency: payload.frequency,
+    target_value: payload.target_value,
+    current_value: payload.current_value,
+    weight: payload.weight,
+    priority: payload.priority,
+  });
+
+  const payloadCandidates = [fullPayload, fallbackPayload].filter(
+    (candidate, idx, arr) =>
+      idx === arr.findIndex((item) => JSON.stringify(item) === JSON.stringify(candidate))
+  );
+
+  const endpointCandidates = [`/kpis/${id}`, `/kpis/${id}.json`, `/api/kpis/${id}`];
+  let lastError: unknown = null;
+
+  for (const base of getApiBaseCandidates()) {
+    for (const endpoint of endpointCandidates) {
+      for (const candidate of payloadCandidates) {
+        try {
+          const { data: json } = await Axios.put(
+            `${base}${endpoint}`,
+            { kpi: candidate },
+            {
+              headers: apiHeaders(),
+            }
+          );
+          return normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
+        } catch (error) {
+          lastError = error;
+          if (Axios.isAxiosError(error)) {
+            console.error("[updateKpi] status:", error.response?.status);
+            console.error("[updateKpi] response body:", JSON.stringify(error.response?.data));
+            console.error("[updateKpi] sent payload:", JSON.stringify({ kpi: candidate }));
+            console.error("[updateKpi] endpoint:", `${base}${endpoint}`);
+          } else {
+            console.error("Update KPI error:", error);
+          }
+        }
       }
-    );
-    return normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
-  } catch (error) {
-    if (Axios.isAxiosError(error)) {
-      console.error("[updateKpi] status:", error.response?.status);
-      console.error("[updateKpi] response body:", JSON.stringify(error.response?.data));
-      console.error("[updateKpi] sent payload:", JSON.stringify({ kpi: payload }));
-    } else {
-      console.error("Update KPI error:", error);
     }
-    throw error;
   }
+
+  throw lastError ?? new Error("Failed to update KPI");
 };
 
 const assignKpiUsers = async (
@@ -922,6 +1033,249 @@ const deleteKpi = async (id: string | number) => {
     console.error("Delete KPI error:", error);
     throw error;
   }
+};
+
+const getCachedApiPreference = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const setCachedApiPreference = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage failures.
+  }
+};
+
+const prioritizeBases = (bases: string[], preferredBase: string | null): string[] => {
+  if (!preferredBase || !bases.includes(preferredBase)) return bases;
+  return [preferredBase, ...bases.filter((base) => base !== preferredBase)];
+};
+
+const prioritizeCandidates = (
+  candidates: ApiCandidate[],
+  preferredKey: string | null
+): ApiCandidate[] => {
+  if (!preferredKey) return candidates;
+  const preferred = candidates.find((candidate) => candidate.key === preferredKey);
+  if (!preferred) return candidates;
+  return [preferred, ...candidates.filter((candidate) => candidate.key !== preferredKey)];
+};
+
+const executeApiCandidate = async (
+  candidate: ApiCandidate,
+  headers: Record<string, string>
+) => {
+  if (candidate.method === "post") {
+    await Axios.post(candidate.url, candidate.body ?? {}, { headers });
+    return;
+  }
+  if (candidate.method === "put") {
+    await Axios.put(candidate.url, candidate.body ?? {}, { headers });
+    return;
+  }
+  if (candidate.method === "patch") {
+    await Axios.patch(candidate.url, candidate.body ?? {}, { headers });
+    return;
+  }
+  await Axios.delete(candidate.url, { headers });
+};
+
+const archiveKpi = async (id: string | number) => {
+  const headers = archivedApiHeaders();
+  const cachedArchiveBase =
+    runtimeArchiveApiBase ?? getCachedApiPreference(KPI_ARCHIVE_API_BASE_CACHE);
+  const cachedArchiveKey =
+    runtimeArchiveApiKey ?? getCachedApiPreference(KPI_ARCHIVE_API_KEY_CACHE);
+
+  const candidateBases = Array.from(
+    new Set(["https://fm-uat-api.lockated.com", ...getApiBaseCandidates()])
+  );
+  const bases = prioritizeBases(candidateBases, cachedArchiveBase);
+  const preferredKey = cachedArchiveKey;
+
+  let lastError: unknown = null;
+  const failedAttempts: Array<{ method: string; url: string; status?: number }> = [];
+
+  for (const base of bases) {
+    const allCandidates = prioritizeCandidates([
+      { key: "post:/kpis/{id}/archive", method: "post" as const, url: `${base}/kpis/${id}/archive` },
+      { key: "post:/kpis/{id}/archive.json", method: "post" as const, url: `${base}/kpis/${id}/archive.json` },
+      { key: "post:/kpis/archive/{id}", method: "post" as const, url: `${base}/kpis/archive/${id}` },
+      { key: "post:/kpis/archive/{id}.json", method: "post" as const, url: `${base}/kpis/archive/${id}.json` },
+      { key: "put:/kpis/{id}/archive", method: "put" as const, url: `${base}/kpis/${id}/archive` },
+      { key: "patch:/kpis/{id}/archive", method: "patch" as const, url: `${base}/kpis/${id}/archive` },
+      {
+        key: "post:/kpis/{id}::_method=put:archived=true",
+        method: "post" as const,
+        url: `${base}/kpis/${id}`,
+        body: { _method: "put", kpi: { archived: true } },
+      },
+      {
+        key: "put:/kpis/{id}:archived=true",
+        method: "put" as const,
+        url: `${base}/kpis/${id}`,
+        body: { kpi: { archived: true } },
+      },
+      {
+        key: "patch:/kpis/{id}:archived=true",
+        method: "patch" as const,
+        url: `${base}/kpis/${id}`,
+        body: { kpi: { archived: true } },
+      },
+      {
+        key: "post:/kpis/{id}::_method=patch:archived=true",
+        method: "post" as const,
+        url: `${base}/kpis/${id}`,
+        body: { _method: "patch", kpi: { archived: true } },
+      },
+      { key: "delete:/kpis/{id}", method: "delete" as const, url: `${base}/kpis/${id}` },
+      { key: "delete:/kpis/{id}.json", method: "delete" as const, url: `${base}/kpis/${id}.json` },
+      {
+        key: "post:/kpis/{id}::_method=delete",
+        method: "post" as const,
+        url: `${base}/kpis/${id}`,
+        body: { _method: "delete" },
+      },
+      {
+        key: "post:/kpis/{id}.json::_method=delete",
+        method: "post" as const,
+        url: `${base}/kpis/${id}.json`,
+        body: { _method: "delete" },
+      },
+    ], preferredKey);
+
+    const preferredCandidate =
+      preferredKey != null
+        ? allCandidates.find((candidate) => candidate.key === preferredKey)
+        : null;
+    const candidates = preferredCandidate ? [preferredCandidate, ...allCandidates.filter((c) => c.key !== preferredCandidate.key)] : allCandidates;
+
+    for (const candidate of candidates) {
+      try {
+        await executeApiCandidate(candidate, headers);
+        runtimeArchiveApiKey = candidate.key;
+        runtimeArchiveApiBase = base;
+        setCachedApiPreference(KPI_ARCHIVE_API_KEY_CACHE, candidate.key);
+        setCachedApiPreference(KPI_ARCHIVE_API_BASE_CACHE, base);
+        console.warn("[archiveKpi] success:", `${candidate.method.toUpperCase()} ${candidate.url}`);
+        return true;
+      } catch (error) {
+        lastError = error;
+        failedAttempts.push({
+          method: candidate.method,
+          url: candidate.url,
+          status: Axios.isAxiosError(error) ? error.response?.status : undefined,
+        });
+      }
+
+      if (preferredCandidate && candidate.key === preferredCandidate.key) {
+        // Preferred route failed, now continue with broader fallbacks for this base.
+        continue;
+      }
+    }
+  }
+
+  console.error("[archiveKpi] all attempts failed:", failedAttempts);
+
+  throw new Error(`Archive failed for ${id}: ${getApiErrorMessage(lastError)}`);
+};
+
+const restoreKpi = async (id: string | number) => {
+  const headers = archivedApiHeaders();
+  const cachedRestoreBase =
+    runtimeRestoreApiBase ?? getCachedApiPreference(KPI_RESTORE_API_BASE_CACHE);
+  const cachedRestoreKey =
+    runtimeRestoreApiKey ?? getCachedApiPreference(KPI_RESTORE_API_KEY_CACHE);
+
+  const candidateBases = Array.from(
+    new Set(["https://fm-uat-api.lockated.com", ...getApiBaseCandidates()])
+  );
+  const bases = prioritizeBases(candidateBases, cachedRestoreBase);
+  const preferredKey = cachedRestoreKey;
+
+  let lastError: unknown = null;
+  const failedAttempts: Array<{ method: string; url: string; status?: number }> = [];
+
+  for (const base of bases) {
+    const allCandidates = prioritizeCandidates([
+      { key: "post:/kpis/{id}/restore", method: "post" as const, url: `${base}/kpis/${id}/restore` },
+      { key: "post:/kpis/{id}/restore.json", method: "post" as const, url: `${base}/kpis/${id}/restore.json` },
+      { key: "post:/kpis/{id}/unarchive", method: "post" as const, url: `${base}/kpis/${id}/unarchive` },
+      { key: "post:/kpis/restore/{id}", method: "post" as const, url: `${base}/kpis/restore/${id}` },
+      { key: "post:/kpis/restore/{id}.json", method: "post" as const, url: `${base}/kpis/restore/${id}.json` },
+      { key: "put:/kpis/{id}/restore", method: "put" as const, url: `${base}/kpis/${id}/restore` },
+      { key: "patch:/kpis/{id}/restore", method: "patch" as const, url: `${base}/kpis/${id}/restore` },
+      {
+        key: "post:/kpis/{id}::_method=put:archived=false",
+        method: "post" as const,
+        url: `${base}/kpis/${id}`,
+        body: { _method: "put", kpi: { archived: false } },
+      },
+      {
+        key: "put:/kpis/{id}:archived=false",
+        method: "put" as const,
+        url: `${base}/kpis/${id}`,
+        body: { kpi: { archived: false } },
+      },
+      {
+        key: "patch:/kpis/{id}:archived=false",
+        method: "patch" as const,
+        url: `${base}/kpis/${id}`,
+        body: { kpi: { archived: false } },
+      },
+      {
+        key: "post:/kpis/{id}::_method=patch:archived=false",
+        method: "post" as const,
+        url: `${base}/kpis/${id}`,
+        body: { _method: "patch", kpi: { archived: false } },
+      },
+      {
+        key: "post:/kpis/{id}.json::_method=patch:archived=false",
+        method: "post" as const,
+        url: `${base}/kpis/${id}.json`,
+        body: { _method: "patch", kpi: { archived: false } },
+      },
+    ], preferredKey);
+
+    const preferredCandidate =
+      preferredKey != null
+        ? allCandidates.find((candidate) => candidate.key === preferredKey)
+        : null;
+    const candidates = preferredCandidate ? [preferredCandidate, ...allCandidates.filter((c) => c.key !== preferredCandidate.key)] : allCandidates;
+
+    for (const candidate of candidates) {
+      try {
+        await executeApiCandidate(candidate, headers);
+        runtimeRestoreApiKey = candidate.key;
+        runtimeRestoreApiBase = base;
+        setCachedApiPreference(KPI_RESTORE_API_KEY_CACHE, candidate.key);
+        setCachedApiPreference(KPI_RESTORE_API_BASE_CACHE, base);
+        console.warn("[restoreKpi] success:", `${candidate.method.toUpperCase()} ${candidate.url}`);
+        return true;
+      } catch (error) {
+        lastError = error;
+        failedAttempts.push({
+          method: candidate.method,
+          url: candidate.url,
+          status: Axios.isAxiosError(error) ? error.response?.status : undefined,
+        });
+      }
+
+      if (preferredCandidate && candidate.key === preferredCandidate.key) {
+        // Preferred route failed, now continue with broader fallbacks for this base.
+        continue;
+      }
+    }
+  }
+
+  console.error("[restoreKpi] all attempts failed:", failedAttempts);
+
+  throw new Error(`Restore failed for ${id}: ${getApiErrorMessage(lastError)}`);
 };
 
 const deleteHistoryEntry = async (id: string | number) => {
@@ -994,6 +1348,84 @@ const KPI = () => {
   const [archivedKpis, setArchivedKpis] = useState<ArchivedKPIEntry[]>([]);
   const [historyKpis, setHistoryKpis] = useState<KPIHistoryRow[]>([]);
 
+  const getOwnerCache = useCallback((): Record<string, string> => {
+    try {
+      const raw = localStorage.getItem(KPI_OWNER_CACHE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw) as Record<string, string>;
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const getCachedOwnerName = useCallback(
+    (kpiId: string): string | undefined => {
+      const cache = getOwnerCache();
+      return cache[kpiId];
+    },
+    [getOwnerCache]
+  );
+
+  const upsertOwnerCache = useCallback(
+    (items: Array<{ id: string; owner?: string }>) => {
+      const cache = getOwnerCache();
+      let changed = false;
+
+      for (const item of items) {
+        const owner = item.owner?.trim();
+        if (!owner || owner === "Unassigned") continue;
+        if (cache[item.id] !== owner) {
+          cache[item.id] = owner;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        localStorage.setItem(KPI_OWNER_CACHE_KEY, JSON.stringify(cache));
+      }
+    },
+    [getOwnerCache]
+  );
+
+  const resolveOwnerName = useCallback(
+    (owner: string | undefined, assigneeId: number | null | undefined, assigneeIds: number[] | undefined) => {
+      if (owner && owner.trim() && owner !== "Unassigned") {
+        return owner;
+      }
+
+      const candidateIds = [
+        assigneeId,
+        ...(Array.isArray(assigneeIds) ? assigneeIds : []),
+      ]
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id));
+
+      for (const id of candidateIds) {
+        const user = companyUsers.find((u) => u.id === id);
+        if (user?.name) {
+          return user.name;
+        }
+      }
+
+      return owner && owner.trim() ? owner : "Unassigned";
+    },
+    [companyUsers]
+  );
+
+  const hydrateKpiOwner = useCallback(
+    <T extends KPICardData>(kpi: T): T => {
+      const resolvedOwner = resolveOwnerName(kpi.owner, kpi.assigneeId, kpi.assigneeIds);
+      if (resolvedOwner !== "Unassigned") {
+        return { ...kpi, owner: resolvedOwner };
+      }
+
+      const cachedOwner = getCachedOwnerName(String(kpi.id));
+      return cachedOwner ? { ...kpi, owner: cachedOwner } : { ...kpi, owner: resolvedOwner };
+    },
+    [getCachedOwnerName, resolveOwnerName]
+  );
+
   const loadHistoryKpis = useCallback(async () => {
     try {
       const rows = await fetchHistoryKpis();
@@ -1009,14 +1441,14 @@ const KPI = () => {
   const loadArchivedKpis = useCallback(async () => {
     try {
       const data = await fetchArchivedKpis();
-      setArchivedKpis(data);
+      setArchivedKpis(data.map((kpi) => hydrateKpiOwner(kpi)));
     } catch (error) {
       const msg = getApiErrorMessage(error);
       console.error("Failed to load archived KPIs:", msg, error);
       toast.error(`Failed to load archived KPIs: ${msg}`);
       setArchivedKpis([]);
     }
-  }, []);
+  }, [hydrateKpiOwner]);
 
   // Fetch KPIs on component mount
   useEffect(() => {
@@ -1024,7 +1456,7 @@ const KPI = () => {
       setIsLoading(true);
       try {
         const data = await fetchKpis();
-        setKpis(data);
+        setKpis(data.map((kpi) => hydrateKpiOwner(kpi)));
       } catch (error) {
         const msg = getApiErrorMessage(error);
         console.error("Failed to load KPIs:", msg, error);
@@ -1036,7 +1468,7 @@ const KPI = () => {
     };
 
     loadKpis();
-  }, []);
+  }, [hydrateKpiOwner]);
 
   useEffect(() => {
     loadArchivedKpis();
@@ -1065,6 +1497,28 @@ const KPI = () => {
 
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    if (companyUsers.length === 0) return;
+
+    setKpis((prev) =>
+      prev.map((kpi) => hydrateKpiOwner(kpi))
+    );
+
+    setArchivedKpis((prev) =>
+      prev.map((kpi) => hydrateKpiOwner(kpi))
+    );
+  }, [companyUsers, hydrateKpiOwner]);
+
+  useEffect(() => {
+    upsertOwnerCache(kpis.map((kpi) => ({ id: String(kpi.id), owner: kpi.owner })));
+  }, [kpis, upsertOwnerCache]);
+
+  useEffect(() => {
+    upsertOwnerCache(
+      archivedKpis.map((kpi) => ({ id: String(kpi.id), owner: kpi.owner }))
+    );
+  }, [archivedKpis, upsertOwnerCache]);
 
   useEffect(() => {
     const loadDepartments = async () => {
@@ -1187,8 +1641,8 @@ const KPI = () => {
         category: kpiData.tags?.[0] || "Operations",
         unit: kpiData.unit,
         frequency: kpiData.frequency?.toLowerCase() || "monthly",
-        target_value: parseFloat(String(kpiData.target)) || 0,
-        current_value: parseFloat(String(kpiData.value)) || 0,
+        target_value: parseInt(String(kpiData.target), 10) || 0,
+        current_value: parseInt(String(kpiData.value), 10) || 0,
         department_id: kpiData.departmentId || null,
         assignee_id: assigneeIds[0] ?? null,
         assignee_ids: assigneeIds,
@@ -1249,17 +1703,43 @@ const KPI = () => {
         frequency: formValues.frequency,
         target_value: formValues.targetValue,
         current_value: formValues.currentValue,
-        department_id: formValues.departmentId,
-        assignee_id: formValues.assigneeId ?? existing.assigneeId ?? null,
-        weight: formValues.weight ? parseFloat(formValues.weight) : undefined,
+        ...(formValues.departmentId != null
+          ? { department_id: formValues.departmentId }
+          : existing.departmentId != null
+            ? { department_id: existing.departmentId }
+            : {}),
+        ...(formValues.assigneeId != null
+          ? { assignee_id: formValues.assigneeId }
+          : existing.assigneeId != null
+            ? { assignee_id: existing.assigneeId }
+            : {}),
+        weight: formValues.weight ? parseInt(formValues.weight, 10) : undefined,
         priority: formValues.priority,
       };
 
       const updated = await updateKpi(formValues.id, payload);
+      const resolvedAssigneeId =
+        formValues.assigneeId ?? updated.assigneeId ?? existing.assigneeId ?? null;
+      const resolvedOwner =
+        updated.owner && updated.owner !== "Unassigned"
+          ? updated.owner
+          : resolvedAssigneeId != null
+            ? companyUsers.find((u) => u.id === Number(resolvedAssigneeId))?.name ??
+              existing.owner
+            : existing.owner;
+
       const mergedUpdated: KPICardData = {
         ...updated,
+        assigneeId: resolvedAssigneeId,
+        assigneeIds:
+          updated.assigneeIds && updated.assigneeIds.length > 0
+            ? updated.assigneeIds
+            : resolvedAssigneeId != null
+              ? [Number(resolvedAssigneeId)]
+              : existing.assigneeIds,
+        owner: resolvedOwner || existing.owner || "Unassigned",
         priority: (formValues.priority as KPICardData["priority"]) ?? updated.priority,
-        weight: formValues.weight ? parseFloat(formValues.weight) : updated.weight,
+        weight: formValues.weight ? parseInt(formValues.weight, 10) : updated.weight,
       };
       setKpis((prev) =>
         prev.map((k) => (k.id === String(formValues.id) ? mergedUpdated : k))
@@ -1295,31 +1775,62 @@ const KPI = () => {
   const handleArchiveSelected = (ids: string[]) => {
     if (ids.length === 0) return;
 
-    const idSet = new Set(ids);
-    const selected = kpis.filter((k) => idSet.has(k.id));
-    if (selected.length === 0) return;
+    void (async () => {
+      const idSet = new Set(ids);
+      const selected = kpis.filter((k) => idSet.has(k.id));
+      if (selected.length === 0) return;
 
-    const archivedAt = new Date().toLocaleDateString();
-    const archivedEntries: ArchivedKPIEntry[] = selected.map((kpi) => ({
-      ...kpi,
-      archivedDate: archivedAt,
-      reason: "Archived manually",
-    }));
+      const results = await Promise.allSettled(
+        selected.map((kpi) => archiveKpi(kpi.id))
+      );
 
-    setArchivedKpis((prev) => [...archivedEntries, ...prev]);
-    setKpis((prev) => prev.filter((k) => !idSet.has(k.id)));
-    setActiveTab("Archived KPIs");
-    toast.success(`${selected.length} KPI(s) archived`);
+      const archivedAt = new Date().toLocaleDateString();
+      const successIds = selected
+        .filter((_, idx) => results[idx].status === "fulfilled")
+        .map((kpi) => kpi.id);
+      const successIdSet = new Set(successIds);
+      const successEntries: ArchivedKPIEntry[] = selected
+        .filter((kpi) => successIdSet.has(kpi.id))
+        .map((kpi) => ({
+          ...kpi,
+          owner: kpi.owner?.trim() ? kpi.owner : "Unassigned",
+          archivedDate: archivedAt,
+          reason: "Archived manually",
+        }));
+
+      if (successEntries.length > 0) {
+        setArchivedKpis((prev) => [...successEntries, ...prev]);
+        setKpis((prev) => prev.filter((k) => !successIdSet.has(k.id)));
+        setActiveTab("Archived KPIs");
+        toast.success(`${successEntries.length} KPI(s) archived`);
+        await loadArchivedKpis();
+      }
+
+      const failedCount = selected.length - successEntries.length;
+      if (failedCount > 0) {
+        toast.error(`Failed to archive ${failedCount} KPI(s)`);
+      }
+    })();
   };
 
   const handleRestoreArchivedKpi = (id: string) => {
-    const target = archivedKpis.find((kpi) => kpi.id === id);
-    if (!target) return;
+    void (async () => {
+      const target = archivedKpis.find((kpi) => kpi.id === id);
+      if (!target) return;
 
-    const { archivedDate: _archivedDate, reason: _reason, ...restoredKpi } = target;
-    setKpis((prev) => [restoredKpi, ...prev]);
-    setArchivedKpis((prev) => prev.filter((kpi) => kpi.id !== id));
-    toast.success("KPI restored to management");
+      try {
+        await restoreKpi(id);
+        const { archivedDate: _archivedDate, reason: _reason, ...restoredKpi } = target;
+        setKpis((prev) => [restoredKpi, ...prev]);
+        setArchivedKpis((prev) => prev.filter((kpi) => kpi.id !== id));
+        toast.success("KPI restored to management");
+        await loadArchivedKpis();
+      } catch (error) {
+        const msg = getApiErrorMessage(error);
+        console.error("Restore KPI error:", msg, error);
+        toast.error(`Failed to restore KPI: ${msg}`);
+      }
+    })();
   };
 
   const handleDeleteArchivedKpi = (id: string) => {
