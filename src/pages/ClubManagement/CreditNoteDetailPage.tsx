@@ -29,6 +29,8 @@ import {
     Copy,
     Share2,
     ShoppingCart,
+    ClipboardList,
+    X,
 } from "lucide-react";
 import {
     Dialog,
@@ -164,6 +166,7 @@ export const CreditNoteDetailPage = () => {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("order-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showApprovalLog, setShowApprovalLog] = useState(false);
 
     const selectMenuProps = {
         PaperProps: {
@@ -197,6 +200,13 @@ export const CreditNoteDetailPage = () => {
             cancelled: "bg-red-100 text-red-800 border-red-200",
         };
         return colors[status] || colors.draft;
+    };
+
+    const getApprovalStatusBadge = (status: any) => {
+        const s = String(status || "").toLowerCase();
+        if (s === "approved") return "bg-green-100 text-green-800";
+        if (s === "rejected") return "bg-red-100 text-red-800";
+        return "bg-yellow-100 text-yellow-800";
     };
 
     const handleEdit = () => {
@@ -265,6 +275,18 @@ export const CreditNoteDetailPage = () => {
                         <Badge className={`${getStatusColor(salesOrder.orderDetails.status)} border`}>
                             {salesOrder.orderDetails.status.toUpperCase()}
                         </Badge>
+
+                        {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setShowApprovalLog(true)}
+                                className="gap-2"
+                            >
+                                <ClipboardList className="h-4 w-4" />
+                                Approval Log
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -603,6 +625,62 @@ export const CreditNoteDetailPage = () => {
                         <Button variant="destructive" onClick={handleDelete}>
                             Delete
                         </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Approval Log Modal */}
+            <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+                <DialogContent className="max-w-4xl">
+                    <div className="flex items-center justify-between">
+                        <DialogHeader>
+                            <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+                        </DialogHeader>
+                        <button
+                            type="button"
+                            onClick={() => setShowApprovalLog(false)}
+                            className="p-2 rounded hover:bg-muted"
+                            aria-label="Close"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <div className="rounded-lg border overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                                    <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(((salesOrder as any)?.approval_status?.approval_levels) || []).map((lvl: any, index: number) => (
+                                    <TableRow key={lvl?.id ?? index}>
+                                        <TableCell className="font-medium">{index + 1}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                                        <TableCell>
+                                            <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                                                {String(lvl?.status || "pending").toUpperCase()}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {lvl?.rejection_reason || "—"}
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            {lvl?.approved_by || "—"}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </div>
                 </DialogContent>
             </Dialog>

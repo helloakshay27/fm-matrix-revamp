@@ -8,6 +8,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from "@/components/ui/badge";
 import { API_CONFIG } from '@/config/apiConfig';
 import { PaymentFilterDialog } from '@/components/PaymentFilterDialog';
+import axios from 'axios';
 
 interface LockPayment {
   id: number;
@@ -167,13 +168,25 @@ export const PaymentManagementDashboard = () => {
 
   // Handle export
   const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl')
+    const token = localStorage.getItem('token');
     try {
-      toast.loading('Preparing export file...');
+      const response = await axios.get(`https://${baseUrl}/lock_payments/export.xlsx`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        responseType: 'blob',
+      })
 
-      // TODO: Replace with actual API call
-      setTimeout(() => {
-        toast.success('Export completed successfully');
-      }, 1000);
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'lock_payments.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('File downloaded successfully');
 
     } catch (error) {
       console.error('Error exporting data:', error);
@@ -384,15 +397,14 @@ export const PaymentManagementDashboard = () => {
           renderCell={renderCell}
           selectable={false}
           pagination={false}
-          enableExport={false}
           exportFileName="lock-payments"
           handleExport={handleExport}
           storageKey="lock-payments-table"
+          enableExport={true}
           enableSelection={false}
           onFilterClick={() => setIsFilterOpen(true)}
           searchPlaceholder="Search Payments"
           onSearchChange={handleSearch}
-          hideTableExport={false}
           hideColumnsButton={false}
           className="transition-all duration-500 ease-in-out"
           loading={loading}

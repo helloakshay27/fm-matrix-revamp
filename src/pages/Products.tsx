@@ -12,6 +12,7 @@ interface Product {
   name: string;
   industry: string;
   champion: string;
+  slug: string;
   purpose: string;
   objective: string;
   whoTheyServe: string;
@@ -21,9 +22,10 @@ interface Product {
 const productData: Product[] = [
   {
     id: "1",
-    name: "Loyalty (Post Sales to Post Possession)",
+    name: "Customer App",
     industry: "Real Estate Developers",
     champion: "Kshitij Rasal",
+    slug: "customer-app",
     purpose:
       "A customer Lifecycle Management Mobile app being used by Real Estate Developers to manage their Customers across the Entire cycle from Booking to Handover and can be extended until Community Management.",
     objective:
@@ -33,10 +35,25 @@ const productData: Product[] = [
       "Customisation of Look & Feel, Data security, Partner experience, Referral Journey & Payout",
   },
   {
+    id: "1b",
+    name: "Customer Post Possession",
+    industry: "Real Estate Developers",
+    champion: "Kshitij Rasal",
+    slug: "customer-post-possession",
+    purpose:
+      "Post-possession customer journey modules focused on community, service, engagement, and retention—delivered in a developer-branded app experience.",
+    objective:
+      "Community modules (broadcasts, events), service workflows (helpdesk, visitors), and retention loops (loyalty/campaigns) with measurable adoption.",
+    whoTheyServe: "Community Ops, CX, Residents",
+    purposeTheyServe:
+      "Increase resident engagement, reduce support load, and build advocacy after handover.",
+  },
+  {
     id: "2",
     name: "Hi Society (Society Community Management)",
     industry: "Property & Facility Management",
     champion: "Deepak Gupta",
+    slug: "hi-society",
     purpose:
       "Integrated Residential Property management Solution that manages helpdesk, security, visitor access, and daily community activities.",
     objective:
@@ -50,6 +67,7 @@ const productData: Product[] = [
     name: "Snag 360",
     industry: "Real Estate Developer & FM",
     champion: "Sagar Singh",
+    slug: "snag-360",
     purpose:
       "Mobile-based QC Application specially designed for the Real Estate industry to deliver a zero-defect product.",
     objective:
@@ -63,6 +81,7 @@ const productData: Product[] = [
     name: "QC (Quality Control)",
     industry: "Real Estate & Construction",
     champion: "Sagar Singh",
+    slug: "qc",
     purpose:
       "Mobile-based solution designed to ensure defect-free execution through stage-wise inspections and compliance monitoring.",
     objective:
@@ -76,6 +95,7 @@ const productData: Product[] = [
     name: "RHB (Rajasthan Housing Board Monitoring)",
     industry: "Government",
     champion: "Sagar Singh",
+    slug: "rhb",
     purpose:
       "Periodically monitor project progress, quality, and financials across multiple locations for the Housing Board of Rajasthan.",
     objective:
@@ -89,6 +109,7 @@ const productData: Product[] = [
     name: "Brokers (CP Management)",
     industry: "Real Estate & Sales",
     champion: "Kshitij Rasal",
+    slug: "brokers",
     purpose:
       "A Channel Partner Lifecycle Management mobile app used by Real Estate Developers to manage Channel Partners end-to-end.",
     objective:
@@ -103,6 +124,7 @@ const productData: Product[] = [
     name: "FM Matrix",
     industry: "Facility Management",
     champion: "Abdul Ghaffar",
+    slug: "fm-matrix",
     purpose:
       "A unified Facility Management platform that digitizes and manages Maintenance, Security, Safety, Procurement, and community operations.",
     objective:
@@ -117,6 +139,7 @@ const productData: Product[] = [
     name: "GoPhygital.work (Corporate)",
     industry: "Enterprise Digital Workplace",
     champion: "Aquil Husain",
+    slug: "gophygital-corporate",
     purpose:
       "A unified digital workplace platform designed to seamlessly bridge physical and digital operations for modern enterprises.",
     objective:
@@ -131,6 +154,7 @@ const productData: Product[] = [
     name: "GoPhygital.work (Co working Space)",
     industry: "Coworking Space",
     champion: "Abdul Ghaffar",
+    slug: "gophygital-coworking",
     purpose:
       "A unified tenant experience platform designed to bridge the gap between physical workspace operations and digital community engagement.",
     objective:
@@ -144,6 +168,7 @@ const productData: Product[] = [
     name: "Project and Task Manager",
     industry: "Work Management / All Industries",
     champion: "Yash & Sadanand Gupta",
+    slug: "task-manager",
     purpose:
       "An end-to-end work management solution designed to help teams plan, track, and execute projects efficiently.",
     objective:
@@ -158,6 +183,7 @@ const productData: Product[] = [
     name: "Vendor Management",
     industry: "Procurement & Supply Chain",
     champion: "Ajay Ghenand",
+    slug: "vendor-management",
     purpose:
       "Complete vendor lifecycle management including onboarding, KYC, empanelment, contract administration, and performance assessment.",
     objective:
@@ -172,6 +198,7 @@ const productData: Product[] = [
     name: "Procurement/Contracts",
     industry: "Real Estate & Manufacturing",
     champion: "Dinesh Shinde",
+    slug: "procurement",
     purpose:
       "Complete management of the procurement and contract lifecycle, from Indent/Purchase Requisition to Contract Closure & Payment.",
     objective:
@@ -186,6 +213,7 @@ const productData: Product[] = [
     name: "Loyalty Engine",
     industry: "Referral & Loyalty",
     champion: "Vinayak Mane & Kshitij Rasal",
+    slug: "loyalty-engine",
     purpose:
       "A configurable system designed to automatically apply loyalty rewards, points, or benefits based on predefined business rules.",
     objective:
@@ -199,6 +227,7 @@ const productData: Product[] = [
     name: "MSafe",
     industry: "Health, Safety & Wellbeing",
     champion: "Sohail Ansari",
+    slug: "msafe",
     purpose:
       "A HSW compliance application that helps stakeholders monitor various safety compliances and perform Key Risk Compliance checks (KRCC).",
     objective:
@@ -212,6 +241,7 @@ const productData: Product[] = [
     name: "Incident Management",
     industry: "Health, Safety & Environment",
     champion: "Shahab Anwar",
+    slug: "incident-management",
     purpose:
       "A structured, end-to-end solution designed to help organizations effectively identify, report, investigate, and resolve incidents.",
     objective:
@@ -226,6 +256,7 @@ const productData: Product[] = [
     name: "Appointments",
     industry: "Real Estate",
     champion: "Deepak Gupta & Sagar Singh",
+    slug: "appointments",
     purpose:
       "A digital solution that allows customers and site teams to schedule, manage, and property handover appointments.",
     objective:
@@ -239,6 +270,7 @@ const productData: Product[] = [
     name: "HSE App",
     industry: "Health, Safety & Environment",
     champion: "Shahab Anwar",
+    slug: "hse-app",
     purpose:
       "A unified digital solution that enhances workplace safety by streamlining incidents, audits, checklists, and safety violations.",
     objective:
@@ -252,6 +284,7 @@ const productData: Product[] = [
     name: "Club Management",
     industry: "Sports & Recreation",
     champion: "Deepak Gupta",
+    slug: "club-management",
     purpose:
       "A comprehensive digital platform designed to help commercial clubs efficiently manage bookings, memberships, and daily operations.",
     objective:
@@ -364,15 +397,12 @@ const Products: React.FC = () => {
     }
   };
 
-  // Actions renderer
   const renderActions = (product: Product) => (
     <div className="flex items-center justify-center gap-2">
       <Eye
         className="w-4 h-4 cursor-pointer hover:text-blue-600 transition-colors"
         onClick={() =>
-          navigate("/product-details", {
-            state: { productId: product.id },
-          })
+          navigate(`/product/${product.slug}`)
         }
       />
     </div>

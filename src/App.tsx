@@ -365,6 +365,26 @@ import OurGroup from "./pages/OurGroup";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import DocumentDrive from "./pages/DocumentDrive";
+import LoyaltyPage from './pages/products/LoyaltyPage';
+import CustomerAppPage from "./pages/products/CustomerAppPage";
+import CustomerPostPossessionPage from "./pages/products/CustomerPostPossessionPage";
+import HiSocietyPage from './pages/products/HiSocietyPage';
+import Snag360Page from './pages/products/Snag360Page';
+import QCPage from './pages/products/QCPage';
+import RHBPage from './pages/products/RHBPage';
+import BrokersPage from './pages/products/BrokersPage';
+import FMMatrixPage from './pages/products/FMMatrixPage';
+import GoPhygitalCorporatePage from './pages/products/GoPhygitalCorporatePage';
+import GoPhygitalCoworkingPage from './pages/products/GoPhygitalCoworkingPage';
+import TaskManagerPage from './pages/products/TaskManagerPage';
+import VendorManagementPage from './pages/products/VendorManagementPage';
+import ProcurementPage from './pages/products/ProcurementPage';
+import LoyaltyEnginePage from './pages/products/LoyaltyEnginePage';
+import MSafePage from './pages/products/MSafePage';
+import IncidentManagementPage from './pages/products/IncidentManagementPage';
+import AppointmentsPage from './pages/products/AppointmentsPage';
+import HSEAppPage from './pages/products/HSEAppPage';
+import ClubManagementPage from './pages/products/ClubManagementPage';
 import HRPolicies from "./pages/HRPolicies";
 import Directory from "./pages/Directory";
 import EmployeeFAQ from "./pages/EmployeeFAQ";
@@ -5587,9 +5607,29 @@ function App() {
                             element={<JobSheetPage />}
                           />
                           <Route
-                            path="/product-details"
+                            path="/product-details/:productId"
                             element={<ProductDetails />}
                           />
+                          <Route path='/product/loyalty' element={<CustomerAppPage />} />
+                          <Route path='/product/customer-app' element={<CustomerAppPage />} />
+                          <Route path='/product/customer-post-possession' element={<CustomerPostPossessionPage />} />
+                          <Route path='/product/hi-society' element={<HiSocietyPage />} />
+                          <Route path='/product/snag-360' element={<Snag360Page />} />
+                          <Route path='/product/qc' element={<QCPage />} />
+                          <Route path='/product/rhb' element={<RHBPage />} />
+                          <Route path='/product/brokers' element={<BrokersPage />} />
+                          <Route path='/product/fm-matrix' element={<FMMatrixPage />} />
+                          <Route path='/product/gophygital-corporate' element={<GoPhygitalCorporatePage />} />
+                          <Route path='/product/gophygital-coworking' element={<GoPhygitalCoworkingPage />} />
+                          <Route path='/product/task-manager' element={<TaskManagerPage />} />
+                          <Route path='/product/vendor-management' element={<VendorManagementPage />} />
+                          <Route path='/product/procurement' element={<ProcurementPage />} />
+                          <Route path='/product/loyalty-engine' element={<LoyaltyEnginePage />} />
+                          <Route path='/product/msafe' element={<MSafePage />} />
+                          <Route path='/product/incident-management' element={<IncidentManagementPage />} />
+                          <Route path='/product/appointments' element={<AppointmentsPage />} />
+                          <Route path='/product/hse-app' element={<HSEAppPage />} />
+                          <Route path='/product/club-management' element={<ClubManagementPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Route>
 
