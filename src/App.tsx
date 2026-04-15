@@ -1478,8 +1478,10 @@ function App() {
           console.warn(message);
           if (
             (message.ntype === "conversation" ||
-              message.ntype === "projectspace") &&
-            message.user_id !== currentUser.id
+              message.ntype === "projectspace" ||
+              message.ntype === 'newtaskmanagement' ||
+              message.ntype === 'newissue') &&
+            (message?.user_id !== currentUser.id || message?.responsible_person_id !== currentUser.id)
           ) {
             return;
           }
