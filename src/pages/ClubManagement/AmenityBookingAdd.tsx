@@ -79,7 +79,8 @@ export const AddFacilityBookingClubPage = () => {
     try {
       const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
         params: {
-          'q[lock_user_permissions_user_type_eq]': 'pms_occupant'
+          'q[lock_user_permissions_user_type_eq]': 'pms_occupant',
+          'active': true,
         }
       });
       if (response.data && response.data.occupant_users) {
@@ -229,7 +230,8 @@ export const AddFacilityBookingClubPage = () => {
     try {
       const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
         params: {
-          'q[lock_user_permissions_user_type_eq]': 'pms_guest'
+          'q[lock_user_permissions_user_type_eq]': 'pms_guest',
+          'active': true,
         }
       });
       if (response.data && response.data.occupant_users) {

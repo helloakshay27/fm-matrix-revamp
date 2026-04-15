@@ -112,11 +112,11 @@ const modulesByPackage = {
       icon: Truck,
       href: "/maintenance/vendor",
     },
-    {
-      name: "Invoices",
-      icon: FileText,
-      href: "/accounting/invoices/list",
-    },
+    // {
+    //   name: "Invoices",
+    //   icon: FileText,
+    //   href: "/accounting/invoices/list",
+    // },
     // {
     //     name: "Accounting",
     //     icon: Calculator,
@@ -350,10 +350,10 @@ const modulesByPackage = {
               name: "Approval Matrix",
               href: "/settings/asset-setup/approval-matrix",
             },
-           
+
           ],
         },
-         {
+        {
           name: "Organization",
           href: "/accounting/organisation",
         },
