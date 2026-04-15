@@ -283,6 +283,7 @@ export const PatrollingCreatePage: React.FC = () => {
   const [patrolName, setPatrolName] = useState('');
   const [description, setDescription] = useState('');
   const [estimatedDuration, setEstimatedDuration] = useState('');
+  const [graceType, setGraceType] = useState<'minutes' | 'hours'>('minutes');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [grace, setGrace] = useState('');
@@ -898,24 +899,24 @@ export const PatrollingCreatePage: React.FC = () => {
    
 
     // Validate shift assignees
-    const shiftsWithoutAssignee = validShifts.filter(s => !s.assignee || s.assignee.trim() === '');
-    if (shiftsWithoutAssignee.length > 0) {
-      toast.error('All schedules must have an assignee', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
-    }
+    // const shiftsWithoutAssignee = validShifts.filter(s => !s.assignee || s.assignee.trim() === '');
+    // if (shiftsWithoutAssignee.length > 0) {
+    //   toast.error('All schedules must have an assignee', {
+    //     duration: 5000,
+    //   });
+    //   setIsSubmitting(false);
+    //   return;
+    // }
 
     // Validate shift supervisors
-    const shiftsWithoutSupervisor = validShifts.filter(s => !s.supervisor || s.supervisor.trim() === '');
-    if (shiftsWithoutSupervisor.length > 0) {
-      toast.error('All schedules must have a supervisor', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
-    }
+    // const shiftsWithoutSupervisor = validShifts.filter(s => !s.supervisor || s.supervisor.trim() === '');
+    // if (shiftsWithoutSupervisor.length > 0) {
+    //   toast.error('All schedules must have a supervisor', {
+    //     duration: 5000,
+    //   });
+    //   setIsSubmitting(false);
+    //   return;
+    // }
 
     // Checkpoints validation
     const validCheckpoints = checkpoints.filter(c => c.name.trim() !== '');
@@ -1020,7 +1021,7 @@ export const PatrollingCreatePage: React.FC = () => {
         "validity_start_date": startDate,
         ...(selectedChecklist && { "checklist_id": selectedChecklist.id }),
         "validity_end_date": endDate,
-        "grace_period_minutes": parseInt(estimatedDuration) || 0,
+        "grace_period_minutes": graceType === 'hours' ? (parseInt(estimatedDuration) || 0) * 60 : (parseInt(estimatedDuration) || 0),
        
         "schedules": shifts.map(s => {
           const assigneeUser = fmUsers.find(u => u.id.toString() === s.assignee);
@@ -1297,7 +1298,7 @@ export const PatrollingCreatePage: React.FC = () => {
       </Section>
 
       <Section title="Validity" icon={<CalendarRange className="w-3.5 h-3.5" />}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <TextField
               type="date"
@@ -1352,14 +1353,30 @@ export const PatrollingCreatePage: React.FC = () => {
           </div>
 
           <div>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Grace Type<span className="text-red-500">*</span></InputLabel>
+              <MuiSelect
+                value={graceType}
+                onChange={(e) => setGraceType(e.target.value as 'minutes' | 'hours')}
+                label="Grace Type"
+                notched
+                disabled={isSubmitting}
+              >
+                <MenuItem value="minutes">Minutes</MenuItem>
+                <MenuItem value="hours">Hourly</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div>
             <TextField
               type="number"
               label={
                 <>
-                  Grace Period (minutes)<span className="text-red-500">*</span>
+                  Grace Period ({graceType === 'hours' ? 'hours' : 'minutes'})<span className="text-red-500">*</span>
                 </>
               }
-              placeholder="Enter grace period in minutes"
+              placeholder={`Enter grace period in ${graceType === 'hours' ? 'hours' : 'minutes'}`}
               value={estimatedDuration}
               onChange={(e) => handleEstimatedDurationChange(e.target.value)}
               fullWidth
@@ -1563,7 +1580,7 @@ export const PatrollingCreatePage: React.FC = () => {
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Assignee Dropdown */}
-                <div>
+                {/* <div>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Guard<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
@@ -1590,9 +1607,9 @@ export const PatrollingCreatePage: React.FC = () => {
                       <MenuItem value="bhai">bhai</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                </div>
+                </div> */}
                 {/* Supervisor Dropdown */}
-                <div>
+                {/* <div>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Supervisor<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
@@ -1619,7 +1636,7 @@ export const PatrollingCreatePage: React.FC = () => {
                       <MenuItem value="bhai">bhai</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                </div>
+                </div> */}
                 {/* Time Setup UI for each shift */}
                
               </div>

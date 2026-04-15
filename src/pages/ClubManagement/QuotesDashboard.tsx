@@ -133,6 +133,7 @@ export const QuotesDashboard: React.FC = () => {
     const [appliedFilters, setAppliedFilters] = useState<SalesOrderFilters>({});
     const [salesOrderData, setSalesOrderData] = useState<SalesOrder[]>([]);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [hasQuoteApproval, setHasQuoteApproval] = useState(false);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -198,6 +199,30 @@ export const QuotesDashboard: React.FC = () => {
         fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
+    // Fetch lock account data
+    useEffect(() => {
+        const fetchLockAccount = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`https://${baseUrl}/get_lock_account.json`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = await response.json();
+                console.log('get_lock_account response:', data);
+                const quoteApproval = Array.isArray(data?.approvals) &&
+                    data.approvals.some((a: any) => a.approval_type === 'quote' && a.active);
+                setHasQuoteApproval(quoteApproval);
+            } catch (error) {
+                console.error('Error fetching lock account:', error);
+            }
+        };
+        fetchLockAccount();
+    }, []);
+
     // Handle search
     const handleSearch = (term: string) => {
         setSearchTerm(term);
@@ -257,7 +282,7 @@ export const QuotesDashboard: React.FC = () => {
                     title="Select for status update"
                 /> */}
 
-                {order.status !== "sent" && (
+                {/* {order.status !== "sent" && ( */}
                     <input
                         type="checkbox"
                         checked={selectedRows.includes(order.id)}
@@ -270,7 +295,7 @@ export const QuotesDashboard: React.FC = () => {
                         }}
                         className="cursor-pointer"
                     />
-                )}
+                {/* )} */}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -444,7 +469,7 @@ export const QuotesDashboard: React.FC = () => {
     //     }
     // };
 
-    const handleMarkAsSent = async () => {
+    const handleUpdateStatus = async (status: string, successMsg: string, failMsg: string) => {
         if (selectedRows.length === 0) {
             toast.error("Select at least one Quote");
             return;
@@ -454,28 +479,36 @@ export const QuotesDashboard: React.FC = () => {
             const baseUrl = localStorage.getItem("baseUrl");
             const token = localStorage.getItem("token");
 
-            await axios.post(
+            const response = await axios.post(
                 `https://${baseUrl}/lock_account_quotes/update_status.json`,
-                {
-                    quotes_ids: selectedRows,
-                },
-                {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                    },
-                }
+                { quotes_ids: selectedRows, status },
+                { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
             );
 
-            toast.success("Quotes marked as sent");
+            if (response.status === 422) {
+                const { message, errors } = response.data;
+                if (Array.isArray(errors) && errors.length > 0) {
+                    errors.forEach((err: { id: string; message: string }) => {
+                        toast.error(`${err.id}: ${err.message}`);
+                    });
+                } else {
+                    toast.error(message || failMsg);
+                }
+                return;
+            }
 
+            toast.success(successMsg);
             setSelectedRows([]);
-
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to mark Quotes as sent");
+            toast.error(failMsg);
         }
     };
+
+    const handleMarkAsSent = () => handleUpdateStatus("sent", "Quotes marked as sent", "Failed to mark Quotes as sent");
+
+    const handleSubmitForApproval = () => handleUpdateStatus("pending_approval", "Quotes submitted for approval", "Failed to submit Quotes for approval");
 
     return (
         <div className="p-6 space-y-6">
@@ -513,12 +546,21 @@ export const QuotesDashboard: React.FC = () => {
                         )} */}
 
                         {selectedRows.length > 0 && (
-                            <Button
-                                className="bg-blue-600 text-white hover:bg-blue-700"
-                                onClick={handleMarkAsSent}
-                            >
-                                Mark as Sent
-                            </Button>
+                            hasQuoteApproval ? (
+                                <Button
+                                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                    onClick={handleSubmitForApproval}
+                                >
+                                    Submit for Approval
+                                </Button>
+                            ) : (
+                                <Button
+                                    className="bg-blue-600 text-white hover:bg-blue-700"
+                                    onClick={handleMarkAsSent}
+                                >
+                                    Mark as Sent
+                                </Button>
+                            )
                         )}
                     </div>
                 )}

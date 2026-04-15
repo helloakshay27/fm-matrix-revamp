@@ -4,6 +4,20 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
+const getTransactionRoute = (transactionType: string, transactionId: any): string | null => {
+    if (!transactionId) return null;
+    const type = (transactionType || '').toLowerCase();
+    if (type === 'invoice') return `/accounting/dashboard/invoices/${transactionId}`;
+    if (type === 'customer payment') return `/accounting/payments-received/${transactionId}`;
+    if (type === 'credit note') return `/accounting/credit-note/${transactionId}`;
+    if (type === 'expense') return `/accounting/expense/${transactionId}`;
+    if (type === 'bill') return `/accounting/bills/${transactionId}`;
+    if (type === 'sales order') return `/accounting/sales-order/${transactionId}`;
+    if (type === 'purchase') return `/accounting/purchase-order/${transactionId}`;
+    if (type === 'vendor credit') return `/accounting/vendor-credits/details/${transactionId}`;
+    return null;
+};
+
 export const BalanceSheetDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -50,14 +64,15 @@ export const BalanceSheetDetails = () => {
                 ? res.data.lock_account_transaction_records.map((r: any) => ({
                     date: r.transaction_detail?.date || r.created_at,
                     account: r.ledger_name || '-',
-                    transaction_details: r.transaction_detail?.description || '-',
+                    transaction_details: r.transaction_detail?.name || '-',
                     transaction_type: r.transaction_type || '-',
-                    transaction_number: r.lock_account_transaction_id || '-',
+                    transaction_number: r.voucher_number || '-',
                     reference_number: r.transaction_detail?.reference_number || '-',
                     tr_type: r.tr_type,
                     debit: r.tr_type === "dr" ? r.amount : 0,
                     credit: r.tr_type === "cr" ? r.amount : 0,
                     amount: r.amount || 0,
+                    transaction_id: r.transaction_detail?.id || null,
                 }))
                 : [];
 
@@ -252,13 +267,23 @@ export const BalanceSheetDetails = () => {
                                         <td className="border border-gray-300 px-4 py-3">{t.transaction_number}</td>
                                         <td className="border border-gray-300 px-4 py-3">{t.reference_number}</td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
-                                            {t.debit ? `₹${Number(t.debit).toFixed(2)}` : '-'}
+                                            {t.debit ? (
+                                                (() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
+                                                    <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.debit).toFixed(2)}</span>
+                                                ) : `₹${Number(t.debit).toFixed(2)}`; })()
+                                            ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
-                                            {t.credit ? `₹${Number(t.credit).toFixed(2)}` : '-'}
+                                            {t.credit ? (
+                                                (() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
+                                                    <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.credit).toFixed(2)}</span>
+                                                ) : `₹${Number(t.credit).toFixed(2)}`; })()
+                                            ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right font-medium">
-                                            ₹{Number(t.amount).toFixed(2)}
+                                            {(() => { const route = getTransactionRoute(t.transaction_type, t.transaction_id); return route ? (
+                                                <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.amount).toFixed(2)}</span>
+                                            ) : `₹${Number(t.amount).toFixed(2)}`; })()}
                                         </td>
                                     </tr>
                                 ))
