@@ -313,7 +313,7 @@ const GroupConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.project_space_id !== id) {
+                    if (String(message.project_space_id) !== id) {
                         return;
                     }
 
