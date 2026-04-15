@@ -16,7 +16,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
 
 interface UserStory {
   title: string;
@@ -57,10 +63,15 @@ interface ProductInfo {
   ownerImage?: string;
 }
 
-const ProductDetails: React.FC = () => {
+interface ProductDetailsProps {
+  productId?: string;
+}
+
+const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdProp }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const productId = location.state?.productId || "1";
+  const { productId: productIdFromParams } = useParams();
+  const productId = productIdProp || productIdFromParams || location.state?.productId || "1";
 
   const [cameraPermission, setCameraPermission] = useState<
     "pending" | "granted" | "denied"
@@ -171,7 +182,7 @@ const ProductDetails: React.FC = () => {
         setIsBlurred(true);
         navigator.clipboard
           .writeText("SECURITY ALERT: Screenshot prohibited.")
-          .catch(() => {});
+          .catch(() => { });
 
         setTimeout(() => {
           alert(
@@ -423,58 +434,19 @@ const ProductDetails: React.FC = () => {
     },
     "3": {
       name: "Snag 360",
-      description:
-        "Snag 360 is a Mobile based QC Application specially designed and developed for the Real Estate industry. Its objective is to deliver a zero defect product to the End consumer.",
-      brief:
-        "Ensures reduction in follow up on complaints from customers. Dynamic Workflow Management validates checkpoints across functions before final delivery.",
-      userStories: [
-        {
-          title: "Roles",
-          items: [
-            "Inspector: Raises and closes Snags",
-            "Reviewer: Repair work on Snags",
-            "Repairer: Verifying work (Supervisor)",
-            "Management: Oversees activity and quality",
-          ],
-        },
-      ],
-      industries: "1. Real Estate Developer, 2. FM Company",
-      usps: [
-        "1. Photo Annotation + Multistage Configuration",
-        "2. Real Time Dashboard and Stage Tracking",
-        "3. Helps Save Time & Improve Productivity",
-      ],
-      includes: ["Standard QC Solution"],
-      upSelling: ["Cleaning, Appointment, HOTO, Hi-Society, FM Matrix"],
-      integrations: ["SFDC, SAP"],
-      decisionMakers: ["Project Head, Quality Head, FM Head"],
-      keyPoints: [
-        "1. Real Time Visibility & Progress Tracking",
-        "2. Time Saved & Enhanced Productivity",
-        "3. Transparency & Accountability",
-      ],
-      roi: [
-        "Strong ROI by reducing rework, inspection effort, and handover delays.",
-      ],
-      assets: [
-        {
-          type: "Link",
-          title: "Presentation",
-          url: "#",
-          icon: <Presentation className="w-5 h-5" />,
-        },
-      ],
-      credentials: [
-        {
-          title: "Web Login",
-          url: "#",
-          id: "master@demo.com",
-          pass: "123456",
-          icon: <Globe className="w-5 h-5" />,
-        },
-      ],
-      owner: "Sagar Singh",
-      ownerImage: "/assets/product_owner/sagar_singh.jpeg",
+      description: "Redirecting to specialized Snag 360 page...",
+      brief: "",
+      userStories: [],
+      industries: "",
+      usps: [],
+      includes: [],
+      upSelling: [],
+      integrations: [],
+      decisionMakers: [],
+      keyPoints: [],
+      roi: [],
+      assets: [],
+      credentials: [],
     },
     "4": {
       name: "QC (Quality Control)",
@@ -2396,11 +2368,10 @@ const ProductDetails: React.FC = () => {
                   {asset.icon}
                 </div>
                 <span
-                  className={`text-xs font-semibold underline cursor-pointer transition-colors ${
-                    !asset.url || asset.url === "NA" || asset.url === "#"
+                  className={`text-xs font-semibold underline cursor-pointer transition-colors ${!asset.url || asset.url === "NA" || asset.url === "#"
                       ? "text-gray-400 hover:text-gray-300 pointer-events-none"
                       : "text-gray-700 hover:text-blue-600"
-                  }`}
+                    }`}
                   onClick={() =>
                     asset.url &&
                     asset.url !== "NA" &&
@@ -2427,14 +2398,13 @@ const ProductDetails: React.FC = () => {
                   </h4>
                   <div className="text-[10px] text-gray-500 space-y-0.5">
                     <p
-                      className={`transition-colors ${
-                        !cred.url ||
-                        cred.url === "NA" ||
-                        cred.url === "#" ||
-                        !cred.url.startsWith("http")
+                      className={`transition-colors ${!cred.url ||
+                          cred.url === "NA" ||
+                          cred.url === "#" ||
+                          !cred.url.startsWith("http")
                           ? "text-gray-400 hover:text-gray-300 cursor-default"
                           : "cursor-pointer hover:text-blue-500 hover:underline text-gray-500"
-                      }`}
+                        }`}
                       onClick={() =>
                         cred.url &&
                         cred.url.startsWith("http") &&
