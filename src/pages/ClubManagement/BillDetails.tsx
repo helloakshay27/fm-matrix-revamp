@@ -258,7 +258,7 @@ export const BillDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -825,7 +825,18 @@ export const BillDetails = () => {
                             const formatted = `₹${absAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                             return (
                               <TableRow key={rec.id}>
-                                <TableCell>{rec.ledger_name}</TableCell>
+                                <TableCell>
+                                  {rec.ledger_id ? (
+                                    <span
+                                      className="text-blue-600 cursor-pointer hover:underline"
+                                      onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
+                                    >
+                                      {rec.ledger_name}
+                                    </span>
+                                  ) : (
+                                    rec.ledger_name
+                                  )}
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {rec.tr_type === "dr" ? formatted : "0.00"}
                                 </TableCell>
