@@ -1481,7 +1481,7 @@ function App() {
               message.ntype === "projectspace" ||
               message.ntype === 'newtaskmanagement' ||
               message.ntype === 'newissue') &&
-            (message?.user_id !== currentUser.id || message?.responsible_person_id !== currentUser.id)
+            (message?.user_id !== currentUser.id && message?.responsible_person_id !== currentUser.id)
           ) {
             return;
           }
