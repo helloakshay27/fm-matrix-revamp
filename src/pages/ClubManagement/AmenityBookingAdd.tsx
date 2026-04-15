@@ -222,6 +222,7 @@ export const AddFacilityBookingClubPage = () => {
   const [autoDownloadInvoice, setAutoDownloadInvoice] = useState(false);
   const [collectedPDF, setCollectedPDF] = useState<{ bill_id: number | string; base64: string; filename: string } | null>(null);
   const [isUploadingPDF, setIsUploadingPDF] = useState(false);
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
   // Fetch guest users
   const fetchGuestUsers = async () => {
@@ -864,6 +865,7 @@ export const AddFacilityBookingClubPage = () => {
           setInvoiceData(formattedInvoice);
           setShowInvoice(true);
           setAutoDownloadInvoice(true);
+          setIsGeneratingInvoice(true);
         } else {
           // If no invoice data, navigate back
           navigate(-1);
@@ -889,6 +891,7 @@ export const AddFacilityBookingClubPage = () => {
   // Handle when PDF is generated
   const handleBase64Generated = (base64: string) => {
     console.log('PDF generated from Invoice');
+    setIsGeneratingInvoice(false);
     // Use invoice_data.lock_account_bill_id or fallback to booking_id or invoice number
     const billId = invoiceData?.lock_account_bill_id ||
       invoiceData?.booking_id ||
@@ -954,7 +957,7 @@ export const AddFacilityBookingClubPage = () => {
         // Navigate back after a short delay
         setTimeout(() => {
           navigate(-1);
-        }, 1000);
+        }, 500);
       }
     } catch (error: any) {
       console.error('Error uploading PDF:', error);
@@ -964,7 +967,7 @@ export const AddFacilityBookingClubPage = () => {
       // Still navigate back after delay
       setTimeout(() => {
         navigate(-1);
-      }, 2000);
+      }, 1000);
     } finally {
       setIsUploadingPDF(false);
     }
@@ -1015,48 +1018,77 @@ export const AddFacilityBookingClubPage = () => {
     <>
       {showInvoice && invoiceData ? (
         <div className="w-full">
-          <div className="fixed top-4 right-4 z-50 flex gap-3">
-            {isUploadingPDF ? (
-              <Button
-                disabled={true}
-                className="bg-[#C72030] text-white"
-              >
-                <span className="animate-spin mr-2">⏳</span>
-                Uploading Invoice...
-              </Button>
-            ) : collectedPDF ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
-                <span className="text-sm font-medium text-green-700">✓ Invoice collected</span>
-                <span className="text-xs text-green-600">Uploading...</span>
+          {/* Loading Overlay while generating or uploading invoice */}
+          {(isGeneratingInvoice || isUploadingPDF) && (
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
+              <div className="bg-white rounded-lg shadow-2xl p-8 text-center max-w-sm">
+                <div className="mb-6 flex justify-center">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-spin" style={{
+                      backgroundClip: 'padding-box',
+                      padding: '3px',
+                      background: 'conic-gradient(from 0deg, #3b82f6, #1e40af)'
+                    }}>
+                      <div className="absolute inset-3 bg-white rounded-full"></div>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-2xl animate-spin">⏳</span>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Booking created successfully</h3>
+                <p className="text-gray-600 font-medium">
+                  Invoice is being prepared and will be emailed shortly.
+                </p>
               </div>
-            ) : (
+            </div>
+          )}
+
+          {/* Invoice Section with blur when generating or uploading */}
+          <div className={`w-full transition-all duration-300 ${isGeneratingInvoice || isUploadingPDF ? 'blur-sm opacity-50 pointer-events-none' : ''}`}>
+            <div className="fixed top-4 right-4 z-50 flex gap-3">
+              {isUploadingPDF ? (
+                <Button
+                  disabled={true}
+                  className="bg-[#C72030] text-white"
+                >
+                  <span className="animate-spin mr-2">⏳</span>
+                  Uploading Invoice...
+                </Button>
+              ) : collectedPDF ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
+                  <span className="text-sm font-medium text-green-700">✓ Invoice collected</span>
+                  <span className="text-xs text-green-600">Uploading...</span>
+                </div>
+              ) : (
+                <Button
+                  disabled={true}
+                  className="bg-gray-400 text-white"
+                >
+                  ⏳ Generating Invoice...
+                </Button>
+              )}
+
               <Button
-                disabled={true}
-                className="bg-gray-400 text-white"
+                onClick={handleCloseInvoice}
+                disabled={isUploadingPDF || isGeneratingInvoice}
+                variant="outline"
+                className="bg-white"
               >
-                ⏳ Generating Invoice...
+                Back to List
               </Button>
-            )}
+            </div>
 
-            <Button
-              onClick={handleCloseInvoice}
-              disabled={isUploadingPDF}
-              variant="outline"
-              className="bg-white"
-            >
-              Back to List
-            </Button>
+            <Invoice
+              key={`invoice-${invoiceData?.booking_id}`}
+              data={invoiceData}
+              returnBase64={true}
+              onBase64Generated={handleBase64Generated}
+              onClose={handleCloseInvoice}
+              showButton={true}
+              autoDownload={autoDownloadInvoice}
+            />
           </div>
-
-          <Invoice
-            key={`invoice-${invoiceData?.booking_id}`}
-            data={invoiceData}
-            returnBase64={true}
-            onBase64Generated={handleBase64Generated}
-            onClose={handleCloseInvoice}
-            showButton={true}
-            autoDownload={autoDownloadInvoice}
-          />
         </div>
       ) : (
         <div className="p-6 mx-auto">

@@ -478,6 +478,8 @@ export const AddGroupMembershipPage = () => {
     const [billsInvoiceDataArray, setBillsInvoiceDataArray] = useState<any[]>([]); // Store all bills
     const [currentBillIndex, setCurrentBillIndex] = useState(0); // Track current bill being viewed
 
+    const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+
     // Add updateMember function after state declarations
     const updateMember = (memberId: string, updates: Partial<MemberData>) => {
         setMembers(prevMembers =>
@@ -1402,6 +1404,7 @@ export const AddGroupMembershipPage = () => {
             setCurrentBillIndex(0);
             setInvoiceData(allBills[0]);
             setShowInvoice(true);
+            setIsGeneratingInvoice(true);
             setAutoDownloadInvoice(true);
 
             toast.success(`Club membership ${isEditMode ? 'updated' : 'added'} successfully`);
@@ -1759,6 +1762,7 @@ export const AddGroupMembershipPage = () => {
 
     // Handle Base64 PDF generation from Invoice component
     const handleBase64Generated = (base64Pdf: string) => {
+        setIsGeneratingInvoice(false);
         if (!invoiceData) {
             console.warn('Invoice data is missing');
             return;
@@ -1916,58 +1920,87 @@ export const AddGroupMembershipPage = () => {
 
         return (
             <div className="w-full">
-                <div className="fixed top-4 right-4 z-50 flex gap-3">
-                    {/* Progress indicator */}
-                    <div className="bg-white rounded-lg shadow-md p-3 flex items-center gap-2 border border-gray-200">
-                        <span className="text-sm font-medium text-gray-700">
-                            Bill {currentBillIndex + 1} of {billsInvoiceDataArray.length}
-                        </span>
-                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                            {collectedPDFs.length} Saved
-                        </span>
+                {/* Loading Overlay while generating or uploading invoices */}
+                {(isGeneratingInvoice || isUploadingPDFs) && (
+                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
+                        <div className="bg-white rounded-lg shadow-2xl p-8 text-center max-w-sm">
+                            <div className="mb-6 flex justify-center">
+                                <div className="relative w-16 h-16">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-spin" style={{
+                                        backgroundClip: 'padding-box',
+                                        padding: '3px',
+                                        background: 'conic-gradient(from 0deg, #3b82f6, #1e40af)'
+                                    }}>
+                                        <div className="absolute inset-3 bg-white rounded-full"></div>
+                                    </div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-2xl animate-spin">⏳</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Club Membership created successfully</h3>
+                            <p className="text-gray-600 font-medium">
+                                Preparing invoicing and sending mail...
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Invoice Section with blur when generating or uploading */}
+                <div className={`w-full transition-all duration-300 ${isGeneratingInvoice || isUploadingPDFs ? 'blur-sm opacity-50 pointer-events-none' : ''}`}>
+                    <div className="fixed top-4 right-4 z-50 flex gap-3">
+                        {/* Progress indicator */}
+                        <div className="bg-white rounded-lg shadow-md p-3 flex items-center gap-2 border border-gray-200">
+                            <span className="text-sm font-medium text-gray-700">
+                                Bill {currentBillIndex + 1} of {billsInvoiceDataArray.length}
+                            </span>
+                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                {collectedPDFs.length} Saved
+                            </span>
+                        </div>
+
+                        {isUploadingPDFs ? (
+                            <Button
+                                disabled={true}
+                                className="bg-[#C72030] text-white"
+                            >
+                                <span className="animate-spin mr-2">⏳</span>
+                                Auto-uploading... ({collectedPDFs.length}/{billsInvoiceDataArray.length})
+                            </Button>
+                        ) : isAllCollected ? (
+                            <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
+                                <span className="text-sm font-medium text-green-700">✓ All PDFs collected</span>
+                                <span className="text-xs text-green-600">Auto-uploading in progress...</span>
+                            </div>
+                        ) : (
+                            <Button
+                                disabled={true}
+                                className="bg-gray-400 text-white"
+                            >
+                                ⏳ Collecting PDFs... ({collectedPDFs.length}/{billsInvoiceDataArray.length})
+                            </Button>
+                        )}
+
+                        <Button
+                            onClick={handleCloseInvoice}
+                            disabled={isUploadingPDFs || isGeneratingInvoice}
+                            variant="outline"
+                        >
+                            Cancel
+                        </Button>
                     </div>
 
-                    {isUploadingPDFs ? (
-                        <Button
-                            disabled={true}
-                            className="bg-[#C72030] text-white"
-                        >
-                            <span className="animate-spin mr-2">⏳</span>
-                            Auto-uploading... ({collectedPDFs.length}/{billsInvoiceDataArray.length})
-                        </Button>
-                    ) : isAllCollected ? (
-                        <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
-                            <span className="text-sm font-medium text-green-700">✓ All PDFs collected</span>
-                            <span className="text-xs text-green-600">Auto-uploading in progress...</span>
-                        </div>
-                    ) : (
-                        <Button
-                            disabled={true}
-                            className="bg-gray-400 text-white"
-                        >
-                            ⏳ Collecting PDFs... ({collectedPDFs.length}/{billsInvoiceDataArray.length})
-                        </Button>
-                    )}
-
-                    <Button
-                        onClick={handleCloseInvoice}
-                        disabled={isUploadingPDFs}
-                        variant="outline"
-                    >
-                        Cancel
-                    </Button>
+                    {/* Key ensures Invoice component re-mounts for each bill */}
+                    <Invoice
+                        key={`invoice-${currentBillIndex}-${invoiceData?.lock_account_bill_id}`}
+                        data={invoiceData}
+                        returnBase64={true}
+                        onBase64Generated={handleBase64Generated}
+                        onClose={handleCloseInvoice}
+                        showButton={false}
+                        autoDownload={autoDownloadInvoice}
+                    />
                 </div>
-
-                {/* Key ensures Invoice component re-mounts for each bill */}
-                <Invoice
-                    key={`invoice-${currentBillIndex}-${invoiceData?.lock_account_bill_id}`}
-                    data={invoiceData}
-                    returnBase64={true}
-                    onBase64Generated={handleBase64Generated}
-                    onClose={handleCloseInvoice}
-                    showButton={false}
-                    autoDownload={autoDownloadInvoice}
-                />
             </div>
         );
     };
