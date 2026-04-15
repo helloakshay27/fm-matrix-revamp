@@ -7,6 +7,7 @@ import CommunityFeed from "../CommunitySection/CommunityFeed";
 import CEOMessageWidget from "../Sidebar/CEOMessageWidget";
 import EmployeeOfMonthWidget from "../Sidebar/EmployeeOfMonthWidget";
 import TownHallsWidget from "../Sidebar/TownHallsWidget";
+import AnnouncementsWidget from "../Sidebar/AnnouncementsWidget";
 import UpcomingEventsWidget from "../Sidebar/UpcomingEventsWidget";
 import { Post, TaskStats, LifeCompassStats } from "../types";
 
@@ -115,6 +116,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             <EmployeeOfMonthWidget currentEmployee={currentEmployee} />
             <div className="space-y-6">
               <TownHallsWidget />
+              <AnnouncementsWidget />
               <UpcomingEventsWidget />
             </div>
           </div>
