@@ -39,7 +39,7 @@ export const DuplicateUserDialog: React.FC<DuplicateUserDialogProps> = ({
   errorMessage,
 }) => {
   const userType = localStorage.getItem("userType");
-  const isOrgAdmin = userType === "pms_organization_admin";
+  const isOrgAdmin = userType === "pms_organization_admin" || "pms_admin";
 
   console.log("isOrgAdmin:", userType);
 

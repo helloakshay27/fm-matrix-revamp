@@ -42,6 +42,7 @@ import { SmsManagementPage } from "./pages/SmsManagementPage";
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
 import { AddInvoiceApprovalsPage } from "./pages/settings/AddInvoiceApprovalsPage";
+import { EditInvoiceApprovalsPage } from "./pages/settings/EditInvoiceApprovalsPage";
 
 // Import Asset Groups page
 import { AssetGroupsPage } from "./pages/AssetGroupsPage";
@@ -204,6 +205,8 @@ import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
 import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
 import AnnouncementsSetup from "./pages/AnnouncementsSetup";
+import TeamSetup from "./pages/settings/company-hub/team-setup";
+import JobsPage from "./pages/CompanyHub/JobsPage";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
@@ -363,6 +366,8 @@ import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import DocumentDrive from "./pages/DocumentDrive";
 import LoyaltyPage from './pages/products/LoyaltyPage';
+import CustomerAppPage from "./pages/products/CustomerAppPage";
+import CustomerPostPossessionPage from "./pages/products/CustomerPostPossessionPage";
 import HiSocietyPage from './pages/products/HiSocietyPage';
 import Snag360Page from './pages/products/Snag360Page';
 import QCPage from './pages/products/QCPage';
@@ -1254,12 +1259,14 @@ import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
 import BusinessCompassDailyReport from "./pages/BusinessCompass/BusinessCompassDailyReport";
 import BusinessPlanAndGoles from "./pages/AdminCompass/BusinessPlanAndGoles";
 import DailyMeeting from "./pages/AdminCompass/DailyMeeting";
+import KPI from "./pages/AdminCompass/KPI";
 import ReportAnalytics from "./pages/ReportAnalytics";
 import WeeklyMeetings from "./pages/AdminCompass/WeeklyMeetings";
 import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
 import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
+import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 
 const queryClient = new QueryClient();
 
@@ -2016,16 +2023,16 @@ function App() {
                               </ProtectedRoute>
                             }
                           />
-                          <Route
+                          {/* <Route
                             path="/employee/company-hub"
                             element={
                               <ProtectedRoute>
                                 <CompanyHub />
                               </ProtectedRoute>
                             }
-                          />
+                          /> */}
                           <Route
-                            path="/employee/company-hub-new"
+                            path="/employee/company-hub"
                             element={
                               <ProtectedRoute>
                                 <CompanyHubNew />
@@ -2084,10 +2091,49 @@ function App() {
                             path="/business-compass/weekly-report"
                             element={<WeeklyReports />}
                           />
-                          <Route
+                          {/* <Route
                             path="/business-compass/tasks-and-issues"
                             element={<BusinessCompassTasksAndIssues />}
+                          /> */}
+                          <Route
+                            path="/business-compass/tasks"
+                            element={<ProjectTasksPage />}
                           />
+                          <Route
+                            path="/business-compass/tasks/:taskId"
+                            element={<ProjectTaskDetails />}
+                          />
+                          <Route
+                            path="/business-compass/issues"
+                            element={<IssuesListPage />}
+                          />
+                          <Route
+                            path="/business-compass/issues/:id"
+                            element={<IssueDetailsPage />}
+                          />
+                          <Route
+                            path="/business-compass/channels"
+                            element={<ChannelsLayout />}
+                          >
+                            <Route
+                              index
+                              element={
+                                <div
+                                  className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                                >
+                                  Select a Chat/Group to view messages
+                                </div>
+                              }
+                            />
+                            <Route
+                              path="/business-compass/channels/messages/:id"
+                              element={<DMConversation />}
+                            />
+                            <Route
+                              path="/business-compass/channels/groups/:id"
+                              element={<GroupConversation />}
+                            />
+                          </Route>
                           <Route
                             path="/business-compass/directory-and-chat"
                             element={<DirectoryAndChat />}
@@ -2145,6 +2191,10 @@ function App() {
                           <Route
                             path="/admin-compass/daily-meeting"
                             element={<DailyMeeting />}
+                          />
+                          <Route
+                            path="/admin-compass/kpi"
+                            element={<KPI />}
                           />
 
 
@@ -3400,6 +3450,10 @@ function App() {
                           <Route
                             path="/accounting/payment-terms"
                             element={<PaymentTermsMaster />}
+                          />
+                          <Route
+                            path="/accounting/organisation"
+                            element={<OrganisationMaster />}
                           />
                           {/* Club Management - Occupant Users */}
                           <Route
@@ -5504,6 +5558,14 @@ function App() {
                             element={<AnnouncementsSetup />}
                           />
                           <Route
+                            path="/settings/company-hub/team-setup"
+                            element={<TeamSetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/jobs"
+                            element={<JobsPage />}
+                          />
+                          <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
                           />
@@ -5547,7 +5609,9 @@ function App() {
                             path="/product-details/:productId"
                             element={<ProductDetails />}
                           />
-                          <Route path='/product/loyalty' element={<LoyaltyPage />} />
+                          <Route path='/product/loyalty' element={<CustomerAppPage />} />
+                          <Route path='/product/customer-app' element={<CustomerAppPage />} />
+                          <Route path='/product/customer-post-possession' element={<CustomerPostPossessionPage />} />
                           <Route path='/product/hi-society' element={<HiSocietyPage />} />
                           <Route path='/product/snag-360' element={<Snag360Page />} />
                           <Route path='/product/qc' element={<QCPage />} />
@@ -5758,6 +5822,18 @@ function App() {
                             path="/pulse/amenity"
                             element={<BookingList />}
                           />
+                          <Route
+                            path="/pulse/amenity/add"
+                            element={<AddFacilityBookingPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/:id"
+                            element={<BookingDetailsPage />}
+                          />
+                          <Route
+                            path="/pulse/amenity/edit/:id"
+                            element={<EditFacilityBookingPage />}
+                          />
                           {/* Plus curated Service Routes */}
                           <Route
                             path="/pulse/curated-services/service"
@@ -5887,6 +5963,10 @@ function App() {
                           <Route
                             path="/settings/invoice-approvals/add"
                             element={<AddInvoiceApprovalsPage />}
+                          />
+                          <Route
+                            path="/settings/invoice-approvals/edit/:id"
+                            element={<EditInvoiceApprovalsPage />}
                           />
                           <Route
                             path="/settings/design-insights/setup"
@@ -6152,7 +6232,7 @@ function App() {
                         />
                         <Route path="/hr-policies" element={<HRPolicies />} />
                         <Route path="/directory" element={<Directory />} />
-                        <Route path="/eployee-faq" element={<EmployeeFAQ />} />
+                        <Route path="/employee-faq" element={<EmployeeFAQ />} />
 
                         {/* Mobile Routes */}
                         <Route

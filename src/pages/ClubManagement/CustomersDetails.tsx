@@ -108,6 +108,7 @@ interface CustomerData {
     pan: string;
     language_code: string;
     currency_code: string;
+    account_receivable?: string;
     opening_balance: number;
     enable_portal: boolean;
     remarks: string;
@@ -325,6 +326,15 @@ export const CustomersDetails = () => {
                                     <span className="text-gray-500 mx-2">:</span>
                                     <span className="text-gray-900 font-medium">
                                         {customerData.currency_code || "-"}
+                                    </span>
+                                </div>
+
+                                {/* Account Receivable */}
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Account Receivable</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.account_receivable || "-"}
                                     </span>
                                 </div>
 

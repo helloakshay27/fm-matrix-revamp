@@ -55,11 +55,7 @@ export const EditServicePage = () => {
 
   const [errors, setErrors] = useState({
     serviceName: false,
-    executionType: false,
     buildingId: false,
-    wingId: false,
-    areaId: false,
-    floorId: false,
   });
 
   // Upload constraints (match Add Service page)
@@ -73,7 +69,7 @@ export const EditServicePage = () => {
       dispatch(fetchService(id));
       dispatch(fetchSites());
       dispatch(fetchGroups());
-      
+
       // Auto-set site based on user's current site
       const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
       if (userSiteId && !formData.siteId) {
@@ -152,9 +148,6 @@ export const EditServicePage = () => {
     if (field === 'serviceName' && value && String(value).trim() !== '') {
       setErrors(prev => ({ ...prev, serviceName: false }));
     }
-    if (field === 'executionType' && value !== '') {
-      setErrors(prev => ({ ...prev, executionType: false }));
-    }
     if (field === 'buildingId' && value !== null) {
       setErrors(prev => ({ ...prev, buildingId: false }));
       const selectedBuilding = buildings.find(b => b.id === value);
@@ -164,17 +157,14 @@ export const EditServicePage = () => {
       setFormData(prev => ({ ...prev, wingId: null, areaId: null, floorId: null, roomId: null }));
     }
     if (field === 'wingId' && value !== null) {
-      setErrors(prev => ({ ...prev, wingId: false }));
       dispatch(fetchAreas(Number(value)));
       setFormData(prev => ({ ...prev, areaId: null, floorId: null, roomId: null }));
     }
     if (field === 'areaId' && value !== null) {
-      setErrors(prev => ({ ...prev, areaId: false }));
       dispatch(fetchFloors(Number(value)));
       setFormData(prev => ({ ...prev, floorId: null, roomId: null }));
     }
     if (field === 'floorId' && value !== null) {
-      setErrors(prev => ({ ...prev, floorId: false }));
       dispatch(fetchRooms(Number(value)));
       setFormData(prev => ({ ...prev, roomId: null }));
     }
@@ -231,36 +221,17 @@ export const EditServicePage = () => {
     setIsSubmitting(true);
 
     const hasServiceNameError = formData.serviceName.trim() === '';
-    const hasExecutionTypeError = formData.executionType === '';
     const hasBuildingIdError = formData.buildingId === null;
-    const hasWingIdError = formData.wingId === null;
-    const hasAreaIdError = formData.areaId === null;
-    const hasFloorIdError = formData.floorId === null;
 
-    if (
-      hasServiceNameError ||
-      hasExecutionTypeError ||
-      hasBuildingIdError ||
-      hasWingIdError ||
-      hasAreaIdError ||
-      hasFloorIdError
-    ) {
+    if (hasServiceNameError || hasBuildingIdError) {
       setErrors({
         serviceName: hasServiceNameError,
-        executionType: hasExecutionTypeError,
         buildingId: hasBuildingIdError,
-        wingId: hasWingIdError,
-        areaId: hasAreaIdError,
-        floorId: hasFloorIdError,
       });
 
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
-      if (hasExecutionTypeError) errorFields.push('Execution Type');
       if (hasBuildingIdError) errorFields.push('Building');
-      if (hasWingIdError) errorFields.push('Wing');
-      if (hasAreaIdError) errorFields.push('Area');
-      if (hasFloorIdError) errorFields.push('Floor');
 
       toast(`Please fill in the following required fields: ${errorFields.join(', ')}`);
 
@@ -270,11 +241,7 @@ export const EditServicePage = () => {
 
     setErrors({
       serviceName: false,
-      executionType: false,
       buildingId: false,
-      wingId: false,
-      areaId: false,
-      floorId: false,
     });
 
     const sendData = new FormData();
@@ -378,9 +345,9 @@ export const EditServicePage = () => {
               InputProps={{ sx: fieldStyles }}
               disabled={isSubmitting}
             />
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={errors.executionType}>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
               <InputLabel shrink>
-                Execution Type<span style={{ color: '#C72030' }}>*</span>
+                Execution Type
               </InputLabel>              <MuiSelect
                 value={formData.executionType}
                 onChange={(e) => handleInputChange('executionType', e.target.value)}
@@ -393,9 +360,6 @@ export const EditServicePage = () => {
                 <MenuItem value="internal">Internal</MenuItem>
                 <MenuItem value="external">External</MenuItem>
               </MuiSelect>
-              {errors.executionType && (
-                <FormHelperText>Execution Type is required</FormHelperText>
-              )}
             </FormControl>
             <TextField
               label="UOM"
@@ -440,9 +404,9 @@ export const EditServicePage = () => {
               )}
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" error={errors.wingId}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel id="wing-select-label" shrink>
-                Wing<span style={{ color: '#C72030' }}>*</span>
+                Wing
               </InputLabel>              <MuiSelect
                 labelId="wing-select-label"
                 label="Wing"
@@ -461,7 +425,6 @@ export const EditServicePage = () => {
                   </MenuItem>
                 ))}
               </MuiSelect>
-              {errors.wingId && <FormHelperText>Wing is required</FormHelperText>}
               {locationLoading.wings && (
                 <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
                   <CircularProgress size={16} />
@@ -469,9 +432,9 @@ export const EditServicePage = () => {
               )}
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" error={errors.areaId}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel id="area-select-label" shrink>
-                Area<span style={{ color: '#C72030' }}>*</span>
+                Area
               </InputLabel>              <MuiSelect
                 labelId="area-select-label"
                 label="Area"
@@ -490,7 +453,6 @@ export const EditServicePage = () => {
                   </MenuItem>
                 ))}
               </MuiSelect>
-              {errors.areaId && <FormHelperText>Area is required</FormHelperText>}
               {locationLoading.areas && (
                 <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
                   <CircularProgress size={16} />
@@ -498,9 +460,9 @@ export const EditServicePage = () => {
               )}
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" error={errors.floorId}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel id="floor-select-label" shrink>
-                Floor<span style={{ color: '#C72030' }}>*</span>
+                Floor
               </InputLabel>              <MuiSelect
                 labelId="floor-select-label"
                 label="Floor"
@@ -519,7 +481,6 @@ export const EditServicePage = () => {
                   </MenuItem>
                 ))}
               </MuiSelect>
-              {errors.floorId && <FormHelperText>Floor is required</FormHelperText>}
               {locationLoading.floors && (
                 <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
                   <CircularProgress size={16} />

@@ -7,6 +7,7 @@ import CommunityFeed from "../CommunitySection/CommunityFeed";
 import CEOMessageWidget from "../Sidebar/CEOMessageWidget";
 import EmployeeOfMonthWidget from "../Sidebar/EmployeeOfMonthWidget";
 import TownHallsWidget from "../Sidebar/TownHallsWidget";
+import AnnouncementsWidget from "../Sidebar/AnnouncementsWidget";
 import UpcomingEventsWidget from "../Sidebar/UpcomingEventsWidget";
 import { Post, TaskStats, LifeCompassStats } from "../types";
 
@@ -28,6 +29,14 @@ interface DashboardTabProps {
   setDeleteConfirmation: (conf: any) => void;
   setIsVideoOpen: (open: boolean) => void;
   currentEmployee: any;
+  openTaskModal: boolean;
+  setOpenTaskModal: (open: boolean) => void;
+  handleCloseModal: () => void;
+  openTodoModal: boolean;
+  setOpenTodoModal: (open: boolean) => void;
+  handleCloseTodoModal: () => void;
+  handleLikePost: (postId: number) => void;
+  handleAddComment: (postId: number, comment: string) => void;
 }
 
 const DashboardTab: React.FC<DashboardTabProps> = ({
@@ -48,6 +57,14 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   setDeleteConfirmation,
   setIsVideoOpen,
   currentEmployee,
+  openTaskModal,
+  setOpenTaskModal,
+  handleCloseModal,
+  openTodoModal,
+  setOpenTodoModal,
+  handleCloseTodoModal,
+  handleLikePost,
+  handleAddComment,
 }) => {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -65,9 +82,16 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         setSelectedMatrixQuadrant={setSelectedMatrixQuadrant}
         activeTimeView={activeTimeView}
         setActiveTimeView={setActiveTimeView}
+        openTaskModal={openTaskModal}
+        setOpenTaskModal={setOpenTaskModal}
+        handleCloseModal={handleCloseModal}
+        openTodoModal={openTodoModal}
+        setOpenTodoModal={setOpenTodoModal}
+        handleCloseTodoModal={handleCloseTodoModal}
       />
 
       <CompassSection lifeCompassStats={lifeCompassStats} />
+
 
       {/* Community Section */}
       <div className="pt-10 space-y-8">
@@ -82,6 +106,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             isLoadingPosts={isLoadingPosts}
             posts={posts}
             setDeleteConfirmation={setDeleteConfirmation}
+            handleLikePost={handleLikePost}
+            handleAddComment={handleAddComment}
           />
 
           {/* Sidebar Column */}
@@ -90,6 +116,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             <EmployeeOfMonthWidget currentEmployee={currentEmployee} />
             <div className="space-y-6">
               <TownHallsWidget />
+              <AnnouncementsWidget />
               <UpcomingEventsWidget />
             </div>
           </div>

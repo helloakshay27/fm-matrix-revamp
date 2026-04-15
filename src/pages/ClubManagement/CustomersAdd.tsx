@@ -285,6 +285,24 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
     const [searchTerm, setSearchTerm] = React.useState('');
     const [newRows, setNewRows] = React.useState([]); // Editable new rows
     const [customerExemptions, setCustomerExemptions] = React.useState<any[]>([]);
+    const [ledgers, setLedgers] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchLedgers = async () => {
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+            const lock_account_id = localStorage.getItem("lock_account_id");
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                });
+                const groups = res.data.data || [];
+                const allLedgers = groups.flatMap((g: any) => g.ledgers || []).filter((l: any) => l.name === 'Accounts Receivable');
+                setLedgers(allLedgers);
+            } catch (err) {}
+        };
+        fetchLedgers();
+    }, []);
 
     React.useEffect(() => {
         if (showConfig) {
@@ -456,7 +474,13 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                             value={form.gstin}
                             onChange={handleChange}
                             fullWidth
-                            inputProps={{ maxLength: 15 }}
+                            error={!!form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)}
+                            helperText={
+                                form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)
+                                    ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
+                                    : ''
+                            }
+                            inputProps={{ maxLength: 15, style: { textTransform: 'uppercase' } }}
                             placeholder="Enter 15 digit GSTIN"
                         />
 
@@ -511,7 +535,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             )}
             {/* <TextField label="PAN" fullWidth /> */}
             <TextField
-                label="PAN"
+                label="PAN NO"
                 name="pan"
                 value={form.pan}
                 onChange={handleChange}
@@ -596,6 +620,20 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             >
                 <MenuItem value="">Select currency</MenuItem>
                 <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+            </TextField>
+
+            <TextField
+                select
+                label="Accounts Receivable"
+                name="lock_account_ledger_id"
+                value={form.lock_account_ledger_id || ""}
+                onChange={handleChange}
+                fullWidth
+            >
+                <MenuItem value="">Select Ledger</MenuItem>
+                {ledgers.map((l: any) => (
+                    <MenuItem key={l.id} value={l.id}>{l.name}</MenuItem>
+                ))}
             </TextField>
 
 
@@ -1064,6 +1102,7 @@ const CustomersAdd = () => {
   gst_preference: "",
   tax_exemption_id: "",
   gst_tds_enabled: false,
+  lock_account_ledger_id: "",
 //   department: "",
 //   designation: "",
 
@@ -1081,6 +1120,8 @@ const CustomersAdd = () => {
         phone: "",
         fax: "",
     });
+
+
 
     const [shipping, setShipping] = useState({
         attention: "",
@@ -1119,6 +1160,7 @@ const CustomersAdd = () => {
     const alphabetsOnly = (v: string) => /^[a-zA-Z\s]*$/.test(v);
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
     const phoneClean = (v: string) => v.replace(/[^0-9+]/g, '');
 
     const handleChange = (e: any) => {
@@ -1141,6 +1183,12 @@ const CustomersAdd = () => {
             value = value.toUpperCase();
             // Allow max 10 chars
             if (value.length > 10) return;
+        }
+
+        // ── GSTIN: auto-uppercase ──
+        if (name === 'gstin') {
+            value = value.toUpperCase();
+            if (value.length > 15) return;
         }
 
         // ── Opening Balance: numeric only, allow up to 2 decimal places ──
@@ -1228,6 +1276,9 @@ const CustomersAdd = () => {
         if (form.pan && !panRegex.test(form.pan)) {
             submitErrors.pan = 'PAN must follow format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
         }
+        if (form.gstin && !gstinRegex.test(form.gstin)) {
+            submitErrors.gstin = 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5';
+        }
 
         if (Object.keys(submitErrors).length > 0) {
             setFieldErrors(submitErrors);
@@ -1236,7 +1287,7 @@ const CustomersAdd = () => {
             return;
         }
 
-        if (form.gst_preference === "regular" || form.gst_preference === "composition") {
+        if (form.gst_treatment === "registered_regular" || form.gst_treatment === "registered_composition") {
             if (!form.gstin) {
                 toast.error("GSTIN is required for Regular/Composition customers");
                 return;
@@ -1272,6 +1323,8 @@ const CustomersAdd = () => {
             mobile: form.mobile || '',
             contact_person: billing.attention || ''
         };
+
+       
 
         const shippingPayload = {
             attention: shipping.attention || '',
@@ -1320,28 +1373,28 @@ const CustomersAdd = () => {
                 opening_balance: form.opening_balance || 0,
                 payment_term_id,
                 enable_portal: form.enable_portal || false,
+                lock_account_ledger_id: form.lock_account_ledger_id || null,
 
-                gstin: form.gstin || null,
-                gst_preference: form.gst_preference || null,
+                // gstin: form.gstin || null,
+                gst_preference: form.gst_treatment || null,
                 tax_preference: form.tax_preference || null,
-                place_of_supply:
-                    form.gst_preference === "overseas" ? null : form.place_of_supply || null,
+                
                 tax_exemption_id:
                     form.tax_preference === "non_taxable"
                         ? form.tax_exemption_id || null
                         : null,
 
-                business_legal_name:
-                    form.gst_preference === "regular" ||
-                        form.gst_preference === "composition"
-                        ? form.business_legal_name || null
-                        : null,
+                // business_legal_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_legal_name || null
+                //         : null,
 
-                business_trade_name:
-                    form.gst_preference === "regular" ||
-                        form.gst_preference === "composition"
-                        ? form.business_trade_name || null
-                        : null,
+                // business_trade_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_trade_name || null
+                //         : null,
 
                 gst_tds_enabled:
                     form.tax_preference === "taxable"
@@ -1349,9 +1402,28 @@ const CustomersAdd = () => {
                         : false,
 
                 remarks: remarksPayload,
-                billing_address_attributes: billingPayload,
-                shipping_address_attributes: shippingPayload,
-                contact_persons_attributes: contactPersonsPayload
+                default_billing_address_attributes: billingPayload,
+                 default_shipping_address_attributes: shippingPayload,
+                contact_persons_attributes: contactPersonsPayload,
+
+                 primary_gst_detail_attributes: {
+      gstin: form.gstin || null,
+
+      business_legal_name:
+        form.gst_treatment === "registered_regular" ||
+        form.gst_treatment === "registered_composition"
+          ? form.business_legal_name || null
+          : null,
+
+          place_of_supply:
+                    form.gst_treatment === "overseas" ? null : form.place_of_supply || null,
+
+      business_trade_name:
+        form.gst_treatment === "registered_regular" ||
+        form.gst_treatment === "registered_composition"
+          ? form.business_trade_name || null
+          : null,
+    }
             }
         };
         console.log("Submitting Customer Payload:", payload);

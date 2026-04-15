@@ -33,6 +33,10 @@ import {
     Receipt,
     DollarSign,
     Paperclip,
+    CirclePlus,
+    Eye,
+    ClipboardList,
+    X,
 } from "lucide-react";
 import {
     Dialog,
@@ -53,6 +57,9 @@ export const InvoiceDashboardDetailsPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("invoice-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showApprovalLog, setShowApprovalLog] = useState(false);
+    const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -61,8 +68,64 @@ export const InvoiceDashboardDetailsPage = () => {
     useEffect(() => {
         if (id && baseUrl && token) {
             fetchInvoiceDetails();
+            fetchLockAccount();
         }
     }, [id, baseUrl, token]);
+
+    const fetchLockAccount = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const hasApproval = Array.isArray(response.data?.approvals) &&
+                response.data.approvals.some((a) => a.approval_type === "invoice" && a.active);
+            setHasInvoiceApproval(hasApproval);
+        } catch (e) {
+            console.error("Failed to fetch lock account", e);
+        }
+    };
+
+    const updateStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            const response = await axios.patch(
+                `https://${baseUrl}/lock_account_invoices/${id}.json`,
+                { lock_account_invoice: { status } },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, validateStatus: () => true }
+            );
+            if (response.status === 422) {
+                const { message, errors } = response.data;
+                const msg = Array.isArray(errors) && errors.length > 0
+                    ? errors.map((e) => `${e.id}: ${e.message}`).join(", ")
+                    : message || "Failed to update status";
+                sonnerToast.error(msg);
+                return;
+            }
+            sonnerToast.success(`Invoice ${status.replace("_", " ")} successfully`);
+            fetchInvoiceDetails();
+        } catch (error) {
+            sonnerToast.error("Failed to update status");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const updateApprovalStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            await axios.post(
+                `https://${baseUrl}/lock_account_invoices/${id}/update_approval_status.json`,
+                { status, comment: "" },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+            );
+            sonnerToast.success(`Invoice ${status.replace("_", " ")} successfully`);
+            fetchInvoiceDetails();
+        } catch (error) {
+            sonnerToast.error("Failed to update approval status");
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     const fetchInvoiceDetails = async () => {
         try {
@@ -110,13 +173,37 @@ export const InvoiceDashboardDetailsPage = () => {
     const getStatusColor = (status) => {
         const colors = {
             draft: "bg-gray-100 text-gray-800 border-gray-200",
+            sent: "bg-blue-100 text-blue-800 border-blue-200",
+            approved: "bg-green-100 text-green-800 border-green-200",
+            pending_approval: "bg-yellow-100 text-yellow-800 border-yellow-200",
             confirmed: "bg-blue-100 text-blue-800 border-blue-200",
             processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
             shipped: "bg-purple-100 text-purple-800 border-purple-200",
             delivered: "bg-green-100 text-green-800 border-green-200",
             cancelled: "bg-red-100 text-red-800 border-red-200",
+            rejected: "bg-red-100 text-red-800 border-red-200",
         };
-        return colors[status] || colors.draft;
+        return colors[status] || "bg-gray-100 text-gray-800 border-gray-200";
+    };
+
+    // Helper: returns true when the invoice is fully approved (main status OR approval_status object)
+    const isFullyApproved = (data) => {
+        if (!data) return false;
+        if (data.status === "approved") return true;
+        const approvalStatus = String(data.approval_status?.status || "").toLowerCase();
+        if (approvalStatus === "approved") return true;
+        const levels = data.approval_status?.approval_levels;
+        if (Array.isArray(levels) && levels.length > 0) {
+            return levels.every((lvl) => String(lvl?.status || "").toLowerCase() === "approved");
+        }
+        return false;
+    };
+
+    const getApprovalStatusBadge = (status) => {
+        const s = String(status || "").toLowerCase();
+        if (s === "approved") return "bg-green-100 text-green-800";
+        if (s === "rejected") return "bg-red-100 text-red-800";
+        return "bg-yellow-100 text-yellow-800";
     };
 
     const handleEdit = () => {
@@ -229,10 +316,90 @@ export const InvoiceDashboardDetailsPage = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={`${getStatusColor(invoiceData.status)} border`}>
-                            {invoiceData.status.toUpperCase()}
+                            {invoiceData.status?.toUpperCase()}
                         </Badge>
+
+                        {invoiceData?.approval_status?.approval_levels?.length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setShowApprovalLog(true)}
+                                className="gap-2"
+                            >
+                                <ClipboardList className="h-4 w-4" />
+                                Approval Log
+                            </Button>
+                        )}
+
+                        {/* ── WITHOUT APPROVAL ── */}
+                        {!hasInvoiceApproval && (
+                            <>
+                                {/* Draft → Mark as Sent */}
+                                {invoiceData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+                            </>
+                        )}
+
+                        {/* ── WITH APPROVAL ── */}
+                        {hasInvoiceApproval && (
+                            <>
+                                {/* Draft → Submit for Approval */}
+                                {invoiceData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("pending_approval")}
+                                    >
+                                        Submit for Approval
+                                    </Button>
+                                )}
+
+                                {/* Pending Approval + can_approve → Approve / Reject */}
+                                {invoiceData.status === "pending_approval" && invoiceData.can_approve && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            className="bg-green-600 text-white hover:bg-green-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("approved")}
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="bg-red-600 text-white hover:bg-red-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("rejected")}
+                                        >
+                                            Reject
+                                        </Button>
+                                    </>
+                                )}
+
+                                {/* Approved → Mark as Sent */}
+                                {isFullyApproved(invoiceData) && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -274,10 +441,11 @@ export const InvoiceDashboardDetailsPage = () => {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-3 w-full max-w-md">
+                    <TabsList className="grid grid-cols-4 w-full max-w-2xl">
                         <TabsTrigger value="invoice-details">Invoice Details</TabsTrigger>
                         <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
                         <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
+                        <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
                     </TabsList>
 
                     {/* Invoice Details Tab */}
@@ -561,6 +729,82 @@ export const InvoiceDashboardDetailsPage = () => {
                             </Card>
                         )}
                     </TabsContent>
+
+                    {/* Activity Logs Tab */}
+                    <TabsContent value="activity-logs" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    Activity Logs
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {Array.isArray(invoiceData.activity_logs) && invoiceData.activity_logs.length > 0 ? (
+                                    <div className="divide-y">
+                                        {invoiceData.activity_logs.map((log, idx) => {
+                                            const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                                            const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                                            const isConverted = hint.includes("convert");
+                                            const isCreated = hint.includes("create");
+                                            const isAccepted = hint.includes("accept");
+                                            const isSent = hint.includes("sent");
+
+                                            const salesOrderId =
+                                                log?.sales_order_id ||
+                                                log?.sale_order_id ||
+                                                log?.lock_account_sale_order_id ||
+                                                invoiceData?.sales_order_id ||
+                                                invoiceData?.sale_order_id ||
+                                                invoiceData?.lock_account_sale_order_id;
+
+                                            const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Edit : FileText);
+                                            const iconWrapClass =
+                                                isConverted || isCreated
+                                                    ? "bg-green-50 text-green-600 border-green-100"
+                                                    : (isAccepted || isSent
+                                                        ? "bg-sky-50 text-sky-600 border-sky-100"
+                                                        : "bg-gray-50 text-gray-500 border-gray-100");
+
+                                            return (
+                                                <div key={key} className="flex gap-6 py-5">
+                                                    <div className="min-w-[170px] text-sm text-muted-foreground">
+                                                        <div>{log?.date || "—"} {log?.time || ""}</div>
+                                                    </div>
+
+                                                    <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
+                                                        <Icon className="h-5 w-5" />
+                                                    </div>
+
+                                                    <div className="flex-1">
+                                                        <div className="text-sm font-medium text-foreground">
+                                                            {log?.message || "—"}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+                                                        </div>
+
+                                                        {isConverted && salesOrderId ? (
+                                                            <button
+                                                                type="button"
+                                                                className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                                                onClick={() => navigate(`/accounting/sales-order/${salesOrderId}`)}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                                View the sales order
+                                                            </button>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </div>
 
@@ -580,6 +824,62 @@ export const InvoiceDashboardDetailsPage = () => {
                         <Button variant="destructive" onClick={handleDelete}>
                             Delete
                         </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Approval Log Modal */}
+            <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+                <DialogContent className="max-w-4xl">
+                    <div className="flex items-center justify-between">
+                        <DialogHeader>
+                            <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+                        </DialogHeader>
+                        <button
+                            type="button"
+                            onClick={() => setShowApprovalLog(false)}
+                            className="p-2 rounded hover:bg-muted"
+                            aria-label="Close"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <div className="rounded-lg border overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                                    <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(invoiceData?.approval_status?.approval_levels || []).map((lvl, index) => (
+                                    <TableRow key={lvl?.id ?? index}>
+                                        <TableCell className="font-medium">{index + 1}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                                        <TableCell>
+                                            <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                                                {String(lvl?.status || "pending").toUpperCase()}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {lvl?.rejection_reason || "—"}
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            {lvl?.approved_by || "—"}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </div>
                 </DialogContent>
             </Dialog>

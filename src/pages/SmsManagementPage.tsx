@@ -48,6 +48,7 @@ import axios from "axios";
 import { TextField } from "@mui/material";
 import { string } from "zod";
 import { API_CONFIG } from "@/config/apiConfig";
+import { TicketPagination } from "@/components/TicketPagination";
 
 interface SmsTemplate {
   id: number;
@@ -79,6 +80,10 @@ const SmsManagementPage: React.FC = () => {
   const [orgsList, setOrgsList] = useState<any[]>([]);
   const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize] = useState(10);
   const [formData, setFormData] = useState({
     organization_id: "",
     module_name: "",
@@ -108,6 +113,12 @@ const SmsManagementPage: React.FC = () => {
     updated_at_lteq: "",
   });
 
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchSmsTemplates(search, filters, page);
+  };
+
   const handleFilterChange = (name: string, value: string) => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
@@ -128,13 +139,26 @@ const SmsManagementPage: React.FC = () => {
       updated_at_lteq: "",
     };
     setFilters(emptyFilters);
-    fetchSmsTemplates(search, emptyFilters);
+    setCurrentPage(1); // Reset to first page
+    fetchSmsTemplates(search, emptyFilters, 1);
     setIsFilterOpen(false);
   };
 
   const applyFilters = () => {
+    console.log("Applying filters:", filters);
     setIsFilterOpen(false);
-    fetchSmsTemplates(search, filters);
+    setCurrentPage(1); // Reset to first page when applying filters
+    fetchSmsTemplates(search, filters, 1);
+
+    // Show success message
+    const activeFiltersCount = Object.values(filters).filter(
+      (value) => value !== ""
+    ).length;
+    if (activeFiltersCount > 0) {
+      toast.success(`${activeFiltersCount} filter applied successfully`);
+    } else {
+      toast.info("No active filters to apply");
+    }
   };
 
   const BASE_URL = API_CONFIG.BASE_URL;
@@ -144,13 +168,14 @@ const SmsManagementPage: React.FC = () => {
   const getAxiosConfig = () => ({
     headers: {
       "Content-Type": "application/json",
-      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {})
-    }
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+    },
   });
 
   const fetchSmsTemplates = async (
     searchTerm?: string,
-    overrideFilters?: typeof filters
+    overrideFilters?: typeof filters,
+    page: number = currentPage
   ) => {
     const isFetchingSearch = !!searchTerm?.trim();
     if (isFetchingSearch) {
@@ -165,35 +190,84 @@ const SmsManagementPage: React.FC = () => {
       const params = new URLSearchParams();
       if (TOKEN) params.append("token", TOKEN);
 
+      // Add pagination parameters
+      params.append("page", page.toString());
+      params.append("per_page", pageSize.toString());
+
       if (searchTerm?.trim()) {
-        params.append("q[combined_search_eq]", searchTerm.trim());
+        const term = searchTerm.trim();
+        params.append(
+          "q[template_name_or_module_name_or_function_name_or_service_provider_cont]",
+          term
+        );
       }
 
       Object.entries(activeFilters).forEach(([key, value]) => {
         if (value) {
+          console.log(`Processing filter: ${key} = ${value}`);
           if (value === "true") {
             params.append(`q[${key}]`, "1");
           } else if (value === "false") {
             params.append(`q[${key}]`, "0");
           } else {
-            params.append(`q[${key}]`, value);
+            // Special handling for date fields to ensure proper format
+            if (key.includes("_gteq") || key.includes("_lteq")) {
+              console.log(`Date filter detected: ${key} = ${value}`);
+              // Ensure date is in YYYY-MM-DD format
+              const dateValue = new Date(value).toISOString().split("T")[0];
+              params.append(`q[${key}]`, dateValue);
+              console.log(`Formatted date: ${dateValue}`);
+
+              // Also try alternative format without 'q' prefix for date fields
+              if (key === "created_at_gteq") {
+                params.append("created_at_gteq", dateValue);
+                console.log(
+                  `Alternative date parameter: created_at_gteq = ${dateValue}`
+                );
+              } else if (key === "updated_at_lteq") {
+                params.append("updated_at_lteq", dateValue);
+                console.log(
+                  `Alternative date parameter: updated_at_lteq = ${dateValue}`
+                );
+              }
+            } else {
+              params.append(`q[${key}]`, value);
+            }
           }
         }
       });
 
       const url = `${BASE_URL}/sms_templates.json?${params.toString()}`;
-      
+
       console.log("Fetching SMS Templates from:", url);
+      console.log("Active filters being applied:", activeFilters);
       const response = await axios.get(url, getAxiosConfig());
       console.log("SMS Templates Response:", response.data);
-      
+
       const payload = response.data;
       const data: SmsTemplate[] = payload?.data || payload?.sms_templates || [];
-      
+
+      // Extract pagination information if available
+      if (payload?.pagination) {
+        setTotalPages(payload.pagination.total_pages || 1);
+        setTotalItems(payload.pagination.total_count || 0);
+      } else if (payload?.meta) {
+        setTotalPages(payload.meta.total_pages || 1);
+        setTotalItems(payload.meta.total_count || 0);
+      } else {
+        // Fallback: calculate total pages from items count if pagination info not available
+        const totalCount =
+          payload?.total_count || payload?.total || data.length;
+        setTotalItems(totalCount);
+        setTotalPages(Math.ceil(totalCount / pageSize));
+      }
+
       setSmsTemplates(data);
     } catch (error: any) {
       console.error("Error fetching SMS templates:", error);
-      toast.error(`Failed to fetch SMS templates: ${error?.response?.status || ""} ${error?.message || ""}`);
+      toast.error(
+        `Failed to fetch SMS templates: ${error?.response?.status || ""} ${error?.message || ""}`
+      );
     } finally {
       setIsSearching(false);
       setIsLoading(false);
@@ -202,6 +276,7 @@ const SmsManagementPage: React.FC = () => {
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
+      setCurrentPage(1); // Reset to first page when searching
       fetchSmsTemplates(search);
     }
   };
@@ -212,7 +287,7 @@ const SmsManagementPage: React.FC = () => {
       setIsLoadingOrgs(true);
       try {
         const response = await axios.get(
-          `${BASE_URL}/organizations.json?token=${TOKEN}`,
+          `${BASE_URL}/organizations.json?token=${TOKEN}&per_page=500`,
           getAxiosConfig()
         );
         setOrgsList(response.data.organizations || []);
@@ -254,7 +329,7 @@ const SmsManagementPage: React.FC = () => {
   ) => {
     const name = e.target.name;
     let value = e.target.value;
-    
+
     // Disallow spaces in module_name and function_name
     if (name === "module_name" || name === "function_name") {
       value = value.replace(/\s+/g, "");
@@ -275,29 +350,6 @@ const SmsManagementPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation
-    const requiredFields: (keyof typeof formData)[] = [
-      "module_name",
-      "function_name",
-      "priority",
-      "service_provider",
-      "template_name",
-      "dlt_template_id",
-      "template_url",
-    ];
-
-    // If not default, organization is required
-    if (!formData.is_default && !formData.organization_id) {
-      toast.error("Please select an organization");
-      return;
-    }
-
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("Please complete all required fields");
-      return;
-    }
 
     setIsSubmitting(true);
     try {
@@ -348,13 +400,46 @@ const SmsManagementPage: React.FC = () => {
         is_default: true,
         active: true,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving template:", error);
-      toast.error(
-        editingId
-          ? "Failed to update SMS Template"
-          : "Failed to create SMS Template"
-      );
+
+      let errorMessage = editingId
+        ? "Failed to update SMS Template"
+        : "Failed to create SMS Template";
+
+      if (error.response?.data) {
+        const data = error.response.data;
+
+        // Specific check for organization/template existence
+        const hasTakenError =
+          data.errors &&
+          typeof data.errors === "object" &&
+          Object.values(data.errors).some(
+            (msgs: any) =>
+              Array.isArray(msgs) &&
+              msgs.some((m) => typeof m === "string" && m.includes("taken"))
+          );
+
+        if (hasTakenError) {
+          errorMessage = "Template for this organization already exist";
+        } else if (data.errors) {
+          if (Array.isArray(data.errors)) {
+            errorMessage = data.errors.join(", ");
+          } else if (typeof data.errors === "object") {
+            errorMessage = Object.entries(data.errors)
+              .map(([field, msgs]) => `${field} ${(msgs as any[]).join(", ")}`)
+              .join(" | ");
+          } else if (typeof data.errors === "string") {
+            errorMessage = data.errors;
+          }
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (typeof data === "string") {
+          errorMessage = data;
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -449,12 +534,16 @@ const SmsManagementPage: React.FC = () => {
       case "organization_name":
         return (
           <div className="flex flex-col">
-            <span className="font-bold text-[#1a1a1a] text-[15px]">
-              {row.organization_name ?? "Default (Global)"}
-            </span>
-            <span className="text-[11px] text-gray-500 font-medium">
-              ID: {row.id}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[#1a1a1a] text-[15px]">
+                {row.organization_name ?? "Default (Global)"}
+              </span>
+              {row.organization_id && (
+                <span className="font-bold text-[#1a1a1a] text-[15px] text-gray-600">
+                  ({row.organization_id})
+                </span>
+              )}
+            </div>
             {row.created_by && (
               <span className="text-[11px] text-[#3b82f6] font-medium mt-0.5">
                 By: {row.created_by}
@@ -600,10 +689,21 @@ const SmsManagementPage: React.FC = () => {
           }
           hideTableSearch={false}
           hideTableExport={true}
-          pagination={true}
-          pageSize={10}
+          pagination={false}
+          disableClientSearch={true}
           className="font-poppins"
           onFilterClick={() => setIsFilterOpen(true)}
+        />
+
+        {/* Pagination — same component used in TicketListDashboard */}
+        <TicketPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRecords={totalItems}
+          perPage={pageSize}
+          isLoading={isLoading || isSearching}
+          onPageChange={handlePageChange}
+          onPerPageChange={() => {}}
         />
       </div>
 
@@ -622,182 +722,190 @@ const SmsManagementPage: React.FC = () => {
             </div>
           </DialogHeader>
 
-          <div className="p-8 space-y-6">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-              <div className="space-y-2">
-                <EnhancedSelect
-                  label="Organization"
-                  value={filters.organization_id_eq}
-                  onChange={(val) =>
-                    handleFilterChange("organization_id_eq", val.toString())
-                  }
-                  options={orgOptions}
-                  placeholder="Select Organization"
-                  searchable={true}
-                />
-              </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              console.log("Filter form submitted");
+              applyFilters();
+            }}
+          >
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-6">
+                <div className="space-y-2">
+                  <EnhancedSelect
+                    label="Organization"
+                    value={filters.organization_id_eq}
+                    onChange={(val) =>
+                      handleFilterChange("organization_id_eq", val.toString())
+                    }
+                    options={orgOptions}
+                    placeholder="Search and Select Organization"
+                    searchable={true}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  Module Name
-                </Label>
-                <Input
-                  placeholder="e.g. auth"
-                  value={filters.module_name_eq}
-                  onChange={(e) =>
-                    handleFilterChange("module_name_eq", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Module Name
+                  </Label>
+                  <Input
+                    placeholder="Enter Module Name"
+                    value={filters.module_name_eq}
+                    onChange={(e) =>
+                      handleFilterChange("module_name_eq", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  Function Name
-                </Label>
-                <Input
-                  placeholder="e.g. login"
-                  value={filters.function_name_cont}
-                  onChange={(e) =>
-                    handleFilterChange("function_name_cont", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Function Name
+                  </Label>
+                  <Input
+                    placeholder="Enter Function Name"
+                    value={filters.function_name_cont}
+                    onChange={(e) =>
+                      handleFilterChange("function_name_cont", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <EnhancedSelect
-                  label="Priority"
-                  value={filters.priority_eq}
-                  onChange={(val) =>
-                    handleFilterChange("priority_eq", val.toString())
-                  }
-                  options={[
-                    { value: "primary", label: "Primary" },
-                    { value: "secondary", label: "Secondary" },
-                  ]}
-                  placeholder="Select Priority"
-                  searchable={true}
-                />
-              </div>
+                <div className="space-y-2">
+                  <EnhancedSelect
+                    label="Priority"
+                    value={filters.priority_eq}
+                    onChange={(val) =>
+                      handleFilterChange("priority_eq", val.toString())
+                    }
+                    options={[
+                      { value: "primary", label: "Primary" },
+                      { value: "secondary", label: "Secondary" },
+                    ]}
+                    placeholder="Select Priority Level"
+                    searchable={true}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  Service Provider
-                </Label>
-                <Input
-                  placeholder="e.g. twilio"
-                  value={filters.service_provider_eq}
-                  onChange={(e) =>
-                    handleFilterChange("service_provider_eq", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Service Provider
+                  </Label>
+                  <Input
+                    placeholder="Enter Service Provider name"
+                    value={filters.service_provider_eq}
+                    onChange={(e) =>
+                      handleFilterChange("service_provider_eq", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  Template Name
-                </Label>
-                <Input
-                  placeholder="e.g. welcome"
-                  value={filters.template_name_cont}
-                  onChange={(e) =>
-                    handleFilterChange("template_name_cont", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Template Name
+                  </Label>
+                  <Input
+                    placeholder="Enter Template Name"
+                    value={filters.template_name_cont}
+                    onChange={(e) =>
+                      handleFilterChange("template_name_cont", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  DLT Template ID
-                </Label>
-                <Input
-                  placeholder="e.g. 789"
-                  value={filters.dlt_template_id_eq}
-                  onChange={(e) =>
-                    handleFilterChange("dlt_template_id_eq", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    DLT Template ID
+                  </Label>
+                  <Input
+                    placeholder="Enter DLT Template ID"
+                    value={filters.dlt_template_id_eq}
+                    onChange={(e) =>
+                      handleFilterChange("dlt_template_id_eq", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  Template URL
-                </Label>
-                <Input
-                  placeholder="e.g. https"
-                  value={filters.template_url_cont}
-                  onChange={(e) =>
-                    handleFilterChange("template_url_cont", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Template URL
+                  </Label>
+                  <Input
+                    placeholder="Enter Template URL"
+                    value={filters.template_url_cont}
+                    onChange={(e) =>
+                      handleFilterChange("template_url_cont", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <EnhancedSelect
-                  label="Is Default"
-                  value={filters.is_default_eq}
-                  onChange={(val) =>
-                    handleFilterChange("is_default_eq", val.toString())
-                  }
-                  options={[
-                    { value: "true", label: "Yes" },
-                    { value: "false", label: "No" },
-                  ]}
-                  placeholder="Any"
-                  searchable={true}
-                />
-              </div>
+                <div className="space-y-2">
+                  <EnhancedSelect
+                    label="Is Default"
+                    value={filters.is_default_eq}
+                    onChange={(val) =>
+                      handleFilterChange("is_default_eq", val.toString())
+                    }
+                    options={[
+                      { value: "true", label: "Yes" },
+                      { value: "false", label: "No" },
+                    ]}
+                    placeholder="Select Default Status"
+                    searchable={true}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <EnhancedSelect
-                  label="Active Status"
-                  value={filters.active_eq}
-                  onChange={(val) =>
-                    handleFilterChange("active_eq", val.toString())
-                  }
-                  options={[
-                    { value: "true", label: "Active" },
-                    { value: "false", label: "Inactive" },
-                  ]}
-                  placeholder="Any"
-                  searchable={true}
-                />
-              </div>
+                <div className="space-y-2">
+                  <EnhancedSelect
+                    label="Active Status"
+                    value={filters.active_eq}
+                    onChange={(val) =>
+                      handleFilterChange("active_eq", val.toString())
+                    }
+                    options={[
+                      { value: "true", label: "Active" },
+                      { value: "false", label: "Inactive" },
+                    ]}
+                    placeholder="Select Active Status"
+                    searchable={true}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  Created At
-                </Label>
-                <Input
-                  type="date"
-                  value={filters.created_at_gteq}
-                  onChange={(e) =>
-                    handleFilterChange("created_at_gteq", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Created At (From)
+                  </Label>
+                  <Input
+                    type="date"
+                    value={filters.created_at_gteq}
+                    onChange={(e) =>
+                      handleFilterChange("created_at_gteq", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700">
-                  Updated At
-                </Label>
-                <Input
-                  type="date"
-                  value={filters.updated_at_lteq}
-                  onChange={(e) =>
-                    handleFilterChange("updated_at_lteq", e.target.value)
-                  }
-                  className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
-                />
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-slate-700">
+                    Updated At (To)
+                  </Label>
+                  <Input
+                    type="date"
+                    value={filters.updated_at_lteq}
+                    onChange={(e) =>
+                      handleFilterChange("updated_at_lteq", e.target.value)
+                    }
+                    className="h-10 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </form>
 
           <DialogFooter className="p-6 border-t border-slate-100 bg-white sticky bottom-0">
             <div className="flex gap-3 w-full sm:justify-end">
@@ -846,6 +954,7 @@ const SmsManagementPage: React.FC = () => {
                     onCheckedChange={(checked) =>
                       handleCheckboxChange("is_default", !!checked)
                     }
+                    className="data-[state=checked]:bg-[#C72030]"
                   />
                   <Label
                     htmlFor="is_default"
@@ -862,6 +971,7 @@ const SmsManagementPage: React.FC = () => {
                   onCheckedChange={(checked) =>
                     handleCheckboxChange("active", !!checked)
                   }
+                  className="data-[state=checked]:bg-[#C72030]"
                 />
                 <Label
                   htmlFor="active"
@@ -1002,7 +1112,7 @@ const SmsManagementPage: React.FC = () => {
                   <Input
                     id="module_name"
                     name="module_name"
-                    placeholder="e.g. Gatekeeper"
+                    placeholder="Enter module name"
                     value={formData.module_name}
                     onChange={handleInputChange}
                     className="h-11 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
@@ -1019,7 +1129,7 @@ const SmsManagementPage: React.FC = () => {
                   <Input
                     id="function_name"
                     name="function_name"
-                    placeholder="e.g. Create"
+                    placeholder="Enter function name"
                     value={formData.function_name}
                     onChange={handleInputChange}
                     className="h-11 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
@@ -1078,7 +1188,7 @@ const SmsManagementPage: React.FC = () => {
                   <Input
                     id="template_name"
                     name="template_name"
-                    placeholder="e.g. Global Visitor OTP"
+                    placeholder="Enter template name"
                     value={formData.template_name}
                     onChange={handleInputChange}
                     className="h-11 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
@@ -1095,7 +1205,7 @@ const SmsManagementPage: React.FC = () => {
                   <Input
                     id="dlt_template_id"
                     name="dlt_template_id"
-                    placeholder="e.g. 1407161234567890123"
+                    placeholder="Enter dlt template id"
                     value={formData.dlt_template_id}
                     onChange={handleInputChange}
                     className="h-11 border-slate-200 focus:ring-[#C72030] rounded-md transition-all"
@@ -1112,7 +1222,7 @@ const SmsManagementPage: React.FC = () => {
                   <Textarea
                     id="template_url"
                     name="template_url"
-                    placeholder="e.g. http://api.provider.com/send?user={#u#}&pass={#p#}&msg={#m#}"
+                    placeholder="Enter template url"
                     value={formData.template_url}
                     onChange={handleInputChange}
                     className="min-h-[100px] border-slate-200 focus:ring-[#C72030] rounded-md transition-all resize-none"
@@ -1156,16 +1266,23 @@ const SmsManagementPage: React.FC = () => {
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-0 gap-0 border-none shadow-2xl rounded-xl bg-white">
           <DialogHeader className="p-6 bg-[#f8fafc] border-b border-slate-100 rounded-t-xl sticky top-0 z-10 hidden">
-            <DialogTitle>View SMS Template</DialogTitle>
+            <DialogTitle>SMS Template</DialogTitle>
           </DialogHeader>
           <div className="p-6 bg-[#f8fafc] border-b border-slate-100 rounded-t-xl sticky top-0 z-10 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-[#C72030] bg-opacity-10 rounded-lg">
                 <Eye className="w-5 h-5 text-[#C72030]" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">
-                View SMS Template
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-800">
+                  SMS Template
+                </h2>
+                {viewData && (
+                  <span className="font-bold text-[#C72030] text-lg">
+                    #{viewData.id}
+                  </span>
+                )}
+              </div>
             </div>
             <button
               onClick={() => setIsViewOpen(false)}
@@ -1177,80 +1294,118 @@ const SmsManagementPage: React.FC = () => {
 
           {viewData && (
             <div className="p-8 space-y-6">
-              <div className="flex items-center gap-12 pb-4 border-b border-slate-50">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-50">
                 <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Is Default</span>
-                  <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.is_default ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"}`}>{viewData.is_default ? "Yes" : "No"}</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Is Default
+                  </span>
+                  <span
+                    className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.is_default ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    {viewData.is_default ? "Yes" : "No"}
+                  </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Active Status</span>
-                  <span className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.active ? "bg-[#ecfdf5] text-[#10b981]" : "bg-[#fef2f2] text-[#ef4444]"}`}>{viewData.active ? "Active" : "Inactive"}</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Active Status
+                  </span>
+                  <span
+                    className={`inline-flex mt-1 items-center px-2.5 py-0.5 rounded-full text-xs font-bold w-fit ${viewData.active ? "bg-[#ecfdf5] text-[#10b981]" : "bg-[#fef2f2] text-[#ef4444]"}`}
+                  >
+                    {viewData.active ? "Active" : "Inactive"}
+                  </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-x-6 gap-y-5">
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Organization</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Organization
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
-                    {viewData.organization_name || "—"}
+                    {viewData.organization_name
+                      ? viewData.organization_id
+                        ? `${viewData.organization_name} (${viewData.organization_id})`
+                        : viewData.organization_name
+                      : "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Module Name</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Module Name
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.module_name || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Function Name</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Function Name
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.function_name || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Priority
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center capitalize">
                     {viewData.priority || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Service Provider</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Service Provider
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.service_provider || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Template Name</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Template Name
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.template_name || "—"}
                   </p>
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">DLT Template ID</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    DLT Template ID
+                  </p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.dlt_template_id || "—"}
                   </p>
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Template URL</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Template URL
+                  </p>
                   <p className="text-sm font-mono text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[60px] break-all whitespace-pre-wrap">
                     {viewData.template_url || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Created At</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Created At
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.created_at || "—"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Updated At</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Updated At
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.updated_at || "—"}
                   </p>
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Created By</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Created By
+                  </p>
                   <p className="text-sm font-medium text-slate-800 bg-slate-50 rounded-md px-3 py-2.5 border border-slate-100 min-h-[40px] flex items-center">
                     {viewData.created_by || "—"}
                   </p>
@@ -1259,16 +1414,16 @@ const SmsManagementPage: React.FC = () => {
             </div>
           )}
           <DialogFooter className="p-6 border-t border-slate-100 bg-white sticky bottom-0">
-             <div className="flex w-full justify-end">
-               <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsViewOpen(false)}
-                  className="px-8 h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-all"
-                >
-                  Close
-                </Button>
-             </div>
+            <div className="flex w-full justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsViewOpen(false)}
+                className="px-8 h-11 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-all"
+              >
+                Close
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -345,7 +345,7 @@ export const NewOutboundPage = () => {
       if (!pkg.state) errors.state = 'State is required';
       if (!pkg.pincode.trim()) errors.pincode = 'Pincode is required';
       if (!pkg.type) errors.type = 'Type is required';
-      if (!pkg.attachments.length) errors.attachments = 'At least one attachment is required';
+      // if (!pkg.attachments.length) errors.attachments = 'At least one attachment is required';
 
       if (Object.keys(errors).length) newPackageErrors[pkg.id] = errors;
     });
@@ -882,7 +882,7 @@ export const NewOutboundPage = () => {
 
                   <div className="lg:col-span-3">
                     <label className="block text-sm font-medium mb-2 text-[#1a1a1a]">
-                      Attachments <span style={{ color: '#C72030' }}>*</span>
+                      Attachments
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-white">
                       <input

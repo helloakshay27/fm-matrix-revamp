@@ -258,7 +258,7 @@ export const BillDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -354,6 +354,7 @@ export const BillDetails = () => {
   const taxBreakdown: Record<string, { rate: number; amount: number }> = {};
   salesOrder?.item_details?.forEach((item) => {
     if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+      // Maharashtra: tax_group has multiple tax_rates
       item.tax_group.tax_rates.forEach((tax) => {
         const taxAmount = (item.total_amount * tax.rate) / 100;
         if (!taxBreakdown[tax.name]) {
@@ -361,6 +362,15 @@ export const BillDetails = () => {
         }
         taxBreakdown[tax.name].amount += taxAmount;
       });
+    } else if (item.tax_type === "tax_rate" && item.tax_group) {
+      // Non-Maharashtra: tax_group is actually a single tax rate object
+      const rate = item.tax_group.rate ?? 0;
+      const name = item.tax_group.name ?? "Tax";
+      const taxAmount = (item.total_amount * rate) / 100;
+      if (!taxBreakdown[name]) {
+        taxBreakdown[name] = { rate, amount: 0 };
+      }
+      taxBreakdown[name].amount += taxAmount;
     }
   });
   const taxRows = Object.entries(taxBreakdown);
@@ -644,8 +654,8 @@ export const BillDetails = () => {
                               ₹{Number(item.rate).toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right">
-                              {item.tax_type === "tax_group"
-                                ? item.tax_group?.name
+                              {(item.tax_type === "tax_group" || item.tax_type === "tax_rate")
+                                ? item.tax_group?.name ?? "-"
                                 : item.tax_type === "non_taxable"
                                   ? "Non Taxable"
                                   : item.tax_type === "out_of_scope"
@@ -815,7 +825,18 @@ export const BillDetails = () => {
                             const formatted = `₹${absAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                             return (
                               <TableRow key={rec.id}>
-                                <TableCell>{rec.ledger_name}</TableCell>
+                                <TableCell>
+                                  {rec.ledger_id ? (
+                                    <span
+                                      className="text-blue-600 cursor-pointer hover:underline"
+                                      onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
+                                    >
+                                      {rec.ledger_name}
+                                    </span>
+                                  ) : (
+                                    rec.ledger_name
+                                  )}
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {rec.tr_type === "dr" ? formatted : "0.00"}
                                 </TableCell>

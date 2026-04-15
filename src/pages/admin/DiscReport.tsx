@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   BarChart3,
   BookOpen,
@@ -29,8 +29,40 @@ import {
   buildDiscProfileFromTableRow,
 } from "@/components/DiscAssessmentResultsModal";
 import type { DiscProfileResult } from "@/components/DiscAssessmentResultsModal";
+import apiClient from "@/utils/apiClient";
+
 
 type DiscTab = "dashboard" | "teams" | "learn";
+
+type DiscTypeDistribution = {
+  type: string;
+  count: number;
+};
+type ProfileNameDistribution = {
+  profile_name: string;
+  count: number;
+};
+type DiscProfileData = {
+  attempt_id: string | number;
+  encrypted_attempt_id?: string;
+  name: string;
+  department?: string;
+  primary_type: string;
+  secondary_type?: string;
+  style_code: string;
+  profile_name: string;
+  score_string: string;
+  date: string;
+};
+type ApiDashboardData = {
+  summary: {
+    latest_profiles_count: number;
+    active_team: number;
+  };
+  disc_type_distribution: DiscTypeDistribution[];
+  profile_name_distribution: ProfileNameDistribution[];
+  disc_profiles: DiscProfileData[];
+};
 
 type RowTone = "d" | "i" | "s" | "c";
 
@@ -791,14 +823,65 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
 
 function TeamsTabContent() {
   const [deptSearch, setDeptSearch] = useState("");
+  const [apiDepts, setApiDepts] = useState<DepartmentTeam[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get("/disc_assessments/department_dashboard");
+        if (response.data?.success) {
+          const rawDepts = response.data.data.departments || [];
+          
+          const parseDisc = (data: Record<string, unknown> | Array<Record<string, unknown>> | undefined, valKey: 'count' | 'score') => {
+             if (Array.isArray(data)) {
+                 const m = { d: 0, i: 0, s: 0, c: 0 };
+                 data.forEach((x: Record<string, unknown>) => {
+                    const t = String(x.type || "").toLowerCase();
+                    if (t === "d") m.d = Number(x[valKey]) || 0;
+                    if (t === "i") m.i = Number(x[valKey]) || 0;
+                    if (t === "s") m.s = Number(x[valKey]) || 0;
+                    if (t === "c") m.c = Number(x[valKey]) || 0;
+                 });
+                 return m;
+             }
+             const obj = data as Record<string, unknown> | undefined;
+             return {
+                 d: Number(obj?.d ?? obj?.D) || 0,
+                 i: Number(obj?.i ?? obj?.I) || 0,
+                 s: Number(obj?.s ?? obj?.S) || 0,
+                 c: Number(obj?.c ?? obj?.C) || 0,
+             };
+          };
+
+          const mapped: DepartmentTeam[] = rawDepts.map((d: Record<string, unknown>) => ({
+            id: String(d.id || d.department_id || Math.random()),
+            name: String(d.name || d.department_name || "Unknown"),
+            assessmentsCompleted: Number(d.assessments_completed ?? d.assessmentsCompleted ?? 0),
+            discDistribution: parseDisc((d.disc_distribution ?? d.discDistribution) as Record<string, unknown> | Array<Record<string, unknown>> | undefined, 'count'),
+            averageScores: parseDisc((d.average_scores ?? d.averageScores) as Record<string, unknown> | Array<Record<string, unknown>> | undefined, 'score'),
+            departmentHead: d.department_head ?? d.departmentHead ? String(d.department_head ?? d.departmentHead) : undefined
+          }));
+          setApiDepts(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching departments:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const filtered = useMemo(() => {
+    const deptsToSearch = apiDepts || MOCK_DEPARTMENTS;
     const q = deptSearch.trim().toLowerCase();
-    if (!q) return MOCK_DEPARTMENTS;
-    return MOCK_DEPARTMENTS.filter((d) =>
+    if (!q) return deptsToSearch;
+    return deptsToSearch.filter((d) =>
       d.name.toLowerCase().includes(q)
     );
-  }, [deptSearch]);
+  }, [deptSearch, apiDepts]);
 
   return (
     <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
@@ -863,6 +946,80 @@ const DiscReport = () => {
     null
   );
 
+  const [apiData, setApiData] = useState<ApiDashboardData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get("/disc_assessments/dashboard");
+        if (response.data?.success) {
+          setApiData(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  const computedDiscSummary = useMemo(() => {
+    if (!apiData?.disc_type_distribution) return DISC_SUMMARY;
+    return DISC_SUMMARY.map(item => {
+      const match = apiData.disc_type_distribution.find((d) => d.type.toLowerCase() === item.key);
+      return {
+        ...item,
+        count: match ? match.count : 0
+      };
+    });
+  }, [apiData]);
+
+  const computedProfileChips = useMemo(() => {
+    if (!apiData?.profile_name_distribution) return PROFILE_CHIPS;
+    return apiData.profile_name_distribution.map((p) => ({
+      name: p.profile_name,
+      count: p.count
+    }));
+  }, [apiData]);
+
+  const mapToneToClasses = (tone: string) => {
+    const t = (tone || "d").toLowerCase();
+    switch (t) {
+      case "i":
+        return { rowBgClass: "bg-[#fffbeb]/90", styleTextClass: "text-[#f59e0b] font-semibold", tone: "i" as RowTone };
+      case "s":
+        return { rowBgClass: "bg-[#f0fdf4]/90", styleTextClass: "text-[#22c55e] font-semibold", tone: "s" as RowTone };
+      case "c":
+        return { rowBgClass: "bg-[#eff6ff]/90", styleTextClass: "text-[#3b82f6] font-semibold", tone: "c" as RowTone };
+      case "d":
+      default:
+        return { rowBgClass: "bg-[#fef2f2]/90", styleTextClass: "text-[#ef4444] font-semibold", tone: "d" as RowTone };
+    }
+  };
+
+  const apiRows: DiscProfileRow[] = useMemo(() => {
+    if (!apiData?.disc_profiles) return MOCK_ROWS; // Use MOCK_ROWS as temporary fallback when testing without API, or initial state
+    
+    return apiData.disc_profiles.map((p) => {
+      const toneData = mapToneToClasses(p.primary_type);
+      return {
+        id: p.encrypted_attempt_id || String(p.attempt_id),
+        name: p.name || "",
+        department: p.department || "N/A",
+        discScore: p.score_string || "",
+        style: p.style_code || "",
+        styleTone: toneData.tone,
+        profileName: p.profile_name || "",
+        date: p.date || "",
+        rowBgClass: toneData.rowBgClass,
+        styleTextClass: toneData.styleTextClass
+      };
+    });
+  }, [apiData]);
+
   const toggleSort = (
     key: typeof sortKey
   ) => {
@@ -875,7 +1032,7 @@ const DiscReport = () => {
   };
 
   const filteredRows = useMemo(() => {
-    let rows = [...MOCK_ROWS];
+    let rows = [...apiRows];
     const q = search.trim().toLowerCase();
     if (q) {
       rows = rows.filter(
@@ -918,7 +1075,7 @@ const DiscReport = () => {
       return sortDir === "asc" ? cmp : -cmp;
     });
     return rows;
-  }, [search, profileFilter, typeFilter, sortKey, sortDir]);
+  }, [search, profileFilter, typeFilter, sortKey, sortDir, apiRows]);
 
   const visibleRows = showAllRows ? filteredRows : filteredRows.slice(0, 3);
   const totalVisible = filteredRows.length;
@@ -1065,7 +1222,7 @@ const DiscReport = () => {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {DISC_SUMMARY.map((d) => (
+                {computedDiscSummary.map((d) => (
                   <div
                     key={d.key}
                     className={cn(
@@ -1118,7 +1275,7 @@ const DiscReport = () => {
                 >
                   All
                 </button>
-                {PROFILE_CHIPS.map((p) => (
+                {computedProfileChips.map((p) => (
                   <button
                     key={p.name}
                     type="button"
@@ -1177,7 +1334,7 @@ const DiscReport = () => {
                   >
                     {showAllRows
                       ? "Show less"
-                      : `Show All (${MOCK_ROWS.length})`}
+                      : `Show All (${apiRows.length})`}
                   </button>
                 </div>
               </div>

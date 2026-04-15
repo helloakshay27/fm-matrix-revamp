@@ -34,6 +34,10 @@ import {
     DollarSign,
     Paperclip,
     FileSignature,
+    CirclePlus,
+    Eye,
+    ClipboardList,
+    X,
 } from "lucide-react";
 import {
     Dialog,
@@ -56,6 +60,11 @@ export const QuotesDetails = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("quote-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [hasQuoteApproval, setHasQuoteApproval] = useState(false);
+    const [showDotsMenu, setShowDotsMenu] = useState(false);
+    const [showConvertMenu, setShowConvertMenu] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [showApprovalLog, setShowApprovalLog] = useState(false);
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -63,20 +72,23 @@ export const QuotesDetails = () => {
     useEffect(() => {
         if (id && baseUrl && token) {
             fetchQuoteDetails();
+            fetchLockAccount();
         }
     }, [id, baseUrl, token]);
+
+    // Close dropdowns on outside click
+    useEffect(() => {
+        const handler = () => { setShowDotsMenu(false); setShowConvertMenu(false); };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
 
     const fetchQuoteDetails = async () => {
         try {
             setLoading(true);
             const response = await axios.get(
                 `https://${baseUrl}/lock_account_quotes/${id}.json`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
             );
             setQuoteData(response.data);
         } catch (error) {
@@ -84,6 +96,62 @@ export const QuotesDetails = () => {
             sonnerToast.error("Failed to fetch quote details");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchLockAccount = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/get_lock_account.json`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const hasApproval = Array.isArray(response.data?.approvals) &&
+                response.data.approvals.some((a) => a.approval_type === "quote" && a.active);
+            setHasQuoteApproval(hasApproval);
+        } catch (e) {
+            console.error("Failed to fetch lock account", e);
+        }
+    };
+
+    // ── Status update (PATCH) ──────────────────────────────────────────────
+    const updateStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            await axios.patch(
+                `https://${baseUrl}/lock_account_quotes/${id}.json`,
+                { lock_account_quote: { status } },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+            );
+            sonnerToast.success(`Quote ${status.replace("_", " ")} successfully`);
+            fetchQuoteDetails();
+        } catch (error) {
+            const errors = error?.response?.data?.errors;
+            if (Array.isArray(errors) && errors.length > 0) {
+                errors.forEach((e) => sonnerToast.error(`${e.id}: ${e.message}`));
+            } else {
+                sonnerToast.error("Failed to update status");
+            }
+        } finally {
+            setActionLoading(false);
+            setShowDotsMenu(false);
+        }
+    };
+
+    // ── Approval status (POST) ─────────────────────────────────────────────
+    const updateApprovalStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            await axios.post(
+                `https://${baseUrl}/lock_account_quotes/${id}/update_approval_status.json`,
+                { status, comment: "" },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+            );
+            sonnerToast.success(`Quote ${status.replace("_", " ")} successfully`);
+            fetchQuoteDetails();
+        } catch (error) {
+            sonnerToast.error("Failed to update approval status");
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -119,6 +187,13 @@ export const QuotesDetails = () => {
             converted: "bg-purple-100 text-purple-800 border-purple-200",
         };
         return colors[status] || colors.draft;
+    };
+
+    const getApprovalStatusBadge = (status) => {
+        const s = String(status || "").toLowerCase();
+        if (s === "approved") return "bg-green-100 text-green-800";
+        if (s === "rejected") return "bg-red-100 text-red-800";
+        return "bg-yellow-100 text-yellow-800";
     };
 
     const handleEdit = () => {
@@ -242,12 +317,276 @@ export const QuotesDetails = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={`${getStatusColor(quoteData.status)} border`}>
-                            {quoteData.status.toUpperCase()}
+                            {quoteData.status?.toUpperCase()}
                         </Badge>
+
+                        {quoteData?.approval_status?.approval_levels?.length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setShowApprovalLog(true)}
+                                className="gap-2"
+                            >
+                                <ClipboardList className="h-4 w-4" />
+                                Approval Log
+                            </Button>
+                        )}
+
+                        {/* ── WITHOUT APPROVAL ── */}
+                        {!hasQuoteApproval && (
+                            <>
+                                {/* Draft → Mark as Sent */}
+                                {quoteData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+
+                                {/* Sent → 3-dot menu: Accept / Decline */}
+                                {quoteData.status === "sent" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setShowDotsMenu((p) => !p)}
+                                        >
+                                            ⋯
+                                        </Button>
+                                        {showDotsMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[180px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-green-700"
+                                                    onClick={() => updateStatus("accepted")}
+                                                >
+                                                    Mark as Accepted
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-700"
+                                                    onClick={() => updateStatus("declined")}
+                                                >
+                                                    Mark as Declined
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Accepted → Convert dropdown */}
+                                {quoteData.status === "accepted" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            onClick={() => setShowConvertMenu((p) => !p)}
+                                        >
+                                            Convert ▾
+                                        </Button>
+                                        {showConvertMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[200px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/invoices/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Invoice
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Sales Order
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* ── WITH APPROVAL ── */}
+                        {hasQuoteApproval && (
+                            <>
+                                {/* Draft → Submit for Approval */}
+                                {quoteData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("pending_approval")}
+                                    >
+                                        Submit for Approval
+                                    </Button>
+                                )}
+
+                                {/* Pending Approval + can_be_approved → Approve / Reject */}
+                                {quoteData.status === "pending_approval" && quoteData.can_approve && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            className="bg-green-600 text-white hover:bg-green-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("approved")}
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="bg-red-600 text-white hover:bg-red-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("rejected")}
+                                        >
+                                            Reject
+                                        </Button>
+                                    </>
+                                )}
+
+                                {/* Approved → Mark as Sent */}
+                                {quoteData.status === "approved" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+
+                                {/* Sent → 3-dot menu: Accept / Decline */}
+                                {quoteData.status === "sent" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setShowDotsMenu((p) => !p)}
+                                        >
+                                            ⋯
+                                        </Button>
+                                        {showDotsMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[180px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-green-700"
+                                                    onClick={() => updateStatus("accepted")}
+                                                >
+                                                    Mark as Accepted
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-700"
+                                                    onClick={() => updateStatus("declined")}
+                                                >
+                                                    Mark as Declined
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Accepted → Convert dropdown */}
+                                {quoteData.status === "accepted" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            onClick={() => setShowConvertMenu((p) => !p)}
+                                        >
+                                            Convert ▾
+                                        </Button>
+                                        {showConvertMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[200px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/invoices/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Invoice
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Sales Order
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
+
+                {/* Approval Log Modal */}
+                <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+                    <DialogContent className="max-w-4xl">
+                        <div className="flex items-center justify-between">
+                            <DialogHeader>
+                                <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+                            </DialogHeader>
+                            <button
+                                type="button"
+                                onClick={() => setShowApprovalLog(false)}
+                                className="p-2 rounded hover:bg-muted"
+                                aria-label="Close"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <div className="rounded-lg border overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                                        <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                                        <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                                        <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                                        <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                                        <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                                        <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                                        <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {(quoteData?.approval_status?.approval_levels || []).map((lvl, index) => (
+                                        <TableRow key={lvl?.id ?? index}>
+                                            <TableCell className="font-medium">{index + 1}</TableCell>
+                                            <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                                            <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                                            <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                                            <TableCell>
+                                                <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                                                    {String(lvl?.status || "pending").toUpperCase()}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {lvl?.rejection_reason || "—"}
+                                            </TableCell>
+                                            <TableCell className="text-sm">
+                                                {lvl?.approved_by || "—"}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 {/* Action Buttons */}
                 {/* <Card>
@@ -287,10 +626,11 @@ export const QuotesDetails = () => {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-3 w-full max-w-md">
+                    <TabsList className="grid grid-cols-4 w-full max-w-2xl">
                         <TabsTrigger value="quote-details">Quote Details</TabsTrigger>
                         <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
                         <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
+                        <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
                     </TabsList>
 
                     {/* Quote Details Tab */}
@@ -386,7 +726,7 @@ export const QuotesDetails = () => {
                                                                     )}
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="text-right">{item.item_unit || "N/A"}</TableCell>
+                                                            <TableCell className="text-right">{item.item_unit || "-"}</TableCell>
                                                             <TableCell className="text-right">{item.quantity || 0}</TableCell>
                                                             <TableCell className="text-right">{formatCurrency(item.rate || 0)}</TableCell>
                                                             <TableCell className="text-right">
@@ -553,6 +893,88 @@ export const QuotesDetails = () => {
                                         </p>
                                     </div>
                                 )}
+
+                                {/* Address Detail from quote response */}
+                                {quoteData.address_detail && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                        <div className="border rounded-lg p-3 bg-muted/20">
+                                            <p className="text-sm font-medium text-muted-foreground mb-2">Billing Address</p>
+                                            {quoteData.address_detail.billing_address ? (
+                                                <div className="text-sm space-y-0.5">
+                                                    <p>{quoteData.address_detail.billing_address.address || "—"}</p>
+                                                    {quoteData.address_detail.billing_address.address_line_two && (
+                                                        <p>{quoteData.address_detail.billing_address.address_line_two}</p>
+                                                    )}
+                                                    <p>
+                                                        {[
+                                                            quoteData.address_detail.billing_address.city,
+                                                            quoteData.address_detail.billing_address.state,
+                                                            quoteData.address_detail.billing_address.country
+                                                        ].filter(Boolean).join(", ")}
+                                                        {quoteData.address_detail.billing_address.pin_code
+                                                            ? `, ${quoteData.address_detail.billing_address.pin_code}`
+                                                            : ""}
+                                                    </p>
+                                                    {quoteData.address_detail.billing_address.contact_person && (
+                                                        <p>Contact: {quoteData.address_detail.billing_address.contact_person}</p>
+                                                    )}
+                                                    {quoteData.address_detail.billing_address.telephone_number && (
+                                                        <p>Phone: {quoteData.address_detail.billing_address.telephone_number}</p>
+                                                    )}
+                                                    {quoteData.address_detail.billing_address.fax_number && (
+                                                        <p>Fax: {quoteData.address_detail.billing_address.fax_number}</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm">N/A</p>
+                                            )}
+                                        </div>
+
+                                        <div className="border rounded-lg p-3 bg-muted/20">
+                                            <p className="text-sm font-medium text-muted-foreground mb-2">Shipping Address</p>
+                                            {quoteData.address_detail.shipping_address ? (
+                                                <div className="text-sm space-y-0.5">
+                                                    <p>{quoteData.address_detail.shipping_address.address || "—"}</p>
+                                                    {quoteData.address_detail.shipping_address.address_line_two && (
+                                                        <p>{quoteData.address_detail.shipping_address.address_line_two}</p>
+                                                    )}
+                                                    <p>
+                                                        {[
+                                                            quoteData.address_detail.shipping_address.city,
+                                                            quoteData.address_detail.shipping_address.state,
+                                                            quoteData.address_detail.shipping_address.country
+                                                        ].filter(Boolean).join(", ")}
+                                                        {quoteData.address_detail.shipping_address.pin_code
+                                                            ? `, ${quoteData.address_detail.shipping_address.pin_code}`
+                                                            : ""}
+                                                    </p>
+                                                    {quoteData.address_detail.shipping_address.contact_person && (
+                                                        <p>Contact: {quoteData.address_detail.shipping_address.contact_person}</p>
+                                                    )}
+                                                    {quoteData.address_detail.shipping_address.telephone_number && (
+                                                        <p>Phone: {quoteData.address_detail.shipping_address.telephone_number}</p>
+                                                    )}
+                                                    {quoteData.address_detail.shipping_address.fax_number && (
+                                                        <p>Fax: {quoteData.address_detail.shipping_address.fax_number}</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm">N/A</p>
+                                            )}
+                                        </div>
+
+                                        <div className="border rounded-lg p-3 bg-muted/20 md:col-span-2">
+                                            <p className="text-sm font-medium text-muted-foreground mb-2">GST Details</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                <p><span className="font-medium">GST Preference:</span> {quoteData.address_detail.gst_preference || "—"}</p>
+                                                <p><span className="font-medium">GSTIN:</span> {quoteData.address_detail.gst_detail?.gstin || "—"}</p>
+                                                <p><span className="font-medium">Place of Supply:</span> {quoteData.address_detail.gst_detail?.place_of_supply || "—"}</p>
+                                                <p><span className="font-medium">Business Legal Name:</span> {quoteData.address_detail.gst_detail?.business_legal_name || "—"}</p>
+                                                <p><span className="font-medium">Business Trade Name:</span> {quoteData.address_detail.gst_detail?.business_trade_name || "—"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -628,6 +1050,84 @@ export const QuotesDetails = () => {
                                 </CardContent>
                             </Card>
                         )}
+                    </TabsContent>
+
+                    {/* Activity Logs Tab */}
+                    <TabsContent value="activity-logs" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    Activity Logs
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {Array.isArray(quoteData.activity_logs) && quoteData.activity_logs.length > 0 ? (
+                                    <div className="divide-y">
+                                        {quoteData.activity_logs.map((log, idx) => (
+                                            (() => {
+                                                const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                                                const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                                                const isConverted = hint.includes("convert");
+                                                const isCreated = hint.includes("create");
+                                                const isAccepted = hint.includes("accept");
+                                                const isSent = hint.includes("sent");
+
+                                                const salesOrderId =
+                                                    log?.sales_order_id ||
+                                                    log?.sale_order_id ||
+                                                    log?.lock_account_sale_order_id ||
+                                                    quoteData?.sales_order_id ||
+                                                    quoteData?.sale_order_id ||
+                                                    quoteData?.lock_account_sale_order_id;
+
+                                                const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Edit : FileText);
+                                                const iconWrapClass =
+                                                    isConverted || isCreated
+                                                        ? "bg-green-50 text-green-600 border-green-100"
+                                                        : (isAccepted || isSent
+                                                            ? "bg-sky-50 text-sky-600 border-sky-100"
+                                                            : "bg-gray-50 text-gray-500 border-gray-100");
+
+                                                return (
+                                                    <div key={key} className="flex gap-6 py-5">
+                                                        <div className="min-w-[170px] text-sm text-muted-foreground">
+                                                            <div>{log?.date || "—"} {log?.time || ""}</div>
+                                                        </div>
+
+                                                        <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
+                                                            <Icon className="h-5 w-5" />
+                                                        </div>
+
+                                                        <div className="flex-1">
+                                                            <div className="text-sm font-medium text-foreground">
+                                                                {log?.message || "—"}
+                                                            </div>
+                                                            <div className="text-sm text-muted-foreground">
+                                                                by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+                                                            </div>
+
+                                                            {isConverted && salesOrderId ? (
+                                                                <button
+                                                                    type="button"
+                                                                    className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                                                    onClick={() => navigate(`/accounting/sales-order/${salesOrderId}`)}
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                    View the sales order
+                                                                </button>
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>

@@ -250,10 +250,12 @@ export const AddFMUserPage = () => {
     } else if (!validateEmail(formData.emailAddress)) {
       toast.error('Please enter a valid email address')
       return false
-    } else if (!formData.selectUserType) {
+    }
+    else if (!formData.selectUserType) {
       toast.error("Please select user type");
       return false;
-    } else if (!formData.selectRole) {
+    }
+    else if (!formData.selectRole) {
       toast.error("Please select role");
       return false;
     } else if (!formData.selectAccessLevel) {
@@ -341,7 +343,7 @@ export const AddFMUserPage = () => {
         return;
       }
       toast.success("User added successfully");
-      navigate("/master/user/fm-users");
+      navigate(-1);
     } catch (error: any) {
       console.log(error);
       if (error?.companies && error?.companies.length > 0) {
@@ -384,7 +386,7 @@ export const AddFMUserPage = () => {
       if (response.data) {
         toast.success("Permissions assigned successfully");
         setDuplicateUserDialog((prev) => ({ ...prev, open: false }));
-        navigate("/master/user/fm-users");
+        navigate(-1);
       }
     } catch (error: any) {
       console.error("Error assigning permissions:", error);
@@ -745,47 +747,44 @@ export const AddFMUserPage = () => {
                   />
                 </div>
 
-                {
-                  !isClubSite && (
-                    <div>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel shrink>
-                          Select User Type<span className="text-red-500">*</span>
-                        </InputLabel>
-                        <Select
-                          value={formData.selectUserType}
-                          onChange={(e) =>
-                            handleInputChange("selectUserType", e.target.value)
-                          }
-                          label="Select User Type"
-                          displayEmpty
-                          required
-                        >
-                          <MenuItem value="">Select User Type</MenuItem>
-                          <MenuItem value="pms_admin">Admin (Web & App)</MenuItem>
-                          <MenuItem value="pms_technician">
-                            Technician (App)
-                          </MenuItem>
-                          <MenuItem value="pms_hse">Head Site Engineer</MenuItem>
-                          <MenuItem value="pms_se">Site Engineer</MenuItem>
-                          <MenuItem value="pms_occupant_admin">
-                            Customer Admin
-                          </MenuItem>
-                          <MenuItem value="pms_accounts">Accounts</MenuItem>
-                          <MenuItem value="pms_po">Purchase Officer</MenuItem>
-                          <MenuItem value="pms_qc">Quality Control</MenuItem>
-                          <MenuItem value="pms_security">Security</MenuItem>
-                          <MenuItem value="pms_security_supervisor">
-                            Security Supervisor
-                          </MenuItem>
-                          <MenuItem value="pms_occupant">
-                            User (Customer User)
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
-                    </div>
-                  )
-                }
+
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>
+                      Select User Type<span className="text-red-500">*</span>
+                    </InputLabel>
+                    <Select
+                      value={formData.selectUserType}
+                      onChange={(e) =>
+                        handleInputChange("selectUserType", e.target.value)
+                      }
+                      label="Select User Type"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select User Type</MenuItem>
+                      <MenuItem value="pms_admin">Admin (Web & App)</MenuItem>
+                      <MenuItem value="pms_technician">
+                        Technician (App)
+                      </MenuItem>
+                      <MenuItem value="pms_hse">Head Site Engineer</MenuItem>
+                      <MenuItem value="pms_se">Site Engineer</MenuItem>
+                      <MenuItem value="pms_occupant_admin">
+                        Customer Admin
+                      </MenuItem>
+                      <MenuItem value="pms_accounts">Accounts</MenuItem>
+                      <MenuItem value="pms_po">Purchase Officer</MenuItem>
+                      <MenuItem value="pms_qc">Quality Control</MenuItem>
+                      <MenuItem value="pms_security">Security</MenuItem>
+                      <MenuItem value="pms_security_supervisor">
+                        Security Supervisor
+                      </MenuItem>
+                      <MenuItem value="pms_occupant">
+                        User (Customer User)
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
 
                 <div>
                   <FormControl fullWidth variant="outlined">

@@ -139,6 +139,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const [showStartCalender, setShowStartCalender] = useState(false);
   const [calendarTaskHours, setCalendarTaskHours] = useState([]);
   const [originalDateWiseHrs, setOriginalDateWiseHrs] = useState([]);
+  const [parentId, setParentId] = useState("")
 
   const [formData, setFormData] = useState({
     taskTitle: "",
@@ -393,6 +394,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         task_tags?: Array<{ company_tag?: { id: string }; id: string }>;
         observers?: Array<{ user_id: string; user_name: string; id: string }>;
         task_allocation_times?: Array<any>;
+        parent_id?: string | null;
       };
 
       console.log(taskData);
@@ -444,6 +446,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         observer: mappedObservers,
         tags: mappedTags,
       });
+
+      setParentId(taskData.parent_id || "")
 
       if (taskData.expected_start_date) {
         setStartDate({
@@ -608,28 +612,6 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
     setIsSubmitting(true);
 
-    // const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
-    // const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
-    // let taskAllocationTimesAttributes = dateWiseHours;
-
-    // console.log(taskAllocationTimesAttributes)
-
-    // if (Array.isArray(taskAllocationTimesAttributes)) {
-    //     taskAllocationTimesAttributes = originalDateWiseHrs.map((allocation) => {
-    //         const allocationDate = allocation.date; // YYYY-MM-DD
-
-    //         const shouldDestroy =
-    //             allocationDate < formatedStartDate ||
-    //             allocationDate > formatedEndDate;
-
-    //         return {
-    //             ...allocation,
-    //             id: allocation.id || null,
-    //             _destroy: shouldDestroy,
-    //         };
-    //     });
-    // }
-
     const formatedEndDate = `${endDate?.year}-${String(endDate?.month + 1).padStart(2, "0")}-${String(endDate?.date).padStart(2, "0")}`;
     const formatedStartDate = `${startDate?.year}-${String(startDate?.month + 1).padStart(2, "0")}-${String(startDate?.date).padStart(2, "0")}`;
 
@@ -708,54 +690,58 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       <div className="max-w-[95%] mx-auto pr-3">
         <div className="p-4 bg-white relative">
           {/* Project and Milestone Dropdowns */}
-          <div className="flex items-center justify-between gap-3 mb-4 mt-4">
-            <div className="w-full">
-              <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles}>
-                <InputLabel id="project-select-label">Project *</InputLabel>
-                <Select
-                  labelId="project-select-label"
-                  id="project-select"
-                  value={selectedProjectId}
-                  onChange={(e) => {
-                    const projectId = e.target.value;
-                    setSelectedProjectId(projectId);
-                    setSelectedMilestoneId("");
-                    setMilestones([]);
-                    if (projectId) {
-                      getMilestones(projectId);
-                    }
-                  }}
-                  label="Project *"
-                >
-                  <MenuItem value="">Select a project</MenuItem>
-                  {projects.map((proj) => (
-                    <MenuItem key={proj.id} value={proj.id}>
-                      {proj.title}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <div className="w-full">
-              <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles} disabled={!selectedProjectId}>
-                <InputLabel id="milestone-select-label">Milestone *</InputLabel>
-                <Select
-                  labelId="milestone-select-label"
-                  id="milestone-select"
-                  value={selectedMilestoneId}
-                  onChange={(e) => setSelectedMilestoneId(e.target.value)}
-                  label="Milestone *"
-                >
-                  <MenuItem value="">Select a milestone</MenuItem>
-                  {milestones.map((ms) => (
-                    <MenuItem key={ms[0]} value={ms[0]}>
-                      {ms[1]}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-          </div>
+          {
+            !parentId && (
+              <div className="flex items-center justify-between gap-3 mb-4 mt-4">
+                <div className="w-full">
+                  <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles}>
+                    <InputLabel id="project-select-label">Project *</InputLabel>
+                    <Select
+                      labelId="project-select-label"
+                      id="project-select"
+                      value={selectedProjectId}
+                      onChange={(e) => {
+                        const projectId = e.target.value;
+                        setSelectedProjectId(projectId);
+                        setSelectedMilestoneId("");
+                        setMilestones([]);
+                        if (projectId) {
+                          getMilestones(projectId);
+                        }
+                      }}
+                      label="Project *"
+                    >
+                      <MenuItem value="">Select a project</MenuItem>
+                      {projects.map((proj) => (
+                        <MenuItem key={proj.id} value={proj.id}>
+                          {proj.title}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div className="w-full">
+                  <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles} disabled={!selectedProjectId}>
+                    <InputLabel id="milestone-select-label">Milestone *</InputLabel>
+                    <Select
+                      labelId="milestone-select-label"
+                      id="milestone-select"
+                      value={selectedMilestoneId}
+                      onChange={(e) => setSelectedMilestoneId(e.target.value)}
+                      label="Milestone *"
+                    >
+                      <MenuItem value="">Select a milestone</MenuItem>
+                      {milestones.map((ms) => (
+                        <MenuItem key={ms[0]} value={ms[0]}>
+                          {ms[1]}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+            )
+          }
 
           {/* Task Title */}
           <div className="mb-1">

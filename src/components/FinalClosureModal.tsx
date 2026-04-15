@@ -73,11 +73,13 @@ interface FinalClosureModalProps {
         rca?: string;
         corrective_action?: string;
         preventive_action?: string;
+        corrective_fields?: CorrectiveField[];
+        preventive_fields?: PreventiveField[];
     };
 }
 
 interface CorrectiveField {
-    id?: number;
+    id?: number;       // present for prefilled rows, absent for new ones
     tag_type_id: string;
     description: string;
     responsible_person_id: string;
@@ -149,6 +151,36 @@ export const FinalClosureModal: React.FC<FinalClosureModalProps> = ({
                 setRca(initialData.rca || '');
                 setCorrectiveAction(initialData.corrective_action || '');
                 setPreventiveAction(initialData.preventive_action || '');
+
+                // Prefill corrective fields with ids intact
+                if (initialData.corrective_fields && initialData.corrective_fields.length > 0) {
+                    setCorrectiveFields(
+                        initialData.corrective_fields.map((f) => ({
+                            id: f.id,                                          // carry id for existing rows
+                            tag_type_id: f.tag_type_id?.toString() || '',
+                            description: f.description || '',
+                            responsible_person_id: f.responsible_person_id?.toString() || '',
+                            date: f.date || '',
+                        }))
+                    );
+                } else {
+                    setCorrectiveFields([{ tag_type_id: '', description: '', responsible_person_id: '', date: '' }]);
+                }
+
+                // Prefill preventive fields with ids intact
+                if (initialData.preventive_fields && initialData.preventive_fields.length > 0) {
+                    setPreventiveFields(
+                        initialData.preventive_fields.map((f) => ({
+                            id: f.id,                                          // carry id for existing rows
+                            tag_type_id: f.tag_type_id?.toString() || '',
+                            description: f.description || '',
+                            responsible_person_id: f.responsible_person_id?.toString() || '',
+                            date: f.date || '',
+                        }))
+                    );
+                } else {
+                    setPreventiveFields([{ tag_type_id: '', description: '', responsible_person_id: '', date: '' }]);
+                }
             }
         }
     }, [isOpen, initialData]);

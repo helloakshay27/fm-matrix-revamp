@@ -49,8 +49,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   // Initialize permission hook
   const { shouldShow } = useDynamicPermissions();
   const user = getUser();
-  const isRestrictedUser =
-    user?.email?.toLowerCase().trim() === "karan.balsara@zycus.com";
+  const isRestrictedUser = user?.email?.toLowerCase().trim() === 'karan.balsara@zycus.com';
 
   console.log("AssetDataTable rendered with assets:", assets);
   console.log("Available custom fields:", availableCustomFields);
@@ -122,13 +121,13 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
 
   const selectionActions = shouldShow("assets", "schedule")
     ? [
-        {
-          label: "Add Schedule",
-          icon: Plus,
-          onClick: handleAddSchedule,
-          variant: "primary" as const,
-        },
-      ]
+      {
+        label: "Add Schedule",
+        icon: Plus,
+        onClick: handleAddSchedule,
+        variant: "primary" as const,
+      },
+    ]
     : [];
 
   const columns: ColumnConfig[] = [
@@ -394,7 +393,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     },
     // Dynamic custom field columns
     ...availableCustomFields.map((field) => ({
-      key: `custom_${field.key.replace(/\s+/g, "_")}`,
+      key: `custom_${field.key.replace(/\s+/g, '_')}`,
       label: field.title,
       sortable: true,
       hideable: true,
@@ -524,9 +523,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         );
       case "category":
         return (
-          <span className="text-sm text-gray-600">
-            {asset.category.name || "-"}
-          </span>
+          <span className="text-sm text-gray-600">{asset.category.name || "-"}</span>
         );
       case "allocationType":
         return (
@@ -667,13 +664,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           }
 
           let displayValue = customFieldValue;
-          if (customFieldValue && typeof customFieldValue === "object") {
-            displayValue =
-              customFieldValue.name || customFieldValue.field_value || "";
+          if (customFieldValue && typeof customFieldValue === 'object') {
+            displayValue = customFieldValue.name || customFieldValue.field_value || '';
           }
 
           return (
-            <span className="text-sm text-gray-600">{displayValue || "-"}</span>
+            <span className="text-sm text-gray-600">
+              {displayValue || "-"}
+            </span>
           );
         }
         return null;
@@ -685,9 +683,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   };
 
   const getRowClassName = (asset: Asset) =>
-    asset.disabled
-      ? "bg-gray-100 text-gray-500 opacity-60 cursor-not-allowed"
-      : "";
+    asset.disabled ? "bg-gray-100 text-gray-500 opacity-60 cursor-not-allowed" : "";
 
   const isRowDisabled = (asset: Asset) => !!asset.disabled;
 
@@ -699,7 +695,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           onAdd={shouldShow("assets", "add") ? handleAddAsset : undefined}
           onClearSelection={() => setShowActionPanel(false)}
           onImport={shouldShow("assets", "import") ? handleImport : undefined}
-          // onChecklist={onChecklist}
+        // onChecklist={onChecklist}
         />
       )}
       
@@ -728,13 +724,9 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         loading={loading}
         rowClassName={getRowClassName}
         isRowDisabled={isRowDisabled}
-        key={`asset-table-${availableCustomFields.map((f) => f.key).join("-")}`} // Force re-render when custom fields change
+        key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
-          shouldShow("assets", "add") &&
-          !(
-            isRestrictedUser &&
-            window.location.pathname.includes("/maintenance/asset")
-          ) ? (
+          shouldShow("assets", "add") && !(isRestrictedUser && window.location.pathname.includes('/maintenance/asset')) ? (
             <Button size="sm" className="mr-2" onClick={handleActionClick}>
               <Plus className="w-4 h-4 mr-2" />
               Action

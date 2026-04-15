@@ -16,6 +16,49 @@ import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
+import Invoice from '@/components/Invoice';
+import { API_CONFIG } from '@/config/apiConfig';
+import { getToken } from '@/utils/auth';
+
+// Formatter helper: Converts facility booking API response into Invoice-compatible format
+const formatFacilityBookingInvoice = (apiResponse: any): any => {
+  const invoiceData = apiResponse?.invoice_data;
+  if (!invoiceData) return null;
+
+  const invoice = invoiceData?.invoice || {};
+  const member = invoiceData?.member || {};
+  const booking = invoiceData?.booking || {};
+  const lineItems = invoiceData?.line_items || [];
+  const totals = invoiceData?.totals || {};
+
+  return {
+    id: invoice.invoice_number || apiResponse?.booking_id || 'FB-' + apiResponse?.booking_id,
+    created_at: invoice.invoice_date || new Date().toLocaleDateString('en-IN'),
+    booking_id: apiResponse?.booking_id,
+    bill_id: apiResponse?.bill_id,
+    club_members: [{
+      user_name: member.full_name || 'Guest',
+      user_email: member.email || '',
+      user_mobile: member.mobile || '',
+    }],
+    membership_plan: { name: booking.facility_name || 'Facility Booking' },
+    site_name: 'Site',
+    facility_name: booking.facility_name || 'Facility Booking',
+    startdate: booking.startdate,
+    allocation_payment_detail: {
+      base_amount: lineItems[0]?.rate || 0,
+      discount: totals.discount || 0,
+      cgst: totals.cgst || 0,
+      sgst: totals.sgst || 0,
+      cgst_per: 9,
+      sgst_per: 9,
+      total_tax: (totals.cgst || 0) + (totals.sgst || 0),
+      total_amount: totals.total_amount || 0,
+      payment_mode: 'online',
+      payment_status: invoiceData?.status || 'pending',
+    },
+  };
+};
 
 export const AmenityBookingDetailsClubPage = () => {
   const { id } = useParams();
@@ -43,6 +86,115 @@ export const AmenityBookingDetailsClubPage = () => {
   const [paymentMode, setPaymentMode] = useState('online');
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [paymentLoading, setPaymentLoading] = useState(false);
+
+  // Invoice PDF state
+  const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [autoDownloadInvoice, setAutoDownloadInvoice] = useState(false);
+  const [collectedPDF, setCollectedPDF] = useState<{ bill_id: number | string; base64: string; filename: string } | null>(null);
+  const [isUploadingPDF, setIsUploadingPDF] = useState(false);
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+  // Handle when PDF is generated
+  const handleBase64Generated = (base64: string) => {
+    console.log('PDF generated from Invoice');
+    setIsGeneratingInvoice(false);
+    const billId = invoiceData?.bill_id || invoiceData?.booking_id;
+
+    if (billId) {
+      setCollectedPDF({
+        bill_id: billId,
+        base64: base64,
+        filename: `invoice_${invoiceData?.id}.pdf`
+      });
+      console.log('PDF collected with bill_id:', billId);
+    }
+  };
+
+  // Send PDF to API
+  const handleUploadPDFToAPI = async () => {
+    if (!collectedPDF) {
+      toast.error('No PDF to upload');
+      return;
+    }
+
+    setIsUploadingPDF(true);
+    try {
+      const savedToken = getToken();
+
+      console.log('Uploading PDF with bill_id:', collectedPDF.bill_id);
+
+      // Build the bills array for API
+      const billsPayload = [
+        {
+          bill_id: collectedPDF.bill_id,
+          attachment_type: 'facility_booking_payment',
+          filename: collectedPDF.filename,
+          file: collectedPDF.base64 // Contains the data:image/png;base64,... format
+        }
+      ];
+
+      console.log('Bills payload:', billsPayload);
+
+      // Send to API
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}/lock_account_bills/bulk_attach_invoice.json`,
+        { bills: billsPayload },
+        {
+          headers: {
+            Authorization: `Bearer ${savedToken}`,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success('Invoice uploaded successfully!');
+        console.log('PDF uploaded successfully');
+
+        // Reset states and refresh
+        setCollectedPDF(null);
+        setShowInvoice(false);
+        setInvoiceData(null);
+        setOpenPaymentModal(false);
+
+        // Refresh booking details after a short delay
+        setTimeout(() => {
+          fetchDetails();
+        }, 1000);
+      }
+    } catch (error: any) {
+      console.error('Error uploading PDF:', error);
+      const errorMsg = axios.isAxiosError(error) ? error.response?.data?.message || error.message : 'Failed to upload invoice';
+      toast.error(errorMsg);
+
+      // Still refresh after delay
+      setTimeout(() => {
+        fetchDetails();
+      }, 2000);
+    } finally {
+      setIsUploadingPDF(false);
+    }
+  };
+
+  // Auto-upload PDF when collected
+  useEffect(() => {
+    if (collectedPDF && !isUploadingPDF && showInvoice) {
+      console.log('PDF collected, auto-uploading...');
+      const timer = setTimeout(() => {
+        handleUploadPDFToAPI();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [collectedPDF, isUploadingPDF, showInvoice]);
+
+  // Close invoice display
+  const handleCloseInvoice = () => {
+    setShowInvoice(false);
+    setInvoiceData(null);
+    setCollectedPDF(null);
+  };
+
   // Payment API handler
   const handlePayment = async () => {
     if (!id) return;
@@ -64,8 +216,26 @@ export const AmenityBookingDetailsClubPage = () => {
         }
       );
       toast.success('Payment request sent successfully!');
-      setOpenPaymentModal(false);
-      fetchDetails();
+
+      // Format and display invoice
+      const responseData = response.data;
+      if (responseData.invoice_data) {
+        const formattedInvoice = formatFacilityBookingInvoice(responseData);
+        if (formattedInvoice) {
+          console.log('Displaying invoice:', formattedInvoice);
+          setInvoiceData(formattedInvoice);
+          setShowInvoice(true);
+          setIsGeneratingInvoice(true);
+          setAutoDownloadInvoice(true);
+          setOpenPaymentModal(false);
+        } else {
+          setOpenPaymentModal(false);
+          fetchDetails();
+        }
+      } else {
+        setOpenPaymentModal(false);
+        fetchDetails();
+      }
     } catch (error) {
       toast.error('Failed to send payment request');
       console.error('Payment error:', error);
@@ -457,7 +627,7 @@ export const AmenityBookingDetailsClubPage = () => {
                     <div key={index} className="flex justify-between items-center pl-4">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">{item.facility_booking_accessory.name}</span>
-                        <span className="text-xs text-gray-400">({item.facility_booking_accessory.quantity} x ₹{item.facility_booking_accessory.price.toFixed(2)})</span>
+                        <span className="text-xs text-gray-400">({item.facility_booking_accessory.quantity} x ₹{item.facility_booking_accessory?.price?.toFixed(2)})</span>
                       </div>
                       <span className="text-sm font-medium">₹{item.facility_booking_accessory.total.toFixed(2)}</span>
                     </div>
@@ -637,8 +807,8 @@ export const AmenityBookingDetailsClubPage = () => {
                           </td>
                           <td className="border border-gray-300 px-4 py-3">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${member.booked_member?.oftype === 'primary'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
                               }`}>
                               {member.booked_member?.oftype || '-'}
                             </span>
@@ -682,133 +852,210 @@ export const AmenityBookingDetailsClubPage = () => {
 
   return (
     <div className="p-[30px] min-h-screen bg-transparent">
-      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1 hover:text-gray-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-      </div>
-      <>
-        <div className="flex items-center gap-4 mb-6">
-          <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
-            {bookings.facility_name}
-          </h1>
-        </div>
-
-
-        {/* Payment & Cancel Button for Pending/Confirmed Status */}
-
-        {(bookings?.current_status === 'Pending' || bookings?.current_status === 'Confirmed') && (
-          <div className="flex justify-end mt-6 mb-4 gap-2">
-            {bookings?.current_status === 'Pending' && (
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setOpenPaymentModal(true)}>
-                Payment
-              </Button>
-            )}
-            {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setShowCancelModal(true)}>
-                Cancel Booking
-              </Button>
-            )}
-          </div>
-        )}
-
-
-
-
-        {console.log(",,,,", bookings)}
-        <div className="bg-white rounded-lg border-2 border-gray-200">
-          <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
-        </div>
-
-
-        {/* Payment Modal */}
-        <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
-          <DialogContent className="sm:max-w-[400px]">
-            <DialogHeader>
-              <DialogTitle>Make Payment</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="payment_mode">Payment Mode</Label>
-                <Select
-                  value={paymentMode}
-                  onValueChange={setPaymentMode}
-                  disabled={paymentLoading}
-                >
-                  <SelectTrigger className="w-full mt-1" id="payment_mode">
-                    <SelectValue placeholder="Select Payment Mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="online">Online</SelectItem>
-                    <SelectItem value="offline">Offline</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="payment_method">Payment Method</Label>
-                <Select
-                  value={paymentMethod}
-                  onValueChange={setPaymentMethod}
-                  disabled={paymentLoading}
-                >
-                  <SelectTrigger className="w-full mt-1" id="payment_method">
-                    <SelectValue placeholder="Select Payment Method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="upi">UPI</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="netbanking">Net Banking</SelectItem>
-                  </SelectContent>
-                </Select>
+      {showInvoice && invoiceData ? (
+        <div className="w-full">
+          {/* Loading Overlay while generating or uploading invoice */}
+          {(isGeneratingInvoice || isUploadingPDF) && (
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
+              <div className="bg-white rounded-lg shadow-2xl p-8 text-center max-w-sm">
+                <div className="mb-6 flex justify-center">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-spin" style={{
+                      backgroundClip: 'padding-box',
+                      padding: '3px',
+                      background: 'conic-gradient(from 0deg, #3b82f6, #1e40af)'
+                    }}>
+                      <div className="absolute inset-3 bg-white rounded-full"></div>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-2xl animate-spin">⏳</span>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Booking Payment Successfull</h3>
+                <p className="text-gray-600 font-medium">
+                  Preparing invoicing and sending mail...
+                </p>
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={handlePayment} disabled={paymentLoading} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
-                {paymentLoading ? 'Processing...' : 'Submit Payment'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
 
-
-        {/* Cancel Booking Modal */}
-        <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
-          <DialogContent className="sm:max-w-[400px]">
-            <DialogHeader>
-              <DialogTitle>Cancel Booking</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-gray-700 text-base">
-                Are you sure you want to cancel this booking?
-              </p>
-              {bookings?.can_cancel && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
-                  <span className="text-gray-800 text-sm">
-                    You will get a refund of <b>₹{bookings.can_cancel.amount}.</b>
-                    {/* ({bookings.can_cancel.return_percentage}% of total amount). */}
-                  </span>
+          {/* Invoice Section with blur when generating or uploading */}
+          <div className={`w-full transition-all duration-300 ${isGeneratingInvoice || isUploadingPDF ? 'blur-sm opacity-50 pointer-events-none' : ''}`}>
+            <div className="fixed top-4 right-4 z-50 flex gap-3">
+              {isUploadingPDF ? (
+                <Button
+                  disabled={true}
+                  className="bg-blue-600 text-white"
+                >
+                  <span className="animate-spin mr-2">⏳</span>
+                  Uploading Invoice...
+                </Button>
+              ) : collectedPDF ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg shadow-md p-3 flex items-center gap-2">
+                  <span className="text-sm font-medium text-green-700">✓ Invoice collected</span>
+                  <span className="text-xs text-green-600">Uploading...</span>
                 </div>
+              ) : (
+                <Button
+                  disabled={true}
+                  className="bg-gray-400 text-white"
+                >
+                  ⏳ Generating Invoice...
+                </Button>
+              )}
+
+              <Button
+                onClick={handleCloseInvoice}
+                disabled={isUploadingPDF || isGeneratingInvoice}
+                variant="outline"
+                className="bg-white"
+              >
+                Back
+              </Button>
+            </div>
+
+            <Invoice
+              key={`invoice-${invoiceData?.bill_id}`}
+              data={invoiceData}
+              returnBase64={true}
+              onBase64Generated={handleBase64Generated}
+              onClose={handleCloseInvoice}
+              showButton={true}
+              autoDownload={autoDownloadInvoice}
+              isFromDetailsPage={true}
+            />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 hover:text-gray-800 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4 mb-6">
+            <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
+              {bookings.facility_name}
+            </h1>
+          </div>
+
+
+          {/* Payment & Cancel Button for Pending/Confirmed Status */}
+
+          {(bookings?.current_status === 'Pending' || bookings?.current_status === 'Confirmed') && (
+            <div className="flex justify-end mt-6 mb-4 gap-2">
+              {bookings?.current_status === 'Pending' && (
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setOpenPaymentModal(true)}>
+                  Payment
+                </Button>
+              )}
+              {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
+                <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setShowCancelModal(true)}>
+                  Cancel Booking
+                </Button>
               )}
             </div>
-            <DialogFooter className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowCancelModal(false)}>
-                Go Back
-              </Button>
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
-                Cancel Booking
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
 
 
 
-        {/* <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+
+          {console.log(",,,,", bookings)}
+          <div className="bg-white rounded-lg border-2 border-gray-200">
+            <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
+          </div>
+
+
+          {/* Payment Modal */}
+          <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>Make Payment</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="payment_mode">Payment Mode</Label>
+                  <Select
+                    value={paymentMode}
+                    onValueChange={setPaymentMode}
+                    disabled={paymentLoading}
+                  >
+                    <SelectTrigger className="w-full mt-1" id="payment_mode">
+                      <SelectValue placeholder="Select Payment Mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="online">Online</SelectItem>
+                      <SelectItem value="offline">Offline</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="payment_method">Payment Method</Label>
+                  <Select
+                    value={paymentMethod}
+                    onValueChange={setPaymentMethod}
+                    disabled={paymentLoading}
+                  >
+                    <SelectTrigger className="w-full mt-1" id="payment_method">
+                      <SelectValue placeholder="Select Payment Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="upi">UPI</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="netbanking">Net Banking</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handlePayment} disabled={paymentLoading} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+                  {paymentLoading ? 'Processing...' : 'Submit Payment'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+
+          {/* Cancel Booking Modal */}
+          <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>Cancel Booking</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-gray-700 text-base">
+                  Are you sure you want to cancel this booking?
+                </p>
+                {bookings?.can_cancel && (
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                    <span className="text-gray-800 text-sm">
+                      You will get a refund of <b>₹{bookings.can_cancel.amount}.</b>
+                      {/* ({bookings.can_cancel.return_percentage}% of total amount). */}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+                  Go Back
+                </Button>
+                <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
+                  Cancel Booking
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+
+
+          {/* <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
   <DialogContent className="sm:max-w-[420px]">
     <DialogHeader>
       <DialogTitle className="text-lg font-semibold text-red-600">
@@ -857,7 +1104,8 @@ export const AmenityBookingDetailsClubPage = () => {
   </DialogContent>
 </Dialog> */}
 
-      </>
+        </>
+      )}
     </div>
   );
 };

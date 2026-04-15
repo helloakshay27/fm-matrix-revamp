@@ -94,36 +94,18 @@ apiClient.interceptors.response.use(
     // Log error for debugging
     console.error("API Error:", error.response?.data || error.message);
 
-    // Handle authentication errors - logout globally
+    // Do not force logout here. Individual screens should decide how to
+    // present auth/network failures so one bad request does not wipe the app.
     if (error.response?.status === 401) {
-      console.warn("401 Unauthorized - Logging out globally");
-
-      // Clear all auth data
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Redirect to login page
-      window.location.href = "/login";
-
-      return Promise.reject(new Error("Session expired. Please login again."));
+      console.warn("401 Unauthorized - rejecting request without global logout");
+      window.dispatchEvent(new CustomEvent("auth:expired"));
+      return Promise.reject(error);
     }
 
-    // Handle network errors - logout globally
+    // Network failures should surface to the current screen, not log out the user.
     if (error.message === "Network Error" || !error.response) {
-      console.warn("Network Error - Logging out globally");
-
-      // Clear all auth data
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Redirect to login page
-      window.location.href = "/login";
-
-      return Promise.reject(
-        new Error(
-          "Network error. Please check your connection and login again."
-        )
-      );
+      console.warn("Network Error - rejecting request without global logout");
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);

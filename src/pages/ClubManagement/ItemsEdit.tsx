@@ -348,6 +348,11 @@ const ItemsEdit = () => {
             toast.error("Please mention the item name.");
             return;
         }
+        if (form.type === "goods" && !form.hsn_code.trim()) {
+            toast.error("HSN Code is required.");
+            return;
+        }
+
         if (!form.tax_preference) {
             toast.error("Please select Tax Preference");
             return;
@@ -617,14 +622,13 @@ const ItemsEdit = () => {
 
                         {form.type === "goods" ? (
                             <TextField
-                                label="HSN Code"
+                                label={<span>HSN Code <span style={{ color: 'red' }}>*</span></span>}
                                 name="hsn_code"
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
-                                // onChange={handleChange}
-                                 onChange={(e) => {
+                                // required
+                                onChange={(e) => {
                                     const value = e.target.value;
-
                                     // Allow only numbers and max 8 digits
                                     if (/^\d{0,8}$/.test(value)) {
                                         handleChange(e);

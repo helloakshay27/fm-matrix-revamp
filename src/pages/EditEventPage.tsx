@@ -765,12 +765,12 @@ export const EditEventPage = () => {
                   <FormControlLabel
                     value="panasche"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Panasche</span>}
+                    label={<span className="text-[12px] text-gray-600">Panache</span>}
                   />
                   <FormControlLabel
                     value="persuit"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Persuit</span>}
+                    label={<span className="text-[12px] text-gray-600">Pursuit</span>}
                   />
                 </RadioGroup>
               </div>

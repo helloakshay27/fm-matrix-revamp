@@ -225,12 +225,25 @@ interface Asset {
   vendor_name: string;
 }
 
+interface ReadingRow {
+  type: string;
+  label: string;
+  data: { [key: string]: number };
+}
+
+interface ConsumptionItem {
+  name: string;
+  uom: string;
+  mf: number;
+  rows: ReadingRow[];
+}
+
 interface ApiResponse {
   start_date: string;
   end_date: string;
   date_headers: { date: string; formatted: string }[];
-  consumptions: { name: string; uom: string; data: { [key: string]: number } }[];
-  non_consumptions: { name: string; uom: string; data: { [key: string]: number } }[];
+  consumptions: ConsumptionItem[];
+  non_consumptions: ConsumptionItem[];
 }
 
 export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
@@ -380,7 +393,7 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
     data,
   }: {
     title: string;
-    data: { name: string; uom: string; data: { [key: string]: number } }[];
+    data: ConsumptionItem[];
   }) => (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-6">
@@ -427,32 +440,48 @@ export const ReadingsTab: React.FC<ReadingsTab> = ({ asset, assetId }) => {
                   </td>
                 </tr>
               ) : (
-                data.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="px-4 py-4 text-sm text-gray-900 border-r border-gray-200 truncate" title={item.name || '-'}>
-                      {item.name || '-'}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-center text-gray-900 border-r border-gray-200">
-                      {item.uom || '-'}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-center text-gray-900 border-r border-gray-200">
-                      -
-                    </td>
-                    <td className="px-4 py-4 text-sm text-center text-gray-900 border-r border-gray-200">
-                      -
-                    </td>
-                    {apiData?.date_headers?.map((header, idx) => (
-                      <td key={idx} className="px-3 py-4 text-sm text-center text-gray-900 border-r border-gray-200 last:border-r-0">
-                        {item.data && header.date ? (
-                          <span className={`${item.data[header.date] > 0 ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
-                            {item.data[header.date] ?? '-'}
-                          </span>
-                        ) : (
-                          <span className="text-gray-500">-</span>
-                        )}
+                data.map((item, itemIndex) => (
+                  <React.Fragment key={itemIndex}>
+                    {/* Header row for the item */}
+                    <tr className="bg-gray-100">
+                      <td className="px-4 py-3 text-sm font-semibold text-gray-900 border-r border-gray-200 truncate" title={item.name || '-'}>
+                        {item.name || '-'}
                       </td>
-                    )) || []}
-                  </tr>
+                      <td className="px-4 py-3 text-sm text-center font-medium text-gray-900 border-r border-gray-200">
+                        {item.uom || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-center font-medium text-gray-900 border-r border-gray-200">
+                        {item.mf ?? '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-center text-gray-900 border-r border-gray-200">
+                        -
+                      </td>
+                      {apiData?.date_headers?.map((_, idx) => (
+                        <td key={idx} className="px-3 py-3 border-r border-gray-200 last:border-r-0" />
+                      ))}
+                    </tr>
+                    {/* Sub-rows: opening, closing, consumption */}
+                    {(item.rows || []).map((row, rowIndex) => (
+                      <tr key={rowIndex} className="hover:bg-gray-50 transition-colors duration-150">
+                        <td className="px-4 py-3 text-sm text-gray-600 border-r border-gray-200 pl-8">
+                          {row.label}
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200" />
+                        <td className="px-4 py-3 border-r border-gray-200" />
+                        <td className="px-4 py-3 border-r border-gray-200" />
+                        {apiData?.date_headers?.map((header, idx) => {
+                          const val = row.data?.[header.date];
+                          return (
+                            <td key={idx} className="px-3 py-3 text-sm text-center border-r border-gray-200 last:border-r-0">
+                              <span className={val != null && val > 0 ? 'text-green-600 font-medium' : 'text-gray-500'}>
+                                {val ?? '-'}
+                              </span>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </React.Fragment>
                 ))
               )}
             </tbody>

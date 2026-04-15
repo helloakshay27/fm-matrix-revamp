@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ItemSearchInput from '@/components/ItemSearchInput';
 import {
     TextField,
     // Button,
@@ -30,12 +31,13 @@ import {
     Close,
     Add,
     Delete,
+    EditOutlined,
     CloudUpload,
     AttachFile,
     PersonAdd,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
@@ -67,6 +69,9 @@ interface Customer {
     outstandingReceivables: number;
     unusedCredits: number;
     contactPersons: ContactPerson[];
+    place_of_supply?: string;
+    billing_address?: any;
+    shipping_address?: any;
 }
 
 interface CustomerOptions {
@@ -98,9 +103,60 @@ interface ContactPerson {
     department: string;
 }
 
+interface CustomerDetail {
+    company_name: string;
+    salutation: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    outstanding_receivable_amount: number;
+    unused_credits_receivable_amount: number;
+    customer_type: string;
+    currency: string;
+    payment_terms: string;
+    portal_status: string;
+    customer_language: string;
+    gst_treatment: string;
+    gst_preference?: string;
+    gstin: string;
+    pan: string;
+    place_of_supply: string;
+    tax_preference: string;
+    contact_persons: any[];
+    billing_address: any;
+    shipping_address: any;
+    billing_addresses?: CustomerAddress[];
+    shipping_addresses?: CustomerAddress[];
+    gst_details?: GstDetail[];
+}
+
+interface CustomerAddress {
+    id: number | string;
+    attention: string;
+    address: string;
+    address_line_two: string;
+    country: string;
+    state: string;
+    city: string;
+    pin_code: string;
+    telephone_number: string;
+    fax_number: string;
+    mobile: string;
+}
+
+interface GstDetail {
+    id: number | string;
+    gstin: string;
+    place_of_supply: string;
+    business_legal_name: string | null;
+    business_trade_name: string | null;
+    primary: boolean;
+}
+
 interface Item {
     id: string;
     name: string;
+    item_id?: string | null;
     description: string;
     quantity: number | '';
     rate: number | '';
@@ -130,14 +186,14 @@ export const CreditNoteAddPage: React.FC = () => {
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id })));
+                    setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id, inter_state_tax_rate_id: item.inter_state_tax_rate_id })));
                     console.log('Fetched items:', res.data);
                 }
             } catch (err) {
@@ -221,6 +277,32 @@ export const CreditNoteAddPage: React.FC = () => {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [loadingCustomers, setLoadingCustomers] = useState(false);
     const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
+    const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
+    const [customerDetailLoading, setCustomerDetailLoading] = useState(false);
+    const [billingAddressBook, setBillingAddressBook] = useState<CustomerAddress[]>([]);
+    const [shippingAddressBook, setShippingAddressBook] = useState<CustomerAddress[]>([]);
+    const [selectedBillingAddressId, setSelectedBillingAddressId] = useState<number | string | null>(null);
+    const [selectedShippingAddressId, setSelectedShippingAddressId] = useState<number | string | null>(null);
+    const [addressListModalOpen, setAddressListModalOpen] = useState(false);
+    const [addressFormModalOpen, setAddressFormModalOpen] = useState(false);
+    const [activeAddressType, setActiveAddressType] = useState<'billing' | 'shipping'>('billing');
+    const [addressFormMode, setAddressFormMode] = useState<'new' | 'edit'>('new');
+    const [editingAddressId, setEditingAddressId] = useState<number | string | null>(null);
+    const [selectedAddressTaxInfoId, setSelectedAddressTaxInfoId] = useState<string>('');
+    const [gstModalOpen, setGstModalOpen] = useState(false);
+    const [gstTreatmentDraft, setGstTreatmentDraft] = useState('');
+    const [gstManageModalOpen, setGstManageModalOpen] = useState(false);
+    const [gstPickerModalOpen, setGstPickerModalOpen] = useState(false);
+    const [showNewGstForm, setShowNewGstForm] = useState(false);
+    const [gstDetails, setGstDetails] = useState<GstDetail[]>([]);
+    const [selectedGstDetailId, setSelectedGstDetailId] = useState<number | string | null>(null);
+    const [editingGstDetailId, setEditingGstDetailId] = useState<number | string | null>(null);
+    const [newGstForm, setNewGstForm] = useState({
+        gstin: '',
+        place_of_supply: '',
+        business_legal_name: '',
+        business_trade_name: ''
+    });
     // Contact persons selected for email
     const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
 
@@ -265,6 +347,33 @@ export const CreditNoteAddPage: React.FC = () => {
         //   { value: "tax_group", label: "Tax Group" }
     ];
     const [placeOfSupply, setPlaceOfSupply] = useState("");
+    const [orgState, setOrgState] = useState<string>("");
+
+    // Fetch organisation state on mount from organisation detail API
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            // org_id stored at login, organisation_id stored by fetchLockAccount
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                // address.state holds the organisation's registered state
+                const state = org?.address?.state || '';
+                console.log('[CreditNote] Org state from API:', state);
+                setOrgState(state);
+            } catch (err) {
+                console.error('[CreditNote] Failed to fetch org state:', err);
+            }
+        };
+        fetchOrgState();
+    }, []);
     const [taxGroups, setTaxGroups] = useState<any[]>([]);
     const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
     useEffect(() => {
@@ -290,6 +399,19 @@ export const CreditNoteAddPage: React.FC = () => {
             .finally(() => {
                 setLoadingTaxGroups(false);
             });
+    }, []);
+
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching tax rates:", error));
     }, []);
 
     const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
@@ -427,6 +549,71 @@ export const CreditNoteAddPage: React.FC = () => {
             padding: { xs: '8px', sm: '10px', md: '12px' },
         },
     };
+    const gstTreatmentOptions = [
+        { value: 'registered_regular', label: 'Registered Business - Regular' },
+        { value: 'registered_composition', label: 'Registered Business - Composition' },
+        { value: 'unregistered', label: 'Unregistered Business' },
+        { value: 'consumer', label: 'Consumer' },
+        { value: 'overseas', label: 'Overseas' },
+        { value: 'sez_unit', label: 'Special Economic Zone (SEZ) Unit' },
+        { value: 'deemed_export', label: 'Deemed Export' },
+        { value: 'tax_deductor', label: 'Tax Deductor' },
+        { value: 'sez_developer', label: 'SEZ Developer' },
+        { value: 'isd', label: 'Input Service Distributor (ISD)' }
+    ];
+    const getGstTreatmentLabel = (value?: string) => {
+        if (!value) return '';
+        return gstTreatmentOptions.find(opt => opt.value === value)?.label || value;
+    };
+    const emptyAddressForm: CustomerAddress = {
+        id: '',
+        attention: '',
+        address: '',
+        address_line_two: '',
+        country: 'India',
+        state: '',
+        city: '',
+        pin_code: '',
+        telephone_number: '',
+        fax_number: '',
+        mobile: ''
+    };
+    const [addressForm, setAddressForm] = useState<CustomerAddress>(emptyAddressForm);
+    const addressCountryOptions = [
+        { code: 'IN', name: 'India' },
+        { code: 'US', name: 'United States' },
+        { code: 'GB', name: 'United Kingdom' }
+    ];
+    const mapAddress = (address: any, fallbackType: 'billing' | 'shipping'): CustomerAddress => ({
+        id: address?.id ?? `${fallbackType}-${Date.now()}-${Math.random()}`,
+        attention: address?.attention || address?.contact_person || '',
+        address: address?.address || '',
+        address_line_two: address?.address_line_two || '',
+        country: address?.country || 'India',
+        state: address?.state || '',
+        city: address?.city || '',
+        pin_code: address?.pin_code || '',
+        telephone_number: address?.telephone_number || '',
+        fax_number: address?.fax_number || '',
+        mobile: address?.mobile || ''
+    });
+    const formatAddressText = (addr?: CustomerAddress | null): string => {
+        if (!addr) return '';
+        const parts = [
+            addr.attention,
+            addr.address,
+            addr.address_line_two,
+            [addr.city, addr.state].filter(Boolean).join(', '),
+            addr.pin_code,
+            addr.country
+        ].filter(Boolean);
+        const contact = [addr.telephone_number, addr.fax_number ? `Fax: ${addr.fax_number}` : ''].filter(Boolean).join(' ');
+        return [...parts, contact].filter(Boolean).join(', ');
+    };
+    const getAddressBookByType = (type: 'billing' | 'shipping') => type === 'billing' ? billingAddressBook : shippingAddressBook;
+    const selectedBillingAddress = billingAddressBook.find(a => String(a.id) === String(selectedBillingAddressId)) || billingAddressBook[0] || null;
+    const selectedShippingAddress = shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null;
+    const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
     // Generate auto sales order number
     useEffect(() => {
@@ -437,6 +624,80 @@ export const CreditNoteAddPage: React.FC = () => {
         };
         generateOrderNumber();
     }, []);
+
+    const fetchCustomerDetail = async (customerId: string | number, preferredGstin?: string) => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        setCustomerDetailLoading(true);
+        try {
+            const response = await fetch(`https://${baseUrl}/lock_account_customers/${customerId}.json?lock_account_id=${lock_account_id}`, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            setCustomerDetail(data);
+            const nextBilling = Array.isArray(data.billing_addresses) && data.billing_addresses.length
+                ? data.billing_addresses.map((a: any) => mapAddress(a, 'billing'))
+                : (data.billing_address ? [mapAddress(data.billing_address, 'billing')] : []);
+            const nextShipping = Array.isArray(data.shipping_addresses) && data.shipping_addresses.length
+                ? data.shipping_addresses.map((a: any) => mapAddress(a, 'shipping'))
+                : (data.shipping_address ? [mapAddress(data.shipping_address, 'shipping')] : []);
+            setBillingAddressBook(nextBilling);
+            setShippingAddressBook(nextShipping);
+            const nextGstDetails: GstDetail[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+            setGstDetails(nextGstDetails);
+            const defaultGst =
+                (preferredGstin ? nextGstDetails.find((g) => g.gstin === preferredGstin) : null) ||
+                nextGstDetails.find((g) => g.primary) ||
+                nextGstDetails[0] ||
+                null;
+            if (defaultGst) {
+                setSelectedGstDetailId(defaultGst.id);
+                setPlaceOfSupply(defaultGst.place_of_supply || placeOfSupply);
+                setCustomerDetail((prev) => (prev ? { ...prev, gstin: defaultGst.gstin } : prev));
+            } else {
+                setSelectedGstDetailId(null);
+            }
+            setSelectedBillingAddressId(nextBilling[0]?.id ?? null);
+            setSelectedShippingAddressId(nextShipping[0]?.id ?? null);
+            setBillingAddress(formatAddressText(nextBilling[0]));
+            setShippingAddress(formatAddressText(nextShipping[0]));
+        } catch (error) {
+            console.error('Error fetching customer detail:', error);
+            toast.error('Failed to load customer details');
+        } finally {
+            setCustomerDetailLoading(false);
+        }
+    };
+
+    const openAddressListModal = (type: 'billing' | 'shipping') => {
+        setActiveAddressType(type);
+        setAddressListModalOpen(true);
+    };
+    const openAddressFormModal = (mode: 'new' | 'edit', type: 'billing' | 'shipping', address?: CustomerAddress) => {
+        setActiveAddressType(type);
+        setAddressFormMode(mode);
+        if (mode === 'edit' && address) {
+            setEditingAddressId(address.id);
+            setAddressForm({ ...address });
+        } else {
+            setEditingAddressId(null);
+            setAddressForm({ ...emptyAddressForm, id: `${type}-${Date.now()}` });
+        }
+        setSelectedAddressTaxInfoId(selectedGstDetailId ? String(selectedGstDetailId) : '');
+        setAddressFormModalOpen(true);
+    };
+    const openGstModal = () => {
+        setGstTreatmentDraft(customerDetail?.gst_preference || customerDetail?.gst_treatment || '');
+        setGstModalOpen(true);
+    };
+    const openGstManageModal = () => {
+        setShowNewGstForm(false);
+        setEditingGstDetailId(null);
+        setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
+        setGstManageModalOpen(true);
+    };
+    const openGstPickerModal = () => setGstPickerModalOpen(true);
 
     // Fetch customers on mount
 
@@ -456,20 +717,6 @@ export const CreditNoteAddPage: React.FC = () => {
             })
             .then(res => {
                 setCustomers(res.data || []);
-                // Optionally fetch detail for first customer
-                if (res.data && res.data.length > 0) {
-                    const customerId = res.data[0].id;
-                    axios
-                        .get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
-                            headers: {
-                                Authorization: token ? `Bearer ${token}` : undefined,
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(detailRes => {
-                            // Optionally handle detailRes.data
-                        });
-                }
             })
             .catch(error => {
                 console.error('Error fetching customers:', error);
@@ -492,7 +739,7 @@ export const CreditNoteAddPage: React.FC = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=sales&q[group_type_in][]=both`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -513,10 +760,8 @@ export const CreditNoteAddPage: React.FC = () => {
     // When customer is selected
     useEffect(() => {
         if (selectedCustomer) {
-            setBillingAddress(selectedCustomer.billingAddress);
-            setShippingAddress(selectedCustomer.shippingAddress);
-            // setBillingAddress(selectedCustomer.address);
-            // setShippingAddress(selectedCustomer.address2);
+            setBillingAddress(selectedCustomer.billingAddress || '');
+            setShippingAddress(selectedCustomer.shippingAddress || '');
             setPaymentTerms(selectedCustomer.paymentTerms);
         }
     }, [selectedCustomer]);
@@ -527,6 +772,149 @@ export const CreditNoteAddPage: React.FC = () => {
             setShippingAddress(billingAddress);
         }
     }, [sameAsBilling, billingAddress]);
+
+    useEffect(() => {
+        if (selectedBillingAddress) setBillingAddress(formatAddressText(selectedBillingAddress));
+    }, [selectedBillingAddressId, billingAddressBook.length]);
+
+    useEffect(() => {
+        if (!sameAsBilling && selectedShippingAddress) setShippingAddress(formatAddressText(selectedShippingAddress));
+    }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
+
+    const handleSaveAddressForm = async () => {
+        if (!selectedCustomer?.id) return toast.error('Please select a customer first');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        const setBook = activeAddressType === 'billing' ? setBillingAddressBook : setShippingAddressBook;
+        const setSelectedId = activeAddressType === 'billing' ? setSelectedBillingAddressId : setSelectedShippingAddressId;
+        const targetId = editingAddressId ?? addressForm.id ?? `${activeAddressType}-${Date.now()}`;
+        const payload: CustomerAddress = { ...addressForm, id: targetId };
+        const addressAttr: any = {
+            attention: addressForm.attention || '',
+            address: addressForm.address || '',
+            email: '',
+            address_type: activeAddressType,
+            address_line_two: addressForm.address_line_two || '',
+            address_line_three: '',
+            country: addressForm.country || 'India',
+            state: addressForm.state || '',
+            city: addressForm.city || '',
+            pin_code: addressForm.pin_code || '',
+            telephone_number: addressForm.telephone_number || '',
+            fax_number: addressForm.fax_number || '',
+            mobile: addressForm.mobile || '',
+            contact_person: addressForm.attention || '',
+            gst_detail_id: selectedAddressTaxInfoId ? Number(selectedAddressTaxInfoId) : null
+        };
+        if (addressFormMode === 'edit' && !String(targetId).startsWith(`${activeAddressType}-`)) {
+            addressAttr.id = Number(targetId) || targetId;
+        }
+        const updatePayload = {
+            lock_account_customer: {
+                id: selectedCustomer.id,
+                [activeAddressType === 'billing' ? 'billing_addresses_attributes' : 'shipping_addresses_attributes']: [addressAttr]
+            }
+        };
+        try {
+            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatePayload)
+            });
+            if (!response.ok) throw new Error(`Address save failed (${response.status})`);
+            setBook((prev) => addressFormMode === 'edit' ? prev.map((item) => (String(item.id) === String(targetId) ? payload : item)) : [...prev, payload]);
+            setSelectedId(targetId);
+            setAddressFormModalOpen(false);
+            setAddressListModalOpen(false);
+            toast.success('Address saved successfully');
+            fetchCustomerDetail(selectedCustomer.id);
+        } catch (error) {
+            console.error('Error saving address:', error);
+            toast.error('Failed to save address');
+        }
+    };
+
+    const handleUpdateGstConfig = () => {
+        setCustomerDetail((prev) => prev ? { ...prev, gst_preference: gstTreatmentDraft, gst_treatment: gstTreatmentDraft } : prev);
+        setGstModalOpen(false);
+    };
+
+    const handleGstinDropdownChange = (value: string | number) => {
+        setSelectedGstDetailId(value);
+        const selected = gstDetails.find((g) => String(g.id) === String(value));
+        if (!selected) return;
+        setCustomerDetail((prev) => prev ? { ...prev, gstin: selected.gstin } : prev);
+        if (selected.place_of_supply) setPlaceOfSupply(selected.place_of_supply);
+        setGstPickerModalOpen(false);
+    };
+
+    const handleSaveAndSelectGst = async () => {
+        if (!selectedCustomer?.id) return toast.error('Please select a customer first');
+        if (!newGstForm.gstin || !newGstForm.place_of_supply) return toast.error('GSTIN and Place of Supply are required');
+        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+        const normalizedGstin = String(newGstForm.gstin || '').toUpperCase().trim();
+        if (!gstinRegex.test(normalizedGstin)) return toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        const gstAttribute = {
+            ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+            gstin: normalizedGstin,
+            place_of_supply: newGstForm.place_of_supply,
+            business_legal_name: newGstForm.business_legal_name || '',
+            business_trade_name: newGstForm.business_trade_name || ''
+        };
+        const payload = { lock_account_customer: { id: selectedCustomer.id, gst_details_attributes: [gstAttribute] } };
+        try {
+            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`GST detail save failed (${response.status})`);
+            setShowNewGstForm(false);
+            setEditingGstDetailId(null);
+            setGstManageModalOpen(false);
+            toast.success('Tax information saved');
+            await fetchCustomerDetail(selectedCustomer.id, normalizedGstin);
+        } catch (error) {
+            console.error('Error saving gst detail:', error);
+            toast.error('Failed to save tax information');
+        }
+    };
+
+    const handleEditGstDetail = (gst: GstDetail) => {
+        setEditingGstDetailId(gst.id);
+        setShowNewGstForm(true);
+        setNewGstForm({
+            gstin: gst.gstin || '',
+            place_of_supply: gst.place_of_supply || '',
+            business_legal_name: gst.business_legal_name || '',
+            business_trade_name: gst.business_trade_name || ''
+        });
+    };
+
+    const handleDeleteGstDetail = async (gstId: number | string) => {
+        if (!selectedCustomer?.id) return toast.error('Please select a customer first');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        const payload = { lock_account_customer: { id: selectedCustomer.id, gst_details_attributes: [{ id: Number(gstId) || gstId, _destroy: true }] } };
+        try {
+            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`GST detail delete failed (${response.status})`);
+            toast.success('Tax information deleted');
+            await fetchCustomerDetail(selectedCustomer.id);
+        } catch (error) {
+            console.error('Error deleting gst detail:', error);
+            toast.error('Failed to delete tax information');
+        }
+    };
 
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
@@ -544,10 +932,17 @@ export const CreditNoteAddPage: React.FC = () => {
         setItems(prev => {
             const newItems = [...prev];
             newItems[index] = { ...newItems[index], [field]: value };
-
-            // Recalculate amount
             newItems[index].amount = calculateItemAmount(newItems[index]);
+            return newItems;
+        });
+    };
 
+    // Update multiple fields at once (avoids multiple re-renders)
+    const updateItemFields = (index: number, fields: Partial<Item>) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], ...fields };
+            newItems[index].amount = calculateItemAmount(newItems[index]);
             return newItems;
         });
     };
@@ -557,6 +952,7 @@ export const CreditNoteAddPage: React.FC = () => {
         setItems(prev => [...prev, {
             id: Date.now().toString(),
             name: '',
+            item_id: null,
             description: '',
             quantity: 1,
             rate: 0,
@@ -724,13 +1120,16 @@ export const CreditNoteAddPage: React.FC = () => {
                 const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
                 return found && found.id ? found.id : selectedTax || '';
             })(),
-            sale_order_items_attributes: items.map(item => ({
-                lock_account_item_id: itemOptions.find(opt => opt.name === item.name)?.id || item.name,
-                rate: item.rate,
-                quantity: item.quantity,
-                total_amount: item.amount,
-                description: item.description || ''
-            })),
+            sale_order_items_attributes: items.map(item => {
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                return {
+                    ...(resolvedId ? { lock_account_item_id: resolvedId } : { item_name: item.name }),
+                    rate: item.rate,
+                    quantity: item.quantity,
+                    total_amount: item.amount,
+                    description: item.description || ''
+                };
+            }),
             // email_contact_persons_attributes: externalUsers.map((user, idx) => ({
             //     contact_person_id: user.id || idx + 1 // Replace with actual contact person id
             // })),
@@ -809,9 +1208,22 @@ export const CreditNoteAddPage: React.FC = () => {
             formData.append('lock_account_credit_note[lock_account_invoice_id]', selectedInvoice || '');
             formData.append('lock_account_credit_note[invoice_type]', invoiceType || '');
             formData.append('lock_account_credit_note[reason]', reason || '');
+            const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
+            const selectedOrFirstShippingId = selectedShippingAddressId ?? shippingAddressBook[0]?.id ?? '';
+            const selectedOrFirstGstDetailId = selectedGstDetailId ?? gstDetails[0]?.id ?? '';
+            const gstPreferenceValue = customerDetail?.gst_preference || customerDetail?.gst_treatment || '';
+            formData.append('lock_account_credit_note[address_detail_attributes][billing_address_id]', String(selectedOrFirstBillingId));
+            formData.append('lock_account_credit_note[address_detail_attributes][shipping_address_id]', String(selectedOrFirstShippingId));
+            formData.append('lock_account_credit_note[address_detail_attributes][gst_detail_id]', String(selectedOrFirstGstDetailId));
+            formData.append('lock_account_credit_note[address_detail_attributes][gst_preference]', String(gstPreferenceValue));
             // Sale order items
             items.forEach((item, idx) => {
-                formData.append(`lock_account_credit_note[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                if (resolvedId) {
+                    formData.append(`lock_account_credit_note[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
+                } else {
+                    formData.append(`lock_account_credit_note[sale_order_items_attributes][${idx}][item_name]`, item.name);
+                }
                 formData.append(`lock_account_credit_note[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
                 formData.append(`lock_account_credit_note[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
                 formData.append(`lock_account_credit_note[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
@@ -900,6 +1312,22 @@ export const CreditNoteAddPage: React.FC = () => {
         }
     }, [selectedTax, taxOptions, afterDiscount]);
 
+    // Re-preselect tax on all taxable items when place of supply or orgState changes
+    useEffect(() => {
+        if (!placeOfSupply) return;
+        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+            const matched = itemOptions.find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [placeOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const selectedTaxGroups = items
         .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
         .map(item => {
@@ -911,23 +1339,34 @@ export const CreditNoteAddPage: React.FC = () => {
         });
     const taxBreakdown: any[] = [];
 
+    // Tax group breakdown (Maharashtra)
     selectedTaxGroups.forEach(group => {
         group.taxRates.forEach(rate => {
             const taxAmount = (group.itemAmount * rate.rate) / 100;
-
             const existing = taxBreakdown.find(t => t.name === rate.name);
-
             if (existing) {
                 existing.amount += taxAmount;
             } else {
-                taxBreakdown.push({
-                    name: rate.name,
-                    rate: rate.rate,
-                    amount: taxAmount
-                });
+                taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
             }
         });
     });
+
+    // Tax rate breakdown (non-Maharashtra)
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find(r => r.id === item.tax_group_id);
+            if (!rate) return;
+            const rateValue = rate.rate ?? rate.percentage ?? 0;
+            const taxAmount = (item.amount * rateValue) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
+            }
+        });
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -962,9 +1401,34 @@ export const CreditNoteAddPage: React.FC = () => {
                 </div>
             )}
 
-            <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">New Credit Note</h1>
+            {/* <header className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <h1 className="text-2xl font-bold">New Credit Note</h1>
+                </div>
+            </header> */}
+
+            <header className="mb-4">
+
+                {/* Back Button - Top */}
+                <button
+                    type="button"
+                    onClick={() => navigate('/accounting/credit-note')}
+                    className="flex items-center gap-2 text-black font-medium mb-2"
+                >
+                    <ArrowLeft className="h-4 w-4 text-black" />
+                    Back to Credit Note List
+                </button>
+
+                {/* Title - Below */}
+                <h1 className="text-2xl font-bold text-black">
+                    Credit Note
+                </h1>
+
             </header>
+
 
             <div className="space-y-6">
                 {/* Customer Section */}
@@ -981,6 +1445,19 @@ export const CreditNoteAddPage: React.FC = () => {
                                         onChange={(e) => {
                                             const customer = customers.find(c => c.id === e.target.value);
                                             setSelectedCustomer(customer || null);
+                                            if (customer) {
+                                                const supply = customer.place_of_supply || customer.billing_address?.state || '';
+                                                setPlaceOfSupply(supply);
+                                                fetchCustomerDetail(customer.id);
+                                            } else {
+                                                setCustomerDetail(null);
+                                                setBillingAddressBook([]);
+                                                setShippingAddressBook([]);
+                                                setGstDetails([]);
+                                                setSelectedBillingAddressId(null);
+                                                setSelectedShippingAddressId(null);
+                                                setSelectedGstDetailId(null);
+                                            }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -1095,16 +1572,73 @@ export const CreditNoteAddPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* {selectedCustomer && (
-                            <Button
-                                variant="outlined"
-                                onClick={() => setCustomerDrawerOpen(true)}
-                                endIcon={<ChevronRight />}
-                                sx={{ textTransform: 'none' }}
-                            >
-                                View Customer Details
-                            </Button>
-                        )} */}
+                        {customerDetail && (
+                            <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                            Billing Address
+                                            <IconButton size="small" onClick={() => openAddressListModal('billing')}>
+                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                            </IconButton>
+                                        </div>
+                                        {selectedBillingAddress?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                <div className="font-medium">{selectedBillingAddress.address}</div>
+                                                {selectedBillingAddress.address_line_two && <div>{selectedBillingAddress.address_line_two}</div>}
+                                                <div>{[selectedBillingAddress.city, selectedBillingAddress.state].filter(Boolean).join(', ')}{selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ''}</div>
+                                                {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
+                                            </div>
+                                        ) : (
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                                New Address
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                            Shipping Address
+                                            <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
+                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                            </IconButton>
+                                        </div>
+                                        {selectedShippingAddress?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                <div className="font-medium">{selectedShippingAddress.address}</div>
+                                                {selectedShippingAddress.address_line_two && <div>{selectedShippingAddress.address_line_two}</div>}
+                                                <div>{[selectedShippingAddress.city, selectedShippingAddress.state].filter(Boolean).join(', ')}{selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ''}</div>
+                                                {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
+                                            </div>
+                                        ) : (
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                                New Address
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GST Treatment:</span>
+                                        <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
+                                        <IconButton size="small" onClick={openGstModal}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GSTIN:</span>
+                                        <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || '—'}</span>
+                                        <IconButton size="small" onClick={openGstPickerModal}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {!customerDetail && selectedCustomer && customerDetailLoading && (
+                            <div className="py-4 flex justify-center">
+                                <CircularProgress size={24} color="error" />
+                            </div>
+                        )}
                     </div>
                 </Section>
 
@@ -1116,17 +1650,14 @@ export const CreditNoteAddPage: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                                 rows={4}
                                 maxLength={500}
-                                value={selectedCustomer?.billing_address?.address
-                                    ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
-                                    : billingAddress}
+                                value={billingAddress || ''}
                                 onChange={(e) => { if (e.target.value.length <= 500) setBillingAddress(e.target.value); }}
                                 placeholder="Enter billing address"
-                                disabled={!!selectedCustomer}
                             />
-                            {!selectedCustomer && <p className="text-xs text-gray-400 text-right mt-1">{billingAddress.length}/500</p>}
+                            <p className="text-xs text-gray-400 text-right mt-1">{(billingAddress?.length || 0)}/500</p>
                         </div>
 
                         <div>
@@ -1134,17 +1665,15 @@ export const CreditNoteAddPage: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 maxLength={500}
-                                value={selectedCustomer?.shipping_address?.address
-                                    ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
-                                    : shippingAddress}
+                                value={shippingAddress || ''}
                                 onChange={(e) => { if (e.target.value.length <= 500) setShippingAddress(e.target.value); }}
                                 placeholder="Enter shipping address"
-                                disabled={!!selectedCustomer || sameAsBilling}
+                                disabled={sameAsBilling}
                             />
-                            {!selectedCustomer && !sameAsBilling && <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p>}
+                            {!sameAsBilling && <p className="text-xs text-gray-400 text-right mt-1">{(shippingAddress?.length || 0)}/500</p>}
                             {/* <FormControlLabel
                                 control={
                                     <Checkbox
@@ -1238,62 +1767,46 @@ export const CreditNoteAddPage: React.FC = () => {
 
                         <div className="border border-border rounded-lg overflow-hidden">
                             <div className="w-full overflow-x-auto">
-                            <table className=" min-w-[950px] w-full ">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
-                                        {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                        <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
+                                <table className=" min-w-[950px] w-full ">
+                                    <thead className="bg-muted/50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
+                                            <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
 
-                                    {items.map((item, index) => (
-                                        <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <Select
-                                                        value={item.name}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-                                                                // TAX HANDLING
-                                                                if (selectedItem.tax_preference === 'non_taxable') {
-                                                                    updateItem(index, 'item_tax_type', 'non_taxable');
-                                                                    updateItem(index, 'tax_exemption_id', selectedItem.tax_exemption_id);
+                                        {items.map((item, index) => (
+                                            <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <FormControl fullWidth sx={{ minWidth: 250 }}>
+                                                        <ItemSearchInput
+                                                            value={item.name}
+                                                            itemOptions={itemOptions}
+                                                            onSelect={(selected) => {
+                                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                                let taxFields: Partial<Item> = {};
+                                                                if (selected.tax_preference === 'non_taxable') {
+                                                                    taxFields = { item_tax_type: 'non_taxable', tax_exemption_id: selected.tax_exemption_id };
+                                                                } else if (selected.tax_preference === 'taxable') {
+                                                                    taxFields = { item_tax_type: isSameState ? 'tax_group' : 'tax_rate', tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
+                                                                } else if (selected.tax_preference === 'out_of_scope') {
+                                                                    taxFields = { item_tax_type: 'out_of_scope' };
+                                                                } else if (selected.tax_preference === 'non_gst_supply') {
+                                                                    taxFields = { item_tax_type: 'non_gst_supply' };
                                                                 }
-                                                                if (selectedItem.tax_preference === 'taxable') {
-                                                                    updateItem(index, 'item_tax_type', 'tax_group');
-                                                                    updateItem(index, 'tax_group_id', selectedItem.tax_group_id);
-                                                                }
-                                                                if (selectedItem.tax_preference === 'out_of_scope') {
-                                                                    updateItem(index, 'item_tax_type', 'out_of_scope');
-                                                                }
-                                                                if (selectedItem.tax_preference === 'non_gst_supply') {
-                                                                    updateItem(index, 'item_tax_type', 'non_gst_supply');
-                                                                }
-                                                            }
-                                                        }}
-                                                        displayEmpty
-                                                        size="small"
-                                                    >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                                {/* <TextField
+                                                                updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
+                                                            }}
+                                                            onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
+                                                        />
+                                                    </FormControl>
+                                                    {/* <TextField
                                                     fullWidth
                                                     size="small"
                                                     placeholder="Description"
@@ -1302,83 +1815,83 @@ export const CreditNoteAddPage: React.FC = () => {
                                                     sx={{ mt: 1 }}
                                                 /> */}
 
-                                                <TextField
-                                                    fullWidth
-                                                    label="Description"
-                                                    size="small"
-                                                    placeholder="Description"
-                                                    value={item.description}
-                                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 2 }}
-                                                    InputLabelProps={{ shrink: true }}
-                                                />
-                                            </td>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Description"
+                                                        size="small"
+                                                        placeholder="Description"
+                                                        value={item.description}
+                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                        sx={{ mt: 2 }}
+                                                        InputLabelProps={{ shrink: true }}
+                                                    />
+                                                </td>
 
 
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth size="small">
-                                                    <InputLabel id={`account-label-${index}`}>
-                                                        Account
-                                                    </InputLabel>
+                                                <td className="px-4 py-3">
+                                                    <FormControl fullWidth size="small">
+                                                        <InputLabel id={`account-label-${index}`}>
+                                                            Account
+                                                        </InputLabel>
 
-                                                    <Select
-                                                        labelId={`account-label-${index}`}
-                                                        value={item.account || ""}
-                                                        label="Account*"
-                                                        onChange={(e) => updateItem(index, "account", e.target.value)}
-                                                        displayEmpty
-                                                        MenuProps={{
-                                                            PaperProps: {
-                                                                style: {
-                                                                    maxHeight: 300,
-                                                                    minWidth: 250,
-                                                                    maxWidth: 350,
+                                                        <Select
+                                                            labelId={`account-label-${index}`}
+                                                            value={item.account || ""}
+                                                            label="Account*"
+                                                            onChange={(e) => updateItem(index, "account", e.target.value)}
+                                                            displayEmpty
+                                                            MenuProps={{
+                                                                PaperProps: {
+                                                                    style: {
+                                                                        maxHeight: 300,
+                                                                        minWidth: 250,
+                                                                        maxWidth: 350,
+                                                                    },
                                                                 },
-                                                            },
-                                                        }}
-                                                    >
-                                                        <MenuItem value="" disabled>
-                                                            Select Account
-                                                        </MenuItem>
+                                                            }}
+                                                        >
+                                                            <MenuItem value="" disabled>
+                                                                Select Account
+                                                            </MenuItem>
 
-                                                        {accountGroups.map((group) =>
-                                                            group.ledgers && group.ledgers.length > 0 ? [
-                                                                <ListSubheader key={`group-${group.id}`}>
-                                                                    {group.group_name}
-                                                                </ListSubheader>,
-                                                                ...group.ledgers.map((ledger) => (
-                                                                    <MenuItem key={ledger.id} value={ledger.id}>
-                                                                        {ledger.name}
-                                                                    </MenuItem>
-                                                                )),
-                                                            ] : null
-                                                        )}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 1, step: 1 }}
-                                                    sx={{ width: 80 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
-                                                    inputProps={{ min: 0, step: 0.01 }}
-                                                    sx={{ width: 100 }}
-                                                />
-                                            </td>
+                                                            {accountGroups.map((group) =>
+                                                                group.ledgers && group.ledgers.length > 0 ? [
+                                                                    <ListSubheader key={`group-${group.id}`}>
+                                                                        {group.group_name}
+                                                                    </ListSubheader>,
+                                                                    ...group.ledgers.map((ledger) => (
+                                                                        <MenuItem key={ledger.id} value={ledger.id}>
+                                                                            {ledger.name}
+                                                                        </MenuItem>
+                                                                    )),
+                                                                ] : null
+                                                            )}
+                                                        </Select>
+                                                    </FormControl>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || '')}
+                                                        inputProps={{ min: 1, step: 1 }}
+                                                        sx={{ width: 80 }}
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        value={item.rate}
+                                                        onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || '')}
+                                                        inputProps={{ min: 0, step: 0.01 }}
+                                                        sx={{ width: 100 }}
+                                                    />
+                                                </td>
 
-                                            {/* <td className="px-4 py-3"> */}
-                                            {/* <div className="flex items-center gap-2">
+                                                {/* <td className="px-4 py-3"> */}
+                                                {/* <div className="flex items-center gap-2">
                                                     <TextField
                                                         type="number"
                                                         size="small"
@@ -1397,73 +1910,75 @@ export const CreditNoteAddPage: React.FC = () => {
                                                         </Select>
                                                     </FormControl>
                                                 </div> */}
-                                            {/* </td> */}
-                                            <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 200 }}>
-                                                    <Select
-                                                        //   value={item.tax_type || ""}
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
-                                                        displayEmpty
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
+                                                {/* </td> */}
+                                                <td className="px-4 py-3">
+                                                    <FormControl size="small" sx={{ width: 200 }}>
+                                                        <Select
+                                                            value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
+                                                            displayEmpty
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
-                                                            // Static tax types
-                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
-                                                                updateItem(index, "item_tax_type", value);
-                                                                updateItem(index, "tax_group_id", null);
-
-                                                                if (value === "non_taxable") {
-                                                                    setCurrentItemIndex(index);
-                                                                    setExemptionModalOpen(true);
+                                                                if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                                    updateItem(index, "item_tax_type", value);
+                                                                    updateItem(index, "tax_group_id", null);
+                                                                    if (value === "non_taxable") {
+                                                                        setCurrentItemIndex(index);
+                                                                        setExemptionModalOpen(true);
+                                                                    }
+                                                                } else {
+                                                                    updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
+                                                                    updateItem(index, "tax_group_id", value);
                                                                 }
-                                                            }
-                                                            // Tax group selected
-                                                            else {
-                                                                updateItem(index, "item_tax_type", "tax_group");
-                                                                updateItem(index, "tax_group_id", value);
-                                                            }
-                                                        }}
+                                                            }}
+                                                        >
+                                                            <MenuItem value="">Select Tax</MenuItem>
+
+                                                            {taxTypeOptions.map((opt) => (
+                                                                <MenuItem key={opt.value} value={opt.value}>
+                                                                    {opt.label}
+                                                                </MenuItem>
+                                                            ))}
+
+                                                            {(() => {
+                                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                                return isSameState ? (
+                                                                    [
+                                                                        <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                        ...taxGroups.map((group) => (
+                                                                            <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                        ))
+                                                                    ]
+                                                                ) : (
+                                                                    [
+                                                                        <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                        ...taxRates.map((rate) => (
+                                                                            <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                        ))
+                                                                    ]
+                                                                );
+                                                            })()}
+                                                        </Select>
+                                                    </FormControl>
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-semibold">
+                                                    ₹{item.amount.toFixed(2)}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => removeItem(index)}
+                                                        disabled={items.length === 1}
+                                                        color="error"
                                                     >
-                                                        <MenuItem value="">Select Tax</MenuItem>
-
-                                                        {/* Static Options */}
-                                                        {taxTypeOptions.map((opt) => (
-                                                            <MenuItem key={opt.value} value={opt.value}>
-                                                                {opt.label}
-                                                            </MenuItem>
-                                                        ))}
-
-                                                        {/* Divider */}
-                                                        <MenuItem disabled>
-                                                            Tax Groups
-                                                        </MenuItem>
-
-                                                        {/* Tax Groups */}
-                                                        {taxGroups.map((group) => (
-                                                            <MenuItem key={group.id} value={group.id}>
-                                                                {group.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-semibold">
-                                                ₹{item.amount.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => removeItem(index)}
-                                                    disabled={items.length === 1}
-                                                    color="error"
-                                                >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                        <Delete fontSize="small" />
+                                                    </IconButton>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -1773,7 +2288,7 @@ export const CreditNoteAddPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                
+
                 <Button
                     // variant="outlined"
                     onClick={() => handleSubmit(true)}
@@ -1812,7 +2327,7 @@ export const CreditNoteAddPage: React.FC = () => {
                 </Button>
                 <Button
                     // variant="outlined"
-                    onClick={() => navigate('/accounting/sales-order')}
+                    onClick={() => navigate('/accounting/credit-note')}
                     disabled={isSubmitting}
                     // sx={{
                     //     textTransform: 'none',
@@ -1826,7 +2341,7 @@ export const CreditNoteAddPage: React.FC = () => {
                     //     }
                     // }}
                     //  className="px-4 py-2 rounded"
-                     variant="outline"
+                    variant="outline"
                 >
                     Cancel
                 </Button>
@@ -1993,6 +2508,181 @@ export const CreditNoteAddPage: React.FC = () => {
                     <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
                     <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
                 </DialogActions>
+            </Dialog>
+
+            <Dialog open={addressListModalOpen} onClose={() => setAddressListModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle className="!text-base !font-semibold !pr-10">
+                    {activeAddressType === 'billing' ? 'Billing Address' : 'Shipping Address'}
+                </DialogTitle>
+                <DialogContent dividers>
+                    <div className="max-h-[420px] overflow-y-auto space-y-3">
+                        {getAddressBookByType(activeAddressType).map((addr) => (
+                            <div
+                                key={addr.id}
+                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
+                                    ? 'border-[#C72030] bg-red-50'
+                                    : 'border-gray-200 hover:border-gray-300'}`}
+                                onClick={() => {
+                                    if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
+                                    else setSelectedShippingAddressId(addr.id);
+                                    setAddressListModalOpen(false);
+                                }}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-0.5 text-gray-700">
+                                        {addr.attention && <div className="font-semibold">{addr.attention}</div>}
+                                        {addr.address && <div>{addr.address}</div>}
+                                        {addr.address_line_two && <div>{addr.address_line_two}</div>}
+                                        <div>{[addr.city, addr.state].filter(Boolean).join(', ')}{addr.pin_code ? ` ${addr.pin_code}` : ''}</div>
+                                        {addr.country && <div>{addr.country}</div>}
+                                        {(addr.telephone_number || addr.fax_number) && <div>{addr.telephone_number}{addr.fax_number ? ` Fax Number : ${addr.fax_number}` : ''}</div>}
+                                    </div>
+                                    <IconButton
+                                        size="small"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openAddressFormModal('edit', activeAddressType, addr);
+                                        }}
+                                    >
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+                <DialogActions className="!justify-between !px-4">
+                    <button type="button" className="text-[#1d4ed8] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
+                        + New address
+                    </button>
+                    <button type="button" onClick={() => setAddressListModalOpen(false)} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Close</button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={addressFormModalOpen} onClose={() => setAddressFormModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle className="!text-base !font-semibold">Additional Address</DialogTitle>
+                <DialogContent dividers>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm((prev) => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm((prev) => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
+                            {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
+                        </TextField>
+                        <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
+                            <MenuItem value="">Select</MenuItem>
+                            {gstDetails.map((gst) => (<MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>))}
+                        </TextField>
+                        <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm((prev) => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
+                        <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="City" fullWidth value={addressForm.city} onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))} className="md:col-span-2" />
+                        <TextField label="State" select fullWidth value={addressForm.state} onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}>
+                            <MenuItem value="">Select</MenuItem>
+                            {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
+                        </TextField>
+                        <TextField label="Pin Code" fullWidth value={addressForm.pin_code} onChange={(e) => setAddressForm((prev) => ({ ...prev, pin_code: e.target.value }))} />
+                        <TextField label="Phone" fullWidth value={addressForm.telephone_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, telephone_number: e.target.value }))} InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }} />
+                        <TextField label="Fax Number" fullWidth value={addressForm.fax_number} onChange={(e) => setAddressForm((prev) => ({ ...prev, fax_number: e.target.value }))} />
+                    </div>
+                </DialogContent>
+                <DialogActions className="!justify-start !px-6 !py-3">
+                    <button type="button" onClick={handleSaveAddressForm} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Save</button>
+                    <button type="button" onClick={() => setAddressFormModalOpen(false)} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Cancel</button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle className="!text-base !font-medium !pb-2">Configure Tax Preferences</DialogTitle>
+                <DialogContent className="!pt-2">
+                    <TextField label="GST Treatment" select fullWidth value={gstTreatmentDraft} onChange={(e) => setGstTreatmentDraft(e.target.value)} size="small">
+                        {gstTreatmentOptions.map((opt) => (<MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>))}
+                    </TextField>
+                </DialogContent>
+                <DialogActions className="!justify-start !px-6 !pb-4">
+                    <button type="button" onClick={handleUpdateGstConfig} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Update</button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle className="!text-base !font-semibold !border-b !border-gray-200 !flex !items-center !justify-between !py-3">
+                    <span>Manage Tax Informations</span>
+                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" className="text-red-500" /></IconButton>
+                </DialogTitle>
+                <DialogContent className="!pt-4">
+                    <div className="space-y-4">
+                        <button type="button" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">
+                            Add New Tax Information
+                        </button>
+                        {showNewGstForm && (
+                            <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <TextField
+                                        label="GSTIN / UIN*"
+                                        fullWidth
+                                        value={newGstForm.gstin}
+                                        onChange={(e) => setNewGstForm((prev) => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
+                                        error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                                        helperText={newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin) ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5' : ''}
+                                        inputProps={{ maxLength: 15 }}
+                                        size="small"
+                                    />
+                                    <button type="button" className="text-blue-600 text-sm mt-1">Validate</button>
+                                </div>
+                                <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} onChange={(e) => setNewGstForm((prev) => ({ ...prev, place_of_supply: e.target.value }))} size="small">
+                                    <MenuItem value="">Select</MenuItem>
+                                    {states.map((state) => (<MenuItem key={state} value={state}>{state}</MenuItem>))}
+                                </TextField>
+                                <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} onChange={(e) => setNewGstForm((prev) => ({ ...prev, business_legal_name: e.target.value }))} size="small" />
+                                <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} onChange={(e) => setNewGstForm((prev) => ({ ...prev, business_trade_name: e.target.value }))} size="small" />
+                                <div className="md:col-span-3 flex items-center gap-2">
+                                    <button type="button" onClick={handleSaveAndSelectGst} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">{editingGstDetailId ? 'Save' : 'Save and Select'}</button>
+                                    <button type="button" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Cancel</button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="border border-gray-200 rounded-md overflow-hidden">
+                            <div className="grid grid-cols-5 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2">
+                                <div>GSTIN</div><div>PLACE OF SUPPLY</div><div>BUSINESS LEGAL NAME</div><div>BUSINESS TRADE NAME</div><div></div>
+                            </div>
+                            <div className="max-h-[280px] overflow-y-auto">
+                                {gstDetails.map((gst) => (
+                                    <div key={gst.id} className={`grid grid-cols-5 px-4 py-2 text-sm border-t border-gray-100 cursor-pointer ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`} onClick={() => handleGstinDropdownChange(gst.id)}>
+                                        <div>{gst.gstin}{gst.primary && <div className="text-green-600 italic">(Primary Tax Information)</div>}</div>
+                                        <div>{gst.place_of_supply || '—'}</div>
+                                        <div>{gst.business_legal_name || '—'}</div>
+                                        <div>{gst.business_trade_name || '—'}</div>
+                                        <div className="flex items-center gap-2 justify-end">
+                                            {!gst.primary && (
+                                                <>
+                                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditGstDetail(gst); }}><EditOutlined fontSize="small" /></IconButton>
+                                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDeleteGstDetail(gst.id); }}><Delete fontSize="small" /></IconButton>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+                <DialogActions className="!px-5 !pb-4">
+                    <button type="button" onClick={() => setGstManageModalOpen(false)} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Close</button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstPickerModalOpen} onClose={() => setGstPickerModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogContent className="!p-0">
+                    <div className="max-h-[240px] overflow-y-auto">
+                        {gstDetails.map((gst) => (
+                            <button key={gst.id} type="button" className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`} onClick={() => handleGstinDropdownChange(gst.id)}>
+                                {gst.gstin} - {gst.place_of_supply}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
+                            <span>⚙</span> Manage Tax Informations
+                        </button>
+                    </div>
+                </DialogContent>
             </Dialog>
 
             {/* Add Contact Person Dialog */}

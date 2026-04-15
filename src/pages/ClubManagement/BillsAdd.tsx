@@ -39,6 +39,7 @@ import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-rea
 import axios from 'axios';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
+import ItemSearchInput from '@/components/ItemSearchInput';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -114,6 +115,7 @@ interface Item {
     item_tax_type?: string
     tax_group_id?: number | null
     tax_exemption_id?: number | null
+    item_id?: string | null
 }
 
 interface ExternalUser {
@@ -130,7 +132,7 @@ export const BillsAdd: React.FC = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_purchase_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -142,7 +144,8 @@ export const BillsAdd: React.FC = () => {
                         account: item.purchase_lock_account_ledger_id,
                         tax_preference: item.tax_preference,
                         tax_exemption_id: item.tax_exemption_id,
-                        tax_group_id: item.intra_state_tax_rate_id
+                        tax_group_id: item.intra_state_tax_rate_id,
+                        inter_state_tax_rate_id: item.inter_state_tax_rate_id
                     })));
                     console.log('Fetched items:', res.data);
                 }
@@ -265,6 +268,30 @@ export const BillsAdd: React.FC = () => {
 
     const [sourceOfSupply, setSourceOfSupply] = useState("");
     const [destinationOfSupply, setDestinationOfSupply] = useState("");
+    const [orgState, setOrgState] = useState("");
+
+    // Fetch organisation state on mount
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                const state = org?.address?.state || '';
+                setOrgState(state);
+            } catch {
+                // silently fail
+            }
+        };
+        fetchOrgState();
+    }, []);
     const indianStates = [
         "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
         "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
@@ -306,6 +333,22 @@ export const BillsAdd: React.FC = () => {
             .finally(() => {
                 setLoadingTaxGroups(false);
             });
+    }, []);
+
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching tax rates:", error));
     }, []);
 
     const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
@@ -497,7 +540,7 @@ export const BillsAdd: React.FC = () => {
         const fetchAccountGroups = async () => {
             try {
                 // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=purchase&q[group_type_in][]=both`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -558,6 +601,15 @@ export const BillsAdd: React.FC = () => {
         });
     };
 
+    const updateItemFields = (index: number, fields: Partial<Item>) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], ...fields };
+            newItems[index].amount = calculateItemAmount(newItems[index]);
+            return newItems;
+        });
+    };
+
     // Add item row
     const addItem = () => {
         setItems(prev => [...prev, {
@@ -573,6 +625,7 @@ export const BillsAdd: React.FC = () => {
             amount: 0,
             customer: "",
             account: "",
+            item_id: null,
         }]);
     };
 
@@ -688,61 +741,61 @@ export const BillsAdd: React.FC = () => {
 
         const newErrors: Record<string, string> = {};
 
-    if (!selectedCustomer) {
-        setErrors(newErrors);
-        toast.error('Vendor is required');
-        return false;
-    }
-     // NEW VALIDATIONS
-    if (!sourceOfSupply) {
-        setErrors(newErrors);
-        toast.error('Source of Supply is required');
-        return false;
-    }
+        if (!selectedCustomer) {
+            setErrors(newErrors);
+            toast.error('Vendor is required');
+            return false;
+        }
+        // NEW VALIDATIONS
+        if (!sourceOfSupply) {
+            setErrors(newErrors);
+            toast.error('Source of Supply is required');
+            return false;
+        }
 
-    if (!destinationOfSupply) {
-        setErrors(newErrors);
-        toast.error('Destination of Supply is required');
-        return false;
-    }
+        if (!destinationOfSupply) {
+            setErrors(newErrors);
+            toast.error('Destination of Supply is required');
+            return false;
+        }
 
-    if (!salesOrderDate) {
-        setErrors(newErrors);
-        toast.error('Bill date is required');
-        return false;
-    }
+        if (!salesOrderDate) {
+            setErrors(newErrors);
+            toast.error('Bill date is required');
+            return false;
+        }
 
-    // if (!expectedShipmentDate) {
-    //     setErrors(newErrors);
-    //     toast.error('Expected Shipment date is required');
-    //     return false;
-    // }
+        // if (!expectedShipmentDate) {
+        //     setErrors(newErrors);
+        //     toast.error('Expected Shipment date is required');
+        //     return false;
+        // }
 
-    if (expectedShipmentDate && salesOrderDate &&
-        new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+        if (expectedShipmentDate && salesOrderDate &&
+            new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
 
-        toast.error('Expected Shipment Date cannot be earlier than Sales Order Date');
-        return false;
-    }
+            toast.error('Expected Shipment Date cannot be earlier than Sales Order Date');
+            return false;
+        }
 
-    if (!selectedTerm) {
-        setErrors(newErrors);
-        toast.error('Payment terms is required');
-        return false;
-    }
+        if (!selectedTerm) {
+            setErrors(newErrors);
+            toast.error('Payment terms is required');
+            return false;
+        }
 
-    const hasValidItems = items.some(
-        item => item.name && item.quantity > 0 && item.rate > 0
-    );
+        const hasValidItems = items.some(
+            item => item.name && item.quantity > 0 && item.rate > 0
+        );
 
-    if (!hasValidItems) {
-        setErrors(newErrors);
-        toast.error('Please add at least one valid item');
-        return false;
-    }
+        if (!hasValidItems) {
+            setErrors(newErrors);
+            toast.error('Please add at least one valid item');
+            return false;
+        }
 
-    setErrors({});
-    return true;
+        setErrors({});
+        return true;
     };
 
     const saleOrderPayload = {
@@ -905,7 +958,12 @@ export const BillsAdd: React.FC = () => {
             formData.append('lock_account_bill[destination_of_supply]', destinationOfSupply || '');
             // Sale order items
             items.forEach((item, idx) => {
-                formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                if (resolvedId) {
+                    formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
+                } else {
+                    formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][item_name]`, item.name);
+                }
                 formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][rate]`, String(item.rate));
                 formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][quantity]`, String(item.quantity));
                 formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][total_amount]`, String(item.amount));
@@ -1006,23 +1064,50 @@ export const BillsAdd: React.FC = () => {
         });
     const taxBreakdown: any[] = [];
 
+    // Tax group breakdown
     selectedTaxGroups.forEach(group => {
         group.taxRates.forEach(rate => {
             const taxAmount = (group.itemAmount * rate.rate) / 100;
-
             const existing = taxBreakdown.find(t => t.name === rate.name);
-
             if (existing) {
                 existing.amount += taxAmount;
             } else {
-                taxBreakdown.push({
-                    name: rate.name,
-                    rate: rate.rate,
-                    amount: taxAmount
-                });
+                taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
             }
         });
     });
+
+    // Tax rate breakdown (non-Maharashtra)
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find(r => r.id === item.tax_group_id);
+            if (!rate) return;
+            const rateValue = rate.rate ?? rate.percentage ?? 0;
+            const taxAmount = (item.amount * rateValue) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) {
+                existing.amount += taxAmount;
+            } else {
+                taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
+            }
+        });
+    // Re-preselect tax on all taxable items when destination or orgState changes
+    useEffect(() => {
+        if (!destinationOfSupply) return;
+        const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+            const matched = itemOptions.find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [destinationOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -1061,22 +1146,22 @@ export const BillsAdd: React.FC = () => {
             </header> */}
             <header className="mb-4">
 
-  {/* Back Button - Top */}
-  <button
-    type="button"
-    onClick={() => navigate('/accounting/bills')}
-    className="flex items-center gap-2 text-black font-medium mb-2"
-  >
-    <ArrowLeft className="h-4 w-4 text-black" />
-    Back to Bill List
-  </button>
+                {/* Back Button - Top */}
+                <button
+                    type="button"
+                    onClick={() => navigate('/accounting/bills')}
+                    className="flex items-center gap-2 text-black font-medium mb-2"
+                >
+                    <ArrowLeft className="h-4 w-4 text-black" />
+                    Back to Bill List
+                </button>
 
-  {/* Title - Below */}
-  <h1 className="text-2xl font-bold text-black">
-    New Bill
-  </h1>
+                {/* Title - Below */}
+                <h1 className="text-2xl font-bold text-black">
+                    New Bill
+                </h1>
 
-</header>
+            </header>
 
             <div className="space-y-6">
                 {/* Customer Section */}
@@ -1093,6 +1178,11 @@ export const BillsAdd: React.FC = () => {
                                         onChange={(e) => {
                                             const customer = customers.find(c => c.id === e.target.value);
                                             setSelectedCustomer(customer || null);
+                                            // if (customer) {
+                                            //     // Preselect source of supply from vendor's state
+                                            //     const vendorState = customer.state || '';
+                                            //     if (vendorState) setSourceOfSupply(vendorState);
+                                            // }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -1430,49 +1520,28 @@ export const BillsAdd: React.FC = () => {
                                     {items.map((item, index) => (
                                         <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <Select
-                                                        value={item.name}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-                                                                // ✅ Account preselect
-                                                                updateItem(index, "account", selectedItem.account);
-
-                                                                // TAX HANDLING
-                                                                if (selectedItem.tax_preference === "non_taxable") {
-                                                                    updateItem(index, "item_tax_type", "non_taxable");
-                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "taxable") {
-                                                                    updateItem(index, "item_tax_type", "tax_group");
-                                                                    updateItem(index, "tax_group_id", selectedItem.tax_group_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "out_of_scope") {
-                                                                    updateItem(index, "item_tax_type", "out_of_scope");
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "non_gst_supply") {
-                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
-                                                                }
-                                                            }
-                                                        }}
-                                                        displayEmpty
-                                                        size="small"
-                                                    >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
+                                                <ItemSearchInput
+                                                    value={item.name}
+                                                    itemOptions={itemOptions}
+                                                    onSelect={(selected) => {
+                                                        const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                        updateItemFields(index, {
+                                                            item_id: String(selected.id),
+                                                            name: selected.name,
+                                                            rate: selected.rate || 0,
+                                                            description: selected.description || '',
+                                                            account: (selected as any).account || '',
+                                                            item_tax_type: selected.tax_preference === 'non_taxable' ? 'non_taxable'
+                                                                : selected.tax_preference === 'taxable' ? (isSameState ? 'tax_group' : 'tax_rate')
+                                                                : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
+                                                                : selected.tax_preference === 'non_gst_supply' ? 'non_gst_supply'
+                                                                : undefined,
+                                                            tax_group_id: selected.tax_preference === 'taxable' ? (isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id) : null,
+                                                            tax_exemption_id: selected.tax_preference === 'non_taxable' ? selected.tax_exemption_id : null,
+                                                        });
+                                                    }}
+                                                    onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
+                                                />
                                                 {/* <TextField
                                                     fullWidth
                                                     size="small"
@@ -1633,11 +1702,11 @@ export const BillsAdd: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl size="small" sx={{ width: 200 }}>
                                                     <Select
-                                                        //   value={item.tax_type || ""}
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                                                        value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
                                                         onChange={(e) => {
                                                             const value = e.target.value;
+                                                            const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1649,9 +1718,9 @@ export const BillsAdd: React.FC = () => {
                                                                     setExemptionModalOpen(true);
                                                                 }
                                                             }
-                                                            // Tax group selected
+                                                            // Tax group (same state) or tax rate (different state)
                                                             else {
-                                                                updateItem(index, "item_tax_type", "tax_group");
+                                                                updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
                                                                 updateItem(index, "tax_group_id", value);
                                                             }
                                                         }}
@@ -1665,17 +1734,28 @@ export const BillsAdd: React.FC = () => {
                                                             </MenuItem>
                                                         ))}
 
-                                                        {/* Divider */}
-                                                        <MenuItem disabled>
-                                                            Tax Groups
-                                                        </MenuItem>
-
-                                                        {/* Tax Groups */}
-                                                        {taxGroups.map((group) => (
-                                                            <MenuItem key={group.id} value={group.id}>
-                                                                {group.name}
-                                                            </MenuItem>
-                                                        ))}
+                                                        {(() => {
+                                                            const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                            return isSameState ? (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                    ...taxGroups.map((group) => (
+                                                                        <MenuItem key={group.id} value={group.id}>
+                                                                            {group.name}
+                                                                        </MenuItem>
+                                                                    ))
+                                                                ]
+                                                            ) : (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                    ...taxRates.map((rate) => (
+                                                                        <MenuItem key={rate.id} value={rate.id}>
+                                                                            {rate.name}
+                                                                        </MenuItem>
+                                                                    ))
+                                                                ]
+                                                            );
+                                                        })()}
                                                     </Select>
                                                 </FormControl>
                                             </td>
@@ -1703,7 +1783,7 @@ export const BillsAdd: React.FC = () => {
                                 startIcon={<Add />}
                                 onClick={addItem}
                                 // variant="outlined"
-                                variant="outline" 
+                                variant="outline"
                                 sx={{ textTransform: 'none' }}
                             >
                                 Add New Row

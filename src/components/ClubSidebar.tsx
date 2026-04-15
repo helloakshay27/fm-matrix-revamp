@@ -112,11 +112,11 @@ const modulesByPackage = {
       icon: Truck,
       href: "/maintenance/vendor",
     },
-    {
-      name: "Invoices",
-      icon: FileText,
-      href: "/accounting/invoices/list",
-    },
+    // {
+    //   name: "Invoices",
+    //   icon: FileText,
+    //   href: "/accounting/invoices/list",
+    // },
     // {
     //     name: "Accounting",
     //     icon: Calculator,
@@ -343,6 +343,20 @@ const modulesByPackage = {
           name: "Default Tax Preferences",
           href: "/accounting/default-tax-preferences",
         },
+        {
+          name: "Invoice Approval",
+          subItems: [
+            {
+              name: "Approval Matrix",
+              href: "/settings/asset-setup/approval-matrix",
+            },
+
+          ],
+        },
+        {
+          name: "Organization",
+          href: "/accounting/organisation",
+        },
         // { name: "Charges ", href: "/accounting/charge-setup" },
         // { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
       ],
@@ -380,20 +394,20 @@ const modulesByPackage = {
 
         {
           name: "Business Overview",
-          icon: TrendingUp,
+          // icon: TrendingUp,
           subItems: [
             {
               name: "Profit and Loss",
               href: "/accounting/reports/profit-and-loss",
             },
-            {
-              name: "Profit and Loss (Schedule III)",
-              href: "/accounting/reports/profit-and-loss-details",
-            },
-            {
-              name: "Horizontal Profit and Loss",
-              href: "/accounting/reports/profit-and-loss",
-            },
+            // {
+            //   name: "Profit and Loss (Schedule III)",
+            //   href: "/accounting/reports/profit-and-loss-details",
+            // },
+            // {
+            //   name: "Horizontal Profit and Loss",
+            //   href: "/accounting/reports/profit-and-loss",
+            // },
             {
               name: "Cash Flow Statement",
               href: "/accounting/reports/cash-flow-statement",
@@ -402,26 +416,26 @@ const modulesByPackage = {
               name: "Balance Sheet",
               href: "/accounting/reports/balance-sheet",
             },
-            {
-              name: "Horizontal Balance Sheet",
-              href: "/accounting/reports/balance-sheet",
-            },
-            {
-              name: "Balance Sheet (Schedule III)",
-              href: "/accounting/reports/balance-sheet-details",
-            },
+            // {
+            //   name: "Horizontal Balance Sheet",
+            //   href: "/accounting/reports/balance-sheet",
+            // },
+            // {
+            //   name: "Balance Sheet (Schedule III)",
+            //   href: "/accounting/reports/balance-sheet-details",
+            // },
             {
               name: "Business Performance Ratios",
               href: "/accounting/reports/business-performance",
             },
-            {
-              name: "Cash Flow Forecasting",
-              href: "/accounting/reports/cash-flow-statement",
-            },
-            {
-              name: "Movement of Equity",
-              href: "/accounting/reports/balance-sheet",
-            },
+            // {
+            //   name: "Cash Flow Forecasting",
+            //   href: "/accounting/reports/cash-flow-statement",
+            // },
+            // {
+            //   name: "Movement of Equity",
+            //   href: "/accounting/reports/balance-sheet",
+            // },
           ],
         },
 
