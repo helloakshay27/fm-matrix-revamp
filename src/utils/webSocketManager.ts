@@ -257,11 +257,6 @@ class WebSocketManager {
                 },
                 {
                     connected() {
-                        console.log('='.repeat(60));
-                        console.log(`✅ CONNECTED to project space ${projectSpaceId}`);
-                        console.log(`📡 Stream: project_space_${projectSpaceId}`);
-                        console.log(`⏰ Time: ${new Date().toISOString()}`);
-                        console.log('='.repeat(60));
                         callbacks.onConnected?.();
                     },
 
@@ -271,24 +266,8 @@ class WebSocketManager {
                     },
 
                     received(data) {
-                        console.log('='.repeat(60));
-                        console.log('📨 RAW MESSAGE RECEIVED FROM BACKEND');
-                        console.log('⏰ Timestamp:', new Date().toISOString());
-                        console.log('📦 Full Data:', JSON.stringify(data, null, 2));
-                        console.log('🔍 Message Type:', data.type);
-                        console.log('='.repeat(60));
-
                         if (data.type === 'new_message') {
-                            console.log('✅ Message type confirmed: new_message');
-                            console.log('📝 Message Details:');
-                            console.log('   - ID:', data.message?.id);
-                            console.log('   - Body:', data.message?.body);
-                            console.log('   - User ID:', data.message?.user_id);
-                            console.log('   - User Name:', data.message?.user_name);
-                            console.log('   - Created At:', data.message?.created_at);
-
                             callbacks.onNewMessage?.(data.message);
-                            console.log('✅ onNewMessage callback executed');
                         } else {
                             console.warn('⚠️ Unknown message type:', data.type);
                         }
