@@ -116,7 +116,7 @@ export const TeamPerformance = () => {
         if (minTasks) queryParams.append('min_tasks', minTasks);
 
         const response = await axios.get(
-          `https://${baseUrl}/team_dashboard?${queryParams.toString()}`,
+          `https://${baseUrl}/team_dashboard.json?${queryParams.toString()}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,

@@ -1419,6 +1419,18 @@ export const SalesOrderCreatePage: React.FC = () => {
             }
         });
     });
+
+    // Inter-state (IGST Tax Rates)
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find(r => String(r.id) === String(item.tax_group_id));
+            if (!rate) return;
+            const taxAmount = (item.amount * rate.rate) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) existing.amount += taxAmount;
+            else taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
+        });
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);

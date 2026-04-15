@@ -366,6 +366,8 @@ import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import DocumentDrive from "./pages/DocumentDrive";
 import LoyaltyPage from './pages/products/LoyaltyPage';
+import CustomerAppPage from "./pages/products/CustomerAppPage";
+import CustomerPostPossessionPage from "./pages/products/CustomerPostPossessionPage";
 import HiSocietyPage from './pages/products/HiSocietyPage';
 import Snag360Page from './pages/products/Snag360Page';
 import QCPage from './pages/products/QCPage';
@@ -5588,7 +5590,9 @@ function App() {
                             path="/product-details/:productId"
                             element={<ProductDetails />}
                           />
-                          <Route path='/product/loyalty' element={<LoyaltyPage />} />
+                          <Route path='/product/loyalty' element={<CustomerAppPage />} />
+                          <Route path='/product/customer-app' element={<CustomerAppPage />} />
+                          <Route path='/product/customer-post-possession' element={<CustomerPostPossessionPage />} />
                           <Route path='/product/hi-society' element={<HiSocietyPage />} />
                           <Route path='/product/snag-360' element={<Snag360Page />} />
                           <Route path='/product/qc' element={<QCPage />} />
