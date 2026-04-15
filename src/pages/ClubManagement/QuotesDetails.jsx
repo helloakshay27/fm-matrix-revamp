@@ -56,6 +56,10 @@ export const QuotesDetails = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("quote-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [hasQuoteApproval, setHasQuoteApproval] = useState(false);
+    const [showDotsMenu, setShowDotsMenu] = useState(false);
+    const [showConvertMenu, setShowConvertMenu] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -63,20 +67,23 @@ export const QuotesDetails = () => {
     useEffect(() => {
         if (id && baseUrl && token) {
             fetchQuoteDetails();
+            fetchLockAccount();
         }
     }, [id, baseUrl, token]);
+
+    // Close dropdowns on outside click
+    useEffect(() => {
+        const handler = () => { setShowDotsMenu(false); setShowConvertMenu(false); };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
 
     const fetchQuoteDetails = async () => {
         try {
             setLoading(true);
             const response = await axios.get(
                 `https://${baseUrl}/lock_account_quotes/${id}.json`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
             );
             setQuoteData(response.data);
         } catch (error) {
@@ -84,6 +91,62 @@ export const QuotesDetails = () => {
             sonnerToast.error("Failed to fetch quote details");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchLockAccount = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/get_lock_account.json`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const hasApproval = Array.isArray(response.data?.approvals) &&
+                response.data.approvals.some((a) => a.approval_type === "quote" && a.active);
+            setHasQuoteApproval(hasApproval);
+        } catch (e) {
+            console.error("Failed to fetch lock account", e);
+        }
+    };
+
+    // ── Status update (PATCH) ──────────────────────────────────────────────
+    const updateStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            await axios.patch(
+                `https://${baseUrl}/lock_account_quotes/${id}.json`,
+                { lock_account_quote: { status } },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+            );
+            sonnerToast.success(`Quote ${status.replace("_", " ")} successfully`);
+            fetchQuoteDetails();
+        } catch (error) {
+            const errors = error?.response?.data?.errors;
+            if (Array.isArray(errors) && errors.length > 0) {
+                errors.forEach((e) => sonnerToast.error(`${e.id}: ${e.message}`));
+            } else {
+                sonnerToast.error("Failed to update status");
+            }
+        } finally {
+            setActionLoading(false);
+            setShowDotsMenu(false);
+        }
+    };
+
+    // ── Approval status (POST) ─────────────────────────────────────────────
+    const updateApprovalStatus = async (status) => {
+        try {
+            setActionLoading(true);
+            await axios.post(
+                `https://${baseUrl}/lock_account_quotes/${id}/update_approval_status.json`,
+                { status, comment: "" },
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+            );
+            sonnerToast.success(`Quote ${status.replace("_", " ")} successfully`);
+            fetchQuoteDetails();
+        } catch (error) {
+            sonnerToast.error("Failed to update approval status");
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -242,10 +305,206 @@ export const QuotesDetails = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={`${getStatusColor(quoteData.status)} border`}>
-                            {quoteData.status.toUpperCase()}
+                            {quoteData.status?.toUpperCase()}
                         </Badge>
+
+                        {/* ── WITHOUT APPROVAL ── */}
+                        {!hasQuoteApproval && (
+                            <>
+                                {/* Draft → Mark as Sent */}
+                                {quoteData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+
+                                {/* Sent → 3-dot menu: Accept / Decline */}
+                                {quoteData.status === "sent" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setShowDotsMenu((p) => !p)}
+                                        >
+                                            ⋯
+                                        </Button>
+                                        {showDotsMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[180px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-green-700"
+                                                    onClick={() => updateStatus("accepted")}
+                                                >
+                                                    Mark as Accepted
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-700"
+                                                    onClick={() => updateStatus("declined")}
+                                                >
+                                                    Mark as Declined
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Accepted → Convert dropdown */}
+                                {quoteData.status === "accepted" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            onClick={() => setShowConvertMenu((p) => !p)}
+                                        >
+                                            Convert ▾
+                                        </Button>
+                                        {showConvertMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[200px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/invoices/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Invoice
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Sales Order
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* ── WITH APPROVAL ── */}
+                        {hasQuoteApproval && (
+                            <>
+                                {/* Draft → Submit for Approval */}
+                                {quoteData.status === "draft" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("pending_approval")}
+                                    >
+                                        Submit for Approval
+                                    </Button>
+                                )}
+
+                                {/* Pending Approval + can_be_approved → Approve / Reject */}
+                                {quoteData.status === "pending_approval" && quoteData.can_approve && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            className="bg-green-600 text-white hover:bg-green-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("approved")}
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="bg-red-600 text-white hover:bg-red-700"
+                                            disabled={actionLoading}
+                                            onClick={() => updateApprovalStatus("rejected")}
+                                        >
+                                            Reject
+                                        </Button>
+                                    </>
+                                )}
+
+                                {/* Approved → Mark as Sent */}
+                                {quoteData.status === "approved" && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                        disabled={actionLoading}
+                                        onClick={() => updateStatus("sent")}
+                                    >
+                                        Mark as Sent
+                                    </Button>
+                                )}
+
+                                {/* Sent → 3-dot menu: Accept / Decline */}
+                                {quoteData.status === "sent" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setShowDotsMenu((p) => !p)}
+                                        >
+                                            ⋯
+                                        </Button>
+                                        {showDotsMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[180px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-green-700"
+                                                    onClick={() => updateStatus("accepted")}
+                                                >
+                                                    Mark as Accepted
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-700"
+                                                    onClick={() => updateStatus("declined")}
+                                                >
+                                                    Mark as Declined
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Accepted → Convert dropdown */}
+                                {quoteData.status === "accepted" && (
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            onClick={() => setShowConvertMenu((p) => !p)}
+                                        >
+                                            Convert ▾
+                                        </Button>
+                                        {showConvertMenu && (
+                                            <div
+                                                className="absolute right-0 top-9 z-50 bg-white border rounded-md shadow-lg min-w-[200px]"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/invoices/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Invoice
+                                                </button>
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/add", { state: { quoteData } }); }}
+                                                >
+                                                    Convert to Sales Order
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
 
