@@ -298,6 +298,7 @@ export const C = {
   textMain: "#1a1a1a",
   borderLgt: "#e5e7eb",
   pageBg: "#f6f4ee",
+  font: "'Poppins', sans-serif",
 };
 
 export const kpiClass = {
