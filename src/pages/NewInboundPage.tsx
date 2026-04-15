@@ -105,8 +105,8 @@ export const NewInboundPage = () => {
     };
 
     const sanitizeText = (value: string) => value?.trim() || '';
-const MOBILE_NUMBER_REGEX = /^\d{10}$/;
-const isValidMobileNumber = (value: string) => MOBILE_NUMBER_REGEX.test(value);
+    const MOBILE_NUMBER_REGEX = /^\d{10}$/;
+    const isValidMobileNumber = (value: string) => MOBILE_NUMBER_REGEX.test(value);
 
     const getSelectedSiteId = () => {
         if (typeof window === 'undefined') return '';
@@ -326,9 +326,9 @@ const isValidMobileNumber = (value: string) => MOBILE_NUMBER_REGEX.test(value);
             if (pkg.type === 'Others' && !pkg.otherType.trim()) {
                 errorsForPackage.otherType = 'Please specify the type';
             }
-            if (!pkg.attachments.length) {
-                errorsForPackage.attachments = 'At least one attachment is required';
-            }
+            // if (!pkg.attachments.length) {
+            //     errorsForPackage.attachments = 'At least one attachment is required';
+            // }
 
             if (Object.keys(errorsForPackage).length > 0) {
                 newPackageErrors[pkg.id] = errorsForPackage;
@@ -872,7 +872,7 @@ const isValidMobileNumber = (value: string) => MOBILE_NUMBER_REGEX.test(value);
                                     {/* Attachments */}
                                     <div className="lg:col-span-4">
                                         <label className="block text-sm font-medium mb-2 text-[#1a1a1a]">
-                                            Attachments <span style={{ color: '#C72030' }}>*</span>
+                                            Attachments
                                         </label>
                                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-white">
                                             <input
