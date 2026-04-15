@@ -30,6 +30,10 @@ import {
     Copy,
     Share2,
     ShoppingCart,
+    CirclePlus,
+    Eye,
+    ClipboardList,
+    X,
 } from "lucide-react";
 import {
     Dialog,
@@ -204,6 +208,7 @@ export const SalesOrderDetailPage = () => {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("order-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showApprovalLog, setShowApprovalLog] = useState(false);
     useEffect(() => {
         const fetchSalesOrder = async () => {
             setLoading(true);
@@ -277,6 +282,13 @@ export const SalesOrderDetailPage = () => {
             cancelled: "bg-red-100 text-red-800 border-red-200",
         };
         return colors[status] || colors.draft;
+    };
+
+    const getApprovalStatusBadge = (status: any) => {
+        const s = String(status || "").toLowerCase();
+        if (s === "approved") return "bg-green-100 text-green-800";
+        if (s === "rejected") return "bg-red-100 text-red-800";
+        return "bg-yellow-100 text-yellow-800";
     };
 
     const handleEdit = () => {
@@ -360,6 +372,18 @@ export const SalesOrderDetailPage = () => {
                         <Badge className={`${getStatusColor(salesOrder.status)} border`}>
                             {/* {salesOrder.status.toUpperCase()} */}
                         </Badge>
+
+                        {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setShowApprovalLog(true)}
+                                className="gap-2"
+                            >
+                                <ClipboardList className="h-4 w-4" />
+                                Approval Log
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -686,34 +710,70 @@ export const SalesOrderDetailPage = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Calendar className="h-5 w-5 text-primary" />
-                                    Order History
+                                    Activity Logs
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
-                                    <div className="flex gap-4 pb-4 border-b">
-                                        <div className="flex-shrink-0">
-                                            <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                                        </div>
-                                        <div className="flex-grow">
-                                            <p className="font-medium">Order Created</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {salesOrder?.created_at ? format(new Date(salesOrder.created_at), 'dd/MM/yyyy hh:mm a') : "N/A"}
-                                            </p>
-                                        </div>
+                                {Array.isArray((salesOrder as any)?.activity_logs) && (salesOrder as any).activity_logs.length > 0 ? (
+                                    <div className="divide-y">
+                                        {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
+                                            const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                                            const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                                            const isConverted = hint.includes("convert");
+                                            const isCreated = hint.includes("create");
+                                            const isAccepted = hint.includes("accept");
+                                            const isSent = hint.includes("sent");
+
+                                            const invoiceId =
+                                                log?.invoice_id ||
+                                                log?.lock_account_invoice_id ||
+                                                (salesOrder as any)?.invoice_id ||
+                                                (salesOrder as any)?.lock_account_invoice_id;
+
+                                            const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Edit : FileText);
+                                            const iconWrapClass =
+                                                isConverted || isCreated
+                                                    ? "bg-green-50 text-green-600 border-green-100"
+                                                    : (isAccepted || isSent
+                                                        ? "bg-sky-50 text-sky-600 border-sky-100"
+                                                        : "bg-gray-50 text-gray-500 border-gray-100");
+
+                                            return (
+                                                <div key={key} className="flex gap-6 py-5">
+                                                    <div className="min-w-[170px] text-sm text-muted-foreground">
+                                                        <div>{log?.date || "—"} {log?.time || ""}</div>
+                                                    </div>
+
+                                                    <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
+                                                        <Icon className="h-5 w-5" />
+                                                    </div>
+
+                                                    <div className="flex-1">
+                                                        <div className="text-sm font-medium text-foreground">
+                                                            {log?.message || "—"}
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+                                                        </div>
+
+                                                        {isConverted && invoiceId ? (
+                                                            <button
+                                                                type="button"
+                                                                className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                                                onClick={() => navigate(`/accounting/invoices/${invoiceId}`)}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                                View the invoice
+                                                            </button>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <div className="flex gap-4 pb-4 border-b">
-                                        <div className="flex-shrink-0">
-                                            <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                                        </div>
-                                        <div className="flex-grow">
-                                            <p className="font-medium">Order Updated</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {salesOrder?.updated_at ? format(new Date(salesOrder.updated_at), 'dd/MM/yyyy hh:mm a') : "N/A"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -736,6 +796,62 @@ export const SalesOrderDetailPage = () => {
                         <Button variant="destructive" onClick={handleDelete}>
                             Delete
                         </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Approval Log Modal */}
+            <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+                <DialogContent className="max-w-4xl">
+                    <div className="flex items-center justify-between">
+                        <DialogHeader>
+                            <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+                        </DialogHeader>
+                        <button
+                            type="button"
+                            onClick={() => setShowApprovalLog(false)}
+                            className="p-2 rounded hover:bg-muted"
+                            aria-label="Close"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <div className="rounded-lg border overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                                    <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                                    <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(((salesOrder as any)?.approval_status?.approval_levels) || []).map((lvl: any, index: number) => (
+                                    <TableRow key={lvl?.id ?? index}>
+                                        <TableCell className="font-medium">{index + 1}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                                        <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                                        <TableCell>
+                                            <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                                                {String(lvl?.status || "pending").toUpperCase()}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {lvl?.rejection_reason || "—"}
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            {lvl?.approved_by || "—"}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </div>
                 </DialogContent>
             </Dialog>
