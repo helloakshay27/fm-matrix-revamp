@@ -1,10 +1,4 @@
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { X, UserPlus, Mail, User, Trash2, Link2, Copy } from "lucide-react";
 import {
@@ -84,7 +78,7 @@ const selectMenuProps = {
       zIndex: 9999,
     },
   },
-  disablePortal: false,
+  disableScrollLock: true,
   disableAutoFocus: true,
   disableEnforceFocus: true,
 };
@@ -106,6 +100,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   const [accessLevel, setAccessLevel] = useState<"viewer" | "editor">("viewer");
   const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Get organization ID from localStorage
   const getOrgId = () => {
@@ -251,51 +246,58 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
     onClose();
   };
 
-  return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-      modal={false}
-    >
-      <DialogContent
-        className="max-w-3xl max-h-[82vh] overflow-y-auto bg-white z-[1001] border-none shadow-2xl p-0"
-        aria-describedby="document-share-dialog-description"
-      >
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-4 border-b border-gray-100">
-          <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-[#C72030]" />
-            SHARE DOCUMENT
-          </DialogTitle>
-          <div className="flex items-center gap-2">
-            {publicUuid && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyShareLink}
-                className="h-8 gap-2 border-[#C72030] text-[#C72030] hover:bg-red-50"
-              >
-                <Link2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Copy Link</span>
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-            >
-              <X className="h-5 w-5 text-gray-500" />
-            </Button>
-          </div>
-          <div id="document-share-dialog-description" className="sr-only">
-            Share document with internal users and external emails with
-            different access levels
-          </div>
-        </DialogHeader>
+  if (!isOpen) return null;
 
-        <div className="px-6 py-6 space-y-6">
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[1000] bg-black/80 animate-in fade-in-0"
+        onClick={onClose}
+      />
+      {/* Modal Container - flexbox centered, NO CSS transform */}
+      <div
+        className="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div
+          ref={modalRef}
+          className="w-full max-w-3xl max-h-[82vh] bg-white rounded-lg shadow-2xl flex flex-col animate-in fade-in-0 zoom-in-95"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between space-y-0 px-6 py-4 border-b border-gray-100 shrink-0">
+            <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#C72030]" />
+              SHARE DOCUMENT
+            </div>
+            <div className="flex items-center gap-2">
+              {publicUuid && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyShareLink}
+                  className="h-8 gap-2 border-[#C72030] text-[#C72030] hover:bg-red-50"
+                >
+                  <Link2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Copy Link</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Scrollable Body */}
+          <div className="px-6 py-6 space-y-6 overflow-y-auto flex-1">
           {/* Add Share Section */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">
@@ -487,6 +489,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
                             )
                           }
                           sx={{ height: "36px" }}
+                          MenuProps={selectMenuProps}
                         >
                           <MenuItem value="viewer">Viewer</MenuItem>
                           <MenuItem value="editor">Editor</MenuItem>
@@ -520,23 +523,24 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="px-6 py-2 bg-[#C72030] hover:bg-[#A01828] text-white shadow-lg"
-          >
-            Save
-          </Button>
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 shrink-0 rounded-b-lg">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="px-6 py-2 bg-[#C72030] hover:bg-[#A01828] text-white shadow-lg"
+            >
+              Save
+            </Button>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </>
   );
 };
