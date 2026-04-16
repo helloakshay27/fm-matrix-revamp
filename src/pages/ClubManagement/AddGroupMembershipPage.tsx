@@ -238,27 +238,36 @@ const formatInvoiceData = (apiResponse: any): any => {
         const totals = firstBill?.totals || {};
 
         return {
-            // Use bills data primarily
-            id: invoice.invoice_number || invoice.id || apiResponse?.id || '1008',
+            id: invoice.invoice_number || invoice.id || apiResponse?.id,
             created_at: invoice.invoice_date || apiResponse?.created_at,
+
             club_members: [{
-                user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name || 'Deepak Gm',
-                user_email: member.email || apiResponse?.club_members?.[0]?.user_email || 'deepak@gmail.com',
-                user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile || '7709622211',
+                user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name,
+                user_email: member.email || apiResponse?.club_members?.[0]?.user_email,
+                user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile,
             }],
-            membership_plan: apiResponse?.membership_plan || { name: 'Rain Plan' },
-            site_name: apiResponse?.site_name || 'New Site 1',
+
+            membership_plan: apiResponse?.membership_plan,
+            site_name: apiResponse?.site_name,
+
             allocation_payment_detail: {
-                base_amount: lineItems[0]?.rate || parseFloat(String(apiResponse?.allocation_payment_detail?.base_amount)) || 5000,
-                discount: totals.discount || parseFloat(String(apiResponse?.allocation_payment_detail?.discount)) || 0,
-                cgst: totals.cgst || parseFloat(String(apiResponse?.allocation_payment_detail?.cgst)) || 400,
-                sgst: totals.sgst || parseFloat(String(apiResponse?.allocation_payment_detail?.sgst)) || 400,
-                cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per || 8,
-                sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per || 8,
-                total_tax: (totals.cgst || 0) + (totals.sgst || 0) || parseFloat(String(apiResponse?.allocation_payment_detail?.total_tax)) || 800,
-                total_amount: totals.total_amount || parseFloat(String(apiResponse?.allocation_payment_detail?.total_amount)) || 5800,
+                base_amount: lineItems[0]?.rate || apiResponse?.allocation_payment_detail?.base_amount,
+                discount: totals.discount || apiResponse?.allocation_payment_detail?.discount,
+                cgst: totals.cgst || apiResponse?.allocation_payment_detail?.cgst,
+                sgst: totals.sgst || apiResponse?.allocation_payment_detail?.sgst,
+                cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per,
+                sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per,
+                total_tax: (totals.cgst || 0) + (totals.sgst || 0) || apiResponse?.allocation_payment_detail?.total_tax,
+                total_amount: totals.total_amount || apiResponse?.allocation_payment_detail?.total_amount,
                 payment_mode: apiResponse?.allocation_payment_detail?.payment_mode,
                 payment_status: apiResponse?.allocation_payment_detail?.payment_status,
+            },
+            invoice_data: {
+                lock_account_bill_id: firstBill?.lock_account_bill_id,
+                invoice: invoice,
+                member: member,
+                line_items: lineItems,
+                totals: totals,
             },
         };
     }
@@ -278,28 +287,41 @@ const formatSingleBill = (billData: any, apiResponse: any, billIndex: number = 0
     const billId = billData?.lock_account_bill_id || billData?.bill_id || (apiResponse?.id && `${apiResponse.id}-${billIndex}`) || `bill-${billIndex}`;
 
     return {
-        id: invoice.invoice_number || invoice.id || apiResponse?.id || '1008',
+        id: invoice.invoice_number || invoice.id || apiResponse?.id,
         bill_number: billData?.bill_number,
-        lock_account_bill_id: billId, // Include bill ID for PDF upload
+        lock_account_bill_id: billId,
         created_at: invoice.invoice_date || apiResponse?.created_at,
+
         club_members: [{
-            user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name || 'Deepak Gm',
-            user_email: member.email || apiResponse?.club_members?.[0]?.user_email || 'deepak@gmail.com',
-            user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile || '7709622211',
+            user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name,
+            user_email: member.email || apiResponse?.club_members?.[0]?.user_email,
+            user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile,
         }],
-        membership_plan: apiResponse?.membership_plan || { name: 'Rain Plan' },
-        site_name: apiResponse?.site_name || 'New Site 1',
+
+        membership_plan: apiResponse?.membership_plan,
+        site_name: apiResponse?.site_name,
+
         allocation_payment_detail: {
-            base_amount: lineItems[0]?.rate || parseFloat(String(apiResponse?.allocation_payment_detail?.base_amount)) || 5000,
-            discount: totals.discount || parseFloat(String(apiResponse?.allocation_payment_detail?.discount)) || 0,
-            cgst: totals.cgst || parseFloat(String(apiResponse?.allocation_payment_detail?.cgst)) || 400,
-            sgst: totals.sgst || parseFloat(String(apiResponse?.allocation_payment_detail?.sgst)) || 400,
-            cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per || 8,
-            sgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per || 8,
-            total_tax: (totals.cgst || 0) + (totals.sgst || 0) || parseFloat(String(apiResponse?.allocation_payment_detail?.total_tax)) || 800,
-            total_amount: totals.total_amount || parseFloat(String(apiResponse?.allocation_payment_detail?.total_amount)) || 5800,
+            base_amount: lineItems[0]?.rate || apiResponse?.allocation_payment_detail?.base_amount,
+            discount: totals.discount || apiResponse?.allocation_payment_detail?.discount,
+            cgst: totals.cgst || apiResponse?.allocation_payment_detail?.cgst,
+            sgst: totals.sgst || apiResponse?.allocation_payment_detail?.sgst,
+            cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per,
+            sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per,
+            total_tax:
+                totals.cgst && totals.sgst
+                    ? totals.cgst + totals.sgst
+                    : apiResponse?.allocation_payment_detail?.total_tax,
+            total_amount: totals.total_amount || apiResponse?.allocation_payment_detail?.total_amount,
             payment_mode: apiResponse?.allocation_payment_detail?.payment_mode,
             payment_status: apiResponse?.allocation_payment_detail?.payment_status,
+        },
+        invoice_data: {
+            lock_account_bill_id: billId,
+            invoice: invoice,
+            member: member,
+            line_items: lineItems,
+            totals: totals,
         },
     };
 };

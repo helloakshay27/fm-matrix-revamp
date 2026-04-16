@@ -397,7 +397,7 @@ export const BookingSetupDetailClubPage = () => {
           selectedSlots: blocking.facility_blocking?.block_slot || [],
         })) || [],
       });
-      
+
       console.log('=== Block Days Debug ===');
       console.log('Raw facility_blockings from API:', response?.facility_blockings);
       console.log('Total facility_blockings count:', response?.facility_blockings?.length);
@@ -409,20 +409,20 @@ export const BookingSetupDetailClubPage = () => {
         selectedSlots: blocking.facility_blocking?.block_slot,
       })));
       console.log('======================');
-      
+
       // Fetch slots for ALL block days (so we can display them in the UI)
       response?.facility_blockings?.forEach((blocking: any, index: number) => {
         const ondate = blocking.facility_blocking?.ondate;
-        
+
         if (ondate) {
-          console.log(`Fetching slots for block day ${index}:`, { 
-            date: ondate, 
+          console.log(`Fetching slots for block day ${index}:`, {
+            date: ondate,
             blockSlotIds: blocking.facility_blocking?.block_slot
           });
           fetchBlockDaySlots(id!, ondate, index);
         }
       });
-      
+
       const transformedRules = response.cancellation_rules?.map((rule: any) => ({
         description: rule.description,
         time: {
@@ -466,7 +466,7 @@ export const BookingSetupDetailClubPage = () => {
 
       // Setup gallery images
       const allGalleryImages: any[] = [];
-      
+
       // 1:1 images
       if (response?.gallery_image_1_by_1 && Array.isArray(response.gallery_image_1_by_1)) {
         response.gallery_image_1_by_1.forEach((item: any) => {
@@ -480,7 +480,7 @@ export const BookingSetupDetailClubPage = () => {
           }
         });
       }
-      
+
       // 16:9 images
       if (response?.gallery_image_16_by_9 && Array.isArray(response.gallery_image_16_by_9)) {
         response.gallery_image_16_by_9.forEach((item: any) => {
@@ -494,7 +494,7 @@ export const BookingSetupDetailClubPage = () => {
           }
         });
       }
-      
+
       // 9:16 images
       if (response?.gallery_image_9_by_16 && Array.isArray(response.gallery_image_9_by_16)) {
         response.gallery_image_9_by_16.forEach((item: any) => {
@@ -508,7 +508,7 @@ export const BookingSetupDetailClubPage = () => {
           }
         });
       }
-      
+
       // 3:2 images
       if (response?.gallery_image_3_by_2 && Array.isArray(response.gallery_image_3_by_2)) {
         response.gallery_image_3_by_2.forEach((item: any) => {
@@ -522,7 +522,7 @@ export const BookingSetupDetailClubPage = () => {
           }
         });
       }
-      
+
       setGalleryImages(allGalleryImages);
     } catch (error) {
       console.error("Error fetching facility details:", error);
@@ -598,7 +598,7 @@ export const BookingSetupDetailClubPage = () => {
             <Button
               variant="ghost"
               onClick={() => location.pathname.includes("/club-management/") ?
-               navigate("/club-management/vas/booking/setup") : navigate("/settings/vas/booking-club/setup") 
+                navigate("/club-management/vas/booking/setup") : navigate("/settings/vas/booking-club/setup")
               }
               className="p-0"
             >
@@ -613,7 +613,7 @@ export const BookingSetupDetailClubPage = () => {
               >
                 Edit
               </Button>
-              <Button
+              {/* <Button
                 onClick={() => setShowQr(true)}
                 className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
               >
@@ -630,7 +630,7 @@ export const BookingSetupDetailClubPage = () => {
                   />
                 </svg>
                 View QR
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -983,7 +983,7 @@ export const BookingSetupDetailClubPage = () => {
                 {formData.blockDays.map((blockDay, index) => (
                   <div key={blockDay.id || index} className="p-4 border rounded-lg space-y-4">
                     <h4 className="text-sm font-semibold text-gray-700">Block Day {index + 1}</h4>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <TextField
                         label="Date"
@@ -1411,7 +1411,7 @@ export const BookingSetupDetailClubPage = () => {
             </div>
           </div>
 
-          {/* /* Additional Setup */ }
+          {/* /* Additional Setup */}
           <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? "h-auto" : "h-[6rem]"}`}>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">

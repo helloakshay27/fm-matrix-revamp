@@ -17,6 +17,7 @@ import axios from 'axios';
 import Invoice from '@/components/Invoice';
 import { API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
+import BookingInvoice from '@/components/BookingInvoice';
 
 // Formatter helper: Converts facility booking API response into Invoice-compatible format
 const formatFacilityBookingInvoice = (apiResponse: any): any => {
@@ -51,6 +52,14 @@ const formatFacilityBookingInvoice = (apiResponse: any): any => {
       total_amount: totals.total_amount || 0,
       payment_mode: apiResponse?.payment_method || 'prepaid',
       payment_status: apiResponse?.payment_status || 'pending',
+    },
+    invoice_data: {
+      lock_account_bill_id: invoiceData.lock_account_bill_id,
+      invoice: invoice,
+      member: member,
+      booking: invoiceData?.booking || {},
+      line_items: lineItems,
+      totals: totals,
     },
   };
 };
@@ -1085,7 +1094,7 @@ export const AddFacilityBookingClubPage = () => {
               </Button>
             </div>
 
-            <Invoice
+            <BookingInvoice
               key={`invoice-${invoiceData?.booking_id}`}
               data={invoiceData}
               returnBase64={true}

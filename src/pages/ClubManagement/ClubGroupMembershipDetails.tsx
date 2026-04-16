@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@
 import axios from 'axios';
 import Invoice from '@/components/Invoice';
 import { getToken } from '@/utils/auth';
+import Receipt from '@/components/Reciept';
 
 interface Attachment {
   id: number;
@@ -232,6 +233,13 @@ const formatPaymentInvoice = (invoiceData: any): any => {
       total_amount: totals.total_amount || 0,
       payment_mode: 'online',
       payment_status: invoiceData?.status || 'pending',
+    },
+    invoice_data: {
+      lock_account_bill_id: invoiceData?.lock_account_bill_id,
+      invoice: invoice,
+      member: member,
+      line_items: lineItems,
+      totals: totals,
     },
   };
 };
@@ -814,7 +822,7 @@ export const ClubGroupMembershipDetails = () => {
               </Button>
             </div>
 
-            <Invoice
+            <Receipt
               key={`invoice-${invoiceData?.bill_id}`}
               data={invoiceData}
               returnBase64={true}
