@@ -694,6 +694,89 @@ export const InvoiceAdd: React.FC = () => {
         });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Pre-fill from sales order when navigated via Convert to Invoice
+    useEffect(() => {
+        const saleOrderId = location.state?.saleOrderId;
+        if (!saleOrderId) return;
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios.get(`https://${baseUrl}/sale_orders/${saleOrderId}.json`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(async (res) => {
+            const saleOrder = res.data;
+            const addressDetail = saleOrder?.address_detail || {};
+            const preferredGstin = addressDetail?.gst_detail?.gstin;
+
+            // Keep the new invoice order number blank; conversion metadata is submitted separately.
+            if (saleOrder.date) setSalesOrderDate(saleOrder.date);
+            if (saleOrder.shipment_date) setExpectedShipmentDate(saleOrder.shipment_date);
+            if (saleOrder.customer_notes) setCustomerNotes(saleOrder.customer_notes);
+            if (saleOrder.terms_and_conditions) setTermsAndConditions(saleOrder.terms_and_conditions);
+            if (saleOrder.subject) setSubject(saleOrder.subject);
+            if (saleOrder.sales_person_id || saleOrder.sales_person_name) {
+                setSalesperson(String(saleOrder.sales_person_id || saleOrder.sales_person_name));
+            }
+            if (saleOrder.payment_term_id) setSelectedTerm(String(saleOrder.payment_term_id));
+
+            const convertedPlaceOfSupply =
+                saleOrder.place_of_supply ||
+                addressDetail?.gst_detail?.place_of_supply ||
+                '';
+            if (convertedPlaceOfSupply) setPlaceOfSupply(convertedPlaceOfSupply);
+
+            if (saleOrder.discount_per !== null && saleOrder.discount_per !== undefined && saleOrder.discount_per !== '') {
+                setDiscountTypeOnTotal('percentage');
+                setDiscountOnTotal(Number(saleOrder.discount_per) || 0);
+            } else {
+                setDiscountTypeOnTotal('amount');
+                setDiscountOnTotal(Number(saleOrder.discount_amount) || 0);
+            }
+
+            setAdjustment(Number(saleOrder.charge_amount) || 0);
+            setAdjustmentLabel(saleOrder.charge_name || 'Adjustment');
+
+            if (saleOrder.tax_type) {
+                const normalizedTaxType = String(saleOrder.tax_type).toUpperCase();
+                if (normalizedTaxType === 'TDS' || normalizedTaxType === 'TCS') {
+                    setTaxType(normalizedTaxType);
+                }
+            }
+            if (saleOrder.lock_account_tax_id || saleOrder.lock_account_tax?.id) {
+                setSelectedTax(String(saleOrder.lock_account_tax_id || saleOrder.lock_account_tax?.id));
+            }
+
+            if (saleOrder.lock_account_customer_id) {
+                setSelectedCustomer({ id: String(saleOrder.lock_account_customer_id), name: saleOrder.customer_name || '' } as any);
+                await fetchCustomerDetail(String(saleOrder.lock_account_customer_id), preferredGstin);
+                if (addressDetail?.billing_address_id) setSelectedBillingAddressId(addressDetail.billing_address_id);
+                if (addressDetail?.shipping_address_id) setSelectedShippingAddressId(addressDetail.shipping_address_id);
+                if (addressDetail?.gst_detail_id) setSelectedGstDetailId(addressDetail.gst_detail_id);
+                if (convertedPlaceOfSupply) setPlaceOfSupply(convertedPlaceOfSupply);
+            }
+
+            if (Array.isArray(saleOrder.item_details) && saleOrder.item_details.length > 0) {
+                setItems(saleOrder.item_details.map((item: any, idx: number) => ({
+                    id: String(idx + 1),
+                    name: item.item_name || '',
+                    item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
+                    description: item.description || '',
+                    quantity: item.quantity || '',
+                    rate: item.rate || '',
+                    discount: 0,
+                    discountType: 'percentage' as const,
+                    tax: item.tax_group?.name || item.tax_rate?.name || '',
+                    taxRate: 0,
+                    amount: item.total_amount || 0,
+                    item_tax_type: item.tax_type || '',
+                    tax_group_id: item.tax_group?.id || item.tax_rate?.id || null,
+                    tax_exemption_id: item.tax_exemption_id || null,
+                })));
+            }
+        }).catch((err) => {
+            console.error('Failed to fetch sales order for invoice pre-fill:', err);
+        });
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     const openAddressListModal = (type: 'billing' | 'shipping') => {
         setActiveAddressType(type);
         setAddressListModalOpen(true);
@@ -1276,10 +1359,14 @@ export const InvoiceAdd: React.FC = () => {
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
             formData.append('lock_account_invoice[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
             formData.append('lock_account_invoice[place_of_supply]', placeOfSupply); //new added
-            // Converted from quote
+            // Converted from quote or sales order
             if (location.state?.quoteData) {
                 formData.append('lock_account_invoice[converted_from_type]', 'LockAccountQuote');
                 formData.append('lock_account_invoice[converted_from_id]', String(location.state.quoteData.id));
+            }
+            if (location.state?.saleOrderId) {
+                formData.append('lock_account_invoice[converted_from_type]', 'SaleOrder');
+                formData.append('lock_account_invoice[converted_from_id]', String(location.state.saleOrderId));
             }
             const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
             const selectedOrFirstShippingId = selectedShippingAddressId ?? shippingAddressBook[0]?.id ?? '';
@@ -1791,14 +1878,14 @@ export const InvoiceAdd: React.FC = () => {
                                     label="Payment Terms"
                                     onChange={e => setSelectedTerm(e.target.value)}
                                     renderValue={val => {
-                                        const found = filteredTerms.find(term => term.id === val);
+                                        const found = paymentTermsList.find(term => String(term.id) === String(val));
                                         return found ? found.name : val;
                                     }}
                                     sx={fieldStyles}
                                 >
                                     <MenuItem value="" disabled>Select payment term</MenuItem>
                                     {filteredTerms.map(term => (
-                                        <MenuItem key={term.id || term.name} value={term.id}>{term.name}</MenuItem>
+                                        <MenuItem key={term.id || term.name} value={String(term.id)}>{term.name}</MenuItem>
                                     ))}
 
                                 </Select>

@@ -287,19 +287,21 @@ const Invoice = ({
                 </div>
             )} */}
 
-            <div ref={invoiceRef} className="h-full">
+            <div ref={invoiceRef} className="min-h-[297mm]">
                 <div className="w-full bg-[#F9F4E8] max-w-4xl flex h-full">
                     {/* LEFT SIDE - Logo/Branding Area */}
                     <div className="w-[24%] p-3 border-r-4 border-[#7C2D12] flex flex-col items-center justify-between py-8">
                         <div className="text-center">
                             <img src="/src/assets/image.png" alt="" className="h-[90%]" />
                         </div>
-                        <div className="flex justify-center items-center mb-[170px]">
+                        <div className="flex justify-center items-center">
                             <div
                                 style={{
                                     transform: "rotate(-90deg)",
                                     transformOrigin: "center",
                                     whiteSpace: "nowrap",
+                                    width: "300px",
+                                    textAlign: "center",
                                 }}
                             >
                                 <p className="text-[#1F5E2E] font-bold text-7xl">
@@ -524,15 +526,12 @@ const Invoice = ({
                             </p>
 
                             {/* Amount in Words */}
-                            <p className="text-[#1F5E2E] text-sm mb-3">
+                            <p className="text-[#1F5E2E] text-sm mb-6">
                                 <span className="font-bold">Amount in words:</span>{" "}
                                 <span className="font-bold text-[#1F5E2E]">
                                     {amountInWords(Math.round(totalAmount))}
                                 </span>
                             </p>
-
-                            {/* Blank space */}
-                            <div className="mb-[70px]"></div>
 
                             {/* Customer Note */}
                             <p className="text-[#1F5E2E] font-bold text-sm mb-1">
