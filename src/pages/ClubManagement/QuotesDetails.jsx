@@ -404,7 +404,7 @@ export const QuotesDetails = () => {
                                                 </button>
                                                 <button
                                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
-                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/add", { state: { quoteData } }); }}
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/create", { state: { quoteData } }); }}
                                                 >
                                                     Convert to Sales Order
                                                 </button>
@@ -519,7 +519,7 @@ export const QuotesDetails = () => {
                                                 </button>
                                                 <button
                                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
-                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/add", { state: { quoteData } }); }}
+                                                    onClick={() => { setShowConvertMenu(false); navigate("/accounting/sales-order/create", { state: { quoteData } }); }}
                                                 >
                                                     Convert to Sales Order
                                                 </button>

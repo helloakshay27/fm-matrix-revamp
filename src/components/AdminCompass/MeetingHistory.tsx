@@ -6,8 +6,19 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WeekPicker } from './WeekPicker';
+import { useState } from 'react';
 
 const MeetingHistory = () => {
+    const [currentWeek, setCurrentWeek] = useState(new Date());
+
+    const handlePreviousWeek = () => {
+        setCurrentWeek(prev => new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000));
+    };
+
+    const handleNextWeek = () => {
+        setCurrentWeek(prev => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000));
+    };
+
     return (
         <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm space-y-6 mt-6">
             {/* Header Section */}
@@ -24,11 +35,21 @@ const MeetingHistory = () => {
 
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
-                        <Button variant="outline" size="icon" className="h-9 w-9 !bg-white !border-gray-200 rounded-[8px] shadow-sm">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 !bg-white !border-gray-200 rounded-[8px] shadow-sm"
+                            onClick={handlePreviousWeek}
+                        >
                             <ChevronLeft className="w-4 h-4 text-gray-600" />
                         </Button>
-                        <WeekPicker />
-                        <Button variant="outline" size="icon" className="h-9 w-9 !bg-white !border-gray-200 rounded-[8px] shadow-sm">
+                        <WeekPicker currentWeek={currentWeek} onWeekChange={setCurrentWeek} />
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 !bg-white !border-gray-200 rounded-[8px] shadow-sm"
+                            onClick={handleNextWeek}
+                        >
                             <ChevronRight className="w-4 h-4 text-gray-600" />
                         </Button>
                     </div>

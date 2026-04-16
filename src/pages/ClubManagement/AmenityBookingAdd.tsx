@@ -30,6 +30,7 @@ const formatFacilityBookingInvoice = (apiResponse: any): any => {
 
   return {
     id: invoice.invoice_number || apiResponse?.id || 'FB-' + apiResponse?.id,
+    lock_account_bill_id: invoiceData.lock_account_bill_id,
     created_at: invoice.invoice_date || new Date().toLocaleDateString('en-IN'),
     booking_id: apiResponse?.id,
     club_members: [{
@@ -801,6 +802,9 @@ export const AddFacilityBookingClubPage = () => {
       //   return;
       // }
 
+      // Determine if complementary - set all amounts to 0 if true
+      const isComplementary = paymentMethod === 'complementary';
+
       const payload = {
         facility_booking: {
           user_id: selectedUser,
@@ -823,16 +827,16 @@ export const AddFacilityBookingClubPage = () => {
             };
           }),
           entity_id: selectedCompany,
-          member_charges: userType === 'occupant' ? costSummary.totalUserCharge : 0,
-          guest_charges: userType === 'occupant' ? costSummary.totalGuestCharge : costSummary.totalUserCharge,
+          member_charges: isComplementary ? 0 : (userType === 'occupant' ? costSummary.totalUserCharge : 0),
+          guest_charges: isComplementary ? 0 : (userType === 'occupant' ? costSummary.totalGuestCharge : costSummary.totalUserCharge),
           guest_premium_details: guestPremiumDetails,
-          discount: costSummary.discountAmount,
-          cgst_amount: costSummary.gstAmount,
-          sgst_amount: costSummary.sgstAmount,
+          discount: isComplementary ? 0 : costSummary.discountAmount,
+          cgst_amount: isComplementary ? 0 : costSummary.gstAmount,
+          sgst_amount: isComplementary ? 0 : costSummary.sgstAmount,
           gst: costSummary.gstPercentage,
           sgst: costSummary.sgstPercentage,
-          sub_total: costSummary.subtotalAfterDiscount,
-          amount_full: costSummary.amountFull,
+          sub_total: isComplementary ? 0 : costSummary.subtotalAfterDiscount,
+          amount_full: isComplementary ? 0 : costSummary.amountFull,
           booked_members_attributes: bookedMembersAttributes,
           member_count: userType === 'occupant' ? 1 : 0,
           guest_count: numberOfGuests,
@@ -892,11 +896,9 @@ export const AddFacilityBookingClubPage = () => {
   const handleBase64Generated = (base64: string) => {
     console.log('PDF generated from Invoice');
     setIsGeneratingInvoice(false);
+    console.log(invoiceData)
     // Use invoice_data.lock_account_bill_id or fallback to booking_id or invoice number
-    const billId = invoiceData?.lock_account_bill_id ||
-      invoiceData?.booking_id ||
-      invoiceData?.id ||
-      invoiceData?.invoice_number;
+    const billId = invoiceData?.lock_account_bill_id
 
     if (billId) {
       setCollectedPDF({
@@ -972,6 +974,10 @@ export const AddFacilityBookingClubPage = () => {
       setIsUploadingPDF(false);
     }
   };
+
+  console.log(collectedPDF)
+  console.log(isUploadingPDF)
+  console.log(showInvoice)
 
   // Auto-upload PDF when collected
   useEffect(() => {
@@ -1087,6 +1093,7 @@ export const AddFacilityBookingClubPage = () => {
               onClose={handleCloseInvoice}
               showButton={true}
               autoDownload={autoDownloadInvoice}
+              isFromBookingPage={true}
             />
           </div>
         </div>
