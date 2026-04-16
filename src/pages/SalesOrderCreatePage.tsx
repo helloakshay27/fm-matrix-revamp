@@ -270,7 +270,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             headers: { Authorization: token ? `Bearer ${token}` : undefined }
         }).then(async (res) => {
             const q = res.data;
-            if (q.reference_number) setReferenceNumber(q.reference_number);
+            // Keep the new sales order's reference/order number blank, same as invoice conversion flow.
             if (q.date) setSalesOrderDate(q.date);
             if (q.customer_notes) setCustomerNotes(q.customer_notes);
             if (q.terms_and_conditions) setTermsAndConditions(q.terms_and_conditions);
@@ -2840,7 +2840,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                     <div className="max-h-[240px] overflow-y-auto">
                         {gstDetails.map((gst) => (
                             <button key={gst.id} type="button" className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`} onClick={() => handleGstinDropdownChange(gst.id)}>
-                                {gst.gstin} - {gst.place_of_supply}[MH]
+                                {gst.gstin} - {gst.place_of_supply}
                             </button>
                         ))}
                     </div>
