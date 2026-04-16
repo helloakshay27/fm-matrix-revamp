@@ -323,6 +323,41 @@ export const KeyProcessesSection = () => {
   const [selectIds, setSelectIds]         = useState<number[]>([]);
   const [searchQuery, setSearchQuery]     = useState('');
 
+  // New States for Dropdowns
+  const [departments, setDepartments]     = useState<any[]>([]);
+  const [users, setUsers]                 = useState<any[]>([]);
+
+  // ── GET Data for Dropdowns ──
+  const fetchDepartmentsAndUsers = useCallback(async () => {
+    try {
+      // Fetch Departments
+      const depRes = await fetch(`${BASE_URL}/pms/departments.json`, { headers: getAuthHeaders() });
+      if (depRes.ok) {
+        const dJson = await depRes.json();
+        // Fallback checks incase API nests response under .departments or .data
+        const dList = Array.isArray(dJson) ? dJson : (dJson.departments || dJson.data || []);
+        setDepartments(dList);
+      }
+
+      // Fetch Users
+      const orgId = localStorage.getItem('org_id') || '';
+      const userRes = await fetch(`${BASE_URL}/api/users?organization_id=${orgId}`, { headers: getAuthHeaders() });
+      if (userRes.ok) {
+        const uJson = await userRes.json();
+        // Fallback checks incase API nests response under .users or .data
+        const uList = Array.isArray(uJson) ? uJson : (uJson.users || uJson.data || []);
+        setUsers(uList);
+      }
+    } catch (err) {
+      console.error('Failed to fetch departments or users', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDepartmentsAndUsers();
+  }, [fetchDepartmentsAndUsers]);
+
+
   // ── GET ──
   const fetchSops = useCallback(async () => {
     setIsFetching(true); setFetchError(null);
@@ -397,8 +432,10 @@ export const KeyProcessesSection = () => {
         system_sop: {
           system_name:       form.name.trim(),
           description:       form.description || '',
+          department_id:     form.department_id ? Number(form.department_id) : null,
           status:            form.status,
           priority:          form.priority,
+          assignee_id:       form.assignee_id ? Number(form.assignee_id) : null,
           health_score:      Number(form.health_score) || 0,
           documentation_url: form.documentation_url || '',
           kpis:              [],
@@ -660,19 +697,39 @@ export const KeyProcessesSection = () => {
                     value={form.health_score} onChange={e => setForm({ ...form, health_score: e.target.value })}
                     className="kp-input" />
                 </div>
+                {/* ── API Powered Department Select ── */}
                 <div>
-                  <label style={labelSt}>Department ID</label>
-                  <input type="number" placeholder="e.g. 1"
-                    value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}
-                    className="kp-input" />
+                  <label style={labelSt}>Department</label>
+                  <select
+                    value={form.department_id}
+                    onChange={e => setForm({ ...form, department_id: e.target.value })}
+                    className="kp-select"
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.name || d.title || d.department_name || d.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
+              
+              {/* ── API Powered Assignee Select ── */}
               <div>
-                <label style={labelSt}>Assignee ID</label>
-                <input type="number" placeholder="e.g. 123"
-                  value={form.assignee_id} onChange={e => setForm({ ...form, assignee_id: e.target.value })}
-                  className="kp-input" />
+                <label style={labelSt}>Assignee</label>
+                <select
+                  value={form.assignee_id}
+                  onChange={e => setForm({ ...form, assignee_id: e.target.value })}
+                  className="kp-select"
+                >
+                  <option value="">Select Assignee</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.email} {u.full_name ? `(${u.full_name})` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div>
                 <label style={labelSt}>Documentation URL</label>
                 <input type="text" placeholder="https://..."

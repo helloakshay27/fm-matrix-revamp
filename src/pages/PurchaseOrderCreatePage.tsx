@@ -85,6 +85,16 @@ interface ContactPerson {
     department: string;
 }
 
+interface Address {
+    id: string;
+    address: string;
+    city: string;
+    state: string;
+    pin_code: string;
+    default_address: boolean;
+    [key: string]: any;
+}
+
 interface Item {
     id: string;
     name: string;
@@ -143,12 +153,26 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [shippingAddress, setShippingAddress] = useState('');
     const [sameAsBilling, setSameAsBilling] = useState(false);
 
+    // Vendor Addresses from API
+    const [billingAddresses, setBillingAddresses] = useState<Address[]>([]);
+    const [shippingAddresses, setShippingAddresses] = useState<Address[]>([]);
+    const [loadingAddresses, setLoadingAddresses] = useState(false);
+    const [addressError, setAddressError] = useState('');
+
     // Delivery Address
     const [deliveryAddressType, setDeliveryAddressType] = useState<'organization' | 'customer'>('organization');
-    const [deliveryAddresses, setDeliveryAddresses] = useState<any[]>([]);
-    const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState<any>(null);
-    const [deliveryOrganizationId, setDeliveryOrganizationId] = useState<string>('');
-    const [deliveryCustomerId, setDeliveryCustomerId] = useState<string>('');
+
+    // Organization flow
+    const [organizationAddress, setOrganizationAddress] = useState<any>(null);
+    const [loadingOrgAddress, setLoadingOrgAddress] = useState(false);
+    const [orgAddressError, setOrgAddressError] = useState('');
+
+    // Customer flow
+    const [deliveryCustomers, setDeliveryCustomers] = useState<any[]>([]);
+    const [selectedDeliveryCustomer, setSelectedDeliveryCustomer] = useState<any>(null);
+    const [deliveryCustomerAddress, setDeliveryCustomerAddress] = useState<any>(null);
+    const [loadingCustomerAddress, setLoadingCustomerAddress] = useState(false);
+    const [customerAddressError, setCustomerAddressError] = useState('');
 
     // Purchase Order Details
     const [referenceNumber, setReferenceNumber] = useState('');
@@ -520,42 +544,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     // Update taxAmount2 using percentage from selected tax option
     // Moved after calculations to avoid ReferenceError
 
-    // Initialize IDs
+    // Fetch account ledgers and groups
     useEffect(() => {
-        const orgId = localStorage.getItem('organization_id');
-        if (orgId) setDeliveryOrganizationId(orgId);
-
-        const user = getUser();
-        if (user?.id) setDeliveryCustomerId(user.id.toString());
-    }, []);
-
-    // Fetch delivery addresses
-    useEffect(() => {
-        const fetchDeliveryAddresses = async () => {
-            try {
-                let url = `https://${baseUrl}/addresses.json`;
-
-                const params = new URLSearchParams();
-                if (deliveryAddressType === 'organization') {
-                    params.append('resource_type', "Organization");
-                    params.append('resource_id', JSON.parse(localStorage.getItem("user")).organization_id)
-                } else {
-                    params.append('resource_type', "Pms::Supplier");
-                }
-
-                const response = await axios.get(`${url}?${params.toString()}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.data) {
-                    setDeliveryAddresses(response.data);
-                }
-            } catch (error) {
-                console.error('Error fetching delivery addresses:', error);
-                toast.error('Failed to fetch delivery addresses');
-            }
-        };
-
         const fetchAccountLedgers = async () => {
             const accountId = JSON.parse(localStorage.getItem("user")).lock_account_id;
             if (!accountId) return;
@@ -592,9 +582,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             }
         };
 
-        fetchDeliveryAddresses();
         fetchAccountLedgers();
-    }, [deliveryAddressType, deliveryOrganizationId, deliveryCustomerId]);
+        fetchAccountGroups();
+    }, [baseUrl, token]);
 
     useEffect(() => {
         const fetchAccountGroups = async () => {
@@ -617,16 +607,205 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         fetchAccountGroups();
     }, [baseUrl, token]);
 
+    // Fetch customers for delivery address section
+    useEffect(() => {
+        const lockAccountId = localStorage.getItem('lock_account_id');
+        const fetchDeliveryCustomers = async () => {
+            try {
+                const response = await axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lockAccountId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setDeliveryCustomers(response.data || []);
+            } catch (error) {
+                console.error('Error fetching customers:', error);
+            }
+        };
+        fetchDeliveryCustomers();
+    }, [baseUrl, token]);
+
+    // Fetch organization address (auto-fetch when org delivery type is selected)
+    useEffect(() => {
+        if (deliveryAddressType !== 'organization') return;
+
+        const fetchOrgAddress = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            // Get org_id from localStorage - try multiple possible keys
+            const orgId =
+                localStorage.getItem('org_id') ||
+                localStorage.getItem('organisation_id') ||
+                localStorage.getItem('organization_id') ||
+                (() => {
+                    try {
+                        return JSON.parse(localStorage.getItem('user') || '{}')?.organization_id;
+                    } catch {
+                        return null;
+                    }
+                })();
+
+            const lockAccountId = localStorage.getItem('lock_account_id');
+
+            if (!baseUrl || !token || !orgId) {
+                setOrgAddressError('Organization not found in session.');
+                return;
+            }
+
+            setLoadingOrgAddress(true);
+            setOrgAddressError('');
+            setOrganizationAddress(null);
+
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${orgId}.json?lock_account_id=${lockAccountId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                const org = res.data?.organization || res.data;
+                const addr = org?.address || null;
+
+                if (addr) {
+                    setOrganizationAddress(addr);
+                } else {
+                    setOrgAddressError('No address found for this organization.');
+                }
+            } catch (err) {
+                console.error('Error fetching organization address:', err);
+                setOrgAddressError('Failed to fetch organization address.');
+            } finally {
+                setLoadingOrgAddress(false);
+            }
+        };
+
+        fetchOrgAddress();
+    }, [deliveryAddressType]);
+
+    // Fetch customer address when customer is selected
+    useEffect(() => {
+        if (!selectedDeliveryCustomer?.id) {
+            setDeliveryCustomerAddress(null);
+            setCustomerAddressError('');
+            return;
+        }
+
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lockAccountId = localStorage.getItem('lock_account_id');
+
+        const fetchCustAddress = async () => {
+            setLoadingCustomerAddress(true);
+            setCustomerAddressError('');
+
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_account_customers/${selectedDeliveryCustomer.id}.json?lock_account_id=${lockAccountId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                // Try to extract address from response
+                let addressData = null;
+                
+                // Check for default_shipping_address first 
+                if (res.data?.default_shipping_address) {
+                    addressData = res.data.default_shipping_address;
+                } else if (res.data?.shipping_address) {
+                    addressData = res.data.shipping_address;
+                } else if (res.data?.billing_address) {
+                    addressData = res.data.billing_address;
+                } else if (res.data?.address) {
+                    addressData = res.data.address;
+                }
+
+                // Extract individual address fields with fallbacks
+                if (addressData || res.data) {
+                    const sourceData = addressData || res.data;
+                    const addressInfo = {
+                        attention: sourceData.attention || '',
+                        address: sourceData.address || sourceData.street || '',
+                        address_line_two: sourceData.address_line_two || sourceData.street2 || '',
+                        city: sourceData.city || '',
+                        state: sourceData.state || sourceData.province || '',
+                        pin_code: sourceData.pin_code || sourceData.postal_code || sourceData.zip || '',
+                        country: sourceData.country || '',
+                        id: sourceData.id || selectedDeliveryCustomer.id
+                    };
+                    setDeliveryCustomerAddress(addressInfo);
+                } else {
+                    setCustomerAddressError('No address found for this customer.');
+                    setDeliveryCustomerAddress(null);
+                }
+            } catch (error) {
+                console.error('Error fetching customer address:', error);
+                setCustomerAddressError('Failed to load customer address.');
+                setDeliveryCustomerAddress(null);
+            } finally {
+                setLoadingCustomerAddress(false);
+            }
+        };
+
+        fetchCustAddress();
+    }, [selectedDeliveryCustomer?.id]);
+
+    // Fetch vendor addresses when vendor is selected
+    const fetchVendorAddresses = async (vendorId: string) => {
+        try {
+            setLoadingAddresses(true);
+            setAddressError('');
+            const token = localStorage.getItem('token') || '';
+            const response = await axios.get(
+                `https://${baseUrl}/pms/suppliers/addresses.json?id=${vendorId}&access_token=${token}`
+            );
+            
+            const data = response.data;
+            const billingAddrs = data.billing_address || [];
+            const shippingAddrs = data.shipping_address || [];
+            
+            setBillingAddresses(billingAddrs);
+            setShippingAddresses(shippingAddrs);
+            
+            // Auto-select default address
+            const defaultBillingAddr = billingAddrs.find(addr => addr.default_address === true);
+            const defaultShippingAddr = shippingAddrs.find(addr => addr.default_address === true);
+            
+            setBillingAddress(defaultBillingAddr?.id || billingAddrs[0]?.id || '');
+            setShippingAddress(defaultShippingAddr?.id || shippingAddrs[0]?.id || '');
+        } catch (error) {
+            console.error('Error fetching vendor addresses:', error);
+            setAddressError('Failed to load addresses');
+            setBillingAddresses([]);
+            setShippingAddresses([]);
+        } finally {
+            setLoadingAddresses(false);
+        }
+    };
+
+    // Handle delivery type change (resets all delivery-related state)
+    const handleDeliveryTypeChange = (type: 'organization' | 'customer') => {
+        setDeliveryAddressType(type);
+        // Clear organization address state
+        setOrganizationAddress(null);
+        setOrgAddressError('');
+        // Clear customer address state
+        setSelectedDeliveryCustomer(null);
+        setDeliveryCustomerAddress(null);
+        setCustomerAddressError('');
+    };
+
     // When vendor is selected
 
     // When vendor is selected
     useEffect(() => {
-        if (selectedVendor) {
+        if (selectedVendor?.id) {
             setBillingAddress(selectedVendor.billingAddress);
             setShippingAddress(selectedVendor.shippingAddress);
             setPaymentTerms(selectedVendor.paymentTerms);
+            fetchVendorAddresses(selectedVendor.id);
+        } else {
+            setBillingAddresses([]);
+            setShippingAddresses([]);
+            setAddressError('');
         }
-    }, [selectedVendor]);
+    }, [selectedVendor?.id]);
 
     // Same as billing address
     useEffect(() => {
@@ -634,15 +813,6 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             setShippingAddress(billingAddress);
         }
     }, [sameAsBilling, billingAddress]);
-
-    // When delivery address is selected, update shipping address
-    useEffect(() => {
-        if (selectedDeliveryAddress) {
-            // Keep shippingAddress as an ID (for API) rather than a free-form string.
-            // If you want to display the formatted address, use selectedDeliveryAddress directly.
-            setShippingAddress(String(selectedDeliveryAddress.id ?? ''));
-        }
-    }, [selectedDeliveryAddress]);
 
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
@@ -1107,7 +1277,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     pms_supplier_id: selectedVendor?.id,
                     billing_address_id: billingAddress, // Assuming select value is ID
                     shipping_address_id: shippingAddress, // Assuming select value is ID
-                    delivery_address_id: selectedDeliveryAddress?.id,
+                    delivery_adress_type: deliveryAddressType,
+                    delivery_address_id: deliveryAddressType === 'organization' ? organizationAddress?.id : deliveryCustomerAddress?.id,
                     reference_number: referenceNumber,
                     po_date: purchaseOrderDate,
                     expected_delivery_date: expectedDeliveryDate,
@@ -1266,14 +1437,22 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     value={billingAddress}
                                     onChange={(e) => setBillingAddress(e.target.value)}
                                     displayEmpty
+                                    disabled={loadingAddresses}
                                     sx={fieldStyles}
                                 >
                                     <MenuItem value="">
-                                        <em>Select...</em>
+                                        <em>
+                                            {loadingAddresses ? 'Loading addresses...' : 'Select...'}
+                                        </em>
                                     </MenuItem>
-                                    {addresses.map((address: any) => (
+                                    {addressError && (
+                                        <MenuItem value="" disabled>
+                                            <em style={{ color: 'red' }}>Error: {addressError}</em>
+                                        </MenuItem>
+                                    )}
+                                    {billingAddresses.map((address) => (
                                         <MenuItem key={address.id} value={address.id}>
-                                            {address.address + " " + (address.address_line_two || "")}
+                                            {address.address}
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -1286,14 +1465,22 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     value={shippingAddress}
                                     onChange={(e) => setShippingAddress(e.target.value)}
                                     displayEmpty
+                                    disabled={loadingAddresses}
                                     sx={fieldStyles}
                                 >
                                     <MenuItem value="">
-                                        <em>Select...</em>
+                                        <em>
+                                            {loadingAddresses ? 'Loading addresses...' : 'Select...'}
+                                        </em>
                                     </MenuItem>
-                                    {addresses.map((address: any) => (
+                                    {addressError && (
+                                        <MenuItem value="" disabled>
+                                            <em style={{ color: 'red' }}>Error: {addressError}</em>
+                                        </MenuItem>
+                                    )}
+                                    {shippingAddresses.map((address) => (
                                         <MenuItem key={address.id} value={address.id}>
-                                            {address.address + " " + (address.address_line_two || "")}
+                                            {address.address}
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -1306,35 +1493,147 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 <RadioGroup
                                     row
                                     value={deliveryAddressType}
-                                    onChange={(e) => setDeliveryAddressType(e.target.value as 'organization' | 'customer')}
+                                    onChange={(e) => handleDeliveryTypeChange(e.target.value as 'organization' | 'customer')}
                                 >
                                     <FormControlLabel value="organization" control={<Radio />} label="Organization" />
                                     <FormControlLabel value="customer" control={<Radio />} label="Customer" />
                                 </RadioGroup>
                             </div>
 
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel shrink>Select Delivery Address</InputLabel>
-                                <Select
-                                    label="Select Delivery Address"
-                                    value={selectedDeliveryAddress?.id || ''}
-                                    onChange={(e) => {
-                                        const selected = deliveryAddresses.find(addr => addr.id === e.target.value);
-                                        setSelectedDeliveryAddress(selected || null);
-                                    }}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="">
-                                        <em>Select Address</em>
-                                    </MenuItem>
-                                    {deliveryAddresses.map((addr: any) => (
-                                        <MenuItem key={addr.id} value={addr.id}>
-                                            {addr.address}, {addr.address_line_two}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                            {/* Organization Address Flow - No Dropdown */}
+                            {deliveryAddressType === 'organization' && (
+                                <div className="space-y-3">
+                                    {/* Loading state */}
+                                    {loadingOrgAddress && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                                            <CircularProgress size={16} />
+                                            <span>Fetching organization address...</span>
+                                        </div>
+                                    )}
+
+                                    {/* Error state */}
+                                    {orgAddressError && !loadingOrgAddress && (
+                                        <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                                            {orgAddressError}
+                                        </div>
+                                    )}
+
+                                    {/* Address display - shows address fields directly, NO dropdown */}
+                                    {organizationAddress && !loadingOrgAddress && (
+                                        <div className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-700 space-y-1">
+                                            {organizationAddress.attention && (
+                                                <p className="font-medium text-gray-800">
+                                                    {organizationAddress.attention}
+                                                </p>
+                                            )}
+                                            {organizationAddress.address && (
+                                                <p>{organizationAddress.address}</p>
+                                            )}
+                                            {organizationAddress.address_line_two && (
+                                                <p>{organizationAddress.address_line_two}</p>
+                                            )}
+                                            {(organizationAddress.city || organizationAddress.state || organizationAddress.pin_code) && (
+                                                <p>
+                                                    {[
+                                                        organizationAddress.city,
+                                                        organizationAddress.state,
+                                                        organizationAddress.pin_code
+                                                    ].filter(Boolean).join(', ')}
+                                                </p>
+                                            )}
+                                            {organizationAddress.country && (
+                                                <p className="text-gray-500">{organizationAddress.country}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Empty state - only shown if fetch succeeded but no address */}
+                                    {!loadingOrgAddress && !organizationAddress && !orgAddressError && (
+                                        <div className="text-sm text-gray-400 italic py-2">
+                                            No address available for this organization.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Customer Address Flow */}
+                            {deliveryAddressType === 'customer' && (
+                                <div className="space-y-3">
+                                    <FormControl fullWidth variant="outlined">
+                                        <InputLabel shrink>Select Customer</InputLabel>
+                                        <Select
+                                            label="Select Customer"
+                                            value={selectedDeliveryCustomer?.id || ''}
+                                            onChange={(e) => {
+                                                const selected = deliveryCustomers.find(c => c.id === e.target.value);
+                                                setSelectedDeliveryCustomer(selected || null);
+                                            }}
+                                            displayEmpty
+                                            sx={fieldStyles}
+                                        >
+                                            <MenuItem value="">
+                                                <em>Select Customer</em>
+                                            </MenuItem>
+                                            {deliveryCustomers.map((customer: any) => (
+                                                <MenuItem key={customer.id} value={customer.id}>
+                                                    {customer.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+
+                                    {/* Loading state */}
+                                    {loadingCustomerAddress && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                                            <CircularProgress size={16} />
+                                            <span>Loading customer address...</span>
+                                        </div>
+                                    )}
+
+                                    {/* Error state */}
+                                    {customerAddressError && !loadingCustomerAddress && (
+                                        <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                                            {customerAddressError}
+                                        </div>
+                                    )}
+
+                                    {/* Address display */}
+                                    {deliveryCustomerAddress && !loadingCustomerAddress && (
+                                        <div className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-700 space-y-1">
+                                            {deliveryCustomerAddress.attention && (
+                                                <p className="font-medium text-gray-800">
+                                                    {deliveryCustomerAddress.attention}
+                                                </p>
+                                            )}
+                                            {deliveryCustomerAddress.address && (
+                                                <p>{deliveryCustomerAddress.address}</p>
+                                            )}
+                                            {deliveryCustomerAddress.address_line_two && (
+                                                <p>{deliveryCustomerAddress.address_line_two}</p>
+                                            )}
+                                            {(deliveryCustomerAddress.city || deliveryCustomerAddress.state || deliveryCustomerAddress.pin_code) && (
+                                                <p>
+                                                    {[
+                                                        deliveryCustomerAddress.city,
+                                                        deliveryCustomerAddress.state,
+                                                        deliveryCustomerAddress.pin_code
+                                                    ].filter(Boolean).join(', ')}
+                                                </p>
+                                            )}
+                                            {deliveryCustomerAddress.country && (
+                                                <p className="text-gray-500">{deliveryCustomerAddress.country}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Empty state */}
+                                    {!loadingCustomerAddress && !deliveryCustomerAddress && !customerAddressError && selectedDeliveryCustomer && (
+                                        <div className="text-sm text-gray-400 italic py-2">
+                                            No address available for this customer.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </Section>

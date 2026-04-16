@@ -62,12 +62,13 @@ export interface KPIManagementTabProps {
 
 const KPICardView: React.FC<{
   kpi: KPICardData;
+  assignedUsersText: string;
   selected: boolean;
   onToggleSelect: () => void;
   onDelete: (id: string) => Promise<void>;
   onEdit: (kpi: KPICardData) => void;
   onManage: (kpi: KPICardData) => void;
-}> = ({ kpi, selected, onToggleSelect, onDelete, onEdit, onManage }) => {
+}> = ({ kpi, assignedUsersText, selected, onToggleSelect, onDelete, onEdit, onManage }) => {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -114,7 +115,7 @@ const KPICardView: React.FC<{
       <h3 className="text-[15px] font-bold leading-snug text-[#1a1a1a]">
         {kpi.name}
       </h3>
-      <p className="mt-1 text-xs text-neutral-500">Owner: {kpi.owner}</p>
+      <p className="mt-1 text-xs text-neutral-500">Assigned: {assignedUsersText}</p>
 
       <div className="mt-4 flex items-start justify-between gap-3 border-t border-[rgba(218,119,86,0.12)] pt-3">
         <span
@@ -179,12 +180,13 @@ const KPICardView: React.FC<{
 
 const KPIListView: React.FC<{
   kpis: KPICardData[];
+  getAssignedUsersText: (kpi: KPICardData) => string;
   selectedIds: Set<string>;
   toggleOne: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   onEdit: (kpi: KPICardData) => void;
   onManage: (kpi: KPICardData) => void;
-}> = ({ kpis, selectedIds, toggleOne, onDelete, onEdit, onManage }) => {
+}> = ({ kpis, getAssignedUsersText, selectedIds, toggleOne, onDelete, onEdit, onManage }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -210,7 +212,7 @@ const KPIListView: React.FC<{
           <tr className="border-b border-[rgba(218,119,86,0.12)] bg-[#faf9f6] text-xs font-semibold uppercase tracking-wide text-neutral-600">
             <th className="w-10 px-3 py-3" />
             <th className="px-3 py-3">KPI</th>
-            <th className="px-3 py-3">Owner</th>
+            <th className="px-3 py-3">Assigned Users</th>
             <th className="px-3 py-3">Target</th>
             <th className="px-3 py-3">Frequency</th>
             <th className="px-3 py-3">Priority</th>
@@ -234,7 +236,7 @@ const KPIListView: React.FC<{
               <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
                 {kpi.name}
               </td>
-              <td className="px-3 py-3 text-neutral-600">{kpi.owner}</td>
+              <td className="px-3 py-3 text-neutral-600">{getAssignedUsersText(kpi)}</td>
               <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
                 {kpi.target}
               </td>
@@ -325,15 +327,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
   const manageUsers = useMemo(() => {
     if (!manageKpi) return [] as FilterUser[];
-
-    const byDepartment = users.filter(
-      (u) =>
-        manageKpi.departmentId != null &&
-        u.departmentId != null &&
-        Number(u.departmentId) === Number(manageKpi.departmentId)
-    );
-
-    return byDepartment.length > 0 ? byDepartment : users;
+    return users;
   }, [users, manageKpi]);
 
   const filteredManageUsers = useMemo(() => {
@@ -341,7 +335,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     if (!query) return manageUsers;
 
     return manageUsers.filter((user) => {
-      const userName = user.name.toLowerCase();
+      const userName = (user.name ?? "").toLowerCase();
       const userEmail = (user.email ?? "").toLowerCase();
       return userName.includes(query) || userEmail.includes(query);
     });
@@ -388,6 +382,32 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       );
     });
   }, [kpis, search, selectedDepartment, selectedUser, selectedFrequency, users]);
+
+  const getAssignedUsersText = (kpi: KPICardData): string => {
+    const idSet = new Set<number>();
+
+    if (Array.isArray(kpi.assigneeIds)) {
+      kpi.assigneeIds.forEach((id) => {
+        const parsed = Number(id);
+        if (Number.isFinite(parsed)) idSet.add(parsed);
+      });
+    }
+
+    if (kpi.assigneeId != null) {
+      const parsed = Number(kpi.assigneeId);
+      if (Number.isFinite(parsed)) idSet.add(parsed);
+    }
+
+    const assignedNames = Array.from(idSet)
+      .map((id) => users.find((u) => u.id === id)?.name)
+      .filter((name): name is string => typeof name === "string" && name.trim().length > 0);
+
+    if (assignedNames.length > 0) {
+      return assignedNames.join(", ");
+    }
+
+    return kpi.owner?.trim() || "Unassigned";
+  };
 
   const allFilteredSelected =
     filtered.length > 0 && filtered.every((k) => selectedIds.has(k.id));
@@ -778,6 +798,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             <KPICardView
               key={kpi.id}
               kpi={kpi}
+              assignedUsersText={getAssignedUsersText(kpi)}
               selected={selectedIds.has(kpi.id)}
               onToggleSelect={() => toggleOne(kpi.id)}
               onDelete={handleDeleteKpi}
@@ -789,6 +810,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       ) : (
         <KPIListView
           kpis={filtered}
+          getAssignedUsersText={getAssignedUsersText}
           selectedIds={selectedIds}
           toggleOne={toggleOne}
           onDelete={handleDeleteKpi}
@@ -851,6 +873,8 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   ) : (
                     filteredManageUsers.map((u) => {
                       const checked = selectedManageUsers.has(u.id);
+                      const displayName = u.name?.trim() || u.email?.trim() || `User ${u.id}`;
+                      const displayEmail = u.email?.trim() || "No email available";
                       return (
                         <label
                           key={u.id}
@@ -864,10 +888,10 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                           />
                           <span>
                             <span className="block text-base font-semibold leading-tight text-neutral-900">
-                              {u.name}
+                              {displayName}
                             </span>
                             <span className="mt-0.5 block text-sm text-neutral-500">
-                              {u.email ?? "No email available"}
+                              {displayEmail}
                             </span>
                           </span>
                         </label>

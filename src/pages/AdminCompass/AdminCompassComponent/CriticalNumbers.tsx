@@ -55,14 +55,24 @@ interface KpiFormState {
   unit:         string;
   frequency:    string;
   target_value: string;
-  department:   string;
-  assign_to:    string;
+  department_id: string;   // id as string
+  assign_to_id:  string;   // id as string
+}
+
+interface UserOption {
+  id:   number;
+  name: string;
+}
+
+interface DeptOption {
+  id:   number;
+  name: string;
 }
 
 const EMPTY_FORM: KpiFormState = {
   name: '', unit: 'Select unit',
   frequency: 'Monthly', target_value: '',
-  department: 'Select', assign_to: 'Select user',
+  department_id: '', assign_to_id: '',
 };
 
 // ── API helpers ──
@@ -95,15 +105,75 @@ const fetchKpisFromApi = async (): Promise<Kpi[]> => {
   }));
 };
 
-const createKpiInApi = async (form: KpiFormState): Promise<Kpi> => {
+// ── Users API ──
+const fetchUsersFromApi = async (): Promise<UserOption[]> => {
+  const orgId = localStorage.getItem('org_id') || localStorage.getItem('organization_id') || '';
+  const url = `${BASE_URL}/api/users${orgId ? `?organization_id=${orgId}` : ''}`;
+  const res = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
+  const raw = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 200)}`);
+  let json: any;
+  try { json = JSON.parse(raw); } catch { json = []; }
+
+  // Handle various response shapes
+  const list: any[] = Array.isArray(json)
+    ? json
+    : Array.isArray(json.users)
+      ? json.users
+      : Array.isArray(json.data)
+        ? json.data
+        : [];
+
+  return list
+    .filter((u: any) => u?.id)
+    .map((u: any) => {
+      // Adding Email + Fullname logic here just like the previous component
+      const fName = u.full_name || u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim();
+      const email = u.email || '';
+      let displayName = email ? `${email} ${fName ? `(${fName})` : ''}` : (fName || `User ${u.id}`);
+      return {
+        id:   u.id,
+        name: displayName.trim()
+      };
+    });
+};
+
+// ── Departments API ──
+const fetchDepartmentsFromApi = async (): Promise<DeptOption[]> => {
+  const url = `${BASE_URL}/pms/departments.json`;
+  const res = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
+  const raw = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 200)}`);
+  let json: any;
+  try { json = JSON.parse(raw); } catch { json = []; }
+
+  const list: any[] = Array.isArray(json)
+    ? json
+    : Array.isArray(json.departments)
+      ? json.departments
+      : Array.isArray(json.data)
+        ? json.data
+        : [];
+
+  return list
+    .filter((d: any) => d?.id)
+    .map((d: any) => ({
+      id:   d.id,
+      // Robust fallbacks for department names
+      name: d.name || d.title || d.department_name || d.label || `Dept ${d.id}`,
+    }));
+};
+
+const createKpiInApi = async (form: KpiFormState, departments: DeptOption[]): Promise<Kpi> => {
+  const deptName = departments.find(d => String(d.id) === form.department_id)?.name;
   const payload = {
     kpi: {
-      name:         form.name.trim(),
-      unit:         form.unit !== 'Select unit' ? form.unit : undefined,
-      frequency:    form.frequency.toLowerCase(),
-      target_value: form.target_value ? parseFloat(form.target_value) : undefined,
-      department:   form.department !== 'Select' ? form.department : undefined,
-      assign_to:    form.assign_to !== 'Select user' ? form.assign_to : undefined,
+      name:          form.name.trim(),
+      unit:          form.unit !== 'Select unit' ? form.unit : undefined,
+      frequency:     form.frequency.toLowerCase(),
+      target_value:  form.target_value ? parseFloat(form.target_value) : undefined,
+      department:    deptName || undefined,
+      assignee_id:   form.assign_to_id ? parseInt(form.assign_to_id, 10) : undefined,
     },
   };
   const res = await fetch(`${BASE_URL}/kpis`, {
@@ -130,7 +200,10 @@ const createKpiInApi = async (form: KpiFormState): Promise<Kpi> => {
   };
 };
 
-const updateKpiInApi = async (id: number, patch: Partial<{ current_value: number; target_value: number; frequency: string }>) => {
+const updateKpiInApi = async (
+  id: number,
+  patch: Partial<{ current_value: number; target_value: number; frequency: string; department_id: number; assignee_id: number }>
+) => {
   const payload = { kpi: patch };
   const res = await fetch(`${BASE_URL}/kpis/${id}`, {
     method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payload),
@@ -204,6 +277,7 @@ const ThemeStyle = () => (
       border-color: #DA7756;
       box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
     }
+    .kpi-select:disabled { opacity: 0.6; cursor: not-allowed; }
     .kpi-checkbox {
       width: 17px; height: 17px;
       accent-color: #DA7756; cursor: pointer; flex-shrink: 0;
@@ -308,21 +382,49 @@ const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () =
 
 const UNITS       = ['Select unit', '%', '₹', '$', 'Count', 'Hours', 'Days', 'Score'];
 const FREQUENCIES = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly'];
-const DEPARTMENTS = ['Select', 'Sales', 'Marketing', 'Operations', 'Finance', 'HR', 'Tech', 'Customer Success'];
-const USERS       = ['Select user', 'Punit Jain', 'Rahul Sharma', 'Priya Singh', 'Amit Kumar', 'Neha Gupta'];
+
+// ── Select with loading state ──
+const ApiSelect = ({
+  value, onChange, options, loading, placeholder, disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { id: number; name: string }[];
+  loading: boolean;
+  placeholder: string;
+  disabled?: boolean;
+}) => (
+  <select
+    value={value}
+    onChange={e => onChange(e.target.value)}
+    className="kpi-select"
+    disabled={loading || disabled}
+  >
+    <option value="">{loading ? 'Loading...' : placeholder}</option>
+    {options.map(o => (
+      <option key={o.id} value={String(o.id)}>{o.name}</option>
+    ))}
+  </select>
+);
 
 // ══════════════════════════════════════════════════════════
 export const CriticalNumbers = () => {
-  const [kpis, setKpis]                   = useState<Kpi[]>([]);
-  const [isFetching, setIsFetching]       = useState(true);
-  const [fetchError, setFetchError]       = useState<string | null>(null);
+  const [kpis, setKpis]                       = useState<Kpi[]>([]);
+  const [isFetching, setIsFetching]           = useState(true);
+  const [fetchError, setFetchError]           = useState<string | null>(null);
   const [showSelectPanel, setShowSelectPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingKpi, setEditingKpi]           = useState<Kpi | null>(null);
-  const [form, setForm]           = useState<KpiFormState>(EMPTY_FORM);
-  const [isSaving, setIsSaving]   = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [form, setForm]                       = useState<KpiFormState>(EMPTY_FORM);
+  const [isSaving, setIsSaving]               = useState(false);
+  const [saveError, setSaveError]             = useState<string | null>(null);
+  const [deletingId, setDeletingId]           = useState<number | null>(null);
+
+  // Users & Departments
+  const [users, setUsers]               = useState<UserOption[]>([]);
+  const [departments, setDepartments]   = useState<DeptOption[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingDepts, setLoadingDepts] = useState(false);
 
   const loadKpis = useCallback(async () => {
     setIsFetching(true); setFetchError(null);
@@ -336,31 +438,80 @@ export const CriticalNumbers = () => {
     }
   }, []);
 
-  useEffect(() => { loadKpis(); }, [loadKpis]);
+  // Fetch users & departments once on mount
+  const loadUsers = useCallback(async () => {
+    setLoadingUsers(true);
+    try {
+      const data = await fetchUsersFromApi();
+      setUsers(data);
+    } catch (err: any) {
+      console.error('Failed to load users:', err.message);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
+  const loadDepartments = useCallback(async () => {
+    setLoadingDepts(true);
+    try {
+      const data = await fetchDepartmentsFromApi();
+      setDepartments(data);
+    } catch (err: any) {
+      console.error('Failed to load departments:', err.message);
+    } finally {
+      setLoadingDepts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadKpis();
+    loadUsers();
+    loadDepartments();
+  }, [loadKpis, loadUsers, loadDepartments]);
 
   const selectedCount = kpis.filter(k => k.selected).length;
   const toggleKpi = (id: number) => setKpis(prev => prev.map(k => k.id === id ? { ...k, selected: !k.selected } : k));
 
-  const openCreate = () => { setForm(EMPTY_FORM); setEditingKpi(null); setSaveError(null); setShowCreateModal(true); };
+  const openCreate = () => {
+    setForm(EMPTY_FORM);
+    setEditingKpi(null);
+    setSaveError(null);
+    setShowCreateModal(true);
+  };
+
   const openEdit = (kpi: Kpi) => {
     setForm({
-      name:         kpi.name,
-      unit:         kpi.unit ?? 'Select unit',
-      frequency:    kpi.frequency ? (kpi.frequency.charAt(0).toUpperCase() + kpi.frequency.slice(1)) : 'Monthly',
-      target_value: kpi.target_value != null ? String(kpi.target_value) : '',
-      department:   'Select',
-      assign_to:    kpi.owner ?? 'Select user',
+      name:          kpi.name,
+      unit:          kpi.unit ?? 'Select unit',
+      frequency:     kpi.frequency ? (kpi.frequency.charAt(0).toUpperCase() + kpi.frequency.slice(1)) : 'Monthly',
+      target_value:  kpi.target_value != null ? String(kpi.target_value) : '',
+      department_id: kpi.department_id != null ? String(kpi.department_id) : '',
+      assign_to_id:  kpi.assignee_id != null ? String(kpi.assignee_id) : '',
     });
-    setEditingKpi(kpi); setSaveError(null); setShowCreateModal(true);
+    setEditingKpi(kpi);
+    setSaveError(null);
+    setShowCreateModal(true);
   };
-  const closeModal = () => { setForm(EMPTY_FORM); setEditingKpi(null); setSaveError(null); setShowCreateModal(false); };
+
+  const closeModal = () => {
+    setForm(EMPTY_FORM);
+    setEditingKpi(null);
+    setSaveError(null);
+    setShowCreateModal(false);
+  };
+
+  // Helper — find name by id from a list
+  const findName = (list: { id: number; name: string }[], idStr: string) =>
+    list.find(x => String(x.id) === idStr)?.name ?? null;
 
   const handleCreate = async () => {
     if (!form.name.trim()) { setSaveError('KPI Name is required.'); return; }
     setIsSaving(true); setSaveError(null);
     try {
-      const created = await createKpiInApi(form);
-      setKpis(prev => [...prev, created]);
+      const created = await createKpiInApi(form, departments);
+      // Attach resolved names optimistically
+      const ownerName = findName(users, form.assign_to_id);
+      setKpis(prev => [...prev, { ...created, owner: ownerName ?? created.owner }]);
       closeModal();
       fetchKpisFromApi().then(data => setKpis(data)).catch(() => {});
     } catch (err: any) {
@@ -375,18 +526,26 @@ export const CriticalNumbers = () => {
     if (!form.name.trim()) { setSaveError('KPI Name is required.'); return; }
     setIsSaving(true); setSaveError(null);
     try {
-      const patch = {
+      const deptName = departments.find(d => String(d.id) === form.department_id)?.name;
+      const patch: any = {
         target_value: form.target_value ? parseFloat(form.target_value) : undefined,
         frequency:    form.frequency.toLowerCase(),
       };
+      if (deptName)           patch.department  = deptName;
+      if (form.assign_to_id)  patch.assignee_id = parseInt(form.assign_to_id, 10);
+
       await updateKpiInApi(editingKpi.id, patch);
+
+      const ownerName = findName(users, form.assign_to_id);
       setKpis(prev => prev.map(k => k.id === editingKpi.id ? {
         ...k,
-        name:         form.name,
-        unit:         form.unit !== 'Select unit' ? form.unit : k.unit,
-        frequency:    form.frequency.toLowerCase(),
-        target_value: form.target_value ? parseFloat(form.target_value) : k.target_value,
-        owner:        form.assign_to !== 'Select user' ? form.assign_to : k.owner,
+        name:          form.name,
+        unit:          form.unit !== 'Select unit' ? form.unit : k.unit,
+        frequency:     form.frequency.toLowerCase(),
+        target_value:  form.target_value ? parseFloat(form.target_value) : k.target_value,
+        department_id: form.department_id ? parseInt(form.department_id, 10) : k.department_id,
+        assignee_id:   form.assign_to_id  ? parseInt(form.assign_to_id, 10)  : k.assignee_id,
+        owner:         ownerName ?? k.owner,
       } : k));
       closeModal();
       fetchKpisFromApi().then(data => setKpis(data)).catch(() => {});
@@ -649,8 +808,8 @@ export const CriticalNumbers = () => {
                 }}>
                   {kpi.name}
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: 0, transition: 'opacity .15s', flexShrink: 0 }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: 0, transition: 'opacity .15s', flexShrink: 0 }}
                   className="kpi-card-actions"
                 >
                   <BtnIcon onClick={() => openEdit(kpi)} title="Edit"><EditIcon /></BtnIcon>
@@ -749,6 +908,7 @@ export const CriticalNumbers = () => {
             >
               {saveError && <div className="kpi-error">{saveError}</div>}
 
+              {/* KPI Name */}
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
                   KPI Name <span style={{ color: C.primary }}>*</span>
@@ -762,6 +922,7 @@ export const CriticalNumbers = () => {
                 />
               </div>
 
+              {/* Unit + Target */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>Unit</label>
@@ -780,14 +941,19 @@ export const CriticalNumbers = () => {
                 </div>
               </div>
 
+              {/* Department + Frequency */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
-                    Department <span style={{ color: C.primary }}>*</span>
+                    Department
                   </label>
-                  <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} className="kpi-select">
-                    {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
-                  </select>
+                  <ApiSelect
+                    value={form.department_id}
+                    onChange={v => setForm({ ...form, department_id: v })}
+                    options={departments}
+                    loading={loadingDepts}
+                    placeholder="Select department"
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
@@ -799,11 +965,18 @@ export const CriticalNumbers = () => {
                 </div>
               </div>
 
+              {/* Assign to User */}
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>Assign to User</label>
-                <select value={form.assign_to} onChange={e => setForm({ ...form, assign_to: e.target.value })} className="kpi-select">
-                  {USERS.map(u => <option key={u}>{u}</option>)}
-                </select>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: C.textMain, marginBottom: 6, fontFamily: C.font }}>
+                  Assign to User
+                </label>
+                <ApiSelect
+                  value={form.assign_to_id}
+                  onChange={v => setForm({ ...form, assign_to_id: v })}
+                  options={users}
+                  loading={loadingUsers}
+                  placeholder="Select user"
+                />
               </div>
             </div>
 

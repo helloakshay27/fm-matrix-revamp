@@ -145,7 +145,10 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
       const selectedUsers = users.filter((u) => assignees[String(u.id)]);
       const selectedAssigneeIds = selectedUsers.map((u) => Number(u.id));
       const selectedDepartment = departmentOptions.find((d) => d.id === department);
-      const owner = selectedUsers[0]?.name ?? "Unassigned";
+      const owner =
+        selectedUsers.length > 0
+          ? selectedUsers.map((u) => u.name).join(", ")
+          : "Unassigned";
       const assigneeId = selectedUsers[0]?.id ?? null;
       const departmentName = selectedDepartment?.name ?? "";
       const departmentId =

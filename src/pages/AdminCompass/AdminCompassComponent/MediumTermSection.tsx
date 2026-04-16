@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 
-// ── Design Tokens — BusinessCompassDashboard theme ──
+// ── Design Tokens ──
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
@@ -19,9 +19,7 @@ const C = {
 const getBaseUrl = () => {
   const raw = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
   if (!raw) return "";
-  return raw.startsWith("http://") || raw.startsWith("https://")
-    ? raw
-    : `https://${raw}`;
+  return raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
 };
 
 export const BASE_URL = getBaseUrl();
@@ -63,161 +61,57 @@ const clampProgress = (val: any): number => {
   return isNaN(n) ? 0 : Math.min(100, Math.max(0, n));
 };
 const MEDIUM_TERM_PERIOD = "three_to_five_years";
-const mapPeriodToApi = (label: string): string =>
-  ({
-    "3-5 Years": MEDIUM_TERM_PERIOD,
-    "This Year": "this_year",
-    "This Quarter": "this_quarter",
-    BHAG: "BHAG",
-  })[label] || MEDIUM_TERM_PERIOD;
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const DAYS_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS_SHORT = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 const sliderBg = (pct: number) =>
   `linear-gradient(to right, ${C.primary} ${pct}%, #e5e7eb ${pct}%)`;
 
 // ── Icons ──
 const InfoIcon = () => (
-  <svg
-    className="w-4 h-4"
-    style={{ color: C.textMuted }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
+  <svg className="w-4 h-4" style={{ color: C.textMuted }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 const EditIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
 const TrashIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
 const CalendarIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
   </svg>
 );
 const ChevronLeft = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 19l-7-7 7-7"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
   </svg>
 );
 const ChevronRight = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
   </svg>
 );
 const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={`${className} animate-spin`} fill="none" viewBox="0 0 24 24">
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth={4}
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-    />
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
   </svg>
 );
 const HeaderTargetIcon = () => (
-  <svg
-    className="w-5 h-5"
-    style={{ color: C.primary }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
+  <svg className="w-5 h-5" style={{ color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <circle cx="12" cy="12" r="9" strokeWidth={2.5} />
     <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
   </svg>
 );
 const TargetLargeIcon = () => (
-  <svg
-    className="w-14 h-14 mx-auto mb-3"
-    style={{ color: C.primary }}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-  >
+  <svg className="w-14 h-14 mx-auto mb-3" style={{ color: C.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <circle cx="12" cy="12" r="10" />
     <circle cx="12" cy="12" r="6" />
     <circle cx="12" cy="12" r="2" fill="currentColor" />
@@ -283,11 +177,7 @@ interface DatePickerProps {
   onChange: (v: string) => void;
   placeholder?: string;
 }
-const DatePicker: React.FC<DatePickerProps> = ({
-  value,
-  onChange,
-  placeholder = "Select date",
-}) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = "Select date" }) => {
   const today = new Date();
   const parsed = parseDDMMYYYY(value);
   const [open, setOpen] = useState(false);
@@ -298,180 +188,65 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
   const openPicker = () => {
-    setCursor(
-      parsed
-        ? new Date(parsed.getFullYear(), parsed.getMonth(), 1)
-        : new Date(today.getFullYear(), today.getMonth(), 1)
-    );
+    setCursor(parsed ? new Date(parsed.getFullYear(), parsed.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1));
     setView("days");
     setOpen(true);
   };
   const selectDay = (day: number) => {
-    onChange(
-      toDDMMYYYY(new Date(cursor.getFullYear(), cursor.getMonth(), day))
-    );
+    onChange(toDDMMYYYY(new Date(cursor.getFullYear(), cursor.getMonth(), day)));
     setOpen(false);
   };
-  const daysInMonth = new Date(
-    cursor.getFullYear(),
-    cursor.getMonth() + 1,
-    0
-  ).getDate();
-  const firstDow = new Date(
-    cursor.getFullYear(),
-    cursor.getMonth(),
-    1
-  ).getDay();
-  const years = Array.from(
-    { length: 21 },
-    (_, i) => cursor.getFullYear() - 10 + i
-  );
+  const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+  const firstDow = new Date(cursor.getFullYear(), cursor.getMonth(), 1).getDay();
+  const years = Array.from({ length: 21 }, (_, i) => cursor.getFullYear() - 10 + i);
   const displayValue = parsed ? toDDMMYYYY(parsed) : "";
   return (
     <div className="st-dp-wrap" ref={ref}>
-      <button
-        type="button"
-        className={`st-dp-input-btn${open ? " open" : ""}`}
-        onClick={() => (open ? setOpen(false) : openPicker())}
-      >
-        <span
-          className={displayValue ? "" : "placeholder"}
-          style={{ fontSize: 13 }}
-        >
-          {displayValue || placeholder}
-        </span>
-        <span
-          style={{ color: C.primary, display: "flex", alignItems: "center" }}
-        >
-          <CalendarIcon />
-        </span>
+      <button type="button" className={`st-dp-input-btn${open ? " open" : ""}`} onClick={() => (open ? setOpen(false) : openPicker())}>
+        <span className={displayValue ? "" : "placeholder"} style={{ fontSize: 13 }}>{displayValue || placeholder}</span>
+        <span style={{ color: C.primary, display: "flex", alignItems: "center" }}><CalendarIcon /></span>
       </button>
       {open && (
         <div className="st-dp-calendar">
           {view === "days" && (
             <>
               <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1)
-                    )
-                  }
-                >
-                  <ChevronLeft />
-                </button>
-                <span
-                  className="st-dp-month-year"
-                  onClick={() => setView("months")}
-                >
-                  {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
+                <button className="st-dp-nav" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}><ChevronLeft /></button>
+                <span className="st-dp-month-year" onClick={() => setView("months")}>{MONTHS[cursor.getMonth()]} {cursor.getFullYear()}</span>
+                <button className="st-dp-nav" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}><ChevronRight /></button>
               </div>
               <div className="st-dp-grid">
-                {DAYS_SHORT.map((d) => (
-                  <div key={d} className="st-dp-dow">
-                    {d}
-                  </div>
-                ))}
-                {Array.from({ length: firstDow }).map((_, i) => (
-                  <div key={`e${i}`} className="st-dp-day empty" />
-                ))}
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(
-                  (day) => {
-                    const isToday =
-                      day === today.getDate() &&
-                      cursor.getMonth() === today.getMonth() &&
-                      cursor.getFullYear() === today.getFullYear();
-                    const isSelected =
-                      parsed &&
-                      day === parsed.getDate() &&
-                      cursor.getMonth() === parsed.getMonth() &&
-                      cursor.getFullYear() === parsed.getFullYear();
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        className={`st-dp-day${isToday ? " today" : ""}${isSelected ? " selected" : ""}`}
-                        onClick={() => selectDay(day)}
-                      >
-                        {day}
-                      </button>
-                    );
-                  }
-                )}
+                {DAYS_SHORT.map((d) => <div key={d} className="st-dp-dow">{d}</div>)}
+                {Array.from({ length: firstDow }).map((_, i) => <div key={`e${i}`} className="st-dp-day empty" />)}
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+                  const isToday = day === today.getDate() && cursor.getMonth() === today.getMonth() && cursor.getFullYear() === today.getFullYear();
+                  const isSelected = parsed && day === parsed.getDate() && cursor.getMonth() === parsed.getMonth() && cursor.getFullYear() === parsed.getFullYear();
+                  return (
+                    <button key={day} type="button" className={`st-dp-day${isToday ? " today" : ""}${isSelected ? " selected" : ""}`} onClick={() => selectDay(day)}>
+                      {day}
+                    </button>
+                  );
+                })}
               </div>
-              {value && (
-                <div className="st-dp-clear">
-                  <button
-                    onClick={() => {
-                      onChange("");
-                      setOpen(false);
-                    }}
-                  >
-                    Clear
-                  </button>
-                </div>
-              )}
+              {value && <div className="st-dp-clear"><button onClick={() => { onChange(""); setOpen(false); }}>Clear</button></div>}
             </>
           )}
           {view === "months" && (
             <>
               <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() - 1, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronLeft />
-                </button>
-                <span
-                  className="st-dp-month-year"
-                  onClick={() => setView("years")}
-                >
-                  {cursor.getFullYear()}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() + 1, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
+                <button className="st-dp-nav" onClick={() => setCursor(new Date(cursor.getFullYear() - 1, cursor.getMonth(), 1))}><ChevronLeft /></button>
+                <span className="st-dp-month-year" onClick={() => setView("years")}>{cursor.getFullYear()}</span>
+                <button className="st-dp-nav" onClick={() => setCursor(new Date(cursor.getFullYear() + 1, cursor.getMonth(), 1))}><ChevronRight /></button>
               </div>
               <div className="st-dp-months">
                 {MONTHS.map((m, i) => (
-                  <div
-                    key={m}
-                    className={`st-dp-mitem${cursor.getMonth() === i ? " active" : ""}`}
-                    onClick={() => {
-                      setCursor(new Date(cursor.getFullYear(), i, 1));
-                      setView("days");
-                    }}
-                  >
+                  <div key={m} className={`st-dp-mitem${cursor.getMonth() === i ? " active" : ""}`} onClick={() => { setCursor(new Date(cursor.getFullYear(), i, 1)); setView("days"); }}>
                     {m.slice(0, 3)}
                   </div>
                 ))}
@@ -481,40 +256,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
           {view === "years" && (
             <>
               <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() - 12, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronLeft />
-                </button>
-                <span className="st-dp-month-year">
-                  {years[0]} – {years[years.length - 1]}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() + 12, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
+                <button className="st-dp-nav" onClick={() => setCursor(new Date(cursor.getFullYear() - 12, cursor.getMonth(), 1))}><ChevronLeft /></button>
+                <span className="st-dp-month-year">{years[0]} – {years[years.length - 1]}</span>
+                <button className="st-dp-nav" onClick={() => setCursor(new Date(cursor.getFullYear() + 12, cursor.getMonth(), 1))}><ChevronRight /></button>
               </div>
               <div className="st-dp-years">
                 {years.map((y) => (
-                  <div
-                    key={y}
-                    className={`st-dp-yitem${cursor.getFullYear() === y ? " active" : ""}`}
-                    onClick={() => {
-                      setCursor(new Date(y, cursor.getMonth(), 1));
-                      setView("months");
-                    }}
-                  >
+                  <div key={y} className={`st-dp-yitem${cursor.getFullYear() === y ? " active" : ""}`} onClick={() => { setCursor(new Date(y, cursor.getMonth(), 1)); setView("months"); }}>
                     {y}
                   </div>
                 ))}
@@ -552,26 +300,13 @@ interface StrategicGoalData {
   profitTarget: string;
 }
 
-const Modal = ({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) => {
+const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => {
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, []);
   return ReactDOM.createPortal(
-    <div
-      className="st-modal-portal"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="st-modal-portal" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       {children}
     </div>,
     document.body
@@ -581,11 +316,7 @@ const Modal = ({
 const SkeletonCards = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {[1, 2, 3, 4].map((n) => (
-      <div
-        key={n}
-        className="rounded-2xl p-4 border"
-        style={{ borderColor: C.borderLgt }}
-      >
+      <div key={n} className="rounded-2xl p-4 border" style={{ borderColor: C.borderLgt }}>
         <div className="st-skeleton h-4 w-3/4 mb-3" />
         <div className="st-skeleton h-2 w-full mt-4" />
       </div>
@@ -593,13 +324,26 @@ const SkeletonCards = () => (
   </div>
 );
 
+const getPeriodBadgeLabel = (period: string): string => {
+  const map: Record<string, string> = {
+    three_to_five_years: "3-5 Years",
+    this_year: "This Year",
+    this_quarter: "This Quarter",
+    quarterly: "Quarterly",
+    long_term: "Long Term",
+    BHAG: "BHAG",
+  };
+  return map[period] || period || "";
+};
+
 // ══════════════════════════════════════════════════════════
 export const MediumTermSection = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
-  const [goals, setGoals] = useState<Goal[]>([]);
 
-  // -- Strategic Goal State --
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [allGoals, setAllGoals] = useState<Goal[]>([]);
+
   const [strategicGoal, setStrategicGoal] = useState<StrategicGoalData>({
     title: "",
     goalType: "Medium-term (3-5 years)",
@@ -607,12 +351,12 @@ export const MediumTermSection = () => {
     revenueTarget: "",
     profitTarget: "",
   });
-  const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(
-    null
-  );
-  const [linkedStrategicInitiatives, setLinkedStrategicInitiatives] = useState<
-    number[]
-  >([]);
+
+  // ✅ Store the goal ID from /goals API so we can PUT on edit
+  const [strategicGoalId, setStrategicGoalId] = useState<number | null>(null);
+
+  const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(null);
+  const [linkedStrategicInitiatives, setLinkedStrategicInitiatives] = useState<number[]>([]);
 
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -620,46 +364,48 @@ export const MediumTermSection = () => {
   const [tempGoalDate, setTempGoalDate] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false); // ← NEW: for strategic delete loader
+  const [isDeleting, setIsDeleting] = useState(false);
 
+  // ─────────────────────────────────────────────
+  // ✅ FIX: fetchStrategicGoal now reads from /goals API
+  // (same place saveStrategicGoal writes to)
+  // ─────────────────────────────────────────────
   const fetchStrategicGoal = useCallback(async () => {
     try {
-      const res = await fetch(
-        `${BASE_URL}/extra_fields?group_name=medium_term_strategic`,
-        { method: "GET", headers: getAuthHeaders() }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(`${BASE_URL}/goals?period=${MEDIUM_TERM_PERIOD}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) return;
       const json = await res.json();
-      const data = Array.isArray(json) ? json[0] : json;
-      if (data && data.values && data.values[0]) {
-        try {
-          const parsed = JSON.parse(data.values[0]);
-          setStrategicGoal({
-            title: parsed.title || "",
-            goalType: parsed.goalType || "Medium-term (3-5 years)",
-            targetDate: data.target_date || parsed.targetDate || "",
-            revenueTarget: parsed.revenueTarget || "",
-            profitTarget: parsed.profitTarget || "",
-          });
-          if (parsed.linkedInitiatives)
-            setLinkedStrategicInitiatives(parsed.linkedInitiatives);
-        } catch (e) {
-          setStrategicGoal({
-            title: data.values[0] || "",
-            goalType: "Medium-term (3-5 years)",
-            targetDate: data.target_date || "",
-            revenueTarget: "",
-            profitTarget: "",
-          });
-        }
-      } else {
+      const records: any[] = Array.isArray(json) ? json : json.goals || json.data || [];
+
+      // Find the "strategic" goal — the one that has key_initiative_goals or revenue/profit targets
+      // We treat the first three_to_five_years goal with revenue_target as the strategic goal
+      const strategic = records.find(
+        (g: any) => g.period === MEDIUM_TERM_PERIOD && (g.revenue_target != null || g.profit_target != null)
+      ) || records.find((g: any) => g.period === MEDIUM_TERM_PERIOD);
+
+      if (strategic) {
+        setStrategicGoalId(strategic.id ?? null);
         setStrategicGoal({
-          title: "",
-          goalType: "Medium-term (3-5 years)",
-          targetDate: "",
-          revenueTarget: "",
-          profitTarget: "",
+          title:         strategic.title || "",
+          goalType:      "Medium-term (3-5 years)",
+          targetDate:    strategic.target_date || "",
+          revenueTarget: String(strategic.revenue_target ?? ""),
+          profitTarget:  String(strategic.profit_target  ?? ""),
         });
+
+        // Restore linked initiatives
+        const linked = Array.isArray(strategic.key_initiative_goals)
+          ? strategic.key_initiative_goals.map((ki: any) => ki.id).filter(Boolean)
+          : [];
+        setLinkedStrategicInitiatives(linked);
+      } else {
+        // No strategic goal exists yet
+        setStrategicGoalId(null);
+        setStrategicGoal({ title: "", goalType: "Medium-term (3-5 years)", targetDate: "", revenueTarget: "", profitTarget: "" });
+        setLinkedStrategicInitiatives([]);
       }
     } catch (err) {
       console.error("[MediumTermSection] fetchStrategicGoal:", err);
@@ -670,40 +416,32 @@ export const MediumTermSection = () => {
     setIsFetching(true);
     setFetchError(null);
     try {
-      const res = await fetch(`${BASE_URL}/goals`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
+      const res = await fetch(`${BASE_URL}/goals`, { method: "GET", headers: getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      const records = Array.isArray(json)
-        ? json
-        : json.goals || json.data || [];
-      const mediumGoals = records.filter(
-        (g: any) =>
-          g.period === "three_to_five_years" ||
-          g.period?.toLowerCase().includes("three_to_five") ||
-          g.period?.toLowerCase().includes("3_to_5") ||
-          g.period?.toLowerCase() === "3-5 years"
-      );
-      setGoals(
-        mediumGoals.map((g: any, idx: number) => ({
-          id: g.id ?? idx + 1,
-          title: g.title || g.name || "Untitled Goal",
-          progress: Number(g.progress_percentage ?? g.progress ?? 0),
-          description: g.description || "",
-          targetValue: String(g.target_value ?? "100"),
-          currentValue: String(g.current_value ?? "0"),
-          unit: g.unit || "%",
-          period: g.period || MEDIUM_TERM_PERIOD,
-          periodLabel: g.period_label || "3-5 Years",
-          targetDate: g.target_date || "",
-          ownerName: g.owner_name || "",
-          ownerId: g.owner_id || "",
-          status: g.status || "On Track",
-          updateRemarks: g.update_remarks || "",
-        }))
-      );
+      const records: any[] = Array.isArray(json) ? json : json.goals || json.data || [];
+
+      const mapRecord = (g: any, idx: number): Goal => ({
+        id:            g.id ?? idx + 1,
+        title:         g.title || g.name || "Untitled Goal",
+        progress:      Number(g.progress_percentage ?? g.progress ?? 0),
+        description:   g.description || "",
+        targetValue:   String(g.target_value ?? "100"),
+        currentValue:  String(g.current_value ?? "0"),
+        unit:          g.unit || "%",
+        period:        g.period || "",
+        periodLabel:   g.period_label || getPeriodBadgeLabel(g.period || ""),
+        targetDate:    g.target_date || "",
+        ownerName:     g.owner_name || "",
+        ownerId:       g.owner_id || "",
+        status:        g.status || "On Track",
+        updateRemarks: g.update_remarks || "",
+      });
+
+      setAllGoals(records.map(mapRecord));
+
+      const mediumGoals = records.filter((g: any) => g.period === MEDIUM_TERM_PERIOD);
+      setGoals(mediumGoals.map(mapRecord));
     } catch (err: any) {
       setFetchError(err.message || "Failed to load goals");
     } finally {
@@ -711,6 +449,7 @@ export const MediumTermSection = () => {
     }
   }, []);
 
+  // ✅ FIX: fetch both on mount
   useEffect(() => {
     fetchStrategicGoal();
     fetchGoals();
@@ -718,21 +457,15 @@ export const MediumTermSection = () => {
 
   const handleCardSlider = async (id: number, val: string) => {
     const clamped = clampProgress(val);
-    setGoals((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, progress: clamped } : g))
-    );
+    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, progress: clamped } : g)));
     try {
       const res = await fetch(`${BASE_URL}/goals/${id}`, {
         method: "PATCH",
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          goal: { progress_percentage: clamped, current_value: clamped },
-        }),
+        body: JSON.stringify({ goal: { progress_percentage: clamped, current_value: clamped } }),
       });
       if (!res.ok) fetchGoals();
-    } catch {
-      fetchGoals();
-    }
+    } catch { fetchGoals(); }
   };
 
   const closeModal = () => {
@@ -744,43 +477,33 @@ export const MediumTermSection = () => {
     setTempStrategic(null);
   };
 
-  // ── Strategic Goal handlers ──
   const openStrategicModal = () => {
+    setSaveError(null);
     setTempStrategic({
-      title: strategicGoal.title,
-      goalType: strategicGoal.goalType,
-      targetDate: apiDateToDisplay(strategicGoal.targetDate),
+      title:         strategicGoal.title,
+      goalType:      strategicGoal.goalType || "Medium-term (3-5 years)",
+      targetDate:    apiDateToDisplay(strategicGoal.targetDate),
       revenueTarget: strategicGoal.revenueTarget,
-      profitTarget: strategicGoal.profitTarget,
+      profitTarget:  strategicGoal.profitTarget,
     });
     setActiveModal("edit_strategic");
   };
 
-  // ← NEW: trigger confirm-delete modal
-  const confirmDeleteStrategic = () =>
-    setActiveModal("confirm_delete_strategic");
+  const confirmDeleteStrategic = () => setActiveModal("confirm_delete_strategic");
 
-  // ← NEW: actually delete via API and reset local state
   const executeDeleteStrategic = async () => {
+    if (!strategicGoalId) { closeModal(); return; }
     setIsDeleting(true);
     try {
-      const payload = {
-        extra_field: { group_name: "medium_term_strategic", values: [""] },
-      };
-      const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
-        method: "POST",
+      const res = await fetch(`${BASE_URL}/goals/${strategicGoalId}`, {
+        method: "DELETE",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`API error ${res.status}`);
-      setStrategicGoal({
-        title: "",
-        goalType: "Medium-term (3-5 years)",
-        targetDate: "",
-        revenueTarget: "",
-        profitTarget: "",
-      });
+      setStrategicGoal({ title: "", goalType: "Medium-term (3-5 years)", targetDate: "", revenueTarget: "", profitTarget: "" });
+      setStrategicGoalId(null);
       setLinkedStrategicInitiatives([]);
+      fetchGoals();
     } catch (err: any) {
       alert("Failed to delete: " + (err.message || "Unknown error"));
     } finally {
@@ -789,7 +512,6 @@ export const MediumTermSection = () => {
     }
   };
 
-  // ── Goal modal handlers ──
   const openGoalModal = (goal: Goal) => {
     setTempGoal({ ...goal });
     setTempGoalDate(apiDateToDisplay(goal.targetDate || ""));
@@ -818,6 +540,12 @@ export const MediumTermSection = () => {
     setActiveModal("goal_details");
   };
 
+  // ─────────────────────────────────────────────
+  // ✅ FIX: saveStrategicGoal
+  // - First time (no strategicGoalId): POST to /goals
+  // - Edit (strategicGoalId exists): PUT to /goals/:id
+  // - After save: re-fetch so UI stays in sync on refresh
+  // ─────────────────────────────────────────────
   const saveStrategicGoal = async () => {
     if (!tempStrategic) return;
     if (!tempStrategic.title.trim()) {
@@ -827,39 +555,59 @@ export const MediumTermSection = () => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const jsonStr = JSON.stringify({
-        title: tempStrategic.title.trim(),
-        goalType: tempStrategic.goalType,
-        targetDate: tempStrategic.targetDate.trim()
-          ? formatDateForApi(tempStrategic.targetDate.trim())
-          : "",
-        revenueTarget: tempStrategic.revenueTarget,
-        profitTarget: tempStrategic.profitTarget,
-        linkedInitiatives: linkedStrategicInitiatives,
-      });
-      const payload: any = {
-        extra_field: { group_name: "medium_term_strategic", values: [jsonStr] },
+      const apiTargetDate = tempStrategic.targetDate.trim()
+        ? formatDateForApi(tempStrategic.targetDate.trim())
+        : "";
+
+      const keyInitiatives = allGoals
+        .filter((g) => linkedStrategicInitiatives.includes(g.id as number))
+        .map((g) => ({ id: g.id, title: g.title }));
+
+      const payload = {
+        goal: {
+          title:                 tempStrategic.title.trim(),
+          description:           "Strategic objective for medium term",
+          target_date:           apiTargetDate,
+          revenue_target:        Number(tempStrategic.revenueTarget) || 0,
+          profit_target:         Number(tempStrategic.profitTarget)  || 0,
+          target_value:          100,
+          current_value:         0,
+          unit:                  "percent",
+          period:                MEDIUM_TERM_PERIOD,
+          status:                "on_track",
+          owner_id:              null,
+          update_remarks:        "",
+          key_initiative_goals:  keyInitiatives,
+        },
       };
-      if (tempStrategic.targetDate.trim())
-        payload.extra_field.target_date = formatDateForApi(
-          tempStrategic.targetDate.trim()
-        );
-      const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(payload),
-      });
+
+      let res: Response;
+
+      if (strategicGoalId) {
+        // ✅ Edit: PUT to existing goal
+        res = await fetch(`${BASE_URL}/goals/${strategicGoalId}`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // ✅ Create: POST new goal
+        res = await fetch(`${BASE_URL}/goals`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      }
+
       if (!res.ok) throw new Error(`API error ${res.status}`);
-      setStrategicGoal({
-        title: tempStrategic.title.trim(),
-        goalType: tempStrategic.goalType,
-        targetDate: formatDateForApi(tempStrategic.targetDate.trim()),
-        revenueTarget: tempStrategic.revenueTarget,
-        profitTarget: tempStrategic.profitTarget,
-      });
+
+      // ✅ Re-fetch from API so strategicGoalId is set and UI stays correct on refresh
+      await fetchStrategicGoal();
+      await fetchGoals();
+
       closeModal();
     } catch (err: any) {
-      setSaveError(err.message || "Failed to save");
+      setSaveError(err.message || "Failed to save. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -873,21 +621,23 @@ export const MediumTermSection = () => {
     }
     setIsSaving(true);
     setSaveError(null);
+
     const payload = {
       goal: {
-        title: tempGoal.title.trim(),
-        description: tempGoal.description || "",
-        target_value: Number(tempGoal.targetValue) || 100,
-        current_value: Number(tempGoal.currentValue) || 0,
+        title:               tempGoal.title.trim(),
+        description:         tempGoal.description || "",
+        target_value:        Number(tempGoal.targetValue) || 100,
+        current_value:       Number(tempGoal.currentValue) || 0,
         progress_percentage: clampProgress(tempGoal.progress),
-        unit: tempGoal.unit || "%",
-        period: mapPeriodToApi(tempGoal.period || "3-5 Years"),
-        status: tempGoal.status || "On Track",
-        owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : undefined,
-        target_date: tempGoalDate ? formatDateForApi(tempGoalDate) : "",
-        update_remarks: tempGoal.updateRemarks || "",
+        unit:                tempGoal.unit || "%",
+        period:              tempGoal.period || MEDIUM_TERM_PERIOD,
+        status:              tempGoal.status || "On Track",
+        owner_id:            tempGoal.ownerId ? Number(tempGoal.ownerId) : undefined,
+        target_date:         tempGoalDate ? formatDateForApi(tempGoalDate) : "",
+        update_remarks:      tempGoal.updateRemarks || "",
       },
     };
+
     try {
       const res = editingGoalId
         ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
@@ -904,7 +654,7 @@ export const MediumTermSection = () => {
       closeModal();
       fetchGoals();
     } catch (err: any) {
-      setSaveError(err.message || "Error saving goal.");
+      setSaveError(err.message || "Error saving goal. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -913,10 +663,7 @@ export const MediumTermSection = () => {
   const deleteGoal = async (id: number) => {
     if (!window.confirm("Delete this goal?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/goals/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      });
+      const res = await fetch(`${BASE_URL}/goals/${id}`, { method: "DELETE", headers: getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       fetchGoals();
     } catch (err: any) {
@@ -926,11 +673,7 @@ export const MediumTermSection = () => {
 
   const handleModalProgressChange = (val: string) => {
     const c = clampProgress(val);
-    setTempGoal((prev: any) => ({
-      ...prev,
-      progress: c,
-      currentValue: String(c),
-    }));
+    setTempGoal((prev: any) => ({ ...prev, progress: c, currentValue: String(c) }));
   };
 
   const toggleStrategicLink = (id: number) => {
@@ -939,7 +682,9 @@ export const MediumTermSection = () => {
     );
   };
 
-  const modalBtnBase = {
+  const isEditingStrategic = !!strategicGoal.title;
+
+  const modalBtnBase: React.CSSProperties = {
     border: "none",
     borderRadius: 10,
     padding: "10px 20px",
@@ -950,76 +695,54 @@ export const MediumTermSection = () => {
   };
 
   return (
-    <div
-      className="medium-wrap"
-      style={{ padding: "24px 0", fontFamily: C.font }}
-    >
+    <div className="medium-wrap" style={{ padding: "24px 0", fontFamily: C.font }}>
       <ThemeStyle />
 
-      <div
-        className="rounded-2xl overflow-hidden shadow-sm mt-6 border"
-        style={{ background: C.cardBg, borderColor: C.borderLgt }}
-      >
+      <div className="rounded-2xl overflow-hidden shadow-sm mt-6 border" style={{ background: C.cardBg, borderColor: C.borderLgt }}>
         {/* Header */}
-        <div
-          className="px-6 py-4 border-b flex items-center justify-between"
-          style={{ borderColor: C.borderLgt, background: C.primaryBg }}
-        >
+        <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: C.borderLgt, background: C.primaryBg }}>
           <div className="flex items-center gap-2">
             <HeaderTargetIcon />
-            <h2
-              className="font-black text-lg m-0"
-              style={{ color: C.textMain }}
-            >
-              Medium-term Goals (3-5 Years)
-            </h2>
+            <h2 className="font-black text-lg m-0" style={{ color: C.textMain }}>Medium-term Goals (3-5 Years)</h2>
             <InfoIcon />
           </div>
           {isFetching && <LoaderIcon className="w-4 h-4" />}
         </div>
 
         <div className="p-6">
-          {/* ── Strategic Priorities Block ── */}
+          {/* ── Strategic Goal block ── */}
           <div className="mb-8">
             {isFetching ? (
               <div className="st-skeleton h-24 w-full rounded-xl" />
             ) : strategicGoal.title ? (
               <div
                 className="bg-white rounded-xl p-5 flex justify-between items-center group transition-all"
-                style={{
-                  border: `1px solid ${C.borderLgt}`,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                }}
+                style={{ border: `1px solid ${C.borderLgt}`, boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}
               >
                 <div>
-                  <h3
-                    className="font-bold text-[16px] m-0"
-                    style={{ color: C.textMain }}
-                  >
-                    {strategicGoal.title}
-                  </h3>
-                  {(strategicGoal.revenueTarget ||
-                    strategicGoal.profitTarget) && (
-                    <div
-                      className="text-[12px] mt-1.5 flex gap-3"
-                      style={{ color: C.textMuted }}
-                    >
-                      {strategicGoal.revenueTarget && (
+                  <h3 className="font-bold text-[16px] m-0" style={{ color: C.textMain }}>{strategicGoal.title}</h3>
+                  {(strategicGoal.revenueTarget || strategicGoal.profitTarget) && (
+                    <div className="text-[12px] mt-1.5 flex gap-3" style={{ color: C.textMuted }}>
+                      {strategicGoal.revenueTarget && strategicGoal.revenueTarget !== "0" && (
                         <span>Revenue: ₹{strategicGoal.revenueTarget}Cr</span>
                       )}
-                      {strategicGoal.profitTarget && (
+                      {strategicGoal.profitTarget && strategicGoal.profitTarget !== "0" && (
                         <span>Profit: ₹{strategicGoal.profitTarget}Cr</span>
                       )}
                     </div>
                   )}
+                  {strategicGoal.targetDate && (
+                    <div className="text-[11px] mt-1" style={{ color: C.textMuted }}>
+                      📅 Target: {apiDateToDisplay(strategicGoal.targetDate)}
+                    </div>
+                  )}
                 </div>
-                {/* ← ADDED: delete button alongside edit, matching ShortTermSection */}
                 <div className="flex gap-2">
                   <button
                     onClick={openStrategicModal}
                     className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors text-gray-500 border"
                     style={{ borderColor: C.borderLgt }}
-                    title="Edit Priority"
+                    title="Edit Goal"
                   >
                     <EditIcon />
                   </button>
@@ -1027,40 +750,23 @@ export const MediumTermSection = () => {
                     onClick={confirmDeleteStrategic}
                     className="p-2 bg-gray-50 hover:bg-red-50 rounded-lg cursor-pointer transition-colors text-gray-500 hover:text-red-500 border"
                     style={{ borderColor: C.borderLgt }}
-                    title="Delete Priority"
+                    title="Delete Goal"
                   >
                     <TrashIcon />
                   </button>
                 </div>
               </div>
             ) : (
-              <div
-                className="text-center py-10 rounded-2xl mb-4"
-                style={{
-                  border: `2px dashed ${C.primaryBord}`,
-                  backgroundColor: "#fffaf9",
-                }}
-              >
+              <div className="text-center py-10 rounded-2xl mb-4" style={{ border: `2px dashed ${C.primaryBord}`, backgroundColor: "#fffaf9" }}>
                 <TargetLargeIcon />
-                <h3
-                  className="text-[16px] font-bold mb-1"
-                  style={{ color: C.textMain }}
-                >
-                  Set Your Medium-Term Priorities
-                </h3>
-                <p className="text-[13px] mb-5" style={{ color: C.textMuted }}>
-                  What are your core objectives for the next 3-5 years?
-                </p>
+                <h3 className="text-[16px] font-bold mb-1" style={{ color: C.textMain }}>Set Your Medium-Term Priorities</h3>
+                <p className="text-[13px] mb-5" style={{ color: C.textMuted }}>What are your core objectives for the next 3-5 years?</p>
                 <button
                   onClick={openStrategicModal}
                   className="px-5 py-2.5 rounded-lg font-bold text-[13px] transition-colors shadow-sm flex items-center justify-center mx-auto gap-2 text-white"
                   style={{ background: C.primary }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = C.primaryHov)
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = C.primary)
-                  }
+                  onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryHov)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
                 >
                   + Add Medium-Term Priority
                 </button>
@@ -1071,238 +777,101 @@ export const MediumTermSection = () => {
           {fetchError && (
             <div className="mb-5 bg-red-100 border border-red-300 text-red-700 text-sm font-semibold rounded-xl px-4 py-3 flex items-center justify-between gap-3">
               <span>⚠ {fetchError}</span>
-              <button onClick={fetchGoals} className="text-xs underline">
-                Retry
-              </button>
+              <button onClick={fetchGoals} className="text-xs underline">Retry</button>
             </div>
           )}
 
           <div className="mb-3 flex items-center gap-2">
-            <span
-              className="text-[10px] font-black uppercase tracking-[0.15em]"
-              style={{ color: "#070707" }}
-            >
-              Medium-term Initiatives
-            </span>
-            {isFetching && (
-              <LoaderIcon
-                className="w-3.5 h-3.5"
-                style={{ color: C.textMuted }}
-              />
-            )}
+            <span className="text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: "#070707" }}>Medium-term Initiatives</span>
+            {isFetching && <LoaderIcon className="w-3.5 h-3.5" />}
           </div>
 
-          {isFetching ? (
-            <SkeletonCards />
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {goals.length === 0 && !fetchError && (
-                  <p
-                    className="col-span-2 text-sm italic py-2"
-                    style={{ color: C.textMuted }}
-                  >
-                    No medium-term goals found. Add one below.
-                  </p>
-                )}
-                {goals.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className="rounded-2xl p-4 transition-all group hover:shadow-md"
-                    style={{
-                      background: C.cardBg,
-                      border: `1px solid ${C.borderLgt}`,
-                    }}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                        <div
-                          className="mt-1 w-3.5 h-3.5 rounded-full border-[3px] bg-white shrink-0"
-                          style={{ borderColor: C.primary }}
-                        />
-                        <div>
-                          <span
-                            className="font-black text-[14px] leading-snug block"
-                            style={{ color: C.textMain }}
-                          >
-                            {goal.title}
-                          </span>
-                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            {goal.periodLabel && (
-                              <span
-                                className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
-                                style={{
-                                  background: C.primaryTint,
-                                  color: C.primary,
-                                }}
-                              >
-                                {goal.periodLabel}
-                              </span>
-                            )}
-                            {(goal.ownerName || goal.targetDate) && (
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: C.textMuted }}
-                              >
-                                {goal.ownerName && (
-                                  <span style={{ color: C.primary }}>• </span>
-                                )}
-                                {goal.ownerName}
-                                {goal.targetDate && (
-                                  <span className="ml-1">
-                                    📅 {apiDateToDisplay(goal.targetDate)}
-                                  </span>
-                                )}
-                              </span>
-                            )}
-                          </div>
+          {isFetching ? <SkeletonCards /> : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              {goals.length === 0 && !fetchError && (
+                <p className="col-span-2 text-sm italic py-2" style={{ color: C.textMuted }}>
+                  No medium-term goals found. Add one below.
+                </p>
+              )}
+              {goals.map((goal) => (
+                <div
+                  key={goal.id}
+                  className="rounded-2xl p-4 transition-all group hover:shadow-md"
+                  style={{ background: C.cardBg, border: `1px solid ${C.borderLgt}` }}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                      <div className="mt-1 w-3.5 h-3.5 rounded-full border-[3px] bg-white shrink-0" style={{ borderColor: C.primary }} />
+                      <div>
+                        <span className="font-black text-[14px] leading-snug block" style={{ color: C.textMain }}>{goal.title}</span>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {goal.periodLabel && (
+                            <span className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider" style={{ background: C.primaryTint, color: C.primary }}>
+                              {goal.periodLabel}
+                            </span>
+                          )}
+                          {(goal.ownerName || goal.targetDate) && (
+                            <span className="text-xs font-medium" style={{ color: C.textMuted }}>
+                              {goal.ownerName && <span style={{ color: C.primary }}>• </span>}
+                              {goal.ownerName}
+                              {goal.targetDate && <span className="ml-1">📅 {apiDateToDisplay(goal.targetDate)}</span>}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div
-                        className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-xl border ml-2"
-                        style={{ borderColor: C.borderLgt }}
-                      >
-                        <button
-                          onClick={() => openGoalModal(goal)}
-                          className="p-1 rounded-lg transition-colors"
-                          style={{ color: "#9ca3af" }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.color = C.primary)
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.color = "#9ca3af")
-                          }
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          onClick={() => deleteGoal(goal.id as number)}
-                          className="p-1 rounded-lg transition-colors"
-                          style={{ color: "#9ca3af" }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.color = "#ef4444")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.color = "#9ca3af")
-                          }
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value={goal.progress}
-                        onChange={(e) =>
-                          handleCardSlider(goal.id as number, e.target.value)
-                        }
-                        className="st-goal-slider"
-                        style={{ background: sliderBg(goal.progress) }}
-                      />
-                      <span
-                        className="text-xs font-black w-9 text-right shrink-0 tabular-nums"
-                        style={{ color: C.textMuted }}
-                      >
-                        {goal.progress}%
-                      </span>
+                    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-xl border ml-2" style={{ borderColor: C.borderLgt }}>
+                      <button onClick={() => openGoalModal(goal)} className="p-1 rounded-lg transition-colors" style={{ color: "#9ca3af" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
+                        <EditIcon />
+                      </button>
+                      <button onClick={() => deleteGoal(goal.id as number)} className="p-1 rounded-lg transition-colors" style={{ color: "#9ca3af" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
+                        <TrashIcon />
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
+                  <div className="flex items-center gap-3">
+                    <input type="range" min="0" max="100" step="1" value={goal.progress}
+                      onChange={(e) => handleCardSlider(goal.id as number, e.target.value)}
+                      className="st-goal-slider" style={{ background: sliderBg(goal.progress) }} />
+                    <span className="text-xs font-black w-9 text-right shrink-0 tabular-nums" style={{ color: C.textMuted }}>{goal.progress}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           <div className="mt-6 flex justify-end">
-            <button
-              onClick={addGoal}
+            <button onClick={addGoal}
               className="text-sm font-black px-4 py-2 rounded-xl transition-colors"
               style={{ color: C.primary, background: "transparent" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = C.primaryTint)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "transparent")
-              }
-            >
+              onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryTint)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
               + Add New Goal
             </button>
           </div>
         </div>
 
-        {/* ══ MODAL 0: Confirm Delete Strategic Goal ══ */}
+        {/* ══ MODAL 0: Confirm Delete ══ */}
         {activeModal === "confirm_delete_strategic" && (
           <Modal onClose={closeModal}>
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 16,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
-                width: "100%",
-                maxWidth: 380,
-                overflow: "hidden",
-                fontFamily: C.font,
-              }}
-            >
-              <div
-                style={{
-                  padding: "28px 28px 20px",
-                  textAlign: "center",
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: C.textMain,
-                }}
-              >
-                Are you sure you want to delete this strategic goal?
+            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.18)", width: "100%", maxWidth: 380, overflow: "hidden", fontFamily: C.font }}>
+              <div style={{ padding: "28px 28px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>🗑️</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.textMain, marginBottom: 8 }}>Delete Strategic Goal?</div>
+                <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>This action cannot be undone. The goal will be permanently removed.</p>
               </div>
-              <div
-                style={{
-                  padding: "0 28px 28px",
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 12,
-                }}
-              >
-                <button
-                  onClick={executeDeleteStrategic}
-                  disabled={isDeleting}
-                  style={{
-                    padding: "10px 24px",
-                    fontWeight: 700,
-                    color: "#fff",
-                    background: "#dc2626",
-                    border: "none",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    cursor: isDeleting ? "not-allowed" : "pointer",
-                    opacity: isDeleting ? 0.7 : 1,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontFamily: C.font,
-                  }}
-                >
+              <div style={{ padding: "20px 28px 28px", display: "flex", justifyContent: "center", gap: 12 }}>
+                <button onClick={executeDeleteStrategic} disabled={isDeleting}
+                  style={{ padding: "10px 24px", fontWeight: 700, color: "#fff", background: "#dc2626", border: "none", borderRadius: 10, fontSize: 13, cursor: isDeleting ? "not-allowed" : "pointer", opacity: isDeleting ? 0.7 : 1, display: "flex", alignItems: "center", gap: 8, fontFamily: C.font }}>
                   {isDeleting && <LoaderIcon />}
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
-                <button
-                  onClick={closeModal}
-                  disabled={isDeleting}
-                  style={{
-                    padding: "10px 24px",
-                    fontWeight: 700,
-                    color: C.textMain,
-                    background: "#f3f4f6",
-                    border: "none",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    fontFamily: C.font,
-                  }}
-                >
+                <button onClick={closeModal} disabled={isDeleting}
+                  style={{ padding: "10px 24px", fontWeight: 700, color: C.textMain, background: "#f3f4f6", border: "none", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: C.font }}>
                   Cancel
                 </button>
               </div>
@@ -1310,226 +879,111 @@ export const MediumTermSection = () => {
           </Modal>
         )}
 
-        {/* ══ MODAL 1: Edit Strategic Goal ══ */}
+        {/* ══ MODAL 1: Add / Edit Strategic Goal ══ */}
         {activeModal === "edit_strategic" && tempStrategic && (
           <Modal onClose={closeModal}>
             <div className="st-modal-box" style={{ maxWidth: 600 }}>
-              <div
-                className="flex justify-between items-center px-6 py-5 border-b bg-white"
-                style={{ borderColor: C.primaryBord }}
-              >
-                <h2
-                  className="font-black text-[17px] m-0"
-                  style={{ color: C.textMain }}
-                >
-                  Edit Medium-term Strategic Goal
-                </h2>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={saveStrategicGoal}
-                    disabled={isSaving}
-                    style={{
-                      ...modalBtnBase,
-                      color: "#fff",
-                      background: C.primary,
-                      padding: "6px 14px",
-                      opacity: isSaving ? 0.7 : 1,
-                    }}
-                  >
-                    {isSaving ? "Updating..." : "Update"}
-                  </button>
-                  <button
-                    onClick={closeModal}
-                    className="p-1 rounded-xl hover:bg-black/5 transition-colors"
-                    style={{ color: "#9ca3af" }}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div
-                className="p-6 space-y-5 overflow-y-auto"
-                style={{ maxHeight: "65vh" }}
-              >
-                {saveError && (
-                  <div className="st-error-banner">{saveError}</div>
-                )}
+              <div className="flex justify-between items-center px-6 py-5 border-b bg-white" style={{ borderColor: C.primaryBord }}>
                 <div>
-                  <label className="st-label">
-                    Goal Title <span style={{ color: C.primary }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={tempStrategic.title}
-                    onChange={(e) =>
-                      setTempStrategic({
-                        ...tempStrategic,
-                        title: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., Expand to 5 new countries in next 3 years"
-                    className="st-input font-black"
-                  />
+                  <h2 className="font-black text-[17px] m-0" style={{ color: C.textMain }}>
+                    {isEditingStrategic ? "Edit Medium-term Strategic Goal" : "Add Medium-term Strategic Goal"}
+                  </h2>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: C.textMuted }}>
+                    {isEditingStrategic ? "Update your 3-5 year strategic direction" : "Define your core objective for the next 3-5 years"}
+                  </p>
                 </div>
+                <button onClick={closeModal} className="p-1 rounded-xl hover:bg-black/5 transition-colors" style={{ color: "#9ca3af" }}>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5 overflow-y-auto" style={{ maxHeight: "65vh" }}>
+                {saveError && <div className="st-error-banner">{saveError}</div>}
+
+                <div>
+                  <label className="st-label">Goal Title <span style={{ color: C.primary }}>*</span></label>
+                  <input type="text" value={tempStrategic.title}
+                    onChange={(e) => setTempStrategic({ ...tempStrategic, title: e.target.value })}
+                    placeholder="e.g., Expand to 5 new cities in next 3 years"
+                    className="st-input font-bold" autoFocus />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="st-label">Goal Type</label>
-                    <select
-                      value={tempStrategic.goalType}
-                      onChange={(e) =>
-                        setTempStrategic({
-                          ...tempStrategic,
-                          goalType: e.target.value,
-                        })
-                      }
-                      className="st-select"
-                    >
-                      <option>Long-term (3-5 years)</option>
-                      <option>Medium-term (1-3 years)</option>
-                      <option>Short-term (Quarterly)</option>
+                    <select value={tempStrategic.goalType} onChange={(e) => setTempStrategic({ ...tempStrategic, goalType: e.target.value })} className="st-select">
+                      <option value="Medium-term (3-5 years)">Medium-term (3-5 years)</option>
+                      <option value="Long-term (5+ years)">Long-term (5+ years)</option>
+                      <option value="Short-term (1-2 years)">Short-term (1-2 years)</option>
                     </select>
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
-                      value={tempStrategic.targetDate}
-                      onChange={(v) =>
-                        setTempStrategic({ ...tempStrategic, targetDate: v })
-                      }
-                      placeholder="dd-mm-yyyy"
-                    />
+                    <DatePicker value={tempStrategic.targetDate} onChange={(v) => setTempStrategic({ ...tempStrategic, targetDate: v })} placeholder="dd-mm-yyyy" />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="st-label">Revenue Target (₹Cr)</label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={tempStrategic.revenueTarget}
-                      onChange={(e) =>
-                        setTempStrategic({
-                          ...tempStrategic,
-                          revenueTarget: e.target.value,
-                        })
-                      }
-                      className="st-input"
-                    />
+                    <input type="number" step="any" value={tempStrategic.revenueTarget}
+                      onChange={(e) => setTempStrategic({ ...tempStrategic, revenueTarget: e.target.value })}
+                      placeholder="e.g. 500" className="st-input" />
                   </div>
                   <div>
                     <label className="st-label">Profit Target (₹Cr)</label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={tempStrategic.profitTarget}
-                      onChange={(e) =>
-                        setTempStrategic({
-                          ...tempStrategic,
-                          profitTarget: e.target.value,
-                        })
-                      }
-                      className="st-input"
-                    />
+                    <input type="number" step="any" value={tempStrategic.profitTarget}
+                      onChange={(e) => setTempStrategic({ ...tempStrategic, profitTarget: e.target.value })}
+                      placeholder="e.g. 100" className="st-input" />
                   </div>
                 </div>
+
                 <div>
-                  <label className="st-label">
-                    Key Initiatives (Link Operational Goals)
-                  </label>
-                  <p
-                    className="text-[11px] mb-2"
-                    style={{ color: C.textMuted }}
-                  >
-                    Select operational goals that are key initiatives for this
-                    strategic goal
+                  <label className="st-label">Key Initiatives (Link Operational Goals)</label>
+                  <p className="text-[11px] mb-2" style={{ color: C.textMuted }}>
+                    Select goals that are key initiatives for this strategic goal
                   </p>
-                  {goals.length > 0 ? (
-                    <div
-                      className="border rounded-xl p-2 max-h-40 overflow-y-auto space-y-1"
-                      style={{ borderColor: C.borderLgt }}
-                    >
-                      {goals.map((goal) => (
-                        <label
-                          key={goal.id}
-                          className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
-                        >
+                  {allGoals.length > 0 ? (
+                    <div className="border rounded-xl p-2 max-h-52 overflow-y-auto space-y-1" style={{ borderColor: C.borderLgt }}>
+                      {allGoals.map((goal) => (
+                        <label key={goal.id} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
                           <input
                             type="checkbox"
-                            checked={linkedStrategicInitiatives.includes(
-                              goal.id as number
-                            )}
-                            onChange={() =>
-                              toggleStrategicLink(goal.id as number)
-                            }
+                            checked={linkedStrategicInitiatives.includes(goal.id as number)}
+                            onChange={() => toggleStrategicLink(goal.id as number)}
                             className="mt-0.5 w-4 h-4 cursor-pointer rounded"
                             style={{ accentColor: C.primary }}
                           />
-                          <div
-                            className="text-[13px] font-medium leading-tight"
-                            style={{ color: C.textMain }}
-                          >
-                            {goal.title}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[13px] font-medium leading-tight" style={{ color: C.textMain }}>{goal.title}</div>
+                            {goal.period && (
+                              <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide" style={{ background: C.primaryTint, color: C.primary }}>
+                                {getPeriodBadgeLabel(goal.period)}
+                              </span>
+                            )}
                           </div>
                         </label>
                       ))}
                     </div>
                   ) : (
-                    <div
-                      className="text-sm italic py-2"
-                      style={{ color: C.textMuted }}
-                    >
-                      No operational goals available to link.
-                    </div>
+                    <div className="text-sm italic py-2" style={{ color: C.textMuted }}>No goals available to link.</div>
                   )}
                 </div>
               </div>
-              <div
-                className="p-5 flex justify-end gap-3 border-t bg-white"
-                style={{ borderColor: C.primaryBord }}
-              >
-                <button
-                  onClick={closeModal}
-                  disabled={isSaving}
-                  style={{
-                    ...modalBtnBase,
-                    color: C.textMain,
-                    background: "#fff",
-                    border: `1px solid ${C.borderLgt}`,
-                  }}
-                >
+
+              <div className="p-5 flex justify-end gap-3 border-t bg-white" style={{ borderColor: C.primaryBord }}>
+                <button onClick={closeModal} disabled={isSaving}
+                  style={{ ...modalBtnBase, color: C.textMain, background: "#fff", border: `1px solid ${C.borderLgt}` }}>
                   Cancel
                 </button>
-                <button
-                  onClick={saveStrategicGoal}
-                  disabled={isSaving}
-                  style={{
-                    ...modalBtnBase,
-                    color: "#fff",
-                    background: C.primary,
-                    opacity: isSaving ? 0.7 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSaving)
-                      e.currentTarget.style.background = C.primaryHov;
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSaving) e.currentTarget.style.background = C.primary;
-                  }}
-                >
-                  {isSaving && <LoaderIcon className="w-4 h-4 inline mr-2" />}
-                  {isSaving ? "Updating..." : "Update"}
+                <button onClick={saveStrategicGoal} disabled={isSaving}
+                  style={{ ...modalBtnBase, color: "#fff", background: C.primary, opacity: isSaving ? 0.7 : 1, display: "flex", alignItems: "center", gap: 8 }}
+                  onMouseEnter={(e) => { if (!isSaving) e.currentTarget.style.background = C.primaryHov; }}
+                  onMouseLeave={(e) => { if (!isSaving) e.currentTarget.style.background = C.primary; }}>
+                  {isSaving && <LoaderIcon className="w-4 h-4" />}
+                  {isSaving ? "Saving..." : (isEditingStrategic ? "Update" : "Save Goal")}
                 </button>
               </div>
             </div>
@@ -1539,194 +993,57 @@ export const MediumTermSection = () => {
         {/* ══ MODAL 2: Create/Edit Medium-term Goal ══ */}
         {activeModal === "goal_details" && tempGoal && (
           <Modal onClose={closeModal}>
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 16,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
-                width: "100%",
-                maxWidth: 640,
-                display: "flex",
-                flexDirection: "column",
-                maxHeight: "90vh",
-                overflow: "hidden",
-                fontFamily: C.font,
-              }}
-            >
+            <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.18)", width: "100%", maxWidth: 640, display: "flex", flexDirection: "column", maxHeight: "90vh", overflow: "hidden", fontFamily: C.font }}>
               <div style={{ padding: "28px 28px 0", position: "relative" }}>
-                <button
-                  onClick={closeModal}
-                  style={{
-                    position: "absolute",
-                    top: 20,
-                    right: 20,
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#9ca3af",
-                    padding: 4,
-                    borderRadius: 6,
-                  }}
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                <button onClick={closeModal} style={{ position: "absolute", top: 20, right: 20, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 4, borderRadius: 6 }}>
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: 20,
-                    fontWeight: 800,
-                    color: C.textMain,
-                  }}
-                >
-                  {editingGoalId
-                    ? "Edit Medium-term Goal"
-                    : "Create New Medium-term Goal"}
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.textMain }}>
+                  {editingGoalId ? "Edit Medium-term Goal" : "Create New Medium-term Goal"}
                 </h2>
-                <p
-                  style={{
-                    margin: "6px 0 0",
-                    fontSize: 13,
-                    color: C.textMuted,
-                  }}
-                >
-                  Set a measurable target for the next 3-5 years
-                </p>
+                <p style={{ margin: "6px 0 0", fontSize: 13, color: C.textMuted }}>Set a measurable target for the next 3-5 years</p>
               </div>
-              <div
-                style={{
-                  padding: "24px 28px",
-                  overflowY: "auto",
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 20,
-                }}
-              >
-                {saveError && (
-                  <div className="st-error-banner">{saveError}</div>
-                )}
+
+              <div style={{ padding: "24px 28px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 20 }}>
+                {saveError && <div className="st-error-banner">{saveError}</div>}
+
                 <div>
-                  <label className="st-label">
-                    Goal Title <span style={{ color: C.primary }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={tempGoal.title}
+                  <label className="st-label">Goal Title <span style={{ color: C.primary }}>*</span></label>
+                  <input type="text" value={tempGoal.title}
                     placeholder="e.g. Manage 10% of India's Real Estate Ecosystem"
-                    onChange={(e) =>
-                      setTempGoal({ ...tempGoal, title: e.target.value })
-                    }
-                    className="st-input"
-                    onFocus={(e) =>
-                      (e.currentTarget.style.borderColor = C.primary)
-                    }
-                    onBlur={(e) =>
-                      (e.currentTarget.style.borderColor = C.borderLgt)
-                    }
-                  />
+                    onChange={(e) => setTempGoal({ ...tempGoal, title: e.target.value })}
+                    className="st-input" autoFocus />
                 </div>
                 <div>
                   <label className="st-label">Description</label>
-                  <textarea
-                    placeholder="Add detailed description..."
-                    value={tempGoal.description}
-                    onChange={(e) =>
-                      setTempGoal({ ...tempGoal, description: e.target.value })
-                    }
-                    className="st-textarea"
-                    onFocus={(e) =>
-                      (e.currentTarget.style.borderColor = C.primary)
-                    }
-                    onBlur={(e) =>
-                      (e.currentTarget.style.borderColor = C.borderLgt)
-                    }
-                  />
+                  <textarea placeholder="Add detailed description..." value={tempGoal.description}
+                    onChange={(e) => setTempGoal({ ...tempGoal, description: e.target.value })}
+                    className="st-textarea" />
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 16,
-                  }}
-                >
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <div>
                     <label className="st-label">Target Value</label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={tempGoal.targetValue || ""}
-                      placeholder="e.g. 100"
-                      onChange={(e) =>
-                        setTempGoal({
-                          ...tempGoal,
-                          targetValue: e.target.value,
-                        })
-                      }
-                      className="st-input"
-                      onFocus={(e) =>
-                        (e.currentTarget.style.borderColor = C.primary)
-                      }
-                      onBlur={(e) =>
-                        (e.currentTarget.style.borderColor = C.borderLgt)
-                      }
-                    />
+                    <input type="number" step="any" value={tempGoal.targetValue || ""} placeholder="e.g. 100"
+                      onChange={(e) => setTempGoal({ ...tempGoal, targetValue: e.target.value })}
+                      className="st-input" />
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
-                      value={tempGoalDate}
-                      onChange={setTempGoalDate}
-                      placeholder="dd-mm-yyyy"
-                    />
+                    <DatePicker value={tempGoalDate} onChange={setTempGoalDate} placeholder="dd-mm-yyyy" />
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: 16,
-                  }}
-                >
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
                   <div>
                     <label className="st-label">Owner ID</label>
-                    <input
-                      type="number"
-                      value={tempGoal.ownerId || ""}
-                      placeholder="e.g. 123"
-                      onChange={(e) =>
-                        setTempGoal({ ...tempGoal, ownerId: e.target.value })
-                      }
-                      className="st-input"
-                      onFocus={(e) =>
-                        (e.currentTarget.style.borderColor = C.primary)
-                      }
-                      onBlur={(e) =>
-                        (e.currentTarget.style.borderColor = C.borderLgt)
-                      }
-                    />
+                    <input type="number" value={tempGoal.ownerId || ""} placeholder="e.g. 123"
+                      onChange={(e) => setTempGoal({ ...tempGoal, ownerId: e.target.value })}
+                      className="st-input" />
                   </div>
                   <div>
                     <label className="st-label">Unit</label>
-                    <select
-                      value={tempGoal.unit || ""}
-                      onChange={(e) =>
-                        setTempGoal({ ...tempGoal, unit: e.target.value })
-                      }
-                      className="st-select"
-                    >
+                    <select value={tempGoal.unit || ""} onChange={(e) => setTempGoal({ ...tempGoal, unit: e.target.value })} className="st-select">
                       <option value="">Select unit</option>
                       <option value="%">%</option>
                       <option value="days">Days</option>
@@ -1736,124 +1053,42 @@ export const MediumTermSection = () => {
                   </div>
                   <div>
                     <label className="st-label">Period</label>
-                    <select
-                      value={tempGoal.period || "three_to_five_years"}
-                      onChange={(e) =>
-                        setTempGoal({ ...tempGoal, period: e.target.value })
-                      }
-                      className="st-select"
-                    >
+                    <select value={tempGoal.period || MEDIUM_TERM_PERIOD}
+                      onChange={(e) => setTempGoal({ ...tempGoal, period: e.target.value })}
+                      className="st-select">
+                      <option value="three_to_five_years">3-5 Years</option>
                       <option value="this_year">This Year</option>
                       <option value="this_quarter">This Quarter</option>
-                      <option value="three_to_five_years">3-5 Years</option>
                       <option value="BHAG">BHAG</option>
                     </select>
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 16,
-                  }}
-                >
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <div>
                     <label className="st-label">Status</label>
-                    <select
-                      value={tempGoal.status || "On Track"}
-                      onChange={(e) =>
-                        setTempGoal({ ...tempGoal, status: e.target.value })
-                      }
-                      className="st-select"
-                    >
+                    <select value={tempGoal.status || "On Track"} onChange={(e) => setTempGoal({ ...tempGoal, status: e.target.value })} className="st-select">
                       <option>On Track</option>
                       <option>Behind</option>
                       <option>At Risk</option>
                     </select>
                   </div>
                 </div>
+
                 {editingGoalId && (
-                  <div
-                    style={{
-                      background: C.primaryBg,
-                      borderRadius: 12,
-                      padding: "16px 18px",
-                      border: `1px solid ${C.primaryBord}`,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <label
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: C.textMain,
-                        }}
-                      >
-                        Current Progress
-                      </label>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="1"
-                          value={tempGoal.progress}
-                          onChange={(e) =>
-                            handleModalProgressChange(e.target.value)
-                          }
-                          style={{
-                            width: 56,
-                            border: `1px solid ${C.borderLgt}`,
-                            borderRadius: 8,
-                            textAlign: "center",
-                            padding: "4px 6px",
-                            fontSize: 13,
-                            fontWeight: 800,
-                            outline: "none",
-                            color: C.textMain,
-                            fontFamily: C.font,
-                          }}
-                        />
-                        <span
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 700,
-                            color: C.textMuted,
-                          }}
-                        >
-                          %
-                        </span>
+                  <div style={{ background: C.primaryBg, borderRadius: 12, padding: "16px 18px", border: `1px solid ${C.primaryBord}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <label style={{ fontSize: 13, fontWeight: 700, color: C.textMain }}>Current Progress</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <input type="number" min="0" max="100" step="1" value={tempGoal.progress}
+                          onChange={(e) => handleModalProgressChange(e.target.value)}
+                          style={{ width: 56, border: `1px solid ${C.borderLgt}`, borderRadius: 8, textAlign: "center", padding: "4px 6px", fontSize: 13, fontWeight: 800, outline: "none", color: C.textMain, fontFamily: C.font }} />
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.textMuted }}>%</span>
                       </div>
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="1"
-                      value={tempGoal.progress}
-                      onChange={(e) =>
-                        handleModalProgressChange(e.target.value)
-                      }
-                      className="st-modal-slider"
-                      style={{ background: sliderBg(tempGoal.progress) }}
-                    />
-                    <div
-                      className="text-white font-black text-center py-2 rounded-xl text-[13px] mt-4"
-                      style={{ background: C.primary }}
-                    >
+                    <input type="range" min="0" max="100" step="1" value={tempGoal.progress}
+                      onChange={(e) => handleModalProgressChange(e.target.value)}
+                      className="st-modal-slider" style={{ background: sliderBg(tempGoal.progress) }} />
+                    <div className="text-white font-black text-center py-2 rounded-xl text-[13px] mt-4" style={{ background: C.primary }}>
                       {tempGoal.progress.toFixed(1)}% Completed
                     </div>
                   </div>
@@ -1861,62 +1096,20 @@ export const MediumTermSection = () => {
                 {editingGoalId && (
                   <div>
                     <label className="st-label">Update Remarks</label>
-                    <textarea
-                      placeholder="Add notes..."
-                      value={tempGoal.updateRemarks}
-                      onChange={(e) =>
-                        setTempGoal({
-                          ...tempGoal,
-                          updateRemarks: e.target.value,
-                        })
-                      }
-                      className="st-textarea"
-                      onFocus={(e) =>
-                        (e.currentTarget.style.borderColor = C.primary)
-                      }
-                      onBlur={(e) =>
-                        (e.currentTarget.style.borderColor = C.borderLgt)
-                      }
-                    />
+                    <textarea placeholder="Add notes..." value={tempGoal.updateRemarks}
+                      onChange={(e) => setTempGoal({ ...tempGoal, updateRemarks: e.target.value })}
+                      className="st-textarea" />
                   </div>
                 )}
               </div>
+
               <div style={{ padding: "0 28px 28px" }}>
-                <button
-                  onClick={saveGoalDetails}
-                  disabled={isSaving}
-                  style={{
-                    width: "100%",
-                    background: C.primary,
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 10,
-                    padding: "14px",
-                    fontSize: 15,
-                    fontWeight: 800,
-                    cursor: isSaving ? "not-allowed" : "pointer",
-                    transition: "background .15s",
-                    opacity: isSaving ? 0.7 : 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    fontFamily: C.font,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSaving)
-                      e.currentTarget.style.background = C.primaryHov;
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSaving) e.currentTarget.style.background = C.primary;
-                  }}
-                >
+                <button onClick={saveGoalDetails} disabled={isSaving}
+                  style={{ width: "100%", background: C.primary, color: "#fff", border: "none", borderRadius: 10, padding: "14px", fontSize: 15, fontWeight: 800, cursor: isSaving ? "not-allowed" : "pointer", transition: "background .15s", opacity: isSaving ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: C.font }}
+                  onMouseEnter={(e) => { if (!isSaving) e.currentTarget.style.background = C.primaryHov; }}
+                  onMouseLeave={(e) => { if (!isSaving) e.currentTarget.style.background = C.primary; }}>
                   {isSaving && <LoaderIcon />}
-                  {isSaving
-                    ? "Saving..."
-                    : editingGoalId
-                      ? "Save Changes"
-                      : "Create Goal"}
+                  {isSaving ? "Saving..." : (editingGoalId ? "Save Changes" : "Create Goal")}
                 </button>
               </div>
             </div>

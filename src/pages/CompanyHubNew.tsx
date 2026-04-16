@@ -76,7 +76,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     },
   ];
 
-  const dispatch = useDispatch();
+  const dispa  = useDispatch();
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openTodoModal, setOpenTodoModal] = useState(false);
   const [openTicketModal, setOpenTicketModal] = useState(false);
@@ -619,8 +619,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
           </button>
           <div className="w-[1.5px] h-6 bg-[#DA7756]/20" />
           <button
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
             onClick={() => setIsExploreOpen(true)}
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
           >
             <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:scale-110">
               <svg

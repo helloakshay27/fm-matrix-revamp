@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import Invoice from '@/components/Invoice';
 import { API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
+import Receipt from "@/components/Reciept";
+import BookingReceipt from "@/components/BookingReceipt";
 
 // Formatter helper: Converts facility booking API response into Invoice-compatible format
 const formatFacilityBookingInvoice = (apiResponse: any): any => {
@@ -56,6 +58,14 @@ const formatFacilityBookingInvoice = (apiResponse: any): any => {
       total_amount: totals.total_amount || 0,
       payment_mode: 'online',
       payment_status: invoiceData?.status || 'pending',
+    },
+    invoice_data: {
+      lock_account_bill_id: invoiceData.lock_account_bill_id,
+      invoice: invoice,
+      member: member,
+      booking: booking,
+      line_items: lineItems,
+      totals: totals,
     },
   };
 };
@@ -921,7 +931,7 @@ export const AmenityBookingDetailsClubPage = () => {
               </Button>
             </div>
 
-            <Invoice
+            <BookingReceipt
               key={`invoice-${invoiceData?.bill_id}`}
               data={invoiceData}
               returnBase64={true}
