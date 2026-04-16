@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 import { BhagSection } from "./AdminCompassComponent/BhagSection";
 import { MediumTermSection } from "./AdminCompassComponent/MediumTermSection";
@@ -28,7 +28,13 @@ const C = {
 };
 
 // ── API base ──
-const BASE_URL = localStorage.getItem("baseUrl") || "";
+const getBaseUrl = () => {
+  const raw = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
+  if (!raw) return "";
+  return raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
+};
+
+const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("token") || "";
@@ -41,7 +47,7 @@ const getAuthHeaders = (): Record<string, string> => {
 // ─────────────────────────────────────────────
 //  Safe JSON Parser
 // ─────────────────────────────────────────────
-const safeParseJSON = (data: any) => {
+const safeParseJSON = (data: any): Record<string, any> => {
   if (!data) return {};
   if (typeof data === "string") {
     try {
@@ -50,7 +56,8 @@ const safeParseJSON = (data: any) => {
       return {};
     }
   }
-  return data;
+  if (typeof data === "object" && !Array.isArray(data)) return data;
+  return {};
 };
 
 // ─────────────────────────────────────────────
@@ -63,54 +70,40 @@ const parseBrandPromisesRecord = (
     const group = json.grouped_data.business_plan_brand_promises;
     const values: string[] = group.values ?? [];
     const videoUrl: string = group.video_url ?? "";
-    const promiseKpis: Record<string, string[]> = safeParseJSON(
-      group.promise_kpis
-    );
+    const promiseKpis: Record<string, string[]> = safeParseJSON(group.promise_kpis);
     const rows: any[] = Array.isArray(json.data) ? json.data : [];
-    const promises: BrandPromise[] = values.map(
-      (text: string, idx: number) => ({
-        id: rows[idx]?.id ?? null,
-        text,
-        kpis: promiseKpis[`item_${idx + 1}`] ?? [],
-      })
-    );
+    const promises: BrandPromise[] = values.map((text: string, idx: number) => ({
+      id: rows[idx]?.id ?? null,
+      text,
+      kpis: promiseKpis[`item_${idx + 1}`] ?? [],
+    }));
     return { promises, videoUrl };
   }
   if (json?.extra_field) {
     const record = json.extra_field;
     const values: string[] = record.values ?? [];
     const videoUrl: string = record.video_url ?? "";
-    const promiseKpis: Record<string, string[]> = safeParseJSON(
-      record.promise_kpis
-    );
-    const promises: BrandPromise[] = values.map(
-      (text: string, idx: number) => ({
-        id: null,
-        text,
-        kpis: promiseKpis[`item_${idx + 1}`] ?? [],
-      })
-    );
+    const promiseKpis: Record<string, string[]> = safeParseJSON(record.promise_kpis);
+    const promises: BrandPromise[] = values.map((text: string, idx: number) => ({
+      id: null,
+      text,
+      kpis: promiseKpis[`item_${idx + 1}`] ?? [],
+    }));
     return { promises, videoUrl };
   }
   if (Array.isArray(json)) {
     const record =
-      json.find((r: any) => r.group_name === "business_plan_brand_promises") ??
-      json[0];
+      json.find((r: any) => r.group_name === "business_plan_brand_promises") ?? json[0];
     if (!record) return { promises: [], videoUrl: "" };
-    const values: string[] =
-      record.values ?? (record.value ? [record.value] : []);
+    const values: string[] = record.values ?? (record.value ? [record.value] : []);
     const videoUrl: string = record.video_url ?? "";
-    const promiseKpis: Record<string, string[]> = safeParseJSON(
-      record.promise_kpis
-    );
+    const promiseKpis: Record<string, string[]> = safeParseJSON(record.promise_kpis);
     const efv: any[] = record.extra_field_values ?? [];
-    const promises: BrandPromise[] = values.map(
-      (text: string, idx: number) => ({
-        id: efv[idx]?.id ?? null,
-        text,
-        kpis: promiseKpis[`item_${idx + 1}`] ?? [],
-      })
-    );
+    const promises: BrandPromise[] = values.map((text: string, idx: number) => ({
+      id: efv[idx]?.id ?? null,
+      text,
+      kpis: promiseKpis[`item_${idx + 1}`] ?? [],
+    }));
     return { promises, videoUrl };
   }
   return { promises: [], videoUrl: "" };
@@ -120,7 +113,7 @@ const fetchBrandPromisesFromApi = async (): Promise<{
   promises: BrandPromise[];
   videoUrl: string;
 }> => {
-  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_brand_promises&include_grouped=true`;
+  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_brand_promises&include_grouped=true`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -133,10 +126,12 @@ const fetchBrandPromisesFromApi = async (): Promise<{
   return parseBrandPromisesRecord(json);
 };
 
+// FIX: stringify promise_kpis so backend stores it correctly,
+// and return local data as source of truth instead of trusting the save response.
 const saveBrandPromisesToApi = async (
   promises: { text: string; kpis: string[] }[],
   videoUrl: string
-): Promise<{ promises: BrandPromise[]; videoUrl: string }> => {
+): Promise<void> => {
   const promiseKpis: Record<string, string[]> = {};
   promises.forEach((p, idx) => {
     promiseKpis[`item_${idx + 1}`] = p.kpis;
@@ -146,10 +141,10 @@ const saveBrandPromisesToApi = async (
       group_name: "business_plan_brand_promises",
       values: promises.map((p) => p.text),
       video_url: videoUrl,
-      promise_kpis: promiseKpis,
+      promise_kpis: JSON.stringify(promiseKpis), // ← explicit stringify
     },
   };
-  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -157,36 +152,19 @@ const saveBrandPromisesToApi = async (
   const rawText = await res.text();
   if (!res.ok)
     throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
-  let json: any;
-  try {
-    json = JSON.parse(rawText);
-  } catch {
-    json = {};
-  }
-  const parsed = parseBrandPromisesRecord(json);
-  if (parsed.promises.length === 0 && promises.length > 0) {
-    return {
-      promises: promises.map((p) => ({ id: null, text: p.text, kpis: p.kpis })),
-      videoUrl,
-    };
-  }
-  return parsed;
 };
 
 // ─────────────────────────────────
 //  DELETE API helper
 // ─────────────────────────────────
 const deleteExtraFieldFromApi = async (id: number): Promise<void> => {
-  const res = await fetch(`https://${BASE_URL}/extra_fields/${id}`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-
   if (!res.ok) {
     const rawText = await res.text();
-    throw new Error(
-      `Delete API error ${res.status}: ${rawText || res.statusText}`
-    );
+    throw new Error(`Delete API error ${res.status}: ${rawText || res.statusText}`);
   }
 };
 
@@ -221,7 +199,7 @@ const fetchPurposeFromApi = async (): Promise<{
   videoUrl: string;
   recordId: number | null;
 }> => {
-  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_purpose&include_grouped=true`;
+  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_purpose&include_grouped=true`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -251,7 +229,7 @@ const savePurposeToApi = async (
       video_url: videoUrl,
     },
   };
-  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -306,7 +284,7 @@ const fetchCoreValuesFromApi = async (): Promise<{
   values: CoreValueRecord[];
   videoUrl: string;
 }> => {
-  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_core_values&include_grouped=true`;
+  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_core_values&include_grouped=true`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -330,7 +308,7 @@ const saveCoreValuesToApi = async (
       video_url: videoUrl,
     },
   };
-  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -347,104 +325,95 @@ const saveCoreValuesToApi = async (
   return parseCoreValuesRecord(json);
 };
 
+// ─────────────────────────────────────────────
+//  Overview Media API helpers
+// ─────────────────────────────────────────────
+interface OverviewMedia {
+  images: string[];
+  videos: string[];
+}
+
+const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
+  const url = `${BASE_URL}/business_compass/overview_media`;
+  const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
+  const rawText = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
+  let json: any;
+  try {
+    json = JSON.parse(rawText);
+  } catch {
+    json = {};
+  }
+  const parseUrlArray = (arr: any[]): string[] =>
+    arr.map((item) => (typeof item === "string" ? item : item?.url ?? "")).filter(Boolean);
+  return {
+    images: Array.isArray(json?.images) ? parseUrlArray(json.images) : [],
+    videos: Array.isArray(json?.videos) ? parseUrlArray(json.videos) : [],
+  };
+};
+
+const saveOverviewImagesApi = async (images: string[]): Promise<void> => {
+  const payload = {
+    extra_field: { group_name: "business_plan_overview", images },
+  };
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const rawText = await res.text();
+    throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
+  }
+};
+
+const saveOverviewVideosApi = async (videos: string[]): Promise<void> => {
+  const payload = {
+    extra_field: { group_name: "business_plan_overview", videos },
+  };
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const rawText = await res.text();
+    throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
+  }
+};
+
 // ─────────────────────────────────
 //  Icons
 // ─────────────────────────────────
 const InfoIcon = () => (
-  <svg
-    className="w-4 h-4 text-gray-400"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
+  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 const EyeIcon = () => (
-  <svg
-    className="w-4 h-4"
-    style={{ color: C.primary }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2.5}
-      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-    />
+  <svg className="w-4 h-4" style={{ color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
   </svg>
 );
 const EditIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
 const TrashIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
 const GripIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 9h2v2H8V9zm0 4h2v2H8v-2zm6-4h2v2h-2V9zm0 4h2v2h-2v-2z"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9h2v2H8V9zm0 4h2v2H8v-2zm6-4h2v2h-2V9zm0 4h2v2h-2v-2z" />
   </svg>
 );
 const PlusIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 4v16m8-8H4"
-    />
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
   </svg>
 );
 const ChevronIcon = ({ isExpanded }: { isExpanded: boolean }) => (
@@ -455,63 +424,362 @@ const ChevronIcon = ({ isExpanded }: { isExpanded: boolean }) => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2.5}
-      d="M19 9l-7 7-7-7"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
   </svg>
 );
 const ImagePlaceholder = () => (
-  <svg
-    className="w-12 h-12 mx-auto mb-2"
-    style={{ color: C.primary, opacity: 0.4 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.5}
-      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
+  <svg className="w-12 h-12 mx-auto mb-2" style={{ color: C.primary, opacity: 0.4 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
   </svg>
 );
 const VideoPlaceholder = () => (
-  <svg
-    className="w-12 h-12 mx-auto mb-2"
-    style={{ color: C.primary, opacity: 0.4 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.5}
-      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-    />
+  <svg className="w-12 h-12 mx-auto mb-2" style={{ color: C.primary, opacity: 0.4 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
   </svg>
 );
 const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={`${className} animate-spin`} fill="none" viewBox="0 0 24 24">
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth={4}
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-    />
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
   </svg>
 );
+
+// ─────────────────────────────────
+//  Inline Image Slider
+// ─────────────────────────────────
+const InlineImageSlider = ({
+  images,
+  onDelete,
+  isSaving,
+}: {
+  images: string[];
+  onDelete: (idx: number) => void;
+  isSaving: boolean;
+}) => {
+  const [current, setCurrent] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (current >= images.length && images.length > 0) setCurrent(images.length - 1);
+  }, [images.length, current]);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") setCurrent((p) => (p > 0 ? p - 1 : images.length - 1));
+      if (e.key === "ArrowRight") setCurrent((p) => (p < images.length - 1 ? p + 1 : 0));
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [fullscreen, images.length]);
+
+  if (images.length === 0) return null;
+
+  const prev = () => setCurrent((p) => (p > 0 ? p - 1 : images.length - 1));
+  const next = () => setCurrent((p) => (p < images.length - 1 ? p + 1 : 0));
+
+  const sliderBox = (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        borderRadius: fullscreen ? 0 : 16,
+        overflow: "hidden",
+        background: "#111",
+        paddingTop: fullscreen ? undefined : "56.25%",
+        height: fullscreen ? "100%" : undefined,
+      }}
+    >
+      <img
+        key={current}
+        src={images[current]}
+        alt={`slide-${current}`}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain" as const,
+          position: fullscreen ? "static" : "absolute",
+          top: fullscreen ? undefined : 0,
+          left: fullscreen ? undefined : 0,
+          display: "block",
+        }}
+        onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
+      />
+      <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 8, zIndex: 10 }}>
+        <button
+          onClick={() => setFullscreen((f) => !f)}
+          title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+          style={{
+            width: 36, height: 36, borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "#fff", transition: "background .15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.38)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.20)")}
+        >
+          {fullscreen ? (
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9L4 4m0 0h5m-5 0v5M15 9l5-5m0 0h-5m5 0v5M9 15l-5 5m0 0h5m-5 0v-5M15 15l5 5m0 0h-5m5 0v-5" />
+            </svg>
+          ) : (
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5M20 8V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l-5-5M20 16v4m0 0h-4m4 0l-5-5" />
+            </svg>
+          )}
+        </button>
+        <button
+          onClick={() => onDelete(current)}
+          disabled={isSaving}
+          title="Delete image"
+          style={{
+            width: 36, height: 36, borderRadius: "50%",
+            background: "#ef4444", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "#fff",
+            fontSize: 14, fontWeight: 900,
+            transition: "background .15s",
+            opacity: isSaving ? 0.5 : 1,
+            fontFamily: "'Poppins',sans-serif",
+          }}
+          onMouseEnter={(e) => { if (!isSaving) e.currentTarget.style.background = "#dc2626"; }}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#ef4444")}
+        >
+          {isSaving ? (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ animation: "bp-spin 1s linear infinite" }}>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} style={{ opacity: 0.25 }} />
+              <path fill="currentColor" style={{ opacity: 0.75 }} d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          ) : "✕"}
+        </button>
+      </div>
+
+      {images.length > 1 && (
+        <button
+          onClick={prev}
+          style={{
+            position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+            width: 40, height: 40, borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "#fff", zIndex: 10,
+            transition: "background .15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.38)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.20)")}
+        >
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
+
+      {images.length > 1 && (
+        <button
+          onClick={next}
+          style={{
+            position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+            width: 40, height: 40, borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "#fff", zIndex: 10,
+            transition: "background .15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.38)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.20)")}
+        >
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
+
+      {images.length > 1 && (
+        <div style={{
+          position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
+          display: "flex", gap: 7, zIndex: 10,
+        }}>
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              style={{
+                width: i === current ? 22 : 7, height: 7,
+                borderRadius: 4, border: "none", cursor: "pointer",
+                background: i === current ? "#DA7756" : "rgba(255,255,255,0.50)",
+                transition: "all .2s", padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (fullscreen) {
+    return ReactDOM.createPortal(
+      <div
+        style={{
+          position: "fixed", inset: 0, zIndex: 999999,
+          background: "#000",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+        onClick={(e) => { if (e.target === e.currentTarget) setFullscreen(false); }}
+      >
+        <div style={{ width: "100vw", height: "100vh" }}>{sliderBox}</div>
+        <style>{`@keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div className="mb-5">
+      {sliderBox}
+      <style>{`@keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
+    </div>
+  );
+};
+
+// ─────────────────────────────────
+//  Inline Video Player
+// ─────────────────────────────────
+const InlineVideoPlayer: React.FC<{
+  videos: string[];
+  onDelete: (idx: number) => void;
+  isSaving: boolean;
+}> = ({ videos, onDelete, isSaving }) => {
+  const [current, setCurrent] = useState(0);
+  const safeIdx = videos.length > 0 ? Math.min(current, videos.length - 1) : 0;
+
+  useEffect(() => {
+    if (safeIdx !== current) setCurrent(safeIdx);
+  }, [safeIdx, current]);
+
+  if (!videos || videos.length === 0) return null;
+
+  const url = videos[safeIdx] ?? "";
+
+  const getYouTubeId = (u: string): string | null => {
+    if (!u || typeof u !== "string") return null;
+    const m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([^?&/#\s]{11})/);
+    return m ? m[1] : null;
+  };
+
+  const videoId = getYouTubeId(url);
+  const prev = () => setCurrent((p) => (p > 0 ? p - 1 : videos.length - 1));
+  const next = () => setCurrent((p) => (p < videos.length - 1 ? p + 1 : 0));
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{
+        position: "relative", width: "100%", paddingTop: "56.25%",
+        borderRadius: 16, overflow: "hidden", background: "#111",
+      }}>
+        {videoId ? (
+          <iframe
+            key={`yt-${safeIdx}-${videoId}`}
+            src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+            title={`video-${safeIdx}`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none", display: "block" }}
+          />
+        ) : (
+          <video
+            key={`vid-${safeIdx}-${url}`}
+            src={url}
+            controls
+            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" as const, display: "block" }}
+          />
+        )}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+        {videos.length > 1 && (
+          <button
+            onClick={prev}
+            style={{
+              flexShrink: 0, width: 32, height: 32, borderRadius: "50%",
+              background: "#f3f4f6", border: "1px solid #e5e7eb",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", color: "#374151",
+            }}
+          >
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
+        {videos.length > 1 && (
+          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+            {videos.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                style={{
+                  width: i === safeIdx ? 18 : 7, height: 7,
+                  borderRadius: 4, border: "none", cursor: "pointer", padding: 0,
+                  background: i === safeIdx ? "#DA7756" : "#d1d5db",
+                  transition: "all .2s",
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {videos.length > 1 && (
+          <button
+            onClick={next}
+            style={{
+              flexShrink: 0, width: 32, height: 32, borderRadius: "50%",
+              background: "#f3f4f6", border: "1px solid #e5e7eb",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", color: "#374151",
+            }}
+          >
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+
+        <p style={{
+          flex: 1, minWidth: 0, margin: 0,
+          fontSize: 11, fontWeight: 600, color: "#6b7280",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          fontFamily: "'Poppins', sans-serif",
+        }}>
+          {safeIdx + 1}/{videos.length} — {url}
+        </p>
+
+        <button
+          onClick={() => onDelete(safeIdx)}
+          disabled={isSaving}
+          title="Delete video"
+          style={{
+            flexShrink: 0, width: 32, height: 32, borderRadius: "50%",
+            background: "#ef4444", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: isSaving ? "not-allowed" : "pointer",
+            color: "#fff", fontSize: 13, fontWeight: 900,
+            opacity: isSaving ? 0.5 : 1,
+            fontFamily: "'Poppins',sans-serif",
+          }}
+        >
+          {isSaving ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ animation: "bp-spin 1s linear infinite" }}>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} opacity={0.25} />
+              <path fill="currentColor" opacity={0.75} d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          ) : "✕"}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ─────────────────────────────────
 //  Shared Buttons
@@ -528,18 +796,23 @@ const BtnPrimary = ({ children, onClick, className = "" }: any) => (
   </button>
 );
 
-const BtnOutline = ({ children, onClick, className = "" }: any) => (
+const BtnOutline = ({ children, onClick, className = "", disabled = false }: any) => (
   <button
     onClick={onClick}
-    className={`inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border ${className}`}
+    disabled={disabled}
+    className={`inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border ${disabled ? "opacity-60 cursor-not-allowed" : ""} ${className}`}
     style={{ borderColor: C.primaryBord, color: C.primary, fontFamily: C.font }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.background = C.primaryBg;
-      e.currentTarget.style.borderColor = C.primaryBordStrong;
+      if (!disabled) {
+        e.currentTarget.style.background = C.primaryBg;
+        e.currentTarget.style.borderColor = C.primaryBordStrong;
+      }
     }}
     onMouseLeave={(e) => {
-      e.currentTarget.style.background = "#fff";
-      e.currentTarget.style.borderColor = C.primaryBord;
+      if (!disabled) {
+        e.currentTarget.style.background = "#fff";
+        e.currentTarget.style.borderColor = C.primaryBord;
+      }
     }}
   >
     {children}
@@ -571,9 +844,7 @@ const BtnIcon = ({ children, onClick, title = "" }: any) => (
 const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-
     .bp-wrap * { font-family: 'Poppins', sans-serif !important; }
-
     .bp-modal-portal {
       position: fixed; inset: 0; z-index: 99999;
       display: flex; align-items: center; justify-content: center;
@@ -604,10 +875,7 @@ const ThemeStyle = () => (
       box-sizing: border-box;
       font-family: 'Poppins', sans-serif !important;
     }
-    .bp-input:focus {
-      border-color: #DA7756;
-      box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
-    }
+    .bp-input:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
     .bp-input::placeholder { color: #a3a3a3; font-weight: 500; }
     .bp-select {
       width: 100%;
@@ -635,56 +903,25 @@ const ThemeStyle = () => (
       background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
       border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600;
     }
-
-    /* ── Card hover lift matching Dashboard ── */
-    .bp-card-lift {
-      transition: box-shadow .2s, transform .2s;
-    }
-    .bp-card-lift:hover {
-      box-shadow: 0 8px 32px rgba(218,119,86,0.12);
-      transform: translateY(-1px);
-    }
-
-    /* ── Tab active pill ── */
-    .bp-tab-active {
-      background: #fff !important;
-      color: #DA7756 !important;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.10);
-    }
-    .bp-tab-inactive {
-      background: transparent !important;
-      color: rgba(255,255,255,0.80) !important;
-    }
-    .bp-tab-inactive:hover {
-      background: rgba(255,255,255,0.12) !important;
-      color: #fff !important;
-    }
+    .bp-card-lift { transition: box-shadow .2s, transform .2s; }
+    .bp-card-lift:hover { box-shadow: 0 8px 32px rgba(218,119,86,0.12); transform: translateY(-1px); }
+    .bp-tab-active { background: #fff !important; color: #DA7756 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+    .bp-tab-inactive { background: transparent !important; color: rgba(255,255,255,0.80) !important; }
+    .bp-tab-inactive:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+    .drag-over { border: 2px dashed ${C.primary} !important; opacity: 0.5; }
   `}</style>
 );
 
 // ─────────────────────────────────
-//  Portal Modal
+//  Portal Modal Component
 // ─────────────────────────────────
-const Modal = ({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) => {
+const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => {
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, []);
   return ReactDOM.createPortal(
-    <div
-      className="bp-modal-portal"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="bp-modal-portal" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       {children}
     </div>,
     document.body
@@ -708,43 +945,16 @@ interface KPI {
 //  CoreValuesInlineCard
 // ─────────────────────────────────
 const CV_STATIC_DESC = [
-  {
-    letter: "I",
-    label: "Innovation",
-    desc: "We embrace innovative solutions to redefine real estate.",
-  },
-  {
-    letter: "N",
-    label: "Nurturing",
-    desc: "We foster a supportive environment for growth.",
-  },
-  {
-    letter: "A",
-    label: "Agility",
-    desc: "We adapt swiftly to industry changes.",
-  },
-  {
-    letter: "R",
-    label: "Resilience",
-    desc: "We persist through challenges and setbacks.",
-  },
-  {
-    letter: "E",
-    label: "Empowerment",
-    desc: "We empower our teams to take initiative and lead.",
-  },
+  { letter: "I", label: "Innovation", desc: "We embrace innovative solutions to redefine real estate." },
+  { letter: "N", label: "Nurturing", desc: "We foster a supportive environment for growth." },
+  { letter: "A", label: "Agility", desc: "We adapt swiftly to industry changes." },
+  { letter: "R", label: "Resilience", desc: "We persist through challenges and setbacks." },
+  { letter: "E", label: "Empowerment", desc: "We empower our teams to take initiative and lead." },
 ];
-const CV_FULL_TEXT = CV_STATIC_DESC.map(
-  (d) => `${d.letter} - ${d.label}: ${d.desc}`
-).join(" ");
-const TRUNCATED =
-  CV_FULL_TEXT.length > 80
-    ? CV_FULL_TEXT.slice(0, 80).trimEnd() + "..."
-    : CV_FULL_TEXT;
+const CV_FULL_TEXT = CV_STATIC_DESC.map((d) => `${d.letter} - ${d.label}: ${d.desc}`).join(" ");
+const TRUNCATED = CV_FULL_TEXT.length > 80 ? CV_FULL_TEXT.slice(0, 80).trimEnd() + "..." : CV_FULL_TEXT;
 
-const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
-  values,
-}) => {
+const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({ values }) => {
   const [hovered, setHovered] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -752,10 +962,7 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
   const handleMouseEnter = () => {
     if (!wrapRef.current) return;
     const rect = wrapRef.current.getBoundingClientRect();
-    setPos({
-      top: rect.bottom + window.scrollY + 6,
-      left: rect.left + window.scrollX,
-    });
+    setPos({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
     setHovered(true);
   };
 
@@ -772,54 +979,28 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
           </span>
         ))}
       </div>
-      <div
-        ref={wrapRef}
-        className="cursor-default"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <p
-          className="text-[12px] leading-relaxed select-none"
-          style={{ color: C.textMuted }}
-        >
+      <div ref={wrapRef} className="cursor-default" onMouseEnter={handleMouseEnter} onMouseLeave={() => setHovered(false)}>
+        <p className="text-[12px] leading-relaxed select-none" style={{ color: C.textMuted }}>
           {TRUNCATED}{" "}
-          <span className="font-bold" style={{ color: C.primary }}>
-            Read more
-          </span>
+          <span className="font-bold" style={{ color: C.primary }}>Read more</span>
         </p>
-        {hovered &&
-          ReactDOM.createPortal(
-            <div
-              style={{
-                position: "absolute",
-                top: pos.top,
-                left: pos.left,
-                zIndex: 99999,
-                background: "#fffaf8",
-                border: "1px solid rgba(218,119,86,0.20)",
-                borderRadius: 16,
-                boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-                padding: "16px 18px",
-                width: 340,
-                fontSize: 13,
-                lineHeight: 1.6,
-                color: C.textMuted,
-                pointerEvents: "none",
-                fontFamily: "'Poppins', sans-serif",
-              }}
-            >
-              {CV_STATIC_DESC.map((d) => (
-                <p key={d.letter} style={{ margin: "0 0 6px" }}>
-                  <strong style={{ color: C.primary, fontWeight: 800 }}>
-                    {d.letter}
-                  </strong>
-                  {" - "}
-                  {d.label}: {d.desc}
-                </p>
-              ))}
-            </div>,
-            document.body
-          )}
+        {hovered && ReactDOM.createPortal(
+          <div style={{
+            position: "absolute", top: pos.top, left: pos.left, zIndex: 99999,
+            background: "#fffaf8", border: "1px solid rgba(218,119,86,0.20)",
+            borderRadius: 16, boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+            padding: "16px 18px", width: 340, fontSize: 13, lineHeight: 1.6,
+            color: C.textMuted, pointerEvents: "none", fontFamily: "'Poppins', sans-serif",
+          }}>
+            {CV_STATIC_DESC.map((d) => (
+              <p key={d.letter} style={{ margin: "0 0 6px" }}>
+                <strong style={{ color: C.primary, fontWeight: 800 }}>{d.letter}</strong>
+                {" - "}{d.label}: {d.desc}
+              </p>
+            ))}
+          </div>,
+          document.body
+        )}
       </div>
     </div>
   );
@@ -840,22 +1021,14 @@ const VideoPreview = ({ url }: { url: string }) => {
   const videoId = extractYouTubeId(url);
   if (!videoId) {
     return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        className="text-[12px] text-blue-500 underline mt-3 block break-all"
-      >
+      <a href={url} target="_blank" rel="noreferrer" className="text-[12px] text-blue-500 underline mt-3 block break-all">
         {url}
       </a>
     );
   }
   return (
     <div className="mb-4 relative w-full">
-      <div
-        className="rounded-xl overflow-hidden shadow-sm border w-full relative"
-        style={{ paddingTop: "56.25%", borderColor: C.borderLgt }}
-      >
+      <div className="rounded-xl overflow-hidden shadow-sm border w-full relative" style={{ paddingTop: "56.25%", borderColor: C.borderLgt }}>
         <iframe
           className="absolute top-0 left-0 w-full h-full"
           src={`https://www.youtube.com/embed/${videoId}?rel=0`}
@@ -876,9 +1049,9 @@ const BusinessPlanAndGoles = () => {
   const [activeMainTab, setActiveMainTab] = useState("strategic");
   const [showAddContent, setShowAddContent] = useState(false);
   const [addContentTab, setAddContentTab] = useState("images");
-  const [showImageInput, setShowImageInput] = useState(false);
-  const [showVideoInput, setShowVideoInput] = useState(false);
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
+
+  const [isCopyingPlan, setIsCopyingPlan] = useState(false);
 
   // KPIs
   const [availableKpis, setAvailableKpis] = useState<KPI[]>([]);
@@ -889,9 +1062,7 @@ const BusinessPlanAndGoles = () => {
   const [purposeVideoUrl, setPurposeVideoUrl] = useState("");
   const [purposeRecordId, setPurposeRecordId] = useState<number | null>(null);
   const [isFetchingPurpose, setIsFetchingPurpose] = useState(true);
-  const [purposeFetchError, setPurposeFetchError] = useState<string | null>(
-    null
-  );
+  const [purposeFetchError, setPurposeFetchError] = useState<string | null>(null);
   const [isSavingPurpose, setIsSavingPurpose] = useState(false);
   const [purposeSaveError, setPurposeSaveError] = useState<string | null>(null);
   const [tempPurposeText, setTempPurposeText] = useState("");
@@ -912,18 +1083,33 @@ const BusinessPlanAndGoles = () => {
   const [brandVideoUrl, setBrandVideoUrl] = useState("");
   const [isFetchingBrand, setIsFetchingBrand] = useState(true);
   const [brandFetchError, setBrandFetchError] = useState<string | null>(null);
-  const [tempBrandPromises, setTempBrandPromises] = useState<BrandPromise[]>(
-    []
-  );
+  const [tempBrandPromises, setTempBrandPromises] = useState<BrandPromise[]>([]);
   const [tempBrandVideoUrl, setTempBrandVideoUrl] = useState("");
   const [isSavingBrand, setIsSavingBrand] = useState(false);
   const [brandSaveError, setBrandSaveError] = useState<string | null>(null);
 
   // Delete Trackers
   const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
-  const [pendingCoreDeleteIds, setPendingCoreDeleteIds] = useState<number[]>(
-    []
-  );
+  const [pendingCoreDeleteIds, setPendingCoreDeleteIds] = useState<number[]>([]);
+
+  // Drag and Drop
+  const dragCoreItem = useRef<number | null>(null);
+  const dragCoreOverItem = useRef<number | null>(null);
+  const [dragCoreOverIdx, setDragCoreOverIdx] = useState<number | null>(null);
+  const dragBrandItem = useRef<number | null>(null);
+  const dragBrandOverItem = useRef<number | null>(null);
+  const [dragBrandOverIdx, setDragBrandOverIdx] = useState<number | null>(null);
+
+  // Overview Media
+  const [overviewImages, setOverviewImages] = useState<string[]>([]);
+  const [overviewVideos, setOverviewVideos] = useState<string[]>([]);
+  const [isFetchingMedia, setIsFetchingMedia] = useState(false);
+  const [mediaFetchError, setMediaFetchError] = useState<string | null>(null);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [isSavingImages, setIsSavingImages] = useState(false);
+  const [isSavingVideos, setIsSavingVideos] = useState(false);
+  const [mediaSaveError, setMediaSaveError] = useState<string | null>(null);
 
   // ── Fetches ──
   const loadBrandPromises = useCallback(async () => {
@@ -944,11 +1130,7 @@ const BusinessPlanAndGoles = () => {
     setIsFetchingPurpose(true);
     setPurposeFetchError(null);
     try {
-      const {
-        purposeText: text,
-        videoUrl,
-        recordId,
-      } = await fetchPurposeFromApi();
+      const { purposeText: text, videoUrl, recordId } = await fetchPurposeFromApi();
       setPurposeText(text);
       setPurposeVideoUrl(videoUrl);
       setPurposeRecordId(recordId);
@@ -976,31 +1158,17 @@ const BusinessPlanAndGoles = () => {
   const loadKpis = useCallback(async () => {
     setIsFetchingKpis(true);
     try {
-      const url = `https://${BASE_URL}/kpis`;
-      const res = await fetch(url, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
+      const url = `${BASE_URL}/kpis`;
+      const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch KPIs");
       const json = await res.json();
-
       let list: any[] = [];
-      if (json?.data?.kpis && Array.isArray(json.data.kpis)) {
-        list = json.data.kpis;
-      } else if (Array.isArray(json?.data)) {
-        list = json.data;
-      } else if (Array.isArray(json)) {
-        list = json;
-      }
-
-      // Format correctly for our dropdown
+      if (json?.data?.kpis && Array.isArray(json.data.kpis)) list = json.data.kpis;
+      else if (Array.isArray(json?.data)) list = json.data;
+      else if (Array.isArray(json)) list = json;
       const formatted = list
         .filter((item) => item?.id && (item?.name || item?.title))
-        .map((item) => ({
-          id: item.id,
-          name: item.name || item.title || "Unnamed KPI",
-        }));
-
+        .map((item) => ({ id: item.id, name: item.name || item.title || "Unnamed KPI" }));
       setAvailableKpis(formatted);
     } catch (e) {
       console.error(e);
@@ -1009,12 +1177,286 @@ const BusinessPlanAndGoles = () => {
     }
   }, []);
 
+  const loadOverviewMedia = useCallback(async () => {
+    setIsFetchingMedia(true);
+    setMediaFetchError(null);
+    try {
+      const data = await fetchOverviewMediaFromApi();
+      setOverviewImages(data.images);
+      setOverviewVideos(data.videos);
+    } catch (err: any) {
+      setMediaFetchError(err.message || "Failed to load media.");
+    } finally {
+      setIsFetchingMedia(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadBrandPromises();
     loadPurpose();
     loadCoreValues();
     loadKpis();
-  }, [loadBrandPromises, loadPurpose, loadCoreValues, loadKpis]);
+    loadOverviewMedia();
+  }, [loadBrandPromises, loadPurpose, loadCoreValues, loadKpis, loadOverviewMedia]);
+
+  // ── COPY PLAN ──
+const handleCopyPlan = async () => {
+  setIsCopyingPlan(true);
+  try {
+    const headers = getAuthHeaders();
+
+    // ── Fetch KPIs ──
+    let kpis: any[] = [];
+    try {
+      const res = await fetch(`${BASE_URL}/kpis`, { headers });
+      const json = await res.json();
+      kpis = Array.isArray(json?.data?.kpis) ? json.data.kpis
+        : Array.isArray(json?.data) ? json.data
+        : Array.isArray(json) ? json : [];
+    } catch (e) { console.error("KPI fetch error", e); }
+
+    // ── Fetch SOPs ──
+    let sops: any[] = [];
+    try {
+      const res = await fetch(`${BASE_URL}/system_sops`, { headers });
+      const json = await res.json();
+      sops = Array.isArray(json?.data?.system_sops) ? json.data.system_sops
+        : Array.isArray(json?.data) ? json.data
+        : Array.isArray(json) ? json : [];
+    } catch (e) { console.error("SOP fetch error", e); }
+
+    // ── Fetch SWOT ──
+    let swotData = { strengths: [] as string[], weaknesses: [] as string[], opportunities: [] as string[], threats: [] as string[] };
+    try {
+      const res = await fetch(
+        `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
+        { headers }
+      );
+      const json = await res.json();
+      swotData = {
+        strengths: json?.grouped_data?.business_plan_strengths?.values || [],
+        weaknesses: json?.grouped_data?.business_plan_weaknesses?.values || [],
+        opportunities: json?.grouped_data?.business_plan_opportunities?.values || [],
+        threats: json?.grouped_data?.business_plan_threats?.values || [],
+      };
+    } catch (e) { console.error("SWOT fetch error", e); }
+
+    // ── Fetch BHAG ──
+    let bhag: { title: string; initiatives: { name: string; progress: number }[] } = { title: "", initiatives: [] };
+    try {
+      const res = await fetch(`${BASE_URL}/business_compass/bhag`, { headers });
+      const json = await res.json();
+      bhag = {
+        title: json?.title || json?.data?.title || json?.bhag?.title || json?.goal || "",
+        initiatives: (json?.initiatives || json?.data?.initiatives || json?.bhag?.initiatives || []).map((i: any) => ({
+          name: i.name || i.title || "",
+          progress: i.progress ?? i.completion ?? 0,
+        })),
+      };
+    } catch (e) { console.error("BHAG fetch error", e); }
+
+    // ── Fetch Medium Term (This Year) ──
+    let year: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
+    try {
+      const res = await fetch(`${BASE_URL}/business_compass/medium_term`, { headers });
+      const json = await res.json();
+      const raw = json?.data || json?.medium_term || json;
+      year = {
+        title: raw?.title || raw?.goal || "",
+        targetDate: raw?.target_date || raw?.targetDate || "",
+        initiatives: (raw?.initiatives || []).map((i: any) => ({
+          name: i.name || i.title || "",
+          progress: i.progress ?? i.completion ?? 0,
+        })),
+      };
+    } catch (e) { console.error("Medium term fetch error", e); }
+
+    // ── Fetch Short Term / Quarter (Rocks) ──
+    let quarter: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
+    try {
+      const res = await fetch(`${BASE_URL}/business_compass/short_term`, { headers });
+      const json = await res.json();
+      const raw = json?.data || json?.short_term || json;
+      quarter = {
+        title: raw?.title || raw?.goal || "",
+        targetDate: raw?.target_date || raw?.targetDate || "",
+        initiatives: (raw?.initiatives || []).map((i: any) => ({
+          name: i.name || i.title || "",
+          progress: i.progress ?? i.completion ?? 0,
+        })),
+      };
+    } catch (e) { console.error("Short term fetch error", e); }
+
+    // ── Fetch Quarterly Rocks ──
+    let rocks: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
+    try {
+      const res = await fetch(`${BASE_URL}/business_compass/quarterly`, { headers });
+      const json = await res.json();
+      const raw = json?.data || json?.quarterly || json;
+      rocks = {
+        title: raw?.title || raw?.goal || "",
+        targetDate: raw?.target_date || raw?.targetDate || "",
+        initiatives: (raw?.initiatives || []).map((i: any) => ({
+          name: i.name || i.title || "",
+          progress: i.progress ?? i.completion ?? 0,
+        })),
+      };
+    } catch (e) { console.error("Quarterly fetch error", e); }
+
+    // ── Build Text ──
+    const d = new Date();
+    const dateStr = d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
+
+    text += `CORE VALUES\n${"-".repeat(60)}\n`;
+    coreValues.length
+      ? coreValues.forEach((v, i) => { text += `${i + 1}. ${v.value}\n`; })
+      : (text += `(No core values)\n`);
+    text += `\n`;
+
+    text += `PURPOSE\n${"-".repeat(60)}\n`;
+    text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
+
+    text += `BRAND PROMISES\n${"-".repeat(60)}\n`;
+    brandPromises.length
+      ? brandPromises.forEach((p, i) => {
+          text += `${i + 1}. ${p.text}\n`;
+          if (p.kpis.length) text += `   KPIs: ${p.kpis.join(", ")}\n`;
+        })
+      : (text += `(No brand promises)\n`);
+    text += `\n`;
+
+    text += `BHAG (BIG HAIRY AUDACIOUS GOAL)\n${"-".repeat(60)}\n`;
+    text += bhag.title ? `${bhag.title}\n` : `(No BHAG defined)\n`;
+    if (bhag.initiatives.length) {
+      text += `\nKey Initiatives:\n`;
+      bhag.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — Progress: ${init.progress}%\n`; });
+    }
+    text += `\n`;
+
+    text += `THIS YEAR'S PLAN\n${"-".repeat(60)}\n`;
+    text += year.title ? `${year.title}\n` : `(No annual plan defined)\n`;
+    if (year.targetDate) text += `Target: ${year.targetDate}\n`;
+    if (year.initiatives.length) {
+      text += `\nAnnual Initiatives:\n`;
+      year.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
+    }
+    text += `\n`;
+
+    text += `THIS QUARTER (ROCKS)\n${"-".repeat(60)}\n`;
+    const q = rocks.title ? rocks : quarter;
+    text += q.title ? `${q.title}\n` : `(No quarterly plan defined)\n`;
+    if (q.targetDate) text += `Target: ${q.targetDate}\n`;
+    if (q.initiatives.length) {
+      text += `\nQuarterly Initiatives:\n`;
+      q.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
+    }
+    text += `\n`;
+
+    text += `CRITICAL NUMBERS\n${"-".repeat(60)}\n`;
+    kpis.length
+      ? kpis.forEach((kpi: any, i: number) => {
+          text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
+          text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
+          text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
+          const owner = kpi.owner || kpi.assignee?.name || kpi.assignee?.full_name || kpi.assignee?.email;
+          if (owner) text += `   Owner: ${owner}\n`;
+        })
+      : (text += `(No KPIs)\n`);
+    text += `\n`;
+
+    text += `KEY PROCESSES\n${"-".repeat(60)}\n`;
+    sops.length
+      ? sops.forEach((sop: any, i: number) => {
+          text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
+          text += `   Status: ${sop.status || "to_start"}\n`;
+          const owner = sop.owner || sop.assignee?.name || sop.assignee?.full_name || sop.assignee?.email;
+          if (owner) text += `   Owner: ${owner}\n`;
+        })
+      : (text += `(No SOPs)\n`);
+    text += `\n`;
+
+    text += `SWOT ANALYSIS\n${"-".repeat(60)}\n\n`;
+    (["strengths", "weaknesses", "opportunities", "threats"] as const).forEach((key) => {
+      text += `${key.charAt(0).toUpperCase() + key.slice(1)}:\n`;
+      swotData[key].length
+        ? swotData[key].forEach((item, i) => { text += `  ${i + 1}. ${item}\n`; })
+        : (text += `  (No items)\n`);
+      text += `\n`;
+    });
+
+    await navigator.clipboard.writeText(text.trim());
+    alert("Business Plan copied to clipboard!");
+  } catch (err) {
+    console.error("Copy failed", err);
+    alert("Failed to copy plan.");
+  } finally {
+    setIsCopyingPlan(false);
+  }
+};
+
+  // ── Overview Media Handlers ──
+  const handleAddImage = async () => {
+    const trimmed = newImageUrl.trim();
+    if (!trimmed) return;
+    setIsSavingImages(true);
+    setMediaSaveError(null);
+    try {
+      const updated = [...overviewImages, trimmed];
+      await saveOverviewImagesApi(updated);
+      setOverviewImages(updated);
+      setNewImageUrl("");
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to save image.");
+    } finally {
+      setIsSavingImages(false);
+    }
+  };
+
+  const handleDeleteImage = async (index: number) => {
+    const updated = overviewImages.filter((_, i) => i !== index);
+    setIsSavingImages(true);
+    setMediaSaveError(null);
+    try {
+      await saveOverviewImagesApi(updated);
+      setOverviewImages(updated);
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to delete image.");
+    } finally {
+      setIsSavingImages(false);
+    }
+  };
+
+  const handleAddVideo = async () => {
+    const trimmed = newVideoUrl.trim();
+    if (!trimmed) return;
+    setIsSavingVideos(true);
+    setMediaSaveError(null);
+    try {
+      const updated = [...overviewVideos, trimmed];
+      await saveOverviewVideosApi(updated);
+      setOverviewVideos(updated);
+      setNewVideoUrl("");
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to save video.");
+    } finally {
+      setIsSavingVideos(false);
+    }
+  };
+
+  const handleDeleteVideo = async (index: number) => {
+    const updated = overviewVideos.filter((_, i) => i !== index);
+    setIsSavingVideos(true);
+    setMediaSaveError(null);
+    try {
+      await saveOverviewVideosApi(updated);
+      setOverviewVideos(updated);
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to delete video.");
+    } finally {
+      setIsSavingVideos(false);
+    }
+  };
 
   // ── Modal openers ──
   const openTopModal = (modalName: string) => {
@@ -1028,9 +1470,7 @@ const BusinessPlanAndGoles = () => {
       setCoreSaveError(null);
       setPendingCoreDeleteIds([]);
     } else if (modalName === "brand") {
-      setTempBrandPromises(
-        brandPromises.map((p) => ({ ...p, kpis: [...p.kpis] }))
-      );
+      setTempBrandPromises(brandPromises.map((p) => ({ ...p, kpis: [...p.kpis] })));
       setTempBrandVideoUrl(brandVideoUrl);
       setBrandSaveError(null);
       setPendingDeleteIds([]);
@@ -1045,7 +1485,6 @@ const BusinessPlanAndGoles = () => {
     try {
       const trimmedText = tempPurposeText.trim();
       const trimmedVideo = tempPurposeVideoUrl.trim();
-
       if (!trimmedText && !trimmedVideo && purposeRecordId) {
         await deleteExtraFieldFromApi(purposeRecordId);
         setPurposeText("");
@@ -1053,16 +1492,11 @@ const BusinessPlanAndGoles = () => {
         setPurposeRecordId(null);
         setActiveTopModal(null);
       } else {
-        const resObj = await savePurposeToApi(
-          trimmedText,
-          trimmedVideo,
-          purposeRecordId
-        );
+        const resObj = await savePurposeToApi(trimmedText, trimmedVideo, purposeRecordId);
         setPurposeText(resObj.purposeText);
         setPurposeVideoUrl(resObj.videoUrl);
         setPurposeRecordId(resObj.recordId);
         setActiveTopModal(null);
-        // Note: Intentional removal of fetchPurposeFromApi() to prevent backend lag wiping UI
       }
     } catch (err: any) {
       setPurposeSaveError(err.message || "Failed to save. Please try again.");
@@ -1077,33 +1511,19 @@ const BusinessPlanAndGoles = () => {
     setCoreSaveError(null);
     try {
       for (const id of pendingCoreDeleteIds) {
-        try {
-          await deleteExtraFieldFromApi(id);
-        } catch (e) {
-          console.error(e);
-        }
+        try { await deleteExtraFieldFromApi(id); } catch (e) { console.error(e); }
       }
       setPendingCoreDeleteIds([]);
-
       if (filtered.length > 0 || tempCoreVideoUrl.trim() !== "") {
-        const resObj = await saveCoreValuesToApi(
-          filtered.map((v) => v.value),
-          tempCoreVideoUrl
-        );
-        // Merge the newly created IDs back into our state without wiping the values
-        const merged = filtered.map((v, i) => ({
-          ...v,
-          id: resObj.values[i]?.id ?? v.id,
-        }));
+        const resObj = await saveCoreValuesToApi(filtered.map((v) => v.value), tempCoreVideoUrl);
+        const merged = filtered.map((v, i) => ({ ...v, id: resObj.values[i]?.id ?? v.id }));
         setCoreValues(merged);
         setCoreVideoUrl(tempCoreVideoUrl);
       } else {
         setCoreValues([]);
         setCoreVideoUrl(tempCoreVideoUrl);
       }
-
       setActiveTopModal(null);
-      // Note: Intentional removal of fetchCoreValuesFromApi() to prevent backend lag wiping UI
     } catch (err: any) {
       setCoreSaveError(err.message || "Failed to save. Please try again.");
     } finally {
@@ -1111,39 +1531,30 @@ const BusinessPlanAndGoles = () => {
     }
   };
 
+  // FIX: saveBrandPromises now uses local tempBrandPromises as the source of truth for KPIs
   const saveBrandPromises = async () => {
     const filtered = tempBrandPromises.filter((p) => p.text.trim() !== "");
     setIsSavingBrand(true);
     setBrandSaveError(null);
     try {
       for (const id of pendingDeleteIds) {
-        try {
-          await deleteExtraFieldFromApi(id);
-        } catch (e) {
-          console.error(e);
-        }
+        try { await deleteExtraFieldFromApi(id); } catch (e) { console.error(e); }
       }
       setPendingDeleteIds([]);
 
       if (filtered.length > 0 || tempBrandVideoUrl.trim() !== "") {
-        const resObj = await saveBrandPromisesToApi(
-          filtered,
-          tempBrandVideoUrl
-        );
-        // Merge the newly created IDs back into our state without wiping the KPIs!
-        const merged = filtered.map((p, i) => ({
-          ...p,
-          id: resObj.promises[i]?.id ?? p.id,
-        }));
-        setBrandPromises(merged);
+        // Save to API (fire and forget the response — we trust local state)
+        await saveBrandPromisesToApi(filtered, tempBrandVideoUrl);
+        // Use local filtered data directly — KPIs are guaranteed correct here
+        setBrandPromises(filtered.map((p) => ({ ...p, kpis: [...p.kpis] })));
         setBrandVideoUrl(tempBrandVideoUrl);
       } else {
+        await saveBrandPromisesToApi([], tempBrandVideoUrl);
         setBrandPromises([]);
         setBrandVideoUrl(tempBrandVideoUrl);
       }
 
       setActiveTopModal(null);
-      // Note: Intentional removal of fetchBrandPromisesFromApi() to prevent backend lag wiping UI
     } catch (err: any) {
       setBrandSaveError(err.message || "Failed to save. Please try again.");
     } finally {
@@ -1159,36 +1570,46 @@ const BusinessPlanAndGoles = () => {
   };
   const handleDeleteBrandPromise = (index: number) => {
     const promise = tempBrandPromises[index];
-    if (promise.id !== null)
-      setPendingDeleteIds((prev) => [...prev, promise.id as number]);
+    if (promise.id !== null) setPendingDeleteIds((prev) => [...prev, promise.id as number]);
     setTempBrandPromises(tempBrandPromises.filter((_, i) => i !== index));
   };
   const handleAddBrandPromise = () =>
-    setTempBrandPromises([
-      ...tempBrandPromises,
-      { id: null, text: "", kpis: [] },
-    ]);
+    setTempBrandPromises([...tempBrandPromises, { id: null, text: "", kpis: [] }]);
   const handleAddKpiToBrandPromise = (promiseIndex: number, kpi: string) => {
     if (!kpi) return;
     const updated = [...tempBrandPromises];
     const current = updated[promiseIndex].kpis;
     if (current.length >= 3 || current.includes(kpi)) return;
-    updated[promiseIndex] = {
-      ...updated[promiseIndex],
-      kpis: [...current, kpi],
-    };
+    updated[promiseIndex] = { ...updated[promiseIndex], kpis: [...current, kpi] };
     setTempBrandPromises(updated);
   };
-  const handleRemoveKpiFromBrandPromise = (
-    promiseIndex: number,
-    kpi: string
-  ) => {
+  const handleRemoveKpiFromBrandPromise = (promiseIndex: number, kpi: string) => {
     const updated = [...tempBrandPromises];
-    updated[promiseIndex] = {
-      ...updated[promiseIndex],
-      kpis: updated[promiseIndex].kpis.filter((k) => k !== kpi),
-    };
+    updated[promiseIndex] = { ...updated[promiseIndex], kpis: updated[promiseIndex].kpis.filter((k) => k !== kpi) };
     setTempBrandPromises(updated);
+  };
+
+  // ── Brand Drag & Drop ──
+  const onDragStartBrand = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    dragBrandItem.current = position;
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const onDragEnterBrand = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    e.preventDefault();
+    dragBrandOverItem.current = position;
+    setDragBrandOverIdx(position);
+  };
+  const onDragEndBrand = () => {
+    if (dragBrandItem.current !== null && dragBrandOverItem.current !== null) {
+      const copy = [...tempBrandPromises];
+      const item = copy[dragBrandItem.current];
+      copy.splice(dragBrandItem.current, 1);
+      copy.splice(dragBrandOverItem.current, 0, item);
+      dragBrandItem.current = null;
+      dragBrandOverItem.current = null;
+      setDragBrandOverIdx(null);
+      setTempBrandPromises(copy);
+    }
   };
 
   // ── Core value handlers ──
@@ -1199,12 +1620,34 @@ const BusinessPlanAndGoles = () => {
   };
   const handleDeleteCoreValue = (index: number) => {
     const item = tempCoreValues[index];
-    if (item.id !== null)
-      setPendingCoreDeleteIds((prev) => [...prev, item.id as number]);
+    if (item.id !== null) setPendingCoreDeleteIds((prev) => [...prev, item.id as number]);
     setTempCoreValues(tempCoreValues.filter((_, i) => i !== index));
   };
   const handleAddCoreValue = () =>
     setTempCoreValues([...tempCoreValues, { id: null, value: "" }]);
+
+  // ── Core Drag & Drop ──
+  const onDragStartCore = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    dragCoreItem.current = position;
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const onDragEnterCore = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    e.preventDefault();
+    dragCoreOverItem.current = position;
+    setDragCoreOverIdx(position);
+  };
+  const onDragEndCore = () => {
+    if (dragCoreItem.current !== null && dragCoreOverItem.current !== null) {
+      const copy = [...tempCoreValues];
+      const item = copy[dragCoreItem.current];
+      copy.splice(dragCoreItem.current, 1);
+      copy.splice(dragCoreOverItem.current, 0, item);
+      dragCoreItem.current = null;
+      dragCoreOverItem.current = null;
+      setDragCoreOverIdx(null);
+      setTempCoreValues(copy);
+    }
+  };
 
   const isSavingAny =
     (activeTopModal === "brand" && isSavingBrand) ||
@@ -1216,87 +1659,51 @@ const BusinessPlanAndGoles = () => {
     { key: "goals", label: "Goals" },
   ];
 
-  // ── Skeleton shimmer helper ──
   const Shimmer = ({ w = "100%", h = 16 }: { w?: string; h?: number }) => (
-    <div
-      className="animate-pulse rounded-xl"
-      style={{ width: w, height: h, background: "#e5e1d8" }}
-    />
+    <div className="animate-pulse rounded-xl" style={{ width: w, height: h, background: "#e5e1d8" }} />
   );
 
-  // ── Empty-add button shared style ──
   const emptyAddBtn = (onClick: () => void, label: string) => (
     <button
       onClick={onClick}
       className="flex flex-col items-center justify-center w-full py-6 rounded-2xl border-2 border-dashed transition-all"
       style={{ borderColor: C.primaryBord, background: C.primaryTint }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = C.primary;
-        e.currentTarget.style.background = C.primaryBg;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = C.primaryBord;
-        e.currentTarget.style.background = C.primaryTint;
-      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.background = C.primaryBg; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.primaryBord; e.currentTarget.style.background = C.primaryTint; }}
     >
-      <div
-        className="w-9 h-9 rounded-full flex items-center justify-center mb-2"
-        style={{ background: "rgba(218,119,86,0.18)" }}
-      >
+      <div className="w-9 h-9 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(218,119,86,0.18)" }}>
         <PlusIcon />
       </div>
-      <span className="text-[13px] font-black" style={{ color: C.primary }}>
-        {label}
-      </span>
+      <span className="text-[13px] font-black" style={{ color: C.primary }}>{label}</span>
     </button>
   );
 
   return (
-    <div
-      className="bp-wrap min-h-screen p-4 md:p-8 max-w-[1400px] mx-auto space-y-6"
-      style={{ background: C.pageBg, color: C.textMain, fontFamily: C.font }}
-    >
+    <div className="bp-wrap min-h-screen p-4 md:p-8 w-full mx-auto space-y-6" style={{ background: C.pageBg, color: C.textMain, fontFamily: C.font }}>
       <ThemeStyle />
 
       {/* ── Page Header ── */}
       <div
         className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
-        style={{
-          background: "rgba(218,119,86,0.10)",
-          borderColor: C.primaryBord,
-        }}
+        style={{ background: "rgba(218,119,86,0.10)", borderColor: C.primaryBord }}
       >
         <div>
-          <p
-            className="text-[10px] font-black uppercase tracking-[0.18em] mb-1"
-            style={{ color: C.textMuted }}
-          >
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-1" style={{ color: C.textMuted }}>
             Strategic overview and goals alignment
           </p>
-          <h1
-            className="text-2xl font-black tracking-tight"
-            style={{ color: "#111" }}
-          >
-            Business Plan
-          </h1>
-          <p
-            className="text-sm font-semibold mt-1"
-            style={{ color: C.textMuted }}
-          >
-            HAVEN INFOLINE PRIVATE LIMITED
-          </p>
+          <h1 className="text-2xl font-black tracking-tight" style={{ color: "#111" }}>Business Plan</h1>
+          <p className="text-sm font-semibold mt-1" style={{ color: C.textMuted }}>HAVEN INFOLINE PRIVATE LIMITED</p>
         </div>
         <div className="flex gap-3 shrink-0">
-          <BtnOutline>Copy Plan</BtnOutline>
+          <BtnOutline onClick={handleCopyPlan} disabled={isCopyingPlan}>
+            {isCopyingPlan ? <LoaderIcon /> : "Copy Plan"}
+          </BtnOutline>
           <BtnPrimary>✨ Create with AI</BtnPrimary>
         </div>
       </div>
 
       {/* ── Tab Bar ── */}
-      <div
-        className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto"
-        style={{ background: C.primary }}
-      >
+      <div className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto" style={{ background: C.primary }}>
         {tabs.map((tab) => {
           const isActive = activeMainTab === tab.key;
           return (
@@ -1311,38 +1718,19 @@ const BusinessPlanAndGoles = () => {
         })}
       </div>
 
-      {/* ══════════════════════════════════════
-          STRATEGIC PLAN VIEW
-      ══════════════════════════════════════ */}
+      {/* ══ STRATEGIC PLAN ══ */}
       {activeMainTab === "strategic" && (
         <div className="space-y-6">
-          {/* ── "Our Business Plan" header row ── */}
-          <div
-            className="rounded-[8px] p-5 flex items-center justify-between"
-            style={{ background: C.tealBg }}
-          >
+          {/* Our Business Plan header */}
+          <div className="rounded-[8px] p-5 flex items-center justify-between" style={{ background: C.tealBg }}>
             <div className="flex items-center gap-3">
-              <div className="bg-white/30 p-2 rounded-full">
-                <EyeIcon />
-              </div>
-              <span className="text-[12px] font-black tracking-[0.15em] text-[#070707] uppercase">
-                Our Business Plan
-              </span>
+              <div className="bg-white/30 p-2 rounded-full"><EyeIcon /></div>
+              <span className="text-[12px] font-black tracking-[0.15em] text-[#070707] uppercase">Our Business Plan</span>
             </div>
             <div className="flex items-center gap-2">
               <BtnIcon title="Info">
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </BtnIcon>
               <BtnIcon onClick={() => setShowAddContent(!showAddContent)}>
@@ -1351,425 +1739,206 @@ const BusinessPlanAndGoles = () => {
             </div>
           </div>
 
-          {/* ── Add Content Dropdown ── */}
+          {/* Add Content Dropdown */}
           {showAddContent && (
-            <div
-              className="rounded-2xl overflow-hidden border"
-              style={{ borderColor: C.primaryBordStrong, background: C.cardBg }}
-            >
-              <div
-                className="flex border-b"
-                style={{ borderColor: C.primaryBord }}
-              >
+            <div className="rounded-2xl overflow-hidden border" style={{ borderColor: C.primaryBordStrong, background: C.cardBg }}>
+              <div className="flex border-b" style={{ borderColor: C.primaryBord }}>
                 {["images", "video"].map((t) => (
                   <button
                     key={t}
                     onClick={() => setAddContentTab(t)}
                     className="flex-1 py-3 text-[13px] font-black transition-colors capitalize"
-                    style={{
-                      background:
-                        addContentTab === t ? C.primary : "transparent",
-                      color: addContentTab === t ? "#fff" : C.textMuted,
-                    }}
+                    style={{ background: addContentTab === t ? C.primary : "transparent", color: addContentTab === t ? "#fff" : C.textMuted }}
                   >
                     {t === "images" ? "Images" : "Explainer Video"}
                   </button>
                 ))}
               </div>
+              <div className="p-6">
+                {mediaSaveError && <div className="bp-error-banner mb-4">{mediaSaveError}</div>}
+                {mediaFetchError && (
+                  <div className="bp-error-banner mb-4 flex items-center justify-between">
+                    <span>{mediaFetchError}</span>
+                    <button onClick={loadOverviewMedia} className="underline ml-3 shrink-0">Retry</button>
+                  </div>
+                )}
 
-              <div className="p-10 flex flex-col items-center text-center">
-                {addContentTab === "images" &&
-                  (!showImageInput ? (
-                    <div className="flex flex-col items-center">
-                      <ImagePlaceholder />
-                      <p
-                        className="text-[13px] font-black mb-5"
-                        style={{ color: C.textMuted }}
-                      >
-                        No images added yet
-                      </p>
-                      <BtnPrimary onClick={() => setShowImageInput(true)}>
-                        Add Images
-                      </BtnPrimary>
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-2xl mx-auto text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <span
-                          className="font-black text-[15px]"
-                          style={{ color: C.textMain }}
-                        >
-                          Add Images
-                        </span>
-                        <button
-                          onClick={() => setShowImageInput(false)}
-                          className="text-gray-400 hover:text-gray-700 font-black text-lg transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          type="text"
-                          placeholder="Paste image URL or Google Drive link..."
-                          className="bp-input flex-1"
-                        />
-                        <button
-                          className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97]"
-                          style={{
-                            background: C.primaryTint,
-                            color: C.primaryHov,
-                            borderColor: C.primaryBord,
-                          }}
-                        >
-                          + Add
-                        </button>
-                        <button
-                          className="px-4 py-2 rounded-xl text-[13px] font-black text-white shadow-sm transition-all active:scale-[0.97]"
-                          style={{ background: C.primary }}
-                        >
-                          ↑ Upload
-                        </button>
-                      </div>
-                      <p
-                        className="text-[11px] mb-5 font-semibold"
-                        style={{ color: C.textMuted }}
-                      >
-                        0/12 images • Max 1 MB per image.{" "}
-                        <a
-                          href="#"
-                          style={{ color: C.primary }}
-                          className="hover:underline"
-                        >
-                          Compress images here
-                        </a>
-                      </p>
-                      <p
-                        className="text-[11px] mb-2 font-black"
-                        style={{ color: C.textMuted }}
-                      >
-                        Generate with AI:
-                      </p>
-                      <div className="flex gap-3">
-                        <button
-                          className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
-                        >
-                          ✨ Create Image (overview)
-                        </button>
-                        <button
-                          className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
-                        >
-                          ✨ Create Image (detailed)
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                {addContentTab === "video" &&
-                  (!showVideoInput ? (
-                    <div className="flex flex-col items-center">
-                      <VideoPlaceholder />
-                      <p
-                        className="text-[13px] font-black mb-5"
-                        style={{ color: C.textMuted }}
-                      >
-                        No explainer videos added yet
-                      </p>
-                      <BtnPrimary onClick={() => setShowVideoInput(true)}>
-                        Add Videos
-                      </BtnPrimary>
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-2xl mx-auto text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <span
-                          className="font-black text-[15px]"
-                          style={{ color: C.textMain }}
-                        >
-                          Add Videos
-                        </span>
-                        <button
-                          onClick={() => setShowVideoInput(false)}
-                          className="text-gray-400 hover:text-gray-700 font-black text-lg transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          type="text"
-                          placeholder="Paste YouTube, Vimeo, or direct video URL..."
-                          className="bp-input flex-1"
-                        />
-                        <button
-                          className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97]"
-                          style={{
-                            background: C.primaryTint,
-                            color: C.primaryHov,
-                            borderColor: C.primaryBord,
-                          }}
-                        >
-                          + Add
-                        </button>
-                      </div>
-                      <p
-                        className="text-[11px] font-black mb-5"
-                        style={{ color: C.textMuted }}
-                      >
-                        0/12 videos added
-                      </p>
-                      <p
-                        className="text-[11px] mb-2 font-black"
-                        style={{ color: C.textMuted }}
-                      >
-                        Generate with AI:
-                      </p>
+                {addContentTab === "images" && (
+                  <div>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text" value={newImageUrl}
+                        onChange={(e) => setNewImageUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddImage()}
+                        placeholder="Paste image URL or Google Drive link..."
+                        className="bp-input flex-1" disabled={isSavingImages}
+                      />
                       <button
-                        className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
-                        style={{ borderColor: C.borderLgt }}
+                        onClick={handleAddImage} disabled={isSavingImages || !newImageUrl.trim()}
+                        className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
+                        style={{ background: C.primaryTint, color: C.primaryHov, borderColor: C.primaryBord }}
                       >
-                        📄 Create Video Script
+                        {isSavingImages ? <LoaderIcon /> : "+ Add"}
                       </button>
                     </div>
-                  ))}
+                    <p className="text-[11px] mb-4 font-semibold" style={{ color: C.textMuted }}>
+                      {overviewImages.length}/12 images • Max 1 MB per image.{" "}
+                      <a href="#" style={{ color: C.primary }} className="hover:underline">Compress images here</a>
+                    </p>
+                    {isFetchingMedia ? (
+                      <div className="w-full rounded-2xl animate-pulse mb-5" style={{ height: 340, background: "#e5e1d8" }} />
+                    ) : overviewImages.length === 0 ? (
+                      <div className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed" style={{ borderColor: C.primaryBord }}>
+                        <ImagePlaceholder />
+                        <p className="text-[13px] font-black" style={{ color: C.textMuted }}>No images added yet</p>
+                      </div>
+                    ) : (
+                      <InlineImageSlider images={overviewImages} onDelete={handleDeleteImage} isSaving={isSavingImages} />
+                    )}
+                    <p className="text-[11px] mb-2 font-black mt-2" style={{ color: C.textMuted }}>Generate with AI:</p>
+                    <div className="flex gap-3">
+                      <button className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm" style={{ borderColor: C.borderLgt }}>✨ Create Image (overview)</button>
+                      <button className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm" style={{ borderColor: C.borderLgt }}>✨ Create Image (detailed)</button>
+                    </div>
+                  </div>
+                )}
+
+                {addContentTab === "video" && (
+                  <div>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text" value={newVideoUrl}
+                        onChange={(e) => setNewVideoUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
+                        placeholder="Paste YouTube, Vimeo, or direct video URL..."
+                        className="bp-input flex-1" disabled={isSavingVideos}
+                      />
+                      <button
+                        onClick={handleAddVideo} disabled={isSavingVideos || !newVideoUrl.trim()}
+                        className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
+                        style={{ background: C.primaryTint, color: C.primaryHov, borderColor: C.primaryBord }}
+                      >
+                        {isSavingVideos ? <LoaderIcon /> : "+ Add"}
+                      </button>
+                    </div>
+                    <p className="text-[11px] font-black mb-4" style={{ color: C.textMuted }}>{overviewVideos.length}/12 videos added</p>
+                    {isFetchingMedia ? (
+                      <div className="w-full rounded-2xl animate-pulse mb-5" style={{ height: 340, background: "#e5e1d8" }} />
+                    ) : overviewVideos.length === 0 ? (
+                      <div className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed" style={{ borderColor: C.primaryBord }}>
+                        <VideoPlaceholder />
+                        <p className="text-[13px] font-black" style={{ color: C.textMuted }}>No explainer videos added yet</p>
+                      </div>
+                    ) : (
+                      <InlineVideoPlayer videos={overviewVideos} onDelete={handleDeleteVideo} isSaving={isSavingVideos} />
+                    )}
+                    <p className="text-[11px] mb-2 font-black mt-2" style={{ color: C.textMuted }}>Generate with AI:</p>
+                    <button className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm" style={{ borderColor: C.borderLgt }}>
+                      📄 Create Video Script
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* ── 3 Cards — Core Values / Purpose / Brand Promises ── */}
+          {/* ── 3 Cards ── */}
           <div className="rounded-[8px] p-6" style={{ background: C.tealBg }}>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">
-              Strategic Essentials
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">Strategic Essentials</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Core Values */}
-              <div
-                className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col"
-                style={{
-                  background: C.cardBg,
-                  borderTop: `4px solid ${C.primary}`,
-                  borderColor: C.borderLgt,
-                }}
-              >
+              <div className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col" style={{ background: C.cardBg, borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
                 <div className="flex justify-between items-start mb-4">
-                  <h3
-                    className="font-black text-[14px] flex items-center gap-1.5"
-                    style={{ color: C.textMain }}
-                  >
-                    Core Values <InfoIcon />
-                  </h3>
-                  <button
-                    onClick={() => openTopModal("core")}
-                    className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
-                    style={{ color: "#9ca3af" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = C.primary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#9ca3af")
-                    }
-                  >
+                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>Core Values <InfoIcon /></h3>
+                  <button onClick={() => openTopModal("core")} className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]" style={{ color: "#9ca3af" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
                     <EditIcon />
                   </button>
                 </div>
                 {isFetchingCore ? (
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 2, 3, 4].map((n) => (
-                      <Shimmer key={n} w="80px" h={28} />
-                    ))}
-                  </div>
+                  <div className="flex flex-wrap gap-2">{[1, 2, 3, 4].map((n) => <Shimmer key={n} w="80px" h={28} />)}</div>
                 ) : coreFetchError ? (
-                  <div className="text-[12px] text-red-500 font-semibold">
-                    ⚠ {coreFetchError}{" "}
-                    <button onClick={loadCoreValues} className="underline">
-                      Retry
-                    </button>
-                  </div>
+                  <div className="text-[12px] text-red-500 font-semibold">⚠ {coreFetchError}{" "}<button onClick={loadCoreValues} className="underline">Retry</button></div>
                 ) : coreValues.length === 0 && !coreVideoUrl ? (
                   <div className="flex flex-col gap-3">
                     {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
-                    <p
-                      className="text-[12px] leading-relaxed"
-                      style={{ color: C.textMuted }}
-                    >
-                      {TRUNCATED}{" "}
-                      <span className="font-bold" style={{ color: C.primary }}>
-                        Read more
-                      </span>
+                    <p className="text-[12px] leading-relaxed" style={{ color: C.textMuted }}>
+                      {TRUNCATED}{" "}<span className="font-bold" style={{ color: C.primary }}>Read more</span>
                     </p>
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
                     {coreVideoUrl && <VideoPreview url={coreVideoUrl} />}
                     {coreValues.length === 0 ? (
-                      <div>
-                        {emptyAddBtn(
-                          () => openTopModal("core"),
-                          "Add Core Values"
-                        )}
-                      </div>
+                      <div>{emptyAddBtn(() => openTopModal("core"), "Add Core Values")}</div>
                     ) : (
-                      <div>
-                        <CoreValuesInlineCard values={coreValues} />
-                      </div>
+                      <div><CoreValuesInlineCard values={coreValues} /></div>
                     )}
                   </div>
                 )}
               </div>
 
               {/* Purpose */}
-              <div
-                className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col"
-                style={{
-                  background: C.cardBg,
-                  borderTop: `4px solid ${C.primary}`,
-                  borderColor: C.borderLgt,
-                }}
-              >
+              <div className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col" style={{ background: C.cardBg, borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
                 <div className="flex justify-between items-start mb-4">
-                  <h3
-                    className="font-black text-[14px] flex items-center gap-1.5"
-                    style={{ color: C.textMain }}
-                  >
-                    Purpose <InfoIcon />
-                  </h3>
-                  <button
-                    onClick={() => openTopModal("purpose")}
-                    className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
-                    style={{ color: "#9ca3af" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = C.primary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#9ca3af")
-                    }
-                  >
+                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>Purpose <InfoIcon /></h3>
+                  <button onClick={() => openTopModal("purpose")} className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]" style={{ color: "#9ca3af" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
                     <EditIcon />
                   </button>
                 </div>
                 {isFetchingPurpose ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((n) => (
-                      <Shimmer key={n} w={n === 3 ? "50%" : "95%"} h={12} />
-                    ))}
-                  </div>
+                  <div className="space-y-2">{[1, 2, 3].map((n) => <Shimmer key={n} w={n === 3 ? "50%" : "95%"} h={12} />)}</div>
                 ) : purposeFetchError ? (
-                  <div className="text-[12px] text-red-500 font-semibold">
-                    ⚠ {purposeFetchError}{" "}
-                    <button onClick={loadPurpose} className="underline">
-                      Retry
-                    </button>
-                  </div>
+                  <div className="text-[12px] text-red-500 font-semibold">⚠ {purposeFetchError}{" "}<button onClick={loadPurpose} className="underline">Retry</button></div>
                 ) : !purposeText && !purposeVideoUrl ? (
                   emptyAddBtn(() => openTopModal("purpose"), "Add Purpose")
                 ) : (
                   <div className="flex flex-col h-full">
                     {purposeVideoUrl && <VideoPreview url={purposeVideoUrl} />}
                     {purposeText ? (
-                      <p
-                        className="text-[13px] font-black leading-relaxed"
-                        style={{ color: C.primary }}
-                      >
-                        {purposeText}
-                      </p>
+                      <p className="text-[13px] font-black leading-relaxed" style={{ color: C.primary }}>{purposeText}</p>
                     ) : (
-                      <div>
-                        {emptyAddBtn(
-                          () => openTopModal("purpose"),
-                          "Add Purpose"
-                        )}
-                      </div>
+                      <div>{emptyAddBtn(() => openTopModal("purpose"), "Add Purpose")}</div>
                     )}
                   </div>
                 )}
               </div>
 
               {/* Brand Promises */}
-              <div
-                className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col"
-                style={{
-                  background: C.cardBg,
-                  borderTop: `4px solid ${C.primary}`,
-                  borderColor: C.borderLgt,
-                }}
-              >
+              <div className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col" style={{ background: C.cardBg, borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
                 <div className="flex justify-between items-start mb-4">
-                  <h3
-                    className="font-black text-[14px] flex items-center gap-1.5"
-                    style={{ color: C.textMain }}
-                  >
-                    Brand Promises <InfoIcon />
-                  </h3>
-                  <button
-                    onClick={() => openTopModal("brand")}
-                    className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]"
-                    style={{ color: "#9ca3af" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = C.primary)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#9ca3af")
-                    }
-                  >
+                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>Brand Promises <InfoIcon /></h3>
+                  <button onClick={() => openTopModal("brand")} className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]" style={{ color: "#9ca3af" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
                     <EditIcon />
                   </button>
                 </div>
                 {isFetchingBrand ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((n) => (
-                      <Shimmer key={n} w={n === 3 ? "60%" : "90%"} h={14} />
-                    ))}
-                  </div>
+                  <div className="space-y-2">{[1, 2, 3].map((n) => <Shimmer key={n} w={n === 3 ? "60%" : "90%"} h={14} />)}</div>
                 ) : brandFetchError ? (
-                  <div className="text-[12px] text-red-500 font-semibold">
-                    ⚠ {brandFetchError}{" "}
-                    <button onClick={loadBrandPromises} className="underline">
-                      Retry
-                    </button>
-                  </div>
+                  <div className="text-[12px] text-red-500 font-semibold">⚠ {brandFetchError}{" "}<button onClick={loadBrandPromises} className="underline">Retry</button></div>
                 ) : brandPromises.length === 0 && !brandVideoUrl ? (
                   emptyAddBtn(() => openTopModal("brand"), "Add Promise")
                 ) : (
                   <div className="flex flex-col h-full">
                     {brandVideoUrl && <VideoPreview url={brandVideoUrl} />}
                     {brandPromises.length === 0 ? (
-                      <div>
-                        {emptyAddBtn(
-                          () => openTopModal("brand"),
-                          "Add Promise"
-                        )}
-                      </div>
+                      <div>{emptyAddBtn(() => openTopModal("brand"), "Add Promise")}</div>
                     ) : (
-                      <ul
-                        className="space-y-3 text-[12px]"
-                        style={{ color: C.textMuted }}
-                      >
+                      <ul className="space-y-3 text-[12px]" style={{ color: C.textMuted }}>
                         {brandPromises.map((p, idx) => (
                           <li key={p.id ?? idx} className="flex items-start">
-                            <span
-                              className="mr-2 mt-0.5 shrink-0 font-black"
-                              style={{ color: C.primary }}
-                            >
-                              •
-                            </span>
+                            <span className="mr-2 mt-0.5 shrink-0 font-black" style={{ color: C.primary }}>•</span>
                             <div>
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: p.text.replace(
-                                    /([^-]+)/,
-                                    `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`
-                                  ),
-                                }}
-                              />
+                              <div dangerouslySetInnerHTML={{ __html: p.text.replace(/([^-]+)/, `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`) }} />
                               {p.kpis.length > 0 ? (
-                                <p className="text-[11px] text-gray-400 mt-0.5">
-                                  {p.kpis.join(", ")}
-                                </p>
+                                <p className="text-[11px] text-gray-400 mt-0.5">{p.kpis.join(", ")}</p>
                               ) : (
-                                <p className="text-[11px] text-gray-400 italic mt-0.5">
-                                  No KPIs linked
-                                </p>
+                                <p className="text-[11px] text-gray-400 italic mt-0.5">No KPIs linked</p>
                               )}
                             </div>
                           </li>
@@ -1795,72 +1964,34 @@ const BusinessPlanAndGoles = () => {
 
       {activeMainTab === "goals" && <GoalsView />}
 
-      {/* ══════════════════════════════════════
-          MODALS
-      ══════════════════════════════════════ */}
+      {/* ══ MODALS ══ */}
       {activeTopModal && (
         <Modal onClose={() => setActiveTopModal(null)}>
           <div className="bp-modal-box">
-            {/* Modal Header */}
-            <div
-              className="flex justify-between items-center px-6 py-5 border-b"
-              style={{ background: C.cardBg, borderColor: C.primaryBord }}
-            >
+            {/* Header */}
+            <div className="flex justify-between items-center px-6 py-5 border-b" style={{ background: C.cardBg, borderColor: C.primaryBord }}>
               <div className="flex items-center gap-3">
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: C.primary,
-                    flexShrink: 0,
-                    display: "inline-block",
-                  }}
-                />
-                <h2
-                  className="font-black text-[17px] m-0"
-                  style={{ color: C.textMain }}
-                >
-                  Edit{" "}
-                  {activeTopModal === "core"
-                    ? "Core Values"
-                    : activeTopModal === "purpose"
-                      ? "Purpose"
-                      : "Brand Promises"}
+                <span style={{ width: 10, height: 10, borderRadius: "50%", background: C.primary, flexShrink: 0, display: "inline-block" }} />
+                <h2 className="font-black text-[17px] m-0" style={{ color: C.textMain }}>
+                  Edit {activeTopModal === "core" ? "Core Values" : activeTopModal === "purpose" ? "Purpose" : "Brand Promises"}
                 </h2>
               </div>
               <BtnIcon onClick={() => setActiveTopModal(null)}>
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </BtnIcon>
             </div>
 
-            {/* Modal Body */}
+            {/* Body */}
             <div className="p-6 flex-1 overflow-y-auto bp-scroll">
-              {/* ── Purpose ── */}
+              {/* Purpose */}
               {activeTopModal === "purpose" && (
                 <div className="space-y-5">
-                  {purposeSaveError && (
-                    <div className="bp-error-banner">{purposeSaveError}</div>
-                  )}
+                  {purposeSaveError && <div className="bp-error-banner">{purposeSaveError}</div>}
                   <div>
-                    <label
-                      className="block text-[12px] font-black mb-1.5"
-                      style={{ color: C.textMain }}
-                    >
-                      Explanation / Text{" "}
-                      <span style={{ color: C.primary }}>*</span>
+                    <label className="block text-[12px] font-black mb-1.5" style={{ color: C.textMain }}>
+                      Explanation / Text <span style={{ color: C.primary }}>*</span>
                     </label>
                     <textarea
                       value={tempPurposeText}
@@ -1871,71 +2002,41 @@ const BusinessPlanAndGoles = () => {
                     />
                   </div>
                   <div>
-                    <label
-                      className="block text-[12px] font-black mb-1.5"
-                      style={{ color: C.textMain }}
-                    >
-                      Video URL (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={tempPurposeVideoUrl}
-                      onChange={(e) => setTempPurposeVideoUrl(e.target.value)}
-                      placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
-                      className="bp-input"
-                    />
-                    <p
-                      className="text-[11px] mt-1.5 font-semibold"
-                      style={{ color: C.textMuted }}
-                    >
-                      Supports YouTube, Vimeo, and direct video files (.mp4,
-                      etc.)
-                    </p>
+                    <label className="block text-[12px] font-black mb-1.5" style={{ color: C.textMain }}>Video URL (Optional)</label>
+                    <input type="text" value={tempPurposeVideoUrl} onChange={(e) => setTempPurposeVideoUrl(e.target.value)} placeholder="Paste YouTube, Vimeo, or Direct Video URL..." className="bp-input" />
+                    <p className="text-[11px] mt-1.5 font-semibold" style={{ color: C.textMuted }}>Supports YouTube, Vimeo, and direct video files (.mp4, etc.)</p>
                   </div>
                 </div>
               )}
 
-              {/* ── Core Values ── */}
+              {/* Core Values */}
               {activeTopModal === "core" && (
                 <div className="space-y-5">
-                  {coreSaveError && (
-                    <div className="bp-error-banner">{coreSaveError}</div>
-                  )}
+                  {coreSaveError && <div className="bp-error-banner">{coreSaveError}</div>}
                   <div>
-                    <label
-                      className="block text-[12px] font-black mb-3"
-                      style={{ color: C.textMain }}
-                    >
-                      Core Values
-                    </label>
+                    <label className="block text-[12px] font-black mb-3" style={{ color: C.textMain }}>Core Values</label>
                     <div className="space-y-2.5 mb-3">
                       {tempCoreValues.map((item, idx) => (
                         <div
                           key={item.id ?? idx}
-                          className="flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
+                          draggable
+                          onDragStart={(e) => onDragStartCore(e, idx)}
+                          onDragEnter={(e) => onDragEnterCore(e, idx)}
+                          onDragEnd={onDragEndCore}
+                          onDragOver={(e) => e.preventDefault()}
+                          className={`flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm transition-all ${dragCoreOverIdx === idx ? "drag-over" : ""}`}
+                          style={{ borderColor: C.borderLgt, cursor: "grab" }}
                         >
-                          <div className="shrink-0 p-1 rounded cursor-grab text-gray-300">
-                            <GripIcon />
-                          </div>
+                          <div className="shrink-0 p-1 rounded text-gray-300"><GripIcon /></div>
                           <input
-                            type="text"
-                            value={item.value}
-                            onChange={(e) =>
-                              handleCoreValueChange(idx, e.target.value)
-                            }
-                            className="flex-1 outline-none text-[13px] font-black bg-transparent"
+                            type="text" value={item.value}
+                            onChange={(e) => handleCoreValueChange(idx, e.target.value)}
+                            className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add core value"
-                            autoFocus={
-                              idx === tempCoreValues.length - 1 &&
-                              item.value === ""
-                            }
+                            autoFocus={idx === tempCoreValues.length - 1 && item.value === ""}
                           />
-                          <button
-                            onClick={() => handleDeleteCoreValue(idx)}
-                            className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50"
-                          >
+                          <button onClick={() => handleDeleteCoreValue(idx)} className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50">
                             <TrashIcon />
                           </button>
                         </div>
@@ -1945,90 +2046,51 @@ const BusinessPlanAndGoles = () => {
                       onClick={handleAddCoreValue}
                       className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-black rounded-2xl transition-colors border-2 border-dashed mb-5"
                       style={{ borderColor: C.borderLgt, color: C.primary }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.background = C.primaryBg)
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = "transparent")
-                      }
+                      onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryBg)}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       <PlusIcon /> Add Item
                     </button>
                   </div>
                   <div>
-                    <label
-                      className="block text-[12px] font-black mb-1.5"
-                      style={{ color: C.textMain }}
-                    >
-                      Video URL (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={tempCoreVideoUrl}
-                      onChange={(e) => setTempCoreVideoUrl(e.target.value)}
-                      placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
-                      className="bp-input"
-                    />
+                    <label className="block text-[12px] font-black mb-1.5" style={{ color: C.textMain }}>Video URL (Optional)</label>
+                    <input type="text" value={tempCoreVideoUrl} onChange={(e) => setTempCoreVideoUrl(e.target.value)} placeholder="Paste YouTube, Vimeo, or Direct Video URL..." className="bp-input" />
                   </div>
                 </div>
               )}
 
-              {/* ── Brand Promises ── */}
+              {/* Brand Promises */}
               {activeTopModal === "brand" && (
                 <div className="space-y-5">
-                  {brandSaveError && (
-                    <div className="bp-error-banner">{brandSaveError}</div>
-                  )}
+                  {brandSaveError && <div className="bp-error-banner">{brandSaveError}</div>}
                   <div>
-                    <label
-                      className="block text-[12px] font-black mb-1.5"
-                      style={{ color: C.textMain }}
-                    >
-                      Video URL (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={tempBrandVideoUrl}
-                      onChange={(e) => setTempBrandVideoUrl(e.target.value)}
-                      placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
-                      className="bp-input"
-                    />
+                    <label className="block text-[12px] font-black mb-1.5" style={{ color: C.textMain }}>Video URL (Optional)</label>
+                    <input type="text" value={tempBrandVideoUrl} onChange={(e) => setTempBrandVideoUrl(e.target.value)} placeholder="Paste YouTube, Vimeo, or Direct Video URL..." className="bp-input" />
                   </div>
                   <div>
-                    <label
-                      className="block text-[12px] font-black mb-3"
-                      style={{ color: C.textMain }}
-                    >
-                      Promises
-                    </label>
+                    <label className="block text-[12px] font-black mb-3" style={{ color: C.textMain }}>Promises</label>
                     <div className="space-y-2.5 mb-3">
                       {tempBrandPromises.map((item, idx) => (
                         <div
                           key={item.id ?? idx}
-                          className="flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
+                          draggable
+                          onDragStart={(e) => onDragStartBrand(e, idx)}
+                          onDragEnter={(e) => onDragEnterBrand(e, idx)}
+                          onDragEnd={onDragEndBrand}
+                          onDragOver={(e) => e.preventDefault()}
+                          className={`flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm transition-all ${dragBrandOverIdx === idx ? "drag-over" : ""}`}
+                          style={{ borderColor: C.borderLgt, cursor: "grab" }}
                         >
-                          <div className="shrink-0 p-1 rounded cursor-grab text-gray-300">
-                            <GripIcon />
-                          </div>
+                          <div className="shrink-0 p-1 rounded text-gray-300"><GripIcon /></div>
                           <input
-                            type="text"
-                            value={item.text}
-                            onChange={(e) =>
-                              handleBrandPromiseChange(idx, e.target.value)
-                            }
-                            className="flex-1 outline-none text-[13px] font-black bg-transparent"
+                            type="text" value={item.text}
+                            onChange={(e) => handleBrandPromiseChange(idx, e.target.value)}
+                            className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add promise"
-                            autoFocus={
-                              idx === tempBrandPromises.length - 1 &&
-                              item.text === ""
-                            }
+                            autoFocus={idx === tempBrandPromises.length - 1 && item.text === ""}
                           />
-                          <button
-                            onClick={() => handleDeleteBrandPromise(idx)}
-                            className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50"
-                          >
+                          <button onClick={() => handleDeleteBrandPromise(idx)} className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50">
                             <TrashIcon />
                           </button>
                         </div>
@@ -2038,12 +2100,8 @@ const BusinessPlanAndGoles = () => {
                       onClick={handleAddBrandPromise}
                       className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-black rounded-2xl transition-colors border-2 border-dashed mb-5"
                       style={{ borderColor: C.borderLgt, color: C.primary }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.background = C.primaryBg)
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = "transparent")
-                      }
+                      onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryBg)}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       <PlusIcon /> Add Item
                     </button>
@@ -2051,92 +2109,44 @@ const BusinessPlanAndGoles = () => {
 
                   {/* KPI Linking */}
                   <div>
-                    <label
-                      className="block text-[12px] font-black mb-3"
-                      style={{ color: C.textMain }}
-                    >
+                    <label className="block text-[12px] font-black mb-3" style={{ color: C.textMain }}>
                       Link KPIs to Promises{" "}
-                      <span className="font-semibold text-gray-400">
-                        (Max 3 per promise)
-                      </span>
+                      <span className="font-semibold text-gray-400">(Max 3 per promise)</span>
                     </label>
                     <div className="max-h-[280px] overflow-y-auto bp-scroll space-y-3 pr-1">
                       {tempBrandPromises
                         .filter((p) => p.text.trim() !== "")
                         .map((item, idx) => (
-                          <div
-                            key={item.id ?? idx}
-                            className="border p-4 rounded-2xl bg-white shadow-sm"
-                            style={{ borderColor: C.borderLgt }}
-                          >
-                            <div
-                              className="text-[13px] font-black mb-3 leading-snug"
-                              style={{ color: C.textMain }}
-                            >
-                              {item.text}
-                            </div>
+                          <div key={item.id ?? idx} className="border p-4 rounded-2xl bg-white shadow-sm" style={{ borderColor: C.borderLgt }}>
+                            <div className="text-[13px] font-black mb-3 leading-snug" style={{ color: C.textMain }}>{item.text}</div>
                             {item.kpis.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mb-2">
                                 {item.kpis.map((kpi) => (
-                                  <span
-                                    key={kpi}
-                                    className="flex items-center gap-1 px-3 py-1 text-[11px] font-black rounded-full text-white"
-                                    style={{ background: C.primary }}
-                                  >
+                                  <span key={kpi} className="flex items-center gap-1 px-3 py-1 text-[11px] font-black rounded-full text-white" style={{ background: C.primary }}>
                                     {kpi}
-                                    <button
-                                      onClick={() =>
-                                        handleRemoveKpiFromBrandPromise(
-                                          idx,
-                                          kpi
-                                        )
-                                      }
-                                      className="ml-0.5 opacity-70 hover:opacity-100 transition-opacity"
-                                    >
-                                      ✕
-                                    </button>
+                                    <button onClick={() => handleRemoveKpiFromBrandPromise(idx, kpi)} className="ml-0.5 opacity-70 hover:opacity-100 transition-opacity">✕</button>
                                   </span>
                                 ))}
                               </div>
                             )}
                             {item.kpis.length < 3 ? (
                               <select
-                                className="bp-select text-gray-500"
-                                value=""
-                                onChange={(e) =>
-                                  handleAddKpiToBrandPromise(
-                                    idx,
-                                    e.target.value
-                                  )
-                                }
+                                className="bp-select text-gray-500" value=""
+                                onChange={(e) => handleAddKpiToBrandPromise(idx, e.target.value)}
                                 disabled={isFetchingKpis}
                               >
-                                <option value="">
-                                  {isFetchingKpis
-                                    ? "Loading KPIs..."
-                                    : "Link a KPI..."}
-                                </option>
+                                <option value="">{isFetchingKpis ? "Loading KPIs..." : "Link a KPI..."}</option>
                                 {availableKpis.map((kpi) => (
-                                  <option key={kpi.id} value={kpi.name}>
-                                    {kpi.name}
-                                  </option>
+                                  <option key={kpi.id} value={kpi.name}>{kpi.name}</option>
                                 ))}
                               </select>
                             ) : (
-                              <div
-                                className="text-[11px] italic font-semibold mt-1"
-                                style={{ color: C.textMuted }}
-                              >
-                                Max 3 KPIs reached.
-                              </div>
+                              <div className="text-[11px] italic font-semibold mt-1" style={{ color: C.textMuted }}>Max 3 KPIs reached.</div>
                             )}
                           </div>
                         ))}
-                      {tempBrandPromises.filter((p) => p.text.trim() !== "")
-                        .length === 0 && (
-                        <p className="text-[13px] text-gray-400 italic">
-                          Add promises above to link KPIs.
-                        </p>
+                      {tempBrandPromises.filter((p) => p.text.trim() !== "").length === 0 && (
+                        <p className="text-[13px] text-gray-400 italic">Add promises above to link KPIs.</p>
                       )}
                     </div>
                   </div>
@@ -2144,14 +2154,9 @@ const BusinessPlanAndGoles = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div
-              className="p-5 flex justify-end gap-3 border-t"
-              style={{ background: C.cardBg, borderColor: C.primaryBord }}
-            >
-              <BtnOutline onClick={() => setActiveTopModal(null)}>
-                Cancel
-              </BtnOutline>
+            {/* Footer */}
+            <div className="p-5 flex justify-end gap-3 border-t" style={{ background: C.cardBg, borderColor: C.primaryBord }}>
+              <BtnOutline onClick={() => setActiveTopModal(null)}>Cancel</BtnOutline>
               <button
                 disabled={isSavingAny}
                 onClick={() => {
@@ -2162,12 +2167,8 @@ const BusinessPlanAndGoles = () => {
                 }}
                 className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
                 style={{ background: "#1a1a1a", fontFamily: C.font }}
-                onMouseEnter={(e) => {
-                  if (!isSavingAny) e.currentTarget.style.background = "#000";
-                }}
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "#1a1a1a")
-                }
+                onMouseEnter={(e) => { if (!isSavingAny) e.currentTarget.style.background = "#000"; }}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#1a1a1a")}
               >
                 {isSavingAny && <LoaderIcon />}
                 {isSavingAny ? "Saving..." : "Save Changes"}

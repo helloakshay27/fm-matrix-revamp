@@ -13,7 +13,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner"; // ← ADDED
+import { toast } from "sonner";
 import {
   fetchMeetingConfigs,
   createMeetingConfig,
@@ -42,7 +42,8 @@ const MeetingConfigModal = ({
     name: existingConfig?.name ?? "",
     meeting_time:
       existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
-    meeting_days: existingConfig?.meetingDays ??
+    meeting_days:
+      existingConfig?.meetingDays ??
       existingConfig?.meeting_days ?? ["Mon", "Tue", "Wed", "Thu", "Fri"],
     meeting_head_id: existingConfig?.meetingHead?.id
       ? String(existingConfig.meetingHead.id)
@@ -111,15 +112,15 @@ const MeetingConfigModal = ({
     try {
       if (isEdit) {
         await updateMeetingConfig(existingConfig.id, payload);
-        toast.success("Meeting configuration updated!"); // ← ADDED
+        toast.success("Meeting configuration updated!");
       } else {
         await createMeetingConfig(payload);
-        toast.success("Meeting configuration created!"); // ← ADDED
+        toast.success("Meeting configuration created!");
       }
       onSaved();
     } catch (err) {
       setError(err.message || "Failed to save config.");
-      toast.error(err.message || "Failed to save config."); // ← ADDED
+      toast.error(err.message || "Failed to save config.");
     } finally {
       setIsLoading(false);
     }
@@ -365,7 +366,7 @@ const MeetingConfigModal = ({
   );
 };
 
-// ── DeleteConfirmModal ── ← ADDED: custom confirm dialog instead of window.confirm
+// ── DeleteConfirmModal ──
 const DeleteConfirmModal = ({ configName, onConfirm, onCancel, isDeleting }) =>
   createPortal(
     <div
@@ -417,11 +418,80 @@ const DeleteConfirmModal = ({ configName, onConfirm, onCancel, isDeleting }) =>
     document.body
   );
 
+// ─────────────────────────────────────────────────────────
+//  This Week Calendar Logic
+//
+//  Rules:
+//  - Grey  → day is NOT in this meeting's schedule (off day)
+//  - Green → scheduled day that has already passed this week
+//            (assumed held — no session API needed)
+//  - Amber → today, and it IS a scheduled meeting day
+//  - Grey  → today but NOT a scheduled day  (still grey/off)
+//  - Grey  → future scheduled day (upcoming, not yet held)
+//
+//  To upgrade to real held/missed status, pass a
+//  `sessionDates: string[]` (ISO date strings) prop to
+//  ConfigCard and replace the `dayIdx < todayDayIdx` check
+//  with a lookup against that array.
+// ─────────────────────────────────────────────────────────
+
+/** Maps our 2-char display keys to JS Date.getDay() (0=Sun..6=Sat) */
+const DAY_TO_JS_IDX: Record<string, number> = {
+  Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6,
+};
+
+/** Normalise any API day format to 2-char display key */
+const normalizeDayKey = (d: string): string => {
+  const map: Record<string, string> = {
+    // 3-char (from MeetingConfigModal toggleDay)
+    Sun: "Su", Mon: "Mo", Tue: "Tu", Wed: "We",
+    Thu: "Th", Fri: "Fr", Sat: "Sa",
+    // Already 2-char
+    Su: "Su", Mo: "Mo", Tu: "Tu", We: "We",
+    Th: "Th", Fr: "Fr", Sa: "Sa",
+    // Full names just in case
+    Sunday: "Su", Monday: "Mo", Tuesday: "Tu", Wednesday: "We",
+    Thursday: "Th", Friday: "Fr", Saturday: "Sa",
+  };
+  return map[d] ?? d;
+};
+
+const WEEK_DISPLAY_KEYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
+
+/** Returns dot colour + whether the column is today */
+const getDayStatus = (
+  displayKey: string,
+  activeDayKeys: Set<string>,
+  todayJsIdx: number
+): { color: string; ringColor: string; isToday: boolean } => {
+  const dayIdx = DAY_TO_JS_IDX[displayKey];
+  const isScheduled = activeDayKeys.has(displayKey);
+  const isToday = dayIdx === todayJsIdx;
+
+  if (!isScheduled) {
+    // Not a meeting day at all — grey regardless of today
+    return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
+  }
+
+  if (isToday) {
+    // Scheduled AND today — amber with ring
+    return { color: "bg-[#F59E0B]", ringColor: "ring-2 ring-offset-1 ring-[#F59E0B]", isToday };
+  }
+
+  if (dayIdx < todayJsIdx) {
+    // Scheduled AND already past — green (assumed held)
+    return { color: "bg-[#2ECC71]", ringColor: "", isToday };
+  }
+
+  // Scheduled but in the future — grey (upcoming)
+  return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
+};
+
 // ── ConfigCard ──
 const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // ← ADDED
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -433,7 +503,6 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ← CHANGED: removed window.confirm, now uses DeleteConfirmModal
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -483,15 +552,21 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
       (u.name ?? u.full_name ?? u.username) === meetingHeadName
   );
 
-  const meetingDays = config.meetingDays || config.meeting_days || [];
   const meetingTime =
     config.meetingTime || config.meeting_time || "No time set";
 
-  const weekDays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  // ── Dynamic This Week calendar ──
+  const today = new Date();
+  const todayJsIdx = today.getDay(); // 0=Sun … 6=Sat
+
+  const activeDayKeys = new Set(
+    (config.meetingDays || config.meeting_days || []).map(normalizeDayKey)
+  );
 
   return (
     <>
       <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 hover:shadow-md hover:border-[#D37E5F] transition-all relative">
+        {/* ── Three-dot menu ── */}
         <div className="absolute top-5 right-4" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -510,7 +585,6 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
               >
                 <Edit className="w-4 h-4 text-[#8C8580]" /> Edit
               </button>
-              {/* ← CHANGED: opens DeleteConfirmModal instead of window.confirm */}
               <button
                 onClick={() => {
                   setMenuOpen(false);
@@ -526,6 +600,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
           )}
         </div>
 
+        {/* ── Name + Time + Day pills ── */}
         <div className="mb-5 pr-8">
           <h3 className="text-[18px] font-black text-[#1A1A1A] mb-3 leading-tight tracking-tight">
             {config.name}
@@ -533,23 +608,34 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
           <div className="inline-flex items-center gap-1.5 bg-[#FCFAFA] border border-[#F0EBE8] text-[#1A1A1A] px-3 py-1.5 rounded-[8px] text-xs font-bold mb-4">
             <Clock className="w-3.5 h-3.5 text-[#8C8580]" /> {meetingTime}
           </div>
+
+          {/* Day pills — highlight active days */}
           <div className="flex gap-1.5 flex-wrap">
-            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-              <div
-                key={day}
-                className={cn(
-                  "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider",
-                  meetingDays.some((cd) => cd.startsWith(day))
-                    ? "bg-[#1A1A1A] text-white"
-                    : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
-                )}
-              >
-                {day}
-              </div>
-            ))}
+            {(["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const).map((day) => {
+              const isActive = activeDayKeys.has(day);
+              const isToday = DAY_TO_JS_IDX[day] === todayJsIdx;
+              return (
+                <div
+                  key={day}
+                  className={cn(
+                    "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider transition-all",
+                    isActive && isToday
+                      ? "bg-[#F59E0B] text-white ring-2 ring-offset-1 ring-[#F59E0B]"
+                      : isActive
+                      ? "bg-[#1A1A1A] text-white"
+                      : isToday
+                      ? "bg-[#FCFAFA] border-2 border-[#F59E0B] text-[#F59E0B]"
+                      : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
+                  )}
+                >
+                  {day}
+                </div>
+              );
+            })}
           </div>
         </div>
 
+        {/* ── Meeting Head ── */}
         <div className="mb-5">
           <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-2">
             Meeting Head
@@ -569,6 +655,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
           </div>
         </div>
 
+        {/* ── Members ── */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest">
@@ -600,39 +687,63 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
           </div>
         </div>
 
+        {/* ── This Week — DYNAMIC ── */}
         <div className="pt-5 border-t border-[#F0EBE8]">
           <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
             This Week
           </div>
+
           <div className="flex justify-between items-center px-1 mb-4">
-            {weekDays.map((day, i) => {
-              let dotColor = "bg-[#E5E7EB]";
-              if (i < 2) dotColor = "bg-[#2ECC71]";
-              else if (i === 2) dotColor = "bg-[#EB4A4A]";
+            {WEEK_DISPLAY_KEYS.map((day) => {
+              const { color, ringColor, isToday } = getDayStatus(
+                day,
+                activeDayKeys,
+                todayJsIdx
+              );
               return (
                 <div key={day} className="flex flex-col items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#8C8580]">
+                  {/* Day label — bold + dark if today */}
+                  <span
+                    className={cn(
+                      "text-[10px]",
+                      isToday
+                        ? "font-black text-[#1A1A1A]"
+                        : "font-bold text-[#8C8580]"
+                    )}
+                  >
                     {day}
                   </span>
-                  <div className={cn("w-2 h-2 rounded-full", dotColor)} />
+                  {/* Dot */}
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all",
+                      color,
+                      ringColor
+                    )}
+                  />
                 </div>
               );
             })}
           </div>
-          <div className="flex items-center gap-3 text-[10px] font-bold text-[#8C8580]">
+
+          {/* Legend */}
+          <div className="flex items-center gap-3 flex-wrap text-[10px] font-bold text-[#8C8580]">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#2ECC71]" /> Held
+              <div className="w-2 h-2 rounded-full bg-[#2ECC71]" />
+              Held
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#EB4A4A]" /> Missed
+              <div className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+              Today
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" />{" "}
-              Upcoming/Off
+              <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" />
+              Upcoming / Off
             </div>
           </div>
         </div>
 
+        {/* ── Default badge ── */}
         {(config.isDefault || config.is_default) && (
           <div className="mt-5 flex">
             <span className="bg-[#1A1A1A] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
@@ -642,7 +753,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
         )}
       </div>
 
-      {/* ← ADDED: Delete confirm modal per card */}
+      {/* Delete confirm modal */}
       {showDeleteConfirm && (
         <DeleteConfirmModal
           configName={config.name}
@@ -692,7 +803,7 @@ const SettingsTab = () => {
         setUsers(usersData?.users ?? usersData ?? []);
       } catch (err) {
         console.error("Failed to load dropdown data:", err);
-        toast.error("Failed to load dropdown data."); // ← ADDED
+        toast.error("Failed to load dropdown data.");
       } finally {
         setDropdownsLoading(false);
       }
@@ -713,7 +824,7 @@ const SettingsTab = () => {
       setConfigs(parsedData);
     } catch (err) {
       setListError(err.message);
-      toast.error("Failed to load configurations: " + err.message); // ← ADDED
+      toast.error("Failed to load configurations: " + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -901,7 +1012,7 @@ const SettingsTab = () => {
         )}
       </div>
 
-      {/* Modal Portal */}
+      {/* Modal */}
       {showModal && (
         <MeetingConfigModal
           onClose={handleModalClose}

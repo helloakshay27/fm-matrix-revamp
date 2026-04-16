@@ -420,10 +420,9 @@ export const ShortTermSection = () => {
       const json = await res.json();
       const records = Array.isArray(json) ? json : (json.goals || json.data || []);
 
-      const yearGoals = records.filter((g: any) =>
-        g.period === 'this_year' ||
-        (g.period && g.period.toLowerCase().includes('year'))
-      );
+    const yearGoals = records.filter((g: any) =>
+  g.period === 'this_year'
+);
 
       const mapped: Goal[] = yearGoals.map((g: any, idx: number) => ({
         id: g.id ?? idx + 1,
