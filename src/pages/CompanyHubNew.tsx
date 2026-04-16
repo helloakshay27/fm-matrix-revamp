@@ -100,7 +100,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   // Community State
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
-  const [, setAnnouncements] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const [currentEmployee, setCurrentEmployee] = useState<any>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
@@ -566,6 +566,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
               visionText={visionText}
               missionText={missionText}
               taskStats={taskStats}
+              announcements={announcements}
               selectedMatrixQuadrant={selectedMatrixQuadrant}
               setSelectedMatrixQuadrant={setSelectedMatrixQuadrant}
               activeTimeView={activeTimeView}

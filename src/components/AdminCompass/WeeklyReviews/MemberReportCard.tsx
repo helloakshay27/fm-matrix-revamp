@@ -7,6 +7,7 @@ import { ReportExpandedView } from './ReportExpandedView';
 interface MemberReportCardProps {
     report: any;
     isExpanded: boolean;
+    isChecked?: boolean;
     activeTab: string;
     priorityText: string;
     selectedPriorityDay: string;
@@ -19,6 +20,7 @@ interface MemberReportCardProps {
     ratingsLoading: Record<number, boolean>;
     daysOfWeek: string[];
     onExpand: () => void;
+    onUserCheck?: (isChecked: boolean) => void;
     onPriorityChange: (text: string) => void;
     onPriorityDaySelect: (day: string) => void;
     onTogglePriorityDropdown: () => void;
@@ -33,6 +35,7 @@ interface MemberReportCardProps {
 export const MemberReportCard = ({
     report,
     isExpanded,
+    isChecked = false,
     activeTab,
     priorityText,
     selectedPriorityDay,
@@ -45,6 +48,7 @@ export const MemberReportCard = ({
     ratingsLoading,
     daysOfWeek,
     onExpand,
+    onUserCheck,
     onPriorityChange,
     onPriorityDaySelect,
     onTogglePriorityDropdown,
@@ -65,6 +69,8 @@ export const MemberReportCard = ({
                 <div className="flex items-center gap-3">
                     <input
                         type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => onUserCheck?.(e.target.checked)}
                         className="w-5 h-5 accent-blue-600 cursor-pointer rounded-md border-gray-300"
                     />
                     <span className="font-bold text-[#1e293b] text-base">{report.name}</span>

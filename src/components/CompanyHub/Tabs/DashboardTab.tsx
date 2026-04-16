@@ -17,6 +17,7 @@ interface DashboardTabProps {
   visionText: string;
   missionText: string;
   taskStats: TaskStats;
+  announcements?: unknown[];
   selectedMatrixQuadrant: any;
   setSelectedMatrixQuadrant: (q: any) => void;
   activeTimeView: "hourly" | "weekly" | "monthly";
@@ -45,6 +46,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   visionText,
   missionText,
   taskStats,
+  announcements,
   selectedMatrixQuadrant,
   setSelectedMatrixQuadrant,
   activeTimeView,
@@ -116,7 +118,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             <EmployeeOfMonthWidget currentEmployee={currentEmployee} />
             <div className="space-y-6">
               <TownHallsWidget />
-              <AnnouncementsWidget />
+              <AnnouncementsWidget announcements={announcements} />
               <UpcomingEventsWidget />
             </div>
           </div>

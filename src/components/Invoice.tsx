@@ -1,6 +1,6 @@
-import { useRef, useEffect } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { useRef, useEffect } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface InvoiceData {
     id?: number;
@@ -38,55 +38,141 @@ interface InvoiceProps {
     onBase64Generated?: (base64: string) => void;
     returnBase64?: boolean;
     isFromDetailsPage?: boolean;
+    isFromBookingPage?: boolean;
 }
 
-const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, showButton = true, onBase64Generated, returnBase64 = false, isFromDetailsPage = false }: InvoiceProps) => {
+const Invoice = ({
+    data,
+    autoDownload = false,
+    onDownloadComplete,
+    onClose,
+    showButton = true,
+    onBase64Generated,
+    returnBase64 = false,
+    isFromDetailsPage = false,
+    isFromBookingPage = false
+}: InvoiceProps) => {
     const invoiceRef = useRef<HTMLDivElement>(null);
 
     // Extract data with fallbacks
-    const invoiceNumber = data?.id || '1008';
+    const invoiceNumber = data?.id || "1008";
     const invoiceDate = data?.created_at
-        ? new Date(data.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '. ')
-        : new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '. ');
+        ? new Date(data.created_at)
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            })
+            .replace(/\//g, ". ")
+        : new Date()
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            })
+            .replace(/\//g, ". ");
 
     // Determine invoice type based on page
-    const invoiceType = isFromDetailsPage ? 'RECEIPT' : 'TAX INVOICE';
+    const invoiceType = isFromDetailsPage ? "RECEIPT" : "TAX INVOICE";
 
     const primaryMember = data?.club_members?.[0];
-    const billToName = primaryMember?.user_name || 'Deepak Gm';
-    const billToEmail = primaryMember?.user_email || 'deepak@gmail.com';
-    const billToMobile = primaryMember?.user_mobile || '7709622211';
+    const billToName = primaryMember?.user_name || "Deepak Gm";
+    const billToEmail = primaryMember?.user_email || "deepak@gmail.com";
+    const billToMobile = primaryMember?.user_mobile || "7709622211";
 
-    const planName = data?.membership_plan?.name || 'Rain Plan';
-    const baseAmount = parseFloat(String(data?.allocation_payment_detail?.base_amount || 5000)) || 5000;
-    const discountAmount = parseFloat(String(data?.allocation_payment_detail?.discount || 0)) || 0;
-    const cgstAmount = parseFloat(String(data?.allocation_payment_detail?.cgst || 400)) || 400;
-    const sgstAmount = parseFloat(String(data?.allocation_payment_detail?.sgst || 400)) || 400;
+    const planName = data?.membership_plan?.name || "Rain Plan";
+    const baseAmount =
+        parseFloat(String(data?.allocation_payment_detail?.base_amount || 5000)) ||
+        5000;
+    const discountAmount =
+        parseFloat(String(data?.allocation_payment_detail?.discount || 0)) || 0;
+    const cgstAmount =
+        parseFloat(String(data?.allocation_payment_detail?.cgst || 400)) || 400;
+    const sgstAmount =
+        parseFloat(String(data?.allocation_payment_detail?.sgst || 400)) || 400;
     const cgstPercentage = data?.allocation_payment_detail?.cgst_per || 8;
     const sgstPercentage = data?.allocation_payment_detail?.sgst_per || 8;
     const totalTax = cgstAmount + sgstAmount;
-    const totalAmount = parseFloat(String(data?.allocation_payment_detail?.total_amount || 5800)) || 5800;
-    const siteName = data?.site_name || 'New Site 1';
+    const totalAmount =
+        parseFloat(String(data?.allocation_payment_detail?.total_amount || 5800)) ||
+        5800;
+    const siteName = data?.site_name || "New Site 1";
 
     // Format amount in words
     const amountInWords = (num: number): string => {
-        const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
-        const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY'];
-        const teens = ['TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN'];
+        const ones = [
+            "",
+            "ONE",
+            "TWO",
+            "THREE",
+            "FOUR",
+            "FIVE",
+            "SIX",
+            "SEVEN",
+            "EIGHT",
+            "NINE",
+        ];
+        const tens = [
+            "",
+            "",
+            "TWENTY",
+            "THIRTY",
+            "FORTY",
+            "FIFTY",
+            "SIXTY",
+            "SEVENTY",
+            "EIGHTY",
+            "NINETY",
+        ];
+        const teens = [
+            "TEN",
+            "ELEVEN",
+            "TWELVE",
+            "THIRTEEN",
+            "FOURTEEN",
+            "FIFTEEN",
+            "SIXTEEN",
+            "SEVENTEEN",
+            "EIGHTEEN",
+            "NINETEEN",
+        ];
 
         const convertLessThanSevenDigits = (n: number): string => {
-            if (n === 0) return '';
+            if (n === 0) return "";
             if (n < 10) return ones[n];
             if (n < 20) return teens[n - 10];
-            if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 > 0 ? ' ' + ones[n % 10] : '');
-            if (n < 1000) return ones[Math.floor(n / 100)] + ' HUNDRED' + (n % 100 > 0 ? ' ' + convertLessThanSevenDigits(n % 100) : '');
-            if (n < 100000) return convertLessThanSevenDigits(Math.floor(n / 1000)) + ' THOUSAND' + (n % 1000 > 0 ? ' ' + convertLessThanSevenDigits(n % 1000) : '');
-            return convertLessThanSevenDigits(Math.floor(n / 100000)) + ' LAKH' + (n % 100000 > 0 ? ' ' + convertLessThanSevenDigits(n % 100000) : '');
+            if (n < 100)
+                return (
+                    tens[Math.floor(n / 10)] + (n % 10 > 0 ? " " + ones[n % 10] : "")
+                );
+            if (n < 1000)
+                return (
+                    ones[Math.floor(n / 100)] +
+                    " HUNDRED" +
+                    (n % 100 > 0 ? " " + convertLessThanSevenDigits(n % 100) : "")
+                );
+            if (n < 100000)
+                return (
+                    convertLessThanSevenDigits(Math.floor(n / 1000)) +
+                    " THOUSAND" +
+                    (n % 1000 > 0 ? " " + convertLessThanSevenDigits(n % 1000) : "")
+                );
+            return (
+                convertLessThanSevenDigits(Math.floor(n / 100000)) +
+                " LAKH" +
+                (n % 100000 > 0 ? " " + convertLessThanSevenDigits(n % 100000) : "")
+            );
         };
 
-        if (num === 0) return 'ZERO';
-        if (num < 10000000) return convertLessThanSevenDigits(Math.floor(num)) + ' ONLY';
-        return convertLessThanSevenDigits(Math.floor(num / 10000000)) + ' CRORE ' + convertLessThanSevenDigits(Math.floor(num % 10000000)) + ' ONLY';
+        if (num === 0) return "ZERO";
+        if (num < 10000000)
+            return convertLessThanSevenDigits(Math.floor(num)) + " ONLY";
+        return (
+            convertLessThanSevenDigits(Math.floor(num / 10000000)) +
+            " CRORE " +
+            convertLessThanSevenDigits(Math.floor(num % 10000000)) +
+            " ONLY"
+        );
     };
 
     const generatePDF = async (autoTrigger: boolean = false) => {
@@ -98,17 +184,17 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                 scale: 1.2, // Reduced from 2 to ~1.5x original size (40% compression)
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff',
+                backgroundColor: "#ffffff",
                 allowTaint: true,
             });
 
             // Convert to JPEG with compression instead of PNG (significantly smaller)
-            const imgData = canvas.toDataURL('image/jpeg', 0.75); // 75% quality for good balance
+            const imgData = canvas.toDataURL("image/jpeg", 0.75); // 75% quality for good balance
 
             const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4',
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4",
                 compress: true, // Enable PDF compression
             });
 
@@ -118,14 +204,28 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
             let position = 0;
 
             // Add first image as JPEG (compressed)
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, (canvas.height * imgWidth) / canvas.width);
+            pdf.addImage(
+                imgData,
+                "JPEG",
+                0,
+                position,
+                imgWidth,
+                (canvas.height * imgWidth) / canvas.width
+            );
             heightLeft -= pageHeight;
 
             // Add subsequent pages if needed
             while (heightLeft >= 0) {
                 position = heightLeft - (canvas.height * imgWidth) / canvas.width;
                 pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, (canvas.height * imgWidth) / canvas.width);
+                pdf.addImage(
+                    imgData,
+                    "JPEG",
+                    0,
+                    position,
+                    imgWidth,
+                    (canvas.height * imgWidth) / canvas.width
+                );
                 heightLeft -= pageHeight;
             }
 
@@ -152,7 +252,7 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                 onDownloadComplete();
             }
         } catch (error) {
-            console.error('Error generating PDF:', error);
+            console.error("Error generating PDF:", error);
         }
     };
 
@@ -187,20 +287,21 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                 </div>
             )} */}
 
-            <div ref={invoiceRef} className='h-full'>
+            <div ref={invoiceRef} className="min-h-[297mm]">
                 <div className="w-full bg-[#F9F4E8] max-w-4xl flex h-full">
-
                     {/* LEFT SIDE - Logo/Branding Area */}
                     <div className="w-[24%] p-3 border-r-4 border-[#7C2D12] flex flex-col items-center justify-between py-8">
                         <div className="text-center">
-                            <img src="/src/assets/image.png" alt="" className='h-[90%]' />
+                            <img src="/src/assets/image.png" alt="" className="h-[90%]" />
                         </div>
-                        <div className="flex justify-center items-center mb-[170px]">
+                        <div className="flex justify-center items-center">
                             <div
                                 style={{
                                     transform: "rotate(-90deg)",
                                     transformOrigin: "center",
                                     whiteSpace: "nowrap",
+                                    width: "300px",
+                                    textAlign: "center",
                                 }}
                             >
                                 <p className="text-[#1F5E2E] font-bold text-7xl">
@@ -217,9 +318,7 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                             <div className="flex justify-between">
                                 {/* Left: Company Details */}
                                 <div className="flex-1">
-                                    <p className="text-[#1F5E2E] font-bold mb-4">
-                                        {invoiceType}
-                                    </p>
+                                    <p className="text-[#1F5E2E] font-bold mb-4">{invoiceType}</p>
                                     <p className="text-[#1F5E2E] font-bold">
                                         PAUSE & PLAY MOVEMENT LABS
                                         <br />
@@ -233,13 +332,15 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                                         Maharashtra, India
                                     </p>
                                     <p className="text-[#1F5E2E]">
-                                        <span className="font-bold">Place of Supply:</span> MAHARASHTRA
+                                        <span className="font-bold">Place of Supply:</span>{" "}
+                                        MAHARASHTRA
                                     </p>
                                     <p className="text-[#1F5E2E]">
                                         <span className="font-bold">Code:</span> 27
                                     </p>
                                     <p className="text-[#1F5E2E]">
-                                        <span className="font-bold">CIN:</span> U92390PN2024PTC235057
+                                        <span className="font-bold">CIN:</span>{" "}
+                                        U92390PN2024PTC235057
                                     </p>
                                     <p className="text-[#1F5E2E]">
                                         <span className="font-bold">GSTIN:</span> 27AALCD1821C1Z1
@@ -258,7 +359,9 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                                         ORIGINAL FOR RECEPIENT
                                     </p>
                                     <p className="text-[#1F5E2E]">
-                                        <span className="font-bold">Invoice Number: {invoiceNumber}</span>
+                                        <span className="font-bold">
+                                            Invoice Number: {invoiceNumber}
+                                        </span>
                                     </p>
                                     <p className="text-[#1F5E2E] mb-4">
                                         <span className="font-bold">Date: {invoiceDate}</span>
@@ -275,41 +378,92 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                         {/* Table Header */}
                         <div className="border-b-4 border-[#7C2D12] px-2">
                             <div className="grid grid-cols-12 gap-0 text-[#000000] text-xs font-bold">
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">SL. NO.</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">DESCRIPTION</div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">SAC/HSN CODE</div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">RATE (₹)</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">DISCOUNT AMOUNT (₹)</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">TOTAL TAXABLE VALUE (₹)</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">TAX RATE</div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">TAX AMOUNT (₹)</div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                    SL. NO.
+                                </div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                    DESCRIPTION
+                                </div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                    SAC/HSN CODE
+                                </div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                    RATE (₹)
+                                </div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                    DISCOUNT AMOUNT (₹)
+                                </div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                    TOTAL TAXABLE VALUE (₹)
+                                </div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                    TAX RATE
+                                </div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                    TAX AMOUNT (₹)
+                                </div>
                             </div>
                         </div>
                         {/* Table Rows */}
                         <div className="border-b-4 border-[#7C2D12] px-2">
                             {/* Row 1 */}
                             <div className="grid grid-cols-12 gap-0">
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">1</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm">
-                                    {planName} (100.0%)
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                    1
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">99652</div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">{baseAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">{discountAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">{(baseAmount - discountAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">CGST ({cgstPercentage}%)</div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm">
+                                    {planName} {!isFromBookingPage && "(100.0%)"}
+                                </div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                    99652
+                                </div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                    {baseAmount.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                    {discountAmount.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                    {(baseAmount - discountAmount).toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                    CGST ({cgstPercentage}%)
+                                </div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                    {cgstAmount.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </div>
                             </div>
                             {/* Sub-row */}
                             <div className="grid grid-cols-12 gap-0">
                                 <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm"></div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm">Membership: {primaryMember?.membership_number || 'N/A'}</div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm">
+                                    {!isFromBookingPage && `Membership: ${primaryMember?.membership_number || "N/A"}`}
+                                </div>
                                 <div className="col-span-1 px-1 py-2"></div>
                                 <div className="col-span-1 px-1 py-2"></div>
                                 <div className="col-span-2 px-1 py-2"></div>
                                 <div className="col-span-2 px-1 py-2"></div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-xs text-center">SGST ({sgstPercentage}%)</div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-xs text-center">{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-xs text-center">
+                                    SGST ({sgstPercentage}%)
+                                </div>
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-xs text-center">
+                                    {sgstAmount.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </div>
                             </div>
                         </div>
 
@@ -317,15 +471,33 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                         <div className="p-6 border-b-4 border-[#7C2D12]">
                             <div className="flex justify-between mb-3">
                                 <p className="text-[#1F5E2E] font-bold">TOTAL TAXABLE AMOUNT</p>
-                                <p className="text-[#1F5E2E]">₹ {(baseAmount - discountAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                <p className="text-[#1F5E2E]">
+                                    ₹{" "}
+                                    {(baseAmount - discountAmount).toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </p>
                             </div>
                             <div className="flex justify-between mb-3">
                                 <p className="text-[#1F5E2E] font-bold">TOTAL CGST</p>
-                                <p className="text-[#1F5E2E]">₹ {cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                <p className="text-[#1F5E2E]">
+                                    ₹{" "}
+                                    {cgstAmount.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </p>
                             </div>
                             <div className="flex justify-between">
                                 <p className="text-[#1F5E2E] font-bold">TOTAL SGST</p>
-                                <p className="text-[#1F5E2E]">₹ {sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                <p className="text-[#1F5E2E]">
+                                    ₹{" "}
+                                    {sgstAmount.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </p>
                             </div>
                         </div>
 
@@ -333,7 +505,13 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                         <div className="px-6 py-3 border-b-4 border-[#7C2D12]">
                             <div className="flex justify-between">
                                 <p className="text-[#1F5E2E] font-bold">TOTAL INVOICE VALUE</p>
-                                <p className="text-[#1F5E2E] font-bold">₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                <p className="text-[#1F5E2E] font-bold">
+                                    ₹
+                                    {totalAmount.toLocaleString("en-IN", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </p>
                             </div>
                         </div>
 
@@ -341,32 +519,48 @@ const Invoice = ({ data, autoDownload = false, onDownloadComplete, onClose, show
                         <div className="p-4">
                             {/* Tax Note */}
                             <p className="text-[#1F5E2E] text-sm mb-1">
-                                <span className="font-bold italic">*Is Tax payable on reverse charge basis:</span> <span className="font-bold italic">NO*</span>
+                                <span className="font-bold italic">
+                                    *Is Tax payable on reverse charge basis:
+                                </span>{" "}
+                                <span className="font-bold italic">NO*</span>
                             </p>
 
                             {/* Amount in Words */}
-                            <p className="text-[#1F5E2E] text-sm mb-3">
-                                <span className="font-bold">Amount in words:</span> <span className="font-bold text-[#1F5E2E]">{amountInWords(Math.round(totalAmount))}</span>
+                            <p className="text-[#1F5E2E] text-sm mb-6">
+                                <span className="font-bold">Amount in words:</span>{" "}
+                                <span className="font-bold text-[#1F5E2E]">
+                                    {amountInWords(Math.round(totalAmount))}
+                                </span>
                             </p>
 
-                            {/* Blank space */}
-                            <div className="mb-[70px]"></div>
-
                             {/* Customer Note */}
-                            <p className="text-[#1F5E2E] font-bold text-sm mb-1">Customer Note:</p>
+                            <p className="text-[#1F5E2E] font-bold text-sm mb-1">
+                                Customer Note:
+                            </p>
                             <p className="text-[#1F5E2E] text-sm mb-4 leading-relaxed">
-                                You are kindly requested to make NEFT / RTGS / Issue Cheque/ Pay Order favouring "Play & Pause Movement Labs Private Limited", payable at "PUNE" on or before the completion of 7 days from the date of invoice generation. We further request you to send the cheque / pay order at the address mentioned hereby: PANCHSHIL TECH PARK, 3rd Floor, Tower 'E', Tech Park One, Next to Don Bosco school, Off. Air Port road, Yerwada, Pune-411006, by subscribing on the envelope the name of "GANESH AHER"
+                                You are kindly requested to make NEFT / RTGS / Issue Cheque/ Pay
+                                Order favouring "Play & Pause Movement Labs Private Limited",
+                                payable at "PUNE" on or before the completion of 7 days from the
+                                date of invoice generation. We further request you to send the
+                                cheque / pay order at the address mentioned hereby: PANCHSHIL
+                                TECH PARK, 3rd Floor, Tower 'E', Tech Park One, Next to Don
+                                Bosco school, Off. Air Port road, Yerwada, Pune-411006, by
+                                subscribing on the envelope the name of "GANESH AHER"
                             </p>
 
                             {/* Company Bank Details */}
-                            <p className="text-[#1F5E2E] font-bold text-sm mb-1">COMFIRM BANK DETAILS</p>
-                            <p className="text-[#1F5E2E] text-sm mb-1">Account Name: PAUSE & PLAY MOVEMENT LABS PVT. LTD.</p>
-                            <p className="text-[#1F5E2E] text-sm mb-1">IFSC Code: KBKB0001758</p>
+                            <p className="text-[#1F5E2E] font-bold text-sm mb-1">
+                                COMFIRM BANK DETAILS
+                            </p>
+                            <p className="text-[#1F5E2E] text-sm mb-1">
+                                Account Name: PAUSE & PLAY MOVEMENT LABS PVT. LTD.
+                            </p>
+                            <p className="text-[#1F5E2E] text-sm mb-1">
+                                IFSC Code: KBKB0001758
+                            </p>
                             <p className="text-[#1F5E2E] text-sm">A/c. No: 3250048396</p>
                         </div>
-
                     </div>
-
                 </div>
             </div>
         </div>

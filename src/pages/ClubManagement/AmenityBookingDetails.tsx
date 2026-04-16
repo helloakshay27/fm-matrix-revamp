@@ -85,6 +85,7 @@ export const AmenityBookingDetailsClubPage = () => {
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [paymentMode, setPaymentMode] = useState('online');
   const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [transactionId, setTransactionId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Invoice PDF state
@@ -205,7 +206,8 @@ export const AmenityBookingDetailsClubPage = () => {
         {
           lock_payment: {
             payment_mode: paymentMode,
-            payment_method: paymentMethod
+            payment_method: paymentMethod,
+            pg_transaction_id: transactionId
           }
         },
         {
@@ -494,13 +496,15 @@ export const AmenityBookingDetailsClubPage = () => {
                   {bookings?.booked_by_name}
                 </span>
               </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">CGST</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.gst || "-"}%
-                </span>
-              </div>
+              {(bookings?.payment_method !== 'complementary' && bookings?.payment_method !== "NA") && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">CGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.gst || "-"}%
+                  </span>
+                </div>
+              )}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Scheduled Date</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -525,13 +529,15 @@ export const AmenityBookingDetailsClubPage = () => {
                 </span>
               </div>
 
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">SGST</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.sgst || "-"}%
-                </span>
-              </div>
+              {(bookings?.payment_method !== 'complementary' && bookings?.payment_method !== "NA") && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">SGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.sgst || "-"}%
+                  </span>
+                </div>
+              )}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Booked On</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -665,7 +671,7 @@ export const AmenityBookingDetailsClubPage = () => {
               )}
 
               {/* CGST */}
-              {bookings?.cgst_amount != null && bookings.cgst_amount > 0 && (
+              {bookings?.cgst_amount != null && bookings.cgst_amount > 0 && bookings?.payment_method !== 'complementary' && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-700">CGST</span>
@@ -676,7 +682,7 @@ export const AmenityBookingDetailsClubPage = () => {
               )}
 
               {/* SGST */}
-              {bookings?.sgst_amount != null && bookings.sgst_amount > 0 && (
+              {bookings?.sgst_amount != null && bookings.sgst_amount > 0 && bookings?.payment_method !== 'complementary' && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-700">SGST</span>
@@ -924,6 +930,7 @@ export const AmenityBookingDetailsClubPage = () => {
               showButton={true}
               autoDownload={autoDownloadInvoice}
               isFromDetailsPage={true}
+              isFromBookingPage={true}
             />
           </div>
         </div>
@@ -973,7 +980,12 @@ export const AmenityBookingDetailsClubPage = () => {
 
 
           {/* Payment Modal */}
-          <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
+          <Dialog open={openPaymentModal} onOpenChange={(open) => {
+            setOpenPaymentModal(open);
+            if (!open) {
+              setTransactionId('');
+            }
+          }}>
             <DialogContent className="sm:max-w-[400px]">
               <DialogHeader>
                 <DialogTitle>Make Payment</DialogTitle>
@@ -1012,6 +1024,18 @@ export const AmenityBookingDetailsClubPage = () => {
                       <SelectItem value="netbanking">Net Banking</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label htmlFor="transaction_id">Transaction ID</Label>
+                  <Input
+                    id="transaction_id"
+                    type="text"
+                    placeholder="Enter transaction ID"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    disabled={paymentLoading}
+                    className="w-full mt-1"
+                  />
                 </div>
               </div>
               <DialogFooter>

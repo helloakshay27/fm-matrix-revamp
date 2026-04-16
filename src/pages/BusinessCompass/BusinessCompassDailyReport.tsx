@@ -41,6 +41,7 @@ import { Label } from "@/components/ui/label";
 import "./BusinessCompass.css";
 import AddTaskOrIssueModal from "@/components/BusinessCompass/AddTaskOrIssueModal";
 import { getBaseUrl, getToken } from "@/utils/auth";
+import { calculateLivePreviewScore } from "@/utils/scoreCalculation";
 import axios from "axios";
 import { useTasks } from "@/hooks/useTasks";
 import { useIssues } from "@/hooks/useIssues";
@@ -142,10 +143,16 @@ const BusinessCompassDailyReport: React.FC = () => {
   >([]);
   const [reportAttachments, setReportAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const closureFileInputRef = useRef<HTMLInputElement>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openIssueModal, setOpenIssueModal] = useState(false);
   const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] = useState<null | HTMLElement>(null);
+  const [showClosureModal, setShowClosureModal] = useState(false);
+  const [closureItem, setClosureItem] = useState<any>(null);
+  const [closureRemarks, setClosureRemarks] = useState("");
+  const [closureAttachments, setClosureAttachments] = useState<any[]>([]);
+  const [isClosureSubmitting, setIsClosureSubmitting] = useState(false);
 
   // Tasks and Issues data state
   const baseUrl = localStorage.getItem("baseUrl");
@@ -178,7 +185,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     taskType: "my",
     page: currentTasksPage,
     filters: {
-      "q[status_in][]": ["open", "overdued", "completed"],
+      "q[start_date_or_target_date_eq]": startDate,
     }
   });
 
@@ -290,19 +297,38 @@ const BusinessCompassDailyReport: React.FC = () => {
       (item) => item.status === "open" || item.status === "reopen"
     ).length;
     const overdue = mergedTasksIssues.filter(
-      (item) => item.status === "overdue" || item.status === "on_hold"
+      (item) => item.status === "overdue"
+    ).length;
+    const onHold = mergedTasksIssues.filter(
+      (item) => item.status === "on_hold"
     ).length;
     const inProgress = mergedTasksIssues.filter(
       (item) => item.status === "in_progress"
     ).length;
 
-    return { completed, open, overdue, inProgress, total: mergedTasksIssues.length };
+    return { completed, open, overdue, onHold, inProgress, total: mergedTasksIssues.length };
   }, [mergedTasksIssues]);
 
   // KPI State
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpiLoading, setKpiLoading] = useState(false);
   const [kpiEntries, setKpiEntries] = useState<{ [key: number]: string }>({});
+
+  // Calculate daily score based on current form data
+  const dailyScore = useMemo(() => {
+    // Convert kpi entries to the format expected by the calculator
+    const kpisWithActualValues = kpis.map((kpi) => ({
+      ...kpi,
+      actual_value: kpiEntries[kpi.kpi_id] || 0,
+    }));
+
+    return calculateLivePreviewScore(
+      kpisWithActualValues,
+      accomplishments,
+      mergedTasksIssues,
+      planningItems
+    );
+  }, [kpis, kpiEntries, accomplishments, mergedTasksIssues, planningItems]);
 
   // Fetch KPIs based on selected date
   useEffect(() => {
@@ -419,6 +445,10 @@ const BusinessCompassDailyReport: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const triggerClosureFileUpload = () => {
+    closureFileInputRef.current?.click();
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
@@ -445,6 +475,132 @@ const BusinessCompassDailyReport: React.FC = () => {
     setUploadedFiles((prev) => [...prev, ...newFiles].slice(0, 5));
     // Reset input
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleClosureFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newFiles = await Promise.all(
+      Array.from(files).map(async (file) => {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          name: file.name,
+          size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+          type: file.type,
+          base64,
+          file,
+        };
+      })
+    );
+
+    setClosureAttachments((prev) => [...prev, ...newFiles].slice(0, 5));
+    // Reset input
+    if (closureFileInputRef.current) closureFileInputRef.current.value = "";
+  };
+
+  const handleMarkItemClosed = async () => {
+    if (!closureItem || !baseUrl || !token) return;
+
+    setIsClosureSubmitting(true);
+    try {
+      const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+      const isTask = closureItem.type === "task";
+      const urlBase = `https://${baseUrl}`;
+
+      const formDataToSend = new FormData();
+      // Step 1: Update the item status
+      if (isTask) {
+        // Update task status to "completed"
+        formDataToSend.append("task_management[status]", "completed");
+        closureAttachments.forEach((attachment) => {
+          formDataToSend.append(`task_management[attachments][]`, attachment.file);
+        });
+
+        await axios.put(
+          `${urlBase}/task_managements/${closureItem.id}.json`,
+          formDataToSend,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } else {
+        // Update issue status to "closed"
+        formDataToSend.append("issue[status]", "completed");
+        closureAttachments.forEach((attachment) => {
+          formDataToSend.append(`issue[attachments][]`, attachment.file);
+        });
+
+        await axios.put(
+          `${urlBase}/issues/${closureItem.id}.json`,
+          formDataToSend,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
+
+      // Step 2: Add closure remarks as a comment
+      if (closureRemarks.trim()) {
+        const commentPayload = {
+          comment: {
+            body: `Closure Remarks: ${closureRemarks}`,
+            commentable_id: closureItem.id,
+            commentable_type: isTask ? "TaskManagement" : "Issue",
+            commentor_id: userId,
+            active: true,
+          },
+        };
+
+        await axios.post(`${urlBase}/comments.json`, commentPayload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+
+      // Mark as completed in UI
+      setSelectedTasksIssues((prev) => ({
+        ...prev,
+        [closureItem.id]: true,
+      }));
+
+      // Close modal and reset
+      setShowClosureModal(false);
+      setClosureRemarks("");
+      setClosureAttachments([]);
+      setClosureItem(null);
+
+      // Show success message
+      const itemName = isTask ? "Task" : "Issue";
+      const message =
+        closureRemarks.trim() || closureAttachments.length > 0
+          ? `${itemName} marked as closed with remarks and attachments`
+          : `${itemName} marked as closed`;
+
+      // Optionally show toast/notification
+      if (typeof window !== "undefined" && (window as any).toast) {
+        (window as any).toast.success(message);
+      }
+    } catch (error) {
+      console.error("Error marking item as closed:", error);
+      const itemName = closureItem?.type === "task" ? "task" : "issue";
+      if (typeof window !== "undefined" && (window as any).toast) {
+        (window as any).toast.error(`Failed to close ${itemName}`);
+      }
+    } finally {
+      setIsClosureSubmitting(false);
+    }
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1466,7 +1622,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="bg-[#ecfdf5] text-[#047857] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
                           >
                             <CheckSquare size={10} />
-                            Closed: {taskIssueCounts.completed}
+                            Completed: {taskIssueCounts.completed}
                           </Badge>
                           <Badge
                             variant="outline"
@@ -1481,6 +1637,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                           >
                             <Clock size={10} />
                             Overdue: {taskIssueCounts.overdue}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-[#fef3c7] text-[#92400e] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                          >
+                            <Clock size={10} />
+                            In Progress: {taskIssueCounts.inProgress}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-[#f3e8ff] text-[#6b21a8] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                          >
+                            <Clock size={10} />
+                            On Hold: {taskIssueCounts.onHold}
                           </Badge>
                         </div>
                       </div>
@@ -1531,12 +1701,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                             )}
                           >
                             <Checkbox
-                              checked={selectedTasksIssues[item.id] || false}
+                              checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
                               onCheckedChange={(checked) => {
-                                setSelectedTasksIssues(prev => ({
-                                  ...prev,
-                                  [item.id]: checked as boolean
-                                }));
+                                if (checked && item.status !== "completed" && item.status !== "closed") {
+                                  setClosureItem(item);
+                                  setShowClosureModal(true);
+                                } else {
+                                  setSelectedTasksIssues(prev => ({
+                                    ...prev,
+                                    [item.id]: checked as boolean
+                                  }));
+                                }
                               }}
                               className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
                             />
@@ -1614,7 +1789,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </h3>
                     </div>
                     <Badge className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
-                      0/25 PTS
+                      {dailyScore.planningScore}/{dailyScore.details.planning.maxPoints} PTS
                     </Badge>
                   </div>
 
@@ -1806,31 +1981,31 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </h3>
                       </div>
                       <span className="text-3xl font-black text-[#8b5cf6] tracking-tighter">
-                        0/100
+                        {dailyScore.totalScore}/100
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {[
                         {
+                          label: "KPI Achievement",
+                          score: `${dailyScore.kpiScore}/${dailyScore.details.kpi.maxPoints}`,
+                          color: "text-green-600",
+                        },
+                        {
                           label: "Accomplishments",
-                          score: "0/25",
+                          score: `${dailyScore.accomplishmentsScore}/${dailyScore.details.accomplishments.maxPoints}`,
                           color: "text-purple-600",
                         },
                         {
-                          label: "Tasks",
-                          score: "0/25",
+                          label: "Tasks & Issues",
+                          score: `${dailyScore.tasksIssuesScore}/${dailyScore.details.tasksIssues.maxPoints}`,
                           color: "text-[#ea580c]",
                         },
                         {
                           label: "Planning",
-                          score: "0/25",
+                          score: `${dailyScore.planningScore}/${dailyScore.details.planning.maxPoints}`,
                           color: "text-blue-600",
-                        },
-                        {
-                          label: "Timing",
-                          score: "0/25",
-                          color: "text-[#ea580c]",
                         },
                       ].map((item, idx) => (
                         <div
@@ -1878,7 +2053,44 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                     {isDetailedScoreExpanded && (
                       <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        {/* 1. Accomplishments Detail */}
+                        {/* 1. KPI Achievement Detail */}
+                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Target size={16} className="text-green-600" />
+                              <span className="text-xs font-black text-green-900 uppercase tracking-widest">
+                                Daily KPI Achievement
+                              </span>
+                            </div>
+                            <span className="text-xs font-black text-green-600">
+                              {dailyScore.kpiScore}/{dailyScore.details.kpi.maxPoints} pts
+                            </span>
+                          </div>
+                          <div className="space-y-2.5 pl-6 border-l-2 border-green-50">
+                            {dailyScore.details.kpi.hasKPIs ? (
+                              <>
+                                {dailyScore.details.kpi.kpis.map((kpi: any, idx: number) => (
+                                  <div key={idx} className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                                    <span className="flex items-center gap-2">
+                                      • {kpi.name}:
+                                    </span>
+                                    <span className="text-gray-900">{kpi.achievement.toFixed(1)}% = {kpi.points.toFixed(2)} pts</span>
+                                  </div>
+                                ))}
+                                <div className="flex items-center justify-between text-[11px] font-black text-green-900 pt-1 border-t border-gray-50">
+                                  <span>Average Achievement:</span>
+                                  <span>{dailyScore.details.kpi.averageAchievement.toFixed(1)}%</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-[11px] font-bold text-gray-500 italic">
+                                No KPIs for this date
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 2. Accomplishments Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -1888,35 +2100,30 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <span className="text-xs font-black text-purple-600">
-                              0/25 pts
+                              {dailyScore.accomplishmentsScore}/{dailyScore.details.accomplishments.maxPoints} pts
                             </span>
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-purple-50">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
-                                • Regular items:
+                                • Completed items:
                               </span>
-                              <span className="text-gray-900">0 × 2.5 pts</span>
+                              <span className="text-gray-900">{dailyScore.details.accomplishments.completedItems}/{dailyScore.details.accomplishments.totalItems} items</span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
-                                •{" "}
-                                <Star
-                                  size={12}
-                                  className="text-[#eab308] fill-[#eab308]"
-                                />{" "}
-                                Starred items:
+                                • Completion rate:
                               </span>
-                              <span className="text-gray-900">0 × 5 pts</span>
+                              <span className="text-gray-900">{dailyScore.details.accomplishments.completionPercentage.toFixed(0)}%</span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-black text-purple-900 pt-1 border-t border-gray-50">
                               <span>Total earned:</span>
-                              <span>0 pts (max 25)</span>
+                              <span>{dailyScore.accomplishmentsScore} pts (max {dailyScore.details.accomplishments.maxPoints})</span>
                             </div>
                           </div>
                         </div>
 
-                        {/* 2. Tasks & Issues Detail */}
+                        {/* 3. Tasks & Issues Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -1929,7 +2136,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <span className="text-xs font-black text-[#ea580c]">
-                              0/25 pts
+                              {dailyScore.tasksIssuesScore}/{dailyScore.details.tasksIssues.maxPoints} pts
                             </span>
                           </div>
                           <div className="bg-slate-50/50 rounded-[12px] border border-slate-100 p-4 space-y-3">
@@ -1943,9 +2150,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     size={12}
                                     className="text-green-500"
                                   />{" "}
-                                  Closed Tasks (0 × ~4 pts avg)
+                                  Closed On Time ({dailyScore.details.tasksIssues.closedOnTimeCount} × 5 pts)
                                 </span>
-                                <span className="text-green-600">+0</span>
+                                <span className="text-green-600">+{dailyScore.details.tasksIssues.closedOnTimeCount * 5}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                                <span className="flex items-center gap-2">
+                                  <Clock
+                                    size={12}
+                                    className="text-orange-500"
+                                  />{" "}
+                                  Closed Late ({dailyScore.details.tasksIssues.closedLateCount} × 2 pts)
+                                </span>
+                                <span className="text-orange-600">+{dailyScore.details.tasksIssues.closedLateCount * 2}</span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                                 <span className="flex items-center gap-2">
@@ -1953,13 +2170,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     size={12}
                                     className="text-blue-500"
                                   />{" "}
-                                  New Issues (0 × 2 pts, max 10)
+                                  New Issues ({dailyScore.details.tasksIssues.newIssuesCount} × 2 pts, max 10)
                                 </span>
-                                <span className="text-blue-600">+0</span>
+                                <span className="text-blue-600">+{Math.min(dailyScore.details.tasksIssues.newIssuesCount * 2, 10)}</span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-100">
                                 <span>Subtotal (Positive)</span>
-                                <span>+0</span>
+                                <span>+{dailyScore.details.tasksIssues.positivePoints}</span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-bold text-red-500">
                                 <span className="flex items-center gap-2">
@@ -1967,24 +2184,22 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     size={12}
                                     className="text-red-500"
                                   />{" "}
-                                  Overdue Penalty (0 × 5 pts, max -15)
+                                  Overdue Penalty ({dailyScore.details.tasksIssues.overdueCount} × 5 pts, max -15)
                                 </span>
-                                <span>-0</span>
+                                <span>{dailyScore.details.tasksIssues.penaltyPoints}</span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-200">
                                 <span className="text-sm">Final Score</span>
-                                <span className="text-[#ea580c]">0/25 pts</span>
+                                <span className="text-[#ea580c]">{dailyScore.tasksIssuesScore}/{dailyScore.details.tasksIssues.maxPoints} pts</span>
                               </div>
                             </div>
                             <p className="text-[9px] text-gray-400 font-medium italic mt-2 leading-relaxed">
-                              Note: The final score from the backend may differ
-                              slightly as it considers exact target dates for
-                              closed tasks (+5 for on-time, +2 for delayed).
+                              Note: Only tasks/issues closed on the report day or new issues reported on that day are counted.
                             </p>
                           </div>
                         </div>
 
-                        {/* 3. Planning Detail */}
+                        {/* 4. Planning Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -1993,11 +2208,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 className="text-blue-600"
                               />
                               <span className="text-xs font-black text-blue-900 uppercase tracking-widest">
-                                Planning
+                                Planning for Next Day
                               </span>
                             </div>
                             <span className="text-xs font-black text-blue-600">
-                              0/25 pts
+                              {dailyScore.planningScore}/{dailyScore.details.planning.maxPoints} pts
                             </span>
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-blue-50">
@@ -2005,7 +2220,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="flex items-center gap-2">
                                 • Regular items:
                               </span>
-                              <span className="text-gray-900">0 × 2 pts</span>
+                              <span className="text-gray-900">{dailyScore.details.planning.regularItems} × 2 pts = {dailyScore.details.planning.regularItems * 2} pts</span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
@@ -2016,43 +2231,44 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 />{" "}
                                 Starred items:
                               </span>
-                              <span className="text-gray-900">0 × 4 pts</span>
+                              <span className="text-gray-900">{dailyScore.details.planning.starredItems} × 4 pts = {dailyScore.details.planning.starredItems * 4} pts</span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-black text-blue-900 pt-1 border-t border-gray-50">
                               <span>Total earned:</span>
-                              <span>0/25 pts</span>
+                              <span>{dailyScore.planningScore}/{dailyScore.details.planning.maxPoints} pts</span>
                             </div>
                           </div>
                         </div>
 
-                        {/* 4. Submission Timing Detail */}
+                        {/* 5. Submission Timing Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <Clock size={16} className="text-[#ea580c]" />
-                              <span className="text-xs font-black text-[#ea580c] uppercase tracking-widest">
+                              <Clock size={16} className="text-orange-600" />
+                              <span className="text-xs font-black text-orange-900 uppercase tracking-widest">
                                 Submission Timing
                               </span>
                             </div>
-                            <span className="text-xs font-black text-[#ea580c]">
-                              0/25 pts
+                            <span className="text-xs font-black text-orange-600">
+                              {dailyScore.timingScore}/{dailyScore.details.timing.maxPoints} pts
                             </span>
                           </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-[#ea580c]/30">
+                          <div className="space-y-2.5 pl-6 border-l-2 border-orange-50">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
-                                • Timing:
+                                • Submission Time:
                               </span>
-                              <span className="text-red-600 font-bold">
-                                After 9am next day — 0 pts
-                              </span>
+                              <span className="text-gray-900 font-bold">{dailyScore.details.timing.submissionTime}</span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
-                                • Bonus percentage:
+                                • Points Awarded:
                               </span>
-                              <span className="text-[#ea580c]">0% of 25</span>
+                              <span className="text-orange-600 font-bold">{dailyScore.timingScore} pts</span>
                             </div>
+                            <p className="text-[9px] text-gray-400 font-medium italic pt-2 border-t border-gray-100">
+                              Note: Submission timing score is calculated based on when the report is actually submitted. The live preview shows 0 points as no submission time has been recorded yet.
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -2742,6 +2958,148 @@ const BusinessCompassDailyReport: React.FC = () => {
         openDialog={openIssueModal}
         handleCloseDialog={() => setOpenIssueModal(false)}
       />
+
+      {/* Closure Remarks Modal */}
+      <Dialog
+        open={showClosureModal}
+        onClose={() => {
+          setShowClosureModal(false);
+          setClosureRemarks("");
+          setClosureAttachments([]);
+          setClosureItem(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          className: "rounded-[16px]",
+          sx: {
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+            maxHeight: "90vh",
+          }
+        }}
+      >
+        <div className="p-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-bold text-[#1a1a1a]">Add Closure Remarks</h2>
+            <button
+              onClick={() => {
+                setShowClosureModal(false);
+                setClosureRemarks("");
+                setClosureAttachments([]);
+                setClosureItem(null);
+              }}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {closureItem && (
+            <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-3">
+              <p className="text-xs text-gray-600 font-medium mb-1">Closing:</p>
+              <p className="text-sm font-bold text-[#1a1a1a]">{closureItem.title}</p>
+              <p className="text-xs text-gray-500 mt-1 capitalize">{closureItem.type} • {closureItem.status.replace(/_/g, " ")}</p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-[#1a1a1a]">Closure Remarks (Optional)</label>
+            <textarea
+              value={closureRemarks}
+              onChange={(e) => setClosureRemarks(e.target.value)}
+              placeholder="How was this resolved? What was done to close it?"
+              className="w-full h-[120px] p-3 border border-[#e5e7eb] rounded-[10px] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-[#1a1a1a]">Attach Files (Optional)</label>
+            <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-green-600">{closureAttachments.length}/5</p>
+                <p className="text-xs text-gray-600 font-medium">Limits: Images 2MB, Others 5MB</p>
+              </div>
+              <input
+                type="file"
+                ref={closureFileInputRef}
+                onChange={handleClosureFileChange}
+                multiple
+                className="hidden"
+              />
+              <Button
+                disabled={closureAttachments.length >= 5}
+                onClick={triggerClosureFileUpload}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 h-9 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Upload size={14} />
+                File Upload
+              </Button>
+            </div>
+            {closureAttachments.length > 0 && (
+              <div className="space-y-2 mt-3">
+                {closureAttachments.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between bg-blue-50/80 p-3 rounded-[10px] border border-blue-100 animate-in fade-in duration-300"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText size={16} className="text-blue-500 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-blue-600 truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500">{file.size}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border-none shrink-0"
+                      onClick={() =>
+                        setClosureAttachments(
+                          closureAttachments.filter((f) => f.id !== file.id)
+                        )
+                      }
+                    >
+                      <X size={14} className="text-red-500" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <Button
+              variant="outline"
+              className="flex-1 h-11 border-gray-300 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50 rounded-[8px]"
+              onClick={() => {
+                setShowClosureModal(false);
+                setClosureRemarks("");
+                setClosureAttachments([]);
+                setClosureItem(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-[8px] flex items-center justify-center gap-2 shadow-md transition-all border-none disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleMarkItemClosed}
+              disabled={isClosureSubmitting}
+            >
+              {isClosureSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Closing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={16} />
+                  Mark Closed
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
 
       <Menu
         anchorEl={taskIssueMenuAnchor}
