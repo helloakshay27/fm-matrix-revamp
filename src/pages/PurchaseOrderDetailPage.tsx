@@ -396,10 +396,14 @@ export const PurchaseOrderDetailPage = () => {
             <Badge className={`${getStatusColor(status)} border`}>
               {status.toUpperCase()}
             </Badge>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate(`/accounting/bills/create?po_id=${purchaseOrder.id}`)}
+            >
               Convert to Bill
             </Button>
-          </div>
+          </div>x
         </div>
 
         {/* Tabs */}
