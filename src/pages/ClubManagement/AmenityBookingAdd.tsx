@@ -1093,6 +1093,7 @@ export const AddFacilityBookingClubPage = () => {
               onClose={handleCloseInvoice}
               showButton={true}
               autoDownload={autoDownloadInvoice}
+              isFromBookingPage={true}
             />
           </div>
         </div>

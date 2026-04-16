@@ -930,6 +930,7 @@ export const AmenityBookingDetailsClubPage = () => {
               showButton={true}
               autoDownload={autoDownloadInvoice}
               isFromDetailsPage={true}
+              isFromBookingPage={true}
             />
           </div>
         </div>
