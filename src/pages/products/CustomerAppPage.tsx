@@ -8,15 +8,16 @@ const customerAppData: ProductData = {
     "A customer lifecycle management mobile app used by Real Estate Developers to manage customers across the entire cycle from booking to handover, extendable to community management.",
   brief:
     "White-labeled customer app with CRM vault, demand notes, construction updates, referrals, loyalty, and post-possession modules built for data sovereignty and branded CX.",
-  excelLikeSummary: true,
-  excelLikeFeatures: true,
-  excelLikeMarket: true,
-  excelLikePricing: true,
-  excelLikeSwot: true,
-  excelLikeRoadmap: true,
-  excelLikeBusinessPlan: true,
-  excelLikeGtm: true,
-  excelLikeMetrics: true,
+  excelLikeSummary: false,
+  excelLikeFeatures: false,
+  excelLikeMarket: false,
+  excelLikePricing: false,
+  excelLikeSwot: false,
+  excelLikeRoadmap: false,
+  excelLikeBusinessPlan: false,
+  excelLikeGtm: false,
+  excelLikeMetrics: false,
+  excelLikePostPossession: false,
   excelFeatureRowStart: 31,
   userStories: [
     {
@@ -828,8 +829,7 @@ const customerAppData: ProductData = {
 };
 
 const CustomerAppPage: React.FC = () => {
-  return <BaseProductPage productData={customerAppData} tabsVariant="snag360" />;
+  return <BaseProductPage productData={customerAppData} />;
 };
 
 export default CustomerAppPage;
-

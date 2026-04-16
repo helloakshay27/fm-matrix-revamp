@@ -185,7 +185,7 @@ const DMConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.conversation_id !== id) {
+                    if (String(message.conversation_id) !== id) {
                         return;
                     }
 

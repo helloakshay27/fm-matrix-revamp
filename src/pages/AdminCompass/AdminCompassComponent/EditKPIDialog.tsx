@@ -57,7 +57,7 @@ export type EditKPIFormValues = {
   unit: string;
   departmentId: number | null;
   departmentName: string;
-  frequency: "weekly" | "monthly" | "quarterly";
+  frequency: "daily" | "weekly" | "monthly" | "quarterly";
   relatedUrl: string;
   targetValue: number;
   currentValue: number;
@@ -109,14 +109,30 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
     );
   }, [departments, kpi]);
 
+  const resolvedAssigneeId = useMemo(() => {
+    if (!kpi) return "";
+
+    if (kpi.assigneeId != null) {
+      return String(kpi.assigneeId);
+    }
+
+    const matchedUser = users.find(
+      (user) => user.name.toLowerCase() === (kpi.owner ?? "").toLowerCase()
+    );
+
+    return matchedUser ? String(matchedUser.id) : "";
+  }, [kpi, users]);
+
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [departmentId, setDepartmentId] = useState("");
-  const [frequency, setFrequency] = useState<"weekly" | "monthly" | "quarterly">("weekly");
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly" | "quarterly">("weekly");
   const [relatedUrl, setRelatedUrl] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [weight, setWeight] = useState("10");
+  const [assigneeId, setAssigneeId] = useState("");
+  const toIntegerString = (value: string) => value.replace(/\D/g, "");
 
   useEffect(() => {
     if (!kpi || !open) return;
@@ -127,17 +143,20 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
       resolvedDepartment ? String(resolvedDepartment.id) : ""
     );
     setFrequency(
-      kpi.frequency.toLowerCase() === "weekly"
+      kpi.frequency.toLowerCase() === "daily"
+        ? "daily"
+        : kpi.frequency.toLowerCase() === "weekly"
         ? "weekly"
         : kpi.frequency.toLowerCase() === "quarterly"
           ? "quarterly"
           : "monthly"
     );
     setRelatedUrl(kpi.description ?? "");
-    setTargetValue(String(kpi.target ?? "0"));
+    setTargetValue(String(Math.trunc(Number(kpi.target) || 0)));
     setPriority(kpi.priority ?? "medium");
-    setWeight(kpi.weight != null ? String(kpi.weight) : "10");
-  }, [kpi, open, resolvedDepartment]);
+    setWeight(String(Math.trunc(Number(kpi.weight) || 10)));
+    setAssigneeId(resolvedAssigneeId);
+  }, [kpi, open, resolvedAssigneeId, resolvedDepartment]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,11 +178,11 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
         "Operations",
       frequency,
       relatedUrl: relatedUrl.trim(),
-      targetValue: Number(targetValue) || 0,
-      currentValue: Number(kpi.value) || 0,
+      targetValue: parseInt(targetValue, 10) || 0,
+      currentValue: parseInt(String(kpi.value), 10) || 0,
       priority,
-      weight,
-      assigneeId: kpi.assigneeId ?? users[0]?.id ?? null,
+      weight: String(parseInt(weight, 10) || 0),
+      assigneeId: assigneeId ? Number(assigneeId) : null,
     });
   };
 
@@ -249,17 +268,34 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
                   <Calendar className="h-4 w-4 text-[#DA7756]" />
                   Frequency *
                 </Label>
-                <Select value={frequency} onValueChange={(value) => setFrequency(value as "weekly" | "monthly" | "quarterly")}>
+                <Select value={frequency} onValueChange={(value) => setFrequency(value as "daily" | "weekly" | "monthly" | "quarterly")}>
                   <SelectTrigger className={selectTriggerClass}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
                     <SelectItem value="quarterly">Quarterly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <Label className="text-sm text-neutral-700">Assigned User</Label>
+              <Select value={assigneeId} onValueChange={setAssigneeId}>
+                <SelectTrigger className={selectTriggerClass}>
+                  <SelectValue placeholder="Select user" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={String(user.id)}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="mt-4 space-y-2">
@@ -284,9 +320,9 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
                 <input
                   id="edit-kpi-target"
                   type="text"
-                  inputMode="decimal"
+                  inputMode="numeric"
                   value={targetValue}
-                  onChange={(e) => setTargetValue(e.target.value)}
+                  onChange={(e) => setTargetValue(toIntegerString(e.target.value))}
                   className={inputClass}
                 />
               </div>
@@ -312,7 +348,7 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
                   type="text"
                   inputMode="numeric"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={(e) => setWeight(toIntegerString(e.target.value))}
                   className={inputClass}
                 />
               </div>

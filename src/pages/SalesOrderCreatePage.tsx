@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ItemSearchInput from '@/components/ItemSearchInput';
 import {
     TextField,
@@ -254,10 +254,59 @@ export const SalesOrderCreatePage: React.FC = () => {
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         document.title = 'New Sales Order';
     }, []);
+
+    // Pre-fill from quote when navigated via Convert to Sales Order
+    useEffect(() => {
+        const quoteId = location.state?.quoteData?.id;
+        if (!quoteId) return;
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        axios.get(`https://${baseUrl}/lock_account_quotes/${quoteId}.json`, {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined }
+        }).then(async (res) => {
+            const q = res.data;
+            // Keep the new sales order's reference/order number blank, same as invoice conversion flow.
+            if (q.date) setSalesOrderDate(q.date);
+            if (q.customer_notes) setCustomerNotes(q.customer_notes);
+            if (q.terms_and_conditions) setTermsAndConditions(q.terms_and_conditions);
+            if (q.sales_person_id) setSalesperson(String(q.sales_person_id));
+            if (q.payment_term_id) setSelectedTerm(String(q.payment_term_id));
+            // Set place of supply directly from quote
+            const quotePlaceOfSupply = q.place_of_supply || q.address_detail?.gst_detail?.place_of_supply || '';
+            if (quotePlaceOfSupply) setPlaceOfSupply(quotePlaceOfSupply);
+            if (q.lock_account_customer_id) {
+                setSelectedCustomer({ id: String(q.lock_account_customer_id), name: q.customer_name || '' } as any);
+                // Fetch customer details (addresses, GST), then re-apply quote's place of supply
+                await fetchCustomerDetail(String(q.lock_account_customer_id));
+                if (quotePlaceOfSupply) setPlaceOfSupply(quotePlaceOfSupply);
+            }
+            if (Array.isArray(q.item_details) && q.item_details.length > 0) {
+                setItems(q.item_details.map((item: any, idx: number) => ({
+                    id: String(idx + 1),
+                    name: item.item_name || '',
+                    item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
+                    description: item.description || '',
+                    quantity: item.quantity || '',
+                    rate: item.rate || '',
+                    discount: 0,
+                    discountType: 'percentage' as const,
+                    tax: item.tax_group?.name || '',
+                    taxRate: 0,
+                    amount: item.total_amount || 0,
+                    item_tax_type: item.tax_type || '',
+                    tax_group_id: item.tax_group?.id || null,
+                    tax_exemption_id: null,
+                })));
+            }
+        }).catch((err) => {
+            console.error('Failed to fetch quote for pre-fill:', err);
+        });
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -394,10 +443,12 @@ export const SalesOrderCreatePage: React.FC = () => {
                 null;
             if (defaultGst) {
                 setSelectedGstDetailId(defaultGst.id);
-                setPlaceOfSupply(defaultGst.place_of_supply || placeOfSupply);
+                setPlaceOfSupply(defaultGst.place_of_supply || data.place_of_supply || (data.billing_address as any)?.state || placeOfSupply);
                 setCustomerDetail((prev) => (prev ? { ...prev, gstin: defaultGst.gstin } : prev));
             } else {
                 setSelectedGstDetailId(null);
+                const fallbackSupply = data.place_of_supply || (data.billing_address as any)?.state || '';
+                if (fallbackSupply) setPlaceOfSupply(fallbackSupply);
             }
             setSelectedBillingAddressId(nextBilling[0]?.id ?? null);
             setSelectedShippingAddressId(nextShipping[0]?.id ?? null);
@@ -1284,6 +1335,11 @@ export const SalesOrderCreatePage: React.FC = () => {
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
             formData.append('sale_order[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
             formData.append('sale_order[place_of_supply]', placeOfSupply); //new added
+            // Converted from quote
+            if (location.state?.quoteData) {
+                formData.append('sale_order[converted_from_type]', 'LockAccountQuote');
+                formData.append('sale_order[converted_from_id]', String(location.state.quoteData.id));
+            }
 
             // Address detail attributes mapping (same as quotes flow)
             const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
@@ -2784,7 +2840,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                     <div className="max-h-[240px] overflow-y-auto">
                         {gstDetails.map((gst) => (
                             <button key={gst.id} type="button" className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`} onClick={() => handleGstinDropdownChange(gst.id)}>
-                                {gst.gstin} - {gst.place_of_supply}[MH]
+                                {gst.gstin} - {gst.place_of_supply}
                             </button>
                         ))}
                     </div>

@@ -5,6 +5,7 @@ import { getWeek } from 'date-fns';
 import { WeekSelector } from './WeeklyReviews/WeekSelector';
 import { MeetingNotes } from './WeeklyReviews/MeetingNotes';
 import { MemberReportCard } from './WeeklyReviews/MemberReportCard';
+import { toast } from 'sonner';
 
 interface WeeklyMeetingData {
     config: {
@@ -61,8 +62,14 @@ const WeeklyReviews = () => {
     const [feedbackInputs, setFeedbackInputs] = useState<Record<number, string>>({});
     const [feedbackScores, setFeedbackScores] = useState<Record<number, number>>({});
     const [feedbackLoading, setFeedbackLoading] = useState<Record<number, boolean>>({});
+    const [saveMeetingLoading, setSaveMeetingLoading] = useState(false);
+    const [checkedUsers, setCheckedUsers] = useState<Record<number, boolean>>({});
 
     const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    const handleUserCheck = (userId: number, isChecked: boolean) => {
+        setCheckedUsers(prev => ({ ...prev, [userId]: isChecked }));
+    };
 
     const handlePreviousWeek = () => {
         setCurrentWeek(prev => new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000));
@@ -72,25 +79,245 @@ const WeeklyReviews = () => {
         setCurrentWeek(prev => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000));
     };
 
+    // Helper function to extract KPI summary from member reports
+    const extractKpiSummary = () => {
+        if (!weeklyData?.member_reports) return {};
+
+        const kpiMap: Record<string, { total: number; achieved: number; names: string[] }> = {};
+
+        weeklyData.member_reports.forEach((report) => {
+            const kpiData = report.report_data?.kpi || report.weekly_report?.report_data?.kpi;
+            if (kpiData && typeof kpiData === 'string') {
+                if (!kpiMap[kpiData]) {
+                    kpiMap[kpiData] = { total: 0, achieved: 0, names: [] };
+                }
+                kpiMap[kpiData].total++;
+                kpiMap[kpiData].names.push(report.name);
+            }
+        });
+
+        return kpiMap;
+    };
+
+    // Helper function to extract open issues and tasks
+    const extractOpenIssues = () => {
+        if (!weeklyData?.member_reports) return [];
+
+        const issues: Array<{ issue: string; assignee: string; status: string }> = [];
+
+        weeklyData.member_reports.forEach((report) => {
+            const remarks = report.report_data?.remarks || report.weekly_report?.report_data?.remarks || [];
+            if (Array.isArray(remarks)) {
+                remarks.forEach((remark: any) => {
+                    if (typeof remark === 'string' && remark.trim()) {
+                        issues.push({
+                            issue: remark,
+                            assignee: report.name,
+                            status: 'open'
+                        });
+                    }
+                });
+            }
+        });
+
+        return issues;
+    };
+
+    // Helper function to extract goals progress
+    const extractGoalsProgress = () => {
+        if (!weeklyData?.member_reports) return [];
+
+        const goalsMap: Record<string, { progress: number; status: string }> = {};
+
+        weeklyData.member_reports.forEach((report) => {
+            const sections = report.report_data?.sections || report.weekly_report?.report_data?.sections || {};
+            if (sections.goals && Array.isArray(sections.goals)) {
+                sections.goals.forEach((goal: any) => {
+                    const goalName = goal.name || goal.title;
+                    if (goalName) {
+                        if (!goalsMap[goalName]) {
+                            goalsMap[goalName] = { progress: goal.progress || 0, status: goal.status || 'on_track' };
+                        }
+                    }
+                });
+            }
+        });
+
+        return Object.entries(goalsMap).map(([name, data]) => ({
+            goal: name,
+            ...data
+        }));
+    };
+
+    // Helper function to build detailed reviews
+    const buildDetailedReviews = () => {
+        if (!weeklyData?.member_reports) return [];
+
+        return weeklyData.member_reports
+            .filter(report => report.weekly_report !== null && checkedUsers[report.user_id])
+            .map((report) => {
+                const reportData = report.report_data || report.weekly_report?.report_data || {};
+                const sections = reportData.sections || {};
+                const tasks = reportData.tasks || [];
+                const achievements = reportData.achievements || [];
+
+                // Extract priorities by day
+                const prioritiesByDay: Record<string, string[]> = {};
+                if (Array.isArray(tasks) && tasks.length > 0 && typeof tasks[0] === 'object') {
+                    Object.assign(prioritiesByDay, tasks[0]);
+                }
+
+                // Get KPI data
+                const kpiList = [];
+                if (reportData.kpi) {
+                    kpiList.push(reportData.kpi);
+                }
+
+                return {
+                    name: report.name,
+                    email: report.email,
+                    department: report.department,
+                    attendance: sections.is_absent ? '✗ Absent' : '✓ Present',
+                    selfRating: sections.self_rating || reportData.details?.self_rating || null,
+                    kpis: kpiList,
+                    achievements: achievements.filter((a: any) => a && a.trim && a.trim()),
+                    priorities: prioritiesByDay,
+                    weeklyNotes: reportData.remarks || []
+                };
+            });
+    };
+
+    // Helper function to generate comprehensive meeting notes
+    const generateDynamicPayload = () => {
+        if (!weeklyData) return null;
+
+        const kpiSummary = extractKpiSummary();
+        const openIssues = extractOpenIssues();
+        const goalsProgress = extractGoalsProgress();
+        const detailedReviews = buildDetailedReviews();
+
+        // Build comprehensive notes
+        let dynamicNotes = '';
+
+        // Team Members who failed to submit
+        dynamicNotes += `Team Members who failed to submit Reports (${weeklyData.missed}):\n\n`;
+        if (weeklyData.missed_members && weeklyData.missed_members.length > 0) {
+            weeklyData.missed_members.forEach((member) => {
+                dynamicNotes += `${member.name}\n`;
+            });
+        }
+        dynamicNotes += '\n';
+
+        // Key Discussion Points & KPI Summary
+        dynamicNotes += `Key Discussion Points:\n\n`;
+        dynamicNotes += `KPI SUMMARY\n`;
+        Object.entries(kpiSummary).forEach(([kpi, data]: any) => {
+            const percentage = Math.round((data.achieved / data.total) * 100) || 0;
+            dynamicNotes += `${kpi}: ${percentage}% average achievement\n`;
+            data.names.forEach((name: string) => {
+                dynamicNotes += `  ${name}: ${data.achieved}/${data.total} (${percentage}%)\n`;
+            });
+        });
+        dynamicNotes += '\n';
+
+        // Open Issues & Tasks
+        if (openIssues.length > 0) {
+            dynamicNotes += `OPEN ISSUES & TASKS\n`;
+            dynamicNotes += `High Priority Issues (${openIssues.length}):\n\n`;
+            openIssues.forEach((issue, index) => {
+                dynamicNotes += `${index + 1}. ${issue.issue} (${issue.assignee}) - ${issue.status}\n`;
+            });
+            dynamicNotes += '\n';
+        }
+
+        // Goals Progress
+        if (goalsProgress.length > 0) {
+            dynamicNotes += `GOALS PROGRESS\n`;
+            goalsProgress.forEach((goal) => {
+                dynamicNotes += `${goal.goal}: ${goal.progress}% (${goal.status})\n`;
+            });
+            dynamicNotes += '\n';
+        }
+
+        // Detailed Reviews
+        if (detailedReviews.length > 0) {
+            dynamicNotes += `DETAILED REVIEWS\n\n`;
+            detailedReviews.forEach((review) => {
+                dynamicNotes += `${review.name}\n`;
+                dynamicNotes += `Attendance: ${review.attendance}\n`;
+                dynamicNotes += `Self Rating: ${review.selfRating || 'N/A'}/10\n`;
+
+                if (review.kpis.length > 0) {
+                    dynamicNotes += `KPIs:\n`;
+                    review.kpis.forEach((kpi) => {
+                        dynamicNotes += `  - ${kpi}\n`;
+                    });
+                }
+
+                if (review.achievements.length > 0) {
+                    dynamicNotes += `Top Wins:\n`;
+                    review.achievements.forEach((achievement) => {
+                        dynamicNotes += `  ✓ ${achievement}\n`;
+                    });
+                }
+
+                if (Object.keys(review.priorities).length > 0) {
+                    dynamicNotes += `Next Week Priorities:\n`;
+                    Object.entries(review.priorities).forEach(([day, priorities]: any) => {
+                        if (Array.isArray(priorities) && priorities.length > 0) {
+                            dynamicNotes += ` ${day}:\n`;
+                            priorities.forEach((p: string) => {
+                                dynamicNotes += `   - ${p}\n`;
+                            });
+                        }
+                    });
+                }
+
+                dynamicNotes += '\n';
+            });
+        }
+
+        return {
+            meeting_id: selectedMeeting,
+            week: getWeekString(currentWeek),
+            week_number: weeklyData.week.replace('W', ''),
+            year: weeklyData.year,
+            notes: dynamicNotes,
+            report_data: {
+                kpi_summary: kpiSummary,
+                open_issues: openIssues,
+                goals_progress: goalsProgress,
+                detailed_reviews: detailedReviews,
+                total_submitted: weeklyData.submitted,
+                total_missed: weeklyData.missed,
+                total_members: weeklyData.total_members
+            }
+        };
+    };
+
     const handleSaveMeeting = async () => {
         try {
+            setSaveMeetingLoading(true);
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
 
             if (!baseUrl || !token) {
                 console.warn('Missing baseUrl or token in localStorage');
+                toast.error('Missing authentication details');
+                return;
+            }
+
+            const dynamicPayload = generateDynamicPayload();
+
+            if (!dynamicPayload) {
+                console.warn('Unable to generate payload - no weekly data available');
+                toast.error('Unable to generate meeting payload');
                 return;
             }
 
             await axios.post(
-                `https://${baseUrl}/user_journals/save_meeting`,
-                {
-                    meeting_id: selectedMeeting,
-                    week: getWeekString(currentWeek),
-                    notes: meetingNotes,
-                    mark_all_attended: markAllAttended,
-                    ai_summary: aiSummary,
-                },
+                `https://${baseUrl}/user_journals/submit_weekly_meeting.json`,
+                dynamicPayload,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -99,15 +326,13 @@ const WeeklyReviews = () => {
                 }
             );
 
-            console.log('Meeting saved successfully');
+            toast.success('Meeting notes saved successfully');
         } catch (error) {
             console.error('Error saving meeting:', error);
+            toast.error('Failed to save meeting notes');
+        } finally {
+            setSaveMeetingLoading(false);
         }
-    };
-
-    const handleAddToCalendar = () => {
-        // TODO: Implement calendar integration
-        console.log('Add to calendar clicked');
     };
 
     const handleAddPriority = async (userId: number, priorityText: string, day: string) => {
@@ -386,6 +611,12 @@ const WeeklyReviews = () => {
                 );
 
                 setWeeklyData(response.data.data);
+
+                const noteText =
+                    `**Team Members Who Missed Report (${response.data?.data?.missed_members?.length}):**\n` +
+                    response.data?.data?.missed_members?.map((m: any) => `- ${m.name}`).join("\n") +
+                    `\n\n**Key Discussion Points:**\n`;
+                setMeetingNotes(noteText);
             } catch (error) {
                 console.error('Error fetching weekly data:', error);
                 setWeeklyData(null);
@@ -463,6 +694,7 @@ const WeeklyReviews = () => {
                     meetingNotes={meetingNotes}
                     markAllAttended={markAllAttended}
                     aiSummary={aiSummary}
+                    saveMeetingLoading={saveMeetingLoading}
                     onMeetingNotesChange={setMeetingNotes}
                     onMarkAllAttendedChange={setMarkAllAttended}
                     onAiSummaryChange={setAiSummary}
@@ -490,6 +722,7 @@ const WeeklyReviews = () => {
                                         key={report.user_id}
                                         report={report}
                                         isExpanded={expandedUserId === report.user_id}
+                                        isChecked={checkedUsers[report.user_id] || false}
                                         activeTab={activeTab}
                                         priorityText={priorityInputs[report.user_id] || ''}
                                         selectedPriorityDay={selectedPriorityDay}
@@ -502,6 +735,7 @@ const WeeklyReviews = () => {
                                         ratingsLoading={ratingsLoading}
                                         daysOfWeek={daysOfWeek}
                                         onExpand={() => setExpandedUserId(expandedUserId === report.user_id ? null : report.user_id)}
+                                        onUserCheck={(isChecked) => handleUserCheck(report.user_id, isChecked)}
                                         onPriorityChange={(text) => setPriorityInputs(prev => ({ ...prev, [report.user_id]: text }))}
                                         onPriorityDaySelect={(day) => {
                                             setSelectedPriorityDay(day);

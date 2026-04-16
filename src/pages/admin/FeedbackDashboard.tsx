@@ -982,7 +982,7 @@ const FeedbackDashboard = () => {
       : "N/A";
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
       <div className="mx-auto max-w-6xl space-y-6">
 
         {/* Header */}

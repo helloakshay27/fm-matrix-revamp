@@ -313,9 +313,12 @@ const GroupConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.project_space_id !== id) {
+                    console.log(message)
+                    if (String(message.project_space_id) !== id) {
                         return;
                     }
+
+                    console.log("In Group converstaion - New message received:", message)
 
                     setMessages((prev) => {
                         const exists = prev.some((msg) => msg.id === message.id);
