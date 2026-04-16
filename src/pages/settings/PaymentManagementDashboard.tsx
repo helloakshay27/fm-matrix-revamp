@@ -276,7 +276,7 @@ export const PaymentManagementDashboard = () => {
   // Define columns for EnhancedTable
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
-    { key: 'order_number', label: 'Order Number', sortable: true },
+    // { key: 'order_number', label: 'Order Number', sortable: true },
     { key: 'payment_of', label: 'Payment Type', sortable: true },
     { key: 'total_amount', label: 'Total Amount', sortable: true },
     { key: 'paid_amount', label: 'Paid Amount', sortable: true },
