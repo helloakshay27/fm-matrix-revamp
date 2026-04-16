@@ -406,6 +406,7 @@ interface BaseProductPageProps {
 }
 
 // Global level cache to persist the model across page navigations
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let cachedModel: any = null;
 
 const BaseProductPage: React.FC<BaseProductPageProps> = ({
@@ -417,10 +418,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
   const snagTabsScrollRef = useRef<HTMLDivElement | null>(null);
 
   // ─── Security Global Cache (Module Level) ──────────────────────────
-  // Using a static-like pattern inside the file to persist the model
-  // Note: For a strictly global app-wide cache, we could move this even further out,
-  // but keeping it here for component-level persistence.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [model, setModel] = useState<any>(cachedModel);
+  const [modelLoading, setModelLoading] = useState(!cachedModel);
+  const [faceDetected, setFaceDetected] = useState(true); // Start as true, will be updated by detection
 
   // Reset scroll position to 0 on mount so first tab (Product Summary) is always visible
   useEffect(() => {
@@ -430,7 +431,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
   // ─── Security State ──────────────────────────────────────────────────
   const [cameraPermission, setCameraPermission] = useState<
     "pending" | "granted" | "denied"
-  >("granted");
+  >("pending");
   const [isBlurred, setIsBlurred] = useState(false);
   const [showBlackout, setShowBlackout] = useState(false);
   const [blackoutReason, setBlackoutReason] =
@@ -609,11 +610,23 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
   // ─── 1. Camera + AI face detection ──────────────────────────
   useEffect(() => {
+    let timeoutId: number | undefined;
+
     const initModel = async () => {
       if (cachedModel) {
         setModel(cachedModel);
+        setModelLoading(false);
         return;
       }
+
+      // Set a timeout - if model doesn't load in 10 seconds, proceed without it
+      timeoutId = window.setTimeout(() => {
+        console.warn(
+          "Face detection model loading timed out - proceeding without security"
+        );
+        setModelLoading(false);
+      }, 10000);
+
       try {
         await tf.ready();
         if (tf.getBackend() !== "webgl") {
@@ -625,8 +638,12 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
         });
         cachedModel = detector;
         setModel(detector);
+        setModelLoading(false);
+        if (timeoutId) window.clearTimeout(timeoutId);
       } catch (err) {
         console.error("Face detection model failed to load:", err);
+        setModelLoading(false);
+        if (timeoutId) window.clearTimeout(timeoutId);
       }
     };
 
@@ -649,6 +666,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
     initModel();
     setupCamera();
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
@@ -662,39 +683,51 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
     }
   }, [cameraPermission]);
 
+  // Face detection interval - USE CASE 1 & 2:
+  // When user is in front of camera = show content
+  // When user is NOT in front of camera = blank screen
   useEffect(() => {
     let detectionInterval: number | undefined;
+    let noFaceCount = 0; // Count consecutive no-face detections
 
     if (model && cameraPermission === "granted") {
       detectionInterval = window.setInterval(async () => {
         const video = videoRef.current;
-        if (!video || video.readyState < 2 || video.videoWidth === 0 || video.paused)
+        if (
+          !video ||
+          video.readyState < 2 ||
+          video.videoWidth === 0 ||
+          video.paused
+        )
           return;
 
         try {
-          // ✅ blazeface API — returnTensors: false for plain JS objects
           const predictions = await model.estimateFaces(video, false);
-          const faceDetected = predictions.length > 0;
+          const detected = predictions.length > 0;
 
-          if (!faceDetected) {
-            triggerBlackout(
-              "No Authorized User Detected",
-              "Please remain in front of the camera to view this content."
-            );
+          if (!detected) {
+            noFaceCount++;
+            // Only trigger blackout after 2 consecutive no-face detections (to avoid flicker)
+            if (noFaceCount >= 2) {
+              setFaceDetected(false);
+              setIsBlurred(true);
+            }
           } else {
+            noFaceCount = 0;
+            setFaceDetected(true);
             setIsBlurred(false);
             setShowBlackout(false);
           }
         } catch (err) {
           console.error("Face detection error:", err);
         }
-      }, 1200);
+      }, 800); // Check every 800ms for faster response
     }
 
     return () => {
       if (detectionInterval) window.clearInterval(detectionInterval);
     };
-  }, [model, cameraPermission, triggerBlackout]);
+  }, [model, cameraPermission]);
 
   // ─── 2. Blackout countdowntimer ───────────────────────────────────────
   useEffect(() => {
@@ -916,7 +949,8 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
     );
   }
 
-  if (!model && cameraPermission === "granted") {
+  // Show loading screen while model is loading (camera permission checks are above)
+  if (modelLoading) {
     return (
       <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
         <div className="w-20 h-20 rounded-full bg-[#DA7756]/10 border border-[#DA7756]/30 flex items-center justify-center mb-6 animate-pulse">
@@ -932,13 +966,29 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
     );
   }
 
+  // USE CASE 2: When user is NOT in front of camera, show blank screen
+  const showBlankScreen =
+    !faceDetected && model && cameraPermission === "granted";
+
   return (
     <div
-      className={`min-h-screen bg-[#FAF9F6] pb-20 select-none font-poppins transition-all duration-300 ${isBlurred ? "blur-3xl brightness-50 pointer-events-none" : ""}`}
+      className={`min-h-screen bg-[#FAF9F6] pb-20 select-none font-poppins transition-all duration-300 ${showBlankScreen ? "blur-3xl brightness-50 pointer-events-none" : ""}`}
     >
-      {/* ── Screenshot blank overlay ─────────────────────────────────────
-           Flashes instantly on PrintScreen / snipping tool so the OS
-           captures a pure white page instead of the actual content.      */}
+      {/* USE CASE 2: Blank screen when no face detected */}
+      {showBlankScreen && (
+        <div className="fixed inset-0 z-[9998] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
+          <div className="w-20 h-20 rounded-full bg-[#DA7756]/10 border border-[#DA7756]/30 flex items-center justify-center mb-6">
+            <Camera className="w-10 h-10 text-[#DA7756]" />
+          </div>
+          <h1 className="text-2xl font-semibold mb-3">User Not Detected</h1>
+          <p className="text-white/50 text-sm max-w-md">
+            Please position yourself in front of the camera to view this
+            content.
+          </p>
+        </div>
+      )}
+
+      {/* USE CASE 3: Screenshot blank overlay - flashes on screenshot attempt */}
       {screenshotBlank && (
         <div
           className="fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center"
@@ -960,7 +1010,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
         width={320}
         height={240}
         className="fixed top-0 left-0 opacity-0 pointer-events-none"
-        style={{ width: 320, height: 240 }}  // ✅ real size, still invisible
+        style={{ width: 320, height: 240 }} // ✅ real size, still invisible
       />
 
       {/* ── Live camera preview badge (top-right) ──────────────────────── */}
