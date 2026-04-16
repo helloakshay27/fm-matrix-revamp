@@ -1188,17 +1188,17 @@ export const AddGroupMembershipPage = () => {
             }
 
             // Mandatory file validations - only for add mode
-            if (!isEditMode) {
-                if (!member.idCardFile) {
-                    toast.error(`${memberLabel}: Please upload ID card (mandatory)`);
-                    return;
-                }
+            // if (!isEditMode) {
+            //     if (!member.idCardFile) {
+            //         toast.error(`${memberLabel}: Please upload ID card (mandatory)`);
+            //         return;
+            //     }
 
-                if (!member.residentPhotoFile) {
-                    toast.error(`${memberLabel}: Please upload resident photo (mandatory)`);
-                    return;
-                }
-            }
+            //     if (!member.residentPhotoFile) {
+            //         toast.error(`${memberLabel}: Please upload resident photo (mandatory)`);
+            //         return;
+            //     }
+            // }
 
             if (cardAllocated && !member.formData.accessCardId?.trim()) {
                 toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
@@ -2466,14 +2466,14 @@ export const AddGroupMembershipPage = () => {
                                             <div className="mb-8 pt-8 border-t border-gray-200">
                                                 <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
                                                     <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">3</div>
-                                                    Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
+                                                    Upload Documents
                                                 </h4>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                     {/* ID Card Upload */}
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            ID Card {!isEditMode && <span className="text-red-500">*</span>}
+                                                            ID Card
                                                         </label>
                                                         <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.idCardFile || member.idCardPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                             {(member.idCardFile || member.idCardPreview) ? (
@@ -2504,7 +2504,7 @@ export const AddGroupMembershipPage = () => {
                                                     {/* Member Photo Upload */}
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Member Photo {!isEditMode && <span className="text-red-500">*</span>}
+                                                            Member Photo
                                                         </label>
                                                         <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.residentPhotoFile || member.residentPhotoPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                             {(member.residentPhotoFile || member.residentPhotoPreview) ? (

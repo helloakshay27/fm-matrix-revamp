@@ -287,7 +287,7 @@ const BookingReceipt = ({
                                     transform: "rotate(-90deg)",
                                     transformOrigin: "",
                                     whiteSpace: "nowrap",
-                                    width: "379px",
+                                    width: "460px",
                                     textAlign: "center",
                                 }}
                             >
@@ -365,28 +365,28 @@ const BookingReceipt = ({
                         {/* Table Header */}
                         <div className="border-b-4 border-[#7C2D12] px-2">
                             <div className="grid grid-cols-12 gap-0 text-[#000000] text-sm font-bold">
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     SL. NO.
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     DESCRIPTION
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     SAC/HSN CODE
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     RATE (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     DISCOUNT AMOUNT (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TOTAL TAXABLE VALUE (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TAX RATE
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TAX AMOUNT (₹)
                                 </div>
                             </div>

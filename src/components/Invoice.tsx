@@ -275,19 +275,19 @@ const Invoice = ({
     return (
         <div className="min-h-[297mm] flex flex-col items-center justify-center p-4">
             <div ref={invoiceRef}>
-                <div className="w-full bg-[#F9F4E8] max-w-4xl flex h-[333.1mm]">
+                <div className="w-full bg-[#F9F4E8] max-w-4xl flex h-[300mm]">
                     {/* LEFT SIDE - Logo/Branding Area */}
                     <div className="w-[24%] p-3 border-r-4 border-[#7C2D12] flex flex-col items-center justify-between py-8">
                         <div className="text-center">
                             <img src="/src/assets/image.png" alt="" className="h-[90%]" />
                         </div>
-                        <div className="flex justify-center items-center">
+                        <div className="flex justify-center items-center mb-[160px]">
                             <div
                                 style={{
                                     transform: "rotate(-90deg)",
                                     transformOrigin: "center",
                                     whiteSpace: "nowrap",
-                                    width: "110px",
+                                    width: "410px",
                                     textAlign: "center",
                                 }}
                             >
