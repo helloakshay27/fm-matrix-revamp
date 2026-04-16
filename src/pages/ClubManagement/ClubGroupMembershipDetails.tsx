@@ -1542,7 +1542,7 @@ export const ClubGroupMembershipDetails = () => {
                           <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">House</span>
                             <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{selectedMember.house.name || '-'}</span>
+                            <span className="text-gray-900 font-medium">{selectedMember?.house?.name || '-'}</span>
                           </div>
                         </div>
                       </TabsContent>
