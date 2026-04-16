@@ -124,6 +124,8 @@ interface CustomerDetail {
     shipping_address: any;
     billing_addresses?: CustomerAddress[];
     shipping_addresses?: CustomerAddress[];
+    default_billing_address?: any;
+    default_shipping_address?: any;
     gst_details?: GstDetail[];
 }
 
@@ -625,7 +627,11 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
     const selectedShippingAddress = shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null;
     const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
-    const fetchCustomerDetail = async (customerId: string | number, preferredGstin?: string) => {
+    const fetchCustomerDetail = async (
+        customerId: string | number, 
+        preferredGstin?: string,
+        newAddressToSelect?: { type: 'billing' | 'shipping', attention: string, address: string, pin_code: string }
+    ) => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         const lock_account_id = localStorage.getItem("lock_account_id");
@@ -658,10 +664,47 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             } else {
                 setSelectedGstDetailId(null);
             }
-            setSelectedBillingAddressId(nextBilling[0]?.id ?? null);
-            setSelectedShippingAddressId(nextShipping[0]?.id ?? null);
-            setBillingAddress(formatAddressText(nextBilling[0]));
-            setShippingAddress(formatAddressText(nextShipping[0]));
+
+            // Billing address logic
+            let finalBilling = null;
+            if (newAddressToSelect?.type === 'billing') {
+                finalBilling = nextBilling.find(a => 
+                    a.attention === newAddressToSelect.attention && 
+                    a.address === newAddressToSelect.address &&
+                    a.pin_code === newAddressToSelect.pin_code
+                );
+            }
+            if (!finalBilling && selectedBillingAddressId) {
+                finalBilling = nextBilling.find(a => String(a.id) === String(selectedBillingAddressId));
+            }
+            if (!finalBilling) {
+                finalBilling = data.default_billing_address 
+                    ? mapAddress(data.default_billing_address, 'billing') 
+                    : (nextBilling.length > 0 ? nextBilling[0] : null);
+            }
+
+            // Shipping address logic
+            let finalShipping = null;
+            if (newAddressToSelect?.type === 'shipping') {
+                finalShipping = nextShipping.find(a => 
+                    a.attention === newAddressToSelect.attention && 
+                    a.address === newAddressToSelect.address &&
+                    a.pin_code === newAddressToSelect.pin_code
+                );
+            }
+            if (!finalShipping && selectedShippingAddressId) {
+                finalShipping = nextShipping.find(a => String(a.id) === String(selectedShippingAddressId));
+            }
+            if (!finalShipping) {
+                finalShipping = data.default_shipping_address 
+                    ? mapAddress(data.default_shipping_address, 'shipping') 
+                    : (nextShipping.length > 0 ? nextShipping[0] : null);
+            }
+
+            setSelectedBillingAddressId(finalBilling?.id ?? null);
+            setSelectedShippingAddressId(finalShipping?.id ?? null);
+            setBillingAddress(formatAddressText(finalBilling));
+            setShippingAddress(formatAddressText(finalShipping));
         } catch (error) {
             console.error('Error fetching customer detail:', error);
             toast.error('Failed to load customer details');
@@ -758,8 +801,8 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
     // When customer is selected
     useEffect(() => {
         if (selectedCustomer) {
-            setBillingAddress(selectedCustomer.billingAddress);
-            setShippingAddress(selectedCustomer.shippingAddress);
+            // setBillingAddress(selectedCustomer.billingAddress);
+            // setShippingAddress(selectedCustomer.shippingAddress);
             setPaymentTerms(selectedCustomer.paymentTerms);
         }
     }, [selectedCustomer]);
@@ -822,7 +865,12 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             setAddressFormModalOpen(false);
             setAddressListModalOpen(false);
             toast.success("Address saved successfully");
-            fetchCustomerDetail(selectedCustomer.id);
+            fetchCustomerDetail(selectedCustomer.id, undefined, {
+                type: activeAddressType,
+                attention: addressForm.attention,
+                address: addressForm.address,
+                pin_code: addressForm.pin_code
+            });
         } catch (error) {
             console.error("Error saving address:", error);
             toast.error("Failed to save address");
@@ -1413,16 +1461,18 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                 <FormControl fullWidth error={!!errors.customer}>
                                     <Select
                                         value={selectedCustomer?.id || ''}
-                                        onChange={(e) => {
-                                            const customer = customers.find(c => c.id === e.target.value);
+                                        onChange={(e) => {                                            const customerId = e.target.value;
+                                            const customer = customers.find(c => c.id === customerId);
                                             setSelectedCustomer(customer || null);
-                                            if (customer?.id) {
-                                                fetchCustomerDetail(customer.id);
-                                                const supply = (customer as any)?.place_of_supply || (customer as any)?.billing_address?.state || '';
-                                                console.log('[RecurringInvoice] Customer place of supply:', supply, '| Org state:', orgState);
-                                                setPlaceOfSupply(supply);
+                                            setSelectedBillingAddressId(null);
+                                            setSelectedShippingAddressId(null);
+                                            if (customerId) {
+                                                fetchCustomerDetail(customerId);
                                             } else {
                                                 setCustomerDetail(null);
+                                                setBillingAddress('');
+                                                setShippingAddress('');
+                                                setPlaceOfSupply('');
                                             }
                                         }}
                                         displayEmpty
