@@ -474,7 +474,7 @@ export const SalesOrderDetailPage = () => {
                                         size="sm"
                                         className="bg-[#C72030] text-white hover:bg-[#a81a28]"
                                         disabled={actionLoading}
-                                        onClick={() => navigate("/accounting/invoices/add", { state: { salesOrder } })}
+                                        onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
                                     >
                                         Convert to Invoice
                                     </Button>
@@ -537,7 +537,7 @@ export const SalesOrderDetailPage = () => {
                                         size="sm"
                                         className="bg-[#C72030] text-white hover:bg-[#a81a28]"
                                         disabled={actionLoading}
-                                        onClick={() => navigate("/accounting/invoices/add", { state: { salesOrder } })}
+                                        onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
                                     >
                                         Convert to Invoice
                                     </Button>
