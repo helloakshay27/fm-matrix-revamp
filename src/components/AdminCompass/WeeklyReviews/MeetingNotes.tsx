@@ -1,10 +1,11 @@
-import { Users, RefreshCw, Send } from 'lucide-react';
+import { Users, RefreshCw, Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MeetingNotesProps {
     meetingNotes: string;
     markAllAttended: boolean;
     aiSummary: boolean;
+    saveMeetingLoading?: boolean;
     onMeetingNotesChange: (value: string) => void;
     onMarkAllAttendedChange: (value: boolean) => void;
     onAiSummaryChange: (value: boolean) => void;
@@ -16,6 +17,7 @@ export const MeetingNotes = ({
     meetingNotes,
     markAllAttended,
     aiSummary,
+    saveMeetingLoading = false,
     onMeetingNotesChange,
     onMarkAllAttendedChange,
     onAiSummaryChange,
@@ -56,7 +58,8 @@ export const MeetingNotes = ({
                         type="checkbox"
                         checked={markAllAttended}
                         onChange={(e) => onMarkAllAttendedChange(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                        disabled={saveMeetingLoading}
+                        className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer disabled:opacity-50"
                     />
                     <span className="text-sm font-medium text-[#1A1A1A]">Mark All Attended</span>
                 </label>
@@ -66,16 +69,25 @@ export const MeetingNotes = ({
                             type="checkbox"
                             checked={aiSummary}
                             onChange={(e) => onAiSummaryChange(e.target.checked)}
-                            className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                            disabled={saveMeetingLoading}
+                            className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer disabled:opacity-50"
                         />
                         <span className="text-sm font-medium text-[#1A1A1A]">AI Summary</span>
                     </label>
                     <Button
                         size="sm"
-                        className="px-6 py-2 h-8 text-xs bg-[#CE7A5A] hover:bg-[#BC6B4A] text-white rounded-2xl font-semibold"
+                        disabled={saveMeetingLoading}
+                        className="px-6 py-2 h-8 text-xs bg-[#CE7A5A] hover:bg-[#BC6B4A] text-white rounded-2xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
                         onClick={onSaveMeeting}
                     >
-                        Save Meeting
+                        {saveMeetingLoading ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Saving...</span>
+                            </div>
+                        ) : (
+                            'Save Meeting'
+                        )}
                     </Button>
                 </div>
             </div>

@@ -1182,6 +1182,7 @@ import VendorCreditDetails from "./pages/ClubManagement/VendorCreditDetails";
 import MobileTodo from "./pages/MobileTodo";
 import { BalanceSheetDetails } from "./pages/ClubManagement/BalanceSheetDetails";
 import { ProfitAndLossDetails } from "./pages/ClubManagement/ProfitAndLossDetails";
+import { CashFlowDetails } from "./pages/ClubManagement/CashFlowDetails";
 import { GSTPayableDetails } from "./pages/ClubManagement/GSTPayableDetails";
 import GstReceivableReport from "./pages/ClubManagement/GSTReceivableReport";
 import { GSTReceivableDetails } from "./pages/ClubManagement/GSTReceivableDetails";
@@ -3164,6 +3165,10 @@ function App() {
                           <Route
                             path="/accounting/reports/profit-and-loss/details/:id"
                             element={<ProfitAndLossDetails />}
+                          />
+                          <Route
+                            path="/accounting/reports/cash-flow-statement/details/:id"
+                            element={<CashFlowDetails />}
                           />
                           {/* <Route */}
                           <Route
