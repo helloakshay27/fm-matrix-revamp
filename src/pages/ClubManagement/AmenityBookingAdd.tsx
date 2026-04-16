@@ -893,10 +893,7 @@ export const AddFacilityBookingClubPage = () => {
     console.log('PDF generated from Invoice');
     setIsGeneratingInvoice(false);
     // Use invoice_data.lock_account_bill_id or fallback to booking_id or invoice number
-    const billId = invoiceData?.lock_account_bill_id ||
-      invoiceData?.booking_id ||
-      invoiceData?.id ||
-      invoiceData?.invoice_number;
+    const billId = invoiceData?.lock_account_bill_id
 
     if (billId) {
       setCollectedPDF({
