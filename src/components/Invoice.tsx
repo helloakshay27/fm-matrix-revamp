@@ -287,7 +287,7 @@ const Invoice = ({
                 </div>
             )} */}
 
-            <div ref={invoiceRef} className="h-full">
+            <div ref={invoiceRef} className="min-h-[297mm]">
                 <div className="w-full bg-[#F9F4E8] max-w-4xl flex h-full">
                     {/* LEFT SIDE - Logo/Branding Area */}
                     <div className="w-[24%] p-3 border-r-4 border-[#7C2D12] flex flex-col items-center justify-between py-8">
