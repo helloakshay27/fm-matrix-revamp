@@ -24,6 +24,7 @@ import { getAuthHeaders, getBaseUrl } from "./Shared";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 // ── UI Components ──
 const BtnIcon = ({
@@ -78,7 +79,7 @@ const CustomSelect = ({
 }: any) => {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
-  const selected = options.find((o: any) => o.value === value);
+  const selected = options.find((o: any) => String(o.value) === String(value));
 
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -125,7 +126,7 @@ const CustomSelect = ({
               }}
               className={cn(
                 "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors",
-                value === opt.value
+                String(value) === String(opt.value)
                   ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
                   : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
               )}
@@ -195,20 +196,70 @@ const fetchDailyMeetingData = async ({
 // ── Helpers ──
 const formatDateTime = (isoStr: string | null) => {
   if (!isoStr) return null;
-  return new Date(isoStr).toLocaleString("en-IN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+  try {
+    return new Date(isoStr).toLocaleString("en-IN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return null;
+  }
 };
 
 const pushUnique = (arr: any[], item: any, keyFields: string[]) => {
   const exists = arr.some((x) => keyFields.every((k) => x[k] === item[k]));
   if (!exists) arr.push(item);
+};
+
+// ── Normalize report_data ──
+const normalizeReportData = (rd: any) => {
+  if (!rd || typeof rd !== "object") {
+    return {
+      accomplishments: [],
+      tasks_issues: [],
+      tomorrow_plan: [],
+      big_win: null,
+      self_rating: null,
+      total_score: null,
+      is_absent: null,
+      kpis: {},
+    };
+  }
+
+  let accomplishments: any[] = [];
+  if (Array.isArray(rd.accomplishments)) {
+    accomplishments = rd.accomplishments;
+  } else if (Array.isArray(rd.accomplishments?.items)) {
+    accomplishments = rd.accomplishments.items;
+  }
+
+  return {
+    accomplishments,
+    tasks_issues: Array.isArray(rd.tasks_issues) ? rd.tasks_issues : [],
+    tomorrow_plan: Array.isArray(rd.tomorrow_plan) ? rd.tomorrow_plan : [],
+    big_win: rd.big_win ?? null,
+    self_rating: rd.self_rating ?? null,
+    total_score: rd.total_score ?? null,
+    is_absent: rd.is_absent ?? null,
+    kpis: rd.kpis && typeof rd.kpis === "object" ? rd.kpis : {},
+  };
+};
+
+const getItemTitle = (item: any): string => {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object") return String(item.title || item.name || "");
+  return String(item);
+};
+
+const getItemStatus = (item: any): string => {
+  if (!item || typeof item !== "object") return "open";
+  return item.status || "open";
 };
 
 // ─────────────────────────────────────────────
@@ -217,6 +268,7 @@ const DailyTab = () => {
     () => new Date().toISOString().split("T")[0]
   );
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
+  const [meetingsLoaded, setMeetingsLoaded] = useState(false);
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(
     null
   );
@@ -234,31 +286,36 @@ const DailyTab = () => {
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [quickActionOpenId, setQuickActionOpenId] = useState<any>(null);
   const [quickActionText, setQuickActionText] = useState("");
+
+  // Feedback specific states
   const [feedbackOpenId, setFeedbackOpenId] = useState<any>(null);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [fetchedFeedbacks, setFetchedFeedbacks] = useState<any[]>([]);
+  const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
+
+  const navigate = useNavigate();
 
   // ── Load Dropdowns ──
   useEffect(() => {
     fetchDynamicMeetings()
       .then((list) => {
         setMeetingsList(list);
-        setSelectedMeetingId(list?.length > 0 ? list[0].id : null);
+        setMeetingsLoaded(true);
+        if (list?.length > 0) {
+          setSelectedMeetingId(list[0].id);
+        } else {
+          setSelectedMeetingId(null);
+        }
       })
       .catch((err) => {
         console.error(err);
         setSelectedMeetingId(null);
+        setMeetingsLoaded(true);
       });
     fetchDynamicMembers().then(setMembersList).catch(console.error);
   }, []);
 
-  // ─────────────────────────────────────────────────────────────────────
-  // ✅ THE CORE FIX:
-  // `skipNotesRestore` = true  → only refresh data, DON'T touch meetingNotes
-  //                              (used after add-plan / feedback / save/update)
-  // `skipNotesRestore` = false → full load including restoring saved discussion
-  //                              (used on initial load / date change / meeting change)
-  // ─────────────────────────────────────────────────────────────────────
   const loadDailyData = async (skipNotesRestore = false) => {
     if (selectedMeetingId === null) return;
     setIsLoading(true);
@@ -271,11 +328,10 @@ const DailyTab = () => {
 
       if (json.success) {
         setDailyData(json.data);
-        const reports: any[] = json.data?.member_reports || [];
+        const reports: any[] =
+          json.data?.member_reports || json.data?.reports || [];
         const headId = json.data?.config?.meeting_head?.id;
 
-        // Find the meeting-level journal (submitted by meeting head or any member
-        // whose report_data contains meeting_notes array)
         const meetingJournalReport =
           reports.find(
             (r: any) =>
@@ -296,9 +352,6 @@ const DailyTab = () => {
         setMeetingJournalId(meetingJournalReport?.journal_id ?? null);
 
         if (!skipNotesRestore) {
-          // ✅ Pull key_discussion_points directly from the API response —
-          //    no extra fetch needed! It lives in:
-          //    report_data.meeting_notes[0].key_discussion_points
           const savedDiscussion: string =
             meetingJournalReport?.report_data?.meeting_notes?.[0]
               ?.key_discussion_points || "";
@@ -306,12 +359,11 @@ const DailyTab = () => {
           if (savedDiscussion) {
             setMeetingNotes(savedDiscussion);
           } else {
-            // Nothing saved yet — show pre-fill template with missed members
             const missed: any[] = json.data?.missed_members || [];
             if (missed.length > 0) {
               setMeetingNotes(
                 `**Team Members Who Missed Report (${missed.length}):**\n` +
-                  missed.map((m: any) => `- ${m.name}`).join("\n") +
+                  missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
                   `\n\n**Key Discussion Points:**\n`
               );
             } else {
@@ -319,7 +371,6 @@ const DailyTab = () => {
             }
           }
         }
-        // skipNotesRestore === true → meetingNotes state stays exactly as-is ✅
       } else {
         throw new Error(json.message || "Failed to fetch");
       }
@@ -331,10 +382,35 @@ const DailyTab = () => {
     }
   };
 
-  // Full restore on date / meeting change
   useEffect(() => {
     loadDailyData(false);
   }, [selectedMeetingId, activeDate]);
+
+  // ── GET Past Feedbacks ──
+  const loadPastFeedbacks = async (targetUserId: string | number) => {
+    setIsFetchingFeedbacks(true);
+    try {
+      const loggedInUserId = localStorage.getItem("userId") || "";
+      const url = `${getBaseUrl()}/ratings?resource_type=User&resource_id=${targetUserId}&rating_from_id=${loggedInUserId}`;
+      const res = await fetch(url, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const feedbackList = Array.isArray(data)
+          ? data
+          : data.data || data.ratings || [];
+        setFetchedFeedbacks(feedbackList);
+      } else {
+        console.error(`HTTP Error: ${res.status}`);
+      }
+    } catch (error) {
+      console.error("Failed to fetch past feedbacks:", error);
+    } finally {
+      setIsFetchingFeedbacks(false);
+    }
+  };
 
   // ── PUT /user_journals/:id ──
   const updateJournal = async (
@@ -354,29 +430,19 @@ const DailyTab = () => {
 
     const sourceRd =
       isPending && hasDraft
-        ? {
+        ? normalizeReportData({
+            ...draftRaw,
             accomplishments:
               draftRaw.accomplishments?.items ||
               (Array.isArray(draftRaw.accomplishments)
                 ? draftRaw.accomplishments
                 : []),
-            tasks_issues: draftRaw.tasks_issues || [],
-            big_win: draftRaw.big_win || "",
-            tomorrow_plan: draftRaw.tomorrow_plan || [],
-            kpis: draftRaw.kpis || {},
             self_rating:
               draftRaw.details?.self_rating ??
               draftRaw.sections?.self_rating ??
               0,
-          }
-        : {
-            accomplishments: rd.accomplishments || [],
-            tasks_issues: rd.tasks_issues || [],
-            big_win: rd.big_win || "",
-            tomorrow_plan: rd.tomorrow_plan || [],
-            kpis: rd.kpis || {},
-            self_rating: rd.self_rating ?? 0,
-          };
+          })
+        : normalizeReportData({ ...rd, self_rating: rd.self_rating ?? 0 });
 
     const payload: any = {
       user_journal: {
@@ -393,8 +459,6 @@ const DailyTab = () => {
         },
       },
     };
-
-    console.log("📦 PUT payload:", JSON.stringify(payload, null, 2));
 
     try {
       const res = await fetch(
@@ -448,17 +512,15 @@ const DailyTab = () => {
         const rd = report.report_data || {};
         const draftRaw = report.daily_report?.report_data || {};
 
-        const source =
+        const rawSource =
           isPending && hasDraft
             ? {
+                ...draftRaw,
                 accomplishments:
                   draftRaw.accomplishments?.items ||
                   (Array.isArray(draftRaw.accomplishments)
                     ? draftRaw.accomplishments
                     : []),
-                tasks_issues: draftRaw.tasks_issues || [],
-                tomorrow_plan: draftRaw.tomorrow_plan || [],
-                big_win: draftRaw.big_win || "",
                 self_rating:
                   draftRaw.details?.self_rating ??
                   draftRaw.sections?.self_rating ??
@@ -468,14 +530,9 @@ const DailyTab = () => {
                   draftRaw.sections?.is_absent ??
                   false,
               }
-            : {
-                accomplishments: rd.accomplishments || [],
-                tasks_issues: rd.tasks_issues || [],
-                tomorrow_plan: rd.tomorrow_plan || [],
-                big_win: rd.big_win || "",
-                self_rating: rd.self_rating ?? 0,
-                is_absent: rd.is_absent ?? false,
-              };
+            : rd;
+
+        const source = normalizeReportData(rawSource);
 
         source.accomplishments.forEach((a: any) =>
           pushUnique(allAccomplishments, { ...a, member: report.name }, [
@@ -500,16 +557,23 @@ const DailyTab = () => {
           combinedBigWin +=
             (combinedBigWin ? " | " : "") + `${report.name}: ${source.big_win}`;
         if (source.self_rating) {
-          combinedSelfRating += source.self_rating;
+          combinedSelfRating += Number(source.self_rating) || 0;
           ratingCount++;
         }
 
         const kpis = report.kpis || rd.kpis || {};
-        if (kpis.tasks) combinedKpis.tasks += parseInt(kpis.tasks) || 0;
-        if (kpis.issues) combinedKpis.issues += parseInt(kpis.issues) || 0;
-        if (kpis.planning)
-          combinedKpis.planning += parseInt(kpis.planning) || 0;
-        if (kpis.timing) combinedKpis.timing += parseInt(kpis.timing) || 0;
+        const sections = draftRaw.sections || rd.sections || {};
+
+        const t = parseInt(sections.tasks_issues ?? kpis.tasks) || 0;
+        const i = parseInt(kpis.issues) || 0;
+        const p = parseInt(sections.planning ?? kpis.planning) || 0;
+        const tim = parseInt(sections.timing ?? kpis.timing) || 0;
+
+        combinedKpis.tasks += t;
+        combinedKpis.issues += i;
+        combinedKpis.planning += p;
+        combinedKpis.timing += tim;
+
         if (report.score) combinedKpis.score += parseInt(report.score) || 0;
       });
 
@@ -554,17 +618,15 @@ const DailyTab = () => {
         const rd = report.report_data || {};
         const draftRaw = report.daily_report?.report_data || {};
 
-        const source =
+        const rawSource =
           isPending && hasDraft
             ? {
+                ...draftRaw,
                 accomplishments:
                   draftRaw.accomplishments?.items ||
                   (Array.isArray(draftRaw.accomplishments)
                     ? draftRaw.accomplishments
                     : []),
-                tasks_issues: draftRaw.tasks_issues || [],
-                tomorrow_plan: draftRaw.tomorrow_plan || [],
-                big_win: draftRaw.big_win || null,
                 self_rating:
                   draftRaw.details?.self_rating ??
                   draftRaw.sections?.self_rating ??
@@ -574,14 +636,9 @@ const DailyTab = () => {
                   draftRaw.sections?.is_absent ??
                   false,
               }
-            : {
-                accomplishments: rd.accomplishments || [],
-                tasks_issues: rd.tasks_issues || [],
-                tomorrow_plan: rd.tomorrow_plan || [],
-                big_win: rd.big_win || null,
-                self_rating: rd.self_rating ?? null,
-                is_absent: rd.is_absent ?? false,
-              };
+            : rd;
+
+        const source = normalizeReportData(rawSource);
 
         meetingNotesArray.push({
           member: report.name,
@@ -613,7 +670,7 @@ const DailyTab = () => {
     }
     setIsSavingMeeting(true);
     try {
-      const allReports = dailyData?.member_reports || [];
+      const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
       const {
         allAccomplishments,
@@ -658,7 +715,6 @@ const DailyTab = () => {
         },
       };
 
-      console.log("📦 Meeting Payload:", JSON.stringify(payload, null, 2));
       const res = await fetch(
         `${getBaseUrl()}/user_journals/submit_daily_meeting`,
         {
@@ -669,7 +725,7 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting saved successfully!");
-      loadDailyData(true); // ✅ notes preserved
+      loadDailyData(true);
     } catch (err: any) {
       toast.error("Error saving meeting: " + err.message);
     } finally {
@@ -687,7 +743,7 @@ const DailyTab = () => {
     }
     setIsSavingMeeting(true);
     try {
-      const allReports = dailyData?.member_reports || [];
+      const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
       const {
         allAccomplishments,
@@ -731,7 +787,6 @@ const DailyTab = () => {
         },
       };
 
-      console.log("📦 Update Payload:", JSON.stringify(payload, null, 2));
       const res = await fetch(
         `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
         {
@@ -742,7 +797,7 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting updated successfully!");
-      loadDailyData(true); // ✅ notes preserved
+      loadDailyData(true);
     } catch (err: any) {
       toast.error("Error updating meeting: " + err.message);
     } finally {
@@ -757,7 +812,7 @@ const DailyTab = () => {
   const configName =
     config?.name || (selectedMeetingId === "all" ? "All Meetings" : "Meeting");
 
-  let memberReports = dailyData?.member_reports || [];
+  let memberReports = dailyData?.member_reports || dailyData?.reports || [];
   let failedMembers = dailyData?.missed_members || [];
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
@@ -781,6 +836,13 @@ const DailyTab = () => {
     }
   };
 
+  const handleFeedback = () => {
+    navigate("/admin-compass/feedback-dashboard");
+  };
+
+  // ── No meetings state ──
+  const noMeetings = meetingsLoaded && meetingsList.length === 0;
+
   return (
     <div
       className="space-y-5 pb-12"
@@ -795,7 +857,7 @@ const DailyTab = () => {
             </div>
             <div>
               <h2 className="text-[18px] font-extrabold text-[#1a1a1a]">
-                Daily Report
+                Daily Meeting
               </h2>
               <p className="text-xs font-bold text-[#CE8261] mt-0.5">
                 {topDateStr}
@@ -818,7 +880,9 @@ const DailyTab = () => {
           </div>
         </div>
 
+        {/* ── Calendar Body ── */}
         {isLoading && !dailyData ? (
+          /* Skeleton loader */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -826,12 +890,28 @@ const DailyTab = () => {
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className="rounded-[18px] bg-[#F0EBE8]"
+                className="rounded-[18px] bg-[#F0EBE8] animate-pulse"
                 style={{ width: 100, height: 120 }}
               />
             ))}
           </div>
+        ) : noMeetings ? (
+          /* ── No Meetings Empty State ── */
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5EFEB] border border-[#EAE3DF]">
+              <Calendar className="w-7 h-7 text-[#CE8261] opacity-40" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-bold text-neutral-500">
+                No meetings configured
+              </p>
+              <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
+                Please configure a meeting first to view the daily calendar.
+              </p>
+            </div>
+          </div>
         ) : (
+          /* ── Normal Calendar ── */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -839,36 +919,48 @@ const DailyTab = () => {
             {dateRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
-              const isUpcomingHoliday = rawStatus === "non_meeting";
               const isUpcoming = rawStatus === "upcoming";
-
-              if (isUpcoming && !isUpcomingHoliday) {
+              // ── UPCOMING: plain text style (image jaisa) ──
+              // ── UPCOMING: plain text style (image jaisa) ──
+              if (isUpcoming) {
                 return (
                   <div
                     key={dateItem.full_date}
                     className="relative select-none cursor-default"
                     style={{ width: 100, height: 120 }}
                   >
-                    <div
-                      className="flex flex-col items-center justify-center w-full h-full"
-                      style={{ color: "#1a1a1a" }}
-                    >
-                      <span className="text-[11px] font-extrabold uppercase tracking-widest mb-1">
+                    <div className="flex flex-col items-center justify-center w-full h-full border-[3px] border-[#C5BFBB] rounded-[18px] bg-transparent transition-all duration-200">
+                      <span
+                        className="text-[11px] font-extrabold uppercase tracking-widest mb-1 opacity-90"
+                        style={{ color: "#C5BFBB" }}
+                      >
                         {dateItem.day}
                       </span>
-                      <span className="text-[24px] font-bold leading-none">
+                      <span
+                        className="text-[34px] font-bold leading-none"
+                        style={{ color: "#C5BFBB" }}
+                      >
                         {dateItem.date}
                       </span>
+                      <div
+                        className="mt-2.5 h-[20px] px-3 rounded-full flex items-center justify-center text-[9px] font-extrabold uppercase tracking-widest"
+                        style={{ color: "#C5BFBB" }}
+                      >
+                        Upcoming
+                      </div>
                     </div>
                   </div>
                 );
               }
 
+              // ── PAST / TODAY: colored card ──
+              // ── PAST / TODAY / HOLIDAY: colored card ──
               let bg = "#F0EDEA",
                 textColor = "#9CA3AF",
                 labelBg = "rgba(0,0,0,0.07)",
                 labelColor = "#9CA3AF",
                 displayLabel = "Holiday";
+
               if (rawStatus === "missed") {
                 bg = "#F34A4A";
                 textColor = "#FFFFFF";
@@ -885,29 +977,19 @@ const DailyTab = () => {
                 rawStatus === "holiday" ||
                 rawStatus === "non_meeting"
               ) {
+                // 👇 Yahan "non_meeting" add kar diya hai
                 bg = "#F5D142";
                 textColor = "#8A6D3B";
                 labelBg = "rgba(0,0,0,0.09)";
                 labelColor = "#8A6D3B";
-                displayLabel = "Holiday";
-              } else if (isUpcomingHoliday) {
-                bg = "#EFEFEF";
-                textColor = "#AAAAAA";
-                labelBg = "rgba(0,0,0,0.06)";
-                labelColor = "#AAAAAA";
                 displayLabel = "Holiday";
               }
 
               return (
                 <div
                   key={dateItem.full_date}
-                  onClick={() => {
-                    if (!isUpcoming) setActiveDate(dateItem.full_date);
-                  }}
-                  className={cn(
-                    "relative select-none transition-all",
-                    isUpcoming ? "cursor-default" : "cursor-pointer"
-                  )}
+                  onClick={() => setActiveDate(dateItem.full_date)}
+                  className="relative select-none cursor-pointer"
                 >
                   <div
                     className="flex flex-col items-center justify-center rounded-[18px] transition-all duration-200"
@@ -949,24 +1031,30 @@ const DailyTab = () => {
           </div>
         )}
 
-        <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase">
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" />{" "}
-            Filled
+        {/* Legend — always show except when no meetings */}
+        {!noMeetings && (
+          <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-2">
+            <div className="flex items-center gap-2.5">
+              <span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" />{" "}
+              Filled
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-[15px] h-[15px] rounded-full bg-[#F34A4A]" />{" "}
+              Missed
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-[15px] h-[15px] rounded-full bg-[#F5D142]" />{" "}
+              Holiday
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span
+                className="w-[15px] h-[15px] rounded-full border-[3px]"
+                style={{ borderColor: "#C5BFBB", background: "transparent" }}
+              />{" "}
+              Upcoming
+            </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-[#F34A4A]" />{" "}
-            Missed
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-[#F5D142]" />{" "}
-            Holiday
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-white border-[3px] border-[#EAE3DF]" />{" "}
-            Upcoming
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ══ FILTERS ══ */}
@@ -975,42 +1063,59 @@ const DailyTab = () => {
           <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
             Meeting
           </span>
-          <CustomSelect
-            value={selectedMeetingId || ""}
-            onChange={setSelectedMeetingId}
-            placeholder="Loading Meetings..."
-            options={meetingsList.map((m: any) => ({
-              value: m.id,
-              label: m.name,
-            }))}
-          />
+          {noMeetings ? (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <span className="text-xs font-bold text-red-500">
+                No meetings configured
+              </span>
+            </div>
+          ) : (
+            <CustomSelect
+              value={selectedMeetingId || ""}
+              onChange={setSelectedMeetingId}
+              placeholder="Loading Meetings..."
+              options={meetingsList.map((m: any) => ({
+                value: m.id,
+                label: m.name,
+              }))}
+            />
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
-            Member
-          </span>
-          <CustomSelect
-            value={selectedMember}
-            onChange={setSelectedMember}
-            placeholder="All Members"
-            options={[
-              { value: "all", label: "All Members" },
-              ...membersList.map((m: any) => ({ value: m.id, label: m.name })),
-            ]}
-          />
-        </div>
-        <button
-          onClick={() => loadDailyData(false)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-neutral-600 shadow-sm hover:border-[#CE7A5A]/60 hover:text-[#CE7A5A] transition-all"
-        >
-          <RefreshCw
-            className={cn(
-              "w-3.5 h-3.5",
-              isLoading && "animate-spin text-[#CE8261]"
-            )}
-          />{" "}
-          Refresh
-        </button>
+
+        {!noMeetings && (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
+                Member
+              </span>
+              <CustomSelect
+                value={selectedMember}
+                onChange={setSelectedMember}
+                placeholder="All Members"
+                options={[
+                  { value: "all", label: "All Members" },
+                  ...membersList.map((m: any) => ({
+                    value: m.id,
+                    label: m.name,
+                  })),
+                ]}
+              />
+            </div>
+            <button
+              onClick={() => loadDailyData(false)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-neutral-600 shadow-sm hover:border-[#CE7A5A]/60 hover:text-[#CE7A5A] transition-all"
+            >
+              <RefreshCw
+                className={cn(
+                  "w-3.5 h-3.5",
+                  isLoading && "animate-spin text-[#CE8261]"
+                )}
+              />{" "}
+              Refresh
+            </button>
+          </>
+        )}
       </div>
 
       {apiError && (
@@ -1019,31 +1124,49 @@ const DailyTab = () => {
         </div>
       )}
 
-      {isLoading && (
+      {/* ══ NO MEETINGS — full info banner ══ */}
+      {noMeetings && (
+        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 border border-orange-200 shrink-0 mt-0.5">
+            <AlertTriangle className="w-5 h-5 text-orange-500" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-orange-800">
+              No meetings found
+            </p>
+            <p className="text-xs text-orange-600 mt-1 leading-relaxed">
+              There are no daily meeting configurations available. Please ask
+              your admin to configure a meeting to start viewing daily reports.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isLoading && !noMeetings && (
         <div className="border border-[#F0EBE8] rounded-2xl shadow-sm overflow-hidden bg-white mt-4">
           <div className="p-4 border-b border-[#F0EBE8] flex justify-between items-center bg-[#FAFAFA] flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8]" />
+              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
               <div className="space-y-2">
-                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full" />
-                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full" />
+                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
+                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl" />
-              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl" />
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl" />
+              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
+              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
+              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
             </div>
           </div>
           <div className="p-4 space-y-6">
             <div className="border border-[#F0EBE8] rounded-2xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between p-3 border-b border-[#F0EBE8] bg-[#FAFAFA]">
-                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full" />
-                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8]" />
+                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
+                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8] animate-pulse" />
               </div>
               <div className="p-4 h-24 bg-white" />
               <div className="p-3 border-t border-[#F0EBE8] bg-[#FAFAFA] flex justify-end">
-                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8]" />
+                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
               </div>
             </div>
             <div className="space-y-4">
@@ -1053,15 +1176,15 @@ const DailyTab = () => {
                   className="border border-[#F0EBE8] rounded-2xl p-4 bg-white shadow-sm flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded bg-[#F0EBE8]" />
-                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full" />
-                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto" />
+                    <div className="w-4 h-4 rounded bg-[#F0EBE8] animate-pulse" />
+                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full animate-pulse" />
+                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto animate-pulse" />
                   </div>
-                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7" />
+                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7 animate-pulse" />
                   <div className="flex gap-2 ml-7">
-                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg" />
+                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
+                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
+                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
                   </div>
                 </div>
               ))}
@@ -1071,7 +1194,7 @@ const DailyTab = () => {
       )}
 
       {/* ══ REPORTS SECTION ══ */}
-      {!isLoading && dailyData && (
+      {!isLoading && dailyData && !noMeetings && (
         <>
           <div className="border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm overflow-hidden bg-[#FFFDFB]">
             <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fef6f4]">
@@ -1177,20 +1300,18 @@ const DailyTab = () => {
                       const draftRaw = report.daily_report?.report_data || {};
                       const rd = report.report_data || {};
 
-                      const displayRd =
+                      const rawDisplayRd =
                         isPending && hasDraft
                           ? {
+                              ...draftRaw,
                               accomplishments:
                                 draftRaw.accomplishments?.items ||
                                 (Array.isArray(draftRaw.accomplishments)
                                   ? draftRaw.accomplishments
                                   : []),
-                              tomorrow_plan: draftRaw.tomorrow_plan || [],
-                              tasks_issues: draftRaw.tasks_issues || [],
                               self_rating:
                                 draftRaw.details?.self_rating ??
                                 draftRaw.sections?.self_rating,
-                              big_win: draftRaw.big_win,
                               total_score: draftRaw.total_score,
                               is_absent:
                                 draftRaw.details?.is_absent ??
@@ -1198,17 +1319,27 @@ const DailyTab = () => {
                             }
                           : rd;
 
-                      const kpis =
-                        report.kpis ||
-                        rd.kpis ||
-                        (isPending && hasDraft
-                          ? {
-                              tasks: "0",
-                              issues: "0",
-                              planning: "0",
-                              timing: "0",
-                            }
-                          : {});
+                      const displayRd = normalizeReportData(rawDisplayRd);
+
+                      const displayKpis = {
+                        tasks:
+                          draftRaw.sections?.tasks_issues ??
+                          rd.sections?.tasks_issues ??
+                          report.kpis?.tasks ??
+                          rd.kpis?.tasks,
+                        issues: report.kpis?.issues ?? rd.kpis?.issues,
+                        planning:
+                          draftRaw.sections?.planning ??
+                          rd.sections?.planning ??
+                          report.kpis?.planning ??
+                          rd.kpis?.planning,
+                        timing:
+                          draftRaw.sections?.timing ??
+                          rd.sections?.timing ??
+                          report.kpis?.timing ??
+                          rd.kpis?.timing,
+                      };
+
                       const canExpand = !isPending || hasDraft;
 
                       return (
@@ -1298,28 +1429,28 @@ const DailyTab = () => {
                                       {report.score}/20
                                     </span>
                                   )}
-                                {kpis.tasks !== undefined &&
-                                  kpis.tasks !== null && (
+                                {displayKpis.tasks !== undefined &&
+                                  displayKpis.tasks !== null && (
                                     <span className="text-[11px] font-bold text-orange-600 bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-lg">
-                                      Tasks: {kpis.tasks}
+                                      Tasks/Issues: {displayKpis.tasks}
                                     </span>
                                   )}
-                                {kpis.issues !== undefined &&
-                                  kpis.issues !== null && (
+                                {displayKpis.issues !== undefined &&
+                                  displayKpis.issues !== null && (
                                     <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-lg">
-                                      Issues: {kpis.issues}
+                                      Issues: {displayKpis.issues}
                                     </span>
                                   )}
-                                {kpis.planning !== undefined &&
-                                  kpis.planning !== null && (
+                                {displayKpis.planning !== undefined &&
+                                  displayKpis.planning !== null && (
                                     <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg">
-                                      Planning: {kpis.planning}
+                                      Planning: {displayKpis.planning}
                                     </span>
                                   )}
-                                {kpis.timing !== undefined &&
-                                  kpis.timing !== null && (
+                                {displayKpis.timing !== undefined &&
+                                  displayKpis.timing !== null && (
                                     <span className="text-[11px] font-bold text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-lg">
-                                      Timing: {kpis.timing}
+                                      Timing: {displayKpis.timing}
                                     </span>
                                   )}
                               </div>
@@ -1347,10 +1478,10 @@ const DailyTab = () => {
                                       )}
                                     >
                                       <span className="text-[8px] opacity-80 leading-none mb-0.5">
-                                        {d.day?.charAt(0)}
+                                        {d.day ? d.day.charAt(0) : ""}
                                       </span>
                                       <span className="leading-none">
-                                        {d.date}
+                                        {d.date ?? ""}
                                       </span>
                                     </div>
                                   );
@@ -1371,7 +1502,7 @@ const DailyTab = () => {
                             <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                               <div className="p-5 space-y-5">
                                 <div className="flex flex-wrap gap-3">
-                                  {displayRd.self_rating && (
+                                  {displayRd.self_rating != null && (
                                     <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
                                       <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                       <span className="text-sm font-bold text-yellow-800">
@@ -1379,36 +1510,39 @@ const DailyTab = () => {
                                       </span>
                                     </div>
                                   )}
-                                  {displayRd.total_score !== undefined && (
-                                    <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                                      <span className="text-sm font-bold text-purple-800">
-                                        Total Score: {displayRd.total_score}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {displayRd.is_absent !== undefined && (
-                                    <div
-                                      className={cn(
-                                        "flex items-center gap-2 rounded-xl px-4 py-2.5 border",
-                                        displayRd.is_absent
-                                          ? "bg-red-50 border-red-100"
-                                          : "bg-green-50 border-green-100"
-                                      )}
-                                    >
-                                      <span
+                                  {rawDisplayRd?.total_score !== undefined &&
+                                    rawDisplayRd?.total_score !== null && (
+                                      <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
+                                        <span className="text-sm font-bold text-purple-800">
+                                          Total Score:{" "}
+                                          {rawDisplayRd.total_score}
+                                        </span>
+                                      </div>
+                                    )}
+                                  {displayRd.is_absent !== null &&
+                                    displayRd.is_absent !== undefined && (
+                                      <div
                                         className={cn(
-                                          "text-sm font-bold",
+                                          "flex items-center gap-2 rounded-xl px-4 py-2.5 border",
                                           displayRd.is_absent
-                                            ? "text-red-700"
-                                            : "text-green-700"
+                                            ? "bg-red-50 border-red-100"
+                                            : "bg-green-50 border-green-100"
                                         )}
                                       >
-                                        {displayRd.is_absent
-                                          ? "Absent"
-                                          : "Present"}
-                                      </span>
-                                    </div>
-                                  )}
+                                        <span
+                                          className={cn(
+                                            "text-sm font-bold",
+                                            displayRd.is_absent
+                                              ? "text-red-700"
+                                              : "text-green-700"
+                                          )}
+                                        >
+                                          {displayRd.is_absent
+                                            ? "Absent"
+                                            : "Present"}
+                                        </span>
+                                      </div>
+                                    )}
                                 </div>
 
                                 {displayRd.big_win && (
@@ -1426,6 +1560,7 @@ const DailyTab = () => {
                                 )}
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  {/* Accomplishments */}
                                   <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                       <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
@@ -1435,14 +1570,13 @@ const DailyTab = () => {
                                         Accomplishments
                                       </h4>
                                     </div>
-                                    {(displayRd.accomplishments || [])
-                                      .length === 0 ? (
+                                    {displayRd.accomplishments.length === 0 ? (
                                       <p className="text-xs text-neutral-300 italic">
                                         None recorded.
                                       </p>
                                     ) : (
                                       <ul className="space-y-2">
-                                        {(displayRd.accomplishments || []).map(
+                                        {displayRd.accomplishments.map(
                                           (item: any, i: number) => (
                                             <li
                                               key={i}
@@ -1450,7 +1584,7 @@ const DailyTab = () => {
                                             >
                                               <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
                                               <span className="leading-relaxed">
-                                                {item.title || item}
+                                                {getItemTitle(item)}
                                               </span>
                                             </li>
                                           )
@@ -1459,6 +1593,7 @@ const DailyTab = () => {
                                     )}
                                   </div>
 
+                                  {/* Tasks & Issues */}
                                   <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                       <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
@@ -1468,14 +1603,13 @@ const DailyTab = () => {
                                         Tasks & Issues
                                       </h4>
                                     </div>
-                                    {(displayRd.tasks_issues || []).length ===
-                                    0 ? (
+                                    {displayRd.tasks_issues.length === 0 ? (
                                       <p className="text-xs text-neutral-300 italic">
                                         None recorded.
                                       </p>
                                     ) : (
                                       <ul className="space-y-2.5">
-                                        {(displayRd.tasks_issues || []).map(
+                                        {displayRd.tasks_issues.map(
                                           (item: any, i: number) => (
                                             <li
                                               key={i}
@@ -1484,17 +1618,18 @@ const DailyTab = () => {
                                               <span
                                                 className={cn(
                                                   "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                                  item.status === "open"
+                                                  getItemStatus(item) === "open"
                                                     ? "bg-red-100 text-red-600"
-                                                    : item.status === "closed"
+                                                    : getItemStatus(item) ===
+                                                        "closed"
                                                       ? "bg-green-100 text-green-600"
                                                       : "bg-gray-100 text-gray-500"
                                                 )}
                                               >
-                                                {item.status || "open"}
+                                                {getItemStatus(item)}
                                               </span>
                                               <span className="leading-relaxed">
-                                                {item.title || item}
+                                                {getItemTitle(item)}
                                               </span>
                                             </li>
                                           )
@@ -1503,6 +1638,7 @@ const DailyTab = () => {
                                     )}
                                   </div>
 
+                                  {/* Tomorrow's Plan */}
                                   <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                       <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
@@ -1512,14 +1648,13 @@ const DailyTab = () => {
                                         Tomorrow's Plan
                                       </h4>
                                     </div>
-                                    {(displayRd.tomorrow_plan || []).length ===
-                                    0 ? (
+                                    {displayRd.tomorrow_plan.length === 0 ? (
                                       <p className="text-xs text-neutral-300 italic">
                                         None recorded.
                                       </p>
                                     ) : (
                                       <ul className="space-y-2">
-                                        {(displayRd.tomorrow_plan || []).map(
+                                        {displayRd.tomorrow_plan.map(
                                           (item: any, i: number) => (
                                             <li
                                               key={i}
@@ -1527,7 +1662,7 @@ const DailyTab = () => {
                                             >
                                               <Circle className="w-3 h-3 text-blue-300 mt-0.5 shrink-0" />
                                               <span className="leading-relaxed">
-                                                {item.title || item}
+                                                {getItemTitle(item)}
                                               </span>
                                             </li>
                                           )
@@ -1563,11 +1698,14 @@ const DailyTab = () => {
                                   </button>
                                   <button
                                     onClick={() => {
-                                      setFeedbackOpenId(
-                                        feedbackOpenId === rId ? null : rId
-                                      );
-                                      setFeedbackRating(0);
-                                      setFeedbackMessage("");
+                                      if (feedbackOpenId === rId) {
+                                        setFeedbackOpenId(null);
+                                      } else {
+                                        setFeedbackOpenId(rId);
+                                        setFeedbackRating(0);
+                                        setFeedbackMessage("");
+                                        loadPastFeedbacks(report.user_id);
+                                      }
                                     }}
                                     className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
                                   >
@@ -1609,7 +1747,7 @@ const DailyTab = () => {
                                               );
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
-                                              loadDailyData(true); // ✅ notes untouched
+                                              loadDailyData(true);
                                             }
                                           }
                                           if (e.key === "Escape") {
@@ -1634,7 +1772,7 @@ const DailyTab = () => {
                                               );
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
-                                              loadDailyData(true); // ✅ notes untouched
+                                              loadDailyData(true);
                                             }
                                           }
                                         }}
@@ -1655,89 +1793,209 @@ const DailyTab = () => {
                                   </div>
                                 )}
 
+                                {/* ── 2-COLUMN FEEDBACK BLOCK ── */}
                                 {feedbackOpenId === rId && (
-                                  <div className="border-t border-[#EAE3DF] pt-4 mt-1">
-                                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                      Quick Actions
-                                    </p>
-                                    <p className="text-sm font-bold text-neutral-800 mb-2">
-                                      Rating (1-5 stars)
-                                    </p>
-                                    <div className="flex items-center gap-1 mb-4">
-                                      {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                          key={star}
-                                          type="button"
-                                          onClick={() =>
-                                            setFeedbackRating(star)
+                                  <div className="border-t border-[#EAE3DF] pt-5 mt-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                      {/* COLUMN 1: Add New Feedback Form */}
+                                      <div>
+                                        <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
+                                          Provide Feedback
+                                        </p>
+                                        <p className="text-sm font-bold text-neutral-800 mb-2">
+                                          Rating (1-5 stars)
+                                        </p>
+                                        <div className="flex items-center gap-1 mb-4">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                              key={star}
+                                              type="button"
+                                              onClick={() =>
+                                                setFeedbackRating(star)
+                                              }
+                                              className="transition-transform hover:scale-110"
+                                            >
+                                              <svg
+                                                className="w-8 h-8"
+                                                viewBox="0 0 24 24"
+                                                fill={
+                                                  star <= feedbackRating
+                                                    ? "#F59E0B"
+                                                    : "none"
+                                                }
+                                                stroke={
+                                                  star <= feedbackRating
+                                                    ? "#F59E0B"
+                                                    : "#D1D5DB"
+                                                }
+                                                strokeWidth="1.5"
+                                              >
+                                                <path
+                                                  strokeLinejoin="round"
+                                                  d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                                                />
+                                              </svg>
+                                            </button>
+                                          ))}
+                                        </div>
+                                        <p className="text-sm font-bold text-neutral-800 mb-2">
+                                          Feedback Message
+                                        </p>
+                                        <textarea
+                                          autoFocus
+                                          value={feedbackMessage}
+                                          onChange={(e) =>
+                                            setFeedbackMessage(e.target.value)
                                           }
-                                          className="transition-transform hover:scale-110"
-                                        >
-                                          <svg
-                                            className="w-8 h-8"
-                                            viewBox="0 0 24 24"
-                                            fill={
-                                              star <= feedbackRating
-                                                ? "#F59E0B"
-                                                : "none"
-                                            }
-                                            stroke={
-                                              star <= feedbackRating
-                                                ? "#F59E0B"
-                                                : "#D1D5DB"
-                                            }
-                                            strokeWidth="1.5"
+                                          placeholder="Enter constructive feedback..."
+                                          rows={3}
+                                          className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                                        />
+                                        <div className="flex items-center gap-3 mt-4">
+                                          <button
+                                            onClick={async () => {
+                                              if (feedbackRating === 0) {
+                                                toast.error(
+                                                  "Please select a star rating!"
+                                                );
+                                                return;
+                                              }
+                                              try {
+                                                const loggedInUserId =
+                                                  localStorage.getItem(
+                                                    "userId"
+                                                  ) || "";
+                                                const payload = {
+                                                  resource_type: "User",
+                                                  resource_id: report.user_id,
+                                                  rating_from_id:
+                                                    loggedInUserId,
+                                                  score: feedbackRating,
+                                                  reviews: feedbackMessage,
+                                                  positive_opening: "",
+                                                  constructive_feedback: "",
+                                                  positive_closing: "",
+                                                };
+                                                const res = await fetch(
+                                                  `${getBaseUrl()}/ratings`,
+                                                  {
+                                                    method: "POST",
+                                                    headers: {
+                                                      ...getAuthHeaders(),
+                                                      "Content-Type":
+                                                        "application/json",
+                                                    },
+                                                    body: JSON.stringify(
+                                                      payload
+                                                    ),
+                                                  }
+                                                );
+                                                if (!res.ok)
+                                                  throw new Error(
+                                                    `HTTP ${res.status}`
+                                                  );
+                                                toast.success(
+                                                  "Feedback added!"
+                                                );
+                                                setFeedbackOpenId(null);
+                                                setFeedbackRating(0);
+                                                setFeedbackMessage("");
+                                                loadDailyData(true);
+                                              } catch (err: any) {
+                                                toast.error(
+                                                  "Error adding feedback: " +
+                                                    err.message
+                                                );
+                                              }
+                                            }}
+                                            className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
                                           >
-                                            <path
-                                              strokeLinejoin="round"
-                                              d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                                            />
-                                          </svg>
-                                        </button>
-                                      ))}
-                                    </div>
-                                    <p className="text-sm font-bold text-neutral-800 mb-2">
-                                      Feedback Message
-                                    </p>
-                                    <textarea
-                                      autoFocus
-                                      value={feedbackMessage}
-                                      onChange={(e) =>
-                                        setFeedbackMessage(e.target.value)
-                                      }
-                                      placeholder="Enter constructive feedback..."
-                                      rows={4}
-                                      className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
-                                    />
-                                    <div className="flex items-center gap-3 mt-4">
-                                      <button
-                                        onClick={async () => {
-                                          const ok = await updateJournal(
-                                            report,
-                                            { self_rating: feedbackRating }
-                                          );
-                                          if (ok) {
-                                            toast.success("Feedback added!");
-                                            setFeedbackOpenId(null);
-                                            setFeedbackRating(0);
-                                            setFeedbackMessage("");
-                                            loadDailyData(true); // ✅ notes untouched
-                                          }
-                                        }}
-                                        className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
-                                      >
-                                        Add Feedback
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setFeedbackOpenId(null);
-                                          setFeedbackRating(0);
-                                          setFeedbackMessage("");
-                                        }}
-                                        className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                      >
-                                        Cancel
-                                      </button>
+                                            Submit Feedback
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setFeedbackOpenId(null);
+                                              setFeedbackRating(0);
+                                              setFeedbackMessage("");
+                                            }}
+                                            className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* COLUMN 2: Recent Feedbacks */}
+                                      <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
+                                        <div className="flex items-center justify-between mb-4">
+                                          <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
+                                            Recent Feedbacks
+                                          </p>
+                                          <button
+                                            onClick={handleFeedback}
+                                            className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                          >
+                                            View All{" "}
+                                            <ChevronRight className="w-3 h-3" />
+                                          </button>
+                                        </div>
+
+                                        {isFetchingFeedbacks ? (
+                                          <div className="flex justify-center items-center h-full py-6">
+                                            <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                          </div>
+                                        ) : fetchedFeedbacks.length === 0 ? (
+                                          <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                            <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                            <span className="text-xs font-medium italic">
+                                              No past feedback found.
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                            {fetchedFeedbacks
+                                              .slice(0, 3)
+                                              .map((fb: any, idx: number) => (
+                                                <div
+                                                  key={idx}
+                                                  className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                                                >
+                                                  <div className="flex items-center gap-1 mb-1.5">
+                                                    {[1, 2, 3, 4, 5].map(
+                                                      (star) => (
+                                                        <Star
+                                                          key={star}
+                                                          className={cn(
+                                                            "w-3 h-3",
+                                                            star <= fb.score
+                                                              ? "text-yellow-400 fill-yellow-400"
+                                                              : "text-gray-200"
+                                                          )}
+                                                        />
+                                                      )
+                                                    )}
+                                                    {fb.created_at && (
+                                                      <span className="text-[9px] text-gray-400 ml-auto font-medium">
+                                                        {new Date(
+                                                          fb.created_at
+                                                        ).toLocaleDateString()}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                  {fb.reviews ? (
+                                                    <p className="text-xs text-neutral-700 leading-relaxed">
+                                                      {fb.reviews}
+                                                    </p>
+                                                  ) : (
+                                                    <p className="text-xs text-neutral-400 italic">
+                                                      No review provided.
+                                                    </p>
+                                                  )}
+                                                </div>
+                                              ))}
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 )}

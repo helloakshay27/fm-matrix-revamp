@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import {
   Check, X, TrendingUp, TriangleAlert,
   Plus, Trash2, GripVertical, Info, ExternalLink,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // ── Design tokens — from BusinessPlanAndGoles ──
 const C = {
@@ -97,6 +98,8 @@ const ThemeStyle = () => (
       box-shadow: 0 8px 32px rgba(218,119,86,0.12) !important;
       transform: translateY(-1px);
     }
+    
+    .drag-over { border: 2px dashed ${C.primary} !important; opacity: 0.5; }
   `}</style>
 );
 
@@ -231,6 +234,11 @@ export default function SWOTAnalysis() {
   const [isSaving, setIsSaving]         = useState(false);
   const [saveError, setSaveError]       = useState<string | null>(null);
 
+  // For Drag and Drop
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
   // ── GET ──
   const fetchQuadrant = useCallback(async (key: string) => {
     const groupName = GROUP_NAMES[key];
@@ -295,8 +303,10 @@ export default function SWOTAnalysis() {
       setData(prev => ({ ...prev, [editCategory]: filtered }));
       setIsModalOpen(false);
       fetchQuadrant(editCategory);
+      toast.success(`${CONFIG[editCategory].title} saved successfully!`);
     } catch (err: any) {
       setSaveError(err.message || 'Failed to save. Please try again.');
+      toast.error(err.message || 'Failed to save.');
     } finally {
       setIsSaving(false);
     }
@@ -304,6 +314,33 @@ export default function SWOTAnalysis() {
 
   const handleItemChange = (idx: number, val: string) => { const n = [...tempItems]; n[idx] = val; setTempItems(n); };
   const handleDeleteItem = (idx: number) => setTempItems(tempItems.filter((_, i) => i !== idx));
+
+  // ── Drag and Drop Logic ──
+  const onDragStart = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    dragItem.current = position;
+    // For firefox to work
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const onDragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+    e.preventDefault();
+    dragOverItem.current = position;
+    setDragOverIdx(position);
+  };
+
+  const onDragEnd = () => {
+    if (dragItem.current !== null && dragOverItem.current !== null) {
+      const copyListItems = [...tempItems];
+      const dragItemContent = copyListItems[dragItem.current];
+      copyListItems.splice(dragItem.current, 1);
+      copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+      
+      dragItem.current = null;
+      dragOverItem.current = null;
+      setDragOverIdx(null);
+      setTempItems(copyListItems);
+    }
+  };
 
   const conf = editCategory ? CONFIG[editCategory] : null;
 
@@ -460,23 +497,30 @@ export default function SWOTAnalysis() {
               {tempItems.map((item, idx) => (
                 <div
                   key={idx}
+                  draggable
+                  onDragStart={(e) => onDragStart(e, idx)}
+                  onDragEnter={(e) => onDragEnter(e, idx)}
+                  onDragEnd={onDragEnd}
+                  onDragOver={(e) => e.preventDefault()}
+                  className={dragOverIdx === idx ? 'drag-over' : ''}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     border: `1px solid ${C.borderLgt}`, borderRadius: 14,
                     padding: '8px 12px', background: '#fff',
                     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                    transition: 'border-color .15s',
+                    transition: 'border-color .15s, opacity 0.2s',
+                    cursor: 'grab' // Indicates draggability
                   }}
                   onFocusCapture={e => e.currentTarget.style.borderColor = C.primary}
                   onBlurCapture={e => e.currentTarget.style.borderColor = C.borderLgt}
                 >
-                  <GripVertical size={15} style={{ color: '#d4cdc6', cursor: 'grab', flexShrink: 0 }} />
+                  <GripVertical size={15} style={{ color: '#d4cdc6', flexShrink: 0 }} />
                   <input
                     type="text" value={item}
                     onChange={e => handleItemChange(idx, e.target.value)}
                     placeholder="Add new item..."
                     className="swot-input"
-                    style={{ flex: 1, border: 'none', padding: 0, background: 'transparent', boxShadow: 'none', fontSize: 13, fontWeight: 600 }}
+                    style={{ flex: 1, border: 'none', padding: 0, background: 'transparent', boxShadow: 'none', fontSize: 13, fontWeight: 600, cursor: 'text' }}
                   />
                   <button
                     onClick={() => handleDeleteItem(idx)}

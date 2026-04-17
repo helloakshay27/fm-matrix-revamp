@@ -564,198 +564,277 @@ const FeedbackPanel = ({ reportId, onClose }) => {
   );
 };
 
-// ─────────────────────────────────────────────
-// Report Detail Modal
+/// ─────────────────────────────────────────────
+// Report Detail Modal (API Integrated + 3-Column Layout)
 // ─────────────────────────────────────────────
 const ReportDetailModal = ({ log, onClose }) => {
   const [activeAction, setActiveAction] = useState(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
 
-  const raw = log._raw || {};
-  const tasks = Array.isArray(raw.tasks_and_issues)
-    ? raw.tasks_and_issues
-    : Array.isArray(raw.tasks)
-      ? raw.tasks
-      : [];
-  const accomplishments = Array.isArray(raw.accomplishments)
-    ? raw.accomplishments
-    : [];
-  const plans = Array.isArray(raw.plans)
-    ? raw.plans
-    : Array.isArray(raw.tomorrows_plan)
-      ? raw.tomorrows_plan
-      : [];
-
-  const fallbackAccomplishments =
-    accomplishments.length === 0 && log.highlights && log.status !== "pending"
-      ? [{ text: log.highlights }]
-      : accomplishments;
+  // API Fetch State
+  const [details, setDetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const isPending = log.status === "pending";
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      // Agar pending hai ya dummy ID hai, toh API call mat karo
+      if (isPending || !log.id || String(log.id).startsWith("user-")) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const baseUrl = getBaseUrl(); // Shared.jsx ka function
+        const headers = getAuthHeaders(); // Shared.jsx ka function
+        const url = `${baseUrl}/user_journals/${log.id}.json`;
+
+        const res = await fetch(url, { method: "GET", headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        setDetails(data);
+      } catch (error) {
+        toast.error("Failed to load report details: " + error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDetails();
+  }, [log.id, isPending]);
+
+  // Extract data from API response or fallback to empty arrays
+  const reportData = details?.report_data || {};
+
+  const tasks = Array.isArray(reportData.tasks_issues)
+    ? reportData.tasks_issues
+    : [];
+  const accomplishments = Array.isArray(reportData.accomplishments)
+    ? reportData.accomplishments
+    : [];
+  const plans = Array.isArray(reportData.tomorrow_plan)
+    ? reportData.tomorrow_plan
+    : [];
+
+  // Agar accomplishments empty hai, toh table wala highlight dikha do
+  const fallbackAccomplishments =
+    accomplishments.length === 0 && log.highlights && !isPending
+      ? [{ title: log.highlights }]
+      : accomplishments;
+
+  // JSON me text "title", "text", ya "description" key me ho sakta hai
+  const getText = (item) =>
+    typeof item === "string"
+      ? item
+      : item.title || item.text || item.description || "";
 
   return (
     <>
       {createPortal(
         <div
-          className="fixed inset-0 z-[9990] flex items-start justify-end"
+          className="fixed inset-0 z-[9990] flex items-center justify-center p-4 sm:p-6"
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
+          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={onClose}
           />
-          <div className="relative z-10 bg-white h-full w-full max-w-[600px] shadow-2xl flex flex-col overflow-hidden border-l border-[#F0EBE8] rounded-l-[32px]">
-            <div className="px-8 pt-8 pb-5 border-b border-[#F0EBE8] shrink-0 flex items-start justify-between bg-[#FCFAFA]">
+
+          {/* Modal Container */}
+          <div className="relative z-10 bg-[#FCFAFA] w-full max-w-[1100px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
               <div>
-                <h3 className="text-xl font-black text-[#1A1A1A] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-[12px] bg-white border border-[#F0EBE8] flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-[#EB4A4A]" />
-                  </div>
-                  {log.user} — Report
-                </h3>
-                <p className="text-xs font-bold text-[#8C8580] mt-2 tracking-wider uppercase">
-                  {log.dept} {log.date && <> · {fmt(log.date)}</>}
+                <h2 className="text-xl font-bold text-[#1A1A1A] flex items-center gap-2">
+                  Daily Report Details
                   {isPending && (
-                    <span className="ml-2 text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
-                      Pending Submission
+                    <span className="text-[10px] bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Pending
                     </span>
                   )}
+                </h2>
+                <p className="text-xs font-semibold text-[#8C8580] mt-1">
+                  {log.user} ({log.dept}) • {log.date && fmt(log.date)}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-[#F0EBE8] text-gray-500 hover:bg-gray-50 transition-colors shrink-0"
+                className="text-gray-400 hover:bg-gray-100 hover:text-[#EB4A4A] p-2 rounded-[12px] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-6">
-              <div className="bg-[#FCFAFA] rounded-[20px] border border-[#F05252]/30 p-5">
-                <h4 className="flex items-center gap-2 text-[11px] uppercase tracking-widest font-black text-[#F05252] mb-4">
-                  <div className="w-2 h-2 rounded-full bg-[#F05252]" /> Tasks
-                  &amp; Issues
-                </h4>
-                {tasks.length === 0 ? (
-                  <p className="text-sm font-medium text-[#8C8580] italic">
-                    {isPending ? "No data submitted yet" : "No tasks or issues"}
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {isLoading ? (
+                // Loading Skeleton
+                <div className="flex flex-col items-center justify-center h-40 space-y-4">
+                  <RefreshCw className="w-8 h-8 text-[#EB4A4A] animate-spin" />
+                  <p className="text-sm font-bold text-[#8C8580]">
+                    Fetching journal details...
                   </p>
-                ) : (
-                  <ul className="space-y-3">
-                    {tasks.map((item, i) => {
-                      const t =
-                        typeof item === "string"
-                          ? item
-                          : item.text || item.description || "";
-                      return (
-                        <li key={i} className="flex items-start gap-3">
-                          <Circle className="w-4 h-4 text-[#F05252] shrink-0 mt-0.5" />
-                          <span className="text-sm font-medium text-[#1A1A1A] flex-1 leading-relaxed">
-                            {t}
-                          </span>
-                          {item.type && (
-                            <span className="text-[10px] font-black px-2 py-1 rounded-[8px] bg-white border border-[#F05252]/30 text-[#F05252] shrink-0 uppercase tracking-wider">
-                              {item.type}
-                            </span>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                  {/* Column 1: Tasks & Issues */}
+                  <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
+                    <div className="bg-[#FFF5F5] px-4 py-3 border-b border-[#F05252]/20 flex items-center gap-2 shrink-0">
+                      <Circle
+                        className="w-4 h-4 text-[#F05252]"
+                        fill="#F05252"
+                        fillOpacity={0.15}
+                      />
+                      <h3 className="font-bold text-[#F05252] text-sm">
+                        Tasks & Issues
+                      </h3>
+                    </div>
+                    <div className="p-5 flex-1">
+                      {tasks.length === 0 ? (
+                        <p className="text-sm font-medium text-[#8C8580] italic">
+                          No tasks or issues
+                        </p>
+                      ) : (
+                        <ul className="space-y-4">
+                          {tasks.map((item, i) => {
+                            const t = getText(item);
+                            const isTask =
+                              item.type === "task" ||
+                              t.toLowerCase().includes("task");
+                            return (
+                              <li key={i} className="flex items-start gap-3">
+                                <Circle className="w-4 h-4 text-[#F05252] shrink-0 mt-0.5" />
+                                <span className="text-sm font-medium text-gray-700 leading-relaxed flex-1">
+                                  {t}
+                                </span>
+                                {isTask && (
+                                  <span className="text-[10px] bg-blue-50 text-blue-500 border border-blue-100 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide shrink-0">
+                                    Task
+                                  </span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="bg-[#FCFAFA] rounded-[20px] border border-[#2ECC71]/30 p-5">
-                <h4 className="flex items-center gap-2 text-[11px] uppercase tracking-widest font-black text-[#2ECC71] mb-4">
-                  <div className="w-2 h-2 rounded-full bg-[#2ECC71]" />{" "}
-                  Accomplishments
-                </h4>
-                {fallbackAccomplishments.length === 0 ? (
-                  <p className="text-sm font-medium text-[#8C8580] italic">
-                    {isPending ? "No data submitted yet" : "No accomplishments"}
-                  </p>
-                ) : (
-                  <ul className="space-y-3">
-                    {fallbackAccomplishments.map((item, i) => {
-                      const t =
-                        typeof item === "string"
-                          ? item
-                          : item.text || item.description || "";
-                      return (
-                        <li key={i} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-4 h-4 text-[#2ECC71] shrink-0 mt-0.5" />
-                          <span className="text-sm font-medium text-[#1A1A1A] leading-relaxed">
-                            {t}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+                  {/* Column 2: Accomplishments */}
+                  <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
+                    <div className="bg-[#F0FDF4] px-4 py-3 border-b border-[#2ECC71]/20 flex items-center gap-2 shrink-0">
+                      <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
+                      <h3 className="font-bold text-[#2ECC71] text-sm">
+                        Accomplishments
+                      </h3>
+                    </div>
+                    <div className="p-5 flex-1">
+                      {fallbackAccomplishments.length === 0 ? (
+                        <p className="text-sm font-medium text-[#8C8580] italic">
+                          No accomplishments
+                        </p>
+                      ) : (
+                        <ul className="space-y-4">
+                          {fallbackAccomplishments.map((item, i) => {
+                            const t = getText(item);
+                            const tLower = t.toLowerCase();
+                            const isInProcess =
+                              tLower.includes("in process") ||
+                              tLower.includes("started");
+                            const Icon = isInProcess ? Circle : CheckCircle2;
 
-              <div className="bg-[#FCFAFA] rounded-[20px] border border-[#F4D35E]/40 p-5">
-                <h4 className="flex items-center gap-2 text-[11px] uppercase tracking-widest font-black text-[#DAB835] mb-4">
-                  <div className="w-2 h-2 rounded-full bg-[#F4D35E]" />{" "}
-                  Tomorrow's Plan
-                </h4>
-                {plans.length === 0 ? (
-                  <p className="text-sm font-medium text-[#8C8580] italic">
-                    {isPending ? "No data submitted yet" : "No plan recorded"}
-                  </p>
-                ) : (
-                  <ul className="space-y-3">
-                    {plans.map((item, i) => {
-                      const t =
-                        typeof item === "string"
-                          ? item
-                          : item.text || item.description || "";
-                      return (
-                        <li key={i} className="flex items-start gap-3">
-                          <ArrowRight className="w-4 h-4 text-[#DAB835] shrink-0 mt-0.5" />
-                          <span className="text-sm font-medium text-[#1A1A1A] leading-relaxed">
-                            {t}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+                            return (
+                              <li key={i} className="flex items-start gap-3">
+                                <Icon className="w-4 h-4 text-[#2ECC71] shrink-0 mt-0.5" />
+                                <span className="text-sm font-medium text-gray-700 leading-relaxed">
+                                  {t}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
 
-              {!isPending && log.id && !String(log.id).startsWith("user-") && (
-                <div className="pt-4 border-t border-[#F0EBE8]">
-                  <p className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-4">
+                  {/* Column 3: Tomorrow's Plan */}
+                  <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
+                    <div className="bg-[#FEFCE8] px-4 py-3 border-b border-[#F4D35E]/40 flex items-center gap-2 shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-[#DAB835] ml-1" />
+                      <h3 className="font-bold text-[#DAB835] text-sm ml-1">
+                        Tomorrow's Plan
+                      </h3>
+                    </div>
+                    <div className="p-5 flex-1">
+                      {plans.length === 0 ? (
+                        <p className="text-sm font-medium text-[#8C8580] italic">
+                          No plan recorded
+                        </p>
+                      ) : (
+                        <ul className="space-y-4">
+                          {plans.map((item, i) => {
+                            const t = getText(item);
+                            return (
+                              <li key={i} className="flex items-start gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#DAB835] shrink-0 mt-2 ml-1" />
+                                <span className="text-sm font-medium text-gray-700 leading-relaxed">
+                                  {t}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer / Quick Actions */}
+            {!isPending &&
+              log.id &&
+              !String(log.id).startsWith("user-") &&
+              !isLoading && (
+                <div className="px-6 py-5 border-t border-[#F0EBE8] bg-white shrink-0">
+                  <p className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
                     Quick Actions
                   </p>
                   {activeAction === null && (
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <button
                         onClick={() => setTaskModalOpen(true)}
-                        className="flex items-center gap-2 px-5 py-2.5 border border-[#F0EBE8] bg-white rounded-[14px] text-sm font-bold text-[#1A1A1A] hover:border-[#1A1A1A] transition-all"
+                        className="flex items-center gap-2 px-4 py-2 border border-[#F0EBE8] bg-white rounded-[12px] text-sm font-bold text-[#1A1A1A] hover:bg-gray-50 transition-colors shadow-sm"
                       >
-                        <Plus className="w-4 h-4" /> Task
+                        <Plus className="w-4 h-4 text-blue-600" /> Task
                       </button>
                       <button
                         onClick={() => setActiveAction("issue")}
-                        className="flex items-center gap-2 px-5 py-2.5 border border-[#F0EBE8] bg-white rounded-[14px] text-sm font-bold text-[#F05252] hover:border-[#F05252] hover:bg-[#F05252]/5 transition-all"
+                        className="flex items-center gap-2 px-4 py-2 border border-[#F0EBE8] bg-white rounded-[12px] text-sm font-bold text-[#1A1A1A] hover:bg-gray-50 transition-colors shadow-sm"
                       >
-                        <Plus className="w-4 h-4" /> Stuck Issue
+                        <Plus className="w-4 h-4 text-red-500" /> Stuck Issue
                       </button>
                       <button
                         onClick={() => setActiveAction("plan")}
-                        className="flex items-center gap-2 px-5 py-2.5 border border-[#F0EBE8] bg-white rounded-[14px] text-sm font-bold text-[#DAB835] hover:border-[#DAB835] hover:bg-[#F4D35E]/10 transition-all"
+                        className="flex items-center gap-2 px-4 py-2 border border-[#F0EBE8] bg-white rounded-[12px] text-sm font-bold text-[#1A1A1A] hover:bg-gray-50 transition-colors shadow-sm"
                       >
-                        <Plus className="w-4 h-4" /> Add to Plan
+                        <Plus className="w-4 h-4 text-yellow-500" /> Add to Plan
                       </button>
+
                       <button
                         onClick={() => setActiveAction("feedback")}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-[#1A1A1A] text-white rounded-[14px] text-sm font-bold shadow-sm hover:bg-gray-800 transition-all"
+                        className="flex items-center gap-2 px-5 py-2 bg-[#8B5CF6] text-white rounded-[12px] text-sm font-bold shadow-sm hover:bg-[#7C3AED] transition-all ml-auto"
                       >
-                        <MessageSquare className="w-4 h-4" /> Feedback
+                        Feedback
                       </button>
                     </div>
                   )}
+
+                  {/* Inline Action Inputs */}
                   {(activeAction === "issue" || activeAction === "plan") && (
                     <InlineActionInput
                       action={activeAction}
@@ -771,11 +850,12 @@ const ReportDetailModal = ({ log, onClose }) => {
                   )}
                 </div>
               )}
-            </div>
           </div>
         </div>,
         document.body
       )}
+
+      {/* Task Modal Overlay */}
       {taskModalOpen && !isPending && (
         <AddTaskModal
           reportUser={log.user}
@@ -785,6 +865,47 @@ const ReportDetailModal = ({ log, onClose }) => {
       )}
     </>
   );
+};
+
+// ─────────────────────────────────────────────
+// ✅ Simple FormattedHighlights Component (No Red BG, Auto-wrap)
+// ─────────────────────────────────────────────
+const FormattedHighlights = ({ text, isPending }) => {
+  if (isPending) {
+    return (
+      <span className="text-gray-400 italic font-semibold">
+        {text || "Pending"}
+      </span>
+    );
+  }
+  if (!text) return <span>-</span>;
+
+  // Format 1: "Acc: 8 | Chal: 0"
+  const matchAccChal = text.match(/Acc:\s*(\d+)\s*\|\s*Chal:\s*(\d+)/i);
+  if (matchAccChal) {
+    return (
+      <span className="text-sm text-[#1A1A1A]">
+        <span className="font-bold">{matchAccChal[1]}</span> accomplishments,{" "}
+        <span className="font-bold">{matchAccChal[2]}</span> challenges
+      </span>
+    );
+  }
+
+  // Format 2: "8 accomplishments, 0 challenges"
+  const matchFull = text.match(
+    /(\d+)\s*accomplishments?,\s*(\d+)\s*challenges?/i
+  );
+  if (matchFull) {
+    return (
+      <span className="text-sm text-[#1A1A1A]">
+        <span className="font-bold">{matchFull[1]}</span> accomplishments,{" "}
+        <span className="font-bold">{matchFull[2]}</span> challenges
+      </span>
+    );
+  }
+
+  // Fallback for normal text
+  return <span className="text-sm text-[#1A1A1A]">{text}</span>;
 };
 
 // ─────────────────────────────────────────────
@@ -823,7 +944,6 @@ const DailyLogTab = () => {
     try {
       const data = await fetchMeetingsAPI();
       setMeetings(data);
-      // ✅ Pehli meeting ko default set karo
       if (data.length > 0) setSelectedMeetingFilter(data[0].id);
     } catch (err) {
       console.error(err);
@@ -858,66 +978,35 @@ const DailyLogTab = () => {
       const response = await fetchDailyLogsFromAPI({
         meetingId: selectedMeetingFilter,
         dateStr: selectedDate,
-        isGrouped,
+        isGrouped: false,
         departmentId: selectedDeptId,
         search: debouncedSearch,
       });
 
-      let reportsArray = [];
-      let expected = 0;
-      let submitted = 0;
+      let logsArray = Array.isArray(response) ? response : [];
 
-      if (response?.data?.reports) {
-        reportsArray = response.data.reports;
-        expected = response.data.total || 0;
-        submitted = response.data.submitted || 0;
-      } else if (response?.reports) {
-        reportsArray = response.reports;
-        expected = response.total || 0;
-        submitted = response.submitted || 0;
-      } else if (Array.isArray(response)) {
-        reportsArray = response;
-        expected = response.length;
-        submitted = response.length;
-      } else if (response?.data && Array.isArray(response.data)) {
-        reportsArray = response.data;
-        expected = response.data.length;
-        submitted = response.data.length;
-      }
+      logsArray = logsArray.filter(
+        (log) => log.status && log.status.toLowerCase().trim() === "submitted"
+      );
 
       if (selectedDeptId) {
-        reportsArray = reportsArray.filter(
-          (r) => String(r.department_id) === String(selectedDeptId)
+        logsArray = logsArray.filter(
+          (log) => String(log._raw?.department_id) === String(selectedDeptId)
         );
       }
+
       if (debouncedSearch) {
         const q = debouncedSearch.toLowerCase();
-        reportsArray = reportsArray.filter(
-          (r) =>
-            (r.name && r.name.toLowerCase().includes(q)) ||
-            (r.email && r.email.toLowerCase().includes(q)) ||
-            (r.department && r.department.toLowerCase().includes(q))
+        logsArray = logsArray.filter(
+          (log) =>
+            (log.user && log.user.toLowerCase().includes(q)) ||
+            (log.email && log.email.toLowerCase().includes(q)) ||
+            (log.dept && log.dept.toLowerCase().includes(q))
         );
       }
 
-      const normalizedLogs = reportsArray.map((r) => ({
-        id: r.journal_id || `user-${r.user_id}`,
-        user: r.name || "Unknown User",
-        email: r.email || "",
-        score: r.score || 0,
-        dept: r.department || "N/A",
-        highlights:
-          r.status === "pending"
-            ? "Pending Submission"
-            : r.big_win || r.member_report || "No highlights recorded",
-        submittedAt: r.submitted_at || null,
-        date: r.date || selectedDate,
-        status: r.status || "pending",
-        _raw: r,
-      }));
-
       if (isGrouped) {
-        const grouped = normalizedLogs.reduce((acc, log) => {
+        const grouped = logsArray.reduce((acc, log) => {
           const d = log.dept || "Uncategorized";
           if (!acc[d]) acc[d] = [];
           acc[d].push(log);
@@ -926,12 +1015,12 @@ const DailyLogTab = () => {
         setGroupedApiLogs(grouped);
         setApiLogs([]);
       } else {
-        setApiLogs(normalizedLogs);
+        setApiLogs(logsArray);
         setGroupedApiLogs({});
       }
 
-      setMetaExpected(expected);
-      setMetaSubmitted(submitted);
+      setMetaExpected(response.total || logsArray.length);
+      setMetaSubmitted(response.submitted || logsArray.length);
     } catch (err) {
       setApiError(err.message);
       setApiLogs([]);
@@ -947,7 +1036,6 @@ const DailyLogTab = () => {
     selectedDeptId,
     debouncedSearch,
   ]);
-
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -1007,10 +1095,12 @@ const DailyLogTab = () => {
             {log.email}
           </div>
         </td>
+        {/* Score Column */}
         <td className="px-6 py-4">
           <span
             className={cn(
-              "inline-block px-3 py-1.5 rounded-[8px] text-[11px] font-black min-w-[36px] text-center tracking-wider",
+              // inline-grid aur place-items-center duniya ka sabse perfect centering solution hai
+              "flex flex-col justify-center items-center font-semibold p-2 rounded-xl",
               scoreColor(log.score, log.status)
             )}
           >
@@ -1022,12 +1112,9 @@ const DailyLogTab = () => {
             {log.dept}
           </span>
         </td>
-        <td className="px-6 py-4 text-sm font-medium text-[#1A1A1A] max-w-[260px] truncate">
-          <span
-            className={cn(isPending && "text-gray-400 italic font-semibold")}
-          >
-            {log.highlights}
-          </span>
+        {/* ✅ Updated TD with normal text wrapping and no scroll */}
+        <td className="px-6 py-4 max-w-[300px] whitespace-normal break-words">
+          <FormattedHighlights text={log.highlights} isPending={isPending} />
         </td>
         <td className="px-6 py-4 text-xs font-semibold text-[#8C8580] whitespace-nowrap">
           <div>{subLine1}</div>
@@ -1145,7 +1232,6 @@ const DailyLogTab = () => {
             )}
           </div>
 
-          {/* Department CustomSelect — keeps "All Departments" option */}
           <CustomSelect
             value={selectedDeptId}
             onChange={setSelectedDeptId}
@@ -1157,7 +1243,6 @@ const DailyLogTab = () => {
             ]}
           />
 
-          {/* ✅ Meeting CustomSelect — "All Meetings" option removed */}
           <CustomSelect
             value={selectedMeetingFilter}
             onChange={setSelectedMeetingFilter}

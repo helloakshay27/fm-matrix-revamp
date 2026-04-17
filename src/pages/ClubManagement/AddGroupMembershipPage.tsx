@@ -238,27 +238,36 @@ const formatInvoiceData = (apiResponse: any): any => {
         const totals = firstBill?.totals || {};
 
         return {
-            // Use bills data primarily
-            id: invoice.invoice_number || invoice.id || apiResponse?.id || '1008',
+            id: invoice.invoice_number || invoice.id || apiResponse?.id,
             created_at: invoice.invoice_date || apiResponse?.created_at,
+
             club_members: [{
-                user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name || 'Deepak Gm',
-                user_email: member.email || apiResponse?.club_members?.[0]?.user_email || 'deepak@gmail.com',
-                user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile || '7709622211',
+                user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name,
+                user_email: member.email || apiResponse?.club_members?.[0]?.user_email,
+                user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile,
             }],
-            membership_plan: apiResponse?.membership_plan || { name: 'Rain Plan' },
-            site_name: apiResponse?.site_name || 'New Site 1',
+
+            membership_plan: apiResponse?.membership_plan,
+            site_name: apiResponse?.site_name,
+
             allocation_payment_detail: {
-                base_amount: lineItems[0]?.rate || parseFloat(String(apiResponse?.allocation_payment_detail?.base_amount)) || 5000,
-                discount: totals.discount || parseFloat(String(apiResponse?.allocation_payment_detail?.discount)) || 0,
-                cgst: totals.cgst || parseFloat(String(apiResponse?.allocation_payment_detail?.cgst)) || 400,
-                sgst: totals.sgst || parseFloat(String(apiResponse?.allocation_payment_detail?.sgst)) || 400,
-                cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per || 8,
-                sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per || 8,
-                total_tax: (totals.cgst || 0) + (totals.sgst || 0) || parseFloat(String(apiResponse?.allocation_payment_detail?.total_tax)) || 800,
-                total_amount: totals.total_amount || parseFloat(String(apiResponse?.allocation_payment_detail?.total_amount)) || 5800,
+                base_amount: lineItems[0]?.rate || apiResponse?.allocation_payment_detail?.base_amount,
+                discount: totals.discount || apiResponse?.allocation_payment_detail?.discount,
+                cgst: totals.cgst || apiResponse?.allocation_payment_detail?.cgst,
+                sgst: totals.sgst || apiResponse?.allocation_payment_detail?.sgst,
+                cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per,
+                sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per,
+                total_tax: (totals.cgst || 0) + (totals.sgst || 0) || apiResponse?.allocation_payment_detail?.total_tax,
+                total_amount: totals.total_amount || apiResponse?.allocation_payment_detail?.total_amount,
                 payment_mode: apiResponse?.allocation_payment_detail?.payment_mode,
                 payment_status: apiResponse?.allocation_payment_detail?.payment_status,
+            },
+            invoice_data: {
+                lock_account_bill_id: firstBill?.lock_account_bill_id,
+                invoice: invoice,
+                member: member,
+                line_items: lineItems,
+                totals: totals,
             },
         };
     }
@@ -278,28 +287,41 @@ const formatSingleBill = (billData: any, apiResponse: any, billIndex: number = 0
     const billId = billData?.lock_account_bill_id || billData?.bill_id || (apiResponse?.id && `${apiResponse.id}-${billIndex}`) || `bill-${billIndex}`;
 
     return {
-        id: invoice.invoice_number || invoice.id || apiResponse?.id || '1008',
+        id: invoice.invoice_number || invoice.id || apiResponse?.id,
         bill_number: billData?.bill_number,
-        lock_account_bill_id: billId, // Include bill ID for PDF upload
+        lock_account_bill_id: billId,
         created_at: invoice.invoice_date || apiResponse?.created_at,
+
         club_members: [{
-            user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name || 'Deepak Gm',
-            user_email: member.email || apiResponse?.club_members?.[0]?.user_email || 'deepak@gmail.com',
-            user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile || '7709622211',
+            user_name: member.full_name || apiResponse?.club_members?.[0]?.user_name,
+            user_email: member.email || apiResponse?.club_members?.[0]?.user_email,
+            user_mobile: member.mobile || apiResponse?.club_members?.[0]?.user_mobile,
         }],
-        membership_plan: apiResponse?.membership_plan || { name: 'Rain Plan' },
-        site_name: apiResponse?.site_name || 'New Site 1',
+
+        membership_plan: apiResponse?.membership_plan,
+        site_name: apiResponse?.site_name,
+
         allocation_payment_detail: {
-            base_amount: lineItems[0]?.rate || parseFloat(String(apiResponse?.allocation_payment_detail?.base_amount)) || 5000,
-            discount: totals.discount || parseFloat(String(apiResponse?.allocation_payment_detail?.discount)) || 0,
-            cgst: totals.cgst || parseFloat(String(apiResponse?.allocation_payment_detail?.cgst)) || 400,
-            sgst: totals.sgst || parseFloat(String(apiResponse?.allocation_payment_detail?.sgst)) || 400,
-            cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per || 8,
-            sgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per || 8,
-            total_tax: (totals.cgst || 0) + (totals.sgst || 0) || parseFloat(String(apiResponse?.allocation_payment_detail?.total_tax)) || 800,
-            total_amount: totals.total_amount || parseFloat(String(apiResponse?.allocation_payment_detail?.total_amount)) || 5800,
+            base_amount: lineItems[0]?.rate || apiResponse?.allocation_payment_detail?.base_amount,
+            discount: totals.discount || apiResponse?.allocation_payment_detail?.discount,
+            cgst: totals.cgst || apiResponse?.allocation_payment_detail?.cgst,
+            sgst: totals.sgst || apiResponse?.allocation_payment_detail?.sgst,
+            cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per,
+            sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per,
+            total_tax:
+                totals.cgst && totals.sgst
+                    ? totals.cgst + totals.sgst
+                    : apiResponse?.allocation_payment_detail?.total_tax,
+            total_amount: totals.total_amount || apiResponse?.allocation_payment_detail?.total_amount,
             payment_mode: apiResponse?.allocation_payment_detail?.payment_mode,
             payment_status: apiResponse?.allocation_payment_detail?.payment_status,
+        },
+        invoice_data: {
+            lock_account_bill_id: billId,
+            invoice: invoice,
+            member: member,
+            line_items: lineItems,
+            totals: totals,
         },
     };
 };
@@ -1166,17 +1188,17 @@ export const AddGroupMembershipPage = () => {
             }
 
             // Mandatory file validations - only for add mode
-            if (!isEditMode) {
-                if (!member.idCardFile) {
-                    toast.error(`${memberLabel}: Please upload ID card (mandatory)`);
-                    return;
-                }
+            // if (!isEditMode) {
+            //     if (!member.idCardFile) {
+            //         toast.error(`${memberLabel}: Please upload ID card (mandatory)`);
+            //         return;
+            //     }
 
-                if (!member.residentPhotoFile) {
-                    toast.error(`${memberLabel}: Please upload resident photo (mandatory)`);
-                    return;
-                }
-            }
+            //     if (!member.residentPhotoFile) {
+            //         toast.error(`${memberLabel}: Please upload resident photo (mandatory)`);
+            //         return;
+            //     }
+            // }
 
             if (cardAllocated && !member.formData.accessCardId?.trim()) {
                 toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
@@ -2444,14 +2466,14 @@ export const AddGroupMembershipPage = () => {
                                             <div className="mb-8 pt-8 border-t border-gray-200">
                                                 <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
                                                     <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">3</div>
-                                                    Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
+                                                    Upload Documents
                                                 </h4>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                     {/* ID Card Upload */}
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            ID Card {!isEditMode && <span className="text-red-500">*</span>}
+                                                            ID Card
                                                         </label>
                                                         <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.idCardFile || member.idCardPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                             {(member.idCardFile || member.idCardPreview) ? (
@@ -2482,7 +2504,7 @@ export const AddGroupMembershipPage = () => {
                                                     {/* Member Photo Upload */}
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Member Photo {!isEditMode && <span className="text-red-500">*</span>}
+                                                            Member Photo
                                                         </label>
                                                         <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.residentPhotoFile || member.residentPhotoPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                             {(member.residentPhotoFile || member.residentPhotoPreview) ? (

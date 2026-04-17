@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import * as blazeface from "@tensorflow-models/blazeface";
 import * as tf from "@tensorflow/tfjs";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import "@tensorflow/tfjs-backend-webgl";
 import {
   ArrowLeft,
   Monitor,
@@ -404,6 +405,10 @@ interface BaseProductPageProps {
   tabsVariant?: "scroll" | "wrap" | "snag360";
 }
 
+// Global level cache to persist the model across page navigations
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cachedModel: any = null;
+
 const BaseProductPage: React.FC<BaseProductPageProps> = ({
   productData,
   backPath = "/products",
@@ -412,20 +417,57 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
   const navigate = useNavigate();
   const snagTabsScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Reset scroll position to 0 on mount to ensure first tab (Product Summary) is visible
+  // ─── Security Global Cache (Module Level) ──────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [model, setModel] = useState<any>(cachedModel);
+  const [modelLoading, setModelLoading] = useState(!cachedModel);
+  const [faceDetected, setFaceDetected] = useState(true); // Start as true, will be updated by detection
+
+  // Reset scroll position to 0 on mount so first tab (Product Summary) is always visible
   useEffect(() => {
-    if (snagTabsScrollRef.current) {
-      snagTabsScrollRef.current.scrollLeft = 0;
-    }
+    if (snagTabsScrollRef.current) snagTabsScrollRef.current.scrollLeft = 0;
   }, []);
 
+  // ─── Security State ──────────────────────────────────────────────────
   const [cameraPermission, setCameraPermission] = useState<
     "pending" | "granted" | "denied"
   >("pending");
   const [isBlurred, setIsBlurred] = useState(false);
   const [showBlackout, setShowBlackout] = useState(false);
-  const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
+  const [blackoutReason, setBlackoutReason] =
+    useState<string>("Security Violation");
+  const [blackoutSubtitle, setBlackoutSubtitle] = useState<string>(
+    "Unauthorized activity detected. Attempt logged."
+  );
+  const [incidentTime, setIncidentTime] = useState<string>("");
+  const [countdown, setCountdown] = useState<number>(5);
+  const [screenshotBlank, setScreenshotBlank] = useState(false);
+  // const [model, setModel] = useState<any>(null); // Removed in favor of cached version above
   const videoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  // Session watermark ID
+  const sessionId = React.useMemo(() => {
+    const id = `SID-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+    return id;
+  }, []);
+
+  const triggerBlackout = React.useCallback(
+    (reason: string, subtitle: string) => {
+      setBlackoutReason(reason);
+      setBlackoutSubtitle(subtitle);
+      setIncidentTime(new Date().toLocaleString());
+      setCountdown(5);
+      setIsBlurred(true);
+      setShowBlackout(true);
+    },
+    []
+  );
+
+  const dismissBlackout = React.useCallback(() => {
+    setShowBlackout(false);
+    setIsBlurred(false);
+  }, []);
   const excelFeatureCols = ["A", "B", "C", "D", "E", "F"];
   const excelFeatureRowStart = productData.excelFeatureRowStart ?? 1;
   const getTagPillClasses = (tag: string) => {
@@ -566,107 +608,547 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
     return rows;
   }, [productData]);
 
+  // ─── 1. Camera + AI face detection ──────────────────────────
   useEffect(() => {
-    const requestCameraAndModel = async () => {
+    let timeoutId: number | undefined;
+
+    const initModel = async () => {
+      if (cachedModel) {
+        setModel(cachedModel);
+        setModelLoading(false);
+        return;
+      }
+
+      // Set a timeout - if model doesn't load in 10 seconds, proceed without it
+      timeoutId = window.setTimeout(() => {
+        console.warn(
+          "Face detection model loading timed out - proceeding without security"
+        );
+        setModelLoading(false);
+      }, 10000);
+
+      try {
+        await tf.ready();
+        if (tf.getBackend() !== "webgl") {
+          await tf.setBackend("webgl");
+        }
+        const detector = await blazeface.load({
+          maxFaces: 3,
+          scoreThreshold: 0.75,
+        });
+        cachedModel = detector;
+        setModel(detector);
+        setModelLoading(false);
+        if (timeoutId) window.clearTimeout(timeoutId);
+      } catch (err) {
+        console.error("Face detection model failed to load:", err);
+        setModelLoading(false);
+        if (timeoutId) window.clearTimeout(timeoutId);
+      }
+    };
+
+    const setupCamera = async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
           setCameraPermission("denied");
           return;
         }
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
+          video: { facingMode: "user", width: 320, height: 240 },
         });
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        mediaStreamRef.current = stream;
         setCameraPermission("granted");
-
-        try {
-          await tf.ready();
-          const loadedModel = await cocoSsd.load();
-          setModel(loadedModel);
-        } catch (err) {
-          console.error("AI Model failed to load:", err);
-        }
       } catch (err) {
         console.error("Camera access denied:", err);
         setCameraPermission("denied");
       }
     };
 
-    requestCameraAndModel();
-    // Intentionally run once on mount.
+    initModel();
+    setupCamera();
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
+    if (cameraPermission === "granted" && mediaStreamRef.current) {
+      if (videoRef.current && !videoRef.current.srcObject) {
+        videoRef.current.srcObject = mediaStreamRef.current;
+      }
+      if (previewVideoRef.current && !previewVideoRef.current.srcObject) {
+        previewVideoRef.current.srcObject = mediaStreamRef.current;
+      }
+    }
+  }, [cameraPermission]);
+
+  // Face detection interval - USE CASE 1 & 2:
+  // When user is in front of camera = show content
+  // When user is NOT in front of camera = blank screen
+  useEffect(() => {
     let detectionInterval: number | undefined;
+    let noFaceCount = 0; // Count consecutive no-face detections
+
     if (model && cameraPermission === "granted") {
       detectionInterval = window.setInterval(async () => {
-        if (videoRef.current && videoRef.current.readyState === 4) {
-          const predictions = await model.detect(videoRef.current, 12, 0.15);
-          const personPresent = predictions.some(
-            (p) => p.class === "person" && p.score > 0.4
-          );
-          const deviceDetected = predictions.some(
-            (p) =>
-              ["cell phone", "camera", "laptop", "tv", "monitor"].includes(
-                p.class
-              ) && p.score > 0.25
-          );
-          if (!personPresent || deviceDetected) {
-            setIsBlurred(true);
-            setShowBlackout(true);
+        const video = videoRef.current;
+        if (
+          !video ||
+          video.readyState < 2 ||
+          video.videoWidth === 0 ||
+          video.paused
+        )
+          return;
+
+        try {
+          const predictions = await model.estimateFaces(video, false);
+          const detected = predictions.length > 0;
+
+          if (!detected) {
+            noFaceCount++;
+            // Only trigger blackout after 2 consecutive no-face detections (to avoid flicker)
+            if (noFaceCount >= 2) {
+              setFaceDetected(false);
+              setIsBlurred(true);
+            }
           } else {
+            noFaceCount = 0;
+            setFaceDetected(true);
             setIsBlurred(false);
             setShowBlackout(false);
           }
+        } catch (err) {
+          console.error("Face detection error:", err);
         }
-      }, 800);
+      }, 800); // Check every 800ms for faster response
     }
+
     return () => {
       if (detectionInterval) window.clearInterval(detectionInterval);
     };
   }, [model, cameraPermission]);
 
+  // ─── 2. Blackout countdowntimer ───────────────────────────────────────
   useEffect(() => {
+    if (!showBlackout) return;
+    setCountdown(5);
+    const tick = window.setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          window.clearInterval(tick);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, [showBlackout]);
+
+  // ─── 3. Keyboard shortcut blocking ───────────────────────────────────
+  useEffect(() => {
+    // Flash a pure white blank overlay so any screenshot captures nothing
+    const flashBlank = () => {
+      setScreenshotBlank(true);
+      setTimeout(() => setScreenshotBlank(false), 800);
+    };
+
+    const screenshotKeys = [
+      (e: KeyboardEvent) => e.key === "PrintScreen",
+      // Windows Snipping Tool: Win+Shift+S (shows as Meta+Shift+s in some browsers)
+      (e: KeyboardEvent) =>
+        e.metaKey && e.shiftKey && e.key.toLowerCase() === "s",
+      // Mac screenshot shortcuts
+      (e: KeyboardEvent) =>
+        e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key),
+    ];
+
+    const blockedCombos = [
+      // Print
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "p",
+      // Save page
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "s",
+      // View source
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "u",
+      // Select all
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "a",
+      // Copy
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "c",
+      // DevTools
+      (e: KeyboardEvent) => e.key === "F12",
+      (e: KeyboardEvent) =>
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        ["i", "j", "c"].includes(e.key.toLowerCase()),
+    ];
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey && e.key === "p") ||
-        (e.metaKey && e.key === "p") ||
-        e.key === "PrintScreen"
-      ) {
+      // Screenshot keys: block event AND immediately blank the screen
+      if (screenshotKeys.some((check) => check(e))) {
         e.preventDefault();
-        alert("Screenshots prohibited.");
+        e.stopPropagation();
+        flashBlank();
+        return;
+      }
+      // Other prohibited shortcuts: block + show blackout
+      if (blockedCombos.some((check) => check(e))) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerBlackout(
+          "Prohibited Action",
+          "Screenshot, recording, and developer tools are strictly prohibited on this page."
+        );
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+
+    // Also blank on keyup for PrintScreen (some OSes fire on keyup)
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen") {
+        e.preventDefault();
+        flashBlank();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("keyup", handleKeyUp, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("keyup", handleKeyUp, true);
+    };
+  }, [triggerBlackout]);
+
+  // ─── 4. Right-click & context menu disable ────────────────────────────
+  useEffect(() => {
+    const block = (e: MouseEvent) => e.preventDefault();
+    window.addEventListener("contextmenu", block);
+    return () => window.removeEventListener("contextmenu", block);
   }, []);
+
+  // ─── 5. Visibility change – blur when tab loses focus ────────────────
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsBlurred(true);
+      } else {
+        setIsBlurred(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // ─── 6. Window blur (alt+tab, window switch) ─────────────────────────
+  useEffect(() => {
+    const handleBlur = () => setIsBlurred(true);
+    const handleFocus = () => setIsBlurred(false);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  // ─── 7. DevTools open detection (window size delta) ──────────────────
+  useEffect(() => {
+    const THRESHOLD = 160;
+    const checkDevTools = () => {
+      const widthDiff = window.outerWidth - window.innerWidth;
+      const heightDiff = window.outerHeight - window.innerHeight;
+      if (widthDiff > THRESHOLD || heightDiff > THRESHOLD) {
+        triggerBlackout(
+          "Developer Tools Detected",
+          "Developer tools are not permitted while viewing proprietary product data."
+        );
+      }
+    };
+    const interval = window.setInterval(checkDevTools, 1500);
+    return () => window.clearInterval(interval);
+  }, [triggerBlackout]);
+
+  // ─── 8. CSS print / @media print blackout (injected style) ───────────
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.id = "fm-print-block";
+    style.textContent = `
+      @media print {
+        body * { visibility: hidden !important; }
+        body::after {
+          content: '🔒 CONFIDENTIAL — PRINTING PROHIBITED';
+          visibility: visible !important;
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 3rem;
+          font-weight: 900;
+          color: #FF0000;
+          text-align: center;
+          white-space: pre-line;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.getElementById("fm-print-block")?.remove();
+    };
+  }, []);
+
+  // ─── 9. Drag-start prevention (drag-to-copy images/text) ─────────────
+  useEffect(() => {
+    const block = (e: DragEvent) => e.preventDefault();
+    document.addEventListener("dragstart", block);
+    return () => document.removeEventListener("dragstart", block);
+  }, []);
+
+  // Camera permission gate — must grant before seeing content
+  if (cameraPermission === "pending") {
+    return (
+      <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
+        <div className="w-20 h-20 rounded-full bg-[#DA7756]/10 border border-[#DA7756]/30 flex items-center justify-center mb-6 animate-pulse">
+          <Camera className="w-10 h-10 text-[#DA7756]" />
+        </div>
+        <h1 className="text-3xl font-semibold mb-3 tracking-tight">
+          Camera Access Required
+        </h1>
+        <p className="text-white/60 max-w-md text-sm leading-relaxed mb-8">
+          This page contains proprietary product intelligence. To view it, you
+          must grant camera access so our security system can verify your
+          identity and detect unauthorized recording devices.
+        </p>
+        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-5 py-2.5 text-xs text-white/40">
+          <Lock className="w-3.5 h-3.5" />
+          Waiting for camera permission…
+        </div>
+      </div>
+    );
+  }
+
+  if (cameraPermission === "denied") {
+    return (
+      <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
+        <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mb-6">
+          <ShieldAlert className="w-10 h-10 text-red-400" />
+        </div>
+        <h1 className="text-3xl font-semibold mb-3 tracking-tight">
+          Access Denied
+        </h1>
+        <p className="text-white/60 max-w-md text-sm leading-relaxed mb-8">
+          Camera permission is required to access this proprietary content.
+          Please enable camera access in your browser settings and refresh the
+          page.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2 bg-[#DA7756] hover:bg-[#c5644a] text-white font-semibold text-sm px-6 py-3 rounded-full transition-all"
+        >
+          <Camera className="w-4 h-4" /> Retry Camera Access
+        </button>
+      </div>
+    );
+  }
+
+  // Show loading screen while model is loading (camera permission checks are above)
+  if (modelLoading) {
+    return (
+      <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
+        <div className="w-20 h-20 rounded-full bg-[#DA7756]/10 border border-[#DA7756]/30 flex items-center justify-center mb-6 animate-pulse">
+          <Lock className="w-10 h-10 text-[#DA7756]" />
+        </div>
+        <h1 className="text-2xl font-semibold mb-3">
+          Initializing Security...
+        </h1>
+        <p className="text-white/50 text-sm">
+          Loading face detection. Please wait.
+        </p>
+      </div>
+    );
+  }
+
+  // USE CASE 2: When user is NOT in front of camera, show blank screen
+  const showBlankScreen =
+    !faceDetected && model && cameraPermission === "granted";
 
   return (
     <div
-      className={`min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins ${isBlurred ? "blur-3xl" : ""}`}
+      className={`min-h-screen bg-[#FAF9F6] pb-20 select-none font-poppins transition-all duration-300 ${showBlankScreen ? "blur-3xl brightness-50 pointer-events-none" : ""}`}
     >
+      {/* USE CASE 2: Blank screen when no face detected */}
+      {showBlankScreen && (
+        <div className="fixed inset-0 z-[9998] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
+          <div className="w-20 h-20 rounded-full bg-[#DA7756]/10 border border-[#DA7756]/30 flex items-center justify-center mb-6">
+            <Camera className="w-10 h-10 text-[#DA7756]" />
+          </div>
+          <h1 className="text-2xl font-semibold mb-3">User Not Detected</h1>
+          <p className="text-white/50 text-sm max-w-md">
+            Please position yourself in front of the camera to view this
+            content.
+          </p>
+        </div>
+      )}
+
+      {/* USE CASE 3: Screenshot blank overlay - flashes on screenshot attempt */}
+      {screenshotBlank && (
+        <div
+          className="fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center"
+          aria-hidden="true"
+        >
+          <Lock className="w-10 h-10 text-[#DA7756] mb-3 opacity-30" />
+          <p className="text-[#DA7756]/30 text-xs font-mono tracking-widest">
+            CONFIDENTIAL · FM MATRIX
+          </p>
+        </div>
+      )}
+
+      {/* Hidden camera feed for AI detection — must have real dimensions */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        className="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none"
+        width={320}
+        height={240}
+        className="fixed top-0 left-0 opacity-0 pointer-events-none"
+        style={{ width: 320, height: 240 }} // ✅ real size, still invisible
       />
 
+      {/* ── Live camera preview badge (top-right) ──────────────────────── */}
+      <div className="fixed top-4 right-4 z-[9992] flex flex-col items-center gap-1.5 select-none">
+        {/* Circular camera feed */}
+        <div className="relative">
+          {/* Pulsing ring */}
+          <div
+            className="absolute inset-0 rounded-full animate-ping"
+            style={{
+              background: isBlurred
+                ? "rgba(239,68,68,0.35)"
+                : "rgba(74,222,128,0.3)",
+              animationDuration: "2s",
+            }}
+          />
+          {/* Border circle */}
+          <div
+            className="relative rounded-full p-[2px] shadow-xl"
+            style={{
+              background: isBlurred
+                ? "linear-gradient(135deg,#ef4444,#b91c1c)"
+                : "linear-gradient(135deg,#4ade80,#16a34a)",
+            }}
+          >
+            <div
+              className="rounded-full overflow-hidden bg-black"
+              style={{ width: 56, height: 56 }}
+            >
+              <video
+                ref={previewVideoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: 56,
+                  height: 56,
+                  objectFit: "cover",
+                  transform: "scaleX(-1)", // mirror front cam
+                  display: "block",
+                }}
+              />
+            </div>
+          </div>
+          {/* Status dot */}
+          <div
+            className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white shadow"
+            style={{ background: isBlurred ? "#ef4444" : "#4ade80" }}
+          />
+        </div>
+        {/* Label */}
+        <div className="bg-black/90 border border-white/10 rounded-full px-2.5 py-0.5 flex flex-col items-center gap-0">
+          <span className="text-[9px] font-mono text-white/80 tracking-widest uppercase">
+            {isBlurred ? "⚠ NO FACE" : "✓ SECURE"}
+          </span>
+          <span className="text-[7px] font-mono text-white/30 tracking-wider">
+            {sessionId}
+          </span>
+        </div>
+      </div>
+
+      {/* Session watermark overlay */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[9990] overflow-hidden select-none"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            -35deg,
+            transparent,
+            transparent 120px,
+            rgba(218,119,86,0.04) 120px,
+            rgba(218,119,86,0.04) 121px
+          )`,
+        }}
+      >
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute whitespace-nowrap text-[#DA7756]/[0.06] font-mono text-xs font-bold tracking-widest"
+            style={{
+              top: `${10 + i * 12}%`,
+              left: "-10%",
+              transform: "rotate(-20deg)",
+              letterSpacing: "0.3em",
+              fontSize: "11px",
+            }}
+          >
+            CONFIDENTIAL · FM MATRIX · {sessionId} · CONFIDENTIAL · FM MATRIX ·{" "}
+            {sessionId} · CONFIDENTIAL · FM MATRIX ·
+          </div>
+        ))}
+      </div>
+
+      {/* Blackout Security Overlay */}
       {showBlackout && (
-        <div className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center text-white text-center p-10">
-          <ShieldAlert className="w-20 h-20 text-red-500 mb-6 animate-pulse" />
-          <h1 className="text-4xl font-semibold mb-4 uppercase">
-            Security Violation
-          </h1>
-          <p className="text-xl">
-            Screen capture is prohibited. Attempt logged.
-          </p>
+        <div className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center text-white text-center p-10 animate-in fade-in duration-200">
+          {/* Animated background grid */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg,#ff000022 0,#ff000022 1px,transparent 1px,transparent 40px),repeating-linear-gradient(90deg,#ff000022 0,#ff000022 1px,transparent 1px,transparent 40px)",
+            }}
+          />
+          <ShieldAlert className="w-20 h-20 text-red-500 mb-6 animate-pulse relative z-10" />
+          <div className="relative z-10 space-y-3 mb-8">
+            <div className="text-red-400 text-xs font-mono tracking-[0.3em] uppercase mb-2">
+              ⚠ Security Alert
+            </div>
+            <h1 className="text-3xl font-bold uppercase tracking-wider">
+              {blackoutReason}
+            </h1>
+            <p className="text-white/60 max-w-lg text-sm leading-relaxed">
+              {blackoutSubtitle}
+            </p>
+          </div>
+          <div className="relative z-10 flex flex-col items-center gap-4">
+            <div className="text-white/30 font-mono text-xs">
+              Session: {sessionId} · Incident logged at {incidentTime}
+            </div>
+            {countdown > 0 ? (
+              <div className="text-white/40 text-xs">
+                Dismiss available in {countdown}s…
+              </div>
+            ) : (
+              <button
+                onClick={dismissBlackout}
+                className="mt-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold px-8 py-2.5 rounded-full transition-all"
+              >
+                I Understand — Dismiss
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       {/* Header */}
-      <div className="relative mb-8 flex flex-col items-center bg-[#F6F4EE] pt-8">
+      <div className="relative mb-8 flex flex-col items-center bg-[#FAF9F6] pt-8">
         <div className="w-full max-w-7xl px-6 lg:px-10 mb-6">
           <button
             onClick={() => navigate(backPath)}
@@ -692,111 +1174,78 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
       <div className="max-w-7xl px-6 lg:px-10 mx-auto">
         <Tabs defaultValue="summary" className="w-full">
           {tabsVariant === "snag360" ? (
-            <div className="relative mb-8">
-              {/* Edge fades (hint more tabs exist) - reduced width to not cover first tab */}
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-[#F6F4EE] to-transparent z-10" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-[#F6F4EE] to-transparent z-10" />
-
-              {/* Scroll controls */}
-              <button
-                type="button"
-                onClick={() =>
-                  snagTabsScrollRef.current?.scrollBy({
-                    left: -320,
-                    behavior: "smooth",
-                  })
-                }
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white border border-[#D3D1C7] shadow-sm flex items-center justify-center hover:bg-[#DA7756]/10 transition-all"
-                aria-label="Scroll tabs left"
-              >
-                <ChevronLeft className="h-4 w-4 text-[#2C2C2C]" />
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  snagTabsScrollRef.current?.scrollBy({
-                    left: 320,
-                    behavior: "smooth",
-                  })
-                }
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-white border border-[#D3D1C7] shadow-sm flex items-center justify-center hover:bg-[#DA7756]/10 transition-all"
-                aria-label="Scroll tabs right"
-              >
-                <ChevronRight className="h-4 w-4 text-[#2C2C2C]" />
-              </button>
-
-              <div
-                ref={snagTabsScrollRef}
-                className="overflow-x-auto no-scrollbar px-10"
-              >
-                {/* Pill-shaped tab container like CompanyHubNew */}
-                <div className="flex justify-center pb-2">
-                  <TabsList className="inline-flex gap-1 bg-[rgba(232,229,220,0.3)] border-[1.31px] border-[#D3D1C7] rounded-full p-1.5 shadow-sm h-auto items-center justify-center">
-                    {[
-                      { id: "summary", label: "Product Summary" },
-                      { id: "features", label: "Features" },
-                      { id: "usecases", label: "Use Cases" },
-                      { id: "market", label: "Market Analysis" },
-                      { id: "pricing", label: "Pricing" },
-                      ...(productData.excelLikePostPossession ||
-                      productData.extendedContent?.detailedPostPossession
-                        ? [{ id: "post-possession", label: "Post Possession" }]
-                        : []),
-                      { id: "swot", label: "SWOT" },
-                      { id: "roadmap", label: "Roadmap" },
-                      { id: "enhancements", label: "Enhancements" },
-                      { id: "business", label: "Business Plan" },
-                      { id: "gtm", label: "GTM Strategy" },
-                      { id: "metrics", label: "Metrics" },
-                    ].map((tab) => (
-                      <TabsTrigger
-                        key={tab.id}
-                        value={tab.id}
-                        className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:shadow-black/5 data-[state=active]:text-[#2C2C2C] text-[#2C2C2C]/50 hover:text-[#2C2C2C]/70 whitespace-nowrap bg-transparent"
-                      >
-                        {tab.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </div>
+            <div
+              ref={snagTabsScrollRef}
+              className="overflow-x-auto no-scrollbar mb-8"
+            >
+              <div className="flex justify-start pb-2 px-1">
+                <TabsList className="inline-flex gap-1 bg-[#E8E5DC] border-[1.31px] border-[#D3D1C7] rounded-full p-1.5 shadow-sm h-auto items-center justify-start">
+                  {[
+                    { id: "summary", label: "Product Summary" },
+                    { id: "features", label: "Features" },
+                    { id: "usecases", label: "Use Cases" },
+                    { id: "market", label: "Market Analysis" },
+                    { id: "pricing", label: "Pricing" },
+                    ...(productData.excelLikePostPossession ||
+                    productData.extendedContent?.detailedPostPossession
+                      ? [{ id: "post-possession", label: "Post Possession" }]
+                      : []),
+                    { id: "swot", label: "SWOT" },
+                    { id: "roadmap", label: "Roadmap" },
+                    { id: "enhancements", label: "Enhancements" },
+                    { id: "business", label: "Business Plan" },
+                    { id: "gtm", label: "GTM Strategy" },
+                    { id: "metrics", label: "Metrics" },
+                  ].map((tab) => (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 whitespace-nowrap flex-shrink-0 bg-transparent"
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
               </div>
             </div>
           ) : (
-            /* Default pill-shaped tab UI matching CompanyHubNew */
-            <div className="flex justify-center mb-8">
-              <TabsList className="inline-flex gap-1 bg-[rgba(232,229,220,0.3)] border-[1.31px] border-[#D3D1C7] rounded-full p-1.5 shadow-sm overflow-x-auto no-scrollbar h-auto items-center justify-center">
-                {[
-                  { id: "summary", label: "Product Summary" },
-                  { id: "features", label: "Features" },
-                  { id: "market", label: "Market Analysis" },
-                  { id: "pricing", label: "Pricing" },
-                  { id: "usecases", label: "Use Cases" },
-                  { id: "roadmap", label: "Roadmap" },
-                  { id: "business", label: "Business Plan" },
-                  { id: "gtm", label: "GTM Strategy" },
-                  { id: "metrics", label: "Metrics" },
-                  { id: "swot", label: "SWOT" },
-                  { id: "enhancements", label: "Enhancements" },
-                  { id: "assets", label: "Assets" },
-                ].map((tab) => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:shadow-black/5 data-[state=active]:text-[#2C2C2C] text-[#2C2C2C]/50 hover:text-[#2C2C2C]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            /* Default: simple scrollable pill tabs, left-aligned so Product Summary is always visible */
+            <div className="overflow-x-auto no-scrollbar mb-8">
+              <div className="flex justify-start pb-2 px-1">
+                <TabsList className="inline-flex gap-1 bg-[#E8E5DC] border-[1.31px] border-[#D3D1C7] rounded-full p-1.5 shadow-sm h-auto items-center justify-start">
+                  {[
+                    { id: "summary", label: "Product Summary" },
+                    { id: "features", label: "Features" },
+                    { id: "market", label: "Market Analysis" },
+                    { id: "pricing", label: "Pricing" },
+                    { id: "usecases", label: "Use Cases" },
+                    { id: "roadmap", label: "Roadmap" },
+                    { id: "business", label: "Business Plan" },
+                    { id: "gtm", label: "GTM Strategy" },
+                    { id: "metrics", label: "Metrics" },
+                    { id: "swot", label: "SWOT" },
+                    { id: "enhancements", label: "Enhancements" },
+                    { id: "assets", label: "Assets" },
+                  ].map((tab) => (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 whitespace-nowrap flex-shrink-0 bg-transparent"
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
             </div>
           )}
 
           {/* 1. Summary */}
           <TabsContent value="summary" className="space-y-6">
             {productData.excelLikeSummary ? (
-              <div className="animate-fade-in overflow-x-auto rounded-xl border border-[#C4B89D] bg-[#F6F4EE] p-3 shadow-xl">
+              <div className="animate-fade-in overflow-x-auto rounded-xl border border-[#D3D1C7] bg-[#F6F4EE] p-3 shadow-xl">
                 <div
-                  className="min-w-[1600px] rounded-md border border-[#C4B89D] bg-white"
+                  className="min-w-[1600px] rounded-md border border-[#D3D1C7] bg-white"
                   style={{
                     backgroundImage:
                       "linear-gradient(to right, rgba(212,219,219,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.2) 1px, transparent 1px)",
@@ -804,7 +1253,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   }}
                 >
                   <div className="px-4 py-4">
-                    <div className="bg-[#DA7756] text-white px-4 py-2 font-semibold font-poppins uppercase tracking-tight text-[11px] text-center border border-[#DA7756]">
+                    <div className="bg-[#cccbc9] text-white px-4 py-2 font-semibold font-poppins uppercase tracking-tight text-[11px] text-center border border-[#DA7756]">
                       Post Sales - Product Summary
                     </div>
 
@@ -814,10 +1263,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                         <table className="w-full border-collapse font-poppins text-[9px] leading-[1.25] bg-white">
                           <thead>
                             <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                              <th className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-2 py-2 w-[38%] text-left">
+                              <th className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-2 py-2 w-[38%] text-left">
                                 Field / Section
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-2 py-2 text-left">
+                              <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-2 py-2 text-left">
                                 Details
                               </th>
                             </tr>
@@ -828,7 +1277,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 return (
                                   <tr key={`section-${index}`}>
                                     <td
-                                      className="border border-[#DA7756] bg-[#DA7756] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white"
+                                      className="border border-[#DA7756] bg-[#cccbc9] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white"
                                       colSpan={2}
                                     >
                                       {row.label}
@@ -842,10 +1291,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                   key={`data-${index}`}
                                   className={`${index % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] transition-colors align-top`}
                                 >
-                                  <td className="border border-[#D5DBDB] bg-[#F6F4EE]/30 px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line">
+                                  <td className="border border-[#E5E7EB] bg-[#F6F4EE]/30 px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line">
                                     {row.label}
                                   </td>
-                                  <td className="border border-[#D5DBDB] bg-white px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line">
+                                  <td className="border border-[#E5E7EB] bg-white px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line">
                                     {row.detail}
                                   </td>
                                 </tr>
@@ -857,7 +1306,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
                       {/* Blank grid area (like the sheet) */}
                       <div
-                        className="flex-1 min-w-[760px] rounded-sm border border-[#C4B89D] bg-white"
+                        className="flex-1 min-w-[760px] rounded-sm border border-[#D3D1C7] bg-white"
                         style={{
                           backgroundImage:
                             "linear-gradient(to right, rgba(212,219,219,0.22) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.22) 1px, transparent 1px)",
@@ -870,7 +1319,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
               </div>
             ) : (
               <div className="space-y-8 animate-fade-in overflow-x-auto">
-                <div className="bg-[#DA7756] text-white p-6 rounded-xl">
+                <div className="bg-[#cccbc9] text-white p-6 rounded-xl">
                   <h2 className="text-2xl font-semibold tracking-tight font-poppins">
                     {productData.name} - Identity
                   </h2>
@@ -878,7 +1327,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                     LOCKATED / GOPHYGITAL | INTERNAL CONFIDENTIAL
                   </p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#C4B89D] overflow-hidden shadow-sm">
+                <div className="bg-white rounded-xl border border-[#D3D1C7] overflow-hidden shadow-sm">
                   <table className="w-full border-collapse text-sm">
                     <tbody>
                       {productData.extendedContent?.productSummaryNew?.identity?.map(
@@ -887,10 +1336,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             key={i}
                             className="hover:bg-[#F6F4EE]/50 transition-colors"
                           >
-                            <td className="border-b border-[#D5DBDB] p-4 font-semibold text-[#2C2C2C] w-1/4 bg-[#F6F4EE] font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-4 font-semibold text-[#2C2C2C] w-1/4 bg-[#F6F4EE] font-poppins">
                               {r.field}
                             </td>
-                            <td className="border-b border-[#D5DBDB] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
                               {r.detail}
                             </td>
                           </tr>
@@ -903,14 +1352,14 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 <div className="bg-[#798C5E] text-white p-4 font-semibold text-sm rounded-t-xl font-poppins">
                   The Problem It Solves
                 </div>
-                <div className="bg-white rounded-b-xl border border-t-0 border-[#C4B89D] overflow-hidden shadow-sm">
+                <div className="bg-white rounded-b-xl border border-t-0 border-[#D3D1C7] overflow-hidden shadow-sm">
                   <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr className="bg-[#9EC8BA] text-[#2C2C2C] font-semibold">
-                        <th className="border-b border-[#D5DBDB] p-4 text-left w-1/4 font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-4 text-left w-1/4 font-poppins">
                           Pain Point
                         </th>
-                        <th className="border-b border-[#D5DBDB] p-4 text-left font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-4 text-left font-poppins">
                           Our Solution
                         </th>
                       </tr>
@@ -922,10 +1371,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             key={i}
                             className="hover:bg-[#F6F4EE]/50 transition-colors"
                           >
-                            <td className="border-b border-[#D5DBDB] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
                               {r.painPoint}
                             </td>
-                            <td className="border-b border-[#D5DBDB] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
                               {r.solution}
                             </td>
                           </tr>
@@ -938,20 +1387,20 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 <div className="bg-[#6B9BCC] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
                   Who It Is For
                 </div>
-                <div className="bg-white rounded-b-xl border border-t-0 border-[#C4B89D] overflow-hidden shadow-sm">
+                <div className="bg-white rounded-b-xl border border-t-0 border-[#D3D1C7] overflow-hidden shadow-sm">
                   <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr className="bg-[#CECBF6] text-[#2C2C2C] font-semibold">
-                        <th className="border-b border-[#D5DBDB] p-3 text-center w-1/4 font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-3 text-center w-1/4 font-poppins">
                           Role
                         </th>
-                        <th className="border-b border-[#D5DBDB] p-3 text-center w-1/4 font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-3 text-center w-1/4 font-poppins">
                           What They Use It For
                         </th>
-                        <th className="border-b border-[#D5DBDB] p-3 text-center w-1/4 font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-3 text-center w-1/4 font-poppins">
                           Key Frustration Today
                         </th>
-                        <th className="border-b border-[#D5DBDB] p-3 text-center w-1/4 font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-3 text-center w-1/4 font-poppins">
                           What They Gain
                         </th>
                       </tr>
@@ -963,16 +1412,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             key={i}
                             className="hover:bg-[#F6F4EE]/50 transition-colors"
                           >
-                            <td className="border-b border-[#D5DBDB] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
                               {r.role}
                             </td>
-                            <td className="border-b border-[#D5DBDB] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
                               {r.useCase}
                             </td>
-                            <td className="border-b border-[#D5DBDB] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins">
                               {r.frustration}
                             </td>
-                            <td className="border-b border-[#D5DBDB] p-3 text-[#2C2C2C] font-semibold leading-relaxed font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-3 text-[#2C2C2C] font-semibold leading-relaxed font-poppins">
                               {r.gain}
                             </td>
                           </tr>
@@ -982,10 +1431,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   </table>
                 </div>
 
-                <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
+                <div className="bg-[#cccbc9] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
                   Feature Summary
                 </div>
-                <div className="border border-t-0 border-[#C4B89D] p-4 text-sm text-[#2C2C2C]/80 bg-white font-medium leading-relaxed rounded-b-xl font-poppins">
+                <div className="border border-t-0 border-[#D3D1C7] p-4 text-sm text-[#2C2C2C]/80 bg-white font-medium leading-relaxed rounded-b-xl font-poppins">
                   {productData.extendedContent?.featureSummary ||
                     productData.brief}
                 </div>
@@ -993,14 +1442,14 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 <div className="bg-[#798C5E] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
                   Where We Are Today
                 </div>
-                <div className="bg-white rounded-b-xl border border-t-0 border-[#C4B89D] overflow-hidden shadow-sm">
+                <div className="bg-white rounded-b-xl border border-t-0 border-[#D3D1C7] overflow-hidden shadow-sm">
                   <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr className="bg-[#9EC8BA] text-[#2C2C2C] font-semibold">
-                        <th className="border-b border-[#D5DBDB] p-3 text-center w-1/4 font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-3 text-center w-1/4 font-poppins">
                           Dimension
                         </th>
-                        <th className="border-b border-[#D5DBDB] p-3 text-center w-3/4 font-poppins">
+                        <th className="border-b border-[#E5E7EB] p-3 text-center w-3/4 font-poppins">
                           Current State
                         </th>
                       </tr>
@@ -1012,10 +1461,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             key={i}
                             className="hover:bg-[#F6F4EE]/50 transition-colors"
                           >
-                            <td className="border-b border-[#D5DBDB] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
                               {r.dimension}
                             </td>
-                            <td className="border-b border-[#D5DBDB] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
+                            <td className="border-b border-[#E5E7EB] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins">
                               {r.state}
                             </td>
                           </tr>
@@ -1034,9 +1483,9 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
             className="space-y-6 animate-fade-in"
           >
             {productData.excelLikePostPossession ? (
-              <div className="overflow-x-auto rounded-xl border border-[#C4B89D] bg-[#F6F4EE] p-3 shadow-xl">
+              <div className="overflow-x-auto rounded-xl border border-[#D3D1C7] bg-[#F6F4EE] p-3 shadow-xl">
                 <div
-                  className="min-w-[1400px] rounded-md border border-[#C4B89D] bg-white"
+                  className="min-w-[1400px] rounded-md border border-[#D3D1C7] bg-white"
                   style={{
                     backgroundImage:
                       "linear-gradient(to right, rgba(212,219,219,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.2) 1px, transparent 1px)",
@@ -1073,10 +1522,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             return (
                               <div
                                 key={sIdx}
-                                className="border border-[#C4B89D] bg-white"
+                                className="border border-[#D3D1C7] bg-white"
                               >
                                 <div
-                                  className={`border border-[#C4B89D] ${tone.bar} px-3 py-1.5 text-[10px] font-semibold font-poppins uppercase tracking-wide text-white`}
+                                  className={`border border-[#D3D1C7] ${tone.bar} px-3 py-1.5 text-[10px] font-semibold font-poppins uppercase tracking-wide text-white`}
                                 >
                                   {section.title}
                                 </div>
@@ -1086,7 +1535,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                       {section.columns.map((c, cIdx) => (
                                         <th
                                           key={cIdx}
-                                          className={`border border-[#D5DBDB] ${tone.head} px-2 py-2`}
+                                          className={`border border-[#E5E7EB] ${tone.head} px-2 py-2`}
                                         >
                                           {c}
                                         </th>
@@ -1102,7 +1551,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                         {row.map((cell, cellIdx) => (
                                           <td
                                             key={cellIdx}
-                                            className="border border-[#D5DBDB] px-2 py-2 whitespace-pre-line"
+                                            className="border border-[#E5E7EB] px-2 py-2 whitespace-pre-line"
                                           >
                                             {cell}
                                           </td>
@@ -1133,12 +1582,12 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
           {/* 2. Features */}
           <TabsContent value="features" className="space-y-6">
-            <div className="bg-[#DA7756] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
+            <div className="bg-[#cccbc9] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
               <h2 className="text-xl font-semibold font-poppins uppercase tracking-tight">
                 {productData.name} - Feature List
               </h2>
             </div>
-            <div className="bg-[#F6F4EE] p-3 border-x border-[#C4B89D]">
+            <div className="bg-[#F6F4EE] p-3 border-x border-[#D3D1C7]">
               <p className="text-[10px] text-[#2C2C2C]/60 font-medium leading-relaxed font-poppins">
                 {productData.excelLikeFeatures
                   ? "Feature list shown in spreadsheet layout with module bands and USP markers."
@@ -1148,7 +1597,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
             {productData.excelLikeFeatures ? (
               <div
-                className="overflow-x-auto border border-[#C4B89D] bg-[#F6F4EE] p-2"
+                className="overflow-x-auto border border-[#D3D1C7] bg-[#F6F4EE] p-2"
                 style={{
                   backgroundImage:
                     "linear-gradient(to right, rgba(212,219,219,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.2) 1px, transparent 1px)",
@@ -1162,29 +1611,29 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
                   <div className="mt-2 flex gap-6">
                     {/* Left: sheet table */}
-                    <div className="w-[980px] shrink-0 bg-white border border-[#D5DBDB]">
+                    <div className="w-[980px] shrink-0 bg-white border border-[#E5E7EB]">
                       <table className="w-full border-collapse text-[9px] leading-[1.15] table-fixed font-poppins">
                         <thead>
                           <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase">
-                            <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[6%]">
+                            <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[6%]">
                               #
                             </th>
-                            <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                            <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                               Module
                             </th>
-                            <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                            <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                               Feature
                             </th>
-                            <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[22%]">
+                            <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[22%]">
                               Sub Feature
                             </th>
-                            <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[28%]">
+                            <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[28%]">
                               Description
                             </th>
-                            <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[5%]">
+                            <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[5%]">
                               User
                             </th>
-                            <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[3%]">
+                            <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[3%]">
                               USP
                             </th>
                           </tr>
@@ -1229,27 +1678,27 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                     key={`${g.moduleKey}-${localIdx}-${f.feature}`}
                                     className={`${zebra} hover:bg-[#F6F4EE] align-top`}
                                   >
-                                    <td className="border border-[#D5DBDB] px-1 py-1 text-center font-bold text-[#2C2C2C]/60">
+                                    <td className="border border-[#E5E7EB] px-1 py-1 text-center font-bold text-[#2C2C2C]/60">
                                       {excelFeatureRowStart + i}
                                     </td>
 
                                     {showModuleCell && (
                                       <td
                                         rowSpan={rowSpan}
-                                        className={`border border-[#D5DBDB] px-1.5 py-1 font-semibold align-top ${getModuleTone(f.module)}`}
+                                        className={`border border-[#E5E7EB] px-1.5 py-1 font-semibold align-top ${getModuleTone(f.module)}`}
                                       >
                                         {g.moduleLabel}
                                       </td>
                                     )}
 
-                                    <td className="border border-[#D5DBDB] px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
+                                    <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
                                       {f.feature}
                                     </td>
-                                    <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                       {f.subFeatures}
                                     </td>
                                     <td
-                                      className={`border border-[#D5DBDB] px-1.5 py-1 whitespace-pre-line break-words ${
+                                      className={`border border-[#E5E7EB] px-1.5 py-1 whitespace-pre-line break-words ${
                                         f.usp
                                           ? "text-[#6B9BCC] font-semibold"
                                           : "text-[#2C2C2C]/80"
@@ -1257,11 +1706,11 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                     >
                                       {f.works || ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] px-1 py-1 text-center font-semibold uppercase text-[8px] text-[#2C2C2C]">
+                                    <td className="border border-[#E5E7EB] px-1 py-1 text-center font-semibold uppercase text-[8px] text-[#2C2C2C]">
                                       {f.userType}
                                     </td>
                                     <td
-                                      className={`border border-[#D5DBDB] px-1 py-1 text-center font-semibold uppercase text-[8px] ${
+                                      className={`border border-[#E5E7EB] px-1 py-1 text-center font-semibold uppercase text-[8px] ${
                                         f.usp
                                           ? "bg-[#9EC8BA]/30 text-[#798C5E]"
                                           : "bg-white text-[#D3D1C7]"
@@ -1280,7 +1729,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
                     {/* Right: blank grid area (like the sheet) */}
                     <div
-                      className="flex-1 min-w-[620px] rounded-sm border border-[#C4B89D] bg-white"
+                      className="flex-1 min-w-[620px] rounded-sm border border-[#D3D1C7] bg-white"
                       style={{
                         backgroundImage:
                           "linear-gradient(to right, rgba(212,219,219,0.22) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.22) 1px, transparent 1px)",
@@ -1292,7 +1741,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
               </div>
             ) : (
               <>
-                <div className="bg-[#F6F4EE] p-3 border-x border-[#C4B89D]">
+                <div className="bg-[#F6F4EE] p-3 border-x border-[#D3D1C7]">
                   <p className="text-[10px] text-[#2C2C2C]/60 font-semibold italic leading-relaxed">
                     <span className="text-[#DA7756]">
                       ★ USP features highlighted in orange
@@ -1302,37 +1751,37 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                     Notifications
                   </p>
                 </div>
-                <div className="overflow-x-auto border border-[#C4B89D] rounded-b-xl shadow-lg">
+                <div className="overflow-x-auto border border-[#D3D1C7] rounded-b-xl shadow-lg">
                   <table className="w-full border-collapse text-[10px] bg-white font-poppins">
                     <thead>
                       <tr className="bg-[#DA7756] text-white font-semibold uppercase text-center">
-                        <th className="border border-[#C4B89D] p-3 w-[5%]">
+                        <th className="border border-[#D3D1C7] p-3 w-[5%]">
                           #
                         </th>
-                        <th className="border border-[#C4B89D] p-3 w-[15%] text-left">
+                        <th className="border border-[#D3D1C7] p-3 w-[15%] text-left">
                           Module / Section
                         </th>
-                        <th className="border border-[#C4B89D] p-3 w-[15%] text-left">
+                        <th className="border border-[#D3D1C7] p-3 w-[15%] text-left">
                           Feature Name
                         </th>
                         {productData.extendedContent?.detailedFeatures?.some(
                           (f) => f.subFeatures !== ""
                         ) && (
-                          <th className="border border-[#C4B89D] p-3 w-[20%] text-left">
+                          <th className="border border-[#D3D1C7] p-3 w-[20%] text-left">
                             Sub-Features
                           </th>
                         )}
-                        <th className="border border-[#C4B89D] p-3 text-left">
+                        <th className="border border-[#D3D1C7] p-3 text-left">
                           How It Currently Works
                         </th>
                         {productData.extendedContent?.detailedFeatures?.some(
                           (f) => f.userType !== "All" && f.userType !== ""
                         ) && (
-                          <th className="border border-[#C4B89D] p-3 w-[10%]">
+                          <th className="border border-[#D3D1C7] p-3 w-[10%]">
                             User Type
                           </th>
                         )}
-                        <th className="border border-[#C4B89D] p-3 w-[8%]">
+                        <th className="border border-[#D3D1C7] p-3 w-[8%]">
                           USP?
                         </th>
                       </tr>
@@ -1344,34 +1793,34 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             key={i}
                             className={`hover:bg-[#F6F4EE] transition-colors ${f.usp ? "bg-[#F6F4EE]/50 font-semibold" : ""}`}
                           >
-                            <td className="border border-[#C4B89D] p-3 text-center font-semibold text-[#2C2C2C]/60">
+                            <td className="border border-[#D3D1C7] p-3 text-center font-semibold text-[#2C2C2C]/60">
                               {i + 1}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 font-semibold text-[#DA7756] uppercase bg-[#F6F4EE]/30">
+                            <td className="border border-[#D3D1C7] p-3 font-semibold text-[#DA7756] uppercase bg-[#F6F4EE]/30">
                               {f.module}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C] font-semibold">
+                            <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold">
                               {f.feature}
                             </td>
                             {productData.extendedContent?.detailedFeatures?.some(
                               (ft) => ft.subFeatures !== ""
                             ) && (
-                              <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium">
                                 {f.subFeatures}
                               </td>
                             )}
-                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
+                            <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
                               {f.works}
                             </td>
                             {productData.extendedContent?.detailedFeatures?.some(
                               (ft) =>
                                 ft.userType !== "All" && ft.userType !== ""
                             ) && (
-                              <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/60 font-semibold text-center uppercase tracking-tighter">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/60 font-semibold text-center uppercase tracking-tighter">
                                 {f.userType}
                               </td>
                             )}
-                            <td className="border border-[#C4B89D] p-3 text-center">
+                            <td className="border border-[#D3D1C7] p-3 text-center">
                               {f.usp && (
                                 <div className="flex items-center justify-center text-[#DA7756] text-sm">
                                   <span>★</span>
@@ -1389,7 +1838,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
           </TabsContent>
           {/* 3. Market */}
           <TabsContent value="market" className="space-y-8">
-            <div className="bg-[#DA7756] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
+            <div className="bg-[#cccbc9] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
               <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
                 {productData.name} - Market Analysis
               </h2>
@@ -1398,7 +1847,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
             productData.extendedContent?.detailedMarketAnalysis
               ?.marketMatrixRows ? (
               <div
-                className="overflow-x-auto border border-[#D5DBDB] bg-[#F6F4EE] p-2"
+                className="overflow-x-auto border border-[#E5E7EB] bg-[#F6F4EE] p-2"
                 style={{
                   backgroundImage:
                     "linear-gradient(to right, rgba(212,219,219,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.2) 1px, transparent 1px)",
@@ -1435,40 +1884,40 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                       </th>
                     </tr>
                     <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                      <th className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-1.5 py-1 text-left">
                         Who Is This Today
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#CECBF6]/15 px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#CECBF6]/15 px-1.5 py-1 text-left">
                         Who We Sell To
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 text-left">
                         Sub-Sector
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-left">
                         What Budget They Have
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#9EC8BA]/20 px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#9EC8BA]/20 px-1.5 py-1 text-left">
                         How They Buy
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#CECBF6]/15 px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#CECBF6]/15 px-1.5 py-1 text-left">
                         Who They Use Today
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-left">
                         How Ready They Are
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#DA7756]/10 px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#DA7756]/10 px-1.5 py-1 text-left">
                         What Makes Them Switch
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-left">
                         What Win Looks Like
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-left">
                         Big Risk
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-left">
                         Entry Wedge
                       </th>
-                      <th className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 text-left">
+                      <th className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 text-left">
                         Opportunity
                       </th>
                     </tr>
@@ -1477,40 +1926,40 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                     {productData.extendedContent.detailedMarketAnalysis.marketMatrixRows.map(
                       (r, i) => (
                         <tr key={i} className="hover:bg-[#F6F4EE] align-top">
-                          <td className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 font-bold text-[#2C2C2C]">
+                          <td className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 font-bold text-[#2C2C2C]">
                             {r.segment}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#F6F4EE]/50 px-1.5 py-1 text-[#2C2C2C]">
+                          <td className="border border-[#E5E7EB] bg-[#F6F4EE]/50 px-1.5 py-1 text-[#2C2C2C]">
                             {r.whoToday}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#F6F4EE]/30 px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#F6F4EE]/30 px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.subsector}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.budget}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#9EC8BA]/15 px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#9EC8BA]/15 px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.purchasePattern}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.incumbents}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.readiness}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#DA7756]/10 px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#DA7756]/10 px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.trigger}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 font-semibold text-[#6B9BCC]">
+                          <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 font-semibold text-[#6B9BCC]">
                             {r.payoff}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.risk}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 text-[#2C2C2C]/80">
+                          <td className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 text-[#2C2C2C]/80">
                             {r.entryWedge}
                           </td>
-                          <td className="border border-[#D5DBDB] bg-[#CECBF6]/15 px-1.5 py-1 font-semibold text-[#798C5E]">
+                          <td className="border border-[#E5E7EB] bg-[#CECBF6]/15 px-1.5 py-1 font-semibold text-[#798C5E]">
                             {r.opportunity}
                           </td>
                         </tr>
@@ -1526,7 +1975,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 productData.extendedContent.detailedMarketAnalysis
                   .competitorMapping?.length) ? (
               <div
-                className="overflow-x-auto border border-[#D5DBDB] bg-[#F6F4EE] p-2"
+                className="overflow-x-auto border border-[#E5E7EB] bg-[#F6F4EE] p-2"
                 style={{
                   backgroundImage:
                     "linear-gradient(to right, rgba(212,219,219,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.2) 1px, transparent 1px)",
@@ -1546,23 +1995,23 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           <div className="bg-[#DA7756]/90 text-white border border-[#DA7756] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide font-poppins">
                             Part A — Customer segments and buying context
                           </div>
-                          <div className="bg-white border border-[#D5DBDB]">
+                          <div className="bg-white border border-[#E5E7EB]">
                             <table className="w-full border-collapse text-[9px] leading-[1.15] table-fixed font-poppins">
                               <thead>
                                 <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase">
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                                     Segment
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[16%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[16%]">
                                     Decision maker
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[22%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[22%]">
                                     Pain points
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[22%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[22%]">
                                     What happens if not solved
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[22%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[22%]">
                                     Good enough today
                                   </th>
                                 </tr>
@@ -1574,19 +2023,19 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                       key={i}
                                       className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] align-top`}
                                     >
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
                                         {t.segment}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-semibold break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-semibold break-words">
                                         {t.industry}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {t.painPoints}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {t.notSolved}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {t.goodEnough}
                                       </td>
                                     </tr>
@@ -1604,29 +2053,29 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           <div className="bg-[#DA7756]/90 text-white border border-[#DA7756] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide font-poppins">
                             Part B — Competitor mapping
                           </div>
-                          <div className="bg-white border border-[#D5DBDB]">
+                          <div className="bg-white border border-[#E5E7EB]">
                             <table className="w-full border-collapse text-[9px] leading-[1.15] table-fixed font-poppins">
                               <thead>
                                 <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase">
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[14%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[14%]">
                                     Competitor
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[14%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[14%]">
                                     Target customer
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[12%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[12%]">
                                     Pricing
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[14%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[14%]">
                                     Discovery
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                                     Strongest features
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[14%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[14%]">
                                     Weakness
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[14%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[14%]">
                                     Market gaps
                                   </th>
                                 </tr>
@@ -1638,25 +2087,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                       key={i}
                                       className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] align-top`}
                                     >
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
                                         {c.name}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {c.targetCustomer}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {c.pricing}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {c.discovery}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#798C5E] font-semibold whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#798C5E] font-semibold whitespace-pre-line break-words">
                                         {c.strongestFeatures}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#b91c1c] font-semibold whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#b91c1c] font-semibold whitespace-pre-line break-words">
                                         {c.weakness}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#6B9BCC] font-semibold whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#6B9BCC] font-semibold whitespace-pre-line break-words">
                                         {c.marketGaps}
                                       </td>
                                     </tr>
@@ -1917,7 +2366,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   !productData.extendedContent?.detailedMarketAnalysis
                     ?.targetAudience && (
                     <div className="space-y-4">
-                      <div className="bg-[#DA7756] text-white px-4 py-2 font-semibold text-sm uppercase font-poppins">
+                      <div className="bg-[#cccbc9] text-white px-4 py-2 font-semibold text-sm uppercase font-poppins">
                         Market Size and Growth
                       </div>
                       <div className="overflow-x-auto border border-[#C4B89D] rounded-xl shadow-lg">
@@ -2083,7 +2532,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
             {productData.excelLikePricing &&
             productData.extendedContent?.detailedPricing ? (
               <div
-                className="overflow-x-auto border border-[#D5DBDB] bg-[#F6F4EE] p-2"
+                className="overflow-x-auto border border-[#E5E7EB] bg-[#F6F4EE] p-2"
                 style={{
                   backgroundImage:
                     "linear-gradient(to right, rgba(212,219,219,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(212,219,219,0.2) 1px, transparent 1px)",
@@ -2103,7 +2552,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                               Post Sales - Features & Pricing
                             </th>
                           </tr>
-                          <tr className="bg-[#DA7756]/80 text-white/90">
+                          <tr className="bg-[#cccbc9]/80 text-white/90">
                             <th
                               className="border border-[#DA7756] px-2 py-1 text-left text-[8px] font-semibold"
                               colSpan={6}
@@ -2123,22 +2572,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             </th>
                           </tr>
                           <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                            <th className="border border-[#D5DBDB] bg-[#CECBF6]/15 px-1.5 py-1 text-left w-[18%]">
+                            <th className="border border-[#E5E7EB] bg-[#CECBF6]/15 px-1.5 py-1 text-left w-[18%]">
                               Feature / Capability
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 text-left w-[18%]">
+                            <th className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 text-left w-[18%]">
                               Current State
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#9EC8BA]/15 px-1.5 py-1 text-left w-[18%]">
+                            <th className="border border-[#E5E7EB] bg-[#9EC8BA]/15 px-1.5 py-1 text-left w-[18%]">
                               What Market Expects
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-left w-[18%]">
+                            <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-left w-[18%]">
                               How This Helps / Hurts Us
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 text-center w-[8%]">
+                            <th className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 text-center w-[8%]">
                               Status
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#DA7756]/10 px-1.5 py-1 text-left w-[20%]">
+                            <th className="border border-[#E5E7EB] bg-[#DA7756]/10 px-1.5 py-1 text-left w-[20%]">
                               Recommended Move
                             </th>
                           </tr>
@@ -2160,24 +2609,24 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                   key={index}
                                   className="align-top hover:bg-[#F6F4EE]"
                                 >
-                                  <td className="border border-[#D5DBDB] bg-[#F6F4EE]/50 px-1.5 py-1 font-bold text-[#2C2C2C]">
+                                  <td className="border border-[#E5E7EB] bg-[#F6F4EE]/50 px-1.5 py-1 font-bold text-[#2C2C2C]">
                                     {row.capability}
                                   </td>
-                                  <td className="border border-[#D5DBDB] bg-white px-1.5 py-1 text-[#2C2C2C]/80">
+                                  <td className="border border-[#E5E7EB] bg-white px-1.5 py-1 text-[#2C2C2C]/80">
                                     {row.currentState}
                                   </td>
-                                  <td className="border border-[#D5DBDB] bg-[#9EC8BA]/10 px-1.5 py-1 text-[#2C2C2C]/80">
+                                  <td className="border border-[#E5E7EB] bg-[#9EC8BA]/10 px-1.5 py-1 text-[#2C2C2C]/80">
                                     {row.marketNeed}
                                   </td>
-                                  <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
+                                  <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-[#2C2C2C]/80">
                                     {row.impact}
                                   </td>
                                   <td
-                                    className={`border border-[#D5DBDB] px-1 py-1 text-center font-semibold uppercase ${statusClass}`}
+                                    className={`border border-[#E5E7EB] px-1 py-1 text-center font-semibold uppercase ${statusClass}`}
                                   >
                                     {row.status}
                                   </td>
-                                  <td className="border border-[#D5DBDB] bg-[#DA7756]/10 px-1.5 py-1 text-[#DA7756]">
+                                  <td className="border border-[#E5E7EB] bg-[#DA7756]/10 px-1.5 py-1 text-[#DA7756]">
                                     {row.recommendation}
                                   </td>
                                 </tr>
@@ -2202,12 +2651,12 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 return (
                                   <tr key={index}>
                                     <td
-                                      className={`w-[26%] border border-[#D5DBDB] px-2 py-1 font-semibold uppercase ${toneClass}`}
+                                      className={`w-[26%] border border-[#E5E7EB] px-2 py-1 font-semibold uppercase ${toneClass}`}
                                     >
                                       {row.label}
                                     </td>
                                     <td
-                                      className={`border border-[#D5DBDB] px-2 py-1 ${toneClass}`}
+                                      className={`border border-[#E5E7EB] px-2 py-1 ${toneClass}`}
                                     >
                                       {row.detail}
                                     </td>
@@ -2235,10 +2684,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           {productData.extendedContent.detailedPricing.pricingCurrentRows?.map(
                             (row, index) => (
                               <tr key={index}>
-                                <td className="w-[24%] border border-[#D5DBDB] bg-[#CECBF6]/10 px-2 py-1 font-bold text-[#2C2C2C]">
+                                <td className="w-[24%] border border-[#E5E7EB] bg-[#CECBF6]/10 px-2 py-1 font-bold text-[#2C2C2C]">
                                   {row.label}
                                 </td>
-                                <td className="border border-[#D5DBDB] bg-white px-2 py-1 text-[#2C2C2C]/80">
+                                <td className="border border-[#E5E7EB] bg-white px-2 py-1 text-[#2C2C2C]/80">
                                   {row.detail}
                                 </td>
                               </tr>
@@ -2263,13 +2712,13 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           {productData.extendedContent.detailedPricing.pricingPositioningRows?.map(
                             (row, index) => (
                               <tr key={index} className="align-top">
-                                <td className="w-[22%] border border-[#D5DBDB] bg-[#F6F4EE]/50 px-2 py-1 font-bold text-[#2C2C2C]">
+                                <td className="w-[22%] border border-[#E5E7EB] bg-[#F6F4EE]/50 px-2 py-1 font-bold text-[#2C2C2C]">
                                   {row.question}
                                 </td>
-                                <td className="border border-[#D5DBDB] bg-white px-2 py-1 text-[#2C2C2C]/80">
+                                <td className="border border-[#E5E7EB] bg-white px-2 py-1 text-[#2C2C2C]/80">
                                   {row.answer}
                                 </td>
-                                <td className="w-[22%] border border-[#D5DBDB] bg-[#DA7756]/10 px-2 py-1 text-[#DA7756]">
+                                <td className="w-[22%] border border-[#E5E7EB] bg-[#DA7756]/10 px-2 py-1 text-[#DA7756]">
                                   {row.note}
                                 </td>
                               </tr>
@@ -2290,16 +2739,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             </th>
                           </tr>
                           <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                            <th className="border border-[#D5DBDB] bg-[#CECBF6]/15 px-1.5 py-1 text-left w-[25%]">
+                            <th className="border border-[#E5E7EB] bg-[#CECBF6]/15 px-1.5 py-1 text-left w-[25%]">
                               Current Prop
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-1.5 py-1 text-left w-[22%]">
+                            <th className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-1.5 py-1 text-left w-[22%]">
                               Suggested Fix
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#9EC8BA]/15 px-1.5 py-1 text-left w-[28%]">
+                            <th className="border border-[#E5E7EB] bg-[#9EC8BA]/15 px-1.5 py-1 text-left w-[28%]">
                               Improved Framing
                             </th>
-                            <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 text-left w-[25%]">
+                            <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 text-left w-[25%]">
                               Why It Matters
                             </th>
                           </tr>
@@ -2308,16 +2757,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           {productData.extendedContent.detailedPricing.pricingImprovementRows?.map(
                             (row, index) => (
                               <tr key={index} className="align-top">
-                                <td className="border border-[#D5DBDB] bg-[#F6F4EE]/50 px-2 py-1 text-[#2C2C2C] font-bold">
+                                <td className="border border-[#E5E7EB] bg-[#F6F4EE]/50 px-2 py-1 text-[#2C2C2C] font-bold">
                                   {row.currentProp}
                                 </td>
-                                <td className="border border-[#D5DBDB] bg-[#CECBF6]/10 px-2 py-1 text-[#6B9BCC]">
+                                <td className="border border-[#E5E7EB] bg-[#CECBF6]/10 px-2 py-1 text-[#6B9BCC]">
                                   {row.suggestedFix}
                                 </td>
-                                <td className="border border-[#D5DBDB] bg-[#9EC8BA]/10 px-2 py-1 text-[#798C5E]">
+                                <td className="border border-[#E5E7EB] bg-[#9EC8BA]/10 px-2 py-1 text-[#798C5E]">
                                   {row.improvedFraming}
                                 </td>
-                                <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-2 py-1 text-[#DA7756]">
+                                <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-2 py-1 text-[#DA7756]">
                                   {row.whyItWins}
                                 </td>
                               </tr>
@@ -2658,26 +3107,26 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           <div className="bg-[#DA7756] text-white border border-[#DA7756] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide font-poppins">
                             Part A — Industry level use cases
                           </div>
-                          <div className="bg-white border border-[#D5DBDB]">
+                          <div className="bg-white border border-[#E5E7EB]">
                             <table className="w-full border-collapse text-[9px] leading-[1.15] table-fixed font-poppins">
                               <thead>
                                 <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase">
-                                  <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[6%]">
+                                  <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[6%]">
                                     #
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                                     Target Segment
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[22%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[22%]">
                                     Use Case
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                                     How they do it today
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[20%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[20%]">
                                     How we solve it
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[16%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[16%]">
                                     How to sell
                                   </th>
                                 </tr>
@@ -2689,22 +3138,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                       key={i}
                                       className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] align-top`}
                                     >
-                                      <td className="border border-[#D5DBDB] px-1 py-1 text-center font-bold text-[#2C2C2C]/60">
+                                      <td className="border border-[#E5E7EB] px-1 py-1 text-center font-bold text-[#2C2C2C]/60">
                                         {u.rank}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 font-semibold text-[#DA7756] break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-[#DA7756] break-words">
                                         {u.industry}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                         {u.useCase}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
                                         {u.currentTool}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {u.features}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {u.profile}
                                       </td>
                                     </tr>
@@ -2718,23 +3167,23 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           <div className="bg-[#DA7756] text-white border border-[#DA7756] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide font-poppins">
                             Part B — Internal team use cases
                           </div>
-                          <div className="bg-white border border-[#D5DBDB]">
+                          <div className="bg-white border border-[#E5E7EB]">
                             <table className="w-full border-collapse text-[9px] leading-[1.15] table-fixed font-poppins">
                               <thead>
                                 <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase">
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                                     Team
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[22%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[22%]">
                                     Relevant features
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[34%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[34%]">
                                     How they use it day-to-day
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                                  <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                                     Benefit
                                   </th>
-                                  <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[8%]">
+                                  <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[8%]">
                                     Freq
                                   </th>
                                 </tr>
@@ -2746,19 +3195,19 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                       key={i}
                                       className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] align-top`}
                                     >
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 font-semibold text-[#DA7756] uppercase break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-[#DA7756] uppercase break-words">
                                         {t.team}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {t.features}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {t.process}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
                                         {t.benefit}
                                       </td>
-                                      <td className="border border-[#D5DBDB] px-1 py-1 text-center font-semibold uppercase text-[8px] text-[#2C2C2C]/80">
+                                      <td className="border border-[#E5E7EB] px-1 py-1 text-center font-semibold uppercase text-[8px] text-[#2C2C2C]/80">
                                         {t.frequency}
                                       </td>
                                     </tr>
@@ -2935,9 +3384,9 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 {tg.sections.map((sec, sIdx) => (
                                   <div
                                     key={sIdx}
-                                    className="bg-white border border-[#D5DBDB]"
+                                    className="bg-white border border-[#E5E7EB]"
                                   >
-                                    <div className="border-b border-[#D5DBDB] bg-[#F6F4EE] px-3 py-1.5 text-[9px] font-semibold uppercase text-[#DA7756] font-poppins">
+                                    <div className="border-b border-[#E5E7EB] bg-[#F6F4EE] px-3 py-1.5 text-[9px] font-semibold uppercase text-[#DA7756] font-poppins">
                                       {sec.title}
                                     </div>
                                     <table className="w-full border-collapse text-[9px] leading-[1.15] table-fixed font-poppins">
@@ -2946,7 +3395,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                           {sec.columns.map((c, i) => (
                                             <th
                                               key={i}
-                                              className="border border-[#D5DBDB] px-1.5 py-1 text-left"
+                                              className="border border-[#E5E7EB] px-1.5 py-1 text-left"
                                             >
                                               {c}
                                             </th>
@@ -2962,7 +3411,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                             {row.map((cell, cIdx) => (
                                               <td
                                                 key={cIdx}
-                                                className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words"
+                                                className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words"
                                               >
                                                 {cell}
                                               </td>
@@ -2975,7 +3424,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 ))}
 
                                 {(tg.summary || tg.keyAssumptions) && (
-                                  <div className="bg-white border border-[#D5DBDB]">
+                                  <div className="bg-white border border-[#E5E7EB]">
                                     <div className="bg-[#DA7756] text-white px-3 py-1.5 text-[9px] font-semibold uppercase font-poppins">
                                       TG Summary
                                     </div>
@@ -3114,7 +3563,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                         {sec.columns.map((c, i) => (
                                           <th
                                             key={i}
-                                            className="border-b border-[#D5DBDB] px-4 py-3 text-left"
+                                            className="border-b border-[#E5E7EB] px-4 py-3 text-left"
                                           >
                                             {c}
                                           </th>
@@ -3130,7 +3579,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                           {row.map((cell, cIdx) => (
                                             <td
                                               key={cIdx}
-                                              className={`border-b border-[#D5DBDB] px-4 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words ${cIdx === 0 ? "font-semibold text-[#2C2C2C] bg-[#F6F4EE]" : ""} ${cIdx === 1 ? "text-[#E49191] text-center" : ""} ${cIdx === 2 ? "text-[#108C72] font-semibold text-center" : ""}`}
+                                              className={`border-b border-[#E5E7EB] px-4 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words ${cIdx === 0 ? "font-semibold text-[#2C2C2C] bg-[#F6F4EE]" : ""} ${cIdx === 1 ? "text-[#E49191] text-center" : ""} ${cIdx === 2 ? "text-[#108C72] font-semibold text-center" : ""}`}
                                             >
                                               {cell}
                                             </td>
@@ -3158,16 +3607,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           <table className="w-full border-collapse text-sm leading-relaxed font-poppins">
                             <thead>
                               <tr className="font-semibold text-[#2C2C2C]">
-                                <th className="border-b border-[#D5DBDB] bg-[#F6F4EE] px-4 py-3 w-[22%] text-left">
+                                <th className="border-b border-[#E5E7EB] bg-[#F6F4EE] px-4 py-3 w-[22%] text-left">
                                   Metric Domain
                                 </th>
-                                <th className="border-b border-[#D5DBDB] bg-[#CECBF6]/30 px-4 py-3 w-[18%] text-center">
+                                <th className="border-b border-[#E5E7EB] bg-[#CECBF6]/30 px-4 py-3 w-[18%] text-center">
                                   Baseline (Traditional)
                                 </th>
-                                <th className="border-b border-[#D5DBDB] bg-[#9EC8BA]/30 px-4 py-3 w-[18%] text-center">
+                                <th className="border-b border-[#E5E7EB] bg-[#9EC8BA]/30 px-4 py-3 w-[18%] text-center">
                                   Digital Impact (Our System)
                                 </th>
-                                <th className="border-b border-[#D5DBDB] bg-[#DA7756]/10 px-4 py-3 text-left">
+                                <th className="border-b border-[#E5E7EB] bg-[#DA7756]/10 px-4 py-3 text-left">
                                   Primary Claim
                                 </th>
                               </tr>
@@ -3179,16 +3628,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                     key={i}
                                     className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/30"} align-top hover:bg-[#F6F4EE]/50 transition-colors`}
                                   >
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE]">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE]">
                                       {m.metric}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-center text-[#E49191] font-medium italic">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-center text-[#E49191] font-medium italic">
                                       {m.baseline}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-center text-[#108C72] font-semibold">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-center text-[#108C72] font-semibold">
                                       {m.withSnag}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line italic">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line italic">
                                       {m.claim}
                                     </td>
                                   </tr>
@@ -3206,25 +3655,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                           <table className="w-full border-collapse text-sm leading-relaxed font-poppins">
                             <thead>
                               <tr className="font-semibold text-[#2C2C2C] bg-[#9EC8BA]/30">
-                                <th className="border-b border-[#D5DBDB] px-4 py-3 w-[20%] text-left">
+                                <th className="border-b border-[#E5E7EB] px-4 py-3 w-[20%] text-left">
                                   Metric
                                 </th>
-                                <th className="border-b border-[#D5DBDB] px-4 py-3 w-[26%] text-left">
+                                <th className="border-b border-[#E5E7EB] px-4 py-3 w-[26%] text-left">
                                   Definition
                                 </th>
-                                <th className="border-b border-[#D5DBDB] px-4 py-3 w-[10%] text-center">
+                                <th className="border-b border-[#E5E7EB] px-4 py-3 w-[10%] text-center">
                                   D30 Current
                                 </th>
-                                <th className="border-b border-[#D5DBDB] px-4 py-3 w-[10%] text-center">
+                                <th className="border-b border-[#E5E7EB] px-4 py-3 w-[10%] text-center">
                                   D30 Phase 1
                                 </th>
-                                <th className="border-b border-[#D5DBDB] px-4 py-3 w-[10%] text-center">
+                                <th className="border-b border-[#E5E7EB] px-4 py-3 w-[10%] text-center">
                                   M3 Current
                                 </th>
-                                <th className="border-b border-[#D5DBDB] px-4 py-3 w-[10%] text-center">
+                                <th className="border-b border-[#E5E7EB] px-4 py-3 w-[10%] text-center">
                                   M3 Phase 1
                                 </th>
-                                <th className="border-b border-[#D5DBDB] px-4 py-3 w-[14%] text-left">
+                                <th className="border-b border-[#E5E7EB] px-4 py-3 w-[14%] text-left">
                                   Notes
                                 </th>
                               </tr>
@@ -3236,25 +3685,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                     key={i}
                                     className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/30"} align-top hover:bg-[#F6F4EE]/50 transition-colors`}
                                   >
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE]">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE]">
                                       {t.metric}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-[#2C2C2C]/80 font-medium">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-[#2C2C2C]/80 font-medium">
                                       {t.definition}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-center text-[#2C2C2C] font-semibold">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-center text-[#2C2C2C] font-semibold">
                                       {t.d30Current}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-center text-[#DA7756] font-semibold bg-[#DA7756]/10">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-center text-[#DA7756] font-semibold bg-[#DA7756]/10">
                                       {t.d30Phase1}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-center text-[#2C2C2C] font-semibold">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-center text-[#2C2C2C] font-semibold">
                                       {t.m3Current}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-center text-[#DA7756] font-semibold bg-[#DA7756]/10">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-center text-[#DA7756] font-semibold bg-[#DA7756]/10">
                                       {t.m3Phase1}
                                     </td>
-                                    <td className="border-b border-[#D5DBDB] px-4 py-3 text-[#2C2C2C]/60 font-medium italic">
+                                    <td className="border-b border-[#E5E7EB] px-4 py-3 text-[#2C2C2C]/60 font-medium italic">
                                       —
                                     </td>
                                   </tr>
@@ -3289,16 +3738,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                         <table className="w-full border-collapse font-poppins text-sm leading-relaxed bg-white text-center">
                           <thead>
                             <tr className="bg-[#CECBF6]/30 font-semibold uppercase text-[#2C2C2C]">
-                              <th className="border border-[#D5DBDB] p-3 w-[25%] text-left">
+                              <th className="border border-[#E5E7EB] p-3 w-[25%] text-left">
                                 Metric Domain
                               </th>
-                              <th className="border border-[#D5DBDB] p-3">
+                              <th className="border border-[#E5E7EB] p-3">
                                 Baseline (Traditional)
                               </th>
-                              <th className="border border-[#D5DBDB] p-3 bg-[#9EC8BA]/20 text-[#2C2C2C] font-semibold">
+                              <th className="border border-[#E5E7EB] p-3 bg-[#9EC8BA]/20 text-[#2C2C2C] font-semibold">
                                 Digital Impact (Our System)
                               </th>
-                              <th className="border border-[#D5DBDB] p-3 text-left">
+                              <th className="border border-[#E5E7EB] p-3 text-left">
                                 Primary Claim
                               </th>
                             </tr>
@@ -3310,16 +3759,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                   key={i}
                                   className={`hover:bg-[#F6F4EE]/50 transition-colors ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/30"}`}
                                 >
-                                  <td className="border border-[#D5DBDB] p-3 font-semibold text-[#2C2C2C] uppercase text-left">
+                                  <td className="border border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] uppercase text-left">
                                     {metric.metric}
                                   </td>
-                                  <td className="border border-[#D5DBDB] p-3 text-[#E49191] font-medium line-through decoration-[#E49191]/30">
+                                  <td className="border border-[#E5E7EB] p-3 text-[#E49191] font-medium line-through decoration-[#E49191]/30">
                                     {metric.baseline}
                                   </td>
-                                  <td className="border border-[#D5DBDB] p-3 text-[#108C72] font-semibold bg-[#9EC8BA]/10">
+                                  <td className="border border-[#E5E7EB] p-3 text-[#108C72] font-semibold bg-[#9EC8BA]/10">
                                     {metric.withSnag}
                                   </td>
-                                  <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C]/70 font-medium leading-tight text-left">
+                                  <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/70 font-medium leading-tight text-left">
                                     {metric.claim}
                                   </td>
                                 </tr>
@@ -3338,19 +3787,19 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                         <table className="w-full border-collapse font-poppins text-sm leading-relaxed bg-white text-center">
                           <thead>
                             <tr className="bg-[#9EC8BA]/30 font-semibold uppercase text-[#2C2C2C]">
-                              <th className="border border-[#D5DBDB] p-3 text-left">
+                              <th className="border border-[#E5E7EB] p-3 text-left">
                                 Product Metric
                               </th>
-                              <th className="border border-[#D5DBDB] p-3">
+                              <th className="border border-[#E5E7EB] p-3">
                                 D30 Current
                               </th>
-                              <th className="border border-[#D5DBDB] p-3 font-semibold text-[#DA7756] bg-[#DA7756]/5">
+                              <th className="border border-[#E5E7EB] p-3 font-semibold text-[#DA7756] bg-[#DA7756]/5">
                                 D30 Phase 1
                               </th>
-                              <th className="border border-[#D5DBDB] p-3">
+                              <th className="border border-[#E5E7EB] p-3">
                                 M3 Current
                               </th>
-                              <th className="border border-[#D5DBDB] p-3 font-semibold text-[#DA7756] bg-[#DA7756]/5">
+                              <th className="border border-[#E5E7EB] p-3 font-semibold text-[#DA7756] bg-[#DA7756]/5">
                                 M3 Phase 1
                               </th>
                             </tr>
@@ -3362,19 +3811,19 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                   key={i}
                                   className={`hover:bg-[#F6F4EE]/50 transition-colors ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/30"}`}
                                 >
-                                  <td className="border border-[#D5DBDB] p-3 font-semibold text-[#2C2C2C] uppercase text-left">
+                                  <td className="border border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] uppercase text-left">
                                     {target.metric}
                                   </td>
-                                  <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C]/60 font-medium">
+                                  <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/60 font-medium">
                                     {target.d30Current}
                                   </td>
-                                  <td className="border border-[#D5DBDB] p-3 text-[#DA7756] font-semibold bg-[#DA7756]/5">
+                                  <td className="border border-[#E5E7EB] p-3 text-[#DA7756] font-semibold bg-[#DA7756]/5">
                                     {target.d30Phase1}
                                   </td>
-                                  <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C]/60 font-medium">
+                                  <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/60 font-medium">
                                     {target.m3Current}
                                   </td>
-                                  <td className="border border-[#D5DBDB] p-3 text-[#DA7756] font-semibold bg-[#DA7756]/5">
+                                  <td className="border border-[#E5E7EB] p-3 text-[#DA7756] font-semibold bg-[#DA7756]/5">
                                     {target.m3Phase1}
                                   </td>
                                 </tr>
@@ -3448,22 +3897,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 </th>
                               </tr>
                               <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                                <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
+                                <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
                                   ID
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#9EC8BA]/30 px-1.5 py-1 text-left w-[20%]">
+                                <th className="border border-[#E5E7EB] bg-[#9EC8BA]/30 px-1.5 py-1 text-left w-[20%]">
                                   Strength
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#9EC8BA]/30 px-1.5 py-1 text-left w-[24%]">
+                                <th className="border border-[#E5E7EB] bg-[#9EC8BA]/30 px-1.5 py-1 text-left w-[24%]">
                                   Detail at market
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
+                                <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
                                   ID
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#CECBF6]/30 px-1.5 py-1 text-left w-[20%]">
+                                <th className="border border-[#E5E7EB] bg-[#CECBF6]/30 px-1.5 py-1 text-left w-[20%]">
                                   Weakness
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#CECBF6]/30 px-1.5 py-1 text-left w-[24%]">
+                                <th className="border border-[#E5E7EB] bg-[#CECBF6]/30 px-1.5 py-1 text-left w-[24%]">
                                   Detail at market
                                 </th>
                               </tr>
@@ -3493,22 +3942,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                     key={`sw-${i}`}
                                     className={`align-top ${zebra} hover:bg-[#F6F4EE] transition-colors`}
                                   >
-                                    <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
+                                    <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
                                       {s ? `S${i + 1}` : ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#9EC8BA]/20 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#9EC8BA]/20 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
                                       {s?.headline ?? ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#9EC8BA]/20 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#9EC8BA]/20 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                       {s?.explanation ?? ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
+                                    <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
                                       {w ? `W${i + 1}` : ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
                                       {w?.headline ?? ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                       {w?.explanation ?? ""}
                                     </td>
                                   </tr>
@@ -3534,22 +3983,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 </th>
                               </tr>
                               <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                                <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
+                                <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
                                   ID
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#6B9BCC]/20 px-1.5 py-1 text-left w-[20%]">
+                                <th className="border border-[#E5E7EB] bg-[#6B9BCC]/20 px-1.5 py-1 text-left w-[20%]">
                                   Opportunity
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#6B9BCC]/20 px-1.5 py-1 text-left w-[24%]">
+                                <th className="border border-[#E5E7EB] bg-[#6B9BCC]/20 px-1.5 py-1 text-left w-[24%]">
                                   Detail & how to
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
+                                <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center w-[6%]">
                                   ID
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#DA7756]/20 px-1.5 py-1 text-left w-[20%]">
+                                <th className="border border-[#E5E7EB] bg-[#DA7756]/20 px-1.5 py-1 text-left w-[20%]">
                                   Threat
                                 </th>
-                                <th className="border border-[#D5DBDB] bg-[#DA7756]/20 px-1.5 py-1 text-left w-[24%]">
+                                <th className="border border-[#E5E7EB] bg-[#DA7756]/20 px-1.5 py-1 text-left w-[24%]">
                                   Detail & mitigation
                                 </th>
                               </tr>
@@ -3579,22 +4028,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                     key={`ot-${i}`}
                                     className={`align-top ${zebra} hover:bg-[#F6F4EE] transition-colors`}
                                   >
-                                    <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
+                                    <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
                                       {o ? `O${i + 1}` : ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#6B9BCC]/15 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#6B9BCC]/15 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
                                       {o?.headline ?? ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#6B9BCC]/15 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#6B9BCC]/15 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                       {o?.explanation ?? ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
+                                    <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
                                       {t ? `T${i + 1}` : ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#DA7756]/15 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#DA7756]/15 px-1.5 py-1 font-semibold text-[#2C2C2C] break-words">
                                       {t?.headline ?? ""}
                                     </td>
-                                    <td className="border border-[#D5DBDB] bg-[#DA7756]/15 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    <td className="border border-[#E5E7EB] bg-[#DA7756]/15 px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                       {t?.explanation ?? ""}
                                     </td>
                                   </tr>
@@ -3624,13 +4073,13 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 </div>
                 {productData.extendedContent?.detailedSWOT && (
                   <div className="border border-[#C4B89D] rounded-b-xl overflow-hidden bg-white">
-                    <div className="bg-[#F6F4EE] text-center text-[11px] p-2 border-b border-[#D5DBDB] text-[#2C2C2C]/70 font-medium font-poppins">
+                    <div className="bg-[#F6F4EE] text-center text-[11px] p-2 border-b border-[#E5E7EB] text-[#2C2C2C]/70 font-medium font-poppins">
                       Grounded in product features, market context, and
                       competitor landscape. Not generic.
                     </div>
 
-                    <div className="flex flex-col md:flex-row border-b border-[#D5DBDB]">
-                      <div className="w-full md:w-1/2 flex flex-col bg-[#9EC8BA]/20 border-b md:border-b-0 md:border-r border-[#D5DBDB]">
+                    <div className="flex flex-col md:flex-row border-b border-[#E5E7EB]">
+                      <div className="w-full md:w-1/2 flex flex-col bg-[#9EC8BA]/20 border-b md:border-b-0 md:border-r border-[#E5E7EB]">
                         <div className="text-center font-semibold text-[#798C5E] p-3 text-lg tracking-widest border-b border-white/50 uppercase font-poppins">
                           STRENGTHS
                         </div>
@@ -3671,7 +4120,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                     </div>
 
                     <div className="flex flex-col md:flex-row">
-                      <div className="w-full md:w-1/2 flex flex-col bg-[#6B9BCC]/15 border-b md:border-b-0 md:border-r border-[#D5DBDB]">
+                      <div className="w-full md:w-1/2 flex flex-col bg-[#6B9BCC]/15 border-b md:border-b-0 md:border-r border-[#E5E7EB]">
                         <div className="text-center font-semibold text-[#6B9BCC] p-3 text-lg tracking-widest border-b border-white/50 uppercase font-poppins">
                           OPPORTUNITIES
                         </div>
@@ -3767,25 +4216,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                       </th>
                                     </tr>
                                     <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase">
-                                      <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[4%]">
+                                      <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[4%]">
                                         #
                                       </th>
-                                      <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[20%]">
+                                      <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[20%]">
                                         Initiative
                                       </th>
-                                      <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[28%]">
+                                      <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[28%]">
                                         Stop losing deals we should be winning
                                       </th>
-                                      <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[18%]">
+                                      <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[18%]">
                                         Customer segment unlocked
                                       </th>
-                                      <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[12%]">
+                                      <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[12%]">
                                         Effort estimate
                                       </th>
-                                      <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[10%]">
+                                      <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[10%]">
                                         Impact
                                       </th>
-                                      <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[8%]">
+                                      <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[8%]">
                                         Priority
                                       </th>
                                     </tr>
@@ -3815,11 +4264,11 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
                                       const headerRow = (
                                         <tr key={`band-${sIdx}`}>
-                                          <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
+                                          <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[8px] text-[#2C2C2C]/70">
                                             {rowNo++}
                                           </td>
                                           <td
-                                            className={`border border-[#D5DBDB] ${band.bar} text-white px-2 py-1 font-semibold uppercase text-[8px] tracking-wide`}
+                                            className={`border border-[#E5E7EB] ${band.bar} text-white px-2 py-1 font-semibold uppercase text-[8px] tracking-wide`}
                                             colSpan={6}
                                           >
                                             {section.timeframe} —{" "}
@@ -3839,36 +4288,36 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                               key={`r-${sIdx}-${iIdx}`}
                                               className={`align-top hover:bg-[#F6F4EE] transition-colors ${zebra}`}
                                             >
-                                              <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[#2C2C2C]/60">
+                                              <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center font-semibold text-[#2C2C2C]/60">
                                                 {rowNo++}
                                               </td>
                                               <td
-                                                className={`border border-[#D5DBDB] ${band.row} px-1.5 py-1 font-semibold text-[#2C2C2C] break-words`}
+                                                className={`border border-[#E5E7EB] ${band.row} px-1.5 py-1 font-semibold text-[#2C2C2C] break-words`}
                                               >
                                                 {item.whatItIs}
                                               </td>
                                               <td
-                                                className={`border border-[#D5DBDB] ${band.row} px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words`}
+                                                className={`border border-[#E5E7EB] ${band.row} px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words`}
                                               >
                                                 {item.whyItMatters}
                                               </td>
                                               <td
-                                                className={`border border-[#D5DBDB] ${band.row} px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words`}
+                                                className={`border border-[#E5E7EB] ${band.row} px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words`}
                                               >
                                                 {item.unlockedSegment}
                                               </td>
                                               <td
-                                                className={`border border-[#D5DBDB] ${band.row} px-1 py-1 text-center font-semibold text-[#2C2C2C] whitespace-pre-line`}
+                                                className={`border border-[#E5E7EB] ${band.row} px-1 py-1 text-center font-semibold text-[#2C2C2C] whitespace-pre-line`}
                                               >
                                                 {item.effort}
                                               </td>
                                               <td
-                                                className={`border border-[#D5DBDB] ${band.row} px-1 py-1 text-center font-semibold text-[#2C2C2C]`}
+                                                className={`border border-[#E5E7EB] ${band.row} px-1 py-1 text-center font-semibold text-[#2C2C2C]`}
                                               >
                                                 {item.impact ?? item.owner}
                                               </td>
                                               <td
-                                                className={`border border-[#D5DBDB] ${band.row} px-1 py-1 text-center font-semibold text-[#2C2C2C]`}
+                                                className={`border border-[#E5E7EB] ${band.row} px-1 py-1 text-center font-semibold text-[#2C2C2C]`}
                                               >
                                                 {item.priority ?? ""}
                                               </td>
@@ -3890,25 +4339,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 <table className="w-full border-collapse font-poppins text-[9px] leading-[1.25] text-left">
                                   <thead>
                                     <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                                      <th className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-2 py-2 w-[8%]">
+                                      <th className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-2 py-2 w-[8%]">
                                         Phase / Timeline
                                       </th>
-                                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-2 py-2 w-[18%]">
+                                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-2 py-2 w-[18%]">
                                         What It Is
                                       </th>
-                                      <th className="border border-[#D5DBDB] bg-[#9EC8BA]/15 px-2 py-2 w-[22%]">
+                                      <th className="border border-[#E5E7EB] bg-[#9EC8BA]/15 px-2 py-2 w-[22%]">
                                         Why It Matters
                                       </th>
-                                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-2 py-2 w-[22%]">
+                                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-2 py-2 w-[22%]">
                                         Unlocked Segment
                                       </th>
-                                      <th className="border border-[#D5DBDB] bg-[#DA7756]/10 px-2 py-2 w-[12%] text-center">
+                                      <th className="border border-[#E5E7EB] bg-[#DA7756]/10 px-2 py-2 w-[12%] text-center">
                                         Effort
                                       </th>
-                                      <th className="border border-[#D5DBDB] bg-[#6B9BCC]/10 px-2 py-2 w-[10%] text-center">
+                                      <th className="border border-[#E5E7EB] bg-[#6B9BCC]/10 px-2 py-2 w-[10%] text-center">
                                         Owner
                                       </th>
-                                      <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-2 py-2 w-[8%] text-center">
+                                      <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-2 py-2 w-[8%] text-center">
                                         Theme
                                       </th>
                                     </tr>
@@ -3946,7 +4395,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                           className={`align-top hover:bg-[#F6F4EE] transition-colors ${iIdx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"}`}
                                         >
                                           <td
-                                            className={`border border-[#D5DBDB] px-2 py-2 font-semibold text-[#2C2C2C] ${tone.bg}`}
+                                            className={`border border-[#E5E7EB] px-2 py-2 font-semibold text-[#2C2C2C] ${tone.bg}`}
                                           >
                                             <div className="text-[8px] uppercase">
                                               {section.timeframe}
@@ -3955,22 +4404,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                               {section.headline}
                                             </div>
                                           </td>
-                                          <td className="border border-[#D5DBDB] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line">
+                                          <td className="border border-[#E5E7EB] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line">
                                             {item.whatItIs}
                                           </td>
-                                          <td className="border border-[#D5DBDB] px-2 py-2 font-medium text-[#2C2C2C] whitespace-pre-line">
+                                          <td className="border border-[#E5E7EB] px-2 py-2 font-medium text-[#2C2C2C] whitespace-pre-line">
                                             {item.whyItMatters}
                                           </td>
-                                          <td className="border border-[#D5DBDB] px-2 py-2 font-medium text-[#2C2C2C] whitespace-pre-line">
+                                          <td className="border border-[#E5E7EB] px-2 py-2 font-medium text-[#2C2C2C] whitespace-pre-line">
                                             {item.unlockedSegment}
                                           </td>
-                                          <td className="border border-[#D5DBDB] px-2 py-2 text-center font-semibold text-[#DA7756] whitespace-pre-line">
+                                          <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-[#DA7756] whitespace-pre-line">
                                             {item.effort}
                                           </td>
-                                          <td className="border border-[#D5DBDB] px-2 py-2 text-center font-semibold text-[#2C2C2C] whitespace-pre-line">
+                                          <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-[#2C2C2C] whitespace-pre-line">
                                             {item.owner}
                                           </td>
-                                          <td className="border border-[#D5DBDB] px-2 py-2 text-center">
+                                          <td className="border border-[#E5E7EB] px-2 py-2 text-center">
                                             <span
                                               className={`inline-block px-2 py-0.5 text-[8px] font-semibold uppercase border ${tone.badge}`}
                                             >
@@ -4065,7 +4514,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                               {section.items.map((item, i) => (
                                 <tr
                                   key={i}
-                                  className={`${bgRow} border-b border-[#D5DBDB] last:border-0 hover:brightness-95 transition-all`}
+                                  className={`${bgRow} border-b border-[#E5E7EB] last:border-0 hover:brightness-95 transition-all`}
                                 >
                                   <td className="p-3 text-[#2C2C2C] font-semibold leading-relaxed">
                                     {item.whatItIs}
@@ -4100,22 +4549,22 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 <table className="w-full border-collapse font-poppins text-[10px] bg-white">
                   <thead>
                     <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase text-center">
-                      <th className="border border-[#D5DBDB] p-3 w-[15%]">
+                      <th className="border border-[#E5E7EB] p-3 w-[15%]">
                         Phase
                       </th>
-                      <th className="border border-[#D5DBDB] p-3 w-[15%] text-left">
+                      <th className="border border-[#E5E7EB] p-3 w-[15%] text-left">
                         Initiative
                       </th>
-                      <th className="border border-[#D5DBDB] p-3 w-[25%] text-left">
+                      <th className="border border-[#E5E7EB] p-3 w-[25%] text-left">
                         Feature / Capability
                       </th>
-                      <th className="border border-[#D5DBDB] p-3 w-[15%] text-left">
+                      <th className="border border-[#E5E7EB] p-3 w-[15%] text-left">
                         Target Segment Unlocked
                       </th>
-                      <th className="border border-[#D5DBDB] p-3 w-[20%] text-left">
+                      <th className="border border-[#E5E7EB] p-3 w-[20%] text-left">
                         Business Impact
                       </th>
-                      <th className="border border-[#D5DBDB] p-3 w-[10%]">
+                      <th className="border border-[#E5E7EB] p-3 w-[10%]">
                         Est. Timeline
                       </th>
                     </tr>
@@ -4131,25 +4580,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             >
                               {iIdx === 0 && (
                                 <td
-                                  className="border border-[#D5DBDB] p-4 font-semibold text-[#2C2C2C] uppercase bg-[#F6F4EE]/50 align-top"
+                                  className="border border-[#E5E7EB] p-4 font-semibold text-[#2C2C2C] uppercase bg-[#F6F4EE]/50 align-top"
                                   rowSpan={phase.initiatives.length}
                                 >
                                   {phase.title}
                                 </td>
                               )}
-                              <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C] font-semibold uppercase">
+                              <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C] font-semibold uppercase">
                                 {item.initiative}
                               </td>
-                              <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed">
+                              <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed">
                                 {item.feature || "-"}
                               </td>
-                              <td className="border border-[#D5DBDB] p-3 text-[#6B9BCC] font-semibold tracking-tight">
+                              <td className="border border-[#E5E7EB] p-3 text-[#6B9BCC] font-semibold tracking-tight">
                                 {item.segment || "-"}
                               </td>
-                              <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C] font-semibold leading-tight">
+                              <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C] font-semibold leading-tight">
                                 {item.impact}
                               </td>
-                              <td className="border border-[#D5DBDB] p-3 text-center font-semibold text-[#DA7756] bg-[#F6F4EE]/20">
+                              <td className="border border-[#E5E7EB] p-3 text-center font-semibold text-[#DA7756] bg-[#F6F4EE]/20">
                                 {item.timeline}
                               </td>
                             </tr>
@@ -4182,25 +4631,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   <table className="w-full border-collapse font-poppins text-[9px] bg-white">
                     <thead>
                       <tr className="bg-[#9EC8BA]/30 text-[#2C2C2C] font-semibold uppercase text-center">
-                        <th className="border border-[#D5DBDB] p-2 w-[3%]">
+                        <th className="border border-[#E5E7EB] p-2 w-[3%]">
                           #
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[15%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[15%] text-left">
                           Enhancement Name
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[10%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[10%] text-left">
                           Category
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[25%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[25%] text-left">
                           Description
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[25%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[25%] text-left">
                           Business Value
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[12%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[12%] text-left">
                           Competitor Leapfrogged
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[10%]">
+                        <th className="border border-[#E5E7EB] p-2 w-[10%]">
                           Priority
                         </th>
                       </tr>
@@ -4212,25 +4661,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             key={idx}
                             className={`hover:bg-[#F6F4EE] transition-colors ${item.priority === "High Impact" ? "bg-[#6B9BCC]/10" : ""}`}
                           >
-                            <td className="border border-[#D5DBDB] p-2 font-semibold text-[#2C2C2C] text-center bg-[#F6F4EE]/50">
+                            <td className="border border-[#E5E7EB] p-2 font-semibold text-[#2C2C2C] text-center bg-[#F6F4EE]/50">
                               {item.id}
                             </td>
-                            <td className="border border-[#D5DBDB] p-2 text-[#2C2C2C] font-semibold uppercase">
+                            <td className="border border-[#E5E7EB] p-2 text-[#2C2C2C] font-semibold uppercase">
                               {item.name}
                             </td>
-                            <td className="border border-[#D5DBDB] p-2 text-[#2C2C2C]/60 font-semibold uppercase tracking-tighter">
+                            <td className="border border-[#E5E7EB] p-2 text-[#2C2C2C]/60 font-semibold uppercase tracking-tighter">
                               {item.category}
                             </td>
-                            <td className="border border-[#D5DBDB] p-2 text-[#2C2C2C]/70 font-medium leading-tight">
+                            <td className="border border-[#E5E7EB] p-2 text-[#2C2C2C]/70 font-medium leading-tight">
                               {item.description}
                             </td>
-                            <td className="border border-[#D5DBDB] p-2 text-[#2C2C2C] font-semibold leading-tight">
+                            <td className="border border-[#E5E7EB] p-2 text-[#2C2C2C] font-semibold leading-tight">
                               {item.value}
                             </td>
-                            <td className="border border-[#D5DBDB] p-2 text-[#6B9BCC] font-semibold uppercase tracking-tighter">
+                            <td className="border border-[#E5E7EB] p-2 text-[#6B9BCC] font-semibold uppercase tracking-tighter">
                               {item.leapfrog}
                             </td>
-                            <td className="border border-[#D5DBDB] p-2 text-center">
+                            <td className="border border-[#E5E7EB] p-2 text-center">
                               <span
                                 className={`px-2 py-1 rounded-full font-semibold uppercase text-[7px] ${item.priority === "High Impact" ? "bg-[#E49191]/15 text-[#E49191]" : "bg-[#6B9BCC]/15 text-[#6B9BCC]"}`}
                               >
@@ -4290,31 +4739,31 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                         <table className="w-full border-collapse font-poppins text-[9px] leading-[1.15] text-left table-fixed">
                           <thead>
                             <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                              <th className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-1 py-1 w-[4%] text-center">
+                              <th className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-1 py-1 w-[4%] text-center">
                                 #
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-1.5 py-1 w-[16%]">
+                              <th className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-1.5 py-1 w-[16%]">
                                 Feature name
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1.5 py-1 w-[18%]">
+                              <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1.5 py-1 w-[18%]">
                                 What it’s currently like
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-1.5 py-1 w-[22%]">
+                              <th className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-1.5 py-1 w-[22%]">
                                 Enhanced version
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 w-[10%] text-center">
+                              <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 w-[10%] text-center">
                                 Integration type
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#fefce8] px-1 py-1 w-[7%] text-center">
+                              <th className="border border-[#E5E7EB] bg-[#fefce8] px-1 py-1 w-[7%] text-center">
                                 Effort
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#fff7ed] px-1 py-1 w-[7%] text-center">
+                              <th className="border border-[#E5E7EB] bg-[#fff7ed] px-1 py-1 w-[7%] text-center">
                                 Impact
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#CECBF6]/20 px-1 py-1 w-[6%] text-center">
+                              <th className="border border-[#E5E7EB] bg-[#CECBF6]/20 px-1 py-1 w-[6%] text-center">
                                 Priority
                               </th>
-                              <th className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 w-[10%] text-center">
+                              <th className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 w-[10%] text-center">
                                 Owner
                               </th>
                             </tr>
@@ -4326,31 +4775,31 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                   key={idx}
                                   className={`${idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} align-top hover:bg-[#F6F4EE] transition-colors`}
                                 >
-                                  <td className="border border-[#D5DBDB] px-1 py-1 font-semibold text-center text-[#DA7756]">
+                                  <td className="border border-[#E5E7EB] px-1 py-1 font-semibold text-center text-[#DA7756]">
                                     {idx + 1}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1.5 py-1 font-semibold text-[#DA7756] break-words">
+                                  <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-[#DA7756] break-words">
                                     {item.featureName}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                  <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                     {item.currentStatus}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1.5 py-1 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
+                                  <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                     {item.enhancedVersion}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1 py-1 text-center text-[#2C2C2C]/80 font-bold text-[8px] uppercase whitespace-pre-line break-words">
+                                  <td className="border border-[#E5E7EB] px-1 py-1 text-center text-[#2C2C2C]/80 font-bold text-[8px] uppercase whitespace-pre-line break-words">
                                     {item.integrationType}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1 py-1 text-center font-semibold text-[#92400e]">
+                                  <td className="border border-[#E5E7EB] px-1 py-1 text-center font-semibold text-[#92400e]">
                                     {item.effort}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1 py-1 text-center font-semibold text-[#7c2d12]">
+                                  <td className="border border-[#E5E7EB] px-1 py-1 text-center font-semibold text-[#7c2d12]">
                                     {item.impact}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1 py-1 text-center font-semibold text-[#2C2C2C]">
+                                  <td className="border border-[#E5E7EB] px-1 py-1 text-center font-semibold text-[#2C2C2C]">
                                     {item.priority}
                                   </td>
-                                  <td className="border border-[#D5DBDB] px-1 py-1 text-center font-bold text-[#2C2C2C] whitespace-pre-line break-words">
+                                  <td className="border border-[#E5E7EB] px-1 py-1 text-center font-bold text-[#2C2C2C] whitespace-pre-line break-words">
                                     {item.owner}
                                   </td>
                                 </tr>
@@ -4377,16 +4826,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   <table className="w-full border-collapse font-poppins text-[10px] bg-white">
                     <thead>
                       <tr className="bg-[#9EC8BA]/30 text-[#2C2C2C] font-semibold uppercase text-center">
-                        <th className="border border-[#D5DBDB] p-2 w-[5%]">
+                        <th className="border border-[#E5E7EB] p-2 w-[5%]">
                           Rank
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[25%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[25%] text-left">
                           Enhancement
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[45%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[45%] text-left">
                           Why It Matters Most
                         </th>
-                        <th className="border border-[#D5DBDB] p-2 w-[25%] text-left">
+                        <th className="border border-[#E5E7EB] p-2 w-[25%] text-left">
                           Competitor It Leapfrogs
                         </th>
                       </tr>
@@ -4398,16 +4847,16 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                             key={idx}
                             className="hover:bg-[#F6F4EE] transition-colors"
                           >
-                            <td className="border border-[#D5DBDB] p-3 font-semibold text-[#2C2C2C] text-center bg-[#F6F4EE]/50">
+                            <td className="border border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] text-center bg-[#F6F4EE]/50">
                               {item.rank}
                             </td>
-                            <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C] font-semibold uppercase">
+                            <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C] font-semibold uppercase">
                               {item.name}
                             </td>
-                            <td className="border border-[#D5DBDB] p-3 text-[#2C2C2C]/70 font-semibold leading-relaxed">
+                            <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/70 font-semibold leading-relaxed">
                               {item.logic}
                             </td>
-                            <td className="border border-[#D5DBDB] p-3 text-[#6B9BCC] font-semibold uppercase tracking-tighter">
+                            <td className="border border-[#E5E7EB] p-3 text-[#6B9BCC] font-semibold uppercase tracking-tighter">
                               {item.leapfrog}
                             </td>
                           </tr>
@@ -4425,19 +4874,19 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                 <table className="w-full border-collapse font-poppins text-[10px] bg-white text-center">
                   <thead>
                     <tr className="bg-[#DA7756] text-white font-semibold uppercase text-center border-b border-white/10">
-                      <th className="border border-[#D5DBDB]/50 p-4 w-[12%]">
+                      <th className="border border-[#E5E7EB]/50 p-4 w-[12%]">
                         Timeline
                       </th>
-                      <th className="border border-[#D5DBDB]/50 p-4 w-[18%]">
+                      <th className="border border-[#E5E7EB]/50 p-4 w-[18%]">
                         Strategic Focus
                       </th>
-                      <th className="border border-[#D5DBDB]/50 p-4 w-[40%] text-left">
+                      <th className="border border-[#E5E7EB]/50 p-4 w-[40%] text-left">
                         Key Features / Innovation
                       </th>
-                      <th className="border border-[#D5DBDB]/50 p-4 w-[15%]">
+                      <th className="border border-[#E5E7EB]/50 p-4 w-[15%]">
                         Business Logic
                       </th>
-                      <th className="border border-[#D5DBDB]/50 p-4 w-[15%]">
+                      <th className="border border-[#E5E7EB]/50 p-4 w-[15%]">
                         Core Benefit
                       </th>
                     </tr>
@@ -4447,23 +4896,23 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                       (row, i) => (
                         <tr
                           key={i}
-                          className="hover:bg-[#F6F4EE]/50 transition-all border-b border-[#D5DBDB] last:border-0"
+                          className="hover:bg-[#F6F4EE]/50 transition-all border-b border-[#E5E7EB] last:border-0"
                         >
-                          <td className="border border-[#D5DBDB]/50 p-4 font-semibold text-[#DA7756] bg-[#F6F4EE]/50 uppercase tracking-tighter">
+                          <td className="border border-[#E5E7EB]/50 p-4 font-semibold text-[#DA7756] bg-[#F6F4EE]/50 uppercase tracking-tighter">
                             {row.period}
                           </td>
-                          <td className="border border-[#D5DBDB]/50 p-4 text-[#2C2C2C] font-semibold uppercase text-[9px] leading-tight">
+                          <td className="border border-[#E5E7EB]/50 p-4 text-[#2C2C2C] font-semibold uppercase text-[9px] leading-tight">
                             {row.focus}
                           </td>
-                          <td className="border border-[#D5DBDB]/50 p-4 text-[#2C2C2C]/70 font-semibold leading-relaxed text-left">
+                          <td className="border border-[#E5E7EB]/50 p-4 text-[#2C2C2C]/70 font-semibold leading-relaxed text-left">
                             <div className="bg-[#F6F4EE] p-3 rounded-lg border-l-4 border-[#6B9BCC] shadow-sm font-medium">
                               {row.features}
                             </div>
                           </td>
-                          <td className="border border-[#D5DBDB]/50 p-4 text-[#2C2C2C]/60 font-semibold uppercase text-[8px] leading-tight bg-[#F6F4EE]/30">
+                          <td className="border border-[#E5E7EB]/50 p-4 text-[#2C2C2C]/60 font-semibold uppercase text-[8px] leading-tight bg-[#F6F4EE]/30">
                             {row.logic}
                           </td>
-                          <td className="border border-[#D5DBDB]/50 p-4 text-[#798C5E] font-semibold uppercase text-[9px] tracking-tight">
+                          <td className="border border-[#E5E7EB]/50 p-4 text-[#798C5E] font-semibold uppercase text-[9px] tracking-tight">
                             {row.risk}
                           </td>
                         </tr>
@@ -4505,23 +4954,23 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                       ?.planQuestions?.length ? (
                       <div className="mt-3 flex gap-6">
                         {/* Left: sheet table */}
-                        <div className="w-[1180px] shrink-0 bg-white border border-[#D5DBDB]">
+                        <div className="w-[1180px] shrink-0 bg-white border border-[#E5E7EB]">
                           <table className="w-full border-collapse text-[9px] leading-[1.15] table-fixed font-poppins">
                             <thead>
                               <tr className="bg-[#CECBF6]/30 text-[#2C2C2C] font-semibold uppercase">
-                                <th className="border border-[#D5DBDB] px-1 py-1 text-center w-[5%]">
+                                <th className="border border-[#E5E7EB] px-1 py-1 text-center w-[5%]">
                                   #
                                 </th>
-                                <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[23%]">
+                                <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[23%]">
                                   Business plan question
                                 </th>
-                                <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[46%]">
+                                <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[46%]">
                                   Suggested answer
                                 </th>
-                                <th className="border border-[#D5DBDB] px-1 py-1 text-left w-[12%]">
+                                <th className="border border-[#E5E7EB] px-1 py-1 text-left w-[12%]">
                                   Sources
                                 </th>
-                                <th className="border border-[#D5DBDB] px-1.5 py-1 text-left w-[14%]">
+                                <th className="border border-[#E5E7EB] px-1.5 py-1 text-left w-[14%]">
                                   Founder review
                                 </th>
                               </tr>
@@ -4551,11 +5000,11 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                       key={i}
                                       className="align-top hover:bg-[#F6F4EE] transition-colors"
                                     >
-                                      <td className="border border-[#D5DBDB] bg-[#F6F4EE] px-1 py-1 text-center font-bold text-[#2C2C2C]/60">
+                                      <td className="border border-[#E5E7EB] bg-[#F6F4EE] px-1 py-1 text-center font-bold text-[#2C2C2C]/60">
                                         {i + 1}
                                       </td>
                                       <td
-                                        className={`border border-[#D5DBDB] ${toneBg} px-1.5 py-1 font-semibold text-[#2C2C2C] whitespace-pre-line break-words`}
+                                        className={`border border-[#E5E7EB] ${toneBg} px-1.5 py-1 font-semibold text-[#2C2C2C] whitespace-pre-line break-words`}
                                       >
                                         {q.question}
                                         {q.flag ? (
@@ -4568,13 +5017,13 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                           </div>
                                         ) : null}
                                       </td>
-                                      <td className="border border-[#D5DBDB] bg-white px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] bg-white px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                         {q.answer}
                                       </td>
-                                      <td className="border border-[#D5DBDB] bg-white px-1.5 py-1 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] bg-white px-1.5 py-1 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
                                         {"-"}
                                       </td>
-                                      <td className="border border-[#D5DBDB] bg-[#f0fdf4] px-1.5 py-1 text-[#166534] font-medium whitespace-pre-line break-words">
+                                      <td className="border border-[#E5E7EB] bg-[#f0fdf4] px-1.5 py-1 text-[#166534] font-medium whitespace-pre-line break-words">
                                         {"-"}
                                       </td>
                                     </tr>

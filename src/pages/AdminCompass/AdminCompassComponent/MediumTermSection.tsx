@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 
-// ── Design Tokens — BusinessCompassDashboard theme ──
+// ── Design Tokens ──
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
@@ -49,42 +49,12 @@ const apiDateToDisplay = (s: string): string => {
   }
   return s;
 };
-const parseDDMMYYYY = (s: string): Date | null => {
-  if (!s) return null;
-  const [d, m, y] = s.split("-").map(Number);
-  if (!d || !m || !y) return null;
-  const dt = new Date(y, m - 1, d);
-  return isNaN(dt.getTime()) ? null : dt;
-};
-const toDDMMYYYY = (dt: Date): string =>
-  `${String(dt.getDate()).padStart(2, "0")}-${String(dt.getMonth() + 1).padStart(2, "0")}-${dt.getFullYear()}`;
 const clampProgress = (val: any): number => {
   const n = Math.round(Number(val));
   return isNaN(n) ? 0 : Math.min(100, Math.max(0, n));
 };
 const MEDIUM_TERM_PERIOD = "three_to_five_years";
-const mapPeriodToApi = (label: string): string =>
-  ({
-    "3-5 Years": MEDIUM_TERM_PERIOD,
-    "This Year": "this_year",
-    "This Quarter": "this_quarter",
-    BHAG: "BHAG",
-  })[label] || MEDIUM_TERM_PERIOD;
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const DAYS_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
 const sliderBg = (pct: number) =>
   `linear-gradient(to right, ${C.primary} ${pct}%, #e5e7eb ${pct}%)`;
 
@@ -132,51 +102,6 @@ const TrashIcon = () => (
       strokeLinejoin="round"
       strokeWidth={2}
       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
-  </svg>
-);
-const CalendarIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
-  </svg>
-);
-const ChevronLeft = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 19l-7-7 7-7"
-    />
-  </svg>
-);
-const ChevronRight = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
     />
   </svg>
 );
@@ -237,9 +162,13 @@ const ThemeStyle = () => (
     .st-modal-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
     .st-modal-portal { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.42); backdrop-filter:blur(4px); }
     .st-modal-box { background:${C.primaryBg}; border-radius:20px; border:1px solid ${C.primaryBord}; box-shadow:0 30px 80px rgba(0,0,0,0.20); width:100%; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
+    
+    /* MODIFIED: .st-input updated for native date picker consistency */
     .st-input { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+    .st-input[type="date"] { padding: 9px 12px; cursor: pointer; }
     .st-input:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
     .st-input::placeholder { color:#a3a3a3; }
+    
     .st-textarea { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; min-height:72px; resize:vertical; font-family:'Poppins',sans-serif; }
     .st-textarea:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
     .st-textarea::placeholder { color:#a3a3a3; }
@@ -249,277 +178,118 @@ const ThemeStyle = () => (
     .st-error-banner { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; border-radius:12px; padding:10px 14px; font-size:13px; font-weight:600; }
     .st-skeleton { background:linear-gradient(90deg,#eeebe4 25%,#e5e1d8 50%,#eeebe4 75%); background-size:200% 100%; animation:st-shimmer 1.4s infinite; border-radius:8px; }
     @keyframes st-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-    .st-dp-wrap { position:relative; }
-    .st-dp-input-btn { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; font-family:'Poppins',sans-serif; }
-    .st-dp-input-btn:focus, .st-dp-input-btn.open { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
-    .st-dp-input-btn .placeholder { color:#a3a3a3; }
-    .st-dp-calendar { position:absolute; top:calc(100% + 6px); left:0; z-index:99999; background:#fff; border:1px solid ${C.borderLgt}; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.12); padding:16px; width:280px; animation:dp-in .15s ease; font-family:'Poppins',sans-serif; }
-    @keyframes dp-in { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-    .st-dp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-    .st-dp-nav { background:none; border:none; padding:6px; border-radius:8px; cursor:pointer; color:${C.textMuted}; display:flex; align-items:center; }
-    .st-dp-nav:hover { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-month-year { font-size:14px; font-weight:700; color:${C.textMain}; cursor:pointer; padding:4px 8px; border-radius:8px; }
-    .st-dp-month-year:hover { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
-    .st-dp-dow { text-align:center; font-size:11px; font-weight:700; color:${C.textMuted}; padding:4px 0 8px; }
-    .st-dp-day { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; border-radius:8px; cursor:pointer; color:${C.textMain}; border:none; background:none; transition:background .1s,color .1s; }
-    .st-dp-day:hover:not(.empty):not(.selected) { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-day.today:not(.selected) { color:${C.primary}; font-weight:800; }
-    .st-dp-day.selected { background:${C.primary}; color:#fff; font-weight:700; }
-    .st-dp-day.empty { cursor:default; }
-    .st-dp-months,.st-dp-years { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:4px 0; }
-    .st-dp-mitem,.st-dp-yitem { text-align:center; padding:8px 4px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; color:${C.textMain}; transition:background .1s; }
-    .st-dp-mitem:hover,.st-dp-yitem:hover { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-mitem.active,.st-dp-yitem.active { background:${C.primary}; color:#fff; }
-    .st-dp-clear { margin-top:10px; padding-top:10px; border-top:1px solid ${C.borderLgt}; text-align:center; }
-    .st-dp-clear button { font-size:12px; font-weight:600; color:${C.textMuted}; background:none; border:none; cursor:pointer; padding:4px 12px; border-radius:8px; }
-    .st-dp-clear button:hover { background:#f3f4f6; color:${C.textMain}; }
   `}</style>
 );
 
-// ── DatePicker ──
-interface DatePickerProps {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}
-const DatePicker: React.FC<DatePickerProps> = ({
+// ── Searchable User Select Component ──
+const UserSelect = ({
   value,
   onChange,
-  placeholder = "Select date",
-}) => {
-  const today = new Date();
-  const parsed = parseDDMMYYYY(value);
+  users,
+  placeholder = "Search owner...",
+}: any) => {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"days" | "months" | "years">("days");
-  const [cursor, setCursor] = useState<Date>(
-    parsed || new Date(today.getFullYear(), today.getMonth(), 1)
-  );
+  const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
+      }
     };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  const openPicker = () => {
-    setCursor(
-      parsed
-        ? new Date(parsed.getFullYear(), parsed.getMonth(), 1)
-        : new Date(today.getFullYear(), today.getMonth(), 1)
-    );
-    setView("days");
-    setOpen(true);
-  };
-  const selectDay = (day: number) => {
-    onChange(
-      toDDMMYYYY(new Date(cursor.getFullYear(), cursor.getMonth(), day))
-    );
-    setOpen(false);
-  };
-  const daysInMonth = new Date(
-    cursor.getFullYear(),
-    cursor.getMonth() + 1,
-    0
-  ).getDate();
-  const firstDow = new Date(
-    cursor.getFullYear(),
-    cursor.getMonth(),
-    1
-  ).getDay();
-  const years = Array.from(
-    { length: 21 },
-    (_, i) => cursor.getFullYear() - 10 + i
-  );
-  const displayValue = parsed ? toDDMMYYYY(parsed) : "";
+
+  const selectedUser = users.find((u: any) => u.id === value);
+  const displayValue = selectedUser
+    ? selectedUser.full_name ||
+      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    : "";
+
+  const filteredUsers = users.filter((u: any) => {
+    const name =
+      u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim();
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
+
   return (
-    <div className="st-dp-wrap" ref={ref}>
-      <button
-        type="button"
-        className={`st-dp-input-btn${open ? " open" : ""}`}
-        onClick={() => (open ? setOpen(false) : openPicker())}
-      >
-        <span
-          className={displayValue ? "" : "placeholder"}
-          style={{ fontSize: 13 }}
+    <div className="relative" ref={ref} style={{ zIndex: open ? 9999 : 1 }}>
+      <input
+        type="text"
+        className="st-input pr-8"
+        placeholder={placeholder}
+        value={open ? search : displayValue}
+        onClick={() => {
+          setOpen(true);
+          setSearch("");
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+      />
+      {/* Dropdown Chevron */}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          {displayValue || placeholder}
-        </span>
-        <span
-          style={{ color: C.primary, display: "flex", alignItems: "center" }}
-        >
-          <CalendarIcon />
-        </span>
-      </button>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+
       {open && (
-        <div className="st-dp-calendar">
-          {view === "days" && (
-            <>
-              <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1)
-                    )
-                  }
+        <div
+          className="absolute bottom-full left-0 right-0 mb-1 bg-white border rounded-xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto overflow-x-hidden"
+          style={{ borderColor: C.borderLgt, fontFamily: C.font }}
+        >
+          {value && (
+            <div
+              className="p-2.5 hover:bg-red-50 cursor-pointer text-[13px] border-b text-red-500 font-semibold truncate"
+              style={{ borderColor: C.borderLgt }}
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+            >
+              Clear Selection
+            </div>
+          )}
+          {filteredUsers.length === 0 ? (
+            <div className="p-3 text-sm text-gray-500 text-center truncate">
+              No users found
+            </div>
+          ) : (
+            filteredUsers.map((u: any) => {
+              const name =
+                u.full_name ||
+                `${u.firstname || ""} ${u.lastname || ""}`.trim();
+              return (
+                <div
+                  key={u.id}
+                  className="p-2.5 hover:bg-gray-50 cursor-pointer text-[13px] border-b last:border-0 truncate"
+                  style={{ borderColor: C.borderLgt, color: C.textMain }}
+                  onClick={() => {
+                    onChange(u.id);
+                    setOpen(false);
+                    setSearch("");
+                  }}
                 >
-                  <ChevronLeft />
-                </button>
-                <span
-                  className="st-dp-month-year"
-                  onClick={() => setView("months")}
-                >
-                  {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="st-dp-grid">
-                {DAYS_SHORT.map((d) => (
-                  <div key={d} className="st-dp-dow">
-                    {d}
-                  </div>
-                ))}
-                {Array.from({ length: firstDow }).map((_, i) => (
-                  <div key={`e${i}`} className="st-dp-day empty" />
-                ))}
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(
-                  (day) => {
-                    const isToday =
-                      day === today.getDate() &&
-                      cursor.getMonth() === today.getMonth() &&
-                      cursor.getFullYear() === today.getFullYear();
-                    const isSelected =
-                      parsed &&
-                      day === parsed.getDate() &&
-                      cursor.getMonth() === parsed.getMonth() &&
-                      cursor.getFullYear() === parsed.getFullYear();
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        className={`st-dp-day${isToday ? " today" : ""}${isSelected ? " selected" : ""}`}
-                        onClick={() => selectDay(day)}
-                      >
-                        {day}
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-              {value && (
-                <div className="st-dp-clear">
-                  <button
-                    onClick={() => {
-                      onChange("");
-                      setOpen(false);
-                    }}
-                  >
-                    Clear
-                  </button>
+                  {name}
                 </div>
-              )}
-            </>
-          )}
-          {view === "months" && (
-            <>
-              <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() - 1, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronLeft />
-                </button>
-                <span
-                  className="st-dp-month-year"
-                  onClick={() => setView("years")}
-                >
-                  {cursor.getFullYear()}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() + 1, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="st-dp-months">
-                {MONTHS.map((m, i) => (
-                  <div
-                    key={m}
-                    className={`st-dp-mitem${cursor.getMonth() === i ? " active" : ""}`}
-                    onClick={() => {
-                      setCursor(new Date(cursor.getFullYear(), i, 1));
-                      setView("days");
-                    }}
-                  >
-                    {m.slice(0, 3)}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-          {view === "years" && (
-            <>
-              <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() - 12, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronLeft />
-                </button>
-                <span className="st-dp-month-year">
-                  {years[0]} – {years[years.length - 1]}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() + 12, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="st-dp-years">
-                {years.map((y) => (
-                  <div
-                    key={y}
-                    className={`st-dp-yitem${cursor.getFullYear() === y ? " active" : ""}`}
-                    onClick={() => {
-                      setCursor(new Date(y, cursor.getMonth(), 1));
-                      setView("months");
-                    }}
-                  >
-                    {y}
-                  </div>
-                ))}
-              </div>
-            </>
+              );
+            })
           )}
         </div>
       )}
@@ -593,13 +363,29 @@ const SkeletonCards = () => (
   </div>
 );
 
+const getPeriodBadgeLabel = (period: string): string => {
+  const map: Record<string, string> = {
+    three_to_five_years: "3-5 Years",
+    this_year: "This Year",
+    this_quarter: "This Quarter",
+    quarterly: "Quarterly",
+    long_term: "Long Term",
+    BHAG: "BHAG",
+  };
+  return map[period] || period || "";
+};
+
 // ══════════════════════════════════════════════════════════
 export const MediumTermSection = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
-  const [goals, setGoals] = useState<Goal[]>([]);
 
-  // -- Strategic Goal State --
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [allGoals, setAllGoals] = useState<Goal[]>([]);
+
+  // Users list state for dropdown
+  const [usersList, setUsersList] = useState<any[]>([]);
+
   const [strategicGoal, setStrategicGoal] = useState<StrategicGoalData>({
     title: "",
     goalType: "Medium-term (3-5 years)",
@@ -607,6 +393,9 @@ export const MediumTermSection = () => {
     revenueTarget: "",
     profitTarget: "",
   });
+
+  const [strategicGoalId, setStrategicGoalId] = useState<number | null>(null);
+
   const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(
     null
   );
@@ -617,42 +406,81 @@ export const MediumTermSection = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [tempGoal, setTempGoal] = useState<Goal | null>(null);
+
+  // Date states now natively hold "YYYY-MM-DD"
   const [tempGoalDate, setTempGoalDate] = useState("");
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false); // ← NEW: for strategic delete loader
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // ─────────────────────────────────────────────
+  // ✅ API Calls
+  // ─────────────────────────────────────────────
+
+  const fetchUsers = useCallback(async () => {
+    const orgId =
+      localStorage.getItem("org_id") ||
+      localStorage.getItem("organization_id") ||
+      "";
+    if (!orgId) return;
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/users?organization_id=${orgId}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setUsersList(Array.isArray(data) ? data : data.users || data.data || []);
+    } catch (err) {
+      console.error("[MediumTermSection] fetchUsers:", err);
+    }
+  }, []);
 
   const fetchStrategicGoal = useCallback(async () => {
     try {
       const res = await fetch(
-        `${BASE_URL}/extra_fields?group_name=medium_term_strategic`,
-        { method: "GET", headers: getAuthHeaders() }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const data = Array.isArray(json) ? json[0] : json;
-      if (data && data.values && data.values[0]) {
-        try {
-          const parsed = JSON.parse(data.values[0]);
-          setStrategicGoal({
-            title: parsed.title || "",
-            goalType: parsed.goalType || "Medium-term (3-5 years)",
-            targetDate: data.target_date || parsed.targetDate || "",
-            revenueTarget: parsed.revenueTarget || "",
-            profitTarget: parsed.profitTarget || "",
-          });
-          if (parsed.linkedInitiatives)
-            setLinkedStrategicInitiatives(parsed.linkedInitiatives);
-        } catch (e) {
-          setStrategicGoal({
-            title: data.values[0] || "",
-            goalType: "Medium-term (3-5 years)",
-            targetDate: data.target_date || "",
-            revenueTarget: "",
-            profitTarget: "",
-          });
+        `${BASE_URL}/goals?period=${MEDIUM_TERM_PERIOD}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
         }
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      const records: any[] = Array.isArray(json)
+        ? json
+        : json.goals || json.data || [];
+
+      const strategic =
+        records.find(
+          (g: any) =>
+            g.period === MEDIUM_TERM_PERIOD &&
+            (g.revenue_target != null || g.profit_target != null)
+        ) || records.find((g: any) => g.period === MEDIUM_TERM_PERIOD);
+
+      if (strategic) {
+        setStrategicGoalId(strategic.id ?? null);
+        setStrategicGoal({
+          title: strategic.title || "",
+          goalType: "Medium-term (3-5 years)",
+          targetDate: strategic.target_date || "", // Keeps native YYYY-MM-DD
+          revenueTarget: String(strategic.revenue_target ?? ""),
+          profitTarget: String(strategic.profit_target ?? ""),
+        });
+
+        const linked = Array.isArray(strategic.key_initiative_goals)
+          ? strategic.key_initiative_goals
+              .map((ki: any) => ki.id)
+              .filter(Boolean)
+          : [];
+        setLinkedStrategicInitiatives(linked);
       } else {
+        setStrategicGoalId(null);
         setStrategicGoal({
           title: "",
           goalType: "Medium-term (3-5 years)",
@@ -660,6 +488,7 @@ export const MediumTermSection = () => {
           revenueTarget: "",
           profitTarget: "",
         });
+        setLinkedStrategicInitiatives([]);
       }
     } catch (err) {
       console.error("[MediumTermSection] fetchStrategicGoal:", err);
@@ -676,34 +505,33 @@ export const MediumTermSection = () => {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      const records = Array.isArray(json)
+      const records: any[] = Array.isArray(json)
         ? json
         : json.goals || json.data || [];
+
+      const mapRecord = (g: any, idx: number): Goal => ({
+        id: g.id ?? idx + 1,
+        title: g.title || g.name || "Untitled Goal",
+        progress: Number(g.progress_percentage ?? g.progress ?? 0),
+        description: g.description || "",
+        targetValue: String(g.target_value ?? "100"),
+        currentValue: String(g.current_value ?? "0"),
+        unit: g.unit || "%",
+        period: g.period || "",
+        periodLabel: g.period_label || getPeriodBadgeLabel(g.period || ""),
+        targetDate: g.target_date || "",
+        ownerName: g.owner_name || "",
+        ownerId: g.owner_id || "",
+        status: g.status || "On Track",
+        updateRemarks: g.update_remarks || "",
+      });
+
+      setAllGoals(records.map(mapRecord));
+
       const mediumGoals = records.filter(
-        (g: any) =>
-          g.period === "three_to_five_years" ||
-          g.period?.toLowerCase().includes("three_to_five") ||
-          g.period?.toLowerCase().includes("3_to_5") ||
-          g.period?.toLowerCase() === "3-5 years"
+        (g: any) => g.period === MEDIUM_TERM_PERIOD
       );
-      setGoals(
-        mediumGoals.map((g: any, idx: number) => ({
-          id: g.id ?? idx + 1,
-          title: g.title || g.name || "Untitled Goal",
-          progress: Number(g.progress_percentage ?? g.progress ?? 0),
-          description: g.description || "",
-          targetValue: String(g.target_value ?? "100"),
-          currentValue: String(g.current_value ?? "0"),
-          unit: g.unit || "%",
-          period: g.period || MEDIUM_TERM_PERIOD,
-          periodLabel: g.period_label || "3-5 Years",
-          targetDate: g.target_date || "",
-          ownerName: g.owner_name || "",
-          ownerId: g.owner_id || "",
-          status: g.status || "On Track",
-          updateRemarks: g.update_remarks || "",
-        }))
-      );
+      setGoals(mediumGoals.map(mapRecord));
     } catch (err: any) {
       setFetchError(err.message || "Failed to load goals");
     } finally {
@@ -714,7 +542,8 @@ export const MediumTermSection = () => {
   useEffect(() => {
     fetchStrategicGoal();
     fetchGoals();
-  }, [fetchStrategicGoal, fetchGoals]);
+    fetchUsers();
+  }, [fetchStrategicGoal, fetchGoals, fetchUsers]);
 
   const handleCardSlider = async (id: number, val: string) => {
     const clamped = clampProgress(val);
@@ -744,33 +573,31 @@ export const MediumTermSection = () => {
     setTempStrategic(null);
   };
 
-  // ── Strategic Goal handlers ──
   const openStrategicModal = () => {
+    setSaveError(null);
     setTempStrategic({
       title: strategicGoal.title,
-      goalType: strategicGoal.goalType,
-      targetDate: apiDateToDisplay(strategicGoal.targetDate),
+      goalType: strategicGoal.goalType || "Medium-term (3-5 years)",
+      targetDate: strategicGoal.targetDate, // Native YYYY-MM-DD
       revenueTarget: strategicGoal.revenueTarget,
       profitTarget: strategicGoal.profitTarget,
     });
     setActiveModal("edit_strategic");
   };
 
-  // ← NEW: trigger confirm-delete modal
   const confirmDeleteStrategic = () =>
     setActiveModal("confirm_delete_strategic");
 
-  // ← NEW: actually delete via API and reset local state
   const executeDeleteStrategic = async () => {
+    if (!strategicGoalId) {
+      closeModal();
+      return;
+    }
     setIsDeleting(true);
     try {
-      const payload = {
-        extra_field: { group_name: "medium_term_strategic", values: [""] },
-      };
-      const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
-        method: "POST",
+      const res = await fetch(`${BASE_URL}/goals/${strategicGoalId}`, {
+        method: "DELETE",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       setStrategicGoal({
@@ -780,7 +607,9 @@ export const MediumTermSection = () => {
         revenueTarget: "",
         profitTarget: "",
       });
+      setStrategicGoalId(null);
       setLinkedStrategicInitiatives([]);
+      fetchGoals();
     } catch (err: any) {
       alert("Failed to delete: " + (err.message || "Unknown error"));
     } finally {
@@ -789,10 +618,9 @@ export const MediumTermSection = () => {
     }
   };
 
-  // ── Goal modal handlers ──
   const openGoalModal = (goal: Goal) => {
     setTempGoal({ ...goal });
-    setTempGoalDate(apiDateToDisplay(goal.targetDate || ""));
+    setTempGoalDate(goal.targetDate || ""); // Native YYYY-MM-DD
     setEditingGoalId(goal.id ?? null);
     setSaveError(null);
     setActiveModal("goal_details");
@@ -827,39 +655,55 @@ export const MediumTermSection = () => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const jsonStr = JSON.stringify({
-        title: tempStrategic.title.trim(),
-        goalType: tempStrategic.goalType,
-        targetDate: tempStrategic.targetDate.trim()
-          ? formatDateForApi(tempStrategic.targetDate.trim())
-          : "",
-        revenueTarget: tempStrategic.revenueTarget,
-        profitTarget: tempStrategic.profitTarget,
-        linkedInitiatives: linkedStrategicInitiatives,
-      });
-      const payload: any = {
-        extra_field: { group_name: "medium_term_strategic", values: [jsonStr] },
+      const apiTargetDate = tempStrategic.targetDate.trim()
+        ? formatDateForApi(tempStrategic.targetDate.trim())
+        : "";
+
+      const keyInitiatives = allGoals
+        .filter((g) => linkedStrategicInitiatives.includes(g.id as number))
+        .map((g) => ({ id: g.id, title: g.title }));
+
+      const payload = {
+        goal: {
+          title: tempStrategic.title.trim(),
+          description: "Strategic objective for medium term",
+          target_date: apiTargetDate,
+          revenue_target: Number(tempStrategic.revenueTarget) || 0,
+          profit_target: Number(tempStrategic.profitTarget) || 0,
+          target_value: 100,
+          current_value: 0,
+          unit: "percent",
+          period: MEDIUM_TERM_PERIOD,
+          status: "on_track",
+          owner_id: null,
+          update_remarks: "",
+          key_initiative_goals: keyInitiatives,
+        },
       };
-      if (tempStrategic.targetDate.trim())
-        payload.extra_field.target_date = formatDateForApi(
-          tempStrategic.targetDate.trim()
-        );
-      const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(payload),
-      });
+
+      let res: Response;
+
+      if (strategicGoalId) {
+        res = await fetch(`${BASE_URL}/goals/${strategicGoalId}`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch(`${BASE_URL}/goals`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      }
+
       if (!res.ok) throw new Error(`API error ${res.status}`);
-      setStrategicGoal({
-        title: tempStrategic.title.trim(),
-        goalType: tempStrategic.goalType,
-        targetDate: formatDateForApi(tempStrategic.targetDate.trim()),
-        revenueTarget: tempStrategic.revenueTarget,
-        profitTarget: tempStrategic.profitTarget,
-      });
+
+      await fetchStrategicGoal();
+      await fetchGoals();
       closeModal();
     } catch (err: any) {
-      setSaveError(err.message || "Failed to save");
+      setSaveError(err.message || "Failed to save. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -873,6 +717,7 @@ export const MediumTermSection = () => {
     }
     setIsSaving(true);
     setSaveError(null);
+
     const payload = {
       goal: {
         title: tempGoal.title.trim(),
@@ -881,13 +726,14 @@ export const MediumTermSection = () => {
         current_value: Number(tempGoal.currentValue) || 0,
         progress_percentage: clampProgress(tempGoal.progress),
         unit: tempGoal.unit || "%",
-        period: mapPeriodToApi(tempGoal.period || "3-5 Years"),
+        period: tempGoal.period || MEDIUM_TERM_PERIOD,
         status: tempGoal.status || "On Track",
-        owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : undefined,
+        owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : null,
         target_date: tempGoalDate ? formatDateForApi(tempGoalDate) : "",
         update_remarks: tempGoal.updateRemarks || "",
       },
     };
+
     try {
       const res = editingGoalId
         ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
@@ -904,7 +750,7 @@ export const MediumTermSection = () => {
       closeModal();
       fetchGoals();
     } catch (err: any) {
-      setSaveError(err.message || "Error saving goal.");
+      setSaveError(err.message || "Error saving goal. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -939,7 +785,9 @@ export const MediumTermSection = () => {
     );
   };
 
-  const modalBtnBase = {
+  const isEditingStrategic = !!strategicGoal.title;
+
+  const modalBtnBase: React.CSSProperties = {
     border: "none",
     borderRadius: 10,
     padding: "10px 20px",
@@ -979,7 +827,7 @@ export const MediumTermSection = () => {
         </div>
 
         <div className="p-6">
-          {/* ── Strategic Priorities Block ── */}
+          {/* ── Strategic Goal block ── */}
           <div className="mb-8">
             {isFetching ? (
               <div className="st-skeleton h-24 w-full rounded-xl" />
@@ -1004,22 +852,31 @@ export const MediumTermSection = () => {
                       className="text-[12px] mt-1.5 flex gap-3"
                       style={{ color: C.textMuted }}
                     >
-                      {strategicGoal.revenueTarget && (
-                        <span>Revenue: ₹{strategicGoal.revenueTarget}Cr</span>
-                      )}
-                      {strategicGoal.profitTarget && (
-                        <span>Profit: ₹{strategicGoal.profitTarget}Cr</span>
-                      )}
+                      {strategicGoal.revenueTarget &&
+                        strategicGoal.revenueTarget !== "0" && (
+                          <span>Revenue: ₹{strategicGoal.revenueTarget}Cr</span>
+                        )}
+                      {strategicGoal.profitTarget &&
+                        strategicGoal.profitTarget !== "0" && (
+                          <span>Profit: ₹{strategicGoal.profitTarget}Cr</span>
+                        )}
+                    </div>
+                  )}
+                  {strategicGoal.targetDate && (
+                    <div
+                      className="text-[11px] mt-1"
+                      style={{ color: C.textMuted }}
+                    >
+                      📅 Target: {apiDateToDisplay(strategicGoal.targetDate)}
                     </div>
                   )}
                 </div>
-                {/* ← ADDED: delete button alongside edit, matching ShortTermSection */}
                 <div className="flex gap-2">
                   <button
                     onClick={openStrategicModal}
                     className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors text-gray-500 border"
                     style={{ borderColor: C.borderLgt }}
-                    title="Edit Priority"
+                    title="Edit Goal"
                   >
                     <EditIcon />
                   </button>
@@ -1027,7 +884,7 @@ export const MediumTermSection = () => {
                     onClick={confirmDeleteStrategic}
                     className="p-2 bg-gray-50 hover:bg-red-50 rounded-lg cursor-pointer transition-colors text-gray-500 hover:text-red-500 border"
                     style={{ borderColor: C.borderLgt }}
-                    title="Delete Priority"
+                    title="Delete Goal"
                   >
                     <TrashIcon />
                   </button>
@@ -1084,136 +941,129 @@ export const MediumTermSection = () => {
             >
               Medium-term Initiatives
             </span>
-            {isFetching && (
-              <LoaderIcon
-                className="w-3.5 h-3.5"
-                style={{ color: C.textMuted }}
-              />
-            )}
+            {isFetching && <LoaderIcon className="w-3.5 h-3.5" />}
           </div>
 
           {isFetching ? (
             <SkeletonCards />
           ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {goals.length === 0 && !fetchError && (
-                  <p
-                    className="col-span-2 text-sm italic py-2"
-                    style={{ color: C.textMuted }}
-                  >
-                    No medium-term goals found. Add one below.
-                  </p>
-                )}
-                {goals.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className="rounded-2xl p-4 transition-all group hover:shadow-md"
-                    style={{
-                      background: C.cardBg,
-                      border: `1px solid ${C.borderLgt}`,
-                    }}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                        <div
-                          className="mt-1 w-3.5 h-3.5 rounded-full border-[3px] bg-white shrink-0"
-                          style={{ borderColor: C.primary }}
-                        />
-                        <div>
-                          <span
-                            className="font-black text-[14px] leading-snug block"
-                            style={{ color: C.textMain }}
-                          >
-                            {goal.title}
-                          </span>
-                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            {goal.periodLabel && (
-                              <span
-                                className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
-                                style={{
-                                  background: C.primaryTint,
-                                  color: C.primary,
-                                }}
-                              >
-                                {goal.periodLabel}
-                              </span>
-                            )}
-                            {(goal.ownerName || goal.targetDate) && (
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: C.textMuted }}
-                              >
-                                {goal.ownerName && (
-                                  <span style={{ color: C.primary }}>• </span>
-                                )}
-                                {goal.ownerName}
-                                {goal.targetDate && (
-                                  <span className="ml-1">
-                                    📅 {apiDateToDisplay(goal.targetDate)}
-                                  </span>
-                                )}
-                              </span>
-                            )}
-                          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              {goals.length === 0 && !fetchError && (
+                <p
+                  className="col-span-2 text-sm italic py-2"
+                  style={{ color: C.textMuted }}
+                >
+                  No medium-term goals found. Add one below.
+                </p>
+              )}
+              {goals.map((goal) => (
+                <div
+                  key={goal.id}
+                  className="rounded-2xl p-4 transition-all group hover:shadow-md"
+                  style={{
+                    background: C.cardBg,
+                    border: `1px solid ${C.borderLgt}`,
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                      <div
+                        className="mt-1 w-3.5 h-3.5 rounded-full border-[3px] bg-white shrink-0"
+                        style={{ borderColor: C.primary }}
+                      />
+                      <div>
+                        <span
+                          className="font-black text-[14px] leading-snug block"
+                          style={{ color: C.textMain }}
+                        >
+                          {goal.title}
+                        </span>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {goal.periodLabel && (
+                            <span
+                              className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
+                              style={{
+                                background: C.primaryTint,
+                                color: C.primary,
+                              }}
+                            >
+                              {goal.periodLabel}
+                            </span>
+                          )}
+                          {(goal.ownerName || goal.targetDate) && (
+                            <span
+                              className="text-xs font-medium"
+                              style={{ color: C.textMuted }}
+                            >
+                              {goal.ownerName && (
+                                <span style={{ color: C.primary }}>• </span>
+                              )}
+                              {goal.ownerName}
+                              {goal.targetDate && (
+                                <span className="ml-1">
+                                  📅 {apiDateToDisplay(goal.targetDate)}
+                                </span>
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div
-                        className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-xl border ml-2"
-                        style={{ borderColor: C.borderLgt }}
-                      >
-                        <button
-                          onClick={() => openGoalModal(goal)}
-                          className="p-1 rounded-lg transition-colors"
-                          style={{ color: "#9ca3af" }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.color = C.primary)
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.color = "#9ca3af")
-                          }
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          onClick={() => deleteGoal(goal.id as number)}
-                          className="p-1 rounded-lg transition-colors"
-                          style={{ color: "#9ca3af" }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.color = "#ef4444")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.color = "#9ca3af")
-                          }
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value={goal.progress}
-                        onChange={(e) =>
-                          handleCardSlider(goal.id as number, e.target.value)
+                    <div
+                      className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-xl border ml-2"
+                      style={{ borderColor: C.borderLgt }}
+                    >
+                      <button
+                        onClick={() => openGoalModal(goal)}
+                        className="p-1 rounded-lg transition-colors"
+                        style={{ color: "#9ca3af" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.color = C.primary)
                         }
-                        className="st-goal-slider"
-                        style={{ background: sliderBg(goal.progress) }}
-                      />
-                      <span
-                        className="text-xs font-black w-9 text-right shrink-0 tabular-nums"
-                        style={{ color: C.textMuted }}
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.color = "#9ca3af")
+                        }
                       >
-                        {goal.progress}%
-                      </span>
+                        <EditIcon />
+                      </button>
+                      <button
+                        onClick={() => deleteGoal(goal.id as number)}
+                        className="p-1 rounded-lg transition-colors"
+                        style={{ color: "#9ca3af" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.color = "#ef4444")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.color = "#9ca3af")
+                        }
+                      >
+                        <TrashIcon />
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={goal.progress}
+                      onChange={(e) =>
+                        handleCardSlider(goal.id as number, e.target.value)
+                      }
+                      className="st-goal-slider"
+                      style={{ background: sliderBg(goal.progress) }}
+                    />
+                    <span
+                      className="text-xs font-black w-9 text-right shrink-0 tabular-nums"
+                      style={{ color: C.textMuted }}
+                    >
+                      {goal.progress}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           <div className="mt-6 flex justify-end">
@@ -1233,7 +1083,7 @@ export const MediumTermSection = () => {
           </div>
         </div>
 
-        {/* ══ MODAL 0: Confirm Delete Strategic Goal ══ */}
+        {/* ══ MODAL 0: Confirm Delete ══ */}
         {activeModal === "confirm_delete_strategic" && (
           <Modal onClose={closeModal}>
             <div
@@ -1247,20 +1097,26 @@ export const MediumTermSection = () => {
                 fontFamily: C.font,
               }}
             >
-              <div
-                style={{
-                  padding: "28px 28px 20px",
-                  textAlign: "center",
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: C.textMain,
-                }}
-              >
-                Are you sure you want to delete this strategic goal?
+              <div style={{ padding: "28px 28px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>🗑️</div>
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: C.textMain,
+                    marginBottom: 8,
+                  }}
+                >
+                  Delete Strategic Goal?
+                </div>
+                <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
+                  This action cannot be undone. The goal will be permanently
+                  removed.
+                </p>
               </div>
               <div
                 style={{
-                  padding: "0 28px 28px",
+                  padding: "20px 28px 28px",
                   display: "flex",
                   justifyContent: "center",
                   gap: 12,
@@ -1310,7 +1166,7 @@ export const MediumTermSection = () => {
           </Modal>
         )}
 
-        {/* ══ MODAL 1: Edit Strategic Goal ══ */}
+        {/* ══ MODAL 1: Add / Edit Strategic Goal ══ */}
         {activeModal === "edit_strategic" && tempStrategic && (
           <Modal onClose={closeModal}>
             <div className="st-modal-box" style={{ maxWidth: 600 }}>
@@ -1318,54 +1174,56 @@ export const MediumTermSection = () => {
                 className="flex justify-between items-center px-6 py-5 border-b bg-white"
                 style={{ borderColor: C.primaryBord }}
               >
-                <h2
-                  className="font-black text-[17px] m-0"
-                  style={{ color: C.textMain }}
-                >
-                  Edit Medium-term Strategic Goal
-                </h2>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={saveStrategicGoal}
-                    disabled={isSaving}
+                <div>
+                  <h2
+                    className="font-black text-[17px] m-0"
+                    style={{ color: C.textMain }}
+                  >
+                    {isEditingStrategic
+                      ? "Edit Medium-term Strategic Goal"
+                      : "Add Medium-term Strategic Goal"}
+                  </h2>
+                  <p
                     style={{
-                      ...modalBtnBase,
-                      color: "#fff",
-                      background: C.primary,
-                      padding: "6px 14px",
-                      opacity: isSaving ? 0.7 : 1,
+                      margin: "4px 0 0",
+                      fontSize: 12,
+                      color: C.textMuted,
                     }}
                   >
-                    {isSaving ? "Updating..." : "Update"}
-                  </button>
-                  <button
-                    onClick={closeModal}
-                    className="p-1 rounded-xl hover:bg-black/5 transition-colors"
-                    style={{ color: "#9ca3af" }}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
+                    {isEditingStrategic
+                      ? "Update your 3-5 year strategic direction"
+                      : "Define your core objective for the next 3-5 years"}
+                  </p>
                 </div>
+                <button
+                  onClick={closeModal}
+                  className="p-1 rounded-xl hover:bg-black/5 transition-colors"
+                  style={{ color: "#9ca3af" }}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
+
               <div
-                className="p-6 space-y-5 overflow-y-auto"
+                className="p-6 space-y-5 overflow-y-auto overflow-x-hidden"
                 style={{ maxHeight: "65vh" }}
               >
                 {saveError && (
                   <div className="st-error-banner">{saveError}</div>
                 )}
+
                 <div>
                   <label className="st-label">
                     Goal Title <span style={{ color: C.primary }}>*</span>
@@ -1379,10 +1237,12 @@ export const MediumTermSection = () => {
                         title: e.target.value,
                       })
                     }
-                    placeholder="e.g., Expand to 5 new countries in next 3 years"
-                    className="st-input font-black"
+                    placeholder="e.g., Expand to 5 new cities in next 3 years"
+                    className="st-input font-bold"
+                    autoFocus
                   />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="st-label">Goal Type</label>
@@ -1396,22 +1256,34 @@ export const MediumTermSection = () => {
                       }
                       className="st-select"
                     >
-                      <option>Long-term (3-5 years)</option>
-                      <option>Medium-term (1-3 years)</option>
-                      <option>Short-term (Quarterly)</option>
+                      <option value="Medium-term (3-5 years)">
+                        Medium-term (3-5 years)
+                      </option>
+                      <option value="Long-term (5+ years)">
+                        Long-term (5+ years)
+                      </option>
+                      <option value="Short-term (1-2 years)">
+                        Short-term (1-2 years)
+                      </option>
                     </select>
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
+                    {/* MODIFIED: Using native input type="date" */}
+                    <input
+                      type="date"
                       value={tempStrategic.targetDate}
-                      onChange={(v) =>
-                        setTempStrategic({ ...tempStrategic, targetDate: v })
+                      onChange={(e) =>
+                        setTempStrategic({
+                          ...tempStrategic,
+                          targetDate: e.target.value,
+                        })
                       }
-                      placeholder="dd-mm-yyyy"
+                      className="st-input"
                     />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="st-label">Revenue Target (₹Cr)</label>
@@ -1425,6 +1297,7 @@ export const MediumTermSection = () => {
                           revenueTarget: e.target.value,
                         })
                       }
+                      placeholder="e.g. 500"
                       className="st-input"
                     />
                   </div>
@@ -1440,10 +1313,12 @@ export const MediumTermSection = () => {
                           profitTarget: e.target.value,
                         })
                       }
+                      placeholder="e.g. 100"
                       className="st-input"
                     />
                   </div>
                 </div>
+
                 <div>
                   <label className="st-label">
                     Key Initiatives (Link Operational Goals)
@@ -1452,15 +1327,15 @@ export const MediumTermSection = () => {
                     className="text-[11px] mb-2"
                     style={{ color: C.textMuted }}
                   >
-                    Select operational goals that are key initiatives for this
-                    strategic goal
+                    Select goals that are key initiatives for this strategic
+                    goal
                   </p>
-                  {goals.length > 0 ? (
+                  {allGoals.length > 0 ? (
                     <div
-                      className="border rounded-xl p-2 max-h-40 overflow-y-auto space-y-1"
+                      className="border rounded-xl p-2 max-h-52 overflow-y-auto space-y-1"
                       style={{ borderColor: C.borderLgt }}
                     >
-                      {goals.map((goal) => (
+                      {allGoals.map((goal) => (
                         <label
                           key={goal.id}
                           className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
@@ -1476,11 +1351,24 @@ export const MediumTermSection = () => {
                             className="mt-0.5 w-4 h-4 cursor-pointer rounded"
                             style={{ accentColor: C.primary }}
                           />
-                          <div
-                            className="text-[13px] font-medium leading-tight"
-                            style={{ color: C.textMain }}
-                          >
-                            {goal.title}
+                          <div className="flex-1 min-w-0">
+                            <div
+                              className="text-[13px] font-medium leading-tight"
+                              style={{ color: C.textMain }}
+                            >
+                              {goal.title}
+                            </div>
+                            {goal.period && (
+                              <span
+                                className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide"
+                                style={{
+                                  background: C.primaryTint,
+                                  color: C.primary,
+                                }}
+                              >
+                                {getPeriodBadgeLabel(goal.period)}
+                              </span>
+                            )}
                           </div>
                         </label>
                       ))}
@@ -1490,11 +1378,12 @@ export const MediumTermSection = () => {
                       className="text-sm italic py-2"
                       style={{ color: C.textMuted }}
                     >
-                      No operational goals available to link.
+                      No goals available to link.
                     </div>
                   )}
                 </div>
               </div>
+
               <div
                 className="p-5 flex justify-end gap-3 border-t bg-white"
                 style={{ borderColor: C.primaryBord }}
@@ -1519,6 +1408,9 @@ export const MediumTermSection = () => {
                     color: "#fff",
                     background: C.primary,
                     opacity: isSaving ? 0.7 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
                   }}
                   onMouseEnter={(e) => {
                     if (!isSaving)
@@ -1528,8 +1420,12 @@ export const MediumTermSection = () => {
                     if (!isSaving) e.currentTarget.style.background = C.primary;
                   }}
                 >
-                  {isSaving && <LoaderIcon className="w-4 h-4 inline mr-2" />}
-                  {isSaving ? "Updating..." : "Update"}
+                  {isSaving && <LoaderIcon className="w-4 h-4" />}
+                  {isSaving
+                    ? "Saving..."
+                    : isEditingStrategic
+                      ? "Update"
+                      : "Save Goal"}
                 </button>
               </div>
             </div>
@@ -1605,10 +1501,12 @@ export const MediumTermSection = () => {
                   Set a measurable target for the next 3-5 years
                 </p>
               </div>
+
               <div
                 style={{
                   padding: "24px 28px",
                   overflowY: "auto",
+                  overflowX: "hidden",
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
@@ -1618,6 +1516,7 @@ export const MediumTermSection = () => {
                 {saveError && (
                   <div className="st-error-banner">{saveError}</div>
                 )}
+
                 <div>
                   <label className="st-label">
                     Goal Title <span style={{ color: C.primary }}>*</span>
@@ -1630,12 +1529,7 @@ export const MediumTermSection = () => {
                       setTempGoal({ ...tempGoal, title: e.target.value })
                     }
                     className="st-input"
-                    onFocus={(e) =>
-                      (e.currentTarget.style.borderColor = C.primary)
-                    }
-                    onBlur={(e) =>
-                      (e.currentTarget.style.borderColor = C.borderLgt)
-                    }
+                    autoFocus
                   />
                 </div>
                 <div>
@@ -1647,12 +1541,6 @@ export const MediumTermSection = () => {
                       setTempGoal({ ...tempGoal, description: e.target.value })
                     }
                     className="st-textarea"
-                    onFocus={(e) =>
-                      (e.currentTarget.style.borderColor = C.primary)
-                    }
-                    onBlur={(e) =>
-                      (e.currentTarget.style.borderColor = C.borderLgt)
-                    }
                   />
                 </div>
                 <div
@@ -1676,23 +1564,20 @@ export const MediumTermSection = () => {
                         })
                       }
                       className="st-input"
-                      onFocus={(e) =>
-                        (e.currentTarget.style.borderColor = C.primary)
-                      }
-                      onBlur={(e) =>
-                        (e.currentTarget.style.borderColor = C.borderLgt)
-                      }
                     />
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
+                    {/* MODIFIED: Using native input type="date" */}
+                    <input
+                      type="date"
                       value={tempGoalDate}
-                      onChange={setTempGoalDate}
-                      placeholder="dd-mm-yyyy"
+                      onChange={(e) => setTempGoalDate(e.target.value)}
+                      className="st-input"
                     />
                   </div>
                 </div>
+
                 <div
                   style={{
                     display: "grid",
@@ -1701,20 +1586,12 @@ export const MediumTermSection = () => {
                   }}
                 >
                   <div>
-                    <label className="st-label">Owner ID</label>
-                    <input
-                      type="number"
-                      value={tempGoal.ownerId || ""}
-                      placeholder="e.g. 123"
-                      onChange={(e) =>
-                        setTempGoal({ ...tempGoal, ownerId: e.target.value })
-                      }
-                      className="st-input"
-                      onFocus={(e) =>
-                        (e.currentTarget.style.borderColor = C.primary)
-                      }
-                      onBlur={(e) =>
-                        (e.currentTarget.style.borderColor = C.borderLgt)
+                    <label className="st-label">Owner</label>
+                    <UserSelect
+                      users={usersList}
+                      value={tempGoal.ownerId}
+                      onChange={(id: any) =>
+                        setTempGoal({ ...tempGoal, ownerId: id })
                       }
                     />
                   </div>
@@ -1735,43 +1612,22 @@ export const MediumTermSection = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="st-label">Period</label>
-                    <select
-                      value={tempGoal.period || "three_to_five_years"}
-                      onChange={(e) =>
-                        setTempGoal({ ...tempGoal, period: e.target.value })
-                      }
-                      className="st-select"
-                    >
-                      <option value="this_year">This Year</option>
-                      <option value="this_quarter">This Quarter</option>
-                      <option value="three_to_five_years">3-5 Years</option>
-                      <option value="BHAG">BHAG</option>
-                    </select>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 16,
-                  }}
-                >
-                  <div>
                     <label className="st-label">Status</label>
                     <select
-                      value={tempGoal.status || "On Track"}
+                      value={tempGoal.status || "not_started"}
                       onChange={(e) =>
                         setTempGoal({ ...tempGoal, status: e.target.value })
                       }
                       className="st-select"
                     >
-                      <option>On Track</option>
-                      <option>Behind</option>
-                      <option>At Risk</option>
+                      <option value="not_started">Not Started</option>
+                      <option value="on_track">On Track</option>
+                      <option value="behind">Behind</option>
+                      <option value="achieved">Achieved</option>
                     </select>
                   </div>
                 </div>
+
                 {editingGoalId && (
                   <div
                     style={{
@@ -1871,16 +1727,11 @@ export const MediumTermSection = () => {
                         })
                       }
                       className="st-textarea"
-                      onFocus={(e) =>
-                        (e.currentTarget.style.borderColor = C.primary)
-                      }
-                      onBlur={(e) =>
-                        (e.currentTarget.style.borderColor = C.borderLgt)
-                      }
                     />
                   </div>
                 )}
               </div>
+
               <div style={{ padding: "0 28px 28px" }}>
                 <button
                   onClick={saveGoalDetails}

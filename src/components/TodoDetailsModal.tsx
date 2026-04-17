@@ -12,7 +12,7 @@ const Transition = forwardRef(function Transition(
     return <Slide direction="left" ref={ref} {...props} />;
 });
 
-const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClick }) => {
+const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClick }: { isModalOpen: boolean; setIsModalOpen: (open: boolean) => void; todo: any | null; onEditClick?: () => void }) => {
     const quillRef = useRef<HTMLDivElement>(null);
     const quillEditorRef = useRef<Quill | null>(null);
 
@@ -140,14 +140,18 @@ const TodoDetailsModal = ({ isModalOpen, setIsModalOpen, todo = null, onEditClic
                                 <h2 className="text-xl font-bold text-gray-900 mb-4 leading-tight pr-8">
                                     {todo.title || 'Untitled'}
                                 </h2>
-                                <Edit
-                                    size={20}
-                                    className="text-[#c72030] cursor-pointer"
-                                    onClick={() => {
-                                        onEditClick();
-                                        closeModal();
-                                    }}
-                                />
+                                {
+                                    onEditClick && (
+                                        <Edit
+                                            size={20}
+                                            className="text-[#c72030] cursor-pointer"
+                                            onClick={() => {
+                                                onEditClick();
+                                                closeModal();
+                                            }}
+                                        />
+                                    )
+                                }
                             </div>
                             <div className="flex flex-wrap gap-2 items-center">
                                 {/* Priority Badge */}

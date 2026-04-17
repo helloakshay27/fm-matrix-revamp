@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@
 import axios from 'axios';
 import Invoice from '@/components/Invoice';
 import { getToken } from '@/utils/auth';
+import Receipt from '@/components/Reciept';
 
 interface Attachment {
   id: number;
@@ -232,6 +233,13 @@ const formatPaymentInvoice = (invoiceData: any): any => {
       total_amount: totals.total_amount || 0,
       payment_mode: 'online',
       payment_status: invoiceData?.status || 'pending',
+    },
+    invoice_data: {
+      lock_account_bill_id: invoiceData?.lock_account_bill_id,
+      invoice: invoice,
+      member: member,
+      line_items: lineItems,
+      totals: totals,
     },
   };
 };
@@ -814,7 +822,7 @@ export const ClubGroupMembershipDetails = () => {
               </Button>
             </div>
 
-            <Invoice
+            <Receipt
               key={`invoice-${invoiceData?.bill_id}`}
               data={invoiceData}
               returnBase64={true}
@@ -1426,6 +1434,12 @@ export const ClubGroupMembershipDetails = () => {
                         >
                           System Info
                         </TabsTrigger>
+                        <TabsTrigger
+                          value="attachments"
+                          className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                        >
+                          Attachments
+                        </TabsTrigger>
                       </TabsList>
 
                       {/* Personal Information Tab */}
@@ -1528,7 +1542,7 @@ export const ClubGroupMembershipDetails = () => {
                           <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">House</span>
                             <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{selectedMember.flat_no || '-'}</span>
+                            <span className="text-gray-900 font-medium">{selectedMember?.house?.name || '-'}</span>
                           </div>
                         </div>
                       </TabsContent>
@@ -1667,6 +1681,125 @@ export const ClubGroupMembershipDetails = () => {
                             >
                               {selectedMember.active ? 'Yes' : 'No'}
                             </Badge>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="attachments" className="mt-0">
+                        <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                          <ImageIcon className="w-5 h-5 text-[#C72030]" />
+                          Attachments & Documents
+                        </h3>
+                        <div className="space-y-6">
+                          {/* Identification Image */}
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-[#C72030]" />
+                              Identification Image
+                            </h4>
+                            {selectedMember.identification_image ? (
+                              <div className="flex items-center gap-4">
+                                <img
+                                  src={selectedMember.identification_image}
+                                  alt="Identification"
+                                  className="h-24 w-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors"
+                                  onClick={() => setSelectedImage(selectedMember.identification_image)}
+                                />
+                                <div className="flex-1">
+                                  <p className="text-sm text-gray-600">Identification Document</p>
+                                  <a
+                                    href={selectedMember.identification_image}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#C72030] hover:text-[#A01828] text-sm font-medium mt-1 inline-block"
+                                  >
+                                    View Full Size →
+                                  </a>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 text-sm">No identification image available</p>
+                            )}
+                          </div>
+
+                          {/* Avatar */}
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-[#C72030]" />
+                              Avatar / Profile Image
+                            </h4>
+                            {selectedMember.avatar ? (
+                              <div className="flex items-center gap-4">
+                                <img
+                                  src={getAvatarUrl(selectedMember.avatar) || selectedMember.avatar}
+                                  alt="Avatar"
+                                  className="h-24 w-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors"
+                                  onClick={() => setSelectedImage(getAvatarUrl(selectedMember.avatar) || selectedMember.avatar)}
+                                />
+                                <div className="flex-1">
+                                  <p className="text-sm text-gray-600">Profile Avatar</p>
+                                  <a
+                                    href={getAvatarUrl(selectedMember.avatar) || selectedMember.avatar}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#C72030] hover:text-[#A01828] text-sm font-medium mt-1 inline-block"
+                                  >
+                                    View Full Size →
+                                  </a>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 text-sm">No avatar available</p>
+                            )}
+                          </div>
+
+                          {/* General Attachments */}
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-[#C72030]" />
+                              General Attachments
+                            </h4>
+                            {selectedMember.attachments && selectedMember.attachments.length > 0 ? (
+                              <div className="space-y-4">
+                                {selectedMember.attachments.map((attachment, idx) => {
+                                  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment.document);
+                                  return (
+                                    <div key={attachment.id || idx} className="border border-gray-200 rounded-lg p-3 bg-white">
+                                      <div className="flex items-start gap-3">
+                                        {isImage ? (
+                                          <img
+                                            src={attachment.document}
+                                            alt={attachment.relation || 'Attachment'}
+                                            className="h-20 w-20 object-cover rounded border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors flex-shrink-0"
+                                            onClick={() => setSelectedImage(attachment.document)}
+                                          />
+                                        ) : (
+                                          <div className="h-20 w-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                            <FileText className="w-8 h-8 text-gray-400" />
+                                          </div>
+                                        )}
+                                        <div className="flex-1">
+                                          <p className="text-sm text-gray-900 font-medium">
+                                            {attachment.relation || 'Document'}
+                                          </p>
+                                          <p className="text-xs text-gray-500 truncate">{attachment.document}</p>
+                                          <a
+                                            href={attachment.document}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[#C72030] hover:text-[#A01828] text-xs font-medium mt-2 inline-block"
+                                          >
+                                            View Full Size →
+                                          </a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 text-sm">No attachments available</p>
+                            )}
                           </div>
                         </div>
                       </TabsContent>
