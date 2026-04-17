@@ -11,6 +11,7 @@ import {
   Edit,
   Trash,
   MoreHorizontal,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -42,19 +43,18 @@ const MeetingConfigModal = ({
     name: existingConfig?.name ?? "",
     meeting_time:
       existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
-    meeting_days:
-      existingConfig?.meetingDays ??
+    meeting_days: existingConfig?.meetingDays ??
       existingConfig?.meeting_days ?? ["Mon", "Tue", "Wed", "Thu", "Fri"],
     meeting_head_id: existingConfig?.meetingHead?.id
       ? String(existingConfig.meetingHead.id)
       : existingConfig?.meetingHeadId
-      ? String(existingConfig.meetingHeadId)
-      : "",
+        ? String(existingConfig.meetingHeadId)
+        : "",
     department_id: existingConfig?.department?.id
       ? String(existingConfig.department.id)
       : existingConfig?.departmentId
-      ? String(existingConfig.departmentId)
-      : "",
+        ? String(existingConfig.departmentId)
+        : "",
     is_default:
       existingConfig?.isDefault ?? existingConfig?.is_default ?? false,
   });
@@ -356,8 +356,8 @@ const MeetingConfigModal = ({
             {isLoading
               ? "Saving..."
               : isEdit
-              ? "Update Config"
-              : "Create Config"}
+                ? "Update Config"
+                : "Create Config"}
           </button>
         </div>
       </div>
@@ -419,39 +419,44 @@ const DeleteConfirmModal = ({ configName, onConfirm, onCancel, isDeleting }) =>
   );
 
 // ─────────────────────────────────────────────────────────
-//  This Week Calendar Logic
-//
-//  Rules:
-//  - Grey  → day is NOT in this meeting's schedule (off day)
-//  - Green → scheduled day that has already passed this week
-//            (assumed held — no session API needed)
-//  - Amber → today, and it IS a scheduled meeting day
-//  - Grey  → today but NOT a scheduled day  (still grey/off)
-//  - Grey  → future scheduled day (upcoming, not yet held)
-//
-//  To upgrade to real held/missed status, pass a
-//  `sessionDates: string[]` (ISO date strings) prop to
-//  ConfigCard and replace the `dayIdx < todayDayIdx` check
-//  with a lookup against that array.
+//  Day helpers
 // ─────────────────────────────────────────────────────────
 
 /** Maps our 2-char display keys to JS Date.getDay() (0=Sun..6=Sat) */
 const DAY_TO_JS_IDX: Record<string, number> = {
-  Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6,
+  Su: 0,
+  Mo: 1,
+  Tu: 2,
+  We: 3,
+  Th: 4,
+  Fr: 5,
+  Sa: 6,
 };
 
 /** Normalise any API day format to 2-char display key */
 const normalizeDayKey = (d: string): string => {
   const map: Record<string, string> = {
-    // 3-char (from MeetingConfigModal toggleDay)
-    Sun: "Su", Mon: "Mo", Tue: "Tu", Wed: "We",
-    Thu: "Th", Fri: "Fr", Sat: "Sa",
-    // Already 2-char
-    Su: "Su", Mo: "Mo", Tu: "Tu", We: "We",
-    Th: "Th", Fr: "Fr", Sa: "Sa",
-    // Full names just in case
-    Sunday: "Su", Monday: "Mo", Tuesday: "Tu", Wednesday: "We",
-    Thursday: "Th", Friday: "Fr", Saturday: "Sa",
+    Sun: "Su",
+    Mon: "Mo",
+    Tue: "Tu",
+    Wed: "We",
+    Thu: "Th",
+    Fri: "Fr",
+    Sat: "Sa",
+    Su: "Su",
+    Mo: "Mo",
+    Tu: "Tu",
+    We: "We",
+    Th: "Th",
+    Fr: "Fr",
+    Sa: "Sa",
+    Sunday: "Su",
+    Monday: "Mo",
+    Tuesday: "Tu",
+    Wednesday: "We",
+    Thursday: "Th",
+    Friday: "Fr",
+    Saturday: "Sa",
   };
   return map[d] ?? d;
 };
@@ -469,22 +474,93 @@ const getDayStatus = (
   const isToday = dayIdx === todayJsIdx;
 
   if (!isScheduled) {
-    // Not a meeting day at all — grey regardless of today
     return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
   }
-
   if (isToday) {
-    // Scheduled AND today — amber with ring
-    return { color: "bg-[#F59E0B]", ringColor: "ring-2 ring-offset-1 ring-[#F59E0B]", isToday };
+    return {
+      color: "bg-[#F59E0B]",
+      ringColor: "ring-2 ring-offset-1 ring-[#F59E0B]",
+      isToday,
+    };
   }
-
   if (dayIdx < todayJsIdx) {
-    // Scheduled AND already past — green (assumed held)
     return { color: "bg-[#2ECC71]", ringColor: "", isToday };
   }
-
-  // Scheduled but in the future — grey (upcoming)
   return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
+};
+
+// ─────────────────────────────────────────────────────────
+//  getNextMeeting — calculates next upcoming meeting slot
+//  across ALL configs dynamically
+// ─────────────────────────────────────────────────────────
+const getNextMeeting = (configs: any[]): string | null => {
+  if (!configs.length) return null;
+
+  const today = new Date();
+  const todayJsIdx = today.getDay(); // 0=Sun … 6=Sat
+  const nowMinutes = today.getHours() * 60 + today.getMinutes();
+
+  const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  let earliest: {
+    daysAhead: number;
+    meetingMinutes: number;
+    label: string;
+    time: string;
+  } | null = null;
+
+  configs.forEach((c) => {
+    const days: string[] = (c.meetingDays || c.meeting_days || []).map(
+      normalizeDayKey
+    );
+
+    const timeStr: string = c.meetingTime || c.meeting_time || "";
+    if (!timeStr) return;
+
+    const [h, m] = timeStr.split(":").map(Number);
+    const meetingMinutes = h * 60 + (m || 0);
+
+    days.forEach((dayKey) => {
+      const jsIdx = DAY_TO_JS_IDX[dayKey];
+      if (jsIdx === undefined) return;
+
+      let daysAhead = (jsIdx - todayJsIdx + 7) % 7;
+
+      // If it's today but time has already passed → push to next week
+      if (daysAhead === 0 && meetingMinutes <= nowMinutes) {
+        daysAhead = 7;
+      }
+
+      const isBetter =
+        !earliest ||
+        daysAhead < earliest.daysAhead ||
+        (daysAhead === earliest.daysAhead &&
+          meetingMinutes < earliest.meetingMinutes);
+
+      if (isBetter) {
+        earliest = {
+          daysAhead,
+          meetingMinutes,
+          label: DAY_LABELS[jsIdx],
+          time: timeStr,
+        };
+      }
+    });
+  });
+
+  if (!earliest) return null;
+
+  // Format time to 12-hr for readability e.g. "09:00" → "9:00 AM"
+  const e = earliest as { label: string; time: string; meetingMinutes: number };
+  const totalMin = e.meetingMinutes;
+  const hh = Math.floor(totalMin / 60);
+  const mm = totalMin % 60;
+  const suffix = hh >= 12 ? "PM" : "AM";
+  const displayH = hh % 12 === 0 ? 12 : hh % 12;
+  const displayM = mm.toString().padStart(2, "0");
+  const formattedTime = `${displayH}:${displayM} ${suffix}`;
+
+  return `${e.label} at ${formattedTime}`;
 };
 
 // ── ConfigCard ──
@@ -533,7 +609,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
     if (m && m.name) return m.name;
     const user = allUsers.find((u) => Number(u.id) === Number(m.id || m));
     return user
-      ? user.name ?? user.full_name ?? user.username ?? `User ${m.id || m}`
+      ? (user.name ?? user.full_name ?? user.username ?? `User ${m.id || m}`)
       : `User ${m.id || m}`;
   });
 
@@ -555,9 +631,8 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   const meetingTime =
     config.meetingTime || config.meeting_time || "No time set";
 
-  // ── Dynamic This Week calendar ──
   const today = new Date();
-  const todayJsIdx = today.getDay(); // 0=Sun … 6=Sat
+  const todayJsIdx = today.getDay();
 
   const activeDayKeys = new Set(
     (config.meetingDays || config.meeting_days || []).map(normalizeDayKey)
@@ -609,29 +684,31 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
             <Clock className="w-3.5 h-3.5 text-[#8C8580]" /> {meetingTime}
           </div>
 
-          {/* Day pills — highlight active days */}
+          {/* Day pills */}
           <div className="flex gap-1.5 flex-wrap">
-            {(["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const).map((day) => {
-              const isActive = activeDayKeys.has(day);
-              const isToday = DAY_TO_JS_IDX[day] === todayJsIdx;
-              return (
-                <div
-                  key={day}
-                  className={cn(
-                    "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider transition-all",
-                    isActive && isToday
-                      ? "bg-[#F59E0B] text-white ring-2 ring-offset-1 ring-[#F59E0B]"
-                      : isActive
-                      ? "bg-[#1A1A1A] text-white"
-                      : isToday
-                      ? "bg-[#FCFAFA] border-2 border-[#F59E0B] text-[#F59E0B]"
-                      : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
-                  )}
-                >
-                  {day}
-                </div>
-              );
-            })}
+            {(["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const).map(
+              (day) => {
+                const isActive = activeDayKeys.has(day);
+                const isToday = DAY_TO_JS_IDX[day] === todayJsIdx;
+                return (
+                  <div
+                    key={day}
+                    className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider transition-all",
+                      isActive && isToday
+                        ? "bg-[#F59E0B] text-white ring-2 ring-offset-1 ring-[#F59E0B]"
+                        : isActive
+                          ? "bg-[#1A1A1A] text-white"
+                          : isToday
+                            ? "bg-[#FCFAFA] border-2 border-[#F59E0B] text-[#F59E0B]"
+                            : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
+                    )}
+                  >
+                    {day}
+                  </div>
+                );
+              }
+            )}
           </div>
         </div>
 
@@ -702,7 +779,6 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
               );
               return (
                 <div key={day} className="flex flex-col items-center gap-2">
-                  {/* Day label — bold + dark if today */}
                   <span
                     className={cn(
                       "text-[10px]",
@@ -713,7 +789,6 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
                   >
                     {day}
                   </span>
-                  {/* Dot */}
                   <div
                     className={cn(
                       "w-2 h-2 rounded-full transition-all",
@@ -819,8 +894,8 @@ const SettingsTab = () => {
       const parsedData = Array.isArray(data)
         ? data
         : data.data
-        ? [data.data]
-        : [];
+          ? [data.data]
+          : [];
       setConfigs(parsedData);
     } catch (err) {
       setListError(err.message);
@@ -876,10 +951,12 @@ const SettingsTab = () => {
   ];
 
   const totalMembersCount = configs.reduce(
-    (acc, curr) =>
-      acc + (curr.members?.length || curr.memberIds?.length || 0),
+    (acc, curr) => acc + (curr.members?.length || curr.memberIds?.length || 0),
     0
   );
+
+  // Dynamic next meeting across all configs
+  const nextMeeting = getNextMeeting(configs);
 
   return (
     <div
@@ -905,18 +982,28 @@ const SettingsTab = () => {
           </button>
         </div>
 
-        {/* Stats Bar */}
-        <div className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 shadow-sm flex flex-wrap items-center gap-4 text-sm font-bold text-[#8C8580]">
-          <div className="text-[#1A1A1A] font-black">
-            {configs.length} Active Meetings
+        {/* Stats Bar — only shown when configs exist */}
+        {configs.length > 0 && (
+          <div className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 shadow-sm flex flex-wrap items-center gap-4 text-sm font-bold text-[#8C8580]">
+            <div className="text-[#1A1A1A] font-black">
+              {configs.length} Active Meeting{configs.length !== 1 ? "s" : ""}
+            </div>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]" />
+            <div>
+              {totalMembersCount} Total Member
+              {totalMembersCount !== 1 ? "s" : ""}
+            </div>
+            {nextMeeting && (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]" />
+                <div className="flex items-center gap-2 text-[#1A1A1A]">
+                  <Clock className="w-4 h-4 text-[#D37E5F]" />
+                  Next: {nextMeeting}
+                </div>
+              </>
+            )}
           </div>
-          <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]"></div>
-          <div>{totalMembersCount} Total Members</div>
-          <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]"></div>
-          <div className="flex items-center gap-2 text-[#1A1A1A]">
-            <Clock className="w-4 h-4 text-[#D37E5F]" /> Next: Sa at 10:00
-          </div>
-        </div>
+        )}
 
         {/* Search & Filter */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -979,11 +1066,36 @@ const SettingsTab = () => {
             ))}
           </div>
         ) : filteredConfigs.length === 0 && !listError ? (
-          <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
-            <p className="text-[#8C8580] font-bold text-sm">
-              No meeting configurations found.
-            </p>
-          </div>
+          configs.length === 0 ? (
+            // ── Zero configs exist — onboarding empty state ──
+            <div className="flex flex-col items-center justify-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px] gap-6">
+              <div className="w-16 h-16 rounded-[20px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center">
+                <CalendarClock className="w-8 h-8 text-[#D37E5F]" />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-[#1A1A1A] font-black text-[16px]">
+                  No meetings configured yet
+                </p>
+                <p className="text-[#8C8580] font-bold text-sm max-w-xs leading-relaxed">
+                  Create your first recurring meeting to get started with daily
+                  standups and minute tracking.
+                </p>
+              </div>
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-3 rounded-[16px] text-sm font-bold shadow-sm hover:bg-black transition-all"
+              >
+                <Plus className="w-4 h-4" /> Create Your First Meeting
+              </button>
+            </div>
+          ) : (
+            // ── Configs exist but search/filter returned nothing ──
+            <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
+              <p className="text-[#8C8580] font-bold text-sm">
+                No meetings match your search or filter.
+              </p>
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredConfigs.map((config) => (

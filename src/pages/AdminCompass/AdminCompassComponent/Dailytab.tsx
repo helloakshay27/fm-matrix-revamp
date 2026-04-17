@@ -268,6 +268,7 @@ const DailyTab = () => {
     () => new Date().toISOString().split("T")[0]
   );
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
+  const [meetingsLoaded, setMeetingsLoaded] = useState(false);
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(
     null
   );
@@ -292,17 +293,25 @@ const DailyTab = () => {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [fetchedFeedbacks, setFetchedFeedbacks] = useState<any[]>([]);
   const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
-const navigate = useNavigate();
+
+  const navigate = useNavigate();
+
   // ── Load Dropdowns ──
   useEffect(() => {
     fetchDynamicMeetings()
       .then((list) => {
         setMeetingsList(list);
-        setSelectedMeetingId(list?.length > 0 ? list[0].id : null);
+        setMeetingsLoaded(true);
+        if (list?.length > 0) {
+          setSelectedMeetingId(list[0].id);
+        } else {
+          setSelectedMeetingId(null);
+        }
       })
       .catch((err) => {
         console.error(err);
         setSelectedMeetingId(null);
+        setMeetingsLoaded(true);
       });
     fetchDynamicMembers().then(setMembersList).catch(console.error);
   }, []);
@@ -378,24 +387,20 @@ const navigate = useNavigate();
   }, [selectedMeetingId, activeDate]);
 
   // ── GET Past Feedbacks ──
-  // targetUserId = jis member ka feedback fetch karna hai (report.user_id)
-  // loggedInUserId = jo abhi login hai (localStorage "userId")
   const loadPastFeedbacks = async (targetUserId: string | number) => {
     setIsFetchingFeedbacks(true);
     try {
       const loggedInUserId = localStorage.getItem("userId") || "";
-
       const url = `${getBaseUrl()}/ratings?resource_type=User&resource_id=${targetUserId}&rating_from_id=${loggedInUserId}`;
-
       const res = await fetch(url, {
         method: "GET",
         headers: getAuthHeaders(),
       });
-
       if (res.ok) {
         const data = await res.json();
-        const feedbackList =
-          Array.isArray(data) ? data : data.data || data.ratings || [];
+        const feedbackList = Array.isArray(data)
+          ? data
+          : data.data || data.ratings || [];
         setFetchedFeedbacks(feedbackList);
       } else {
         console.error(`HTTP Error: ${res.status}`);
@@ -448,17 +453,12 @@ const navigate = useNavigate();
           tasks_issues: sourceRd.tasks_issues,
           big_win: sourceRd.big_win || null,
           tomorrow_plan: patch.tomorrow_plan_item
-            ? [
-                ...sourceRd.tomorrow_plan,
-                { title: patch.tomorrow_plan_item },
-              ]
+            ? [...sourceRd.tomorrow_plan, { title: patch.tomorrow_plan_item }]
             : sourceRd.tomorrow_plan,
           kpis: sourceRd.kpis,
         },
       },
     };
-
-    console.log("📦 PUT payload:", JSON.stringify(payload, null, 2));
 
     try {
       const res = await fetch(
@@ -555,8 +555,7 @@ const navigate = useNavigate();
 
         if (source.big_win)
           combinedBigWin +=
-            (combinedBigWin ? " | " : "") +
-            `${report.name}: ${source.big_win}`;
+            (combinedBigWin ? " | " : "") + `${report.name}: ${source.big_win}`;
         if (source.self_rating) {
           combinedSelfRating += Number(source.self_rating) || 0;
           ratingCount++;
@@ -716,7 +715,6 @@ const navigate = useNavigate();
         },
       };
 
-      console.log("📦 Meeting Payload:", JSON.stringify(payload, null, 2));
       const res = await fetch(
         `${getBaseUrl()}/user_journals/submit_daily_meeting`,
         {
@@ -789,7 +787,6 @@ const navigate = useNavigate();
         },
       };
 
-      console.log("📦 Update Payload:", JSON.stringify(payload, null, 2));
       const res = await fetch(
         `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
         {
@@ -839,9 +836,12 @@ const navigate = useNavigate();
     }
   };
 
-  const handleFeedback = ()=>{
+  const handleFeedback = () => {
     navigate("/admin-compass/feedback-dashboard");
-  }
+  };
+
+  // ── No meetings state ──
+  const noMeetings = meetingsLoaded && meetingsList.length === 0;
 
   return (
     <div
@@ -857,7 +857,7 @@ const navigate = useNavigate();
             </div>
             <div>
               <h2 className="text-[18px] font-extrabold text-[#1a1a1a]">
-                Daily Report
+                Daily Meeting
               </h2>
               <p className="text-xs font-bold text-[#CE8261] mt-0.5">
                 {topDateStr}
@@ -880,7 +880,9 @@ const navigate = useNavigate();
           </div>
         </div>
 
+        {/* ── Calendar Body ── */}
         {isLoading && !dailyData ? (
+          /* Skeleton loader */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -888,12 +890,28 @@ const navigate = useNavigate();
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className="rounded-[18px] bg-[#F0EBE8]"
+                className="rounded-[18px] bg-[#F0EBE8] animate-pulse"
                 style={{ width: 100, height: 120 }}
               />
             ))}
           </div>
+        ) : noMeetings ? (
+          /* ── No Meetings Empty State ── */
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5EFEB] border border-[#EAE3DF]">
+              <Calendar className="w-7 h-7 text-[#CE8261] opacity-40" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-bold text-neutral-500">
+                No meetings configured
+              </p>
+              <p className="text-xs text-neutral-400 mt-1 max-w-[220px] leading-relaxed">
+                Please configure a meeting first to view the daily calendar.
+              </p>
+            </div>
+          </div>
         ) : (
+          /* ── Normal Calendar ── */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -901,36 +919,48 @@ const navigate = useNavigate();
             {dateRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
-              const isUpcomingHoliday = rawStatus === "non_meeting";
               const isUpcoming = rawStatus === "upcoming";
-
-              if (isUpcoming && !isUpcomingHoliday) {
+              // ── UPCOMING: plain text style (image jaisa) ──
+              // ── UPCOMING: plain text style (image jaisa) ──
+              if (isUpcoming) {
                 return (
                   <div
                     key={dateItem.full_date}
                     className="relative select-none cursor-default"
                     style={{ width: 100, height: 120 }}
                   >
-                    <div
-                      className="flex flex-col items-center justify-center w-full h-full"
-                      style={{ color: "#1a1a1a" }}
-                    >
-                      <span className="text-[11px] font-extrabold uppercase tracking-widest mb-1">
+                    <div className="flex flex-col items-center justify-center w-full h-full border-[3px] border-[#C5BFBB] rounded-[18px] bg-transparent transition-all duration-200">
+                      <span
+                        className="text-[11px] font-extrabold uppercase tracking-widest mb-1 opacity-90"
+                        style={{ color: "#C5BFBB" }}
+                      >
                         {dateItem.day}
                       </span>
-                      <span className="text-[24px] font-bold leading-none">
+                      <span
+                        className="text-[34px] font-bold leading-none"
+                        style={{ color: "#C5BFBB" }}
+                      >
                         {dateItem.date}
                       </span>
+                      <div
+                        className="mt-2.5 h-[20px] px-3 rounded-full flex items-center justify-center text-[9px] font-extrabold uppercase tracking-widest"
+                        style={{ color: "#C5BFBB" }}
+                      >
+                        Upcoming
+                      </div>
                     </div>
                   </div>
                 );
               }
 
+              // ── PAST / TODAY: colored card ──
+              // ── PAST / TODAY / HOLIDAY: colored card ──
               let bg = "#F0EDEA",
                 textColor = "#9CA3AF",
                 labelBg = "rgba(0,0,0,0.07)",
                 labelColor = "#9CA3AF",
                 displayLabel = "Holiday";
+
               if (rawStatus === "missed") {
                 bg = "#F34A4A";
                 textColor = "#FFFFFF";
@@ -947,29 +977,19 @@ const navigate = useNavigate();
                 rawStatus === "holiday" ||
                 rawStatus === "non_meeting"
               ) {
+                // 👇 Yahan "non_meeting" add kar diya hai
                 bg = "#F5D142";
                 textColor = "#8A6D3B";
                 labelBg = "rgba(0,0,0,0.09)";
                 labelColor = "#8A6D3B";
-                displayLabel = "Holiday";
-              } else if (isUpcomingHoliday) {
-                bg = "#EFEFEF";
-                textColor = "#AAAAAA";
-                labelBg = "rgba(0,0,0,0.06)";
-                labelColor = "#AAAAAA";
                 displayLabel = "Holiday";
               }
 
               return (
                 <div
                   key={dateItem.full_date}
-                  onClick={() => {
-                    if (!isUpcoming) setActiveDate(dateItem.full_date);
-                  }}
-                  className={cn(
-                    "relative select-none transition-all",
-                    isUpcoming ? "cursor-default" : "cursor-pointer"
-                  )}
+                  onClick={() => setActiveDate(dateItem.full_date)}
+                  className="relative select-none cursor-pointer"
                 >
                   <div
                     className="flex flex-col items-center justify-center rounded-[18px] transition-all duration-200"
@@ -1011,24 +1031,30 @@ const navigate = useNavigate();
           </div>
         )}
 
-        <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase">
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" />{" "}
-            Filled
+        {/* Legend — always show except when no meetings */}
+        {!noMeetings && (
+          <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-2">
+            <div className="flex items-center gap-2.5">
+              <span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" />{" "}
+              Filled
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-[15px] h-[15px] rounded-full bg-[#F34A4A]" />{" "}
+              Missed
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="w-[15px] h-[15px] rounded-full bg-[#F5D142]" />{" "}
+              Holiday
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span
+                className="w-[15px] h-[15px] rounded-full border-[3px]"
+                style={{ borderColor: "#C5BFBB", background: "transparent" }}
+              />{" "}
+              Upcoming
+            </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-[#F34A4A]" />{" "}
-            Missed
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-[#F5D142]" />{" "}
-            Holiday
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-[15px] h-[15px] rounded-full bg-white border-[3px] border-[#EAE3DF]" />{" "}
-            Upcoming
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ══ FILTERS ══ */}
@@ -1037,42 +1063,59 @@ const navigate = useNavigate();
           <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
             Meeting
           </span>
-          <CustomSelect
-            value={selectedMeetingId || ""}
-            onChange={setSelectedMeetingId}
-            placeholder="Loading Meetings..."
-            options={meetingsList.map((m: any) => ({
-              value: m.id,
-              label: m.name,
-            }))}
-          />
+          {noMeetings ? (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <span className="text-xs font-bold text-red-500">
+                No meetings configured
+              </span>
+            </div>
+          ) : (
+            <CustomSelect
+              value={selectedMeetingId || ""}
+              onChange={setSelectedMeetingId}
+              placeholder="Loading Meetings..."
+              options={meetingsList.map((m: any) => ({
+                value: m.id,
+                label: m.name,
+              }))}
+            />
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
-            Member
-          </span>
-          <CustomSelect
-            value={selectedMember}
-            onChange={setSelectedMember}
-            placeholder="All Members"
-            options={[
-              { value: "all", label: "All Members" },
-              ...membersList.map((m: any) => ({ value: m.id, label: m.name })),
-            ]}
-          />
-        </div>
-        <button
-          onClick={() => loadDailyData(false)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-neutral-600 shadow-sm hover:border-[#CE7A5A]/60 hover:text-[#CE7A5A] transition-all"
-        >
-          <RefreshCw
-            className={cn(
-              "w-3.5 h-3.5",
-              isLoading && "animate-spin text-[#CE8261]"
-            )}
-          />{" "}
-          Refresh
-        </button>
+
+        {!noMeetings && (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
+                Member
+              </span>
+              <CustomSelect
+                value={selectedMember}
+                onChange={setSelectedMember}
+                placeholder="All Members"
+                options={[
+                  { value: "all", label: "All Members" },
+                  ...membersList.map((m: any) => ({
+                    value: m.id,
+                    label: m.name,
+                  })),
+                ]}
+              />
+            </div>
+            <button
+              onClick={() => loadDailyData(false)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-neutral-600 shadow-sm hover:border-[#CE7A5A]/60 hover:text-[#CE7A5A] transition-all"
+            >
+              <RefreshCw
+                className={cn(
+                  "w-3.5 h-3.5",
+                  isLoading && "animate-spin text-[#CE8261]"
+                )}
+              />{" "}
+              Refresh
+            </button>
+          </>
+        )}
       </div>
 
       {apiError && (
@@ -1081,31 +1124,49 @@ const navigate = useNavigate();
         </div>
       )}
 
-      {isLoading && (
+      {/* ══ NO MEETINGS — full info banner ══ */}
+      {noMeetings && (
+        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 border border-orange-200 shrink-0 mt-0.5">
+            <AlertTriangle className="w-5 h-5 text-orange-500" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-orange-800">
+              No meetings found
+            </p>
+            <p className="text-xs text-orange-600 mt-1 leading-relaxed">
+              There are no daily meeting configurations available. Please ask
+              your admin to configure a meeting to start viewing daily reports.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isLoading && !noMeetings && (
         <div className="border border-[#F0EBE8] rounded-2xl shadow-sm overflow-hidden bg-white mt-4">
           <div className="p-4 border-b border-[#F0EBE8] flex justify-between items-center bg-[#FAFAFA] flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8]" />
+              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
               <div className="space-y-2">
-                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full" />
-                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full" />
+                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
+                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl" />
-              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl" />
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl" />
+              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
+              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
+              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
             </div>
           </div>
           <div className="p-4 space-y-6">
             <div className="border border-[#F0EBE8] rounded-2xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between p-3 border-b border-[#F0EBE8] bg-[#FAFAFA]">
-                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full" />
-                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8]" />
+                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
+                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8] animate-pulse" />
               </div>
               <div className="p-4 h-24 bg-white" />
               <div className="p-3 border-t border-[#F0EBE8] bg-[#FAFAFA] flex justify-end">
-                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8]" />
+                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
               </div>
             </div>
             <div className="space-y-4">
@@ -1115,15 +1176,15 @@ const navigate = useNavigate();
                   className="border border-[#F0EBE8] rounded-2xl p-4 bg-white shadow-sm flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded bg-[#F0EBE8]" />
-                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full" />
-                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto" />
+                    <div className="w-4 h-4 rounded bg-[#F0EBE8] animate-pulse" />
+                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full animate-pulse" />
+                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto animate-pulse" />
                   </div>
-                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7" />
+                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7 animate-pulse" />
                   <div className="flex gap-2 ml-7">
-                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg" />
+                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
+                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
+                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
                   </div>
                 </div>
               ))}
@@ -1133,7 +1194,7 @@ const navigate = useNavigate();
       )}
 
       {/* ══ REPORTS SECTION ══ */}
-      {!isLoading && dailyData && (
+      {!isLoading && dailyData && !noMeetings && (
         <>
           <div className="border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm overflow-hidden bg-[#FFFDFB]">
             <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fef6f4]">
@@ -1171,8 +1232,7 @@ const navigate = useNavigate();
                 <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm mb-6">
                   <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#FFFAF8]">
                     <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
-                      <Users className="w-4 h-4 text-[#CE7A5A]" /> Meeting
-                      Notes
+                      <Users className="w-4 h-4 text-[#CE7A5A]" /> Meeting Notes
                     </div>
                     <BtnIcon
                       onClick={() => loadDailyData(false)}
@@ -1411,10 +1471,10 @@ const navigate = useNavigate();
                                         s === "done" || s === "submitted"
                                           ? "bg-[#2ECC71] text-white border-[#2ECC71]"
                                           : s === "missed"
-                                          ? "bg-[#EB4A4A] text-white border-[#EB4A4A]"
-                                          : s === "holiday"
-                                          ? "bg-yellow-100 text-yellow-600 border-yellow-200"
-                                          : "bg-gray-100 text-gray-400 border-gray-200"
+                                            ? "bg-[#EB4A4A] text-white border-[#EB4A4A]"
+                                            : s === "holiday"
+                                              ? "bg-yellow-100 text-yellow-600 border-yellow-200"
+                                              : "bg-gray-100 text-gray-400 border-gray-200"
                                       )}
                                     >
                                       <span className="text-[8px] opacity-80 leading-none mb-0.5">
@@ -1454,7 +1514,8 @@ const navigate = useNavigate();
                                     rawDisplayRd?.total_score !== null && (
                                       <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
                                         <span className="text-sm font-bold text-purple-800">
-                                          Total Score: {rawDisplayRd.total_score}
+                                          Total Score:{" "}
+                                          {rawDisplayRd.total_score}
                                         </span>
                                       </div>
                                     )}
@@ -1560,9 +1621,9 @@ const navigate = useNavigate();
                                                   getItemStatus(item) === "open"
                                                     ? "bg-red-100 text-red-600"
                                                     : getItemStatus(item) ===
-                                                      "closed"
-                                                    ? "bg-green-100 text-green-600"
-                                                    : "bg-gray-100 text-gray-500"
+                                                        "closed"
+                                                      ? "bg-green-100 text-green-600"
+                                                      : "bg-gray-100 text-gray-500"
                                                 )}
                                               >
                                                 {getItemStatus(item)}
@@ -1643,7 +1704,6 @@ const navigate = useNavigate();
                                         setFeedbackOpenId(rId);
                                         setFeedbackRating(0);
                                         setFeedbackMessage("");
-                                        // report.user_id = jis member ko feedback de rahe ho
                                         loadPastFeedbacks(report.user_id);
                                       }
                                     }}
@@ -1737,7 +1797,6 @@ const navigate = useNavigate();
                                 {feedbackOpenId === rId && (
                                   <div className="border-t border-[#EAE3DF] pt-5 mt-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
                                       {/* COLUMN 1: Add New Feedback Form */}
                                       <div>
                                         <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
@@ -1802,32 +1861,21 @@ const navigate = useNavigate();
                                                 return;
                                               }
                                               try {
-                                                // logged-in user ki id localStorage se
                                                 const loggedInUserId =
                                                   localStorage.getItem(
                                                     "userId"
                                                   ) || "";
-
                                                 const payload = {
                                                   resource_type: "User",
                                                   resource_id: report.user_id,
-                                                  rating_from_id: loggedInUserId,
+                                                  rating_from_id:
+                                                    loggedInUserId,
                                                   score: feedbackRating,
                                                   reviews: feedbackMessage,
                                                   positive_opening: "",
                                                   constructive_feedback: "",
                                                   positive_closing: "",
                                                 };
-
-                                                console.log(
-                                                  "📦 Feedback POST payload:",
-                                                  JSON.stringify(
-                                                    payload,
-                                                    null,
-                                                    2
-                                                  )
-                                                );
-
                                                 const res = await fetch(
                                                   `${getBaseUrl()}/ratings`,
                                                   {
@@ -1846,7 +1894,9 @@ const navigate = useNavigate();
                                                   throw new Error(
                                                     `HTTP ${res.status}`
                                                   );
-                                                toast.success("Feedback added!");
+                                                toast.success(
+                                                  "Feedback added!"
+                                                );
                                                 setFeedbackOpenId(null);
                                                 setFeedbackRating(0);
                                                 setFeedbackMessage("");
@@ -1882,7 +1932,7 @@ const navigate = useNavigate();
                                             Recent Feedbacks
                                           </p>
                                           <button
-                                           onClick={handleFeedback}
+                                            onClick={handleFeedback}
                                             className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
                                           >
                                             View All{" "}
