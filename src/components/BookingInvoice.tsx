@@ -272,7 +272,7 @@ const BookingInvoice = ({
                     {/* LEFT SIDE - Logo/Branding Area */}
                     <div className="w-[24%] p-3 border-r-4 border-[#7C2D12] flex flex-col items-center justify-between py-8">
                         <div className="text-center">
-                            <img src="/src/assets/image.png" alt="" className="h-[90%]" />
+                            <img src={`${window.location.origin}/image.png`} alt="" className="h-[90%]" />
                         </div>
                         <div className="flex justify-center items-center">
                             <div
