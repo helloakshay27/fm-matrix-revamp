@@ -535,7 +535,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       <div className="pb-10">
         {/* --- TOP NAV TABS --- */}
         <div className="flex justify-center pb-2">
-          <div className="flex gap-1 bg-[rgba(232,229,220,0.2)] border-[1.31px] border-[rgba(211,209,199,1)] rounded-full p-1 shadow-sm">
+          <div className="flex gap-1 bg-[#cccbc9] border-[1.31px] border-[rgba(211,209,199,1)] rounded-full p-1 shadow-sm">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -596,7 +596,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
       {/* Floating Bottom Bar */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-2 backdrop-blur-md bg-white/20 border-[1px] border-white rounded-full p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <div className="flex items-center gap-2 backdrop-blur-md bg-white/50 border-[1px] border-white rounded-full p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
           <button
             onClick={() => setIsQuickActionsOpen(true)}
             className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
@@ -749,3 +749,5 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 };
 
 export default CompanyHubNew;
+
+

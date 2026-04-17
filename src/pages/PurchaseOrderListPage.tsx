@@ -366,15 +366,16 @@
 // };
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { toast as sonnerToast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
+import axios from "axios";
 
 interface PurchaseOrder {
   id: number;
@@ -384,6 +385,8 @@ interface PurchaseOrder {
   expected_delivery_date: string | null;
   total_amount_formatted: string;
   all_level_approved: boolean;
+  status?: string;
+  received?: boolean;
   supplier?: {
     company_name: string;
   };
@@ -395,6 +398,13 @@ interface PurchaseOrderFilters {
 }
 
 const columns: ColumnConfig[] = [
+  {
+    key: "actions",
+    label: "Action",
+    sortable: false,
+    hideable: false,
+    draggable: false,
+  },
   {
     key: "date",
     label: "Date",
@@ -460,13 +470,14 @@ export const PurchaseOrderListPage: React.FC = () => {
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 800);
-
-  const [purchaseOrderData, setPurchaseOrderData] = useState<PurchaseOrder[]>(
-    []
-  );
-
+  const [purchaseOrderData, setPurchaseOrderData] = useState<PurchaseOrder[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [hasPurchaseOrderApproval, setHasPurchaseOrderApproval] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ show: boolean; errors: { id: string; message: string }[] }>({
+    show: false,
+    errors: [],
+  });
   const [loading, setLoading] = useState(false);
-
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -534,12 +545,139 @@ export const PurchaseOrderListPage: React.FC = () => {
     fetchPurchaseOrderData(currentPage, perPage, debouncedSearchQuery);
   }, [currentPage, perPage, debouncedSearchQuery]);
 
+  useEffect(() => {
+    const fetchLockAccount = async () => {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+      if (!baseUrl || !token) return;
+
+      try {
+        const response = await fetch(`https://${baseUrl}/get_lock_account.json`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : undefined,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        const purchaseOrderApproval =
+          Array.isArray(data?.approvals) &&
+          data.approvals.some((a: any) => a.approval_type === "purchase_order" && a.active);
+        setHasPurchaseOrderApproval(purchaseOrderApproval);
+      } catch (error) {
+        console.error("Error fetching lock account:", error);
+      }
+    };
+
+    fetchLockAccount();
+  }, []);
+
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     setCurrentPage(1);
   };
 
+  const handleBulkUpdate = async (
+    payload: Record<string, unknown>,
+    successMsg: string,
+    failMsg: string
+  ) => {
+    if (selectedRows.length === 0) {
+      sonnerToast.error("Select at least one Purchase Order");
+      return;
+    }
+
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/purchase_orders/update_status.json`,
+        {
+          purchase_order_ids: selectedRows,
+          ...payload,
+        },
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+          validateStatus: () => true,
+        }
+      );
+
+      if (response.status >= 400) {
+        const { message, errors } = response.data || {};
+        if (Array.isArray(errors) && errors.length > 0) {
+          setErrorModal({ show: true, errors });
+        } else {
+          setErrorModal({
+            show: true,
+            errors: [{ id: "-", message: message || failMsg }],
+          });
+        }
+        return;
+      }
+
+      sonnerToast.success(successMsg);
+      setSelectedRows([]);
+      fetchPurchaseOrderData(currentPage, perPage, debouncedSearchQuery);
+    } catch (error) {
+      console.error(error);
+      sonnerToast.error(failMsg);
+    }
+  };
+
+  const handleMarkAsIssued = () =>
+    handleBulkUpdate(
+      { status: "issued" },
+      "Purchase orders marked as issued",
+      "Failed to mark purchase orders as issued"
+    );
+
+  const handleSubmitForApproval = () =>
+    handleBulkUpdate(
+      { status: "pending_approval" },
+      "Purchase orders submitted for approval",
+      "Failed to submit purchase orders for approval"
+    );
+
+  const handleMarkAsReceived = () =>
+    handleBulkUpdate(
+      { received: true },
+      "Purchase orders marked as received",
+      "Failed to mark purchase orders as received"
+    );
+
+  const handleMarkAsUnreceived = () =>
+    handleBulkUpdate(
+      { received: false },
+      "Purchase orders marked as unreceived",
+      "Failed to mark purchase orders as unreceived"
+    );
+
   const renderRow = (order: PurchaseOrder) => ({
+    actions: (
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={selectedRows.includes(order.id)}
+          onChange={(e) => {
+            setSelectedRows((prev) =>
+              e.target.checked
+                ? [...prev, order.id]
+                : prev.filter((id) => id !== order.id)
+            );
+          }}
+          className="cursor-pointer"
+          title="Select for status update"
+        />
+        <button
+          onClick={() => navigate(`/accounting/purchase-order/${order.id}`)}
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="View"
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+      </div>
+    ),
+
     date: (
       <span>
         {order.po_date
@@ -549,12 +687,12 @@ export const PurchaseOrderListPage: React.FC = () => {
     ),
 
     purchase_order: (
-      <span
-        className="text-blue-600 font-medium cursor-pointer"
-        onClick={() => navigate(`/accounting/purchase-order/${order.id}`)}
+      <Link
+        to={`/accounting/purchase-order/${order.id}`}
+        className="text-blue-600 font-medium hover:underline"
       >
         PO-{String(order.id).padStart(5, "0")}
-      </span>
+      </Link>
     ),
 
     reference: <span>{order.reference_number || "-"}</span>,
@@ -563,11 +701,11 @@ export const PurchaseOrderListPage: React.FC = () => {
 
     status: (
       <span className="text-blue-600 font-medium">
-        {order.all_level_approved ? "Approved" : "Pending"}
+        {order.status || (order.all_level_approved ? "approved" : "pending")}
       </span>
     ),
 
-    billed_status: <span>Not Billed</span>,
+    billed_status: <span>{order.received ? "Received" : "Not Received"}</span>,
 
     amount: (
       <span className="font-medium">
@@ -600,15 +738,51 @@ export const PurchaseOrderListPage: React.FC = () => {
         onSearchChange={handleSearch}
         loading={loading}
         hideTableExport={true}
-        leftActions={
-          <Button
-            onClick={() => navigate("/accounting/purchase-order/create")}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            New
-          </Button>
-        }
+        leftActions={(
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => navigate("/accounting/purchase-order/create")}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New
+            </Button>
+
+            {selectedRows.length > 0 &&
+              (hasPurchaseOrderApproval ? (
+                <Button
+                  className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                  onClick={handleSubmitForApproval}
+                >
+                  Submit for Approval
+                </Button>
+              ) : (
+                <Button
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={handleMarkAsIssued}
+                >
+                  Mark as Issued
+                </Button>
+              ))}
+
+            {selectedRows.length > 0 && (
+              <>
+                <Button
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  onClick={handleMarkAsReceived}
+                >
+                  Mark as Received
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleMarkAsUnreceived}
+                >
+                  Mark as Unreceived
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       />
 
       {pagination.total_count > 0 && (
@@ -624,6 +798,48 @@ export const PurchaseOrderListPage: React.FC = () => {
             setCurrentPage(1);
           }}
         />
+      )}
+
+      {errorModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <h2 className="text-base font-semibold text-gray-800">Bulk Update Error Summary</h2>
+              <button
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                onClick={() => setErrorModal({ show: false, errors: [] })}
+              >
+                ×
+              </button>
+            </div>
+            <div className="px-5 py-4 max-h-80 overflow-y-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="text-left px-3 py-2 border-b font-medium text-gray-700">ID</th>
+                    <th className="text-left px-3 py-2 border-b font-medium text-gray-700">Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {errorModal.errors.map((err, index) => (
+                    <tr key={`${err.id}-${index}`}>
+                      <td className="px-3 py-2 border-b text-gray-700">{err.id}</td>
+                      <td className="px-3 py-2 border-b text-gray-700">{err.message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-5 py-3 border-t flex justify-end">
+              <Button
+                className="bg-[#C72030] text-white hover:bg-[#a81a28] px-6"
+                onClick={() => setErrorModal({ show: false, errors: [] })}
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -292,7 +292,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
               ? currentMonth
               : getSelectedDateLabel()}
           </h3>
-          <div className="flex items-center gap-0.5 bg-[#F3F0E8] h-8 rounded-full px-1 border border-[#E5DFD0]">
+          <div className="flex items-center gap-0.5 bg-[#cccbc9] h-8 rounded-full px-1 border border-[#E5DFD0]">
             {["Hourly", "Weekly", "Monthly"].map((v) => (
               <button
                 key={v}
@@ -499,7 +499,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 onClick={() => setOpenTaskModal(true)}
                 className="bg-[#DA7756] text-white px-4 h-8 rounded-[8px] text-[12px] font-semibold transition-all hover:bg-[#c96a44] active:scale-95 whitespace-nowrap"
               >
-                + Create Task
+                + Task
               </button>
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-none pr-1 space-y-2">
@@ -547,7 +547,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 onClick={() => setOpenTodoModal(true)}
                 className="bg-[#DA7756] text-white px-4 h-8 rounded-[8px] text-[12px] font-semibold transition-all hover:bg-[#c96a44] active:scale-95 whitespace-nowrap"
               >
-                + Create To-do
+                + To-do
               </button>
             </div>
             <div className="space-y-1.5 flex-1 overflow-y-auto scrollbar-none pr-1">
