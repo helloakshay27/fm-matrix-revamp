@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
 // ── Design tokens — from BusinessPlanAndGoles ──
 const C = {
@@ -240,26 +241,32 @@ const createKpiInApi = async (
     selected: true,
   };
 };
-
 const updateKpiInApi = async (
   id: number,
   patch: Partial<{
+    name: string;
+    unit: string;
     current_value: number;
     target_value: number;
     frequency: string;
     department_id: number;
-    assignee_id: number;
+    assignee_ids: number[]; // Changed to array
+    weight?: number;
+    related_link_url?: string;
+    kpi_type?: string;
+    priority?: string;
   }>
 ) => {
   const payload = { kpi: patch };
-  const res = await fetch(`${BASE_URL}/kpis/${id}`, {
-    method: "PUT",
+  // URL update kiya .json ke sath aur method PATCH kar diya
+  const res = await fetch(`${BASE_URL}/kpis/${id}.json`, {
+    method: "PATCH",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
   const raw = await res.text();
   if (!res.ok)
-    throw new Error(`PUT error ${res.status}: ${raw || res.statusText}`);
+    throw new Error(`PATCH error ${res.status}: ${raw || res.statusText}`);
 };
 
 const deleteKpiFromApi = async (id: number) => {
@@ -795,6 +802,7 @@ export const CriticalNumbers = () => {
   const handleCreate = async () => {
     if (!form.name.trim()) {
       setSaveError("KPI Name is required.");
+      toast.error("KPI Name is required.");
       return;
     }
     setIsSaving(true);
@@ -811,8 +819,10 @@ export const CriticalNumbers = () => {
       fetchKpisFromApi()
         .then((data) => setKpis(data))
         .catch(() => {});
+      toast.success("KPI created successfully!");
     } catch (err: any) {
       setSaveError(err.message || "Failed to create KPI.");
+      toast.error(err.message || "Failed to create KPI.");
     } finally {
       setIsSaving(false);
     }
@@ -822,23 +832,32 @@ export const CriticalNumbers = () => {
     if (!editingKpi) return;
     if (!form.name.trim()) {
       setSaveError("KPI Name is required.");
+      toast.error("KPI Name is required.");
       return;
     }
     setIsSaving(true);
     setSaveError(null);
     try {
-      const deptName = departments.find(
-        (d) => String(d.id) === form.department_id
-      )?.name;
+      // Naya payload structure
       const patch: any = {
+        name: form.name.trim(),
         target_value: form.target_value
           ? parseFloat(form.target_value)
           : undefined,
         frequency: form.frequency.toLowerCase(),
       };
-      if (deptName) patch.department = deptName;
-      if (form.assign_to_id)
-        patch.assignee_id = parseInt(form.assign_to_id, 10);
+
+      if (form.unit !== "Select unit") patch.unit = form.unit;
+
+      // Department ID pass kar rahe hain (pehle naam pass ho raha tha)
+      if (form.department_id) {
+        patch.department_id = parseInt(form.department_id, 10);
+      }
+
+      // Assignee ID ko array mein wrap kar ke bhej rahe hain
+      if (form.assign_to_id) {
+        patch.assignee_ids = [parseInt(form.assign_to_id, 10)];
+      }
 
       await updateKpiInApi(editingKpi.id, patch);
 
@@ -869,20 +888,23 @@ export const CriticalNumbers = () => {
       fetchKpisFromApi()
         .then((data) => setKpis(data))
         .catch(() => {});
+      toast.success("KPI updated successfully!");
     } catch (err: any) {
       setSaveError(err.message || "Failed to update KPI.");
+      toast.error(err.message || "Failed to update KPI.");
     } finally {
       setIsSaving(false);
     }
   };
-
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
       await deleteKpiFromApi(id);
       setKpis((prev) => prev.filter((k) => k.id !== id));
+      toast.success("KPI deleted successfully!");
     } catch (err: any) {
       setFetchError(err.message || "Failed to delete KPI.");
+      toast.error(err.message || "Failed to delete KPI.");
     } finally {
       setDeletingId(null);
     }

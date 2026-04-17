@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
 // ── Design tokens — from BusinessPlanAndGoles ──
 const C = {
@@ -779,6 +780,7 @@ export const KeyProcessesSection = () => {
   const createSop = async () => {
     if (!form.name.trim()) {
       setSaveError("System name is required.");
+      toast.error("System name is required.");
       return;
     }
     setIsSaving(true);
@@ -808,8 +810,10 @@ export const KeyProcessesSection = () => {
       }
       closeModal();
       fetchSops();
+      toast.success("System/SOP created successfully!");
     } catch (err: any) {
       setSaveError(err.message || "Failed to create SOP.");
+      toast.error(err.message || "Failed to create SOP.");
     } finally {
       setIsSaving(false);
     }
@@ -818,6 +822,7 @@ export const KeyProcessesSection = () => {
   const updateSop = async () => {
     if (!editingSop || !form.name.trim()) {
       setSaveError("System name is required.");
+      toast.error("System name is required.");
       return;
     }
     setIsSaving(true);
@@ -847,8 +852,10 @@ export const KeyProcessesSection = () => {
       }
       closeModal();
       fetchSops();
+      toast.success("System/SOP updated successfully!");
     } catch (err: any) {
       setSaveError(err.message || "Failed to update SOP.");
+      toast.error(err.message || "Failed to update SOP.");
     } finally {
       setIsSaving(false);
     }
@@ -868,8 +875,9 @@ export const KeyProcessesSection = () => {
       setDisplayedSops((prev) => prev.filter((s) => s.id !== id));
       setAllSops((prev) => prev.filter((s) => s.id !== id));
       setSelectIds((prev) => prev.filter((x) => x !== id));
+      toast.success("System/SOP deleted successfully!");
     } catch (err: any) {
-      alert(`Delete failed: ${err.message}`);
+      toast.error(`Delete failed: ${err.message}`);
     }
   };
 

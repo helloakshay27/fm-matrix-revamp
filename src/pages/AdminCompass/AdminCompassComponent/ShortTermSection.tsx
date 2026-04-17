@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 
-// ── Design Tokens (same as QuarterlySection & MediumTermSection) ──
+// ── Design Tokens ──
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
@@ -50,17 +50,6 @@ const apiDateToDisplay = (s: string): string => {
   return s;
 };
 
-const parseDDMMYYYY = (s: string): Date | null => {
-  if (!s) return null;
-  const [d, m, y] = s.split("-").map(Number);
-  if (!d || !m || !y) return null;
-  const dt = new Date(y, m - 1, d);
-  return isNaN(dt.getTime()) ? null : dt;
-};
-
-const toDDMMYYYY = (dt: Date): string =>
-  `${String(dt.getDate()).padStart(2, "0")}-${String(dt.getMonth() + 1).padStart(2, "0")}-${dt.getFullYear()}`;
-
 const clampProgress = (val: any): number => {
   const n = Math.round(Number(val));
   return isNaN(n) ? 0 : Math.min(100, Math.max(0, n));
@@ -68,21 +57,6 @@ const clampProgress = (val: any): number => {
 
 const SHORT_TERM_PERIOD = "this_year";
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const DAYS_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const sliderBg = (pct: number) =>
   `linear-gradient(to right, ${C.primary} ${pct}%, #e5e7eb ${pct}%)`;
 
@@ -133,51 +107,6 @@ const TrashIcon = () => (
     />
   </svg>
 );
-const CalendarIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
-  </svg>
-);
-const ChevronLeft = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 19l-7-7 7-7"
-    />
-  </svg>
-);
-const ChevronRight = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
-    />
-  </svg>
-);
 const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg className={`${className} animate-spin`} fill="none" viewBox="0 0 24 24">
     <circle
@@ -195,7 +124,6 @@ const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
     />
   </svg>
 );
-// Same header icon as Quarterly & Medium
 const HeaderTargetIcon = () => (
   <svg
     className="w-5 h-5"
@@ -208,7 +136,6 @@ const HeaderTargetIcon = () => (
     <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
   </svg>
 );
-// Same large empty-state icon
 const TargetLargeIcon = () => (
   <svg
     className="w-14 h-14 mx-auto mb-3"
@@ -224,7 +151,7 @@ const TargetLargeIcon = () => (
   </svg>
 );
 
-// ── ThemeStyle (identical to Quarterly & Medium) ──
+// ── ThemeStyle ──
 const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
@@ -237,9 +164,12 @@ const ThemeStyle = () => (
     .st-modal-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
     .st-modal-portal { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.42); backdrop-filter:blur(4px); }
     .st-modal-box { background:${C.primaryBg}; border-radius:20px; border:1px solid ${C.primaryBord}; box-shadow:0 30px 80px rgba(0,0,0,0.20); width:100%; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
+    
     .st-input { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+    .st-input[type="date"] { padding: 9px 12px; cursor: pointer; }
     .st-input:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
     .st-input::placeholder { color:#a3a3a3; }
+    
     .st-textarea { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; min-height:72px; resize:vertical; font-family:'Poppins',sans-serif; }
     .st-textarea:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
     .st-textarea::placeholder { color:#a3a3a3; }
@@ -249,277 +179,118 @@ const ThemeStyle = () => (
     .st-error-banner { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; border-radius:12px; padding:10px 14px; font-size:13px; font-weight:600; }
     .st-skeleton { background:linear-gradient(90deg,#eeebe4 25%,#e5e1d8 50%,#eeebe4 75%); background-size:200% 100%; animation:st-shimmer 1.4s infinite; border-radius:8px; }
     @keyframes st-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-    .st-dp-wrap { position:relative; }
-    .st-dp-input-btn { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; font-family:'Poppins',sans-serif; }
-    .st-dp-input-btn:focus, .st-dp-input-btn.open { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
-    .st-dp-input-btn .placeholder { color:#a3a3a3; }
-    .st-dp-calendar { position:absolute; top:calc(100% + 6px); left:0; z-index:99999; background:#fff; border:1px solid ${C.borderLgt}; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.12); padding:16px; width:280px; animation:dp-in .15s ease; font-family:'Poppins',sans-serif; }
-    @keyframes dp-in { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-    .st-dp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-    .st-dp-nav { background:none; border:none; padding:6px; border-radius:8px; cursor:pointer; color:${C.textMuted}; display:flex; align-items:center; }
-    .st-dp-nav:hover { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-month-year { font-size:14px; font-weight:700; color:${C.textMain}; cursor:pointer; padding:4px 8px; border-radius:8px; }
-    .st-dp-month-year:hover { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
-    .st-dp-dow { text-align:center; font-size:11px; font-weight:700; color:${C.textMuted}; padding:4px 0 8px; }
-    .st-dp-day { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500; border-radius:8px; cursor:pointer; color:${C.textMain}; border:none; background:none; transition:background .1s,color .1s; }
-    .st-dp-day:hover:not(.empty):not(.selected) { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-day.today:not(.selected) { color:${C.primary}; font-weight:800; }
-    .st-dp-day.selected { background:${C.primary}; color:#fff; font-weight:700; }
-    .st-dp-day.empty { cursor:default; }
-    .st-dp-months,.st-dp-years { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:4px 0; }
-    .st-dp-mitem,.st-dp-yitem { text-align:center; padding:8px 4px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; color:${C.textMain}; transition:background .1s; }
-    .st-dp-mitem:hover,.st-dp-yitem:hover { background:${C.primaryTint}; color:${C.primary}; }
-    .st-dp-mitem.active,.st-dp-yitem.active { background:${C.primary}; color:#fff; }
-    .st-dp-clear { margin-top:10px; padding-top:10px; border-top:1px solid ${C.borderLgt}; text-align:center; }
-    .st-dp-clear button { font-size:12px; font-weight:600; color:${C.textMuted}; background:none; border:none; cursor:pointer; padding:4px 12px; border-radius:8px; }
-    .st-dp-clear button:hover { background:#f3f4f6; color:${C.textMain}; }
   `}</style>
 );
 
-// ── DatePicker (identical to other two) ──
-interface DatePickerProps {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}
-const DatePicker: React.FC<DatePickerProps> = ({
+// ── Searchable User Select Component ──
+const UserSelect = ({
   value,
   onChange,
-  placeholder = "Select date",
-}) => {
-  const today = new Date();
-  const parsed = parseDDMMYYYY(value);
+  users,
+  placeholder = "Search owner...",
+}: any) => {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"days" | "months" | "years">("days");
-  const [cursor, setCursor] = useState<Date>(
-    parsed || new Date(today.getFullYear(), today.getMonth(), 1)
-  );
+  const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
+      }
     };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  const openPicker = () => {
-    setCursor(
-      parsed
-        ? new Date(parsed.getFullYear(), parsed.getMonth(), 1)
-        : new Date(today.getFullYear(), today.getMonth(), 1)
-    );
-    setView("days");
-    setOpen(true);
-  };
-  const selectDay = (day: number) => {
-    onChange(
-      toDDMMYYYY(new Date(cursor.getFullYear(), cursor.getMonth(), day))
-    );
-    setOpen(false);
-  };
-  const daysInMonth = new Date(
-    cursor.getFullYear(),
-    cursor.getMonth() + 1,
-    0
-  ).getDate();
-  const firstDow = new Date(
-    cursor.getFullYear(),
-    cursor.getMonth(),
-    1
-  ).getDay();
-  const years = Array.from(
-    { length: 21 },
-    (_, i) => cursor.getFullYear() - 10 + i
-  );
-  const displayValue = parsed ? toDDMMYYYY(parsed) : "";
+
+  const selectedUser = users.find((u: any) => u.id === value);
+  const displayValue = selectedUser
+    ? selectedUser.full_name ||
+      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    : "";
+
+  const filteredUsers = users.filter((u: any) => {
+    const name =
+      u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim();
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
+
   return (
-    <div className="st-dp-wrap" ref={ref}>
-      <button
-        type="button"
-        className={`st-dp-input-btn${open ? " open" : ""}`}
-        onClick={() => (open ? setOpen(false) : openPicker())}
-      >
-        <span
-          className={displayValue ? "" : "placeholder"}
-          style={{ fontSize: 13 }}
+    <div className="relative" ref={ref} style={{ zIndex: open ? 9999 : 1 }}>
+      <input
+        type="text"
+        className="st-input pr-8"
+        placeholder={placeholder}
+        value={open ? search : displayValue}
+        onClick={() => {
+          setOpen(true);
+          setSearch("");
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+      />
+      {/* Dropdown Chevron */}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          {displayValue || placeholder}
-        </span>
-        <span
-          style={{ color: C.primary, display: "flex", alignItems: "center" }}
-        >
-          <CalendarIcon />
-        </span>
-      </button>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+
       {open && (
-        <div className="st-dp-calendar">
-          {view === "days" && (
-            <>
-              <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1)
-                    )
-                  }
+        <div
+          className="absolute bottom-full left-0 right-0 mb-1 z-50 bg-white border rounded-xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto overflow-x-hidden"
+          style={{ borderColor: C.borderLgt, fontFamily: C.font }}
+        >
+          {value && (
+            <div
+              className="p-2.5 hover:bg-red-50 cursor-pointer text-[13px] border-b text-red-500 font-semibold truncate"
+              style={{ borderColor: C.borderLgt }}
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+            >
+              Clear Selection
+            </div>
+          )}
+          {filteredUsers.length === 0 ? (
+            <div className="p-3 text-sm text-gray-500 text-center truncate">
+              No users found
+            </div>
+          ) : (
+            filteredUsers.map((u: any) => {
+              const name =
+                u.full_name ||
+                `${u.firstname || ""} ${u.lastname || ""}`.trim();
+              return (
+                <div
+                  key={u.id}
+                  className="p-2.5 hover:bg-gray-50 cursor-pointer text-[13px] border-b last:border-0 truncate"
+                  style={{ borderColor: C.borderLgt, color: C.textMain }}
+                  onClick={() => {
+                    onChange(u.id);
+                    setOpen(false);
+                    setSearch("");
+                  }}
                 >
-                  <ChevronLeft />
-                </button>
-                <span
-                  className="st-dp-month-year"
-                  onClick={() => setView("months")}
-                >
-                  {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="st-dp-grid">
-                {DAYS_SHORT.map((d) => (
-                  <div key={d} className="st-dp-dow">
-                    {d}
-                  </div>
-                ))}
-                {Array.from({ length: firstDow }).map((_, i) => (
-                  <div key={`e${i}`} className="st-dp-day empty" />
-                ))}
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(
-                  (day) => {
-                    const isToday =
-                      day === today.getDate() &&
-                      cursor.getMonth() === today.getMonth() &&
-                      cursor.getFullYear() === today.getFullYear();
-                    const isSelected =
-                      parsed &&
-                      day === parsed.getDate() &&
-                      cursor.getMonth() === parsed.getMonth() &&
-                      cursor.getFullYear() === parsed.getFullYear();
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        className={`st-dp-day${isToday ? " today" : ""}${isSelected ? " selected" : ""}`}
-                        onClick={() => selectDay(day)}
-                      >
-                        {day}
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-              {value && (
-                <div className="st-dp-clear">
-                  <button
-                    onClick={() => {
-                      onChange("");
-                      setOpen(false);
-                    }}
-                  >
-                    Clear
-                  </button>
+                  {name}
                 </div>
-              )}
-            </>
-          )}
-          {view === "months" && (
-            <>
-              <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() - 1, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronLeft />
-                </button>
-                <span
-                  className="st-dp-month-year"
-                  onClick={() => setView("years")}
-                >
-                  {cursor.getFullYear()}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() + 1, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="st-dp-months">
-                {MONTHS.map((m, i) => (
-                  <div
-                    key={m}
-                    className={`st-dp-mitem${cursor.getMonth() === i ? " active" : ""}`}
-                    onClick={() => {
-                      setCursor(new Date(cursor.getFullYear(), i, 1));
-                      setView("days");
-                    }}
-                  >
-                    {m.slice(0, 3)}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-          {view === "years" && (
-            <>
-              <div className="st-dp-header">
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() - 12, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronLeft />
-                </button>
-                <span className="st-dp-month-year">
-                  {years[0]} – {years[years.length - 1]}
-                </span>
-                <button
-                  className="st-dp-nav"
-                  onClick={() =>
-                    setCursor(
-                      new Date(cursor.getFullYear() + 12, cursor.getMonth(), 1)
-                    )
-                  }
-                >
-                  <ChevronRight />
-                </button>
-              </div>
-              <div className="st-dp-years">
-                {years.map((y) => (
-                  <div
-                    key={y}
-                    className={`st-dp-yitem${cursor.getFullYear() === y ? " active" : ""}`}
-                    onClick={() => {
-                      setCursor(new Date(y, cursor.getMonth(), 1));
-                      setView("months");
-                    }}
-                  >
-                    {y}
-                  </div>
-                ))}
-              </div>
-            </>
+              );
+            })
           )}
         </div>
       )}
@@ -537,6 +308,7 @@ interface Goal {
   currentValue?: string;
   unit?: string;
   period?: string;
+  periodLabel?: string;
   targetDate?: string;
   ownerName?: string;
   ownerId?: string | number;
@@ -579,7 +351,7 @@ const Modal = ({
   );
 };
 
-// ── Skeleton (identical to other two) ──
+// ── Skeleton ──
 const SkeletonCards = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {[1, 2, 3, 4].map((n) => (
@@ -595,6 +367,18 @@ const SkeletonCards = () => (
   </div>
 );
 
+const getPeriodBadgeLabel = (period: string): string => {
+  const map: Record<string, string> = {
+    three_to_five_years: "3-5 Years",
+    this_year: "This Year",
+    this_quarter: "This Quarter",
+    quarterly: "Quarterly",
+    long_term: "Long Term",
+    BHAG: "BHAG",
+  };
+  return map[period] || period || "";
+};
+
 // ══════════════════════════════════════════════════════════
 export const ShortTermSection = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -602,6 +386,9 @@ export const ShortTermSection = () => {
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [allGoals, setAllGoals] = useState<Goal[]>([]);
+
+  // Users list state for dropdown
+  const [usersList, setUsersList] = useState<any[]>([]);
 
   const [strategicGoal, setStrategicGoal] = useState<StrategicGoalData>({
     title: "",
@@ -611,7 +398,6 @@ export const ShortTermSection = () => {
     profitTarget: "",
   });
 
-  // Track saved strategic goal ID for PUT on edit
   const [strategicGoalId, setStrategicGoalId] = useState<number | null>(null);
 
   const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(
@@ -624,12 +410,41 @@ export const ShortTermSection = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [tempGoal, setTempGoal] = useState<Goal | null>(null);
+
+  // Using native HTML input type date -> expects YYYY-MM-DD
   const [tempGoalDate, setTempGoalDate] = useState("");
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch the strategic goal (this_year + has revenue/profit target)
+  // ─────────────────────────────────────────────
+  // ✅ API Calls
+  // ─────────────────────────────────────────────
+
+  const fetchUsers = useCallback(async () => {
+    const orgId =
+      localStorage.getItem("org_id") ||
+      localStorage.getItem("organization_id") ||
+      "";
+    if (!orgId) return;
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/users?organization_id=${orgId}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setUsersList(Array.isArray(data) ? data : data.users || data.data || []);
+    } catch (err) {
+      console.error("[ShortTermSection] fetchUsers:", err);
+    }
+  }, []);
+
   const fetchStrategicGoal = useCallback(async () => {
     try {
       const res = await fetch(`${BASE_URL}/goals`, {
@@ -660,7 +475,7 @@ export const ShortTermSection = () => {
         setStrategicGoal({
           title: strategic.title || "",
           goalType: "Short-term (This Year)",
-          targetDate: strategic.target_date || "",
+          targetDate: strategic.target_date || "", // Keeps native YYYY-MM-DD
           revenueTarget: String(strategic.revenue_target ?? ""),
           profitTarget: String(strategic.profit_target ?? ""),
         });
@@ -735,7 +550,8 @@ export const ShortTermSection = () => {
   useEffect(() => {
     fetchStrategicGoal();
     fetchGoals();
-  }, [fetchStrategicGoal, fetchGoals]);
+    fetchUsers();
+  }, [fetchStrategicGoal, fetchGoals, fetchUsers]);
 
   const handleCardSlider = async (id: number, val: string) => {
     const clamped = clampProgress(val);
@@ -770,7 +586,7 @@ export const ShortTermSection = () => {
     setTempStrategic({
       title: strategicGoal.title,
       goalType: strategicGoal.goalType || "Short-term (This Year)",
-      targetDate: apiDateToDisplay(strategicGoal.targetDate),
+      targetDate: strategicGoal.targetDate, // Native YYYY-MM-DD
       revenueTarget: strategicGoal.revenueTarget,
       profitTarget: strategicGoal.profitTarget,
     });
@@ -812,7 +628,7 @@ export const ShortTermSection = () => {
 
   const openEditGoalModal = (goal: Goal) => {
     setTempGoal({ ...goal });
-    setTempGoalDate(apiDateToDisplay(goal.targetDate || ""));
+    setTempGoalDate(goal.targetDate || ""); // Native YYYY-MM-DD
     setEditingGoalId(goal.id ?? null);
     setSaveError(null);
     setActiveModal("goal_details");
@@ -916,7 +732,7 @@ export const ShortTermSection = () => {
         unit: tempGoal.unit || "%",
         period: SHORT_TERM_PERIOD,
         status: tempGoal.status || "On Track",
-        owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : undefined,
+        owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : null,
         target_date: tempGoalDate ? formatDateForApi(tempGoalDate) : "",
         update_remarks: tempGoal.updateRemarks || "",
       },
@@ -996,7 +812,7 @@ export const ShortTermSection = () => {
         className="rounded-2xl overflow-hidden shadow-sm mt-6 border"
         style={{ background: C.cardBg, borderColor: C.borderLgt }}
       >
-        {/* ── Header (same as Quarterly & Medium) ── */}
+        {/* Header */}
         <div
           className="px-6 py-4 border-b flex items-center justify-between"
           style={{ borderColor: C.borderLgt, background: C.primaryBg }}
@@ -1015,7 +831,7 @@ export const ShortTermSection = () => {
         </div>
 
         <div className="p-6">
-          {/* ── Strategic Goal block (same as Quarterly & Medium) ── */}
+          {/* ── Strategic Goal block ── */}
           <div className="mb-8">
             {isFetching ? (
               <div className="st-skeleton h-24 w-full rounded-xl" />
@@ -1079,7 +895,6 @@ export const ShortTermSection = () => {
                 </div>
               </div>
             ) : (
-              /* Empty state — dashed border, TargetLargeIcon, same as Quarterly & Medium */
               <div
                 className="text-center py-10 rounded-2xl mb-4"
                 style={{
@@ -1124,7 +939,7 @@ export const ShortTermSection = () => {
             </div>
           )}
 
-          {/* ── Section label (same uppercase style as Quarterly & Medium) ── */}
+          {/* ── Section label ── */}
           <div className="mb-3 flex items-center gap-2">
             <span
               className="text-[10px] font-black uppercase tracking-[0.15em]"
@@ -1134,7 +949,7 @@ export const ShortTermSection = () => {
             </span>
           </div>
 
-          {/* ── Goal Cards (same layout & style as Quarterly & Medium) ── */}
+          {/* ── Goal Cards ── */}
           {isFetching ? (
             <SkeletonCards />
           ) : (
@@ -1158,7 +973,6 @@ export const ShortTermSection = () => {
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                      {/* Bullet circle — same as Quarterly & Medium */}
                       <div
                         className="mt-1 w-3.5 h-3.5 rounded-full border-[3px] bg-white shrink-0"
                         style={{ borderColor: C.primary }}
@@ -1171,15 +985,17 @@ export const ShortTermSection = () => {
                           {goal.title}
                         </span>
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          <span
-                            className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
-                            style={{
-                              background: C.primaryTint,
-                              color: C.primary,
-                            }}
-                          >
-                            THIS YEAR
-                          </span>
+                          {goal.periodLabel && (
+                            <span
+                              className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
+                              style={{
+                                background: C.primaryTint,
+                                color: C.primary,
+                              }}
+                            >
+                              THIS YEAR
+                            </span>
+                          )}
                           {(goal.ownerName || goal.targetDate) && (
                             <span
                               className="text-xs font-medium"
@@ -1199,7 +1015,6 @@ export const ShortTermSection = () => {
                         </div>
                       </div>
                     </div>
-                    {/* Edit / Delete — hover reveal, same as Quarterly & Medium */}
                     <div
                       className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 bg-gray-50 px-1 py-1 rounded-xl border ml-2"
                       style={{ borderColor: C.borderLgt }}
@@ -1257,7 +1072,6 @@ export const ShortTermSection = () => {
             </div>
           )}
 
-          {/* ── Add button (same style as Quarterly & Medium) ── */}
           <div className="mt-6 flex justify-end">
             <button
               onClick={openCreateGoalModal}
@@ -1275,7 +1089,89 @@ export const ShortTermSection = () => {
           </div>
         </div>
 
-        {/* ══ Strategic Modal (same as Quarterly & Medium) ══ */}
+        {/* ══ Confirm Delete Strategic Modal ══ */}
+        {activeModal === "confirm_delete_strategic" && (
+          <Modal onClose={closeModal}>
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: 16,
+                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+                width: "100%",
+                maxWidth: 380,
+                overflow: "hidden",
+                fontFamily: C.font,
+              }}
+            >
+              <div style={{ padding: "28px 28px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>🗑️</div>
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: C.textMain,
+                    marginBottom: 8,
+                  }}
+                >
+                  Delete Annual Goal?
+                </div>
+                <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div
+                style={{
+                  padding: "20px 28px 28px",
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 12,
+                }}
+              >
+                <button
+                  onClick={executeDeleteStrategic}
+                  disabled={isDeleting}
+                  style={{
+                    padding: "10px 24px",
+                    fontWeight: 700,
+                    color: "#fff",
+                    background: "#dc2626",
+                    border: "none",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    cursor: isDeleting ? "not-allowed" : "pointer",
+                    opacity: isDeleting ? 0.7 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontFamily: C.font,
+                  }}
+                >
+                  {isDeleting && <LoaderIcon />}
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+                <button
+                  onClick={closeModal}
+                  disabled={isDeleting}
+                  style={{
+                    padding: "10px 24px",
+                    fontWeight: 700,
+                    color: C.textMain,
+                    background: "#f3f4f6",
+                    border: "none",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: C.font,
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* ══ Strategic Modal ══ */}
         {activeModal === "edit_strategic" && tempStrategic && (
           <Modal onClose={closeModal}>
             <div className="st-modal-box" style={{ maxWidth: 600 }}>
@@ -1325,12 +1221,13 @@ export const ShortTermSection = () => {
                 </button>
               </div>
               <div
-                className="p-6 space-y-5 overflow-y-auto"
+                className="p-6 space-y-5 overflow-y-auto overflow-x-hidden"
                 style={{ maxHeight: "65vh" }}
               >
                 {saveError && (
                   <div className="st-error-banner">{saveError}</div>
                 )}
+
                 <div>
                   <label className="st-label">
                     Goal Title <span style={{ color: C.primary }}>*</span>
@@ -1369,11 +1266,16 @@ export const ShortTermSection = () => {
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
+                    <input
+                      type="date"
                       value={tempStrategic.targetDate}
-                      onChange={(v) =>
-                        setTempStrategic({ ...tempStrategic, targetDate: v })
+                      onChange={(e) =>
+                        setTempStrategic({
+                          ...tempStrategic,
+                          targetDate: e.target.value,
+                        })
                       }
+                      className="st-input"
                     />
                   </div>
                 </div>
@@ -1492,7 +1394,7 @@ export const ShortTermSection = () => {
                     if (!isSaving) e.currentTarget.style.background = C.primary;
                   }}
                 >
-                  {isSaving && <LoaderIcon />}
+                  {isSaving && <LoaderIcon className="w-4 h-4" />}
                   {isSaving
                     ? "Saving..."
                     : isEditingStrategic
@@ -1504,7 +1406,7 @@ export const ShortTermSection = () => {
           </Modal>
         )}
 
-        {/* ══ Create/Edit Goal Modal (same as Quarterly & Medium) ══ */}
+        {/* ══ Create/Edit Goal Modal ══ */}
         {activeModal === "goal_details" && tempGoal && (
           <Modal onClose={closeModal}>
             <div
@@ -1577,6 +1479,7 @@ export const ShortTermSection = () => {
                 style={{
                   padding: "24px 28px",
                   overflowY: "auto",
+                  overflowX: "hidden",
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
@@ -1636,9 +1539,11 @@ export const ShortTermSection = () => {
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    <DatePicker
+                    <input
+                      type="date"
                       value={tempGoalDate}
-                      onChange={setTempGoalDate}
+                      onChange={(e) => setTempGoalDate(e.target.value)}
+                      className="st-input"
                     />
                   </div>
                 </div>
@@ -1650,15 +1555,13 @@ export const ShortTermSection = () => {
                   }}
                 >
                   <div>
-                    <label className="st-label">Owner ID</label>
-                    <input
-                      type="number"
-                      value={tempGoal.ownerId || ""}
-                      placeholder="e.g. 123"
-                      onChange={(e) =>
-                        setTempGoal({ ...tempGoal, ownerId: e.target.value })
+                    <label className="st-label">Owner</label>
+                    <UserSelect
+                      users={usersList}
+                      value={tempGoal.ownerId}
+                      onChange={(id: any) =>
+                        setTempGoal({ ...tempGoal, ownerId: id })
                       }
-                      className="st-input"
                     />
                   </div>
                   <div>
@@ -1680,15 +1583,16 @@ export const ShortTermSection = () => {
                   <div>
                     <label className="st-label">Status</label>
                     <select
-                      value={tempGoal.status || "On Track"}
+                      value={tempGoal.status || "not_started"}
                       onChange={(e) =>
                         setTempGoal({ ...tempGoal, status: e.target.value })
                       }
                       className="st-select"
                     >
-                      <option>On Track</option>
-                      <option>Behind</option>
-                      <option>At Risk</option>
+                      <option value="not_started">Not Started</option>
+                      <option value="on_track">On Track</option>
+                      <option value="behind">Behind</option>
+                      <option value="achieved">Achieved</option>
                     </select>
                   </div>
                 </div>
@@ -1830,88 +1734,6 @@ export const ShortTermSection = () => {
                     : editingGoalId
                       ? "Save Changes"
                       : "Create Goal"}
-                </button>
-              </div>
-            </div>
-          </Modal>
-        )}
-
-        {/* ══ Confirm Delete Strategic Modal (same as Quarterly & Medium) ══ */}
-        {activeModal === "confirm_delete_strategic" && (
-          <Modal onClose={closeModal}>
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 16,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
-                width: "100%",
-                maxWidth: 380,
-                overflow: "hidden",
-                fontFamily: C.font,
-              }}
-            >
-              <div style={{ padding: "28px 28px 8px", textAlign: "center" }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🗑️</div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: C.textMain,
-                    marginBottom: 8,
-                  }}
-                >
-                  Delete Annual Goal?
-                </div>
-                <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
-                  This action cannot be undone.
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: "20px 28px 28px",
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 12,
-                }}
-              >
-                <button
-                  onClick={executeDeleteStrategic}
-                  disabled={isDeleting}
-                  style={{
-                    padding: "10px 24px",
-                    fontWeight: 700,
-                    color: "#fff",
-                    background: "#dc2626",
-                    border: "none",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    cursor: isDeleting ? "not-allowed" : "pointer",
-                    opacity: isDeleting ? 0.7 : 1,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontFamily: C.font,
-                  }}
-                >
-                  {isDeleting && <LoaderIcon />}
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-                <button
-                  onClick={closeModal}
-                  disabled={isDeleting}
-                  style={{
-                    padding: "10px 24px",
-                    fontWeight: 700,
-                    color: C.textMain,
-                    background: "#f3f4f6",
-                    border: "none",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    fontFamily: C.font,
-                  }}
-                >
-                  Cancel
                 </button>
               </div>
             </div>

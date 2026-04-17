@@ -4,6 +4,7 @@ import {
   Check, X, TrendingUp, TriangleAlert,
   Plus, Trash2, GripVertical, Info, ExternalLink,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // ── Design tokens — from BusinessPlanAndGoles ──
 const C = {
@@ -302,8 +303,10 @@ export default function SWOTAnalysis() {
       setData(prev => ({ ...prev, [editCategory]: filtered }));
       setIsModalOpen(false);
       fetchQuadrant(editCategory);
+      toast.success(`${CONFIG[editCategory].title} saved successfully!`);
     } catch (err: any) {
       setSaveError(err.message || 'Failed to save. Please try again.');
+      toast.error(err.message || 'Failed to save.');
     } finally {
       setIsSaving(false);
     }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import ReactDOM from "react-dom";
 import { BhagSection } from "./AdminCompassComponent/BhagSection";
 import { MediumTermSection } from "./AdminCompassComponent/MediumTermSection";
@@ -1967,10 +1968,10 @@ const BusinessPlanAndGoles = () => {
       });
 
       await navigator.clipboard.writeText(text.trim());
-      alert("Business Plan copied to clipboard!");
+      toast.success("Business Plan copied to clipboard!");
     } catch (err) {
       console.error("Copy failed", err);
-      alert("Failed to copy plan.");
+      toast.error("Failed to copy plan.");
     } finally {
       setIsCopyingPlan(false);
     }
@@ -1987,8 +1988,10 @@ const BusinessPlanAndGoles = () => {
       await saveOverviewImagesApi(updated);
       setOverviewImages(updated);
       setNewImageUrl("");
+      toast.success("Image added successfully!");
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save image.");
+      toast.error(err.message || "Failed to save image.");
     } finally {
       setIsSavingImages(false);
     }
@@ -2001,8 +2004,10 @@ const BusinessPlanAndGoles = () => {
     try {
       await saveOverviewImagesApi(updated);
       setOverviewImages(updated);
+      toast.success("Image deleted successfully!");
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete image.");
+      toast.error(err.message || "Failed to delete image.");
     } finally {
       setIsSavingImages(false);
     }
@@ -2018,8 +2023,10 @@ const BusinessPlanAndGoles = () => {
       await saveOverviewVideosApi(updated);
       setOverviewVideos(updated);
       setNewVideoUrl("");
+      toast.success("Video added successfully!");
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save video.");
+      toast.error(err.message || "Failed to save video.");
     } finally {
       setIsSavingVideos(false);
     }
@@ -2032,8 +2039,10 @@ const BusinessPlanAndGoles = () => {
     try {
       await saveOverviewVideosApi(updated);
       setOverviewVideos(updated);
+      toast.success("Video deleted successfully!");
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete video.");
+      toast.error(err.message || "Failed to delete video.");
     } finally {
       setIsSavingVideos(false);
     }
@@ -2076,6 +2085,7 @@ const BusinessPlanAndGoles = () => {
         setPurposeVideoUrl("");
         setPurposeRecordId(null);
         setActiveTopModal(null);
+        toast.success("Purpose deleted successfully!");
       } else {
         const resObj = await savePurposeToApi(
           trimmedText,
@@ -2086,9 +2096,11 @@ const BusinessPlanAndGoles = () => {
         setPurposeVideoUrl(resObj.videoUrl);
         setPurposeRecordId(resObj.recordId);
         setActiveTopModal(null);
+        toast.success("Purpose saved successfully!");
       }
     } catch (err: any) {
       setPurposeSaveError(err.message || "Failed to save. Please try again.");
+      toast.error(err.message || "Failed to save purpose.");
     } finally {
       setIsSavingPurpose(false);
     }
@@ -2123,8 +2135,10 @@ const BusinessPlanAndGoles = () => {
         setCoreVideoUrl(tempCoreVideoUrl);
       }
       setActiveTopModal(null);
+      toast.success("Core Values saved successfully!");
     } catch (err: any) {
       setCoreSaveError(err.message || "Failed to save. Please try again.");
+      toast.error(err.message || "Failed to save core values.");
     } finally {
       setIsSavingCore(false);
     }
@@ -2155,8 +2169,10 @@ const BusinessPlanAndGoles = () => {
       }
 
       setActiveTopModal(null);
+      toast.success("Brand Promises saved successfully!");
     } catch (err: any) {
       setBrandSaveError(err.message || "Failed to save. Please try again.");
+      toast.error(err.message || "Failed to save brand promises.");
     } finally {
       setIsSavingBrand(false);
     }
