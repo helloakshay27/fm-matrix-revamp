@@ -134,6 +134,23 @@ export type FeedbackItem = {
   constructiveFeedback?: string;
   positiveClosing?: string;
   createdAt?: string;
+  reviewer?: string;
+  reviews?: string;
+  readAt?: string;
+  readComment?: string;
+};
+
+export type FeedbackSummary = {
+  received: number;
+  given: number;
+  unread: number;
+  avgRating: string;
+  feedbackPoints: number;
+};
+
+export type FeedbackListResponse = {
+  summary?: FeedbackSummary;
+  ratings: FeedbackItem[];
 };
 
 type TeamMemberOption = {
@@ -442,6 +459,10 @@ const FeedbackSchema = z.object({
     })
     .optional()
     .catch(undefined),
+  reviewer: z.string().optional().catch(undefined),
+  reviews: z.string().nullable().optional().catch(undefined),
+  read_at: z.string().optional().catch(undefined),
+  read_comment: z.string().nullable().optional().catch(undefined),
 });
 
 type RawFeedback = z.infer<typeof FeedbackSchema>;
@@ -470,6 +491,20 @@ const FeedbackListSchema = z
     z
       .object({ feedback: z.array(FeedbackSchema) })
       .transform((d) => d.feedback),
+    z
+      .object({
+        summary: z
+          .object({
+            received: z.number(),
+            given: z.number(),
+            unread: z.number(),
+            avg_rating: z.string(),
+            feedback_points: z.number(),
+          })
+          .optional(),
+        ratings: z.array(FeedbackSchema),
+      })
+      .transform((d) => d.ratings),
   ])
   .catch([]);
 
@@ -545,12 +580,14 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
     raw.positive_opening || raw.fields?.positive_opening,
     raw.constructive_feedback || raw.fields?.constructive_feedback,
     raw.positive_closing || raw.fields?.positive_closing,
+    raw.reviews,
   ]
     .filter(Boolean)
     .join(" ");
 
   const ratingFromName =
     raw.rating_from_name ||
+    raw.reviewer ||
     ratingFrom?.name ||
     ratingFrom?.full_name ||
     (ratingFrom?.firstname && ratingFrom?.lastname
@@ -573,6 +610,10 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
       raw.constructive_feedback || raw.fields?.constructive_feedback,
     positiveClosing: raw.positive_closing || raw.fields?.positive_closing,
     createdAt: raw.created_at ?? raw.createdAt ?? raw.date,
+    reviewer: raw.reviewer,
+    reviews: raw.reviews || undefined,
+    readAt: raw.read_at,
+    readComment: raw.read_comment || undefined,
   };
 }
 
@@ -778,15 +819,15 @@ function getRatingsDetailEndpoints(feedbackId: string): string[] {
 async function fetchFeedbackList(
   direction: "given" | "received",
   userId: number | null
-): Promise<FeedbackItem[]> {
+): Promise<{ items: FeedbackItem[]; summary?: FeedbackSummary }> {
   const memoryKey = getFeedbackCacheKey(direction, userId);
   const params: Record<string, string | number> = {};
   if (userId) {
     if (direction === "given") params.rating_from_id = userId;
     else {
-      params.resource_id = userId
+      params.resource_id = userId;
       params.resource_type = "User";
-    };
+    }
   }
 
   let lastError: AppError | null = null;
@@ -794,13 +835,32 @@ async function fetchFeedbackList(
   for (const endpoint of RATINGS_COLLECTION_ENDPOINTS) {
     try {
       const { data } = await apiClient.get(endpoint, {
-        params
+        params,
       });
 
-      console.log(data)
+      console.log(data);
+
+      // Extract summary if present
+      let summary: FeedbackSummary | undefined;
+      if (data && typeof data === "object" && "summary" in data) {
+        const rawSummary = data.summary as {
+          received: number;
+          given: number;
+          unread: number;
+          avg_rating: string;
+          feedback_points: number;
+        };
+        summary = {
+          received: rawSummary.received,
+          given: rawSummary.given,
+          unread: rawSummary.unread,
+          avgRating: rawSummary.avg_rating,
+          feedbackPoints: rawSummary.feedback_points,
+        };
+      }
 
       const raw = FeedbackListSchema.parse(data);
-      console.log(raw)
+      console.log(raw);
       const mapped = raw.map(mapRawFeedback);
       const filtered = mapped.filter((item) => {
         if (!userId) return true;
@@ -823,20 +883,23 @@ async function fetchFeedbackList(
         visibleItems.length === 0 &&
         (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) > 0
       ) {
-        return LAST_SUCCESSFUL_FEEDBACK[memoryKey];
+        return { items: LAST_SUCCESSFUL_FEEDBACK[memoryKey], summary };
       }
 
       const cachedItems = readFeedbackCache(direction, userId);
       if (visibleItems.length === 0 && cachedItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-        return cachedItems;
+        return { items: cachedItems, summary };
       }
 
-      return visibleItems.sort((a, b) => {
-        const at = new Date(a.createdAt || 0).getTime();
-        const bt = new Date(b.createdAt || 0).getTime();
-        return bt - at;
-      });
+      return {
+        items: visibleItems.sort((a, b) => {
+          const at = new Date(a.createdAt || 0).getTime();
+          const bt = new Date(b.createdAt || 0).getTime();
+          return bt - at;
+        }),
+        summary,
+      };
     } catch (err) {
       lastError = normalizeError(err);
       if (lastError.kind === "auth" || lastError.kind === "forbidden") break;
@@ -844,7 +907,7 @@ async function fetchFeedbackList(
       const cachedItems = readFeedbackCache(direction, userId);
       if (cachedItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-        return cachedItems;
+        return { items: cachedItems };
       }
     }
   }
@@ -852,7 +915,7 @@ async function fetchFeedbackList(
   const cachedItems = readFeedbackCache(direction, userId);
   if (cachedItems.length > 0) {
     LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-    return cachedItems;
+    return { items: cachedItems };
   }
 
   throw (
@@ -909,6 +972,12 @@ async function createFeedback(payload: FeedbackPayload): Promise<unknown> {
       if (lastError.kind === "auth" || lastError.kind === "forbidden") {
         throw lastError;
       }
+      if (lastError.status === 429) {
+        throw {
+          ...lastError,
+          message: "Too many requests. Please try again later.",
+        } as AppError;
+      }
     }
   }
 
@@ -927,34 +996,31 @@ async function updateFeedback(
   id: string,
   payload: FeedbackPayload
 ): Promise<unknown> {
-  let lastError: AppError | null = null;
-
-  for (const endpoint of getRatingsDetailEndpoints(id)) {
-    try {
-      const { data } = await apiClient.put(endpoint, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-      return data;
-    } catch (err) {
-      lastError = normalizeError(err);
-      if (lastError.kind === "auth" || lastError.kind === "forbidden") {
-        throw lastError;
-      }
-      if (lastError.kind === "notFound") {
-        continue;
-      }
-    }
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  if (lastError?.kind === "notFound") {
-    throw {
-      ...lastError,
-      message:
-        "Feedback could not be updated because the ratings API route is not available.",
-    } as AppError;
+  const { data } = await apiClient.put(
+    `/ratings/${encodeURIComponent(trimmedId)}.json`,
+    payload,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return data;
+}
+
+async function markRatingAsRead(id: string, readComment?: string): Promise<unknown> {
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  throw lastError ?? { message: "Failed to update feedback.", kind: "unknown" };
+  const { data } = await apiClient.patch(
+    `/ratings/${encodeURIComponent(trimmedId)}/mark_as_read`,
+    readComment?.trim() ? { read_comment: readComment.trim() } : {},
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return data;
 }
 
 async function deleteFeedback(id: string): Promise<void> {
@@ -1000,10 +1066,13 @@ function useFeedbackList(
     LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cached;
   }
 
-  return useQuery<FeedbackItem[], AppError>({
+  return useQuery<
+    { items: FeedbackItem[]; summary?: FeedbackSummary },
+    AppError
+  >({
     queryKey: ["feedback", direction, userId],
     queryFn: () => fetchFeedbackList(direction, userId),
-    placeholderData: cached.length > 0 ? cached : [],
+    placeholderData: cached.length > 0 ? { items: cached } : { items: [] },
   });
 }
 
@@ -1028,13 +1097,19 @@ function useCreateFeedback() {
         variables.recipientName
       );
 
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
@@ -1067,27 +1142,37 @@ function useUpdateFeedback() {
         variables.id
       );
 
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
-        (old) =>
-          old?.some((existing) => existing.id === item.id)
-            ? upsertFeedbackItem(old, item)
-            : (old ?? [])
+        (old) => {
+          const items = old?.items?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old?.items, item)
+            : (old?.items ?? []);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "received", currentUserId],
-        (old) =>
-          old?.some((existing) => existing.id === item.id)
-            ? upsertFeedbackItem(old, item)
-            : (old ?? [])
+        (old) => {
+          const items = old?.items?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old?.items, item)
+            : (old?.items ?? []);
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
@@ -1130,21 +1215,41 @@ function useDeleteFeedback() {
     mutationFn: ({ id }) => deleteFeedback(id),
     onSuccess: (_, variables) => {
       const currentUserId = getCurrentUserId();
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "received", currentUserId],
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
@@ -1164,6 +1269,51 @@ function useDeleteFeedback() {
         currentUserId,
         LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
       );
+    },
+  });
+}
+
+function useMarkAsRead() {
+  const qc = useQueryClient();
+  return useMutation<unknown, AppError, { id: string; readComment?: string }>({
+    mutationFn: ({ id, readComment }) => markRatingAsRead(id, readComment),
+    onSuccess: (_, variables) => {
+      const currentUserId = getCurrentUserId();
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
+        { queryKey: ["feedback", "received"] },
+        (old) => {
+          const items = (old?.items ?? []).map((item) =>
+            item.id === variables.id
+              ? { ...item, status: "read" as const }
+              : item
+          );
+          return { items, summary: old?.summary };
+        }
+      );
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
+        ["feedback", "received", currentUserId],
+        (old) => {
+          const items = (old?.items ?? []).map((item) =>
+            item.id === variables.id
+              ? { ...item, status: "read" as const }
+              : item
+          );
+          return { items, summary: old?.summary };
+        }
+      );
+      const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
+      if (LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]) {
+        LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = LAST_SUCCESSFUL_FEEDBACK[
+          receivedMemoryKey
+        ].map((item) =>
+          item.id === variables.id ? { ...item, status: "read" as const } : item
+        );
+        writeFeedbackCache(
+          "received",
+          currentUserId,
+          LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
+        );
+      }
     },
   });
 }
@@ -1290,13 +1440,18 @@ function FeedbackEmptyState() {
 
 function StarRatingRow({ value }: { value: number }) {
   return (
-    <div className="flex shrink-0 gap-0.5" aria-label={`${value} out of 5 stars`}>
+    <div
+      className="flex shrink-0 gap-0.5"
+      aria-label={`${value} out of 5 stars`}
+    >
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
           className={cn(
             "h-4 w-4",
-            i <= value ? "fill-amber-400 text-amber-400" : "fill-transparent text-neutral-300"
+            i <= value
+              ? "fill-amber-400 text-amber-400"
+              : "fill-transparent text-neutral-300"
           )}
           strokeWidth={i <= value ? 0 : 1.5}
         />
@@ -1320,14 +1475,17 @@ function GivenFeedbackList({
 }) {
   const fetchDirection = direction === "to" ? "given" : "received";
   const {
-    data: queriedItems = [],
+    data: queriedData = { items: [] },
     isLoading,
     isError,
     error,
     refetch,
   } = useFeedbackList(fetchDirection, filterUserId);
+  const queriedItems = queriedData.items;
+  const summary = queriedData.summary;
   const items = itemsOverride ?? queriedItems;
   const deleteMutation = useDeleteFeedback();
+  const markAsReadMutation = useMarkAsRead();
   const currentUserId = getCurrentUserId();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -1360,13 +1518,40 @@ function GivenFeedbackList({
   const handleExpand = async (itemId: string) => {
     const isCollapsing = expandedId === itemId;
     setExpandedId(isCollapsing ? null : itemId);
-    if (isCollapsing || detailCache[itemId]) return;
+    if (isCollapsing) return;
+
+    // Pre-populate cache with data already in the list item so the 3 sections
+    // (positiveOpening, constructiveFeedback, positiveClosing) render immediately
+    const existingItem = sourceItems.find((i) => i.id === itemId);
+    if (existingItem && !detailCache[itemId]) {
+      setDetailCache((prev) => ({ ...prev, [itemId]: existingItem }));
+    }
+
+    // Skip detail fetch if we already have enriched data cached
+    if (detailCache[itemId]) return;
+
     setLoadingDetailId(itemId);
     try {
       const detail = await fetchFeedbackDetail(itemId);
-      if (detail) setDetailCache((prev) => ({ ...prev, [itemId]: detail }));
+      if (detail) {
+        // Merge: prefer detail API data for each field, fallback to list data
+        setDetailCache((prev) => ({
+          ...prev,
+          [itemId]: {
+            ...(existingItem ?? {}),
+            ...detail,
+            // Ensure the 3 key fields are never lost
+            positiveOpening:
+              detail.positiveOpening ?? existingItem?.positiveOpening,
+            constructiveFeedback:
+              detail.constructiveFeedback ?? existingItem?.constructiveFeedback,
+            positiveClosing:
+              detail.positiveClosing ?? existingItem?.positiveClosing,
+          } as FeedbackItem,
+        }));
+      }
     } catch {
-      /* ignore */
+      /* ignore — we already have list-level data in cache */
     } finally {
       setLoadingDetailId(null);
     }
@@ -1375,7 +1560,8 @@ function GivenFeedbackList({
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -1401,26 +1587,47 @@ function GivenFeedbackList({
     [sourceItems, searchQuery, ratingFilter, statusFilter, direction]
   );
 
-  const avgRating = filtered.length > 0
-    ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(1)
-    : "0.0";
+  const avgRating =
+    summary?.avgRating ??
+    (filtered.length > 0
+      ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(
+          1
+        )
+      : "0.0");
   const avgRatingNum = Number(avgRating);
-  let points = 0;
-  filtered.forEach((item) => {
-    if (item.rating === 1) points -= 10;
-    else if (item.rating === 2) points -= 5;
-    else if (item.rating === 4) points += 5;
-    else if (item.rating === 5) points += 10;
-  });
+  const totalFeedback =
+    direction === "to"
+      ? (summary?.given ?? filtered.length)
+      : (summary?.received ?? filtered.length);
+  const points =
+    summary?.feedbackPoints ??
+    (() => {
+      let calculatedPoints = 0;
+      filtered.forEach((item) => {
+        if (item.rating === 1) calculatedPoints -= 10;
+        else if (item.rating === 2) calculatedPoints -= 5;
+        else if (item.rating === 4) calculatedPoints += 5;
+        else if (item.rating === 5) calculatedPoints += 10;
+      });
+      return calculatedPoints;
+    })();
 
-  const allSelected = filtered.length > 0 && filtered.every(i => selectedIds.has(i.id));
+  const allSelected =
+    filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id));
   const handleSelectAll = () => {
     if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filtered.map(i => i.id)));
+    else setSelectedIds(new Set(filtered.map((i) => i.id)));
   };
 
   const getAvatarBg = (name: string) => {
-    const colors = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4"];
+    const colors = [
+      "#3B82F6",
+      "#8B5CF6",
+      "#10B981",
+      "#F59E0B",
+      "#EF4444",
+      "#06B6D4",
+    ];
     const idx = (name.charCodeAt(0) || 0) % colors.length;
     return colors[idx];
   };
@@ -1450,7 +1657,12 @@ function GivenFeedbackList({
             <button
               type="button"
               onClick={() => {
-                if (!window.confirm(`Delete ${selectedIds.size} selected feedback item${selectedIds.size > 1 ? "s" : ""}?`)) return;
+                if (
+                  !window.confirm(
+                    `Delete ${selectedIds.size} selected feedback item${selectedIds.size > 1 ? "s" : ""}?`
+                  )
+                )
+                  return;
                 Array.from(selectedIds).forEach((id) =>
                   deleteMutation.mutate({ id })
                 );
@@ -1466,12 +1678,15 @@ function GivenFeedbackList({
         )}
       </div>
 
-
       <div className="mx-4 rounded-xl border border-neutral-200 bg-[#FDFBF3] px-6 py-4 grid grid-cols-3 divide-x divide-neutral-200">
         <div className="flex flex-col gap-1 pr-6">
-          <span className="text-xs text-neutral-500 font-medium">Average Rating</span>
+          <span className="text-xs text-neutral-500 font-medium">
+            Average Rating
+          </span>
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-amber-500">{avgRating}</span>
+            <span className="text-2xl font-bold text-amber-500">
+              {avgRating}
+            </span>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Star
@@ -1489,11 +1704,17 @@ function GivenFeedbackList({
           </div>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <span className="text-xs text-neutral-500 font-medium">Total Feedback</span>
-          <span className="text-2xl font-bold text-neutral-900">{filtered.length}</span>
+          <span className="text-xs text-neutral-500 font-medium">
+            Total Feedback
+          </span>
+          <span className="text-2xl font-bold text-neutral-900">
+            {totalFeedback}
+          </span>
         </div>
         <div className="flex flex-col items-end gap-1 pl-6">
-          <span className="text-xs text-neutral-500 font-medium">Points from Feedback</span>
+          <span className="text-xs text-neutral-500 font-medium">
+            Points from Feedback
+          </span>
           <span className="text-2xl font-bold text-neutral-900">{points}</span>
         </div>
       </div>
@@ -1543,7 +1764,7 @@ function GivenFeedbackList({
             <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
             Loading feedback…
           </div>
-        ) : isError && filtered.length === 0 && direction === "to" ? (
+        ) : isError && filtered.length === 0 ? (
           <InlineError
             error={normalizeError(error)}
             onRetry={() => refetch()}
@@ -1555,9 +1776,10 @@ function GivenFeedbackList({
             const expanded = expandedId === item.id;
             const detail = detailCache[item.id] ?? item;
             const isLoadingDetail = loadingDetailId === item.id;
-            const displayName = direction === "from"
-              ? (item.ratingFromName || item.recipientName)
-              : item.recipientName;
+            const displayName =
+              direction === "from"
+                ? item.ratingFromName || item.recipientName
+                : item.recipientName;
             const initial = (displayName || "T").charAt(0).toUpperCase();
             const avatarBg = getAvatarBg(displayName || "T");
 
@@ -1593,17 +1815,19 @@ function GivenFeedbackList({
                       onClick={() => handleExpand(item.id)}
                     >
                       <p className="font-semibold text-[#1a1a1a] text-sm">
-                        {direction === "from" ? "From" : "To"}: {displayName}
+                        {direction === "from" ? "From: " : "To: "}{displayName}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <CalendarIcon className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-                        <span className="text-xs text-neutral-500">{item.date}</span>
+                        <span className="text-xs text-neutral-500">
+                          {item.date}
+                        </span>
                         <span
                           className={cn(
                             "rounded px-2 py-0.5 text-[10px] font-semibold",
                             item.status === "unread"
                               ? "bg-blue-100 text-blue-700"
-                              : "bg-neutral-100 text-neutral-500"
+                              : "bg-green-100 text-green-700"
                           )}
                         >
                           {item.status === "unread" ? "Unread" : "Read"}
@@ -1627,46 +1851,84 @@ function GivenFeedbackList({
                           <>
                             {detail.positiveOpening && (
                               <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                                <p className="text-[11px] font-semibold text-green-700 mb-1">+ Positive Opening</p>
-                                <p className="text-sm text-neutral-700">{detail.positiveOpening}</p>
+                                <p className="text-[11px] font-semibold text-green-700 mb-1">
+                                  ✓ What You're Doing Well
+                                </p>
+                                <p className="text-sm text-neutral-700">
+                                  {detail.positiveOpening}
+                                </p>
                               </div>
                             )}
                             {detail.constructiveFeedback && (
                               <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
-                                <p className="text-[11px] font-semibold text-orange-600 mb-1">— Area for Growth</p>
-                                <p className="text-sm text-neutral-700">{detail.constructiveFeedback}</p>
+                                <p className="text-[11px] font-semibold text-orange-600 mb-1">
+                                  → Area for Growth
+                                </p>
+                                <p className="text-sm text-neutral-700">
+                                  {detail.constructiveFeedback}
+                                </p>
                               </div>
                             )}
                             {detail.positiveClosing && (
                               <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2">
-                                <p className="text-[11px] font-semibold text-sky-600 mb-1">+ Positive Closing</p>
-                                <p className="text-sm text-neutral-700">{detail.positiveClosing}</p>
+                                <p className="text-[11px] font-semibold text-sky-600 mb-1">
+                                  ★ Encouragement
+                                </p>
+                                <p className="text-sm text-neutral-700">
+                                  {detail.positiveClosing}
+                                </p>
                               </div>
                             )}
-                            {!detail.positiveOpening && !detail.constructiveFeedback && !detail.positiveClosing && detail.detailPreview && (
-                              <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                                <p className="text-sm text-neutral-700">{detail.detailPreview}</p>
+                            {!detail.positiveOpening &&
+                              !detail.constructiveFeedback &&
+                              !detail.positiveClosing &&
+                              detail.detailPreview && (
+                                <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                                  <p className="text-sm text-neutral-700">
+                                    {detail.detailPreview}
+                                  </p>
+                                </div>
+                              )}
+                            {/* Notes — only meaningful for received feedback (as the recipient acting on it) */}
+                            {direction === "from" && (
+                              <div className="mt-2">
+                                <label className="text-xs font-semibold text-neutral-600">
+                                  Your Notes / Action Items{" "}
+                                  <span className="font-normal text-neutral-400">
+                                    (Optional)
+                                  </span>
+                                </label>
+                                <textarea
+                                  rows={3}
+                                  value={notes[item.id] || ""}
+                                  onChange={(e) =>
+                                    setNotes((prev) => ({
+                                      ...prev,
+                                      [item.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Add your notes about how you'll act on this feedback..."
+                                  className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y"
+                                />
                               </div>
                             )}
-                            <div className="mt-2">
-                              <label className="text-xs font-semibold text-neutral-600">
-                                Your Notes / Action Items <span className="font-normal text-neutral-400">(Optional)</span>
-                              </label>
-                              <textarea
-                                rows={3}
-                                value={notes[item.id] || ""}
-                                onChange={(e) => setNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
-                                placeholder="Add your notes about how you'll act on this feedback..."
-                                className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y"
-                              />
-                            </div>
-                            {item.status === "unread" && (
+                            {/* Mark as Read — only for received (from) unread items */}
+                            {direction === "from" && item.status === "unread" && (
                               <button
                                 type="button"
-                                className="inline-flex items-center gap-2 rounded-lg bg-[#2E7D32] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1B5E20] transition-colors"
+                                onClick={() =>
+                                  markAsReadMutation.mutate({
+                                    id: item.id,
+                                    readComment: notes[item.id] || undefined,
+                                  })
+                                }
+                                disabled={markAsReadMutation.isPending}
+                                className="inline-flex items-center gap-2 rounded-lg bg-[#2E7D32] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1B5E20] transition-colors disabled:opacity-50"
                               >
                                 <CheckCircle className="h-3.5 w-3.5" />
-                                Mark as Read
+                                {markAsReadMutation.isPending
+                                  ? "Marking..."
+                                  : "Mark as Read"}
                               </button>
                             )}
                           </>
@@ -1693,14 +1955,22 @@ function GivenFeedbackList({
                     </button>
                     {direction === "to" && (
                       <div className="flex gap-1">
-                        <button
-                          type="button"
-                          className="rounded p-1 text-neutral-400 hover:text-neutral-700"
-                          title="Edit"
-                          onClick={(e) => { e.stopPropagation(); onEditFeedback(item); }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
+                        {/* Edit — only shown for incomplete feedback (missing ≥1 of the 3 sections) */}
+                        {(!item.positiveOpening ||
+                          !item.constructiveFeedback ||
+                          !item.positiveClosing) && (
+                          <button
+                            type="button"
+                            className="rounded p-1 text-neutral-400 hover:text-neutral-700"
+                            title="Edit (incomplete feedback)"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditFeedback(item);
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="rounded p-1 text-neutral-400 hover:text-red-600"
@@ -1726,7 +1996,6 @@ function GivenFeedbackList({
     </div>
   );
 }
-
 
 // ─── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -1808,10 +2077,19 @@ function GiveFeedbackForm({
   }, []);
 
   const handleSubmit = async () => {
-    if (!recipient) { setLocalError("Please select a team member."); return; }
-    if (rating === 0) { setLocalError("Please select a star rating."); return; }
+    if (!recipient) {
+      setLocalError("Please select a team member.");
+      return;
+    }
+    if (rating === 0) {
+      setLocalError("Please select a star rating.");
+      return;
+    }
     const selectedMember = teamMembers.find((m) => m.value === recipient);
-    if (!selectedMember) { setLocalError("Invalid recipient selected."); return; }
+    if (!selectedMember) {
+      setLocalError("Invalid recipient selected.");
+      return;
+    }
 
     setLocalError("");
     const currentUser = getUser();
@@ -1834,7 +2112,11 @@ function GiveFeedbackForm({
 
     if (isEditMode && initialFeedback?.id) {
       updateMutation.mutate(
-        { id: initialFeedback.id, payload, recipientName: selectedMember.label },
+        {
+          id: initialFeedback.id,
+          payload,
+          recipientName: selectedMember.label,
+        },
         { onSuccess: onSubmitted }
       );
     } else {
@@ -1856,7 +2138,8 @@ function GiveFeedbackForm({
             {isEditMode ? "Feedback Updated!" : "Feedback Sent!"}
           </h3>
           <p className="mt-1 text-sm text-neutral-500">
-            Your feedback has been {isEditMode ? "updated" : "submitted"} successfully.
+            Your feedback has been {isEditMode ? "updated" : "submitted"}{" "}
+            successfully.
           </p>
         </div>
         <button
@@ -1883,21 +2166,30 @@ function GiveFeedbackForm({
 
       <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-950">
         <span className="font-semibold">Sandwich technique: </span>
-        Start with something positive, share constructive feedback in the middle,
-        and close with encouragement —{" "}
+        Start with something positive, share constructive feedback in the
+        middle, and close with encouragement —{" "}
         <span className="font-medium">Positive → Constructive → Positive</span>.
       </div>
 
       {displayError && (
         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" strokeWidth={2} />
+          <AlertCircle
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
+            strokeWidth={2}
+          />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-red-800">Submission Failed</p>
+            <p className="text-sm font-semibold text-red-800">
+              Submission Failed
+            </p>
             <p className="mt-0.5 text-sm text-red-700">{displayError}</p>
           </div>
           <button
             type="button"
-            onClick={() => { setLocalError(""); createMutation.reset(); updateMutation.reset(); }}
+            onClick={() => {
+              setLocalError("");
+              createMutation.reset();
+              updateMutation.reset();
+            }}
             className="shrink-0 rounded-md p-1 text-red-500 hover:bg-red-100"
           >
             <X className="h-4 w-4" />
@@ -1910,8 +2202,15 @@ function GiveFeedbackForm({
           <Label htmlFor="feedback-recipient" className="text-neutral-800">
             Give Feedback To <span className="text-[#DA7756]">*</span>
           </Label>
-          <Select value={recipient} onValueChange={setRecipient} disabled={teamMembersLoading}>
-            <SelectTrigger id="feedback-recipient" className="h-11 rounded-xl border-neutral-200 bg-white">
+          <Select
+            value={recipient}
+            onValueChange={setRecipient}
+            disabled={teamMembersLoading}
+          >
+            <SelectTrigger
+              id="feedback-recipient"
+              className="h-11 rounded-xl border-neutral-200 bg-white"
+            >
               {teamMembersLoading ? (
                 <span className="flex items-center gap-2 text-neutral-400">
                   <Loader2 className="h-4 w-4 animate-spin" /> Loading members…
@@ -1922,10 +2221,14 @@ function GiveFeedbackForm({
             </SelectTrigger>
             <SelectContent>
               {teamMembers.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-neutral-400">No members found</div>
+                <div className="px-3 py-2 text-sm text-neutral-400">
+                  No members found
+                </div>
               ) : (
                 teamMembers.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
                 ))
               )}
             </SelectContent>
@@ -1933,7 +2236,9 @@ function GiveFeedbackForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="feedback-date" className="text-neutral-800">Date</Label>
+          <Label htmlFor="feedback-date" className="text-neutral-800">
+            Date
+          </Label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <button
@@ -1942,14 +2247,23 @@ function GiveFeedbackForm({
                 className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900 outline-none hover:bg-neutral-50/80"
               >
                 <span className="tabular-nums">{formatDMY(feedbackDate)}</span>
-                <CalendarIcon className="h-4 w-4 shrink-0 text-neutral-500" strokeWidth={2} aria-hidden />
+                <CalendarIcon
+                  className="h-4 w-4 shrink-0 text-neutral-500"
+                  strokeWidth={2}
+                  aria-hidden
+                />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
                 selected={feedbackDate}
-                onSelect={(d) => { if (d) { setFeedbackDate(d); setDatePickerOpen(false); } }}
+                onSelect={(d) => {
+                  if (d) {
+                    setFeedbackDate(d);
+                    setDatePickerOpen(false);
+                  }
+                }}
                 initialFocus
               />
             </PopoverContent>
@@ -1959,8 +2273,12 @@ function GiveFeedbackForm({
 
       <div className="space-y-3">
         <div>
-          <Label className="text-neutral-800">Star Rating <span className="text-[#DA7756]">*</span></Label>
-          <p className="mt-0.5 text-sm text-neutral-500">Rate overall performance (1–5 stars)</p>
+          <Label className="text-neutral-800">
+            Star Rating <span className="text-[#DA7756]">*</span>
+          </Label>
+          <p className="mt-0.5 text-sm text-neutral-500">
+            Rate overall performance (1–5 stars)
+          </p>
         </div>
         <div className="flex gap-1" role="radiogroup" aria-label="Star rating">
           {[1, 2, 3, 4, 5].map((n) => (
@@ -1973,7 +2291,12 @@ function GiveFeedbackForm({
               className="rounded-md p-0.5 transition-transform hover:scale-110"
             >
               <Star
-                className={cn("h-8 w-8 sm:h-9 sm:w-9", n <= rating ? "fill-amber-400 text-amber-400" : "fill-transparent text-neutral-300")}
+                className={cn(
+                  "h-8 w-8 sm:h-9 sm:w-9",
+                  n <= rating
+                    ? "fill-amber-400 text-amber-400"
+                    : "fill-transparent text-neutral-300"
+                )}
                 strokeWidth={n <= rating ? 0 : 1.5}
               />
             </button>
@@ -1986,10 +2309,20 @@ function GiveFeedbackForm({
                 key={seg.stars}
                 type="button"
                 onClick={() => setRating(seg.stars)}
-                className={cn("min-w-0 flex-1 px-0.5 py-2.5 text-center transition-all sm:px-1 sm:py-3", seg.bg, seg.text, rating === seg.stars && "relative z-10 ring-2 ring-inset ring-neutral-900/80")}
+                className={cn(
+                  "min-w-0 flex-1 px-0.5 py-2.5 text-center transition-all sm:px-1 sm:py-3",
+                  seg.bg,
+                  seg.text,
+                  rating === seg.stars &&
+                    "relative z-10 ring-2 ring-inset ring-neutral-900/80"
+                )}
               >
-                <span className="block text-[10px] font-semibold leading-tight sm:text-xs">{seg.stars}★</span>
-                <span className="mt-0.5 block text-[9px] font-medium opacity-95 sm:text-[11px]">{seg.pts}</span>
+                <span className="block text-[10px] font-semibold leading-tight sm:text-xs">
+                  {seg.stars}★
+                </span>
+                <span className="mt-0.5 block text-[9px] font-medium opacity-95 sm:text-[11px]">
+                  {seg.pts}
+                </span>
               </button>
             ))}
           </div>
@@ -1998,7 +2331,8 @@ function GiveFeedbackForm({
 
       <div className="space-y-2">
         <Label htmlFor="feedback-context" className="text-neutral-800">
-          Context / Situation <span className="font-normal text-neutral-400">(Optional)</span>
+          Context / Situation{" "}
+          <span className="font-normal text-neutral-400">(Optional)</span>
         </Label>
         <input
           id="feedback-context"
@@ -2012,34 +2346,95 @@ function GiveFeedbackForm({
 
       <div className="space-y-6 border-t border-neutral-100 pt-6">
         {[
-          { step: 1, color: "bg-[#2E7D32]", title: "Positive opening", desc: "Start with genuine appreciation and what they're doing well.", value: positiveOpen, onChange: setPositiveOpen, placeholder: "Share what is working well…" },
-          { step: 2, color: "bg-orange-500", title: "Constructive feedback", desc: "Provide specific, actionable feedback for improvement.", value: constructive, onChange: setConstructive, placeholder: "Be clear and kind…" },
-          { step: 3, color: "bg-sky-600", title: "Positive closing", desc: "End with encouragement and confidence in their abilities.", value: positiveClose, onChange: setPositiveClose, placeholder: "Close on a supportive note…" },
+          {
+            step: 1,
+            color: "bg-[#2E7D32]",
+            title: "Positive opening",
+            desc: "Start with genuine appreciation and what they're doing well.",
+            value: positiveOpen,
+            onChange: setPositiveOpen,
+            placeholder: "Share what is working well…",
+          },
+          {
+            step: 2,
+            color: "bg-orange-500",
+            title: "Constructive feedback",
+            desc: "Provide specific, actionable feedback for improvement.",
+            value: constructive,
+            onChange: setConstructive,
+            placeholder: "Be clear and kind…",
+          },
+          {
+            step: 3,
+            color: "bg-sky-600",
+            title: "Positive closing",
+            desc: "End with encouragement and confidence in their abilities.",
+            value: positiveClose,
+            onChange: setPositiveClose,
+            placeholder: "Close on a supportive note…",
+          },
         ].map(({ step, color, title, desc, value, onChange, placeholder }) => (
           <div key={step} className="space-y-3">
             <div className="flex gap-3">
-              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", color)}>{step}</div>
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
+                  color
+                )}
+              >
+                {step}
+              </div>
               <div>
                 <h3 className="font-semibold text-neutral-900">{title}</h3>
                 <p className="text-sm text-neutral-500">{desc}</p>
               </div>
             </div>
-            <Textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white text-sm" />
+            <Textarea
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
+            />
           </div>
         ))}
       </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-neutral-100 pt-6 sm:flex-row sm:justify-end">
         {isEditMode && (
-          <button type="button" onClick={onCancelEdit} disabled={isPending} className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:opacity-50">
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            disabled={isPending}
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:opacity-50"
+          >
             Cancel edit
           </button>
         )}
-        <button type="button" onClick={clearForm} disabled={isPending} className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-50">
+        <button
+          type="button"
+          onClick={clearForm}
+          disabled={isPending}
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-50"
+        >
           Clear form
         </button>
-        <button type="button" onClick={handleSubmit} disabled={isPending || teamMembersLoading} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60">
-          {isPending ? (<><Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />{isEditMode ? "Updating…" : "Sending…"}</>) : (<><Send className="h-4 w-4" strokeWidth={2} />{isEditMode ? "Update feedback" : "Send feedback"}</>)}
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isPending || teamMembersLoading}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+              {isEditMode ? "Updating…" : "Sending…"}
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4" strokeWidth={2} />
+              {isEditMode ? "Update feedback" : "Send feedback"}
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -2073,12 +2468,22 @@ function FeedbackPage() {
   );
   const orgLine = selectedCompany?.name?.toUpperCase() ?? "YOUR ORGANIZATION";
 
-  const { data: givenFeedback = [] } = useFeedbackList("given", currentUserId);
-  const { data: selectedReceivedFeedback = [] } = useFeedbackList(
-    "received",
-    selectedReceivedUserId
+  const { data: givenFeedbackData = { items: [] } } = useFeedbackList(
+    "given",
+    currentUserId
   );
-  const { data: allReceivedFeedback = [] } = useFeedbackList("received", null);
+  const givenFeedback = givenFeedbackData.items;
+  const givenSummary = givenFeedbackData.summary;
+  const { data: selectedReceivedFeedbackData = { items: [] } } =
+    useFeedbackList("received", selectedReceivedUserId);
+  const selectedReceivedFeedback = selectedReceivedFeedbackData.items;
+  const selectedReceivedSummary = selectedReceivedFeedbackData.summary;
+  const { data: allReceivedFeedbackData = { items: [] } } = useFeedbackList(
+    "received",
+    null
+  );
+  const allReceivedFeedback = allReceivedFeedbackData.items;
+  const allReceivedSummary = allReceivedFeedbackData.summary;
   const selectedReceivedMember =
     selectedReceivedUserId == null
       ? null
@@ -2087,7 +2492,10 @@ function FeedbackPage() {
     receivedView === "myself" ? currentUserName : selectedReceivedMember?.label;
 
   const receivedFeedback = useMemo(() => {
-    const merged = mergeFeedbackItems(selectedReceivedFeedback, allReceivedFeedback);
+    const merged = mergeFeedbackItems(
+      selectedReceivedFeedback,
+      allReceivedFeedback
+    );
 
     if (selectedReceivedUserId != null && merged.length > 0) {
       return merged;
@@ -2096,8 +2504,8 @@ function FeedbackPage() {
     const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
     if (!normalizedSelectedName) return merged;
 
-    const exactMatches = merged.filter((item) =>
-      item.recipientName.toLowerCase() === normalizedSelectedName
+    const exactMatches = merged.filter(
+      (item) => item.recipientName.toLowerCase() === normalizedSelectedName
     );
     if (exactMatches.length > 0) return exactMatches;
 
@@ -2122,7 +2530,7 @@ function FeedbackPage() {
             <button
               type="button"
               className="min-w-0 flex-1 text-left"
-              onClick={() => { }}
+              onClick={() => {}}
             >
               <p className="text-sm font-semibold text-sky-950">
                 Giving &amp; Receiving Feedback
@@ -2167,15 +2575,32 @@ function FeedbackPage() {
           </div>
         </header>
 
-
         <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
           {/* Tab bar */}
           <div className="flex border-b border-neutral-200">
-            {([
-              { value: "received", label: "Received", icon: Inbox, count: receivedFeedback.length },
-              { value: "given", label: "Given", icon: Send, count: givenFeedback.length },
-              { value: "give", label: "Give Feedback", icon: Pencil, count: null },
-            ] as const).map(({ value, label, icon: Icon, count }) => (
+            {(
+              [
+                {
+                  value: "received",
+                  label: "Received",
+                  icon: Inbox,
+                  count:
+                    allReceivedSummary?.received ?? receivedFeedback.length,
+                },
+                {
+                  value: "given",
+                  label: "Given",
+                  icon: Send,
+                  count: givenSummary?.given ?? givenFeedback.length,
+                },
+                {
+                  value: "give",
+                  label: "Give Feedback",
+                  icon: Pencil,
+                  count: null,
+                },
+              ] as const
+            ).map(({ value, label, icon: Icon, count }) => (
               <button
                 key={value}
                 type="button"
@@ -2201,7 +2626,9 @@ function FeedbackPage() {
           {/* View for: dropdown — received tab only */}
           {feedbackTab === "received" && (
             <div className="px-4 py-3 border-b border-neutral-100 bg-white flex items-center gap-3">
-              <span className="text-sm text-neutral-600 font-medium">View feedback for:</span>
+              <span className="text-sm text-neutral-600 font-medium">
+                View feedback for:
+              </span>
               <Select value={receivedView} onValueChange={setReceivedView}>
                 <SelectTrigger className="h-9 w-[200px] rounded-lg border-neutral-200 bg-white text-sm">
                   <SelectValue placeholder={myselfLabel} />
@@ -2209,7 +2636,9 @@ function FeedbackPage() {
                 <SelectContent>
                   <SelectItem value="myself">{myselfLabel}</SelectItem>
                   {teamMembersLoading ? (
-                    <div className="px-3 py-2 text-sm text-neutral-400">Loading...</div>
+                    <div className="px-3 py-2 text-sm text-neutral-400">
+                      Loading...
+                    </div>
                   ) : (
                     teamMembers
                       .filter((member) => member.id !== currentUserId)
@@ -2229,8 +2658,14 @@ function FeedbackPage() {
             <AsyncBoundary>
               <GivenFeedbackList
                 key={`received-${receivedView}`}
-                onGiveFeedbackClick={() => { setEditingFeedback(null); setFeedbackTab("give"); }}
-                onEditFeedback={(item) => { setEditingFeedback(item); setFeedbackTab("give"); }}
+                onGiveFeedbackClick={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("give");
+                }}
+                onEditFeedback={(item) => {
+                  setEditingFeedback(item);
+                  setFeedbackTab("give");
+                }}
                 direction="from"
                 filterUserId={null}
                 itemsOverride={receivedFeedback}
@@ -2241,8 +2676,14 @@ function FeedbackPage() {
           {feedbackTab === "given" && (
             <AsyncBoundary>
               <GivenFeedbackList
-                onGiveFeedbackClick={() => { setEditingFeedback(null); setFeedbackTab("give"); }}
-                onEditFeedback={(item) => { setEditingFeedback(item); setFeedbackTab("give"); }}
+                onGiveFeedbackClick={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("give");
+                }}
+                onEditFeedback={(item) => {
+                  setEditingFeedback(item);
+                  setFeedbackTab("give");
+                }}
                 direction="to"
               />
             </AsyncBoundary>
@@ -2252,8 +2693,14 @@ function FeedbackPage() {
             <AsyncBoundary>
               <GiveFeedbackForm
                 initialFeedback={editingFeedback}
-                onCancelEdit={() => { setEditingFeedback(null); setFeedbackTab("given"); }}
-                onSubmitted={() => { setEditingFeedback(null); setFeedbackTab("given"); }}
+                onCancelEdit={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("given");
+                }}
+                onSubmitted={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("given");
+                }}
               />
             </AsyncBoundary>
           )}

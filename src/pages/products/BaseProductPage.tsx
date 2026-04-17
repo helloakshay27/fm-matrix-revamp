@@ -1253,7 +1253,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   }}
                 >
                   <div className="px-4 py-4">
-                    <div className="bg-[#DA7756] text-white px-4 py-2 font-semibold font-poppins uppercase tracking-tight text-[11px] text-center border border-[#DA7756]">
+                    <div className="bg-[#cccbc9] text-white px-4 py-2 font-semibold font-poppins uppercase tracking-tight text-[11px] text-center border border-[#DA7756]">
                       Post Sales - Product Summary
                     </div>
 
@@ -1277,7 +1277,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                                 return (
                                   <tr key={`section-${index}`}>
                                     <td
-                                      className="border border-[#DA7756] bg-[#DA7756] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white"
+                                      className="border border-[#DA7756] bg-[#cccbc9] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white"
                                       colSpan={2}
                                     >
                                       {row.label}
@@ -1319,7 +1319,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
               </div>
             ) : (
               <div className="space-y-8 animate-fade-in overflow-x-auto">
-                <div className="bg-[#DA7756] text-white p-6 rounded-xl">
+                <div className="bg-[#cccbc9] text-white p-6 rounded-xl">
                   <h2 className="text-2xl font-semibold tracking-tight font-poppins">
                     {productData.name} - Identity
                   </h2>
@@ -1431,7 +1431,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   </table>
                 </div>
 
-                <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
+                <div className="bg-[#cccbc9] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
                   Feature Summary
                 </div>
                 <div className="border border-t-0 border-[#D3D1C7] p-4 text-sm text-[#2C2C2C]/80 bg-white font-medium leading-relaxed rounded-b-xl font-poppins">
@@ -1582,7 +1582,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
           {/* 2. Features */}
           <TabsContent value="features" className="space-y-6">
-            <div className="bg-[#DA7756] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
+            <div className="bg-[#cccbc9] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
               <h2 className="text-xl font-semibold font-poppins uppercase tracking-tight">
                 {productData.name} - Feature List
               </h2>
@@ -1838,7 +1838,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
           </TabsContent>
           {/* 3. Market */}
           <TabsContent value="market" className="space-y-8">
-            <div className="bg-[#DA7756] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
+            <div className="bg-[#cccbc9] text-white p-4 rounded-t-xl mb-0 flex justify-between items-center">
               <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
                 {productData.name} - Market Analysis
               </h2>
@@ -2366,7 +2366,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                   !productData.extendedContent?.detailedMarketAnalysis
                     ?.targetAudience && (
                     <div className="space-y-4">
-                      <div className="bg-[#DA7756] text-white px-4 py-2 font-semibold text-sm uppercase font-poppins">
+                      <div className="bg-[#cccbc9] text-white px-4 py-2 font-semibold text-sm uppercase font-poppins">
                         Market Size and Growth
                       </div>
                       <div className="overflow-x-auto border border-[#C4B89D] rounded-xl shadow-lg">
@@ -2552,7 +2552,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                               Post Sales - Features & Pricing
                             </th>
                           </tr>
-                          <tr className="bg-[#DA7756]/80 text-white/90">
+                          <tr className="bg-[#cccbc9]/80 text-white/90">
                             <th
                               className="border border-[#DA7756] px-2 py-1 text-left text-[8px] font-semibold"
                               colSpan={6}
