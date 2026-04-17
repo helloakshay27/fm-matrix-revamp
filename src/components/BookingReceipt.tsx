@@ -41,7 +41,7 @@ interface InvoiceProps {
     isFromBookingPage?: boolean;
 }
 
-const Invoice = ({
+const BookingReceipt = ({
     data,
     autoDownload = false,
     onDownloadComplete,
@@ -81,15 +81,15 @@ const Invoice = ({
     const billToEmail = primaryMember?.user_email;
     const billToMobile = primaryMember?.user_mobile;
 
-    const planName = data?.membership_plan?.name || "";
+    const planName = data?.membership_plan?.name;
     const baseAmount =
         parseFloat(String(data?.allocation_payment_detail?.base_amount))
     const discountAmount =
-        parseFloat(String(data?.allocation_payment_detail?.discount))
+        parseFloat(String(data?.allocation_payment_detail?.discount));
     const cgstAmount =
-        parseFloat(String(data?.allocation_payment_detail?.cgst))
+        parseFloat(String(data?.allocation_payment_detail?.cgst));
     const sgstAmount =
-        parseFloat(String(data?.allocation_payment_detail?.sgst))
+        parseFloat(String(data?.allocation_payment_detail?.sgst));
     const cgstPercentage = data?.allocation_payment_detail?.cgst_per;
     const sgstPercentage = data?.allocation_payment_detail?.sgst_per;
     const totalTax = cgstAmount + sgstAmount;
@@ -275,19 +275,19 @@ const Invoice = ({
     return (
         <div className="min-h-[297mm] flex flex-col items-center justify-center p-4">
             <div ref={invoiceRef}>
-                <div className="w-full bg-[#F9F4E8] max-w-4xl flex h-[300mm]">
+                <div className="w-full bg-[#F9F4E8] max-w-4xl flex h-[330mm]">
                     {/* LEFT SIDE - Logo/Branding Area */}
                     <div className="w-[24%] p-3 border-r-4 border-[#7C2D12] flex flex-col items-center justify-between py-8">
                         <div className="text-center">
                             <img src={`${window.location.origin}/image.png`} alt="" className="h-[90%]" />
                         </div>
-                        <div className="flex justify-center items-center mb-[160px]">
+                        <div className="flex justify-center items-center mb-[100px]">
                             <div
                                 style={{
                                     transform: "rotate(-90deg)",
-                                    transformOrigin: "center",
+                                    transformOrigin: "",
                                     whiteSpace: "nowrap",
-                                    width: "410px",
+                                    width: "460px",
                                     textAlign: "center",
                                 }}
                             >
@@ -299,64 +299,64 @@ const Invoice = ({
                     </div>
 
                     {/* RIGHT SIDE - Invoice Content Area */}
-                    <div className="flex-1 h-full">
+                    <div className="flex-1">
                         {/* Header Section */}
                         <div className="border-b-4 border-[#7C2D12] p-6">
                             <div className="flex justify-between">
                                 {/* Left: Company Details */}
                                 <div className="flex-1">
-                                    <p className="text-[#1F5E2E] font-bold mb-4">{invoiceType}</p>
-                                    <p className="text-[#1F5E2E] font-bold">
+                                    <p className="text-[#1F5E2E] font-bold mb-4 text-sm">{invoiceType}</p>
+                                    <p className="text-[#1F5E2E] font-bold text-sm">
                                         PAUSE & PLAY MOVEMENT LABS
                                         <br />
                                         PVT. LTD.
                                     </p>
-                                    <p className="text-[#1F5E2E] leading-tight">
+                                    <p className="text-[#1F5E2E] leading-tight text-sm">
                                         S. No. 19A/2A/1/2, Tech Park One,
                                         <br />
                                         Tower 'E', Yerwada, Pune – 411006,
                                         <br />
                                         Maharashtra, India
                                     </p>
-                                    <p className="text-[#1F5E2E]">
+                                    <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">Place of Supply:</span>{" "}
                                         MAHARASHTRA
                                     </p>
-                                    <p className="text-[#1F5E2E]">
+                                    <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">Code:</span> 27
                                     </p>
-                                    <p className="text-[#1F5E2E]">
+                                    <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">CIN:</span>{" "}
                                         U92390PN2024PTC235057
                                     </p>
-                                    <p className="text-[#1F5E2E]">
+                                    <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">GSTIN:</span> 27AALCD1821C1Z1
                                     </p>
-                                    <p className="text-[#1F5E2E]">
+                                    <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">PAN:</span> AALCD1821C
                                     </p>
-                                    <p className="text-[#1F5E2E]">
+                                    <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">TAN:</span> PNED22860F
                                     </p>
                                 </div>
 
                                 {/* Right: Invoice Title + Bill To Details */}
                                 <div className="text-right">
-                                    <p className="text-[#1F5E2E] font-bold mb-4">
+                                    <p className="text-[#1F5E2E] font-bold mb-4 text-sm">
                                         ORIGINAL FOR RECEPIENT
                                     </p>
-                                    <p className="text-[#1F5E2E]">
+                                    <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">
                                             Invoice Number: {invoiceNumber}
                                         </span>
                                     </p>
-                                    <p className="text-[#1F5E2E] mb-4">
+                                    <p className="text-[#1F5E2E] mb-4 text-sm">
                                         <span className="font-bold">Date: {invoiceDate}</span>
                                     </p>
-                                    <p className="text-[#1F5E2E] font-bold">Bill To:</p>
-                                    <p className="text-[#1F5E2E]">{billToName}</p>
-                                    <p className="text-[#1F5E2E]">{billToMobile}</p>
-                                    <p className="text-[#1F5E2E]">{billToEmail}</p>
+                                    <p className="text-[#1F5E2E] font-bold text-sm">Bill To:</p>
+                                    <p className="text-[#1F5E2E] text-sm">{billToName}</p>
+                                    <p className="text-[#1F5E2E] text-sm">{billToMobile}</p>
+                                    <p className="text-[#1F5E2E] text-sm">{billToEmail}</p>
                                 </div>
                             </div>
                         </div>
@@ -364,29 +364,29 @@ const Invoice = ({
                         {/* Table Section */}
                         {/* Table Header */}
                         <div className="border-b-4 border-[#7C2D12] px-2">
-                            <div className="grid grid-cols-12 gap-0 text-[#000000] text-xs font-bold">
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                            <div className="grid grid-cols-12 gap-0 text-[#000000] text-sm font-bold">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     SL. NO.
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     DESCRIPTION
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     SAC/HSN CODE
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     RATE (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     DISCOUNT AMOUNT (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TOTAL TAXABLE VALUE (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TAX RATE
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TAX AMOUNT (₹)
                                 </div>
                             </div>
@@ -442,10 +442,10 @@ const Invoice = ({
                         </div>
 
                         {/* Totals Section */}
-                        <div className="px-6 pb-6 border-b-4 border-[#7C2D12]">
+                        <div className="px-6 pb-6 pt-2 border-b-4 border-[#7C2D12]">
                             <div className="flex justify-between mb-3">
-                                <p className="text-[#1F5E2E] font-bold">TOTAL TAXABLE AMOUNT</p>
-                                <p className="text-[#1F5E2E]">
+                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL TAXABLE AMOUNT</p>
+                                <p className="text-[#1F5E2E] text-sm">
                                     ₹{" "}
                                     {totalTaxableValue.toLocaleString("en-IN", {
                                         minimumFractionDigits: 2,
@@ -454,8 +454,8 @@ const Invoice = ({
                                 </p>
                             </div>
                             <div className="flex justify-between mb-3">
-                                <p className="text-[#1F5E2E] font-bold">TOTAL CGST</p>
-                                <p className="text-[#1F5E2E]">
+                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL CGST</p>
+                                <p className="text-[#1F5E2E] text-sm">
                                     ₹{" "}
                                     {cgstAmount.toLocaleString("en-IN", {
                                         minimumFractionDigits: 2,
@@ -464,8 +464,8 @@ const Invoice = ({
                                 </p>
                             </div>
                             <div className="flex justify-between">
-                                <p className="text-[#1F5E2E] font-bold">TOTAL SGST</p>
-                                <p className="text-[#1F5E2E]">
+                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL SGST</p>
+                                <p className="text-[#1F5E2E] text-sm">
                                     ₹{" "}
                                     {sgstAmount.toLocaleString("en-IN", {
                                         minimumFractionDigits: 2,
@@ -478,8 +478,8 @@ const Invoice = ({
                         {/* Invoice Value */}
                         <div className="px-6 pt-1 pb-5 border-b-4 border-[#7C2D12]">
                             <div className="flex justify-between">
-                                <p className="text-[#1F5E2E] font-bold">TOTAL INVOICE VALUE</p>
-                                <p className="text-[#1F5E2E] font-bold">
+                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL INVOICE VALUE</p>
+                                <p className="text-[#1F5E2E] font-bold text-sm">
                                     ₹
                                     {totalAmount.toLocaleString("en-IN", {
                                         minimumFractionDigits: 2,
@@ -490,7 +490,7 @@ const Invoice = ({
                         </div>
 
                         {/* Notes and Details Section */}
-                        <div className="p-4 h-full">
+                        <div className="p-4">
                             {/* Tax Note */}
                             <p className="text-[#1F5E2E] text-sm mb-1">
                                 <span className="font-bold italic">
@@ -544,4 +544,4 @@ const Invoice = ({
     );
 };
 
-export default Invoice;
+export default BookingReceipt;

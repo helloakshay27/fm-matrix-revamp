@@ -16,7 +16,11 @@ import {
   LogOut,
   Settings,
   ChevronDown,
-  Shield
+  Shield,
+  Bot,
+  Megaphone,
+  Car,
+  Activity
 } from "lucide-react";
 import recessLogo from "@/assets/recess-logo";
 import { useSelector } from "react-redux";
@@ -62,6 +66,7 @@ const navMenuOptions: Record<
       title: "Create Booking",
       description: "Make your booking",
       icon: <Calendar className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/vas/booking/add"
     },
     {
       title: "Create MOM",
@@ -80,10 +85,16 @@ const navMenuOptions: Record<
   ],
   Work: [
     {
-      title: "Company Hub",
-      description: "",
-      icon: <Globe className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/employee/company-hub",
+      title: "Project and Taks",
+      description: "View and manage your project tasks",
+      icon: <FolderKanban className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/vas/projects",
+    },
+    {
+      title: "Calendar",
+      description: "Schedule and view events",
+      icon: <Calendar className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/employee/calendar",
     },
     {
       title: "Business Compass",
@@ -104,34 +115,71 @@ const navMenuOptions: Record<
       href: "/employee/dashboard",
     },
     {
-      title: "Project and Taks",
-      description: "View and manage your project tasks",
-      icon: <FolderKanban className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/vas/projects",
-    },
-    {
       title: "Tickets",
       description: "View and manage support tickets",
       icon: <Ticket className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
       href: "/maintenance/ticket/employee"
     },
+  ],
+  Communicate: [
     {
-      title: "Calendar",
-      description: "Schedule and view events",
-      icon: <Calendar className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/employee/calendar",
+      title: "Contacts",
+      description: "Access your contacts",
+      icon: <User className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/directory",
     },
+    {
+      title: "Ask AI",
+      description: "Get help from our AI assistant",
+      icon: <Bot className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/ask-ai",
+    },
+    {
+      title: "Announcements",
+      description: "Stay updated with the latest announcements",
+      icon: <Megaphone className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/business-compass/announcements",
+    },
+  ],
+  Workspace: [
     {
       title: "Documents",
       description: "Access important documents",
       icon: <FileText className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
       href: "/vas/documents",
     },
+  ],
+  Insight: [
     {
-      title: "ID Card",
-      description: "Access your ID card",
+      title: "Activity",
+      description: "View your recent activity",
+      icon: <Activity className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+    },
+  ],
+  Operations: [
+    {
+      title: "Parkings",
+      description: "View and manage your parking",
+      icon: <Car className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/parking",
+    },
+    {
+      title: "Bookings",
+      description: "View and manage your bookings",
+      icon: <Ticket className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/bookings-overview",
+    },
+    {
+      title: "F&B",
+      description: "View and manage your bookings",
       icon: <FileText className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/business-card",
+      href: "/bookings-overview",
+    },
+    {
+      title: "Visitors",
+      description: "View and manage your visitors",
+      icon: <User className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/security/visitor/employee",
     },
   ],
 };
@@ -143,6 +191,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const navigate = useNavigate()
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLNavElement>(null);
   const { userRole } = usePermissions();
   const {
     notifications,
@@ -231,7 +280,12 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        navRef.current &&
+        !navRef.current.contains(event.target as Node)
+      ) {
         setActiveNavMenu(null);
       }
     };
@@ -388,20 +442,35 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
               </svg>
             )}
           </div>
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav ref={navRef} className="hidden lg:flex items-center gap-6">
+            <div
+              onClick={() => {
+                setActiveNavMenu(null);
+                navigate("/employee/company-hub");
+              }}
+              className="flex items-center gap-1.5 cursor-pointer group"
+            >
+              {/* <Globe className="w-3.5 h-3.5 text-[#DA7756]" /> */}
+              <span
+                className={`text-[13px] font-medium tracking-wider transition-colors`}
+              >
+                Company Hub
+              </span>
+            </div>
             {[
               "Create",
               "Work",
               "Communicate",
-              "Documents",
+              "Workspace",
               "Operations",
               "Insight",
             ].map((item) => (
               <div
                 key={item}
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation();
                   setActiveNavMenu(activeNavMenu === item ? null : item)
-                }
+                }}
                 className="flex items-center gap-1.5 cursor-pointer group"
               >
                 <span
@@ -571,6 +640,10 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 </div>
               )}
               <div className="py-1">
+                <DropdownMenuItem onClick={() => navigate("/business-card")} className="mx-2 my-1 rounded-md">
+                  <FileText className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">ID Card</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")} className="mx-2 my-1 rounded-md">
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
@@ -595,7 +668,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
       {activeNavMenu && navMenuOptions[activeNavMenu] && (
         <div
           ref={dropdownRef}
-          className="absolute top-[65px] left-0 w-full bg-white border-b border-gray-200 shadow-md z-50 px-8 py-8 animate-in slide-in-from-top-2 fade-in duration-200"
+          className="fixed top-[65px] left-0 right-0 bg-white border-b border-gray-200 shadow-md z-50 px-8 py-8 animate-in slide-in-from-top-2 fade-in duration-200"
         >
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">
             {activeNavMenu}
@@ -604,7 +677,10 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
             {navMenuOptions[activeNavMenu].map((option, idx) => (
               <div
                 key={idx}
-                onClick={() => navigate(option.href)}
+                onClick={() => {
+                  setActiveNavMenu(null);
+                  navigate(option.href);
+                }}
                 className="flex flex-shrink-0 items-center gap-4 p-4 border border-gray-100 rounded-xl hover:shadow-md hover:border-gray-200 transition-all cursor-pointer bg-white min-w-[220px]"
               >
                 <div className="p-2 bg-orange-50 rounded-lg">

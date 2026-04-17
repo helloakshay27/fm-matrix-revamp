@@ -41,7 +41,7 @@ interface InvoiceProps {
     isFromBookingPage?: boolean;
 }
 
-const Invoice = ({
+const BookingInvoice = ({
     data,
     autoDownload = false,
     onDownloadComplete,
@@ -96,13 +96,6 @@ const Invoice = ({
     const totalAmount =
         parseFloat(String(data?.allocation_payment_detail?.total_amount))
     const siteName = data?.site_name || "New Site 1";
-
-    // Calculate total taxable value from line items
-    const totalTaxableValue = Array.isArray(data?.invoice_data?.line_items)
-        ? data.invoice_data.line_items.reduce((sum: number, item: any) => {
-            return sum + (parseFloat(String(item.total)) || 0);
-        }, 0)
-        : 0;
 
     // Format amount in words
     const amountInWords = (num: number): string => {
@@ -281,7 +274,7 @@ const Invoice = ({
                         <div className="text-center">
                             <img src={`${window.location.origin}/image.png`} alt="" className="h-[90%]" />
                         </div>
-                        <div className="flex justify-center items-center mb-[160px]">
+                        <div className="flex justify-center items-center">
                             <div
                                 style={{
                                     transform: "rotate(-90deg)",
@@ -447,7 +440,7 @@ const Invoice = ({
                                 <p className="text-[#1F5E2E] font-bold">TOTAL TAXABLE AMOUNT</p>
                                 <p className="text-[#1F5E2E]">
                                     ₹{" "}
-                                    {totalTaxableValue.toLocaleString("en-IN", {
+                                    {(baseAmount - discountAmount).toLocaleString("en-IN", {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
                                     })}
@@ -544,4 +537,4 @@ const Invoice = ({
     );
 };
 
-export default Invoice;
+export default BookingInvoice;

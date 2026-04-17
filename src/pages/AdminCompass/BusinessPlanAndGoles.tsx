@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 import { BhagSection } from "./AdminCompassComponent/BhagSection";
 import { MediumTermSection } from "./AdminCompassComponent/MediumTermSection";
@@ -28,7 +28,15 @@ const C = {
 };
 
 // ── API base ──
-const BASE_URL = localStorage.getItem("baseUrl") || "";
+const getBaseUrl = () => {
+  const raw = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
+  if (!raw) return "";
+  return raw.startsWith("http://") || raw.startsWith("https://")
+    ? raw
+    : `https://${raw}`;
+};
+
+const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("token") || "";
@@ -41,7 +49,7 @@ const getAuthHeaders = (): Record<string, string> => {
 // ─────────────────────────────────────────────
 //  Safe JSON Parser
 // ─────────────────────────────────────────────
-const safeParseJSON = (data: any) => {
+const safeParseJSON = (data: any): Record<string, any> => {
   if (!data) return {};
   if (typeof data === "string") {
     try {
@@ -50,7 +58,8 @@ const safeParseJSON = (data: any) => {
       return {};
     }
   }
-  return data;
+  if (typeof data === "object" && !Array.isArray(data)) return data;
+  return {};
 };
 
 // ─────────────────────────────────────────────
@@ -120,7 +129,7 @@ const fetchBrandPromisesFromApi = async (): Promise<{
   promises: BrandPromise[];
   videoUrl: string;
 }> => {
-  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_brand_promises&include_grouped=true`;
+  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_brand_promises&include_grouped=true`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -136,7 +145,7 @@ const fetchBrandPromisesFromApi = async (): Promise<{
 const saveBrandPromisesToApi = async (
   promises: { text: string; kpis: string[] }[],
   videoUrl: string
-): Promise<{ promises: BrandPromise[]; videoUrl: string }> => {
+): Promise<void> => {
   const promiseKpis: Record<string, string[]> = {};
   promises.forEach((p, idx) => {
     promiseKpis[`item_${idx + 1}`] = p.kpis;
@@ -146,10 +155,11 @@ const saveBrandPromisesToApi = async (
       group_name: "business_plan_brand_promises",
       values: promises.map((p) => p.text),
       video_url: videoUrl,
+      // Removed JSON.stringify to send as a nested object
       promise_kpis: promiseKpis,
     },
   };
-  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -157,31 +167,16 @@ const saveBrandPromisesToApi = async (
   const rawText = await res.text();
   if (!res.ok)
     throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
-  let json: any;
-  try {
-    json = JSON.parse(rawText);
-  } catch {
-    json = {};
-  }
-  const parsed = parseBrandPromisesRecord(json);
-  if (parsed.promises.length === 0 && promises.length > 0) {
-    return {
-      promises: promises.map((p) => ({ id: null, text: p.text, kpis: p.kpis })),
-      videoUrl,
-    };
-  }
-  return parsed;
 };
 
 // ─────────────────────────────────
 //  DELETE API helper
 // ─────────────────────────────────
 const deleteExtraFieldFromApi = async (id: number): Promise<void> => {
-  const res = await fetch(`https://${BASE_URL}/extra_fields/${id}`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-
   if (!res.ok) {
     const rawText = await res.text();
     throw new Error(
@@ -221,7 +216,7 @@ const fetchPurposeFromApi = async (): Promise<{
   videoUrl: string;
   recordId: number | null;
 }> => {
-  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_purpose&include_grouped=true`;
+  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_purpose&include_grouped=true`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -251,7 +246,7 @@ const savePurposeToApi = async (
       video_url: videoUrl,
     },
   };
-  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -306,7 +301,7 @@ const fetchCoreValuesFromApi = async (): Promise<{
   values: CoreValueRecord[];
   videoUrl: string;
 }> => {
-  const url = `https://${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_core_values&include_grouped=true`;
+  const url = `${BASE_URL}/extra_fields?q[group_name_in][]=business_plan_core_values&include_grouped=true`;
   const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
@@ -330,7 +325,7 @@ const saveCoreValuesToApi = async (
       video_url: videoUrl,
     },
   };
-  const res = await fetch(`https://${BASE_URL}/extra_fields/bulk_upsert`, {
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -345,6 +340,65 @@ const saveCoreValuesToApi = async (
     json = {};
   }
   return parseCoreValuesRecord(json);
+};
+
+// ─────────────────────────────────────────────
+//  Overview Media API helpers
+// ─────────────────────────────────────────────
+interface OverviewMedia {
+  images: string[];
+  videos: string[];
+}
+
+const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
+  const url = `${BASE_URL}/business_compass/overview_media`;
+  const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
+  const rawText = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 200)}`);
+  let json: any;
+  try {
+    json = JSON.parse(rawText);
+  } catch {
+    json = {};
+  }
+  const parseUrlArray = (arr: any[]): string[] =>
+    arr
+      .map((item) => (typeof item === "string" ? item : (item?.url ?? "")))
+      .filter(Boolean);
+  return {
+    images: Array.isArray(json?.images) ? parseUrlArray(json.images) : [],
+    videos: Array.isArray(json?.videos) ? parseUrlArray(json.videos) : [],
+  };
+};
+
+const saveOverviewImagesApi = async (images: string[]): Promise<void> => {
+  const payload = {
+    extra_field: { group_name: "business_plan_overview", images },
+  };
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const rawText = await res.text();
+    throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
+  }
+};
+
+const saveOverviewVideosApi = async (videos: string[]): Promise<void> => {
+  const payload = {
+    extra_field: { group_name: "business_plan_overview", videos },
+  };
+  const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const rawText = await res.text();
+    throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
+  }
 };
 
 // ─────────────────────────────────
@@ -514,6 +568,654 @@ const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 );
 
 // ─────────────────────────────────
+//  Inline Image Slider
+// ─────────────────────────────────
+const InlineImageSlider = ({
+  images,
+  onDelete,
+  isSaving,
+}: {
+  images: string[];
+  onDelete: (idx: number) => void;
+  isSaving: boolean;
+}) => {
+  const [current, setCurrent] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (current >= images.length && images.length > 0)
+      setCurrent(images.length - 1);
+  }, [images.length, current]);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft")
+        setCurrent((p) => (p > 0 ? p - 1 : images.length - 1));
+      if (e.key === "ArrowRight")
+        setCurrent((p) => (p < images.length - 1 ? p + 1 : 0));
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [fullscreen, images.length]);
+
+  if (images.length === 0) return null;
+
+  const prev = () => setCurrent((p) => (p > 0 ? p - 1 : images.length - 1));
+  const next = () => setCurrent((p) => (p < images.length - 1 ? p + 1 : 0));
+
+  const sliderBox = (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        borderRadius: fullscreen ? 0 : 16,
+        overflow: "hidden",
+        background: "#111",
+        paddingTop: fullscreen ? undefined : "56.25%",
+        height: fullscreen ? "100%" : undefined,
+      }}
+    >
+      <img
+        key={current}
+        src={images[current]}
+        alt={`slide-${current}`}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain" as const,
+          position: fullscreen ? "static" : "absolute",
+          top: fullscreen ? undefined : 0,
+          left: fullscreen ? undefined : 0,
+          display: "block",
+        }}
+        onError={(e) => {
+          (e.target as HTMLImageElement).style.opacity = "0.3";
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          display: "flex",
+          gap: 8,
+          zIndex: 10,
+        }}
+      >
+        <button
+          onClick={() => setFullscreen((f) => !f)}
+          title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#fff",
+            transition: "background .15s",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+          }
+        >
+          {fullscreen ? (
+            <svg
+              width="15"
+              height="15"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 9L4 4m0 0h5m-5 0v5M15 9l5-5m0 0h-5m5 0v5M9 15l-5 5m0 0h5m-5 0v-5M15 15l5 5m0 0h-5m5 0v-5"
+              />
+            </svg>
+          ) : (
+            <svg
+              width="15"
+              height="15"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 8V4m0 0h4M4 4l5 5M20 8V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l-5-5M20 16v4m0 0h-4m4 0l-5-5"
+              />
+            </svg>
+          )}
+        </button>
+        <button
+          onClick={() => onDelete(current)}
+          disabled={isSaving}
+          title="Delete image"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "#ef4444",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 900,
+            transition: "background .15s",
+            opacity: isSaving ? 0.5 : 1,
+            fontFamily: "'Poppins',sans-serif",
+          }}
+          onMouseEnter={(e) => {
+            if (!isSaving) e.currentTarget.style.background = "#dc2626";
+          }}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#ef4444")}
+        >
+          {isSaving ? (
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              style={{ animation: "bp-spin 1s linear infinite" }}
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth={4}
+                style={{ opacity: 0.25 }}
+              />
+              <path
+                fill="currentColor"
+                style={{ opacity: 0.75 }}
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+          ) : (
+            "✕"
+          )}
+        </button>
+      </div>
+
+      {images.length > 1 && (
+        <button
+          onClick={prev}
+          style={{
+            position: "absolute",
+            left: 12,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#fff",
+            zIndex: 10,
+            transition: "background .15s",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+          }
+        >
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+      )}
+
+      {images.length > 1 && (
+        <button
+          onClick={next}
+          style={{
+            position: "absolute",
+            right: 12,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.20)",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#fff",
+            zIndex: 10,
+            transition: "background .15s",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+          }
+        >
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      )}
+
+      {images.length > 1 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 14,
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: 7,
+            zIndex: 10,
+          }}
+        >
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              style={{
+                width: i === current ? 22 : 7,
+                height: 7,
+                borderRadius: 4,
+                border: "none",
+                cursor: "pointer",
+                background:
+                  i === current ? "#DA7756" : "rgba(255,255,255,0.50)",
+                transition: "all .2s",
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (fullscreen) {
+    return ReactDOM.createPortal(
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 999999,
+          background: "#000",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setFullscreen(false);
+        }}
+      >
+        <div style={{ width: "100vw", height: "100vh" }}>{sliderBox}</div>
+        <style>{`@keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div className="mb-5">
+      {sliderBox}
+      <style>{`@keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
+    </div>
+  );
+};
+
+// ─────────────────────────────────
+//  Video Preview Helper
+// ─────────────────────────────────
+const extractYouTubeId = (url: string) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+};
+
+const VideoPreview = ({ url }: { url: string }) => {
+  if (!url) return null;
+  const videoId = extractYouTubeId(url);
+  if (!videoId) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="text-[12px] text-blue-500 underline mt-3 block break-all"
+      >
+        {url}
+      </a>
+    );
+  }
+  return (
+    <div className="mb-4 relative w-full">
+      <div
+        className="rounded-xl overflow-hidden shadow-sm border w-full relative"
+        style={{ paddingTop: "56.25%", borderColor: C.borderLgt }}
+      >
+        <iframe
+          className="absolute top-0 left-0 w-full h-full"
+          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+          title="Video Preview"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────
+//  Inline Video Player
+// ─────────────────────────────────
+const InlineVideoPlayer: React.FC<{
+  videos: string[];
+  onDelete: (idx: number) => void;
+  isSaving: boolean;
+}> = ({ videos, onDelete, isSaving }) => {
+  const [current, setCurrent] = useState(0);
+  const safeIdx = videos.length > 0 ? Math.min(current, videos.length - 1) : 0;
+
+  useEffect(() => {
+    if (safeIdx !== current) setCurrent(safeIdx);
+  }, [safeIdx, current]);
+
+  if (!videos || videos.length === 0) return null;
+
+  const url = videos[safeIdx] ?? "";
+  const videoId = extractYouTubeId(url);
+  const prev = () => setCurrent((p) => (p > 0 ? p - 1 : videos.length - 1));
+  const next = () => setCurrent((p) => (p < videos.length - 1 ? p + 1 : 0));
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          paddingTop: "56.25%",
+          borderRadius: 16,
+          overflow: "hidden",
+          background: "#111",
+        }}
+      >
+        {videoId ? (
+          <iframe
+            key={`yt-${safeIdx}-${videoId}`}
+            src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+            title={`video-${safeIdx}`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              border: "none",
+              display: "block",
+            }}
+          />
+        ) : (
+          <video
+            key={`vid-${safeIdx}-${url}`}
+            src={url}
+            controls
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain" as const,
+              display: "block",
+            }}
+          />
+        )}
+
+        <div
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            display: "flex",
+            gap: 8,
+            zIndex: 10,
+          }}
+        >
+          <button
+            onClick={() => onDelete(safeIdx)}
+            disabled={isSaving}
+            title="Delete video"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              background: "#ef4444",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 900,
+              transition: "background .15s",
+              opacity: isSaving ? 0.5 : 1,
+              fontFamily: "'Poppins',sans-serif",
+            }}
+            onMouseEnter={(e) => {
+              if (!isSaving) e.currentTarget.style.background = "#dc2626";
+            }}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#ef4444")}
+          >
+            {isSaving ? (
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                style={{ animation: "bp-spin 1s linear infinite" }}
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth={4}
+                  style={{ opacity: 0.25 }}
+                />
+                <path
+                  fill="currentColor"
+                  style={{ opacity: 0.75 }}
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+            ) : (
+              "✕"
+            )}
+          </button>
+        </div>
+
+        {videos.length > 1 && (
+          <button
+            onClick={prev}
+            style={{
+              position: "absolute",
+              left: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.20)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#fff",
+              zIndex: 10,
+              transition: "background .15s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+            }
+          >
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+        )}
+
+        {videos.length > 1 && (
+          <button
+            onClick={next}
+            style={{
+              position: "absolute",
+              right: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.20)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "#fff",
+              zIndex: 10,
+              transition: "background .15s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+            }
+          >
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        )}
+
+        {videos.length > 1 && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 14,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              gap: 7,
+              zIndex: 10,
+              pointerEvents: "none",
+            }}
+          >
+            {videos.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrent(i);
+                }}
+                style={{
+                  width: i === safeIdx ? 22 : 7,
+                  height: 7,
+                  borderRadius: 4,
+                  border: "none",
+                  cursor: "pointer",
+                  background:
+                    i === safeIdx ? "#DA7756" : "rgba(255,255,255,0.50)",
+                  transition: "all .2s",
+                  padding: 0,
+                  pointerEvents: "auto",
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────
 //  Shared Buttons
 // ─────────────────────────────────
 const BtnPrimary = ({ children, onClick, className = "" }: any) => (
@@ -528,18 +1230,28 @@ const BtnPrimary = ({ children, onClick, className = "" }: any) => (
   </button>
 );
 
-const BtnOutline = ({ children, onClick, className = "" }: any) => (
+const BtnOutline = ({
+  children,
+  onClick,
+  className = "",
+  disabled = false,
+}: any) => (
   <button
     onClick={onClick}
-    className={`inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border ${className}`}
+    disabled={disabled}
+    className={`inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border ${disabled ? "opacity-60 cursor-not-allowed" : ""} ${className}`}
     style={{ borderColor: C.primaryBord, color: C.primary, fontFamily: C.font }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.background = C.primaryBg;
-      e.currentTarget.style.borderColor = C.primaryBordStrong;
+      if (!disabled) {
+        e.currentTarget.style.background = C.primaryBg;
+        e.currentTarget.style.borderColor = C.primaryBordStrong;
+      }
     }}
     onMouseLeave={(e) => {
-      e.currentTarget.style.background = "#fff";
-      e.currentTarget.style.borderColor = C.primaryBord;
+      if (!disabled) {
+        e.currentTarget.style.background = "#fff";
+        e.currentTarget.style.borderColor = C.primaryBord;
+      }
     }}
   >
     {children}
@@ -571,9 +1283,7 @@ const BtnIcon = ({ children, onClick, title = "" }: any) => (
 const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-
     .bp-wrap * { font-family: 'Poppins', sans-serif !important; }
-
     .bp-modal-portal {
       position: fixed; inset: 0; z-index: 99999;
       display: flex; align-items: center; justify-content: center;
@@ -604,10 +1314,7 @@ const ThemeStyle = () => (
       box-sizing: border-box;
       font-family: 'Poppins', sans-serif !important;
     }
-    .bp-input:focus {
-      border-color: #DA7756;
-      box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
-    }
+    .bp-input:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
     .bp-input::placeholder { color: #a3a3a3; font-weight: 500; }
     .bp-select {
       width: 100%;
@@ -635,35 +1342,17 @@ const ThemeStyle = () => (
       background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
       border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600;
     }
-
-    /* ── Card hover lift matching Dashboard ── */
-    .bp-card-lift {
-      transition: box-shadow .2s, transform .2s;
-    }
-    .bp-card-lift:hover {
-      box-shadow: 0 8px 32px rgba(218,119,86,0.12);
-      transform: translateY(-1px);
-    }
-
-    /* ── Tab active pill ── */
-    .bp-tab-active {
-      background: #fff !important;
-      color: #DA7756 !important;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.10);
-    }
-    .bp-tab-inactive {
-      background: transparent !important;
-      color: rgba(255,255,255,0.80) !important;
-    }
-    .bp-tab-inactive:hover {
-      background: rgba(255,255,255,0.12) !important;
-      color: #fff !important;
-    }
+    .bp-card-lift { transition: box-shadow .2s, transform .2s; }
+    .bp-card-lift:hover { box-shadow: 0 8px 32px rgba(218,119,86,0.12); transform: translateY(-1px); }
+    .bp-tab-active { background: #fff !important; color: #DA7756 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+    .bp-tab-inactive { background: transparent !important; color: rgba(255,255,255,0.80) !important; }
+    .bp-tab-inactive:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+    .drag-over { border: 2px dashed ${C.primary} !important; opacity: 0.5; }
   `}</style>
 );
 
 // ─────────────────────────────────
-//  Portal Modal
+//  Portal Modal Component
 // ─────────────────────────────────
 const Modal = ({
   children,
@@ -825,50 +1514,6 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
   );
 };
 
-// ─────────────────────────────────
-//  Video Preview Helper
-// ─────────────────────────────────
-const extractYouTubeId = (url: string) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
-};
-
-const VideoPreview = ({ url }: { url: string }) => {
-  if (!url) return null;
-  const videoId = extractYouTubeId(url);
-  if (!videoId) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        className="text-[12px] text-blue-500 underline mt-3 block break-all"
-      >
-        {url}
-      </a>
-    );
-  }
-  return (
-    <div className="mb-4 relative w-full">
-      <div
-        className="rounded-xl overflow-hidden shadow-sm border w-full relative"
-        style={{ paddingTop: "56.25%", borderColor: C.borderLgt }}
-      >
-        <iframe
-          className="absolute top-0 left-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-          title="Video Preview"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-    </div>
-  );
-};
-
 // ==========================================
 //  MAIN COMPONENT
 // ==========================================
@@ -876,9 +1521,9 @@ const BusinessPlanAndGoles = () => {
   const [activeMainTab, setActiveMainTab] = useState("strategic");
   const [showAddContent, setShowAddContent] = useState(false);
   const [addContentTab, setAddContentTab] = useState("images");
-  const [showImageInput, setShowImageInput] = useState(false);
-  const [showVideoInput, setShowVideoInput] = useState(false);
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
+
+  const [isCopyingPlan, setIsCopyingPlan] = useState(false);
 
   // KPIs
   const [availableKpis, setAvailableKpis] = useState<KPI[]>([]);
@@ -924,6 +1569,25 @@ const BusinessPlanAndGoles = () => {
   const [pendingCoreDeleteIds, setPendingCoreDeleteIds] = useState<number[]>(
     []
   );
+
+  // Drag and Drop
+  const dragCoreItem = useRef<number | null>(null);
+  const dragCoreOverItem = useRef<number | null>(null);
+  const [dragCoreOverIdx, setDragCoreOverIdx] = useState<number | null>(null);
+  const dragBrandItem = useRef<number | null>(null);
+  const dragBrandOverItem = useRef<number | null>(null);
+  const [dragBrandOverIdx, setDragBrandOverIdx] = useState<number | null>(null);
+
+  // Overview Media
+  const [overviewImages, setOverviewImages] = useState<string[]>([]);
+  const [overviewVideos, setOverviewVideos] = useState<string[]>([]);
+  const [isFetchingMedia, setIsFetchingMedia] = useState(false);
+  const [mediaFetchError, setMediaFetchError] = useState<string | null>(null);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [newVideoUrl, setNewVideoUrl] = useState("");
+  const [isSavingImages, setIsSavingImages] = useState(false);
+  const [isSavingVideos, setIsSavingVideos] = useState(false);
+  const [mediaSaveError, setMediaSaveError] = useState<string | null>(null);
 
   // ── Fetches ──
   const loadBrandPromises = useCallback(async () => {
@@ -976,31 +1640,24 @@ const BusinessPlanAndGoles = () => {
   const loadKpis = useCallback(async () => {
     setIsFetchingKpis(true);
     try {
-      const url = `https://${BASE_URL}/kpis`;
+      const url = `${BASE_URL}/kpis`;
       const res = await fetch(url, {
         method: "GET",
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error("Failed to fetch KPIs");
       const json = await res.json();
-
       let list: any[] = [];
-      if (json?.data?.kpis && Array.isArray(json.data.kpis)) {
+      if (json?.data?.kpis && Array.isArray(json.data.kpis))
         list = json.data.kpis;
-      } else if (Array.isArray(json?.data)) {
-        list = json.data;
-      } else if (Array.isArray(json)) {
-        list = json;
-      }
-
-      // Format correctly for our dropdown
+      else if (Array.isArray(json?.data)) list = json.data;
+      else if (Array.isArray(json)) list = json;
       const formatted = list
         .filter((item) => item?.id && (item?.name || item?.title))
         .map((item) => ({
           id: item.id,
           name: item.name || item.title || "Unnamed KPI",
         }));
-
       setAvailableKpis(formatted);
     } catch (e) {
       console.error(e);
@@ -1009,12 +1666,378 @@ const BusinessPlanAndGoles = () => {
     }
   }, []);
 
+  const loadOverviewMedia = useCallback(async () => {
+    setIsFetchingMedia(true);
+    setMediaFetchError(null);
+    try {
+      const data = await fetchOverviewMediaFromApi();
+      setOverviewImages(data.images);
+      setOverviewVideos(data.videos);
+    } catch (err: any) {
+      setMediaFetchError(err.message || "Failed to load media.");
+    } finally {
+      setIsFetchingMedia(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadBrandPromises();
     loadPurpose();
     loadCoreValues();
     loadKpis();
-  }, [loadBrandPromises, loadPurpose, loadCoreValues, loadKpis]);
+    loadOverviewMedia();
+  }, [
+    loadBrandPromises,
+    loadPurpose,
+    loadCoreValues,
+    loadKpis,
+    loadOverviewMedia,
+  ]);
+
+  // ── COPY PLAN ──
+  const handleCopyPlan = async () => {
+    setIsCopyingPlan(true);
+    try {
+      const headers = getAuthHeaders();
+
+      // ── Fetch KPIs ──
+      let kpis: any[] = [];
+      try {
+        const res = await fetch(`${BASE_URL}/kpis`, { headers });
+        const json = await res.json();
+        kpis = Array.isArray(json?.data?.kpis)
+          ? json.data.kpis
+          : Array.isArray(json?.data)
+            ? json.data
+            : Array.isArray(json)
+              ? json
+              : [];
+      } catch (e) {
+        console.error("KPI fetch error", e);
+      }
+
+      // ── Fetch SOPs ──
+      let sops: any[] = [];
+      try {
+        const res = await fetch(`${BASE_URL}/system_sops`, { headers });
+        const json = await res.json();
+        sops = Array.isArray(json?.data?.system_sops)
+          ? json.data.system_sops
+          : Array.isArray(json?.data)
+            ? json.data
+            : Array.isArray(json)
+              ? json
+              : [];
+      } catch (e) {
+        console.error("SOP fetch error", e);
+      }
+
+      // ── Fetch SWOT ──
+      let swotData = {
+        strengths: [] as string[],
+        weaknesses: [] as string[],
+        opportunities: [] as string[],
+        threats: [] as string[],
+      };
+      try {
+        const res = await fetch(
+          `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
+          { headers }
+        );
+        const json = await res.json();
+        swotData = {
+          strengths: json?.grouped_data?.business_plan_strengths?.values || [],
+          weaknesses:
+            json?.grouped_data?.business_plan_weaknesses?.values || [],
+          opportunities:
+            json?.grouped_data?.business_plan_opportunities?.values || [],
+          threats: json?.grouped_data?.business_plan_threats?.values || [],
+        };
+      } catch (e) {
+        console.error("SWOT fetch error", e);
+      }
+
+      // ── Fetch BHAG ──
+      let bhag: {
+        title: string;
+        initiatives: { name: string; progress: number }[];
+      } = { title: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/bhag`, {
+          headers,
+        });
+        const json = await res.json();
+        bhag = {
+          title:
+            json?.title ||
+            json?.data?.title ||
+            json?.bhag?.title ||
+            json?.goal ||
+            "",
+          initiatives: (
+            json?.initiatives ||
+            json?.data?.initiatives ||
+            json?.bhag?.initiatives ||
+            []
+          ).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) {
+        console.error("BHAG fetch error", e);
+      }
+
+      // ── Fetch Medium Term (This Year) ──
+      let year: {
+        title: string;
+        targetDate: string;
+        initiatives: { name: string; progress: number }[];
+      } = { title: "", targetDate: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/medium_term`, {
+          headers,
+        });
+        const json = await res.json();
+        const raw = json?.data || json?.medium_term || json;
+        year = {
+          title: raw?.title || raw?.goal || "",
+          targetDate: raw?.target_date || raw?.targetDate || "",
+          initiatives: (raw?.initiatives || []).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) {
+        console.error("Medium term fetch error", e);
+      }
+
+      // ── Fetch Short Term / Quarter (Rocks) ──
+      let quarter: {
+        title: string;
+        targetDate: string;
+        initiatives: { name: string; progress: number }[];
+      } = { title: "", targetDate: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/short_term`, {
+          headers,
+        });
+        const json = await res.json();
+        const raw = json?.data || json?.short_term || json;
+        quarter = {
+          title: raw?.title || raw?.goal || "",
+          targetDate: raw?.target_date || raw?.targetDate || "",
+          initiatives: (raw?.initiatives || []).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) {
+        console.error("Short term fetch error", e);
+      }
+
+      // ── Fetch Quarterly Rocks ──
+      let rocks: {
+        title: string;
+        targetDate: string;
+        initiatives: { name: string; progress: number }[];
+      } = { title: "", targetDate: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/quarterly`, {
+          headers,
+        });
+        const json = await res.json();
+        const raw = json?.data || json?.quarterly || json;
+        rocks = {
+          title: raw?.title || raw?.goal || "",
+          targetDate: raw?.target_date || raw?.targetDate || "",
+          initiatives: (raw?.initiatives || []).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) {
+        console.error("Quarterly fetch error", e);
+      }
+
+      // ── Build Text ──
+      const d = new Date();
+      const dateStr = d.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+      let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
+
+      text += `CORE VALUES\n${"-".repeat(60)}\n`;
+      coreValues.length
+        ? coreValues.forEach((v, i) => {
+            text += `${i + 1}. ${v.value}\n`;
+          })
+        : (text += `(No core values)\n`);
+      text += `\n`;
+
+      text += `PURPOSE\n${"-".repeat(60)}\n`;
+      text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
+
+      text += `BRAND PROMISES\n${"-".repeat(60)}\n`;
+      brandPromises.length
+        ? brandPromises.forEach((p, i) => {
+            text += `${i + 1}. ${p.text}\n`;
+            if (p.kpis.length) text += `   KPIs: ${p.kpis.join(", ")}\n`;
+          })
+        : (text += `(No brand promises)\n`);
+      text += `\n`;
+
+      text += `BHAG (BIG HAIRY AUDACIOUS GOAL)\n${"-".repeat(60)}\n`;
+      text += bhag.title ? `${bhag.title}\n` : `(No BHAG defined)\n`;
+      if (bhag.initiatives.length) {
+        text += `\nKey Initiatives:\n`;
+        bhag.initiatives.forEach((init, i) => {
+          text += `  ${i + 1}. ${init.name} — Progress: ${init.progress}%\n`;
+        });
+      }
+      text += `\n`;
+
+      text += `THIS YEAR'S PLAN\n${"-".repeat(60)}\n`;
+      text += year.title ? `${year.title}\n` : `(No annual plan defined)\n`;
+      if (year.targetDate) text += `Target: ${year.targetDate}\n`;
+      if (year.initiatives.length) {
+        text += `\nAnnual Initiatives:\n`;
+        year.initiatives.forEach((init, i) => {
+          text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`;
+        });
+      }
+      text += `\n`;
+
+      text += `THIS QUARTER (ROCKS)\n${"-".repeat(60)}\n`;
+      const q = rocks.title ? rocks : quarter;
+      text += q.title ? `${q.title}\n` : `(No quarterly plan defined)\n`;
+      if (q.targetDate) text += `Target: ${q.targetDate}\n`;
+      if (q.initiatives.length) {
+        text += `\nQuarterly Initiatives:\n`;
+        q.initiatives.forEach((init, i) => {
+          text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`;
+        });
+      }
+      text += `\n`;
+
+      text += `CRITICAL NUMBERS\n${"-".repeat(60)}\n`;
+      kpis.length
+        ? kpis.forEach((kpi: any, i: number) => {
+            text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
+            text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
+            text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
+            const owner =
+              kpi.owner ||
+              kpi.assignee?.name ||
+              kpi.assignee?.full_name ||
+              kpi.assignee?.email;
+            if (owner) text += `   Owner: ${owner}\n`;
+          })
+        : (text += `(No KPIs)\n`);
+      text += `\n`;
+
+      text += `KEY PROCESSES\n${"-".repeat(60)}\n`;
+      sops.length
+        ? sops.forEach((sop: any, i: number) => {
+            text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
+            text += `   Status: ${sop.status || "to_start"}\n`;
+            const owner =
+              sop.owner ||
+              sop.assignee?.name ||
+              sop.assignee?.full_name ||
+              sop.assignee?.email;
+            if (owner) text += `   Owner: ${owner}\n`;
+          })
+        : (text += `(No SOPs)\n`);
+      text += `\n`;
+
+      text += `SWOT ANALYSIS\n${"-".repeat(60)}\n\n`;
+      (
+        ["strengths", "weaknesses", "opportunities", "threats"] as const
+      ).forEach((key) => {
+        text += `${key.charAt(0).toUpperCase() + key.slice(1)}:\n`;
+        swotData[key].length
+          ? swotData[key].forEach((item, i) => {
+              text += `  ${i + 1}. ${item}\n`;
+            })
+          : (text += `  (No items)\n`);
+        text += `\n`;
+      });
+
+      await navigator.clipboard.writeText(text.trim());
+      alert("Business Plan copied to clipboard!");
+    } catch (err) {
+      console.error("Copy failed", err);
+      alert("Failed to copy plan.");
+    } finally {
+      setIsCopyingPlan(false);
+    }
+  };
+
+  // ── Overview Media Handlers ──
+  const handleAddImage = async () => {
+    const trimmed = newImageUrl.trim();
+    if (!trimmed) return;
+    setIsSavingImages(true);
+    setMediaSaveError(null);
+    try {
+      const updated = [...overviewImages, trimmed];
+      await saveOverviewImagesApi(updated);
+      setOverviewImages(updated);
+      setNewImageUrl("");
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to save image.");
+    } finally {
+      setIsSavingImages(false);
+    }
+  };
+
+  const handleDeleteImage = async (index: number) => {
+    const updated = overviewImages.filter((_, i) => i !== index);
+    setIsSavingImages(true);
+    setMediaSaveError(null);
+    try {
+      await saveOverviewImagesApi(updated);
+      setOverviewImages(updated);
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to delete image.");
+    } finally {
+      setIsSavingImages(false);
+    }
+  };
+
+  const handleAddVideo = async () => {
+    const trimmed = newVideoUrl.trim();
+    if (!trimmed) return;
+    setIsSavingVideos(true);
+    setMediaSaveError(null);
+    try {
+      const updated = [...overviewVideos, trimmed];
+      await saveOverviewVideosApi(updated);
+      setOverviewVideos(updated);
+      setNewVideoUrl("");
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to save video.");
+    } finally {
+      setIsSavingVideos(false);
+    }
+  };
+
+  const handleDeleteVideo = async (index: number) => {
+    const updated = overviewVideos.filter((_, i) => i !== index);
+    setIsSavingVideos(true);
+    setMediaSaveError(null);
+    try {
+      await saveOverviewVideosApi(updated);
+      setOverviewVideos(updated);
+    } catch (err: any) {
+      setMediaSaveError(err.message || "Failed to delete video.");
+    } finally {
+      setIsSavingVideos(false);
+    }
+  };
 
   // ── Modal openers ──
   const openTopModal = (modalName: string) => {
@@ -1034,10 +2057,12 @@ const BusinessPlanAndGoles = () => {
       setTempBrandVideoUrl(brandVideoUrl);
       setBrandSaveError(null);
       setPendingDeleteIds([]);
+
+      // ✅ NAYA CODE: Modal open hote hi fresh KPIs fetch karein
+      loadKpis();
     }
     setActiveTopModal(modalName);
   };
-
   // ── Save handlers ──
   const saveTopPurpose = async () => {
     setIsSavingPurpose(true);
@@ -1045,7 +2070,6 @@ const BusinessPlanAndGoles = () => {
     try {
       const trimmedText = tempPurposeText.trim();
       const trimmedVideo = tempPurposeVideoUrl.trim();
-
       if (!trimmedText && !trimmedVideo && purposeRecordId) {
         await deleteExtraFieldFromApi(purposeRecordId);
         setPurposeText("");
@@ -1062,7 +2086,6 @@ const BusinessPlanAndGoles = () => {
         setPurposeVideoUrl(resObj.videoUrl);
         setPurposeRecordId(resObj.recordId);
         setActiveTopModal(null);
-        // Note: Intentional removal of fetchPurposeFromApi() to prevent backend lag wiping UI
       }
     } catch (err: any) {
       setPurposeSaveError(err.message || "Failed to save. Please try again.");
@@ -1084,13 +2107,11 @@ const BusinessPlanAndGoles = () => {
         }
       }
       setPendingCoreDeleteIds([]);
-
       if (filtered.length > 0 || tempCoreVideoUrl.trim() !== "") {
         const resObj = await saveCoreValuesToApi(
           filtered.map((v) => v.value),
           tempCoreVideoUrl
         );
-        // Merge the newly created IDs back into our state without wiping the values
         const merged = filtered.map((v, i) => ({
           ...v,
           id: resObj.values[i]?.id ?? v.id,
@@ -1101,9 +2122,7 @@ const BusinessPlanAndGoles = () => {
         setCoreValues([]);
         setCoreVideoUrl(tempCoreVideoUrl);
       }
-
       setActiveTopModal(null);
-      // Note: Intentional removal of fetchCoreValuesFromApi() to prevent backend lag wiping UI
     } catch (err: any) {
       setCoreSaveError(err.message || "Failed to save. Please try again.");
     } finally {
@@ -1126,24 +2145,16 @@ const BusinessPlanAndGoles = () => {
       setPendingDeleteIds([]);
 
       if (filtered.length > 0 || tempBrandVideoUrl.trim() !== "") {
-        const resObj = await saveBrandPromisesToApi(
-          filtered,
-          tempBrandVideoUrl
-        );
-        // Merge the newly created IDs back into our state without wiping the KPIs!
-        const merged = filtered.map((p, i) => ({
-          ...p,
-          id: resObj.promises[i]?.id ?? p.id,
-        }));
-        setBrandPromises(merged);
+        await saveBrandPromisesToApi(filtered, tempBrandVideoUrl);
+        setBrandPromises(filtered.map((p) => ({ ...p, kpis: [...p.kpis] })));
         setBrandVideoUrl(tempBrandVideoUrl);
       } else {
+        await saveBrandPromisesToApi([], tempBrandVideoUrl);
         setBrandPromises([]);
         setBrandVideoUrl(tempBrandVideoUrl);
       }
 
       setActiveTopModal(null);
-      // Note: Intentional removal of fetchBrandPromisesFromApi() to prevent backend lag wiping UI
     } catch (err: any) {
       setBrandSaveError(err.message || "Failed to save. Please try again.");
     } finally {
@@ -1191,6 +2202,35 @@ const BusinessPlanAndGoles = () => {
     setTempBrandPromises(updated);
   };
 
+  // ── Brand Drag & Drop ──
+  const onDragStartBrand = (
+    e: React.DragEvent<HTMLDivElement>,
+    position: number
+  ) => {
+    dragBrandItem.current = position;
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const onDragEnterBrand = (
+    e: React.DragEvent<HTMLDivElement>,
+    position: number
+  ) => {
+    e.preventDefault();
+    dragBrandOverItem.current = position;
+    setDragBrandOverIdx(position);
+  };
+  const onDragEndBrand = () => {
+    if (dragBrandItem.current !== null && dragBrandOverItem.current !== null) {
+      const copy = [...tempBrandPromises];
+      const item = copy[dragBrandItem.current];
+      copy.splice(dragBrandItem.current, 1);
+      copy.splice(dragBrandOverItem.current, 0, item);
+      dragBrandItem.current = null;
+      dragBrandOverItem.current = null;
+      setDragBrandOverIdx(null);
+      setTempBrandPromises(copy);
+    }
+  };
+
   // ── Core value handlers ──
   const handleCoreValueChange = (index: number, value: string) => {
     const updated = [...tempCoreValues];
@@ -1206,6 +2246,35 @@ const BusinessPlanAndGoles = () => {
   const handleAddCoreValue = () =>
     setTempCoreValues([...tempCoreValues, { id: null, value: "" }]);
 
+  // ── Core Drag & Drop ──
+  const onDragStartCore = (
+    e: React.DragEvent<HTMLDivElement>,
+    position: number
+  ) => {
+    dragCoreItem.current = position;
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const onDragEnterCore = (
+    e: React.DragEvent<HTMLDivElement>,
+    position: number
+  ) => {
+    e.preventDefault();
+    dragCoreOverItem.current = position;
+    setDragCoreOverIdx(position);
+  };
+  const onDragEndCore = () => {
+    if (dragCoreItem.current !== null && dragCoreOverItem.current !== null) {
+      const copy = [...tempCoreValues];
+      const item = copy[dragCoreItem.current];
+      copy.splice(dragCoreItem.current, 1);
+      copy.splice(dragCoreOverItem.current, 0, item);
+      dragCoreItem.current = null;
+      dragCoreOverItem.current = null;
+      setDragCoreOverIdx(null);
+      setTempCoreValues(copy);
+    }
+  };
+
   const isSavingAny =
     (activeTopModal === "brand" && isSavingBrand) ||
     (activeTopModal === "purpose" && isSavingPurpose) ||
@@ -1216,7 +2285,6 @@ const BusinessPlanAndGoles = () => {
     { key: "goals", label: "Goals" },
   ];
 
-  // ── Skeleton shimmer helper ──
   const Shimmer = ({ w = "100%", h = 16 }: { w?: string; h?: number }) => (
     <div
       className="animate-pulse rounded-xl"
@@ -1224,7 +2292,6 @@ const BusinessPlanAndGoles = () => {
     />
   );
 
-  // ── Empty-add button shared style ──
   const emptyAddBtn = (onClick: () => void, label: string) => (
     <button
       onClick={onClick}
@@ -1253,7 +2320,7 @@ const BusinessPlanAndGoles = () => {
 
   return (
     <div
-      className="bp-wrap min-h-screen p-4 md:p-8 max-w-[1400px] mx-auto space-y-6"
+      className="bp-wrap min-h-screen p-4 md:p-8 w-full mx-auto space-y-6"
       style={{ background: C.pageBg, color: C.textMain, fontFamily: C.font }}
     >
       <ThemeStyle />
@@ -1287,7 +2354,9 @@ const BusinessPlanAndGoles = () => {
           </p>
         </div>
         <div className="flex gap-3 shrink-0">
-          <BtnOutline>Copy Plan</BtnOutline>
+          <BtnOutline onClick={handleCopyPlan} disabled={isCopyingPlan}>
+            {isCopyingPlan ? <LoaderIcon /> : "Copy Plan"}
+          </BtnOutline>
           <BtnPrimary>✨ Create with AI</BtnPrimary>
         </div>
       </div>
@@ -1311,12 +2380,10 @@ const BusinessPlanAndGoles = () => {
         })}
       </div>
 
-      {/* ══════════════════════════════════════
-          STRATEGIC PLAN VIEW
-      ══════════════════════════════════════ */}
+      {/* ══ STRATEGIC PLAN ══ */}
       {activeMainTab === "strategic" && (
         <div className="space-y-6">
-          {/* ── "Our Business Plan" header row ── */}
+          {/* Our Business Plan header */}
           <div
             className="rounded-[8px] p-5 flex items-center justify-between"
             style={{ background: C.tealBg }}
@@ -1351,7 +2418,7 @@ const BusinessPlanAndGoles = () => {
             </div>
           </div>
 
-          {/* ── Add Content Dropdown ── */}
+          {/* Add Content Dropdown */}
           {showAddContent && (
             <div
               className="rounded-2xl overflow-hidden border"
@@ -1376,168 +2443,183 @@ const BusinessPlanAndGoles = () => {
                   </button>
                 ))}
               </div>
+              <div className="p-6">
+                {mediaSaveError && (
+                  <div className="bp-error-banner mb-4">{mediaSaveError}</div>
+                )}
+                {mediaFetchError && (
+                  <div className="bp-error-banner mb-4 flex items-center justify-between">
+                    <span>{mediaFetchError}</span>
+                    <button
+                      onClick={loadOverviewMedia}
+                      className="underline ml-3 shrink-0"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
 
-              <div className="p-10 flex flex-col items-center text-center">
-                {addContentTab === "images" &&
-                  (!showImageInput ? (
-                    <div className="flex flex-col items-center">
-                      <ImagePlaceholder />
-                      <p
-                        className="text-[13px] font-black mb-5"
-                        style={{ color: C.textMuted }}
-                      >
-                        No images added yet
-                      </p>
-                      <BtnPrimary onClick={() => setShowImageInput(true)}>
-                        Add Images
-                      </BtnPrimary>
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-2xl mx-auto text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <span
-                          className="font-black text-[15px]"
-                          style={{ color: C.textMain }}
-                        >
-                          Add Images
-                        </span>
-                        <button
-                          onClick={() => setShowImageInput(false)}
-                          className="text-gray-400 hover:text-gray-700 font-black text-lg transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          type="text"
-                          placeholder="Paste image URL or Google Drive link..."
-                          className="bp-input flex-1"
-                        />
-                        <button
-                          className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97]"
-                          style={{
-                            background: C.primaryTint,
-                            color: C.primaryHov,
-                            borderColor: C.primaryBord,
-                          }}
-                        >
-                          + Add
-                        </button>
-                        <button
-                          className="px-4 py-2 rounded-xl text-[13px] font-black text-white shadow-sm transition-all active:scale-[0.97]"
-                          style={{ background: C.primary }}
-                        >
-                          ↑ Upload
-                        </button>
-                      </div>
-                      <p
-                        className="text-[11px] mb-5 font-semibold"
-                        style={{ color: C.textMuted }}
-                      >
-                        0/12 images • Max 1 MB per image.{" "}
-                        <a
-                          href="#"
-                          style={{ color: C.primary }}
-                          className="hover:underline"
-                        >
-                          Compress images here
-                        </a>
-                      </p>
-                      <p
-                        className="text-[11px] mb-2 font-black"
-                        style={{ color: C.textMuted }}
-                      >
-                        Generate with AI:
-                      </p>
-                      <div className="flex gap-3">
-                        <button
-                          className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
-                        >
-                          ✨ Create Image (overview)
-                        </button>
-                        <button
-                          className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
-                        >
-                          ✨ Create Image (detailed)
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                {addContentTab === "video" &&
-                  (!showVideoInput ? (
-                    <div className="flex flex-col items-center">
-                      <VideoPlaceholder />
-                      <p
-                        className="text-[13px] font-black mb-5"
-                        style={{ color: C.textMuted }}
-                      >
-                        No explainer videos added yet
-                      </p>
-                      <BtnPrimary onClick={() => setShowVideoInput(true)}>
-                        Add Videos
-                      </BtnPrimary>
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-2xl mx-auto text-left">
-                      <div className="flex items-center justify-between mb-4">
-                        <span
-                          className="font-black text-[15px]"
-                          style={{ color: C.textMain }}
-                        >
-                          Add Videos
-                        </span>
-                        <button
-                          onClick={() => setShowVideoInput(false)}
-                          className="text-gray-400 hover:text-gray-700 font-black text-lg transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div className="flex gap-2 mb-3">
-                        <input
-                          type="text"
-                          placeholder="Paste YouTube, Vimeo, or direct video URL..."
-                          className="bp-input flex-1"
-                        />
-                        <button
-                          className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97]"
-                          style={{
-                            background: C.primaryTint,
-                            color: C.primaryHov,
-                            borderColor: C.primaryBord,
-                          }}
-                        >
-                          + Add
-                        </button>
-                      </div>
-                      <p
-                        className="text-[11px] font-black mb-5"
-                        style={{ color: C.textMuted }}
-                      >
-                        0/12 videos added
-                      </p>
-                      <p
-                        className="text-[11px] mb-2 font-black"
-                        style={{ color: C.textMuted }}
-                      >
-                        Generate with AI:
-                      </p>
+                {addContentTab === "images" && (
+                  <div>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text"
+                        value={newImageUrl}
+                        onChange={(e) => setNewImageUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddImage()}
+                        placeholder="Paste image URL or Google Drive link..."
+                        className="bp-input flex-1"
+                        disabled={isSavingImages}
+                      />
                       <button
-                        className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
-                        style={{ borderColor: C.borderLgt }}
+                        onClick={handleAddImage}
+                        disabled={isSavingImages || !newImageUrl.trim()}
+                        className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
+                        style={{
+                          background: C.primaryTint,
+                          color: C.primaryHov,
+                          borderColor: C.primaryBord,
+                        }}
                       >
-                        📄 Create Video Script
+                        {isSavingImages ? <LoaderIcon /> : "+ Add"}
                       </button>
                     </div>
-                  ))}
+                    <p
+                      className="text-[11px] mb-4 font-semibold"
+                      style={{ color: C.textMuted }}
+                    >
+                      {overviewImages.length}/12 images • Max 1 MB per image.{" "}
+                      <a
+                        href="#"
+                        style={{ color: C.primary }}
+                        className="hover:underline"
+                      >
+                        Compress images here
+                      </a>
+                    </p>
+                    {isFetchingMedia ? (
+                      <div
+                        className="w-full rounded-2xl animate-pulse mb-5"
+                        style={{ height: 340, background: "#e5e1d8" }}
+                      />
+                    ) : overviewImages.length === 0 ? (
+                      <div
+                        className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed"
+                        style={{ borderColor: C.primaryBord }}
+                      >
+                        <ImagePlaceholder />
+                        <p
+                          className="text-[13px] font-black"
+                          style={{ color: C.textMuted }}
+                        >
+                          No images added yet
+                        </p>
+                      </div>
+                    ) : (
+                      <InlineImageSlider
+                        images={overviewImages}
+                        onDelete={handleDeleteImage}
+                        isSaving={isSavingImages}
+                      />
+                    )}
+                    <p
+                      className="text-[11px] mb-2 font-black mt-2"
+                      style={{ color: C.textMuted }}
+                    >
+                      Generate with AI:
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
+                        style={{ borderColor: C.borderLgt }}
+                      >
+                        ✨ Create Image (overview)
+                      </button>
+                      <button
+                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
+                        style={{ borderColor: C.borderLgt }}
+                      >
+                        ✨ Create Image (detailed)
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {addContentTab === "video" && (
+                  <div>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text"
+                        value={newVideoUrl}
+                        onChange={(e) => setNewVideoUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
+                        placeholder="Paste YouTube, Vimeo, or direct video URL..."
+                        className="bp-input flex-1"
+                        disabled={isSavingVideos}
+                      />
+                      <button
+                        onClick={handleAddVideo}
+                        disabled={isSavingVideos || !newVideoUrl.trim()}
+                        className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
+                        style={{
+                          background: C.primaryTint,
+                          color: C.primaryHov,
+                          borderColor: C.primaryBord,
+                        }}
+                      >
+                        {isSavingVideos ? <LoaderIcon /> : "+ Add"}
+                      </button>
+                    </div>
+                    <p
+                      className="text-[11px] font-black mb-4"
+                      style={{ color: C.textMuted }}
+                    >
+                      {overviewVideos.length}/12 videos added
+                    </p>
+                    {isFetchingMedia ? (
+                      <div
+                        className="w-full rounded-2xl animate-pulse mb-5"
+                        style={{ height: 340, background: "#e5e1d8" }}
+                      />
+                    ) : overviewVideos.length === 0 ? (
+                      <div
+                        className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed"
+                        style={{ borderColor: C.primaryBord }}
+                      >
+                        <VideoPlaceholder />
+                        <p
+                          className="text-[13px] font-black"
+                          style={{ color: C.textMuted }}
+                        >
+                          No explainer videos added yet
+                        </p>
+                      </div>
+                    ) : (
+                      <InlineVideoPlayer
+                        videos={overviewVideos}
+                        onDelete={handleDeleteVideo}
+                        isSaving={isSavingVideos}
+                      />
+                    )}
+                    <p
+                      className="text-[11px] mb-2 font-black mt-2"
+                      style={{ color: C.textMuted }}
+                    >
+                      Generate with AI:
+                    </p>
+                    <button
+                      className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
+                      style={{ borderColor: C.borderLgt }}
+                    >
+                      📄 Create Video Script
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* ── 3 Cards — Core Values / Purpose / Brand Promises ── */}
+          {/* ── 3 Cards ── */}
           <div className="rounded-[8px] p-6" style={{ background: C.tealBg }}>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">
               Strategic Essentials
@@ -1795,13 +2877,11 @@ const BusinessPlanAndGoles = () => {
 
       {activeMainTab === "goals" && <GoalsView />}
 
-      {/* ══════════════════════════════════════
-          MODALS
-      ══════════════════════════════════════ */}
+      {/* ══ MODALS ══ */}
       {activeTopModal && (
         <Modal onClose={() => setActiveTopModal(null)}>
           <div className="bp-modal-box">
-            {/* Modal Header */}
+            {/* Header */}
             <div
               className="flex justify-between items-center px-6 py-5 border-b"
               style={{ background: C.cardBg, borderColor: C.primaryBord }}
@@ -1846,9 +2926,9 @@ const BusinessPlanAndGoles = () => {
               </BtnIcon>
             </div>
 
-            {/* Modal Body */}
+            {/* Body */}
             <div className="p-6 flex-1 overflow-y-auto bp-scroll">
-              {/* ── Purpose ── */}
+              {/* Purpose */}
               {activeTopModal === "purpose" && (
                 <div className="space-y-5">
                   {purposeSaveError && (
@@ -1895,7 +2975,7 @@ const BusinessPlanAndGoles = () => {
                 </div>
               )}
 
-              {/* ── Core Values ── */}
+              {/* Core Values */}
               {activeTopModal === "core" && (
                 <div className="space-y-5">
                   {coreSaveError && (
@@ -1912,10 +2992,15 @@ const BusinessPlanAndGoles = () => {
                       {tempCoreValues.map((item, idx) => (
                         <div
                           key={item.id ?? idx}
-                          className="flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
+                          draggable
+                          onDragStart={(e) => onDragStartCore(e, idx)}
+                          onDragEnter={(e) => onDragEnterCore(e, idx)}
+                          onDragEnd={onDragEndCore}
+                          onDragOver={(e) => e.preventDefault()}
+                          className={`flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm transition-all ${dragCoreOverIdx === idx ? "drag-over" : ""}`}
+                          style={{ borderColor: C.borderLgt, cursor: "grab" }}
                         >
-                          <div className="shrink-0 p-1 rounded cursor-grab text-gray-300">
+                          <div className="shrink-0 p-1 rounded text-gray-300">
                             <GripIcon />
                           </div>
                           <input
@@ -1924,7 +3009,7 @@ const BusinessPlanAndGoles = () => {
                             onChange={(e) =>
                               handleCoreValueChange(idx, e.target.value)
                             }
-                            className="flex-1 outline-none text-[13px] font-black bg-transparent"
+                            className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add core value"
                             autoFocus={
@@ -1973,7 +3058,7 @@ const BusinessPlanAndGoles = () => {
                 </div>
               )}
 
-              {/* ── Brand Promises ── */}
+              {/* Brand Promises */}
               {activeTopModal === "brand" && (
                 <div className="space-y-5">
                   {brandSaveError && (
@@ -2005,10 +3090,15 @@ const BusinessPlanAndGoles = () => {
                       {tempBrandPromises.map((item, idx) => (
                         <div
                           key={item.id ?? idx}
-                          className="flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm"
-                          style={{ borderColor: C.borderLgt }}
+                          draggable
+                          onDragStart={(e) => onDragStartBrand(e, idx)}
+                          onDragEnter={(e) => onDragEnterBrand(e, idx)}
+                          onDragEnd={onDragEndBrand}
+                          onDragOver={(e) => e.preventDefault()}
+                          className={`flex items-center gap-3 border rounded-2xl p-2.5 bg-white shadow-sm transition-all ${dragBrandOverIdx === idx ? "drag-over" : ""}`}
+                          style={{ borderColor: C.borderLgt, cursor: "grab" }}
                         >
-                          <div className="shrink-0 p-1 rounded cursor-grab text-gray-300">
+                          <div className="shrink-0 p-1 rounded text-gray-300">
                             <GripIcon />
                           </div>
                           <input
@@ -2017,7 +3107,7 @@ const BusinessPlanAndGoles = () => {
                             onChange={(e) =>
                               handleBrandPromiseChange(idx, e.target.value)
                             }
-                            className="flex-1 outline-none text-[13px] font-black bg-transparent"
+                            className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add promise"
                             autoFocus={
@@ -2144,7 +3234,7 @@ const BusinessPlanAndGoles = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
+            {/* Footer */}
             <div
               className="p-5 flex justify-end gap-3 border-t"
               style={{ background: C.cardBg, borderColor: C.primaryBord }}

@@ -107,57 +107,6 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   department: apiUser.department?.department_name ?? "",
 });
 
-const columns: ColumnConfig[] = [
-  { key: "id", label: "ID", sortable: true, draggable: true },
-  { key: "active", label: "Active", sortable: true, draggable: true },
-  { key: "userName", label: "User Name", sortable: true, draggable: true },
-  { key: "gender", label: "Gender", sortable: true, draggable: true },
-  { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
-  { key: "email", label: "Email", sortable: true, draggable: true },
-  {
-    key: "vendorCompany",
-    label: "Vendor Company Name",
-    sortable: true,
-    draggable: true,
-  },
-  {
-    key: "entityName",
-    label: "Entity Name",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "department", label: "Department", sortable: true, draggable: true },
-  { key: "unit", label: "Unit", sortable: true, draggable: true },
-  { key: "role", label: "Role", sortable: true, draggable: true },
-  {
-    key: "employeeId",
-    label: "Employee ID",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "createdBy", label: "Created By", sortable: true, draggable: true },
-  {
-    key: "accessLevel",
-    label: "Access Level",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "type", label: "Type", sortable: true, draggable: true },
-  { key: "status", label: "Status", sortable: true, draggable: true },
-  // {
-  //   key: "faceRecognition",
-  //   label: "Face Recognition",
-  //   sortable: true,
-  //   draggable: true,
-  // },
-  {
-    key: "appDownloaded",
-    label: "App Downloaded",
-    sortable: true,
-    draggable: true,
-  },
-];
-
 export const FMUserMasterDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl") ?? "";
   const token = localStorage.getItem("token") ?? "";
@@ -196,6 +145,59 @@ export const FMUserMasterDashboard = () => {
     status: "",
     downloaded: undefined,
   });
+
+  const isClubSite = location.pathname.includes("club-management");
+
+  const columns: ColumnConfig[] = [
+    { key: "id", label: "ID", sortable: true, draggable: true },
+    { key: "active", label: "Active", sortable: true, draggable: true },
+    { key: "userName", label: "User Name", sortable: true, draggable: true },
+    { key: "gender", label: "Gender", sortable: true, draggable: true },
+    { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
+    { key: "email", label: "Email", sortable: true, draggable: true },
+    !isClubSite && {
+      key: "vendorCompany",
+      label: "Vendor Company Name",
+      sortable: true,
+      draggable: true,
+    },
+    !isClubSite && {
+      key: "entityName",
+      label: "Entity Name",
+      sortable: true,
+      draggable: true,
+    },
+    !isClubSite && { key: "department", label: "Department", sortable: true, draggable: true },
+    !isClubSite && { key: "unit", label: "Unit", sortable: true, draggable: true },
+    { key: "role", label: "Role", sortable: true, draggable: true },
+    {
+      key: "employeeId",
+      label: "Employee ID",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "createdBy", label: "Created By", sortable: true, draggable: true },
+    {
+      key: "accessLevel",
+      label: "Access Level",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "type", label: "Type", sortable: true, draggable: true },
+    { key: "status", label: "Status", sortable: true, draggable: true },
+    // {
+    //   key: "faceRecognition",
+    //   label: "Face Recognition",
+    //   sortable: true,
+    //   draggable: true,
+    // },
+    {
+      key: "appDownloaded",
+      label: "App Downloaded",
+      sortable: true,
+      draggable: true,
+    },
+  ];
 
   const [fmUsersData, setFmUsersData] = useState<TransformedFMUser[]>([]);
   const [fmForClone, setFmForClone] = useState([])

@@ -36,6 +36,8 @@ const KPI_HISTORY_ENDPOINT_PATHS = ["/kpis/history.json", "/kpis/history"] as co
 const KPI_ARCHIVED_BEARER_TOKEN =
   "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4Nzk4OX0.pHlLUDAbJSUJbV-wTIdDyuXScLS7MKbPY9P3BZ8TmzI";
 const KPI_OWNER_CACHE_KEY = "kpi_owner_name_cache_v1";
+const KPI_ASSIGNEE_CACHE_KEY = "kpi_assignee_ids_cache_v1";
+const KPI_COMPANY_USERS_CACHE_KEY = "kpi_company_users_cache_v1";
 const KPI_ARCHIVE_API_KEY_CACHE = "kpi_archive_api_key_v1";
 const KPI_ARCHIVE_API_BASE_CACHE = "kpi_archive_api_base_v1";
 const KPI_RESTORE_API_KEY_CACHE = "kpi_restore_api_key_v1";
@@ -44,6 +46,9 @@ let runtimeArchiveApiKey: string | null = null;
 let runtimeArchiveApiBase: string | null = null;
 let runtimeRestoreApiKey: string | null = null;
 let runtimeRestoreApiBase: string | null = null;
+let companyUsersRequestPromise: Promise<CompanyUser[]> | null = null;
+let companyUsersMemoryCache: { data: CompanyUser[]; ts: number } | null = null;
+const COMPANY_USERS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type ApiMethod = "post" | "put" | "patch" | "delete";
 type ApiCandidate = {
@@ -58,7 +63,7 @@ type RawKpiData = {
   kpi_name?: string;
   name?: string;
   assignee_name?: string;
-  assignee?: string | { name?: string; full_name?: string };
+  assignee?: string | { id?: string | number; name?: string; full_name?: string };
   target_value?: number;
   current_value?: number;
   unit?: string;
@@ -67,7 +72,10 @@ type RawKpiData = {
   priority?: string;
   department_id?: number;
   assignee_id?: number;
-  assignee_ids?: Array<number | string>;
+  assignee_ids?: Array<number | string> | string;
+  assignees?: Array<{ id?: string | number; user_id?: string | number }>;
+  assigned_users?: Array<{ id?: string | number; user_id?: string | number }>;
+  users?: Array<{ id?: string | number; user_id?: string | number }>;
   description?: string;
   weight?: number;
 };
@@ -95,6 +103,11 @@ type KpiPayload = {
   assignee_ids?: number[];
   weight?: number;
   priority?: string;
+  // Some deployments require org/company scoping fields during create.
+  organization_id?: number | string;
+  organisation_id?: number | string;
+  org_id?: number | string;
+  company_id?: number | string;
 };
 
 type KpiUpdatePayload = {
@@ -119,15 +132,38 @@ type CompanyDepartment = {
 
 type RawCompanyUser = {
   id?: number | string;
+  user_id?: number | string;
   name?: string;
   full_name?: string;
+  employee_name?: string;
+  display_name?: string;
+  user_name?: string;
   firstname?: string;
+  first_name?: string;
   lastname?: string;
+  last_name?: string;
   email?: string;
   official_email?: string;
   work_email?: string;
   department_id?: number | string;
   dept_id?: number | string;
+  user?: {
+    id?: number | string;
+    name?: string;
+    full_name?: string;
+    firstname?: string;
+    first_name?: string;
+    lastname?: string;
+    last_name?: string;
+    email?: string;
+    official_email?: string;
+    work_email?: string;
+    department_id?: number | string;
+  };
+  lock_user_permission?: {
+    department_id?: number | string;
+    employee_id?: number | string;
+  };
 };
 
 type RawDepartment = {
@@ -146,6 +182,52 @@ type RawExtraField = {
   group_name?: string;
   values?: unknown;
   field_description?: string;
+};
+
+const getCachedCompanyUsers = (): CompanyUser[] => {
+  try {
+    const raw = localStorage.getItem(KPI_COMPANY_USERS_CACHE_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => {
+        const record = item as {
+          id?: unknown;
+          name?: unknown;
+          email?: unknown;
+          departmentId?: unknown;
+        };
+
+        const id = Number(record.id);
+        const name = typeof record.name === "string" ? record.name.trim() : "";
+
+        if (!Number.isFinite(id) || !name) return null;
+
+        return {
+          id,
+          name,
+          email: typeof record.email === "string" ? record.email : undefined,
+          departmentId:
+            Number.isFinite(Number(record.departmentId))
+              ? Number(record.departmentId)
+              : undefined,
+        } as CompanyUser;
+      })
+      .filter((user): user is CompanyUser => user !== null);
+  } catch {
+    return [];
+  }
+};
+
+const setCachedCompanyUsers = (users: CompanyUser[]): void => {
+  try {
+    localStorage.setItem(KPI_COMPANY_USERS_CACHE_KEY, JSON.stringify(users));
+  } catch {
+    // Ignore cache write errors to avoid blocking UI updates.
+  }
 };
 
 const KPI_UNITS_GROUP_NAME = "kpi_units_configuration";
@@ -246,34 +328,222 @@ const getApiErrorMessage = (error: unknown): string => {
 };
 
 const fetchCompanyUsers = async (): Promise<CompanyUser[]> => {
-  const { data } = await Axios.get(
-    `${getApiBaseUrl()}/pms/users/get_escalate_to_users.json`,
-    { headers: apiHeaders() }
-  );
+  if (
+    companyUsersMemoryCache &&
+    Date.now() - companyUsersMemoryCache.ts < COMPANY_USERS_CACHE_TTL_MS
+  ) {
+    return companyUsersMemoryCache.data;
+  }
 
-  const rawUsers = Array.isArray(data)
-    ? data
-    : (data.users ?? data.fm_users ?? data.data ?? []);
+  if (companyUsersRequestPromise) {
+    return companyUsersRequestPromise;
+  }
 
-  if (!Array.isArray(rawUsers)) return [];
+  const normalizeUsers = (rawUsers: RawCompanyUser[]): CompanyUser[] => {
+    const normalizedUsers = rawUsers
+    .map((u: RawCompanyUser) => {
+      const id = Number(u.id ?? u.user_id ?? u.user?.id);
 
-  return rawUsers
-    .map((u: RawCompanyUser) => ({
-      id: Number(u.id),
-      name:
-        u.name ??
-        u.full_name ??
-        [u.firstname, u.lastname].filter(Boolean).join(" ") ??
-        `User ${u.id}`,
-      email: u.email ?? u.official_email ?? u.work_email,
-      departmentId:
-        u.department_id != null
-          ? Number(u.department_id)
-          : u.dept_id != null
-            ? Number(u.dept_id)
+      const fullNameFromParts = [
+        u.firstname ?? u.first_name,
+        u.lastname ?? u.last_name,
+      ]
+        .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
+        .join(" ");
+
+      const nestedFullNameFromParts = [
+        u.user?.firstname ?? u.user?.first_name,
+        u.user?.lastname ?? u.user?.last_name,
+      ]
+        .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
+        .join(" ");
+
+      const email =
+        u.email ??
+        u.official_email ??
+        u.work_email ??
+        u.user?.email ??
+        u.user?.official_email ??
+        u.user?.work_email;
+
+      const fullNameCandidates = [
+        u.full_name,
+        u.employee_name,
+        u.display_name,
+        fullNameFromParts,
+        u.user?.full_name,
+        nestedFullNameFromParts,
+        u.name,
+        u.user?.name,
+      ];
+
+      const fallbackNameCandidates = [
+        u.name,
+        u.user_name,
+        u.user?.name,
+        email,
+      ];
+
+      const primaryName =
+        [...fullNameCandidates, ...fallbackNameCandidates].find(
+          (candidate): candidate is string =>
+            typeof candidate === "string" && candidate.trim().length > 0
+        )?.trim() ?? `User ${id}`;
+      const name = primaryName;
+
+      const departmentIdRaw =
+        u.department_id ??
+        u.dept_id ??
+        u.user?.department_id ??
+        u.lock_user_permission?.department_id;
+
+      return {
+        id,
+        name,
+        email,
+        departmentId:
+          departmentIdRaw != null && Number.isFinite(Number(departmentIdRaw))
+            ? Number(departmentIdRaw)
             : undefined,
-    }))
-    .filter((u: CompanyUser) => Number.isFinite(u.id) && !!u.name);
+      };
+    })
+    .filter((u: CompanyUser) => Number.isFinite(u.id) && u.name.trim().length > 0);
+
+    const dedupedById = new Map<number, CompanyUser>();
+    for (const user of normalizedUsers) {
+      dedupedById.set(user.id, user);
+    }
+
+    return Array.from(dedupedById.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+    );
+  };
+
+  const extractRawUsers = (data: unknown): RawCompanyUser[] => {
+    if (Array.isArray(data)) return data as RawCompanyUser[];
+    if (!data || typeof data !== "object") return [];
+
+    const obj = data as Record<string, unknown>;
+    const candidates = [obj.users, obj.fm_users, obj.data];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) return candidate as RawCompanyUser[];
+      if (candidate && typeof candidate === "object") {
+        const nested = candidate as Record<string, unknown>;
+        if (Array.isArray(nested.users)) return nested.users as RawCompanyUser[];
+      }
+    }
+
+    return [];
+  };
+
+  const endpointCandidates = (() => {
+    const rawUser = localStorage.getItem("user");
+    let parsedUser: {
+      organization_id?: string | number;
+      org_id?: string | number;
+      company_id?: string | number;
+      lock_role?: { company_id?: string | number };
+    } | null = null;
+
+    if (rawUser) {
+      try {
+        parsedUser = JSON.parse(rawUser);
+      } catch {
+        parsedUser = null;
+      }
+    }
+
+    const orgId =
+      localStorage.getItem("org_id") ||
+      localStorage.getItem("organization_id") ||
+      (parsedUser?.organization_id != null ? String(parsedUser.organization_id) : "") ||
+      (parsedUser?.org_id != null ? String(parsedUser.org_id) : "") ||
+      (parsedUser?.company_id != null ? String(parsedUser.company_id) : "") ||
+      (parsedUser?.lock_role?.company_id != null
+        ? String(parsedUser.lock_role.company_id)
+        : "");
+
+    if (orgId) {
+      return [
+        `/api/users?organization_id=${encodeURIComponent(orgId)}`,
+        `/api/users?organisation_id=${encodeURIComponent(orgId)}`,
+      ];
+    }
+
+    return ["/api/users"];
+  })();
+
+  companyUsersRequestPromise = (async () => {
+    const bases = getApiBaseCandidates();
+    const requestUrls = Array.from(
+      new Set(
+        bases.flatMap((base) => endpointCandidates.map((endpoint) => `${base}${endpoint}`))
+      )
+    );
+
+    if (requestUrls.length === 0) return [];
+
+    const requestOptions = {
+      headers: apiHeaders(),
+      timeout: 15000,
+    };
+
+    try {
+      // Try sequentially so we don't spam multiple org variants.
+      let lastError: unknown = null;
+      let users: CompanyUser[] = [];
+
+      for (const url of requestUrls) {
+        try {
+          const getWithRetry = async () => {
+            try {
+              return await Axios.get(url, requestOptions);
+            } catch (error) {
+              // Retry once for transient network/5xx/timeouts.
+              const status = Axios.isAxiosError(error) ? error.response?.status : undefined;
+              const code = Axios.isAxiosError(error) ? error.code : undefined;
+              const retryable =
+                status == null ||
+                (typeof status === "number" && status >= 500) ||
+                code === "ECONNABORTED";
+              if (!retryable) throw error;
+              await new Promise((r) => setTimeout(r, 400));
+              return await Axios.get(url, requestOptions);
+            }
+          };
+
+          const { data } = await getWithRetry();
+          const normalized = normalizeUsers(extractRawUsers(data));
+          if (normalized.length > 0) {
+            users = normalized;
+            break;
+          }
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      if (users.length === 0) {
+        throw lastError ?? new Error("All user endpoints returned empty lists");
+      }
+
+      companyUsersMemoryCache = {
+        data: users,
+        ts: Date.now(),
+      };
+
+      return users;
+    } catch (error) {
+      // Fall back to an empty list instead of delaying UI with repeated retries.
+      console.error("Failed to fetch company users:", error);
+      return [];
+    } finally {
+      companyUsersRequestPromise = null;
+    }
+  })();
+
+  return companyUsersRequestPromise;
 };
 
 const fetchCompanyDepartments = async (): Promise<CompanyDepartment[]> => {
@@ -586,13 +856,51 @@ const normalizeKpiFromAPI = (raw: RawKpiData): KPICardData => {
   const priority = (priorityMap[raw.priority?.toLowerCase() ?? "medium"] ??
     "medium") as "low" | "medium" | "high";
 
-  const assigneeIds = Array.isArray(raw.assignee_ids)
-    ? raw.assignee_ids
-        .map((id) => Number(id))
-        .filter((id) => Number.isFinite(id))
-    : raw.assignee_id != null
-      ? [Number(raw.assignee_id)]
-      : [];
+  const assigneeIds = (() => {
+    const toId = (value: unknown): number | null => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const ids: number[] = [];
+
+    const pushId = (value: unknown) => {
+      const parsed = toId(value);
+      if (parsed != null) ids.push(parsed);
+    };
+
+    if (Array.isArray(raw.assignee_ids)) {
+      raw.assignee_ids.forEach((id) => pushId(id));
+    } else if (typeof raw.assignee_ids === "string") {
+      raw.assignee_ids
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean)
+        .forEach((id) => pushId(id));
+    }
+
+    if (Array.isArray(raw.assignees)) {
+      raw.assignees.forEach((item) => pushId(item.id ?? item.user_id));
+    }
+
+    if (Array.isArray(raw.assigned_users)) {
+      raw.assigned_users.forEach((item) => pushId(item.id ?? item.user_id));
+    }
+
+    if (Array.isArray(raw.users)) {
+      raw.users.forEach((item) => pushId(item.id ?? item.user_id));
+    }
+
+    if (typeof raw.assignee === "object" && raw.assignee) {
+      pushId(raw.assignee.id);
+    }
+
+    if (raw.assignee_id != null) {
+      pushId(raw.assignee_id);
+    }
+
+    return Array.from(new Set(ids));
+  })();
 
   const primaryAssigneeId =
     assigneeIds.length > 0
@@ -912,19 +1220,195 @@ const fetchKpiById = async (id: string | number): Promise<KPICardData | null> =>
 };
 
 const createKpi = async (payload: KpiPayload) => {
-  try {
-    const { data: json } = await Axios.post(
-      `${getApiBaseUrl()}/kpis`,
-      { kpi: payload },
+  const rawUser = localStorage.getItem("user");
+  const parsedUser = (() => {
+    if (!rawUser) return null;
+    try {
+      return JSON.parse(rawUser) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  })();
+
+  const orgIdFromStorage =
+    localStorage.getItem("org_id") ||
+    localStorage.getItem("organization_id") ||
+    localStorage.getItem("organisation_id") ||
+    (parsedUser && typeof parsedUser === "object"
+      ? (parsedUser.organization_id ??
+          parsedUser.organisation_id ??
+          parsedUser.org_id ??
+          parsedUser.company_id ??
+          (parsedUser.lock_role as { company_id?: unknown } | undefined)?.company_id ??
+          null)
+      : null);
+  const orgId =
+    orgIdFromStorage != null && String(orgIdFromStorage).trim().length > 0
+      ? String(orgIdFromStorage).trim()
+      : null;
+
+  const cleanCreatePayload = (
+    candidate: Partial<KpiPayload>
+  ): Partial<KpiPayload> =>
+    Object.fromEntries(
+      Object.entries(candidate).filter(([, value]) => value !== undefined && value !== null)
+    ) as Partial<KpiPayload>;
+
+  const withOrgScope = <T extends Partial<KpiPayload>>(candidate: T): T => {
+    if (!orgId) return candidate;
+    return {
+      ...candidate,
+      organization_id: candidate.organization_id ?? orgId,
+      organisation_id: candidate.organisation_id ?? orgId,
+      org_id: candidate.org_id ?? orgId,
+      company_id: candidate.company_id ?? orgId,
+    };
+  };
+
+  const fullPayload = cleanCreatePayload(payload);
+  const withoutAssigneeIdsPayload = cleanCreatePayload({
+    ...payload,
+    assignee_ids: undefined,
+  });
+  const minimalPayload = cleanCreatePayload({
+    name: payload.name,
+    category: payload.category,
+    unit: payload.unit,
+    frequency: payload.frequency,
+    target_value: payload.target_value,
+    current_value: payload.current_value,
+    department_id: payload.department_id,
+    assignee_id: payload.assignee_id,
+    weight: payload.weight,
+    priority: payload.priority,
+    description: payload.description,
+  });
+
+  const payloadCandidates = [fullPayload, withoutAssigneeIdsPayload, minimalPayload]
+    .map((candidate) => withOrgScope(candidate))
+    .filter(
+    (candidate, idx, arr) =>
+      idx === arr.findIndex((item) => JSON.stringify(item) === JSON.stringify(candidate))
+  );
+
+  const endpointCandidates = ["/kpis", "/kpis.json", "/api/kpis", "/api/kpis.json"];
+  const bases = Array.from(new Set(getApiBaseCandidates()));
+  const headersCandidates = (() => {
+    const token = getToken();
+    const bearer = apiHeaders();
+
+    if (!token) return [bearer];
+
+    return [
+      bearer,
       {
-        headers: apiHeaders(),
+        ...bearer,
+        Authorization: token,
+      },
+    ];
+  })();
+  let lastError: unknown = null;
+
+  for (const base of bases) {
+    for (const endpoint of endpointCandidates) {
+      const urlCandidates = (() => {
+        const baseUrl = `${base}${endpoint}`;
+        if (!orgId) return [baseUrl];
+        const sep = baseUrl.includes("?") ? "&" : "?";
+        return [
+          baseUrl,
+          `${baseUrl}${sep}organization_id=${encodeURIComponent(orgId)}`,
+          `${baseUrl}${sep}organisation_id=${encodeURIComponent(orgId)}`,
+          `${baseUrl}${sep}org_id=${encodeURIComponent(orgId)}`,
+          `${baseUrl}${sep}company_id=${encodeURIComponent(orgId)}`,
+        ];
+      })();
+
+      for (const candidate of payloadCandidates) {
+        const bodyCandidates: Array<Record<string, unknown>> = (() => {
+          const baseKpiWrapped = { kpi: candidate };
+          const baseFlat = candidate as Record<string, unknown>;
+
+          if (!orgId) return [baseKpiWrapped, baseFlat];
+
+          // Try org scoping both at top-level and inside `kpi`, since APIs differ.
+          const orgScopedTopLevel = {
+            ...baseKpiWrapped,
+            organization_id: orgId,
+            organisation_id: orgId,
+            org_id: orgId,
+            company_id: orgId,
+          };
+          const orgScopedInsideKpi = {
+            kpi: {
+              ...candidate,
+              organization_id: orgId,
+              organisation_id: orgId,
+              org_id: orgId,
+              company_id: orgId,
+            },
+          };
+          const orgScopedFlat = {
+            ...baseFlat,
+            organization_id: orgId,
+            organisation_id: orgId,
+            org_id: orgId,
+            company_id: orgId,
+          };
+
+          return [orgScopedInsideKpi, orgScopedTopLevel, orgScopedFlat, baseKpiWrapped, baseFlat];
+        })();
+
+        for (const requestBody of bodyCandidates) {
+          for (const headers of headersCandidates) {
+            for (const url of urlCandidates) {
+        try {
+          const { data: json } = await Axios.post(
+            url,
+            requestBody,
+            {
+              headers,
+              timeout: 20000,
+            }
+          );
+          const created =
+            json && typeof json === "object"
+              ? ((json as { data?: unknown; kpi?: unknown }).data ??
+                (json as { data?: unknown; kpi?: unknown }).kpi ??
+                json)
+              : {
+                  ...candidate,
+                  id: `tmp-${Date.now()}`,
+                };
+
+          return normalizeKpiFromAPI(created as RawKpiData);
+        } catch (error) {
+          lastError = error;
+          if (Axios.isAxiosError(error)) {
+            // Axios v1 uses `ERR_CANCELED` when aborted; surface a clearer log.
+            if (error.code === "ERR_CANCELED") {
+              console.error("[createKpi] request canceled/aborted:", {
+                endpoint: url,
+                payload: requestBody,
+              });
+            }
+            console.error("[createKpi] status:", error.response?.status);
+            console.error("[createKpi] response body:", JSON.stringify(error.response?.data));
+            console.error("[createKpi] sent payload:", JSON.stringify(requestBody));
+            console.error("[createKpi] endpoint:", url);
+          } else {
+            console.error("[createKpi] unknown error:", error);
+          }
+        }
+            }
+          }
+        }
       }
-    );
-    return normalizeKpiFromAPI(json.data ?? json.kpi ?? json);
-  } catch (error) {
-    console.error("Create KPI error:", error);
-    throw error;
+    }
   }
+
+  console.error("Create KPI error:", lastError);
+  throw lastError ?? new Error("Failed to create KPI");
 };
 
 const cleanKpiUpdatePayload = (
@@ -994,10 +1478,17 @@ const assignKpiUsers = async (
   ownerName?: string
 ) => {
   try {
+    const normalizedOwnerName =
+      typeof ownerName === "string" && ownerName.trim().length > 0
+        ? ownerName.trim()
+        : undefined;
     const payload = {
       kpi: {
         assignee_id: assigneeIds[0] ?? null,
         assignee_ids: assigneeIds,
+        // Some KPI APIs require the employee name field explicitly.
+        ...(normalizedOwnerName ? { assignee_name: normalizedOwnerName } : {}),
+        ...(normalizedOwnerName ? { owner_name: normalizedOwnerName } : {}),
       },
     };
 
@@ -1339,7 +1830,9 @@ const KPI = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([]);
+  const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>(() =>
+    getCachedCompanyUsers()
+  );
   const [companyDepartments, setCompanyDepartments] = useState<CompanyDepartment[]>([]);
   const [kpiUnits, setKpiUnits] = useState<string[]>(DEFAULT_KPI_UNITS);
   const [kpiUnitIdMap, setKpiUnitIdMap] = useState<Record<string, number>>({});
@@ -1359,12 +1852,42 @@ const KPI = () => {
     }
   }, []);
 
+  const getAssigneeCache = useCallback((): Record<string, number[]> => {
+    try {
+      const raw = localStorage.getItem(KPI_ASSIGNEE_CACHE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      if (!parsed || typeof parsed !== "object") return {};
+
+      return Object.fromEntries(
+        Object.entries(parsed).map(([kpiId, value]) => {
+          const ids = Array.isArray(value)
+            ? value
+                .map((id) => Number(id))
+                .filter((id) => Number.isFinite(id))
+            : [];
+          return [kpiId, Array.from(new Set(ids))];
+        })
+      );
+    } catch {
+      return {};
+    }
+  }, []);
+
   const getCachedOwnerName = useCallback(
     (kpiId: string): string | undefined => {
       const cache = getOwnerCache();
       return cache[kpiId];
     },
     [getOwnerCache]
+  );
+
+  const getCachedAssigneeIds = useCallback(
+    (kpiId: string): number[] => {
+      const cache = getAssigneeCache();
+      return cache[kpiId] ?? [];
+    },
+    [getAssigneeCache]
   );
 
   const upsertOwnerCache = useCallback(
@@ -1388,12 +1911,74 @@ const KPI = () => {
     [getOwnerCache]
   );
 
-  const resolveOwnerName = useCallback(
-    (owner: string | undefined, assigneeId: number | null | undefined, assigneeIds: number[] | undefined) => {
-      if (owner && owner.trim() && owner !== "Unassigned") {
-        return owner;
+  const upsertAssigneeCache = useCallback(
+    (items: Array<{ id: string; assigneeIds?: number[]; assigneeId?: number | null }>) => {
+      const cache = getAssigneeCache();
+      let changed = false;
+
+      for (const item of items) {
+        const ids = Array.from(
+          new Set(
+            [
+              ...(Array.isArray(item.assigneeIds) ? item.assigneeIds : []),
+              item.assigneeId,
+            ]
+              .map((id) => Number(id))
+              .filter((id) => Number.isFinite(id))
+          )
+        );
+
+        if (ids.length === 0) continue;
+
+        const prev = cache[item.id] ?? [];
+        if (JSON.stringify(prev) !== JSON.stringify(ids)) {
+          cache[item.id] = ids;
+          changed = true;
+        }
       }
 
+      if (changed) {
+        localStorage.setItem(KPI_ASSIGNEE_CACHE_KEY, JSON.stringify(cache));
+      }
+    },
+    [getAssigneeCache]
+  );
+
+  const hydrateKpiAssignees = useCallback(
+    <T extends KPICardData>(kpi: T): T => {
+      const currentIds = Array.from(
+        new Set(
+          [
+            ...(Array.isArray(kpi.assigneeIds) ? kpi.assigneeIds : []),
+            kpi.assigneeId,
+          ]
+            .map((id) => Number(id))
+            .filter((id) => Number.isFinite(id))
+        )
+      );
+
+      if (currentIds.length > 0) {
+        return {
+          ...kpi,
+          assigneeIds: currentIds,
+          assigneeId: currentIds[0] ?? null,
+        };
+      }
+
+      const cachedIds = getCachedAssigneeIds(String(kpi.id));
+      if (cachedIds.length === 0) return kpi;
+
+      return {
+        ...kpi,
+        assigneeIds: cachedIds,
+        assigneeId: cachedIds[0] ?? null,
+      };
+    },
+    [getCachedAssigneeIds]
+  );
+
+  const resolveOwnerName = useCallback(
+    (owner: string | undefined, assigneeId: number | null | undefined, assigneeIds: number[] | undefined) => {
       const candidateIds = [
         assigneeId,
         ...(Array.isArray(assigneeIds) ? assigneeIds : []),
@@ -1406,6 +1991,10 @@ const KPI = () => {
         if (user?.name) {
           return user.name;
         }
+      }
+
+      if (owner && owner.trim() && owner !== "Unassigned") {
+        return owner;
       }
 
       return owner && owner.trim() ? owner : "Unassigned";
@@ -1426,6 +2015,14 @@ const KPI = () => {
     [getCachedOwnerName, resolveOwnerName]
   );
 
+  const hydrateKpiData = useCallback(
+    <T extends KPICardData>(kpi: T): T => {
+      const withAssignees = hydrateKpiAssignees(kpi);
+      return hydrateKpiOwner(withAssignees);
+    },
+    [hydrateKpiAssignees, hydrateKpiOwner]
+  );
+
   const loadHistoryKpis = useCallback(async () => {
     try {
       const rows = await fetchHistoryKpis();
@@ -1441,14 +2038,14 @@ const KPI = () => {
   const loadArchivedKpis = useCallback(async () => {
     try {
       const data = await fetchArchivedKpis();
-      setArchivedKpis(data.map((kpi) => hydrateKpiOwner(kpi)));
+      setArchivedKpis(data.map((kpi) => hydrateKpiData(kpi)));
     } catch (error) {
       const msg = getApiErrorMessage(error);
       console.error("Failed to load archived KPIs:", msg, error);
       toast.error(`Failed to load archived KPIs: ${msg}`);
       setArchivedKpis([]);
     }
-  }, [hydrateKpiOwner]);
+  }, [hydrateKpiData]);
 
   // Fetch KPIs on component mount
   useEffect(() => {
@@ -1456,7 +2053,7 @@ const KPI = () => {
       setIsLoading(true);
       try {
         const data = await fetchKpis();
-        setKpis(data.map((kpi) => hydrateKpiOwner(kpi)));
+        setKpis(data.map((kpi) => hydrateKpiData(kpi)));
       } catch (error) {
         const msg = getApiErrorMessage(error);
         console.error("Failed to load KPIs:", msg, error);
@@ -1468,7 +2065,7 @@ const KPI = () => {
     };
 
     loadKpis();
-  }, [hydrateKpiOwner]);
+  }, [hydrateKpiData]);
 
   useEffect(() => {
     loadArchivedKpis();
@@ -1489,6 +2086,7 @@ const KPI = () => {
       try {
         const users = await fetchCompanyUsers();
         setCompanyUsers(users);
+        setCachedCompanyUsers(users);
       } catch (error) {
         const msg = getApiErrorMessage(error);
         console.error("Failed to load company users:", msg, error);
@@ -1502,23 +2100,43 @@ const KPI = () => {
     if (companyUsers.length === 0) return;
 
     setKpis((prev) =>
-      prev.map((kpi) => hydrateKpiOwner(kpi))
+      prev.map((kpi) => hydrateKpiData(kpi))
     );
 
     setArchivedKpis((prev) =>
-      prev.map((kpi) => hydrateKpiOwner(kpi))
+      prev.map((kpi) => hydrateKpiData(kpi))
     );
-  }, [companyUsers, hydrateKpiOwner]);
+  }, [companyUsers, hydrateKpiData]);
 
   useEffect(() => {
     upsertOwnerCache(kpis.map((kpi) => ({ id: String(kpi.id), owner: kpi.owner })));
   }, [kpis, upsertOwnerCache]);
 
   useEffect(() => {
+    upsertAssigneeCache(
+      kpis.map((kpi) => ({
+        id: String(kpi.id),
+        assigneeIds: kpi.assigneeIds,
+        assigneeId: kpi.assigneeId,
+      }))
+    );
+  }, [kpis, upsertAssigneeCache]);
+
+  useEffect(() => {
     upsertOwnerCache(
       archivedKpis.map((kpi) => ({ id: String(kpi.id), owner: kpi.owner }))
     );
   }, [archivedKpis, upsertOwnerCache]);
+
+  useEffect(() => {
+    upsertAssigneeCache(
+      archivedKpis.map((kpi) => ({
+        id: String(kpi.id),
+        assigneeIds: kpi.assigneeIds,
+        assigneeId: kpi.assigneeId,
+      }))
+    );
+  }, [archivedKpis, upsertAssigneeCache]);
 
   useEffect(() => {
     const loadDepartments = async () => {
@@ -1651,12 +2269,26 @@ const KPI = () => {
       };
 
       const newKpi = await createKpi(payload);
+      const resolvedAssigneeId = newKpi.assigneeId ?? assigneeIds[0] ?? null;
+      const resolvedAssigneeIds =
+        newKpi.assigneeIds && newKpi.assigneeIds.length > 0
+          ? newKpi.assigneeIds
+          : assigneeIds;
+      const resolvedOwner = resolveOwnerName(
+        newKpi.owner && newKpi.owner !== "Unassigned" ? newKpi.owner : kpiData.owner,
+        resolvedAssigneeId,
+        resolvedAssigneeIds
+      );
+
       // Merge local fields back in case the API response omits them
       const mergedKpi: KPICardData = {
         ...newKpi,
-        assigneeIds: newKpi.assigneeIds && newKpi.assigneeIds.length > 0 ? newKpi.assigneeIds : assigneeIds,
-        assigneeId: newKpi.assigneeId ?? assigneeIds[0] ?? null,
-        owner: newKpi.owner && newKpi.owner !== "Unassigned" ? newKpi.owner : kpiData.owner,
+        assigneeIds: resolvedAssigneeIds,
+        assigneeId: resolvedAssigneeId,
+        owner:
+          resolvedOwner && resolvedOwner !== "Unassigned"
+            ? resolvedOwner
+            : kpiData.owner,
         priority: (kpiData.priority as KPICardData["priority"]) ?? newKpi.priority,
       };
       setKpis((prev) => [mergedKpi, ...prev]);
@@ -1720,13 +2352,11 @@ const KPI = () => {
       const updated = await updateKpi(formValues.id, payload);
       const resolvedAssigneeId =
         formValues.assigneeId ?? updated.assigneeId ?? existing.assigneeId ?? null;
-      const resolvedOwner =
-        updated.owner && updated.owner !== "Unassigned"
-          ? updated.owner
-          : resolvedAssigneeId != null
-            ? companyUsers.find((u) => u.id === Number(resolvedAssigneeId))?.name ??
-              existing.owner
-            : existing.owner;
+      const resolvedOwner = resolveOwnerName(
+        updated.owner && updated.owner !== "Unassigned" ? updated.owner : existing.owner,
+        resolvedAssigneeId,
+        updated.assigneeIds
+      );
 
       const mergedUpdated: KPICardData = {
         ...updated,
@@ -1758,9 +2388,12 @@ const KPI = () => {
   };
 
   const handleManageUsersSave = async (kpiIds: string[], assigneeIds: number[]) => {
-    // Resolve the primary assignee name from companyUsers for owner display
-    const primaryUser = companyUsers.find((u) => u.id === assigneeIds[0]);
-    const ownerName = primaryUser?.name;
+    // Build employee name(s) to send along with IDs (some APIs require this).
+    const selectedUsers = assigneeIds
+      .map((id) => companyUsers.find((u) => u.id === id))
+      .filter((u): u is CompanyUser => !!u && typeof u.name === "string" && u.name.trim().length > 0);
+    const ownerName =
+      selectedUsers.length > 0 ? selectedUsers.map((u) => u.name.trim()).join(", ") : undefined;
 
     const updates = await Promise.all(
       kpiIds.map((kpiId) => assignKpiUsers(kpiId, assigneeIds, ownerName))

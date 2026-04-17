@@ -2757,84 +2757,84 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             <TabsList className="w-full mb-8 flex-wrap h-auto gap-1">
               <TabsTrigger
                 value="summary"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <Target className="w-4 h-4 mr-1" />
                 Product Summary
               </TabsTrigger>
               <TabsTrigger
                 value="features"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <List className="w-4 h-4 mr-1" />
                 Feature List
               </TabsTrigger>
               <TabsTrigger
                 value="market"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <BarChart3 className="w-4 h-4 mr-1" />
                 Market Analysis
               </TabsTrigger>
               <TabsTrigger
                 value="pricing"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <DollarSign className="w-4 h-4 mr-1" />
                 Features & Pricing
               </TabsTrigger>
               <TabsTrigger
                 value="usecases"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <Briefcase className="w-4 h-4 mr-1" />
                 Use Cases
               </TabsTrigger>
               <TabsTrigger
                 value="roadmap"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <Map className="w-4 h-4 mr-1" />
                 Product Roadmap
               </TabsTrigger>
               <TabsTrigger
                 value="business"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <Building2 className="w-4 h-4 mr-1" />
                 Business Plan
               </TabsTrigger>
               <TabsTrigger
                 value="gtm"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <Megaphone className="w-4 h-4 mr-1" />
                 GTM Strategy
               </TabsTrigger>
               <TabsTrigger
                 value="metrics"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <LineChart className="w-4 h-4 mr-1" />
                 Metrics
               </TabsTrigger>
               <TabsTrigger
                 value="swot"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <Compass className="w-4 h-4 mr-1" />
                 SWOT Analysis
               </TabsTrigger>
               <TabsTrigger
                 value="enhancements"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <Rocket className="w-4 h-4 mr-1" />
                 Enhancement Roadmap
               </TabsTrigger>
               <TabsTrigger
                 value="assets"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
               >
                 <CreditCard className="w-4 h-4 mr-1" />
                 Assets & Credentials
@@ -2844,19 +2844,19 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Product Summary Tab */}
             <TabsContent value="summary" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Target className="w-6 h-6" style={{ color: "#C72030" }} />
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
+                    <Target className="w-6 h-6" style={{ color: "#808080" }} />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Product Summary
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6 space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-white p-4 rounded-lg border">
                       <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <Target className="w-4 h-4 text-[#C72030]" /> Vision
+                        <Target className="w-4 h-4 text-[#808080]" /> Vision
                       </h4>
                       <p className="text-sm text-gray-600">
                         {productData.extendedContent.productSummary.vision}
@@ -2864,7 +2864,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                     </div>
                     <div className="bg-white p-4 rounded-lg border">
                       <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <Compass className="w-4 h-4 text-[#C72030]" /> Mission
+                        <Compass className="w-4 h-4 text-[#808080]" /> Mission
                       </h4>
                       <p className="text-sm text-gray-600">
                         {productData.extendedContent.productSummary.mission}
@@ -2915,15 +2915,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Feature List Tab */}
             <TabsContent value="features" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <List className="w-6 h-6" style={{ color: "#C72030" }} />
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
+                    <List className="w-6 h-6" style={{ color: "#808080" }} />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Feature List
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {productData.extendedContent.featureList.map(
                       (category, idx) => (
@@ -2931,7 +2931,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           key={idx}
                           className="bg-white p-4 rounded-lg border"
                         >
-                          <h4 className="font-semibold mb-3 text-[#C72030]">
+                          <h4 className="font-semibold mb-3 text-[#808080]">
                             {category.category}
                           </h4>
                           <ul className="space-y-2">
@@ -2956,24 +2956,24 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Market Analysis Tab */}
             <TabsContent value="market" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <BarChart3
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Market Analysis
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-white p-4 rounded-lg border">
                       <h4 className="font-semibold text-gray-800 mb-2">
                         Market Size
                       </h4>
-                      <p className="text-2xl font-bold text-[#C72030]">
+                      <p className="text-2xl font-bold text-[#808080]">
                         {productData.extendedContent.marketAnalysis.marketSize}
                       </p>
                     </div>
@@ -2994,7 +2994,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                       {productData.extendedContent.marketAnalysis.segments.map(
                         (segment, idx) => (
                           <div key={idx} className="border rounded-lg p-3">
-                            <h5 className="font-medium text-[#C72030] mb-2">
+                            <h5 className="font-medium text-[#808080] mb-2">
                               {segment.segment}
                             </h5>
                             <ul className="text-xs text-gray-600 space-y-1">
@@ -3051,18 +3051,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Features & Pricing Tab */}
             <TabsContent value="pricing" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <DollarSign
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Features & Pricing
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6 space-y-6">
                   <p className="text-sm text-gray-600 italic">
                     {productData.extendedContent.featuresAndPricing.overview}
                   </p>
@@ -3071,12 +3071,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                       (tier, idx) => (
                         <div
                           key={idx}
-                          className={`bg-white p-5 rounded-lg border-2 ${idx === 1 ? "border-[#C72030] shadow-lg" : "border-gray-200"}`}
+                          className={`bg-white p-5 rounded-lg border-2 ${idx === 1 ? "border-[#808080] shadow-lg" : "border-gray-200"}`}
                         >
                           <h4 className="font-bold text-lg text-gray-800">
                             {tier.tier}
                           </h4>
-                          <p className="text-2xl font-bold text-[#C72030] mt-2 mb-4">
+                          <p className="text-2xl font-bold text-[#808080] mt-2 mb-4">
                             {tier.price}
                           </p>
                           <ul className="space-y-2">
@@ -3105,7 +3105,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                             key={i}
                             className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"
                           >
-                            <DollarSign className="w-4 h-4 text-[#C72030]" />
+                            <DollarSign className="w-4 h-4 text-[#808080]" />
                             <span>{addon}</span>
                           </div>
                         )
@@ -3119,18 +3119,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Use Cases Tab */}
             <TabsContent value="usecases" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <Briefcase
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Use Cases
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {productData.extendedContent.useCases.map(
                       (useCase, idx) => (
@@ -3139,10 +3139,10 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           className="bg-white p-5 rounded-lg border"
                         >
                           <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
-                            <Briefcase className="w-4 h-4 text-[#C72030]" />
+                            <Briefcase className="w-4 h-4 text-[#808080]" />
                             {useCase.title}
                           </h4>
-                          <p className="text-sm text-gray-600 mb-4 italic border-l-2 border-[#C72030] pl-3">
+                          <p className="text-sm text-gray-600 mb-4 italic border-l-2 border-[#808080] pl-3">
                             {useCase.scenario}
                           </p>
                           <h5 className="font-medium text-gray-700 mb-2">
@@ -3170,15 +3170,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Product Roadmap Tab */}
             <TabsContent value="roadmap" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Map className="w-6 h-6" style={{ color: "#C72030" }} />
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
+                    <Map className="w-6 h-6" style={{ color: "#808080" }} />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Product Roadmap
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="space-y-4">
                     {productData.extendedContent.productRoadmap.map(
                       (phase, idx) => (
@@ -3186,12 +3186,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           key={idx}
                           className="bg-white p-5 rounded-lg border relative"
                         >
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030] rounded-l-lg"></div>
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#808080] rounded-l-lg"></div>
                           <div className="flex justify-between items-start mb-3">
                             <h4 className="font-bold text-gray-800">
                               {phase.phase}
                             </h4>
-                            <span className="px-3 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                            <span className="px-3 py-1 bg-[#808080] text-white text-xs rounded-full">
                               {phase.timeline}
                             </span>
                           </div>
@@ -3217,18 +3217,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Business Plan Tab */}
             <TabsContent value="business" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <Building2
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Business Plan Builder
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {productData.extendedContent.businessPlanBuilder.map(
                       (section, idx) => (
@@ -3236,7 +3236,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           key={idx}
                           className="bg-white p-5 rounded-lg border"
                         >
-                          <h4 className="font-bold text-[#C72030] mb-3">
+                          <h4 className="font-bold text-[#808080] mb-3">
                             {section.title}
                           </h4>
                           <ul className="space-y-2">
@@ -3245,7 +3245,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                                 key={i}
                                 className="flex items-start gap-2 text-sm text-gray-600"
                               >
-                                <ChevronRight className="w-4 h-4 text-[#C72030] mt-0.5 flex-shrink-0" />
+                                <ChevronRight className="w-4 h-4 text-[#808080] mt-0.5 flex-shrink-0" />
                                 <span>{item}</span>
                               </li>
                             ))}
@@ -3261,18 +3261,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* GTM Strategy Tab */}
             <TabsContent value="gtm" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <Megaphone
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     GTM Strategy
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {productData.extendedContent.gtmStrategy.map(
                       (channel, idx) => (
@@ -3281,7 +3281,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           className="bg-white p-5 rounded-lg border"
                         >
                           <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <Megaphone className="w-4 h-4 text-[#C72030]" />
+                            <Megaphone className="w-4 h-4 text-[#808080]" />
                             {channel.channel}
                           </h4>
                           <ul className="space-y-2">
@@ -3306,18 +3306,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Metrics Tab */}
             <TabsContent value="metrics" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <LineChart
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Metrics & KPIs
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {productData.extendedContent.metrics.kpis.map(
                       (kpi, idx) => (
@@ -3325,7 +3325,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           key={idx}
                           className="bg-white p-4 rounded-lg border text-center"
                         >
-                          <p className="text-3xl font-bold text-[#C72030]">
+                          <p className="text-3xl font-bold text-[#808080]">
                             {kpi.value}
                           </p>
                           <h4 className="font-semibold text-gray-800 mt-2 text-sm">
@@ -3363,15 +3363,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* SWOT Analysis Tab */}
             <TabsContent value="swot" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Compass className="w-6 h-6" style={{ color: "#C72030" }} />
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
+                    <Compass className="w-6 h-6" style={{ color: "#808080" }} />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     SWOT Analysis
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {productData.extendedContent.swotAnalysis.map(
                       (category, idx) => (
@@ -3446,15 +3446,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             {/* Enhancement Roadmap Tab */}
             <TabsContent value="enhancements" className="space-y-6">
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Rocket className="w-6 h-6" style={{ color: "#C72030" }} />
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
+                    <Rocket className="w-6 h-6" style={{ color: "#808080" }} />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Enhancement Roadmap
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="space-y-4">
                     {productData.extendedContent.enhancementRoadmap.map(
                       (item, idx) => (
@@ -3509,12 +3509,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             <TabsContent value="assets" className="space-y-8">
               {/* Product Assets Section */}
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9] justify-between">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9] justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                       <CreditCard
                         className="w-6 h-6"
-                        style={{ color: "#C72030" }}
+                        style={{ color: "#808080" }}
                       />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
@@ -3526,7 +3526,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                     VIEW ONLY
                   </span>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {assets.map((asset, index) => (
                       <div
@@ -3555,18 +3555,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
 
               {/* Credentials Section */}
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <UserCheck
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Login Credentials
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {credentials.map((cred, index) => (
                       <div
@@ -3604,15 +3604,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
 
               {/* Meet The People Section */}
               <div className="w-full bg-white rounded-lg shadow-sm border">
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <User className="w-6 h-6" style={{ color: "#C72030" }} />
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
+                    <User className="w-6 h-6" style={{ color: "#808080" }} />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Meet The People Behind The Product
                   </h3>
                 </div>
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="flex gap-6 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                     {teamMembers.map((member, index) => (
                       <div
@@ -3645,7 +3645,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             <TabsList className="w-full mb-8">
               <TabsTrigger
                 value="overview"
-                className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+                className="w-full data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black"
               >
                 <svg
                   width="16"
@@ -3664,7 +3664,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
               </TabsTrigger>
               <TabsTrigger
                 value="details"
-                className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+                className="w-full data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black"
               >
                 <svg
                   width="18"
@@ -3685,7 +3685,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
               </TabsTrigger>
               <TabsTrigger
                 value="assets"
-                className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+                className="w-full data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black"
               >
                 <svg
                   width="16"
@@ -3708,11 +3708,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             <TabsContent value="overview" className="space-y-8">
               <div className="w-full bg-white rounded-lg shadow-sm border">
                 {/* Header */}
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <Settings
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
@@ -3721,7 +3721,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                 </div>
 
                 {/* Body */}
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-8">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6 space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
                     {/* Left Section - Product Info */}
                     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
@@ -3823,11 +3823,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
             <TabsContent value="details" className="space-y-8">
               <div className="w-full bg-white rounded-lg shadow-sm border">
                 {/* Header */}
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <FileText
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
@@ -3836,7 +3836,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                 </div>
 
                 {/* Body */}
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-8">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6 space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* User Stories */}
                     <div>
@@ -3922,12 +3922,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
               {/* Product Assets Section */}
               <div className="w-full bg-white rounded-lg shadow-sm border">
                 {/* Header */}
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9] justify-between">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9] justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                       <CreditCard
                         className="w-6 h-6"
-                        style={{ color: "#C72030" }}
+                        style={{ color: "#808080" }}
                       />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
@@ -3941,7 +3941,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                 </div>
 
                 {/* Body */}
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {assets.map((asset, index) => (
                       <div
@@ -3977,11 +3977,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
               {/* Credentials Section */}
               <div className="w-full bg-white rounded-lg shadow-sm border">
                 {/* Header */}
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
                     <UserCheck
                       className="w-6 h-6"
-                      style={{ color: "#C72030" }}
+                      style={{ color: "#808080" }}
                     />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
@@ -3990,7 +3990,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                 </div>
 
                 {/* Body */}
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {credentials.map((cred, index) => (
                       <div
@@ -4036,9 +4036,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
               {/* Meet The People Section */}
               <div className="w-full bg-white rounded-lg shadow-sm border">
                 {/* Header */}
-                <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <User className="w-6 h-6" style={{ color: "#C72030" }} />
+                <div className="flex items-center gap-3 bg-[#C4B89D] p-6 border border-[#D9D9D9]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#DCDAD2]">
+                    <User className="w-6 h-6" style={{ color: "#808080" }} />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                     Meet The People Behind The Product
@@ -4046,7 +4046,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                 </div>
 
                 {/* Body */}
-                <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                <div className="bg-white border border-t-0 border-[#D9D9D9] p-6">
                   <div className="flex gap-6 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                     {teamMembers.map((member, index) => (
                       <div
@@ -4118,3 +4118,5 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
 };
 
 export default ProductDetails;
+
+

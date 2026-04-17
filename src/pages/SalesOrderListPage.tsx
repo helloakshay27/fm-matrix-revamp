@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
@@ -348,37 +348,11 @@ console.log('Sales Order Data:', salesOrderData);
         status: (
             <div className="flex items-center justify-center gap-2">
                 {getStatusBadge(order.status)}
-                {/* {order.status !== 'confirmed' && ( */}
-                    <input
-                        type="checkbox"
-                        checked={order.fulfilled}
-                        onChange={async () => {
-                            try {
-                                const baseUrl = localStorage.getItem('baseUrl');
-                                const token = localStorage.getItem('token');
-                                const response = await axios.post(
-                                    `https://${baseUrl}/sale_orders/update_status.json`,
-                                    { sale_order_ids: [order.id], fulfilled: !order.fulfilled },
-                                    { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
-                                );
-                                if (response.status === 422) {
-                                    const { message, errors } = response.data;
-                                    if (Array.isArray(errors) && errors.length > 0) {
-                                        setErrorModal({ show: true, errors });
-                                    } else {
-                                        setErrorModal({ show: true, errors: [{ id: String(order.id), message: message || 'Failed to update fulfilled status' }] });
-                                    }
-                                    return;
-                                }
-                                fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-                            } catch (err) {
-                                toast.error('Failed to update fulfilled status');
-                            }
-                        }}
-                        style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
-                        title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
-                    />
-                {/* )} */}
+                {order.fulfilled && (
+                    <span title="Fulfilled">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    </span>
+                )}
             </div>
         )
     });
@@ -439,6 +413,30 @@ console.log('Sales Order Data:', salesOrderData);
 
     const handleSubmitForApproval = () => handleUpdateStatus('pending_approval', 'Sales orders submitted for approval', 'Failed to submit sales orders for approval');
 
+    const handleMarkAsFulfilled = async () => {
+        if (selectedRows.length === 0) { toast.error('Select at least one sales order'); return; }
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `https://${baseUrl}/sale_orders/update_status.json`,
+                { sale_order_ids: selectedRows, fulfilled: true },
+                { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+            );
+            if (response.status >= 400) {
+                const { message, errors } = response.data;
+                if (Array.isArray(errors) && errors.length > 0) { setErrorModal({ show: true, errors }); }
+                else { setErrorModal({ show: true, errors: [{ id: '-', message: message || 'Failed to mark as fulfilled' }] }); }
+                return;
+            }
+            toast.success('Sales orders marked as fulfilled');
+            setSelectedRows([]);
+            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error) {
+            toast.error('Failed to mark as fulfilled');
+        }
+    };
+
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
@@ -465,21 +463,30 @@ console.log('Sales Order Data:', salesOrderData);
                             <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
                         {selectedRows.length > 0 && (
-                            hasSaleOrderApproval ? (
+                            <>
+                                {hasSaleOrderApproval ? (
+                                    <Button
+                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        onClick={handleSubmitForApproval}
+                                    >
+                                        Submit for Approval
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        className="bg-green-600 text-white hover:bg-green-700"
+                                        onClick={handleMarkAsConfirmed}
+                                    >
+                                        Mark as Confirmed
+                                    </Button>
+                                )}
                                 <Button
-                                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
-                                    onClick={handleSubmitForApproval}
+                                    className="bg-blue-600 text-white hover:bg-blue-700"
+                                    onClick={handleMarkAsFulfilled}
                                 >
-                                    Submit for Approval
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Mark as Fulfilled
                                 </Button>
-                            ) : (
-                                <Button
-                                    className="bg-green-600 text-white hover:bg-green-700"
-                                    onClick={handleMarkAsConfirmed}
-                                >
-                                    Mark as Confirmed
-                                </Button>
-                            )
+                            </>
                         )}
                     </div>
                 )}

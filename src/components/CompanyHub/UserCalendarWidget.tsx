@@ -23,6 +23,9 @@ import {
   getDailyTaskCounts,
 } from "./hooks/useUserCalendars";
 import TodoConvertModal from "../TodoConvertModal";
+import TodoDetailsModal from "../TodoDetailsModal";
+import { useToggleTodo } from "@/hooks/useTodos";
+import { toast } from "sonner";
 
 interface UserCalendarWidgetProps {
   activeTimeView: "hourly" | "weekly" | "monthly";
@@ -59,6 +62,10 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
   const [convertTodoId, setConvertTodoId] = useState<number | string | null>(
     null
   );
+  const [toggleLoading, setToggleLoading] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
+  const toggleMutation = useToggleTodo();
 
   const { calendars, tasks, todos, issues, isLoading, refetch } =
     useUserCalendars({
@@ -186,10 +193,51 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
   }, [calendars, selectedFilterDate]);
 
   const handleItemClick = (item: UserCalendarItem) => {
-    if (item.redirect_url) {
+    // For todos, open the details modal
+    if (item.calendarable_type === "Todo") {
+      // Transform UserCalendarItem to TodoDetailsModal format
+      const formattedTodo = {
+        id: item.calendarable_id,
+        title: item.title,
+        description: item.description || "",
+        status: item.status || "open",
+        priority: "P1", // Default priority since not available in UserCalendarItem
+        target_date: item.start_at ? new Date(item.start_at).toLocaleDateString() : "",
+        user: item.user?.name || "Unknown",
+        user_id: item.user_id,
+        created_by: item.user?.name || "Unknown",
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        task_management_id: null,
+        start_at: item.start_at,
+        all_day: item.all_day,
+      };
+      setSelectedTodo(formattedTodo);
+      setIsDetailsModalOpen(true);
+    } else if (item.redirect_url) {
       const url = new URL(item.redirect_url);
       const path = url.pathname;
       window.location.href = path;
+    }
+  };
+
+  const handleToggleTodo = async (e: React.MouseEvent, todo: UserCalendarItem) => {
+    console.log(todo)
+    e.stopPropagation();
+    setToggleLoading(true);
+    try {
+      const isCompleted = todo.status === "open" || todo.status === null;
+      await toggleMutation.mutateAsync({
+        id: todo.calendarable_id,
+        completed: isCompleted,
+      });
+      toast.success(isCompleted ? "Task completed successfully" : "Task reopened successfully");
+      refetch();
+    } catch (error: any) {
+      toast.error("Failed to update task status");
+      console.error(error);
+    } finally {
+      setToggleLoading(false);
     }
   };
 
@@ -244,7 +292,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
               ? currentMonth
               : getSelectedDateLabel()}
           </h3>
-          <div className="flex items-center gap-0.5 bg-[#F3F0E8] h-8 rounded-full px-1 border border-[#E5DFD0]">
+          <div className="flex items-center gap-0.5 bg-[#cccbc9] h-8 rounded-full px-1 border border-[#E5DFD0]">
             {["Hourly", "Weekly", "Monthly"].map((v) => (
               <button
                 key={v}
@@ -257,11 +305,10 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                     v.toLowerCase() === "hourly" ? new Date().getHours() : null
                   );
                 }}
-                className={`px-2.5 h-6 text-[11px] font-semibold rounded-full transition-all ${
-                  activeTimeView === v.toLowerCase()
-                    ? "bg-white shadow-sm text-gray-900 border border-[#E5DFD0]"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`px-2.5 h-6 text-[11px] font-semibold rounded-full transition-all ${activeTimeView === v.toLowerCase()
+                  ? "bg-white shadow-sm text-gray-900 border border-[#E5DFD0]"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 {v} View
               </button>
@@ -384,13 +431,12 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                   {item.label}
                 </p>
                 <div
-                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${
-                    item.isSelected || item.isActive
-                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-gray-800 shadow-sm"
-                      : item.count > 0
-                        ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#C97B6B]"
-                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#C97B6B]"
-                  }`}
+                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${item.isSelected || item.isActive
+                    ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-gray-800 shadow-sm"
+                    : item.count > 0
+                      ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#C97B6B]"
+                      : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#C97B6B]"
+                    }`}
                 >
                   {item.count > 0
                     ? `${item.count} task${item.count > 1 ? "s" : ""}`
@@ -410,24 +456,22 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 className="flex flex-col items-center gap-1.5 group cursor-pointer min-w-0"
               >
                 <p
-                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${
-                    item.isSelected || item.isToday
-                      ? "text-[#C97B6B]"
-                      : item.isWeekend
-                        ? "text-gray-600"
-                        : "text-gray-600"
-                  }`}
+                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${item.isSelected || item.isToday
+                    ? "text-[#C97B6B]"
+                    : item.isWeekend
+                      ? "text-gray-600"
+                      : "text-gray-600"
+                    }`}
                 >
                   {item.label}
                 </p>
                 <div
-                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] transition-all p-1 text-center leading-tight overflow-hidden ${
-                    item.isSelected || item.isToday
-                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-[#C97B6B] shadow-sm font-bold"
-                      : item.isWeekend
-                        ? "bg-white/50 border-[#E8CC9F] text-[#E8CC9F] font-medium"
-                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-500 font-medium hover:border-[#C97B6B]"
-                  }`}
+                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] transition-all p-1 text-center leading-tight overflow-hidden ${item.isSelected || item.isToday
+                    ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-[#C97B6B] shadow-sm font-bold"
+                    : item.isWeekend
+                      ? "bg-white/50 border-[#E8CC9F] text-[#E8CC9F] font-medium"
+                      : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-500 font-medium hover:border-[#C97B6B]"
+                    }`}
                 >
                   {item.isWeekend
                     ? "Weekly Off"
@@ -455,7 +499,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 onClick={() => setOpenTaskModal(true)}
                 className="bg-[#DA7756] text-white px-4 h-8 rounded-[8px] text-[12px] font-semibold transition-all hover:bg-[#c96a44] active:scale-95 whitespace-nowrap"
               >
-                + Create Task
+                + Task
               </button>
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-none pr-1 space-y-2">
@@ -503,7 +547,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 onClick={() => setOpenTodoModal(true)}
                 className="bg-[#DA7756] text-white px-4 h-8 rounded-[8px] text-[12px] font-semibold transition-all hover:bg-[#c96a44] active:scale-95 whitespace-nowrap"
               >
-                + Create To-do
+                + To-do
               </button>
             </div>
             <div className="space-y-1.5 flex-1 overflow-y-auto scrollbar-none pr-1">
@@ -525,7 +569,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                       className="flex items-center gap-2 bg-white border border-[#ECE6DA] px-3 h-[34px] rounded-[8px] shadow-sm transition-all group cursor-pointer hover:shadow-md"
                     >
                       <div
-                        onClick={() => handleItemClick(todo)}
+                        onClick={(e) => handleToggleTodo(e, todo)}
                         className={`w-4 h-4 rounded-[3px] border flex items-center justify-center flex-shrink-0 transition-all ${isCompleted ? "bg-[#FFF6F2] border-[#DA7756]" : "border-gray-300 group-hover:border-[#DA7756]"}`}
                       >
                         {isCompleted ? (
@@ -578,6 +622,14 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
             setConvertTodoId(null);
             refetch();
           }}
+        />
+      )}
+
+      {isDetailsModalOpen && selectedTodo && (
+        <TodoDetailsModal
+          isModalOpen={isDetailsModalOpen}
+          setIsModalOpen={setIsDetailsModalOpen}
+          todo={selectedTodo}
         />
       )}
     </div>

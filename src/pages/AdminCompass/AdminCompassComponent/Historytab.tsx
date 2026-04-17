@@ -39,6 +39,9 @@ const cleanDiscussionPoints = (rawText: string) => {
 // ─────────────────────────────────────────────
 // Compile all API data into one plain-text block
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Compile all API data into one plain-text block
+// ─────────────────────────────────────────────
 const compileMeetingNotes = (historyData: any): string => {
   if (!historyData) return "";
 
@@ -69,49 +72,26 @@ const compileMeetingNotes = (historyData: any): string => {
     text += "\n";
   }
 
+  // 👇 YAHAN FIX KIYA HAI: Ab sirf unka aayega jinka properly "submitted" hai
   const submittedReports = memberReports.filter(
-    (r: any) => r.status !== "pending" || !!r.daily_report
+    (r: any) => r.status === "submitted"
   );
 
   if (submittedReports.length > 0) {
     text += `\n---\n\nDETAILED REPORTS\n\n`;
 
     submittedReports.forEach((report: any) => {
-      const isPending = report.status === "pending";
-      const hasDraft = !!report.daily_report;
       const rd = report.report_data || {};
-      const draftRaw = report.daily_report?.report_data || {};
 
-      const source =
-        isPending && hasDraft
-          ? {
-              accomplishments:
-                draftRaw.accomplishments?.items ||
-                (Array.isArray(draftRaw.accomplishments)
-                  ? draftRaw.accomplishments
-                  : []),
-              tasks_issues: draftRaw.tasks_issues || [],
-              tomorrow_plan: draftRaw.tomorrow_plan || [],
-              big_win: draftRaw.big_win || "",
-              self_rating:
-                draftRaw.details?.self_rating ??
-                draftRaw.sections?.self_rating ??
-                null,
-              is_absent:
-                draftRaw.details?.is_absent ??
-                draftRaw.sections?.is_absent ??
-                false,
-              kpis: draftRaw.kpis || {},
-            }
-          : {
-              accomplishments: rd.accomplishments || [],
-              tasks_issues: rd.tasks_issues || [],
-              tomorrow_plan: rd.tomorrow_plan || [],
-              big_win: rd.big_win || "",
-              self_rating: rd.self_rating ?? null,
-              is_absent: rd.is_absent ?? false,
-              kpis: rd.kpis || report.kpis || {},
-            };
+      const source = {
+        accomplishments: rd.accomplishments || [],
+        tasks_issues: rd.tasks_issues || [],
+        tomorrow_plan: rd.tomorrow_plan || [],
+        big_win: rd.big_win || "",
+        self_rating: rd.self_rating ?? null,
+        is_absent: rd.is_absent ?? false,
+        kpis: rd.kpis || report.kpis || {},
+      };
 
       text += `${report.name}\n`;
       text += `**Attendance:** ${source.is_absent ? "✗ Absent" : "✓ Present"}\n`;
@@ -166,7 +146,6 @@ const compileMeetingNotes = (historyData: any): string => {
 
   return text.trim();
 };
-
 // ── CUSTOM SELECT (Same concept as ReportsTab, adapted for HistoryTab theme) ──
 const CustomSelect = ({
   value,
@@ -191,7 +170,10 @@ const CustomSelect = ({
     <div
       ref={ref}
       className="relative shrink-0"
-      style={{ fontFamily: "'Poppins', sans-serif", zIndex: open ? 50 : "auto" }}
+      style={{
+        fontFamily: "'Poppins', sans-serif",
+        zIndex: open ? 50 : "auto",
+      }}
     >
       <button
         type="button"
@@ -228,7 +210,8 @@ const CustomSelect = ({
           style={{
             maxHeight: 240,
             overflowY: "auto",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+            boxShadow:
+              "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
             zIndex: 999,
           }}
         >
@@ -502,6 +485,7 @@ const HistoryTab = () => {
   };
 
   // ── Derived ──
+  // ── Derived ──
   const selectedMeetingLabel =
     meetings.find((m) => String(m.id) === String(selectedMeetingId))?.name ??
     "Meeting";
@@ -519,19 +503,14 @@ const HistoryTab = () => {
 
   const memberReports: any[] = historyData?.member_reports || [];
 
-  const submittedCount =
-    memberReports.filter(
-      (r: any) =>
-        r.status === "submitted" || (r.status === "pending" && !!r.daily_report)
-    ).length ||
-    historyData?.submitted ||
-    0;
+  // 👇 YAHAN STRICT FILTER LAGA DIYA HAI: Sirf aur sirf submitted wale hi count honge
+  const submittedCount = memberReports.filter(
+    (r: any) => r.status === "submitted"
+  ).length;
 
-  const missedCount =
-    memberReports.filter((r: any) => r.status === "pending" && !r.daily_report)
-      .length ||
-    historyData?.missed ||
-    0;
+  const missedCount = memberReports.filter(
+    (r: any) => r.status === "pending" || r.status === "missed"
+  ).length;
 
   const meetingHeadReport =
     memberReports.find(
@@ -539,10 +518,11 @@ const HistoryTab = () => {
         r.user_id === historyData?.config?.meeting_head?.id &&
         r.status === "submitted"
     ) || memberReports.find((r: any) => r.status === "submitted");
+
   const meetingSubmittedAt = meetingHeadReport?.submitted_at || null;
 
   const compiledNotes = compileMeetingNotes(historyData);
-
+  const hasSubmissions = submittedCount > 0 || !!getMeetingJournalId();
   const formatSubmittedAt = (isoStr: string | null) => {
     if (!isoStr) return null;
     return new Date(isoStr).toLocaleString("en-IN", {
@@ -642,17 +622,17 @@ const HistoryTab = () => {
       )}
 
       {/* ── No Data ── */}
-      {!isLoading && !historyData && (
+      {!isLoading && (!historyData || !hasSubmissions) && (
         <div className="text-center py-24 bg-white border-2 border-dashed border-[#E0D8F0] rounded-[32px]">
           <HistoryIcon className="w-10 h-10 text-[#CE7A5A] opacity-30 mx-auto mb-4" />
           <p className="text-[#8C8580] font-bold text-sm">
-            No meeting history found for the selected date.
+            No meeting data has been submitted yet for the selected date.
           </p>
         </div>
       )}
 
       {/* ── Main Card ── */}
-      {!isLoading && historyData && (
+      {!isLoading && historyData && hasSubmissions && (
         <div className="bg-white border border-[#F1E8E3] rounded-[24px] shadow-sm overflow-hidden">
           {/* Header */}
           <div className="bg-[#CE7A5A] px-6 py-5 rounded-t-[24px]">
