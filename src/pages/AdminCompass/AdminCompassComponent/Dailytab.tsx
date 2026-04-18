@@ -890,7 +890,7 @@ const DailyTab = () => {
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className="rounded-[18px] bg-[#F0EBE8] animate-pulse"
+                className="rounded-[18px] skeleton"
                 style={{ width: 100, height: 120 }}
               />
             ))}
@@ -920,7 +920,6 @@ const DailyTab = () => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
               const isUpcoming = rawStatus === "upcoming";
-              // ── UPCOMING: plain text style (image jaisa) ──
               // ── UPCOMING: plain text style (image jaisa) ──
               if (isUpcoming) {
                 return (
@@ -953,7 +952,6 @@ const DailyTab = () => {
                 );
               }
 
-              // ── PAST / TODAY: colored card ──
               // ── PAST / TODAY / HOLIDAY: colored card ──
               let bg = "#F0EDEA",
                 textColor = "#9CA3AF",
@@ -977,7 +975,6 @@ const DailyTab = () => {
                 rawStatus === "holiday" ||
                 rawStatus === "non_meeting"
               ) {
-                // 👇 Yahan "non_meeting" add kar diya hai
                 bg = "#F5D142";
                 textColor = "#8A6D3B";
                 labelBg = "rgba(0,0,0,0.09)";
@@ -1146,27 +1143,27 @@ const DailyTab = () => {
         <div className="border border-[#F0EBE8] rounded-2xl shadow-sm overflow-hidden bg-white mt-4">
           <div className="p-4 border-b border-[#F0EBE8] flex justify-between items-center bg-[#FAFAFA] flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
+              <div className="h-9 w-9 rounded-2xl skeleton" />
               <div className="space-y-2">
-                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
+                <div className="w-32 h-4 rounded-full skeleton" />
+                <div className="w-20 h-3 rounded-full skeleton" />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
-              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
+              <div className="w-20 h-7 rounded-2xl skeleton" />
+              <div className="w-24 h-7 rounded-2xl skeleton" />
+              <div className="w-20 h-7 rounded-2xl skeleton" />
             </div>
           </div>
           <div className="p-4 space-y-6">
             <div className="border border-[#F0EBE8] rounded-2xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between p-3 border-b border-[#F0EBE8] bg-[#FAFAFA]">
-                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8] animate-pulse" />
+                <div className="w-24 h-4 rounded-full skeleton" />
+                <div className="w-8 h-8 rounded-xl skeleton" />
               </div>
               <div className="p-4 h-24 bg-white" />
               <div className="p-3 border-t border-[#F0EBE8] bg-[#FAFAFA] flex justify-end">
-                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
+                <div className="w-32 h-9 rounded-2xl skeleton" />
               </div>
             </div>
             <div className="space-y-4">
@@ -1176,15 +1173,15 @@ const DailyTab = () => {
                   className="border border-[#F0EBE8] rounded-2xl p-4 bg-white shadow-sm flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded bg-[#F0EBE8] animate-pulse" />
-                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full animate-pulse" />
-                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto animate-pulse" />
+                    <div className="w-4 h-4 rounded skeleton" />
+                    <div className="w-40 h-5 rounded-full skeleton" />
+                    <div className="w-16 h-4 rounded-full ml-auto skeleton" />
                   </div>
-                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7 animate-pulse" />
+                  <div className="w-48 h-3 rounded-full ml-7 skeleton" />
                   <div className="flex gap-2 ml-7">
-                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
+                    <div className="w-12 h-6 rounded-lg skeleton" />
+                    <div className="w-16 h-6 rounded-lg skeleton" />
+                    <div className="w-16 h-6 rounded-lg skeleton" />
                   </div>
                 </div>
               ))}
@@ -1245,7 +1242,7 @@ const DailyTab = () => {
                     <textarea
                       value={meetingNotes}
                       onChange={(e) => setMeetingNotes(e.target.value)}
-                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[80px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
+className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
                       placeholder="Enter meeting remarks, feedback, action items..."
                     />
                   </div>
@@ -2087,6 +2084,19 @@ const DailyTab = () => {
         select option:checked, select option:hover { background: #FFF3EE; color: #CE7A5A; }
         select:focus { outline: none; }
         .calendar-row::-webkit-scrollbar { display: none; }
+        
+        /* SHIMMER SKELETON ANIMATION */
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        
+        .skeleton {
+          background: #F0EBE8;
+          background-image: linear-gradient(to right, #F0EBE8 4%, #FAF8F7 25%, #F0EBE8 36%);
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite linear;
+        }
       `}</style>
     </div>
   );

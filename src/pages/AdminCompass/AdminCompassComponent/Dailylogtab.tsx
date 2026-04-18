@@ -16,13 +16,33 @@ import {
   ArrowRight,
   AlertTriangle,
   ChevronDown,
+  ChevronRight,
   MessageSquare,
   Layers,
   Circle,
+  Loader2,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchDailyLogsFromAPI, getBaseUrl, getAuthHeaders } from "./Shared";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
+import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
+import AddIssueModal from "../../../components/AddIssueModal";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+
+// ─────────────────────────────────────────────
+// MUI z-index override wrapper
+// Forces MUI Dialog/Modal above ReportDetailModal (z-9990)
+// ─────────────────────────────────────────────
+const muiHighZTheme = createTheme({
+  zIndex: {
+    modal: 10001,
+    drawer: 10001,
+  },
+});
+const MuiZIndexFix = ({ children }) => (
+  <ThemeProvider theme={muiHighZTheme}>{children}</ThemeProvider>
+);
 
 // ─────────────────────────────────────────────
 // Custom Themed Select
@@ -202,39 +222,6 @@ const fetchDepartmentsAPI = async () => {
 };
 
 // ─────────────────────────────────────────────
-// API helpers
-// ─────────────────────────────────────────────
-const createTask = async (payload) => {
-  const res = await fetch(`${getBaseUrl()}/tasks`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-};
-
-const createStuckIssue = async (payload) => {
-  const res = await fetch(`${getBaseUrl()}/stuck_issues`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-};
-
-const submitFeedback = async (payload) => {
-  const res = await fetch(`${getBaseUrl()}/feedbacks`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-};
-
-// ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
 const fmt = (dateStr) => {
@@ -254,385 +241,236 @@ const scoreColor = (s, status) => {
   return s >= 50 ? "bg-[#2ECC71] text-white" : "bg-[#EB4A4A] text-white";
 };
 
-// ─────────────────────────────────────────────
-// Add Task Modal
-// ─────────────────────────────────────────────
-const AddTaskModal = ({ reportUser, reportId, onClose }) => {
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [priority, setPriority] = useState("Medium");
-  const [dueDate, setDueDate] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [loading, setLoading] = useState(false);
-
-  const handleCreate = async () => {
-    if (!title.trim()) {
-      toast.error("Task title is required.");
-      return;
-    }
-    if (!dueDate) {
-      toast.error("Due date is required.");
-      return;
-    }
-    setLoading(true);
-    try {
-      await createTask({
-        title: title.trim(),
-        description: desc.trim(),
-        priority,
-        due_date: dueDate,
-        progress: Number(progress),
-        user_journal_id: reportId,
-      });
-      toast.success(`Task created for ${reportUser}`);
-      onClose();
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setLoading(false);
-    }
+const normalizeReportData = (rd) => {
+  if (!rd || typeof rd !== "object") {
+    return {
+      accomplishments: [],
+      tasks_issues: [],
+      tomorrow_plan: [],
+      big_win: null,
+      self_rating: null,
+    };
+  }
+  let accomplishments = [];
+  if (Array.isArray(rd.accomplishments)) {
+    accomplishments = rd.accomplishments;
+  } else if (Array.isArray(rd.accomplishments?.items)) {
+    accomplishments = rd.accomplishments.items;
+  }
+  return {
+    accomplishments,
+    tasks_issues: Array.isArray(rd.tasks_issues) ? rd.tasks_issues : [],
+    tomorrow_plan: Array.isArray(rd.tomorrow_plan) ? rd.tomorrow_plan : [],
+    big_win: rd.big_win ?? null,
+    self_rating: rd.self_rating ?? null,
   };
+};
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-      style={{ fontFamily: "'Poppins', sans-serif" }}
-    >
-      <div className="bg-white rounded-[28px] shadow-2xl w-full max-w-[520px] overflow-hidden border border-[#F0EBE8]">
-        <div className="flex items-center justify-between px-7 pt-7 pb-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center">
-              <FileText className="w-5 h-5 text-[#D37E5F]" />
-            </div>
-            <h2 className="text-lg font-black text-[#1A1A1A]">
-              Add Task for {reportUser}
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-[#F0EBE8] hover:bg-gray-50 text-gray-500 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="px-7 pt-6 pb-8 space-y-5 font-medium">
-          <div>
-            <label className="block text-sm font-bold text-[#8C8580] mb-1.5 uppercase tracking-wider text-[11px]">
-              Task Title <span className="text-[#EB4A4A]">*</span>
-            </label>
-            <input
-              autoFocus
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
-              className="w-full border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#EB4A4A]/20 focus:border-[#EB4A4A] transition-colors text-[#1A1A1A]"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-[#8C8580] mb-1.5 uppercase tracking-wider text-[11px]">
-              Description
-            </label>
-            <textarea
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              placeholder="Additional details..."
-              rows={3}
-              className="w-full border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#EB4A4A]/20 focus:border-[#EB4A4A] resize-none transition-colors text-[#1A1A1A]"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-[#8C8580] mb-1.5 uppercase tracking-wider text-[11px]">
-                Priority
-              </label>
-              <div className="relative">
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                  className="w-full appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#EB4A4A]/20 focus:border-[#EB4A4A] text-[#1A1A1A]"
-                >
-                  {["Low", "Medium", "High", "Critical"].map((p) => (
-                    <option key={p}>{p}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-[#8C8580] mb-1.5 uppercase tracking-wider text-[11px]">
-                Due Date <span className="text-[#EB4A4A]">*</span>
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#EB4A4A]/20 focus:border-[#EB4A4A] text-[#1A1A1A]"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-[#8C8580] mb-2 uppercase tracking-wider text-[11px]">
-              Progress: {progress}%
-            </label>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={progress}
-              onChange={(e) => setProgress(Number(e.target.value))}
-              className="w-full h-2 rounded-full cursor-pointer accent-[#EB4A4A] bg-[#F0EBE8]"
-            />
-          </div>
-          <div className="flex items-center justify-end gap-3 pt-3">
-            <button
-              onClick={onClose}
-              className="px-6 py-3 border border-[#F0EBE8] rounded-[14px] text-sm font-bold text-[#8C8580] hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 bg-[#EB4A4A] hover:bg-[#DA3B3B] text-white rounded-[14px] text-sm font-bold shadow-sm transition-colors disabled:opacity-60"
-            >
-              <Plus className="w-4 h-4" />{" "}
-              {loading ? "Creating…" : "Create Task"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
+const getItemTitle = (item) => {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object") return String(item.title || item.name || "");
+  return String(item);
 };
 
 // ─────────────────────────────────────────────
-// Inline quick-action input
+// FormattedHighlights Component
 // ─────────────────────────────────────────────
-const InlineActionInput = ({ action, reportId, onClose }) => {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
+const FormattedHighlights = ({ text, isPending }) => {
+  if (isPending) {
+    return (
+      <span className="text-gray-400 italic font-semibold">
+        {text || "Pending"}
+      </span>
+    );
+  }
+  if (!text) return <span>-</span>;
 
-  const cfg = {
-    issue: {
-      placeholder: "Enter stuck issue description…",
-      btnText: "Add Issue",
-      btnCls: "bg-[#F05252] hover:bg-[#DA3B3B]",
-      successMsg: "Stuck issue logged.",
-      apiCall: (t) =>
-        createStuckIssue({ description: t, user_journal_id: reportId }),
-    },
-    plan: {
-      placeholder: "Add to tomorrow's plan…",
-      btnText: "Add to Plan",
-      btnCls: "bg-[#F4D35E] text-[#856417] hover:bg-[#DAB835]",
-      successMsg: "Added to tomorrow's plan.",
-      apiCall: (t) =>
-        createTask({ title: t, type: "plan", user_journal_id: reportId }),
-    },
-  }[action];
+  const matchAccChal = text.match(/Acc:\s*(\d+)\s*\|\s*Chal:\s*(\d+)/i);
+  if (matchAccChal) {
+    return (
+      <span className="text-sm text-[#1A1A1A]">
+        <span className="font-bold">{matchAccChal[1]}</span> accomplishments,{" "}
+        <span className="font-bold">{matchAccChal[2]}</span> challenges
+      </span>
+    );
+  }
 
-  if (!cfg) return null;
-
-  const handleSubmit = async () => {
-    if (!text.trim()) return;
-    setLoading(true);
-    try {
-      await cfg.apiCall(text.trim());
-      toast.success(cfg.successMsg);
-      onClose(true);
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="mt-4 space-y-2">
-      <div className="flex gap-2">
-        <input
-          autoFocus
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          placeholder={cfg.placeholder}
-          className="flex-1 border border-[#F0EBE8] bg-[#FCFAFA] rounded-[14px] px-4 py-2 text-sm focus:outline-none focus:border-[#EB4A4A] font-medium text-[#1A1A1A]"
-        />
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className={cn(
-            "px-5 py-2 font-bold text-sm rounded-[14px] transition-colors",
-            cfg.btnCls,
-            loading && "opacity-60"
-          )}
-        >
-          {loading ? "…" : cfg.btnText}
-        </button>
-        <button
-          onClick={() => onClose(false)}
-          className="px-4 py-2 border border-[#F0EBE8] rounded-[14px] text-sm font-bold text-[#8C8580] hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
+  const matchFull = text.match(
+    /(\d+)\s*accomplishments?,\s*(\d+)\s*challenges?/i
   );
+  if (matchFull) {
+    return (
+      <span className="text-sm text-[#1A1A1A]">
+        <span className="font-bold">{matchFull[1]}</span> accomplishments,{" "}
+        <span className="font-bold">{matchFull[2]}</span> challenges
+      </span>
+    );
+  }
+
+  return <span className="text-sm text-[#1A1A1A]">{text}</span>;
 };
 
 // ─────────────────────────────────────────────
-// Feedback panel
-// ─────────────────────────────────────────────
-const FeedbackPanel = ({ reportId, onClose }) => {
-  const [rating, setRating] = useState(0);
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async () => {
-    if (rating === 0) {
-      toast.error("Please select a rating.");
-      return;
-    }
-    if (!text.trim()) {
-      toast.error("Feedback text is required.");
-      return;
-    }
-    setLoading(true);
-    try {
-      await submitFeedback({
-        rating,
-        feedback: text.trim(),
-        user_journal_id: reportId,
-      });
-      toast.success("Feedback submitted successfully!");
-      onClose(true);
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="mt-4 bg-[#FCFAFA] p-5 rounded-[20px] border border-[#F0EBE8] space-y-4">
-      <div className="flex items-center gap-4">
-        <span className="text-[11px] uppercase tracking-wider font-bold text-[#8C8580]">
-          Rating:
-        </span>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <Star
-              key={n}
-              onClick={() => setRating(n)}
-              className={cn(
-                "w-7 h-7 cursor-pointer transition-colors",
-                n <= rating
-                  ? "text-[#F4D35E] fill-[#F4D35E]"
-                  : "text-gray-300 hover:text-[#F4D35E]/50"
-              )}
-            />
-          ))}
-        </div>
-      </div>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Enter constructive feedback…"
-        rows={3}
-        className="w-full border border-[#F0EBE8] rounded-[14px] px-4 py-3 text-sm font-medium text-[#1A1A1A] resize-none focus:outline-none focus:border-[#EB4A4A]"
-      />
-      <div className="flex justify-end gap-2 mt-2">
-        <button
-          onClick={() => onClose(false)}
-          className="px-5 py-2.5 border border-[#F0EBE8] rounded-[14px] text-sm font-bold text-[#8C8580] hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="px-5 py-2.5 bg-[#EB4A4A] hover:bg-[#DA3B3B] text-white rounded-[14px] text-sm font-bold transition-colors disabled:opacity-60"
-        >
-          {loading ? "Submitting…" : "Submit Feedback"}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-/// ─────────────────────────────────────────────
-// Report Detail Modal (API Integrated + 3-Column Layout)
+// Report Detail Modal
 // ─────────────────────────────────────────────
 const ReportDetailModal = ({ log, onClose }) => {
-  const [activeAction, setActiveAction] = useState(null);
-  const [taskModalOpen, setTaskModalOpen] = useState(false);
-
-  // API Fetch State
   const [details, setDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isPending = log.status === "pending";
+  // ── action modals
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchDetails = async () => {
-      // Agar pending hai ya dummy ID hai, toh API call mat karo
-      if (isPending || !log.id || String(log.id).startsWith("user-")) {
+  // ── quick-action (Add to Plan)
+  const [quickActionOpen, setQuickActionOpen] = useState(false);
+  const [quickActionText, setQuickActionText] = useState("");
+
+  // ── feedback state
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [fetchedFeedbacks, setFetchedFeedbacks] = useState([]);
+  const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
+
+  const isPending = log.status === "pending";
+  const hasValidId = log.id && !String(log.id).startsWith("user-");
+
+  // ── Fetch journal details
+  const refetchDetails = useCallback(
+    async (silent = false) => {
+      if (isPending || !hasValidId) {
         setIsLoading(false);
         return;
       }
-
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       try {
-        const baseUrl = getBaseUrl(); // Shared.jsx ka function
-        const headers = getAuthHeaders(); // Shared.jsx ka function
-        const url = `${baseUrl}/user_journals/${log.id}.json`;
-
-        const res = await fetch(url, { method: "GET", headers });
+        const res = await fetch(
+          `${getBaseUrl()}/user_journals/${log.id}.json`,
+          { method: "GET", headers: getAuthHeaders() }
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = await res.json();
-        setDetails(data);
+        setDetails(await res.json());
       } catch (error) {
         toast.error("Failed to load report details: " + error.message);
       } finally {
-        setIsLoading(false);
+        if (!silent) setIsLoading(false);
       }
-    };
+    },
+    [log.id, isPending, hasValidId]
+  );
 
-    fetchDetails();
-  }, [log.id, isPending]);
+  useEffect(() => {
+    refetchDetails(false);
+  }, [refetchDetails]);
 
-  // Extract data from API response or fallback to empty arrays
   const reportData = details?.report_data || {};
+  const normalized = normalizeReportData(reportData);
 
-  const tasks = Array.isArray(reportData.tasks_issues)
-    ? reportData.tasks_issues
-    : [];
-  const accomplishments = Array.isArray(reportData.accomplishments)
-    ? reportData.accomplishments
-    : [];
-  const plans = Array.isArray(reportData.tomorrow_plan)
-    ? reportData.tomorrow_plan
-    : [];
-
-  // Agar accomplishments empty hai, toh table wala highlight dikha do
   const fallbackAccomplishments =
-    accomplishments.length === 0 && log.highlights && !isPending
+    normalized.accomplishments.length === 0 && log.highlights && !isPending
       ? [{ title: log.highlights }]
-      : accomplishments;
+      : normalized.accomplishments;
 
-  // JSON me text "title", "text", ya "description" key me ho sakta hai
-  const getText = (item) =>
-    typeof item === "string"
-      ? item
-      : item.title || item.text || item.description || "";
+  // ── updateJournal
+  const updateJournal = async (patch) => {
+    if (!hasValidId) {
+      toast.error("Journal ID not found.");
+      return false;
+    }
+    const source = normalizeReportData(reportData);
+    const payload = {
+      user_journal: {
+        self_rating: source.self_rating ?? 0,
+        status: "submitted",
+        report_data: {
+          accomplishments: source.accomplishments,
+          tasks_issues: source.tasks_issues,
+          big_win: source.big_win || null,
+          tomorrow_plan: patch.tomorrow_plan_item
+            ? [...source.tomorrow_plan, { title: patch.tomorrow_plan_item }]
+            : source.tomorrow_plan,
+          kpis: reportData.kpis || {},
+        },
+      },
+    };
+    try {
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/${log.id}.json`,
+        {
+          method: "PUT",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return true;
+    } catch (err) {
+      toast.error("Error updating journal: " + err.message);
+      return false;
+    }
+  };
+
+  // ── GET past feedbacks
+  const loadPastFeedbacks = async () => {
+    setIsFetchingFeedbacks(true);
+    try {
+      const loggedInUserId = localStorage.getItem("userId") || "";
+      const res = await fetch(
+        `${getBaseUrl()}/ratings?resource_type=User&resource_id=${
+          log._raw?.user_id || log.userId || ""
+        }&rating_from_id=${loggedInUserId}`,
+        { method: "GET", headers: getAuthHeaders() }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setFetchedFeedbacks(
+          Array.isArray(data) ? data : data.data || data.ratings || []
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch feedbacks:", error);
+    } finally {
+      setIsFetchingFeedbacks(false);
+    }
+  };
+
+  // ── Submit feedback
+  const handleSubmitFeedback = async () => {
+    if (feedbackRating === 0) {
+      toast.error("Please select a star rating!");
+      return;
+    }
+    try {
+      const loggedInUserId = localStorage.getItem("userId") || "";
+      const payload = {
+        resource_type: "User",
+        resource_id: log._raw?.user_id || log.userId || "",
+        rating_from_id: loggedInUserId,
+        score: feedbackRating,
+        reviews: feedbackMessage,
+        positive_opening: "",
+        constructive_feedback: "",
+        positive_closing: "",
+      };
+      const res = await fetch(`${getBaseUrl()}/ratings`, {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success("Feedback added!");
+      setFeedbackOpen(false);
+      setFeedbackRating(0);
+      setFeedbackMessage("");
+    } catch (err) {
+      toast.error("Error adding feedback: " + err.message);
+    }
+  };
 
   return (
     <>
+      {/* ── Main Detail Modal ── */}
       {createPortal(
         <div
           className="fixed inset-0 z-[9990] flex items-center justify-center p-4 sm:p-6"
@@ -640,12 +478,12 @@ const ReportDetailModal = ({ log, onClose }) => {
         >
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
 
-          {/* Modal Container */}
-          <div className="relative z-10 bg-[#FCFAFA] w-full max-w-[1100px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden">
+          {/* Modal */}
+          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1100px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
               <div>
@@ -672,7 +510,6 @@ const ReportDetailModal = ({ log, onClose }) => {
             {/* Body */}
             <div className="flex-1 overflow-y-auto p-6">
               {isLoading ? (
-                // Loading Skeleton
                 <div className="flex flex-col items-center justify-center h-40 space-y-4">
                   <RefreshCw className="w-8 h-8 text-[#EB4A4A] animate-spin" />
                   <p className="text-sm font-bold text-[#8C8580]">
@@ -680,232 +517,457 @@ const ReportDetailModal = ({ log, onClose }) => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                  {/* Column 1: Tasks & Issues */}
-                  <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
-                    <div className="bg-[#FFF5F5] px-4 py-3 border-b border-[#F05252]/20 flex items-center gap-2 shrink-0">
-                      <Circle
-                        className="w-4 h-4 text-[#F05252]"
-                        fill="#F05252"
-                        fillOpacity={0.15}
-                      />
-                      <h3 className="font-bold text-[#F05252] text-sm">
-                        Tasks & Issues
-                      </h3>
-                    </div>
-                    <div className="p-5 flex-1">
-                      {tasks.length === 0 ? (
-                        <p className="text-sm font-medium text-[#8C8580] italic">
-                          No tasks or issues
+                <div className="space-y-6">
+                  {/* Big Win */}
+                  {normalized.big_win && (
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
+                      <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">
+                          Big Win 🏆
+                        </div>
+                        <p className="text-sm font-semibold text-amber-900">
+                          {normalized.big_win}
                         </p>
-                      ) : (
-                        <ul className="space-y-4">
-                          {tasks.map((item, i) => {
-                            const t = getText(item);
-                            const isTask =
-                              item.type === "task" ||
-                              t.toLowerCase().includes("task");
-                            return (
-                              <li key={i} className="flex items-start gap-3">
-                                <Circle className="w-4 h-4 text-[#F05252] shrink-0 mt-0.5" />
-                                <span className="text-sm font-medium text-gray-700 leading-relaxed flex-1">
-                                  {t}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3-column grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                    {/* Column 1: Tasks & Issues */}
+                    <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
+                      <div className="bg-[#FFF5F5] px-4 py-3 border-b border-[#F05252]/20 flex items-center gap-2 shrink-0">
+                        <AlertTriangle className="w-4 h-4 text-[#F05252]" />
+                        <h3 className="font-bold text-[#F05252] text-sm">
+                          Tasks & Issues
+                        </h3>
+                      </div>
+                      <div className="p-5 flex-1">
+                        {normalized.tasks_issues.length === 0 ? (
+                          <p className="text-sm font-medium text-[#8C8580] italic">
+                            No tasks or issues
+                          </p>
+                        ) : (
+                          <ul className="space-y-3">
+                            {normalized.tasks_issues.map((item, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2 text-xs text-neutral-700"
+                              >
+                                <span
+                                  className={cn(
+                                    "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
+                                    (item.status || "open") === "open"
+                                      ? "bg-red-100 text-red-600"
+                                      : (item.status || "open") === "closed"
+                                      ? "bg-green-100 text-green-600"
+                                      : "bg-gray-100 text-gray-500"
+                                  )}
+                                >
+                                  {item.status || "open"}
                                 </span>
-                                {isTask && (
-                                  <span className="text-[10px] bg-blue-50 text-blue-500 border border-blue-100 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide shrink-0">
-                                    Task
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Column 2: Accomplishments */}
+                    <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
+                      <div className="bg-[#F0FDF4] px-4 py-3 border-b border-[#2ECC71]/20 flex items-center gap-2 shrink-0">
+                        <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
+                        <h3 className="font-bold text-[#2ECC71] text-sm">
+                          Accomplishments
+                        </h3>
+                      </div>
+                      <div className="p-5 flex-1">
+                        {fallbackAccomplishments.length === 0 ? (
+                          <p className="text-sm font-medium text-[#8C8580] italic">
+                            No accomplishments
+                          </p>
+                        ) : (
+                          <ul className="space-y-3">
+                            {fallbackAccomplishments.map((item, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2 text-xs text-neutral-700"
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Tomorrow's Plan */}
+                    <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
+                      <div className="bg-[#FEFCE8] px-4 py-3 border-b border-[#F4D35E]/40 flex items-center gap-2 shrink-0">
+                        <Circle className="w-4 h-4 text-blue-500" />
+                        <h3 className="font-bold text-blue-600 text-sm">
+                          Tomorrow's Plan
+                        </h3>
+                      </div>
+                      <div className="p-5 flex-1">
+                        {normalized.tomorrow_plan.length === 0 ? (
+                          <p className="text-sm font-medium text-[#8C8580] italic">
+                            No plan recorded
+                          </p>
+                        ) : (
+                          <ul className="space-y-3">
+                            {normalized.tomorrow_plan.map((item, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2 text-xs text-neutral-700"
+                              >
+                                <Circle className="w-3 h-3 text-blue-300 mt-0.5 shrink-0" />
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Quick Action Buttons ── */}
+                  {!isPending && hasValidId && !isLoading && (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          onClick={() => setIsTaskModalOpen(true)}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Task
+                        </button>
+                        <button
+                          onClick={() => setIsIssueModalOpen(true)}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                        </button>
+                        <button
+                          onClick={() => {
+                            setQuickActionOpen(!quickActionOpen);
+                            setQuickActionText("");
+                          }}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add to Plan
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (feedbackOpen) {
+                              setFeedbackOpen(false);
+                            } else {
+                              setFeedbackOpen(true);
+                              setFeedbackRating(0);
+                              setFeedbackMessage("");
+                              loadPastFeedbacks();
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                        </button>
+                      </div>
+
+                      {/* ── Add to Plan inline input ── */}
+                      {quickActionOpen && (
+                        <div className="border-t border-[#EAE3DF] pt-4">
+                          <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-3">
+                            Quick Actions
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <input
+                              autoFocus
+                              type="text"
+                              value={quickActionText}
+                              onChange={(e) =>
+                                setQuickActionText(e.target.value)
+                              }
+                              placeholder="Add to tomorrow's plan..."
+                              className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-neutral-400"
+                              onKeyDown={async (e) => {
+                                if (
+                                  e.key === "Enter" &&
+                                  quickActionText.trim()
+                                ) {
+                                  const ok = await updateJournal({
+                                    tomorrow_plan_item: quickActionText.trim(),
+                                  });
+                                  if (ok) {
+                                    toast.success("Added to tomorrow's plan!");
+                                    setQuickActionOpen(false);
+                                    setQuickActionText("");
+                                    refetchDetails(true);
+                                  }
+                                }
+                                if (e.key === "Escape") {
+                                  setQuickActionOpen(false);
+                                  setQuickActionText("");
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={async () => {
+                                if (quickActionText.trim()) {
+                                  const ok = await updateJournal({
+                                    tomorrow_plan_item: quickActionText.trim(),
+                                  });
+                                  if (ok) {
+                                    toast.success("Added to tomorrow's plan!");
+                                    setQuickActionOpen(false);
+                                    setQuickActionText("");
+                                    refetchDetails(true);
+                                  }
+                                }
+                              }}
+                              className="px-5 py-2 rounded-full text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
+                            >
+                              Add
+                            </button>
+                            <button
+                              onClick={() => {
+                                setQuickActionOpen(false);
+                                setQuickActionText("");
+                              }}
+                              className="px-5 py-2 rounded-full text-xs font-bold text-neutral-600 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ── 2-Column Feedback Block ── */}
+                      {feedbackOpen && (
+                        <div className="border-t border-[#EAE3DF] pt-5 mt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* COLUMN 1: Add New Feedback */}
+                            <div>
+                              <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
+                                Provide Feedback
+                              </p>
+                              <p className="text-sm font-bold text-neutral-800 mb-2">
+                                Rating (1-5 stars)
+                              </p>
+                              <div className="flex items-center gap-1 mb-4">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => setFeedbackRating(star)}
+                                    className="transition-transform hover:scale-110"
+                                  >
+                                    <svg
+                                      className="w-8 h-8"
+                                      viewBox="0 0 24 24"
+                                      fill={
+                                        star <= feedbackRating
+                                          ? "#F59E0B"
+                                          : "none"
+                                      }
+                                      stroke={
+                                        star <= feedbackRating
+                                          ? "#F59E0B"
+                                          : "#D1D5DB"
+                                      }
+                                      strokeWidth="1.5"
+                                    >
+                                      <path
+                                        strokeLinejoin="round"
+                                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                                      />
+                                    </svg>
+                                  </button>
+                                ))}
+                              </div>
+                              <p className="text-sm font-bold text-neutral-800 mb-2">
+                                Feedback Message
+                              </p>
+                              <textarea
+                                autoFocus
+                                value={feedbackMessage}
+                                onChange={(e) =>
+                                  setFeedbackMessage(e.target.value)
+                                }
+                                placeholder="Enter constructive feedback..."
+                                rows={3}
+                                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                              />
+                              <div className="flex items-center gap-3 mt-4">
+                                <button
+                                  onClick={handleSubmitFeedback}
+                                  className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                                >
+                                  Submit Feedback
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setFeedbackOpen(false);
+                                    setFeedbackRating(0);
+                                    setFeedbackMessage("");
+                                  }}
+                                  className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* COLUMN 2: Recent Feedbacks */}
+                            <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
+                              <div className="flex items-center justify-between mb-4">
+                                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
+                                  Recent Feedbacks
+                                </p>
+                                <button
+                                  onClick={() =>
+                                    (window.location.href =
+                                      "/admin-compass/feedback-dashboard")
+                                  }
+                                  className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                                >
+                                  View All{" "}
+                                  <ChevronRight className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              {isFetchingFeedbacks ? (
+                                <div className="flex justify-center items-center h-full py-6">
+                                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                                </div>
+                              ) : fetchedFeedbacks.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
+                                  <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
+                                  <span className="text-xs font-medium italic">
+                                    No past feedback found.
                                   </span>
-                                )}
-                              </li>
-                            );
-                          })}
-                        </ul>
+                                </div>
+                              ) : (
+                                <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                  {fetchedFeedbacks
+                                    .slice(0, 3)
+                                    .map((fb, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                                      >
+                                        <div className="flex items-center gap-1 mb-1.5">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                              key={star}
+                                              className={cn(
+                                                "w-3 h-3",
+                                                star <= fb.score
+                                                  ? "text-yellow-400 fill-yellow-400"
+                                                  : "text-gray-200"
+                                              )}
+                                            />
+                                          ))}
+                                          {fb.created_at && (
+                                            <span className="text-[9px] text-gray-400 ml-auto font-medium">
+                                              {new Date(
+                                                fb.created_at
+                                              ).toLocaleDateString()}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {fb.reviews ? (
+                                          <p className="text-xs text-neutral-700 leading-relaxed">
+                                            {fb.reviews}
+                                          </p>
+                                        ) : (
+                                          <p className="text-xs text-neutral-400 italic">
+                                            No review provided.
+                                          </p>
+                                        )}
+                                      </div>
+                                    ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-
-                  {/* Column 2: Accomplishments */}
-                  <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
-                    <div className="bg-[#F0FDF4] px-4 py-3 border-b border-[#2ECC71]/20 flex items-center gap-2 shrink-0">
-                      <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
-                      <h3 className="font-bold text-[#2ECC71] text-sm">
-                        Accomplishments
-                      </h3>
-                    </div>
-                    <div className="p-5 flex-1">
-                      {fallbackAccomplishments.length === 0 ? (
-                        <p className="text-sm font-medium text-[#8C8580] italic">
-                          No accomplishments
-                        </p>
-                      ) : (
-                        <ul className="space-y-4">
-                          {fallbackAccomplishments.map((item, i) => {
-                            const t = getText(item);
-                            const tLower = t.toLowerCase();
-                            const isInProcess =
-                              tLower.includes("in process") ||
-                              tLower.includes("started");
-                            const Icon = isInProcess ? Circle : CheckCircle2;
-
-                            return (
-                              <li key={i} className="flex items-start gap-3">
-                                <Icon className="w-4 h-4 text-[#2ECC71] shrink-0 mt-0.5" />
-                                <span className="text-sm font-medium text-gray-700 leading-relaxed">
-                                  {t}
-                                </span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Column 3: Tomorrow's Plan */}
-                  <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
-                    <div className="bg-[#FEFCE8] px-4 py-3 border-b border-[#F4D35E]/40 flex items-center gap-2 shrink-0">
-                      <div className="w-2 h-2 rounded-full bg-[#DAB835] ml-1" />
-                      <h3 className="font-bold text-[#DAB835] text-sm ml-1">
-                        Tomorrow's Plan
-                      </h3>
-                    </div>
-                    <div className="p-5 flex-1">
-                      {plans.length === 0 ? (
-                        <p className="text-sm font-medium text-[#8C8580] italic">
-                          No plan recorded
-                        </p>
-                      ) : (
-                        <ul className="space-y-4">
-                          {plans.map((item, i) => {
-                            const t = getText(item);
-                            return (
-                              <li key={i} className="flex items-start gap-3">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#DAB835] shrink-0 mt-2 ml-1" />
-                                <span className="text-sm font-medium text-gray-700 leading-relaxed">
-                                  {t}
-                                </span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
-
-            {/* Footer / Quick Actions */}
-            {!isPending &&
-              log.id &&
-              !String(log.id).startsWith("user-") &&
-              !isLoading && (
-                <div className="px-6 py-5 border-t border-[#F0EBE8] bg-white shrink-0">
-                  <p className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
-                    Quick Actions
-                  </p>
-                  {activeAction === null && (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <button
-                        onClick={() => setTaskModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 border border-[#F0EBE8] bg-white rounded-[12px] text-sm font-bold text-[#1A1A1A] hover:bg-gray-50 transition-colors shadow-sm"
-                      >
-                        <Plus className="w-4 h-4 text-blue-600" /> Task
-                      </button>
-                      <button
-                        onClick={() => setActiveAction("issue")}
-                        className="flex items-center gap-2 px-4 py-2 border border-[#F0EBE8] bg-white rounded-[12px] text-sm font-bold text-[#1A1A1A] hover:bg-gray-50 transition-colors shadow-sm"
-                      >
-                        <Plus className="w-4 h-4 text-red-500" /> Stuck Issue
-                      </button>
-                      <button
-                        onClick={() => setActiveAction("plan")}
-                        className="flex items-center gap-2 px-4 py-2 border border-[#F0EBE8] bg-white rounded-[12px] text-sm font-bold text-[#1A1A1A] hover:bg-gray-50 transition-colors shadow-sm"
-                      >
-                        <Plus className="w-4 h-4 text-yellow-500" /> Add to Plan
-                      </button>
-
-                      <button
-                        onClick={() => setActiveAction("feedback")}
-                        className="flex items-center gap-2 px-5 py-2 bg-[#8B5CF6] text-white rounded-[12px] text-sm font-bold shadow-sm hover:bg-[#7C3AED] transition-all ml-auto"
-                      >
-                        Feedback
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Inline Action Inputs */}
-                  {(activeAction === "issue" || activeAction === "plan") && (
-                    <InlineActionInput
-                      action={activeAction}
-                      reportId={log.id}
-                      onClose={() => setActiveAction(null)}
-                    />
-                  )}
-                  {activeAction === "feedback" && (
-                    <FeedbackPanel
-                      reportId={log.id}
-                      onClose={() => setActiveAction(null)}
-                    />
-                  )}
-                </div>
-              )}
           </div>
         </div>,
         document.body
       )}
 
-      {/* Task Modal Overlay */}
-      {taskModalOpen && !isPending && (
-        <AddTaskModal
-          reportUser={log.user}
-          reportId={log.id}
-          onClose={() => setTaskModalOpen(false)}
-        />
+      {/* ── Add Task Modal — side panel portal ── */}
+      {isTaskModalOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[10000] flex">
+            <div
+              className="flex-1 bg-black/40 backdrop-blur-sm"
+              onClick={() => setIsTaskModalOpen(false)}
+            />
+            <div
+              className="relative flex flex-col bg-white shadow-2xl"
+              style={{ width: "min(760px, 95vw)" }}
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 shrink-0">
+                <h2 className="text-base font-bold text-neutral-900">
+                  Add Tasks
+                </h2>
+                <button
+                  onClick={() => setIsTaskModalOpen(false)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="h-[3px] bg-[#C72030] w-full shrink-0" />
+              <div className="flex-1 overflow-y-auto">
+                <ProjectTaskCreateModal
+                  isEdit={false}
+                  onCloseModal={() => setIsTaskModalOpen(false)}
+                  className="max-w-full mx-0"
+                  prefillData={null}
+                  opportunityId={null}
+                  onSuccess={() => setIsTaskModalOpen(false)}
+                  isConversion={false}
+                />
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/*
+        ── AddIssueModal — MUI Dialog renders its own portal on document.body
+           with z-index 1300 by default. Our ReportDetailModal uses z-[9990]
+           which is higher, so MUI gets buried underneath.
+           Fix: wrap with MUI ThemeProvider to force zIndex.modal = 10001.
+      */}
+      {isIssueModalOpen && (
+        <MuiZIndexFix>
+          <AddIssueModal
+            openDialog={isIssueModalOpen}
+            handleCloseDialog={() => setIsIssueModalOpen(false)}
+            preSelectedProjectId={undefined}
+          />
+        </MuiZIndexFix>
       )}
     </>
   );
-};
-
-// ─────────────────────────────────────────────
-// ✅ Simple FormattedHighlights Component (No Red BG, Auto-wrap)
-// ─────────────────────────────────────────────
-const FormattedHighlights = ({ text, isPending }) => {
-  if (isPending) {
-    return (
-      <span className="text-gray-400 italic font-semibold">
-        {text || "Pending"}
-      </span>
-    );
-  }
-  if (!text) return <span>-</span>;
-
-  // Format 1: "Acc: 8 | Chal: 0"
-  const matchAccChal = text.match(/Acc:\s*(\d+)\s*\|\s*Chal:\s*(\d+)/i);
-  if (matchAccChal) {
-    return (
-      <span className="text-sm text-[#1A1A1A]">
-        <span className="font-bold">{matchAccChal[1]}</span> accomplishments,{" "}
-        <span className="font-bold">{matchAccChal[2]}</span> challenges
-      </span>
-    );
-  }
-
-  // Format 2: "8 accomplishments, 0 challenges"
-  const matchFull = text.match(
-    /(\d+)\s*accomplishments?,\s*(\d+)\s*challenges?/i
-  );
-  if (matchFull) {
-    return (
-      <span className="text-sm text-[#1A1A1A]">
-        <span className="font-bold">{matchFull[1]}</span> accomplishments,{" "}
-        <span className="font-bold">{matchFull[2]}</span> challenges
-      </span>
-    );
-  }
-
-  // Fallback for normal text
-  return <span className="text-sm text-[#1A1A1A]">{text}</span>;
 };
 
 // ─────────────────────────────────────────────
@@ -1019,12 +1081,14 @@ const DailyLogTab = () => {
         setGroupedApiLogs({});
       }
 
-      setMetaExpected(response.total || logsArray.length);
-      setMetaSubmitted(response.submitted || logsArray.length);
+      setMetaSubmitted(logsArray.length);
+      setMetaExpected(response.total || 0);
     } catch (err) {
       setApiError(err.message);
       setApiLogs([]);
       setGroupedApiLogs({});
+      setMetaSubmitted(0);
+      setMetaExpected(0);
       toast.error(`Failed to load logs: ${err.message}`);
     } finally {
       setIsLoading(false);
@@ -1095,11 +1159,9 @@ const DailyLogTab = () => {
             {log.email}
           </div>
         </td>
-        {/* Score Column */}
         <td className="px-6 py-4">
           <span
             className={cn(
-              // inline-grid aur place-items-center duniya ka sabse perfect centering solution hai
               "flex flex-col justify-center items-center font-semibold p-2 rounded-xl",
               scoreColor(log.score, log.status)
             )}
@@ -1112,7 +1174,6 @@ const DailyLogTab = () => {
             {log.dept}
           </span>
         </td>
-        {/* ✅ Updated TD with normal text wrapping and no scroll */}
         <td className="px-6 py-4 max-w-[300px] whitespace-normal break-words">
           <FormattedHighlights text={log.highlights} isPending={isPending} />
         </td>
@@ -1138,19 +1199,7 @@ const DailyLogTab = () => {
       className="pb-12 min-h-screen pt-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <Toaster
-        position="bottom-right"
-        toastOptions={{
-          classNames: {
-            toast:
-              "font-['Poppins'] shadow-lg border rounded-[16px] text-sm font-semibold",
-            success: "bg-[#F0FDF4] border-[#BBF7D0] text-[#166534]",
-            error: "bg-[#FFF1F2] border-[#FECDD3] text-[#BE123C]",
-            warning: "bg-amber-50 border-amber-200 text-amber-900",
-            info: "bg-sky-50 border-sky-200 text-sky-900",
-          },
-        }}
-      />
+
 
       {/* Header card */}
       <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8 mb-8">
@@ -1209,7 +1258,6 @@ const DailyLogTab = () => {
 
         {/* Filter bar */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          {/* Search */}
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580]" />
             <input
@@ -1251,7 +1299,6 @@ const DailyLogTab = () => {
             options={meetings.map((m) => ({ value: m.id, label: m.label }))}
           />
 
-          {/* Group toggle */}
           <button
             onClick={() => setIsGrouped(!isGrouped)}
             className={cn(
@@ -1264,7 +1311,6 @@ const DailyLogTab = () => {
             <Layers className="w-4 h-4" /> Group by Departments
           </button>
 
-          {/* Refresh */}
           <button
             onClick={loadData}
             className="w-[50px] h-[50px] flex items-center justify-center border border-[#F0EBE8] rounded-[16px] bg-white text-[#8C8580] hover:text-[#1A1A1A] hover:bg-gray-50 transition-all shrink-0"
@@ -1290,7 +1336,7 @@ const DailyLogTab = () => {
       )}
 
       {/* Table */}
-      <div className="bg-white border border-[#F0EBE8] rounded-[32px] shadow-sm overflow-hidden ">
+      <div className="bg-white border border-[#F0EBE8] rounded-[32px] shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead className="bg-[#FCFAFA]">
@@ -1313,31 +1359,31 @@ const DailyLogTab = () => {
                       className="border-b border-[#F0EBE8] bg-white"
                     >
                       <td className="px-6 py-4">
-                        <div className="w-20 h-4 bg-[#F0EBE8] rounded-full"></div>
+                        <div className="w-20 h-4 bg-[#F0EBE8] rounded-full" />
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-2">
-                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full"></div>
-                          <div className="w-32 h-3 bg-[#F0EBE8] rounded-full"></div>
+                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full" />
+                          <div className="w-32 h-3 bg-[#F0EBE8] rounded-full" />
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="w-10 h-6 bg-[#F0EBE8] rounded-[8px]"></div>
+                        <div className="w-10 h-6 bg-[#F0EBE8] rounded-[8px]" />
                       </td>
                       <td className="px-6 py-4">
-                        <div className="w-20 h-6 bg-[#F0EBE8] rounded-[8px]"></div>
+                        <div className="w-20 h-6 bg-[#F0EBE8] rounded-[8px]" />
                       </td>
                       <td className="px-6 py-4">
-                        <div className="w-48 h-4 bg-[#F0EBE8] rounded-full"></div>
+                        <div className="w-48 h-4 bg-[#F0EBE8] rounded-full" />
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-2">
-                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full"></div>
-                          <div className="w-16 h-3 bg-[#F0EBE8] rounded-full"></div>
+                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full" />
+                          <div className="w-16 h-3 bg-[#F0EBE8] rounded-full" />
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <div className="w-9 h-9 bg-[#F0EBE8] rounded-[12px] mx-auto"></div>
+                        <div className="w-9 h-9 bg-[#F0EBE8] rounded-[12px] mx-auto" />
                       </td>
                     </tr>
                   ))}

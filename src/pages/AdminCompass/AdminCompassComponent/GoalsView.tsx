@@ -167,19 +167,21 @@ const mapApiGoal = (k: any): Goal => ({
 });
 
 // ── API helpers ──
-const fetchGoalsFromApi = async (): Promise<Goal[]> => {
-  const res = await fetch(`https://${BASE_URL}/goals`, {
+const fetchGoalsFromApi = async (page: number = 1, perPage: number = 20): Promise<{ goals: Goal[], totalPages: number }> => {
+  const res = await fetch(`https://${BASE_URL}/goals?page=${page}&per_page=${perPage}`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
   const raw = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 200)}`);
+  
   let json: any;
   try {
     json = JSON.parse(raw);
   } catch {
-    json = [];
+    json = {};
   }
+  
   const list: any[] = Array.isArray(json)
     ? json
     : Array.isArray(json.goals)
@@ -189,7 +191,14 @@ const fetchGoalsFromApi = async (): Promise<Goal[]> => {
         : Array.isArray(json.data)
           ? json.data
           : [];
-  return list.map(mapApiGoal);
+
+  let totalPages = 1;
+  if (json.meta?.total_pages) totalPages = json.meta.total_pages;
+  else if (json.pagination?.total_pages) totalPages = json.pagination.total_pages;
+  else if (json.total_pages) totalPages = json.total_pages;
+  else if (json.data?.total_pages) totalPages = json.data.total_pages;
+
+  return { goals: list.map(mapApiGoal), totalPages };
 };
 
 const fetchUsersFromApi = async (): Promise<UserRecord[]> => {
@@ -310,6 +319,20 @@ const deleteGoalFromApi = async (id: number): Promise<void> => {
     const t = await res.text();
     throw new Error(`DELETE error ${res.status}: ${t || res.statusText}`);
   }
+};
+
+// ── Pagination Helper ──
+const getPaginationRange = (current: number, total: number) => {
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 3) {
+    return [1, 2, 3, "...", total];
+  }
+  if (current >= total - 2) {
+    return [1, "...", total - 2, total - 1, total];
+  }
+  return [1, "...", current, "...", total];
 };
 
 // ── Icons ──
@@ -482,6 +505,18 @@ const LoaderIcon = () => (
   </svg>
 );
 
+const ChevronLeftIcon = () => (
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+  </svg>
+);
+
 // ── Global styles ──
 const Styles = () => (
   <style>{`
@@ -570,6 +605,49 @@ const Styles = () => (
       background: rgba(218,119,86,0.15); color: ${C.primary};
       display: flex; align-items: center; justify-content: center;
       font-size: 10px; font-weight: 700; flex-shrink: 0;
+    }
+    
+    /* ── Pagination Buttons ── */
+    .gv-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 24px;
+      padding: 16px;
+    }
+    .gv-page-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .gv-page-item:hover:not(:disabled):not(.dots) {
+      background: #f0ebe8;
+      color: #1a1a1a;
+    }
+    .gv-page-item.active {
+      background: ${C.primary};
+      color: #fff;
+    }
+    .gv-page-item:disabled {
+      color: #a3a3a3;
+      cursor: not-allowed;
+    }
+    .gv-page-item.dots {
+      cursor: default;
+      background: transparent;
+      color: #737373;
     }
   `}</style>
 );
@@ -1038,6 +1116,12 @@ export const GoalsView = () => {
   const [activeModal, setActiveModal] = useState<"create" | "edit" | null>(
     null
   );
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const perPage = 20;
+
   const [form, setForm] = useState<GoalFormState>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -1049,21 +1133,23 @@ export const GoalsView = () => {
   );
   const dragId = useRef<number | null>(null);
 
-  const loadGoals = useCallback(async () => {
+  const loadGoals = useCallback(async (page: number = 1) => {
     setIsFetching(true);
     setFetchError(null);
     try {
-      const data = await fetchGoalsFromApi();
-      setGoals(data);
+      const data = await fetchGoalsFromApi(page, perPage);
+      setGoals(data.goals);
+      setTotalPages(data.totalPages);
+      setCurrentPage(page);
     } catch (err: any) {
       setFetchError(err.message || "Failed to load goals.");
     } finally {
       setIsFetching(false);
     }
-  }, []);
+  }, [perPage]);
 
   useEffect(() => {
-    loadGoals();
+    loadGoals(1);
     fetchUsersFromApi()
       .then(setUsers)
       .catch(() => {});
@@ -1120,7 +1206,7 @@ export const GoalsView = () => {
     setDeletingId(id);
     try {
       await deleteGoalFromApi(id);
-      setGoals((prev) => prev.filter((g) => g.id !== id));
+      loadGoals(currentPage);
     } catch (err: any) {
       setFetchError(err.message || "Failed to delete goal.");
     } finally {
@@ -1148,7 +1234,7 @@ export const GoalsView = () => {
       await patchGoalStatusInApi(id, status);
     } catch (err: any) {
       console.error("[Goals] PATCH status error:", err);
-      loadGoals();
+      loadGoals(currentPage);
     }
   };
 
@@ -1161,43 +1247,13 @@ export const GoalsView = () => {
     setSaveError(null);
     try {
       if (activeModal === "create") {
-        const created = await createGoalInApi(form);
-        setGoals((prev) => [...prev, created]);
+        await createGoalInApi(form);
         closeModal();
-        fetchGoalsFromApi()
-          .then((data) => setGoals(data))
-          .catch(() => {});
+        loadGoals(currentPage);
       } else if (editingId !== null) {
         await updateGoalInApi(editingId, form);
-        setGoals((prev) =>
-          prev.map((g) =>
-            g.id === editingId
-              ? {
-                  ...g,
-                  title: form.title,
-                  description: form.description,
-                  period: form.period,
-                  owner: form.owner,
-                  owner_id: form.owner_id
-                    ? parseInt(form.owner_id)
-                    : g.owner_id,
-                  dueDate:
-                    formatDateDisplay(parseDateToApi(form.dueDate)) ||
-                    form.dueDate,
-                  target_date: parseDateToApi(form.dueDate),
-                  current: Number(form.current),
-                  target: Number(form.target),
-                  unit: form.unit,
-                  status: form.status,
-                  update_remarks: form.update_remarks,
-                }
-              : g
-          )
-        );
         closeModal();
-        fetchGoalsFromApi()
-          .then((data) => setGoals(data))
-          .catch(() => {});
+        loadGoals(currentPage);
       }
     } catch (err: any) {
       setSaveError(err.message || "Failed to save. Please try again.");
@@ -1278,6 +1334,21 @@ export const GoalsView = () => {
       textColor: "#991b1b",
     },
   ];
+
+  const getPageNumbers = (current: number, total: number) => {
+    if (total <= 5) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 3) {
+      return [1, 2, 3, "...", total];
+    }
+    if (current >= total - 2) {
+      return [1, "...", total - 2, total - 1, total];
+    }
+    return [1, "...", current, "...", total];
+  };
+
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
     <>
@@ -1376,7 +1447,7 @@ export const GoalsView = () => {
         >
           <span>⚠ {fetchError}</span>
           <button
-            onClick={loadGoals}
+            onClick={() => loadGoals(currentPage)}
             style={{
               background: "none",
               border: "none",
@@ -1968,6 +2039,38 @@ export const GoalsView = () => {
               )}
             </div>
           ))}
+
+        {/* ── PAGINATION ── */}
+        {totalPages > 1 && (
+          <div className="gv-pagination">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => loadGoals(currentPage - 1)}
+              className="gv-page-item"
+            >
+              <ChevronLeftIcon />
+            </button>
+            
+            {pageNumbers.map((num, idx) => (
+              <button
+                key={idx}
+                className={`gv-page-item ${num === currentPage ? "active" : ""} ${num === "..." ? "dots" : ""}`}
+                disabled={num === "..."}
+                onClick={() => { if (num !== "...") loadGoals(Number(num)); }}
+              >
+                {num}
+              </button>
+            ))}
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => loadGoals(currentPage + 1)}
+              className="gv-page-item"
+            >
+              <ChevronRightIcon />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ══ Create / Edit Modal ══ */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
 // ── Design Tokens ──
 const C = {
@@ -8,6 +9,7 @@ const C = {
   primaryBg: "#f6f4ee",
   primaryTint: "rgba(218,119,86,0.06)",
   primaryBord: "#e8e3de",
+  tealBg: "#9EC8BA",
   cardBg: "#ffffff",
   textMain: "#1a1a1a",
   textMuted: "#6b7280",
@@ -256,7 +258,7 @@ const UserSelect = ({
 
       {open && (
         <div
-          className="absolute bottom-full left-0 right-0 mb-1 bg-white border rounded-xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto overflow-x-hidden"
+          className="absolute bottom-full left-0 right-0 mb-1 z-50 bg-white border rounded-xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto overflow-x-hidden"
           style={{ borderColor: C.borderLgt, fontFamily: C.font }}
         >
           {value && (
@@ -375,6 +377,11 @@ const SkeletonCards = () => (
 export const QuarterlySection = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
+
+  // Info Tooltip State
+  const [isInfoHovered, setIsInfoHovered] = useState(false);
+  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
+  const infoBtnRef = useRef<HTMLSpanElement>(null);
 
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [allGoals, setAllGoals] = useState<Initiative[]>([]);
@@ -782,6 +789,7 @@ export const QuarterlySection = () => {
   };
 
   const isEditingStrategic = !!strategicGoal.title;
+
   const modalBtnBase: React.CSSProperties = {
     border: "none",
     borderRadius: 10,
@@ -803,7 +811,7 @@ export const QuarterlySection = () => {
         className="rounded-2xl overflow-hidden shadow-sm mt-6 border"
         style={{ background: C.cardBg, borderColor: C.borderLgt }}
       >
-        {/* ── Header ── */}
+        {/* Header */}
         <div
           className="px-6 py-4 border-b flex items-center justify-between"
           style={{ borderColor: C.borderLgt, background: C.primaryBg }}
@@ -816,8 +824,68 @@ export const QuarterlySection = () => {
             >
               Immediate Goals — This Quarter
             </h2>
-            <InfoIcon />
+            <span
+              ref={infoBtnRef}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setInfoPos({
+                  top: rect.bottom + window.scrollY + 10,
+                  left: rect.left + window.scrollX + rect.width / 2,
+                  transform: "translateX(-50%)"
+                });
+                setIsInfoHovered(true);
+              }}
+              onMouseLeave={() => setIsInfoHovered(false)}
+              style={{ cursor: "help", display: "inline-flex" }}
+            >
+              <InfoIcon />
+            </span>
           </div>
+
+          {isInfoHovered && ReactDOM.createPortal(
+            <div 
+              style={{
+                position: "absolute",
+                top: infoPos.top,
+                left: infoPos.left,
+                transform: infoPos.transform,
+                zIndex: 99999,
+                background: "#16102b",
+                color: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                padding: "16px",
+                width: 340,
+                textAlign: "center",
+                fontFamily: "'Poppins', sans-serif",
+                pointerEvents: "none",
+                border: "1px solid rgba(218,119,86,0.2)"
+              }}
+            >
+              <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800, color: "#fff" }}>
+                Immediate goals (This Quarter)
+              </h4>
+              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
+                Your 90-day priorities that drive immediate progress. Called "Rocks" from the analogy: If you fill a jar with sand (small tasks) first, the rocks (big priorities) won't fit. Put rocks first!
+              </p>
+              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
+                Choose 3-5 most important initiatives for the next 90 days. Each should have ONE owner who's 100% accountable.
+              </p>
+              <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#9ca3af" }}>
+                From Scaling Up: "If you have more than 5 rocks per quarter, you're setting yourself up to fail."
+              </p>
+              <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                <div style={{ fontStyle: "italic" }}>
+                  Example for Q1:
+                </div>
+                <div style={{ fontStyle: "italic" }}>
+                  "Complete GST audit, hire 5 sales executives, launch premium product line, implement CRM system"
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
           {isFetching && <LoaderIcon className="w-4 h-4" />}
         </div>
 
@@ -1432,7 +1500,8 @@ export const QuarterlySection = () => {
                     <input
                       type="number"
                       step="any"
-                      value={tempGoal.targetValue}
+                      value={tempGoal.targetValue || ""}
+                      placeholder="e.g. 100"
                       onChange={(e) =>
                         setTempGoal({
                           ...tempGoal,
@@ -1618,6 +1687,7 @@ export const QuarterlySection = () => {
                     fontSize: 15,
                     fontWeight: 800,
                     cursor: isSaving ? "not-allowed" : "pointer",
+                    transition: "background .15s",
                     opacity: isSaving ? 0.7 : 1,
                     display: "flex",
                     alignItems: "center",
@@ -1639,88 +1709,6 @@ export const QuarterlySection = () => {
                     : editingGoalId
                       ? "Save Changes"
                       : "Create Goal"}
-                </button>
-              </div>
-            </div>
-          </Modal>
-        )}
-
-        {/* ══ Confirm Delete Strategic Modal ══ */}
-        {activeModal === "confirm_delete_strategic" && (
-          <Modal onClose={closeModal}>
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 16,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
-                width: "100%",
-                maxWidth: 380,
-                overflow: "hidden",
-                fontFamily: C.font,
-              }}
-            >
-              <div style={{ padding: "28px 28px 8px", textAlign: "center" }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🗑️</div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: C.textMain,
-                    marginBottom: 8,
-                  }}
-                >
-                  Delete Strategic Goal?
-                </div>
-                <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
-                  This action cannot be undone.
-                </p>
-              </div>
-              <div
-                style={{
-                  padding: "20px 28px 28px",
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 12,
-                }}
-              >
-                <button
-                  onClick={executeDeleteStrategic}
-                  disabled={isDeleting}
-                  style={{
-                    padding: "10px 24px",
-                    fontWeight: 700,
-                    color: "#fff",
-                    background: "#dc2626",
-                    border: "none",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    cursor: isDeleting ? "not-allowed" : "pointer",
-                    opacity: isDeleting ? 0.7 : 1,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontFamily: C.font,
-                  }}
-                >
-                  {isDeleting && <LoaderIcon />}
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-                <button
-                  onClick={closeModal}
-                  disabled={isDeleting}
-                  style={{
-                    padding: "10px 24px",
-                    fontWeight: 700,
-                    color: C.textMain,
-                    background: "#f3f4f6",
-                    border: "none",
-                    borderRadius: 10,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    fontFamily: C.font,
-                  }}
-                >
-                  Cancel
                 </button>
               </div>
             </div>
