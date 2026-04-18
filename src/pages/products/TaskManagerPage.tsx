@@ -21,61 +21,66 @@ import {
  */
 const taskManagerData: ProductData = {
   name: "Project and Task Manager",
-  description: "An end-to-end work management solution designed to help teams plan, track, and execute projects efficiently. Centralizes tasks, timelines, ownership, and progress tracking.",
-  brief: "A centralized platform enabling transparency, accountability, and faster delivery across teams by managing work efficiently from planning to execution.",
+  description: "An enterprise-grade work management solution designed for total data sovereignty and execution speed. Centralizes tasks, native MS Office documents, and meeting management into one secure platform.",
+  brief: "Eliminate tool sprawl and reclaim data ownership. Project & Task Manager integrates task hierarchy, collaborative doc creation, and MoM automation on client-owned infrastructure.",
+  excelLikeSummary: true,
+  excelLikeFeatures: true,
+  excelLikeMarket: true,
+  excelLikePricing: false,
+  excelLikeUseCases: true,
+  excelLikeSwot: true,
+  excelLikeRoadmap: true,
+  excelLikeBusinessPlan: true,
+  excelLikeGtm: true,
+  excelLikeMetrics: true,
+  excelLikePostPossession: true,
   userStories: [
     {
-      title: "Project Management & Delivery",
+      title: "Task & Project Management",
       items: [
-        "Create projects with tasks, milestones, and deadlines for easy progress tracking.",
-        "High-level dashboards and reports for stakeholders to monitor delivery without micro-managing.",
-        "Real-time visibility into task status and blockers for team leads to take corrective action early.",
+        "Project → Milestone → Task → Subtask hierarchy (4 levels deep)",
+        "Sprint management with task linking",
+        "Kanban, Eisenhower Matrix, and List views",
+        "Auto-escalation for delayed tasks",
       ],
     },
     {
-      title: "Team Productivity",
+      title: "Document Creation & Collaboration",
       items: [
-        "Personalized task views for team members to manage daily work and priorities efficiently.",
-        "Collaboration through comments, mentions, and file attachments on specific tasks.",
-        "Progress updates (To Do / In Progress / Done) for transparent team coordination.",
+        "Native Word, Excel, PPT, PDF creation in-platform",
+        "Real-time collaborative editing",
+        "Export as official MS Office files",
       ],
     },
     {
-      title: "Administration & Security",
+      title: "Meeting Management (MoM)",
       items: [
-        "Manage users, roles, and permissions to maintain data security and operational control.",
-        "Detailed activity logs and audit trails for accountability across the project lifecycle.",
+        "Structured MoM with 9 data fields",
+        "Auto-convert action points to tasks in one click",
+        "Linked project and milestone association",
+      ],
+    },
+    {
+      title: "Data Sovereignty & Security",
+      items: [
+        "On-premise / Client-owned database storage",
+        "No third-party cloud exposure",
+        "Full audit trail for all data modifications",
       ],
     },
   ],
-  industries: "All (Generic Work Management)",
+  industries: "Technology, Professional Services, Real Estate",
   usps: [
-    "Simple, intuitive UI with minimal learning curve.",
-    "Real-time visibility across projects and teams.",
-    "Highly configurable workflows without heavy customization.",
-    "Scales from small teams to enterprise use cases.",
-    "Cost-effective compared to heavyweight PM tools.",
+    "USP 1: 100% Data Sovereignty - The only PM tool where all data (tasks, docs, chats) stays on your own servers.",
+    "USP 2: Native MS Office Creation - Write and edit documents inside PM, no need for external subscriptions.",
+    "USP 3: MoM-to-Task Automation - Eliminate the gap between meetings and execution with one-click task creation.",
+    "USP 4: Eisenhower Matrix for Focus - Built-in urgency vs importance prioritization at the personal task level.",
   ],
-  includes: [
-    "Project & task creation",
-    "Task assignment, priorities, and due dates",
-    "Status tracking, comments, and mentions",
-    "Activity logs and audit trail",
-    "Role-based access control",
-  ],
-  upSelling: [
-    "Advanced analytics, Workflow automation, Mobile app access, AI prioritization.",
-  ],
-  integrations: [
-    "Google/Outlook Calendar, Jira, GitHub/GitLab, Zoom/Meet, HRMS & Accounting tools.",
-  ],
-  decisionMakers: ["Head of Engineering/Operations, PMOs, Founders, CFO, COO"],
-  keyPoints: [
-    "Ease of use & Fast onboarding.",
-    "Visibility & control over delivery timelines.",
-    "Team productivity improvement through transparency.",
-    "Reduced dependency on spreadsheets.",
-  ],
+  includes: ["Web Workspace", "Mobile Web Access", "Admin Cockpit"],
+  upSelling: ["CRM Integration", "Tally/Zoho Integration", "Custom AI Assistant"],
+  integrations: ["SAP", "Salesforce", "Active Directory"],
+  decisionMakers: ["CTO", "CIO", "Project Head", "Operations Head"],
+  keyPoints: ["Zero compromise on data security", "Productivity-first design", "Cost reduction through tool consolidation"],
   roi: [
     "Reduced project delays & improved on-time delivery.",
     "Higher team productivity & lower coordination overhead.",
@@ -106,7 +111,7 @@ const taskManagerData: ProductData = {
         <table className="w-full border-collapse text-xs bg-white">
           <tbody>
             <tr className="border-b border-gray-200">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-gray-50/50">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <ClipboardList className="w-4 h-4 text-orange-500" /> Projects & Task Engine
                 </div>
@@ -114,7 +119,7 @@ const taskManagerData: ProductData = {
               <td className="w-3/4 p-3 text-gray-700 leading-relaxed font-medium">Projects with milestones, tasks, subtasks · Projects dashboard (8 chart types) · Task table with 15 columns · Issues register (client-raised) · Sprint management · Task vs To-Do logic (30-min rule)</td>
             </tr>
             <tr className="border-b border-gray-200">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-gray-50/50">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <CheckSquare className="w-4 h-4 text-green-500" /> Todo
                 </div>
@@ -122,7 +127,7 @@ const taskManagerData: ProductData = {
               <td className="w-3/4 p-3 text-gray-700 leading-relaxed font-medium">Personal To-Do list · Kanban board (To Do / In Progress / On Hold / Done) · Eisenhower matrix (urgency-importance prioritisation)</td>
             </tr>
             <tr className="border-b border-gray-200">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-gray-50/50">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <FileText className="w-4 h-4 text-gray-400" /> Documents (MS Office Replacement)
                 </div>
@@ -130,7 +135,7 @@ const taskManagerData: ProductData = {
               <td className="w-3/4 p-3 text-gray-700 leading-relaxed font-medium">Create Word docs, Excel sheets, PPTs, PDFs inside the platform · Real-time collaborative editing · Export as official .docx / .xlsx / .pptx / .pdf · Data stored only on client's server</td>
             </tr>
             <tr className="border-b border-gray-200">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-gray-50/50">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <MessageSquare className="w-4 h-4 text-purple-400" /> Communication
                 </div>
@@ -138,7 +143,7 @@ const taskManagerData: ProductData = {
               <td className="w-3/4 p-3 text-gray-700 leading-relaxed font-medium">Direct messages · Group channels · Inline task creation from chat messages</td>
             </tr>
             <tr className="border-b border-gray-200">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-gray-50/50">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <Calendar className="w-4 h-4 text-red-400" /> Minutes of Meeting
                 </div>
@@ -146,7 +151,7 @@ const taskManagerData: ProductData = {
               <td className="w-3/4 p-3 text-gray-700 leading-relaxed font-medium">Structured MoM with 9 data fields · Direct conversion of action points to tasks · Meeting type, mode, internal/client flag</td>
             </tr>
             <tr className="border-b border-gray-200">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-gray-50/50">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <Lightbulb className="w-4 h-4 text-yellow-500" /> Opportunity Register
                 </div>
@@ -154,15 +159,15 @@ const taskManagerData: ProductData = {
               <td className="w-3/4 p-3 text-gray-700 leading-relaxed font-medium">Public forum for employee and external suggestions · Department tagging · Convert suggestion to task</td>
             </tr>
             <tr className="border-b border-gray-200">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-gray-50/50">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <Bell className="w-4 h-4 text-orange-400" /> Notifications
                 </div>
               </td>
               <td className="w-3/4 p-3 text-gray-700 leading-relaxed font-medium">Push notifications for task assignments, deadline reminders, MoM action points</td>
             </tr>
-            <tr className="bg-blue-50/30">
-              <td className="w-1/4 p-3 border-r border-gray-200 bg-blue-50/50">
+            <tr className="bg-white">
+              <td className="w-1/4 p-3 border-r border-[#D3D1C7] bg-white">
                 <div className="flex items-center gap-2 font-bold text-blue-700">
                   <ShieldCheck className="w-4 h-4 text-orange-400" /> Data Sovereignty (USP)
                 </div>
@@ -244,16 +249,16 @@ const taskManagerData: ProductData = {
       ]
     },
     detailedFeatures: [
-      { module: "Projects", feature: "Projects Dashboard (Analytics)", subFeatures: "", works: "Visual analytics for each project: project completion chart, milestone completion, assignee-wise milestone progress, task completion, assignee-wise task status, task dependencies map, project-wise issue breakdown, and assignee-wise issues.", userType: "All", usp: false },
+      { module: "Projects", feature: "Projects Dashboard (8-Chart Depth)", subFeatures: "", works: "Visual analytics for each project: project completion chart, milestone completion, assignee-wise milestone progress, task completion, assignee-wise task status, task dependencies map, project-wise issue breakdown, and assignee-wise issues. Depth matches Jira Premium.", userType: "All", usp: false },
       { module: "Projects", feature: "Projects Overview Table", subFeatures: "", works: "Table view of all projects with columns: Actions, ID, Code, Title, Status, Type, Manager, Completion %, Milestone Completion %, Task & Subtask Completion %, Task count, Subtask count, Milestone count, Issues, Start Date, End Date, Priority.", userType: "All", usp: false },
       { module: "Projects", feature: "Tasks Table", subFeatures: "", works: "Comprehensive task management table with columns: Actions, ID, Project, Milestone, Feature Name, Workflow Status, Responsible Person, Created By, Started Time, Time Left, Efforts/Duration, Predecessor, Successor, Completion %, Tag.", userType: "All", usp: false },
       { module: "Projects", feature: "Milestones as Modules", subFeatures: "", works: "All modules within a project are structured as Milestones. Each milestone contains Tasks and Subtasks, creating a clear three-tier hierarchy: Project → Milestone → Task → Subtask.", userType: "All", usp: false },
       { module: "Projects", feature: "Task vs To-Do Logic", subFeatures: "", works: "Any work item estimated at more than 30 minutes is classified as a Task. Items under 30 minutes are classified as To-Dos ,ensuring the right level of tracking for every type of work.", userType: "All", usp: false },
-      { module: "Projects", feature: "Issues Register (Client Issues)", subFeatures: "", works: "Tracks issues raised by clients (not internal bugs) with full detail: Actions, ID, Project Name, Milestone, Task, Subtask, Title, Type, Priority, Status, Responsible Person, Raised By, Start Date, End Date, Comments.", userType: "All", usp: false },
+      { module: "Projects", feature: "Dedicated Issues Register (Client-Raised)", subFeatures: "", works: "Tracks issues raised by clients separate from internal tasks (rare in PM tools). Includes: ID, Project Name, Milestone, Task, Subtask, Title, Type, Priority, Status, Responsible Person, Raised By, Start Date, End Date, Comments.", userType: "All", usp: false },
       { module: "Projects", feature: "Sprints", subFeatures: "", works: "Connects sprints to their associated tasks in a table view. Includes sprint planning details, sprint scope, start/end dates, and task-level linkage for agile teams.", userType: "All", usp: false },
       { module: "Channels", feature: "Direct Messages", subFeatures: "", works: "1-on-1 messaging between employees within the platform ,keeps project communication in context without switching to WhatsApp or email.", userType: "All", usp: false },
       { module: "Channels", feature: "Group Channels", subFeatures: "", works: "Team or project-specific group chats for async collaboration ,all conversations are searchable and tied to the work context.", userType: "All", usp: false },
-      { module: "Minutes of Meeting", feature: "Minutes of Meeting", subFeatures: "", works: "Structured MoM creation with fields: Meeting Title, Type, Mode, Date, Time, Internal/Client flag, Attendees, Points with Description, Raised By, Responsible Person, Due Date, Tags, Document Attachment. Each point can be converted into a Task directly.", userType: "All", usp: true },
+      { module: "Minutes of Meeting", feature: "MoM-to-Task Automation", subFeatures: "", works: "Structured MoM creation with fields: Meeting Title, Type, Mode, Date, Time, Internal/Client flag. Each point can be converted into a Task directly, saving 30+ minutes per meeting cycle. No competitor has this natively.", userType: "All", usp: true },
       { module: "Opportunity Register", feature: "Public Suggestion Forum", subFeatures: "", works: "An open forum where any employee ,or even external visitors ,can post suggestions, ideas, or feedback for any team or the company. Public to all, encouraging a culture of open innovation.", userType: "All", usp: true },
       { module: "Documents", feature: "In-Platform Document Creation", subFeatures: "", works: "Create Word documents, Excel sheets, PowerPoint presentations, and PDFs directly within the platform ,no Microsoft 365 subscription required.", userType: "All", usp: true },
       { module: "Documents", feature: "Real-Time Collaboration", subFeatures: "", works: "Multiple team members can co-edit documents simultaneously within the platform ,similar to Google Docs but with data stored on the company's own servers.", userType: "All", usp: true },
@@ -383,52 +388,340 @@ const taskManagerData: ProductData = {
           threats: "Microsoft Copilot across Teams, Word, and Excel is Microsoft's biggest move. If Copilot becomes the standard AI layer across MS 365, the bar for any work tool rises significantly."
         }
       ],
-      detailedPricing: {
+    },
+    detailedPricing: {
+        pricingMatrixSubtitle: "Section 1: Feature comparison | Section 2: Pricing landscape | Section 3: Positioning | Section 4: Value propositions",
+        pricingFeatureRows: [
+          {
+            capability: "Task & Project Management",
+            currentState: "Project → Milestone → Task → Subtask with 15-column task table, sprint management.",
+            marketNeed: "Create projects, assign tasks, set deadlines, track status. Basic hierarchy: Project → Task.",
+            impact: "Four-tier hierarchy is deeper than Asana or Monday. Only ClickUp matches this depth.",
+            status: "AHEAD",
+            recommendation: "Focus on complex enterprise projects where granularity is a requirement.",
+          },
+          {
+            capability: "Project Dashboards & Analytics",
+            currentState: "8-chart project dashboard: completion, milestone, assignee-wise milestone, task status, task dependencies, issue breakdown.",
+            marketNeed: "Basic completion charts, assignee workload.",
+            impact: "Dashboard depth matches Jira Premium. Most SMB tools offer 2-3 chart types maximum.",
+            status: "AHEAD",
+            recommendation: "Demo analytics to CXOs to show real-time visibility without manual reporting.",
+          },
+          {
+            capability: "Issues Register (Client-Raised)",
+            currentState: "Dedicated client issues register separate from internal tasks: ID, project, milestone, task, type, priority, status, responsible.",
+            marketNeed: "Most PM tools mix internal bugs with client issues or have no structured issue register.",
+            impact: "Separate client issue register is rare. Competitors either mix bugs with client issues or rely on email.",
+            status: "AHEAD",
+            recommendation: "Target Customer Support and Real Estate teams where client feedback loops are critical.",
+          },
+          {
+            capability: "Sprint / Agile Management",
+            currentState: "Sprint module with task linking, sprint details, sprint-to-task association.",
+            marketNeed: "Jira: comprehensive. Asana, Monday: basic. ClickUp: moderate.",
+            impact: "Functional sprint management. Lacks velocity tracking and burndown charts, roadmap gap vs Jira.",
+            status: "AT PAR",
+            recommendation: "Improve velocity tracking and burndown charts to truly compete with Jira for dev teams.",
+          },
+          {
+            capability: "Document Creation & Editing",
+            currentState: "Full in-platform creation: Word, Excel, PPT, PDF. Real-time collaborative editing. Exports as official MS Office files.",
+            marketNeed: "External only (Google Docs, Notion, SharePoint). Almost no PM tool includes native doc creation.",
+            impact: "No PM competitor offers MS Office-compatible document creation and export.",
+            status: "AHEAD, UNIQUE",
+            recommendation: "Pitch as a cost-saving replacement for MS 365 or Google Workspace document tiers.",
+          },
+          {
+            capability: "Data Sovereignty",
+            currentState: "All data, documents, tasks, chats, MoMs, stored exclusively on the client's own database.",
+            marketNeed: "All competitors store data on their own cloud. No SMB PM tool offers client-hosted data.",
+            impact: "Structural differentiator that competitors cannot easily copy without rebuilding their architecture.",
+            status: "AHEAD, UNIQUE",
+            recommendation: "Lead with this for government, legal, and IP-sensitive enterprise accounts.",
+          },
+          {
+            capability: "Minutes of Meeting (MoM)",
+            currentState: "Structured MoM with 9 data fields including direct conversion of action points to tasks.",
+            marketNeed: "Rarely built into PM tools. Usually Google Docs or a separate tool.",
+            impact: "Auto-convert MoM action points to tasks saves 30+ minutes per meeting cycle. No PM competitor has this natively.",
+            status: "AHEAD, UNIQUE",
+            recommendation: "Focus on the 'Meeting to Task' speed in demos to drive immediate perceived value.",
+          },
+        ],
+        pricingSummaryRows: [
+          {
+            label: "Our Structural Leads",
+            detail: "Four-tier project hierarchy and 100% data sovereignty are deep moats against global SaaS players like Asana or Monday.",
+            tone: "green",
+          },
+          {
+            label: "Execution Efficiency",
+            detail: "Native MS Office creation and MoM-to-task automation (saving 30m/meeting) provide immediate ROI that competitors lack.",
+            tone: "green",
+          },
+          {
+            label: "Current Road-map Gap",
+            detail: "While functional, our sprint module currently lacks advanced velocity tracking and burndown charts compared to Jira.",
+            tone: "yellow",
+          },
+        ],
+        pricingCurrentRows: [
+          { label: "India Price Point", detail: "₹499 (Starter) to ₹899 (Growth) per user/month. Enterprise custom from ₹1,200+." },
+          { label: "GCC Price Point", detail: "$8 to $25 per user/month. Premium justified by UAE data residency compliance." },
+          { label: "Deployment Model", detail: "SaaS (Standard) or On-Premise (Enterprise only with setup fee)." },
+          { label: "Commercial Logic", detail: "Priced to replace Asana + Google Docs seat cost; adds sovereignty as a 'free' bonus." },
+        ],
+        pricingPositioningRows: [
+          {
+            question: "Why chose PTM over Asana?",
+            answer: "Because Asana owns your data on their servers. PTM gives you the tool but you keep the data.",
+            note: "This is the 'Nuclear Option' in sales pitches for IP-sensitive firms.",
+          },
+          {
+            question: "Is it just a PM tool?",
+            answer: "No, it is a document and meeting operating system for your team.",
+            note: "Focus on the 'Three Pillars' (Tasks + Docs + Meetings).",
+          },
+        ],
+        pricingImprovementRows: [
+          {
+            currentProp: "All-in-one Project Management",
+            suggestedFix: "Reframe as 'The Sovereign Work OS'",
+            improvedFraming: "The only platform where your company's tasks, docs, and meetings stay on your servers.",
+            whyItWins: "Moves the conversation from 'features' to 'security and control'.",
+          },
+          {
+            currentProp: "MoM to task button",
+            suggestedFix: "Focus on 'Closed-Loop Execution'",
+            improvedFraming: "Stop having meetings that go nowhere. Every action becomes a task automatically.",
+            whyItWins: "Solves a specific, painful operational frustration.",
+          },
+        ],
         featuresVsMarket: [
-          { area: "Task & Project Management", standard: "Create projects, assign tasks, set deadlines, track status. Basic hierarchy: Project → Task.", ourProduct: "Project → Milestone → Task → Subtask with 15-column task table, sprint management.", status: "AHEAD", notes: "Four-tier hierarchy is deeper than Asana or Monday. Only ClickUp matches this depth." },
-          { area: "Project Dashboards & Analytics", standard: "Basic completion charts, assignee workload.", ourProduct: "8-chart project dashboard: completion, milestone, assignee-wise milestone, task status, task dependencies, issue.", status: "AHEAD", notes: "Dashboard depth matches Jira Premium. Most SMB tools offer 2–3 chart types maximum." },
-          { area: "Issues Register (Client-Raised)", standard: "Most PM tools mix internal bugs with client issues or have no structured issue register.", ourProduct: "Dedicated client issues register separate from internal tasks: ID, project, milestone, task, type, priority, status, responsible", status: "AHEAD", notes: "Separate client issue register is rare. Competitors either mix bugs with client issues or rely on email." },
-          { area: "Sprint / Agile Management", standard: "Jira: comprehensive. Asana, Monday: basic. ClickUp: moderate.", ourProduct: "Sprint module with task linking, sprint details, sprint-to-task association.", status: "AT PAR", notes: "Functional sprint management. Lacks velocity tracking and burndown charts — roadmap gap vs Jira." },
-          { area: "Document Creation & Editing", standard: "External only (Google Docs, Notion, SharePoint). Almost no PM tool includes native doc creation.", ourProduct: "Full in-platform creation: Word, Excel, PPT, PDF. Real-time collaborative editing. Exports as official MS Office files.", status: "AHEAD (UNIQUE)", notes: "No PM competitor offers MS Office-compatible document creation and export. Replaces Google Workspace or MS 365 for document needs." },
-          { area: "Data Sovereignty", standard: "All competitors store data on their own cloud. No SMB PM tool offers client-hosted data.", ourProduct: "All data (documents, tasks, chats, MoMs) stored exclusively on the client's own database.", status: "AHEAD (UNIQUE)", notes: "Structural differentiator that competitors cannot easily copy without rebuilding their architecture." },
-          { area: "Minutes of Meeting (MoM)", standard: "Rarely built into PM tools. Usually Google Docs or a separate tool.", ourProduct: "Structured MoM with 9 data fields including direct conversion of action points to tasks.", status: "AHEAD (UNIQUE)", notes: "Auto-convert MoM action points to tasks saves 30+ minutes per meeting cycle. No PM competitor has this natively." },
-          { area: "Opportunity Register", standard: "Not present in any PM competitor. Closest: Aha! for product feedback (B2B SaaS only).", ourProduct: "Public suggestion forum — employees or external visitors post ideas, tagged by module. Can be upvoted and auto-converted to tasks.", status: "AHEAD (UNIQUE)", notes: "Innovation capture built into the PM workflow. No direct competitor has this as a native PM feature." },
-          { area: "Team Communication (Chat)", standard: "Most require Slack/Teams separately. ClickUp has basic chat.", ourProduct: "Direct messages + group channels. Inline task creation from chat messages.", status: "AT PAR with ClickUp", notes: "Functional. Not as mature as Slack threading — roadmap item." },
-          { area: "Todo with Kanban + Eisenhower", standard: "Kanban is common. Eisenhower matrix is rare in enterprise PM tools.", ourProduct: "Personal to-do list with both Kanban board view and Eisenhower matrix (urgency × importance) view.", status: "AHEAD", notes: "Eisenhower matrix differentiation is rare. Most tools offer kanban only for personal tasks." },
-          { area: "Mobile App", standard: "All major competitors have polished mobile apps (Jira, Asana, Monday, Notion, ClickUp).", ourProduct: "Not yet available.", status: "GAP", notes: "Critical gap for field teams, real estate site managers, any user away from a desk." },
-          { area: "Third-party Integrations", standard: "Jira: 3000+. Asana: 200+. Monday: 200+.", ourProduct: "No third-party integrations currently. Roadmap: Jira, GitHub, Slack, accounting tools (Tally, Zoho Books).", status: "GAP", notes: "Will cost deals in tech companies where GitHub/Jira sync is expected." },
-          { area: "Gantt / Timeline View", standard: "Industry standard for PM (Asana, Monday, MS Project).", ourProduct: "Native Gantt view not available. Relying on task list and dashboards.", status: "GAP", notes: "Losing head-to-head battles with Monday.com in construction/infrastructure planning sectors." },
-          { area: "Workflow Automation", standard: "No-code automation (If this then that) in ClickUp, Monday, and Jira.", ourProduct: "Minimal. Currently relying on hardcoded status flows.", status: "GAP", notes: "Serious limitation for operations-heavy enterprise buyers who want custom triggers." },
-          { area: "AI Assistant", standard: "Jira AI, Asana Intelligence, Monday AI, Notion AI.", ourProduct: "Not yet available.", status: "GAP", notes: "Roadmap: Must grounded on sovereign data to remain ahead on security while offering AI features." }
+          {
+            featureArea: "Task & Project Management",
+            marketStandard: "Create projects, assign tasks, set deadlines, track status. Basic hierarchy: Project → Task.",
+            ourProduct: "Project → Milestone → Task → Subtask with 15-column task table, sprint management.",
+            status: "AHEAD",
+            summary: "Four-tier hierarchy is deeper than Asana or Monday. Only ClickUp matches this depth.",
+          },
+          {
+            featureArea: "Project Dashboards & Analytics",
+            marketStandard: "Basic completion charts, assignee workload.",
+            ourProduct: "8-chart project dashboard: completion, milestone, assignee-wise milestone progress, task completion, assignee-wise task status, task dependencies, issue breakdown.",
+            status: "AHEAD",
+            summary: "Dashboard depth matches Jira Premium. Most SMB tools offer 2–3 chart types maximum.",
+          },
+          {
+            featureArea: "Issues Register (Client-Raised)",
+            marketStandard: "Most PM tools mix internal bugs with client issues or have no structured issue register.",
+            ourProduct: "Dedicated client issues register separate from internal tasks: ID, project, milestone, task, type, priority, status, responsible person.",
+            status: "AHEAD",
+            summary: "Separate client issue register is rare. Competitors either mix bugs with client issues or rely on email.",
+          },
+          {
+            featureArea: "Sprint / Agile Management",
+            marketStandard: "Jira: comprehensive. Asana, Monday: basic. ClickUp: moderate.",
+            ourProduct: "Sprint module with task linking, sprint details, sprint-to-task association.",
+            status: "AT PAR with ClickUp",
+            summary: "Functional sprint management. Lacks velocity tracking and burndown charts ,roadmap gap vs Jira.",
+          },
+          {
+            featureArea: "Document Creation & Editing",
+            marketStandard: "External only (Google Docs, Notion, SharePoint). Almost no PM tool includes native doc creation.",
+            ourProduct: "Full in-platform creation: Word, Excel, PPT, PDF. Real-time collaborative editing. Exports as official MS Office files.",
+            status: "AHEAD ,UNIQUE",
+            summary: "No PM competitor offers MS Office-compatible document creation and export. Replaces Google Workspace or MS 365 for document needs.",
+          },
+          {
+            featureArea: "Data Sovereignty",
+            marketStandard: "All competitors store data on their own cloud. No SMB PM tool offers client-hosted data.",
+            ourProduct: "All data ,documents, tasks, chats, MoMs ,stored exclusively on the client's own database.",
+            status: "AHEAD ,UNIQUE",
+            summary: "Structural differentiator that competitors cannot easily copy without rebuilding their architecture.",
+          },
+          {
+            featureArea: "Minutes of Meeting (MoM)",
+            marketStandard: "Rarely built into PM tools. Usually Google Docs or a separate tool.",
+            ourProduct: "Structured MoM with 9 data fields including direct conversion of action points to tasks.",
+            status: "AHEAD ,UNIQUE",
+            summary: "Auto-convert MoM action points to tasks saves 30+ minutes per meeting cycle. No PM competitor has this natively.",
+          },
+          {
+            featureArea: "Opportunity Register",
+            marketStandard: "Not present in any PM competitor. Closest: Aha! for product feedback (B2B SaaS only).",
+            ourProduct: "Public suggestion forum ,employees or external visitors post ideas, tagged by department, convertible to tasks.",
+            status: "AHEAD ,UNIQUE",
+            summary: "Innovation capture built into the PM workflow. No direct competitor has this as a native PM feature.",
+          },
+          {
+            featureArea: "Team Communication (Chat)",
+            marketStandard: "Most require Slack/Teams separately. ClickUp has basic chat.",
+            ourProduct: "Direct messages + group channels. Inline task creation from chat messages.",
+            status: "AT PAR with ClickUp",
+            summary: "Functional. Not as mature as Slack threading ,roadmap item.",
+          },
+          {
+            featureArea: "Todo with Kanban + Eisenhower",
+            marketStandard: "Kanban is common. Eisenhower matrix is rare in enterprise PM tools.",
+            ourProduct: "Personal to-do list with both Kanban board view and Eisenhower matrix (urgency × importance) view.",
+            status: "AHEAD",
+            summary: "Eisenhower matrix differentiation is rare. Most tools offer kanban only for personal tasks.",
+          },
+          {
+            featureArea: "Mobile App",
+            marketStandard: "All major competitors have polished mobile apps (Jira, Asana, Monday, Notion, ClickUp).",
+            ourProduct: "Not yet available.",
+            status: "GAP",
+            summary: "Critical gap for field teams, real estate site managers, any user away from a desk.",
+          },
+          {
+            featureArea: "Third-party Integrations",
+            marketStandard: "Jira: 3000+. Asana: 200+. Monday: 200+.",
+            ourProduct: "No third-party integrations currently. Roadmap: Jira, GitHub, Slack, accounting tools (Tally, Zoho Books).",
+            status: "GAP",
+            summary: "Will cost deals in tech companies where GitHub/Jira sync is expected.",
+          },
+          {
+            featureArea: "Gantt / Timeline View",
+            marketStandard: "Standard in Asana (Premium+), Monday, MS Project, ClickUp.",
+            ourProduct: "Not available.",
+            status: "GAP",
+            summary: "Will cost deals vs Asana and Monday when buyers ask for timeline view.",
+          },
+          {
+            featureArea: "Workflow Automation",
+            marketStandard: "Asana, Monday, ClickUp all have strong no-code automation.",
+            ourProduct: "Not available.",
+            status: "GAP",
+            summary: "Buyers in ops-heavy companies expect 'when task moves to Done → notify manager' automation.",
+          },
+          {
+            featureArea: "AI Assistant",
+            marketStandard: "Notion AI, ClickUp AI, Jira AI (beta), Asana AI ,all in market.",
+            ourProduct: "Not in current scope.",
+            status: "GAP",
+            summary: "Out of current scope. When added, should be grounded on sovereign data ,the key differentiator.",
+          },
         ],
         comparisonSummary: {
-          ahead: "Data sovereignty (unique) - MS Office document creation & export (unique) - MoM-to-task auto-conversion (unique) - Opportunity Register (unique) - 8-chart project dashboard (ahead) - 4-tier project hierarchy (deeper than most) - Client issues register (separate from internal bugs) - Eisenhower matrix for todos (rare)",
-          atPar: "Team chat and channels (functional, not as mature as Slack) - Sprint management (functional, lacks burndown/velocity charts)",
-          gaps: "Mobile app (losing every deal with field teams or mobile-first users) - Gantt/timeline view (losing head-to-head vs Asana/Monday) - Workflow automation (ops-heavy buyers expect this) - Third-party integrations (tech companies expect GitHub/Jira sync) - AI assistant (not in current scope; when added, must be grounded on sovereign data to differentiate)"
+          ahead: "Data sovereignty (unique) · MS Office document creation & export (unique) · MoM-to-task auto-conversion (unique) · Opportunity Register (unique) · 8-chart project dashboard (ahead) · 4-tier project hierarchy (deeper than most) · Client issues register (separate from internal bugs) · Eisenhower matrix for todos (rare)",
+          atPar: "Team chat and channels (functional, not as mature as Slack) · Sprint management (functional, lacks burndown/velocity charts)",
+          gaps: "Mobile app ,losing every deal with field teams or mobile-first users · Gantt/timeline view ,losing head-to-head vs Asana/Monday · Workflow automation ,ops-heavy buyers expect this · Third-party integrations ,tech companies expect GitHub/Jira sync · AI assistant ,not in current scope; when added, must be grounded on sovereign data to differentiate",
         },
         pricingLandscape: [
-          { category: "Standard pricing models", details: "Per-seat SaaS (annual billing) is the category standard. Freemium (free up to 10 users) drives viral adoption. Notion, ClickUp, Asana all use it. Module add-ons create upsell revenue. Enterprise custom contracts with 20–30% discounts for 500+ seats." },
-          { category: "India price ranges", details: "Entry/Starter: ₹400–800/user/month. Mid/Professional: ₹900–1,500/user/month. Enterprise: ₹1,500–3,000/user/month (custom).\nCompetitors: Asana Personal ~₹880, Jira Standard ~₹650, Monday Standard ~₹1,100, ClickUp Unlimited ~₹580." },
-          { category: "GCC price ranges", details: "Entry: $5–10/user/month (AED 18–37). Mid: $10–20/user/month (AED 37–73). Enterprise: $20–40+/user/month (custom, annual).\nGCC pricing carries a premium justified by data residency compliance value." },
-          { category: "Recommended pricing now", details: "₹599–799/user/month (India) | AED 28–35/user/month (GCC).\nFree 14-day trial. Starter: up to 20 users at ₹499. Growth: 21–200 users at ₹699 (adds advanced dashboards and MoM features). Do not go below ₹499, too cheap signals 'not enterprise-ready'." },
-          { category: "At 6 months (post mobile + integrations)", details: "Raise Growth tier to ₹899–999. Introduce Workplace add-on at ₹150/user (when those features are built). Add freemium entry tier (5 users free, forever) to drive viral SMB adoption." },
-          { category: "At 18 months", details: "Enterprise tier: ₹1,499–1,999/user/month with on-premise deployment option (₹2–5L setup fee).\nGCC Enterprise: AED 50–70/user/month for full data sovereignty compliance stack." },
-          { category: "Pricing risk to watch", details: "Do not compete on price alone against ClickUp ($7) or Notion ($8). Data sovereignty and MoM-to-task are worth a premium. Never discount below ₹499. Instead of discounting: offer extended trial (30–45 days), free onboarding session, or 2 months free on annual contract." }
+          {
+            tier: "Standard pricing models",
+            model: "Per-seat SaaS (annual billing) is the category standard. Freemium (free up to 10 users) drives viral adoption ,Notion, ClickUp, Asana all use it. Module add-ons create upsell revenue. Enterprise custom contracts with 20–30% discounts for 500+ seats.",
+            india: "",
+            global: "",
+            included: "",
+            target: "",
+          },
+          {
+            tier: "India price ranges",
+            model: "Entry/Starter: ₹400–800/user/month. Mid/Professional: ₹900–1,500/user/month. Enterprise: ₹1,500–3,000/user/month (custom). Competitors: Asana Personal ~₹880, Jira Standard ~₹650, Monday Standard ~₹1,000, ClickUp Unlimited ~₹580.",
+            india: "",
+            global: "",
+            included: "",
+            target: "",
+          },
+          {
+            tier: "GCC price ranges",
+            model: "Entry: $5–10/user/month (AED 18–37). Mid: $10–20/user/month (AED 37–73). Enterprise: $20–40+/user/month (custom, annual). GCC pricing carries a premium justified by data residency compliance value.",
+            india: "",
+            global: "",
+            included: "",
+            target: "",
+          },
+          {
+            tier: "Recommended pricing now",
+            model: "₹599–799/user/month (India) | AED 28–35/user/month (GCC). Free 14-day trial. Starter: up to 20 users at ₹499. Growth: 21–200 users at ₹699 (adds advanced dashboards and MoM features). Do not go below ₹499 ,too cheap signals 'not enterprise-ready'.",
+            india: "",
+            global: "",
+            included: "",
+            target: "",
+          },
+          {
+            tier: "At 6 months (post mobile + integrations)",
+            model: "Raise Growth tier to ₹899–999. Introduce Workplace add-on at ₹150/user (when those features are built). Add freemium entry tier (5 users free, forever) to drive viral SMB adoption.",
+            india: "",
+            global: "",
+            included: "",
+            target: "",
+          },
+          {
+            tier: "At 18 months",
+            model: "Enterprise tier: ₹1,499–1,999/user/month with on-premise deployment option (₹2–5L setup fee). GCC Enterprise: AED 50–70/user/month for full data sovereignty compliance stack.",
+            india: "",
+            global: "",
+            included: "",
+            target: "",
+          },
+          {
+            tier: "Pricing risk to watch",
+            model: "Do not compete on price alone against ClickUp ($7) or Notion ($8). Data sovereignty and MoM-to-task are worth a premium. Never discount below ₹499. Instead of discounting: offer extended trial (30–45 days), free onboarding session, or 2 months free on annual contract.",
+            india: "",
+            global: "",
+            included: "",
+            target: "",
+          },
         ],
         positioning: [
-          { category: "Single most defensible position", details: "The only project management platform where 100% of your company's data — tasks, documents, MoMs, communications — stays on infrastructure you own. With MS Office document creation built in." },
-          { category: "Segments to prioritise this year", details: "1. Tech/SaaS companies (50–300 employees, India metros) — highest urgency, fastest cycle, engineering teams drive adoption\n2. Professional Services (consulting, legal, audit) in India + GCC — data sovereignty is a compliance requirement, MoM-to-task is immediately compelling\n3. Lockated existing clients (all industries) — zero CAC, warm relationships, cross-sell motion" },
-          { category: "Competitor to displace most aggressively", details: "Asana. It is the most common 'good enough' tool in target segments. Has no document creation, no MoM module, no sovereign storage.\nDisplacement message: 'Replace Asana + Google Docs with one platform where your data never leaves your building.'" },
-          { category: "What to STOP doing or saying", details: "STOP: Pitching as 'just another PM tool' — leads with feature list instead of sovereignty story\nSTOP: Saying 'we replace Jira' — instead say 'keep Jira for engineering, use PTM for everyone else'\nSTOP: Discounting to compete with Notion/ClickUp pricing\nSTOP: Mentioning removed features (wallet, desk/space booking features, F&B, AI) in sales decks — creates expectation confusion" },
-          { category: "Recommended GTM motion Year 1", details: "Founder-led direct sales (first 20 accounts). India-first outbound to CTOs, VPs Engineering, Managing Partners. Lockated existing clients as cross-sell pipeline. 2–3 invite-only roundtables on 'data sovereignty in work management'. GITEX (Dubai) for GCC presence." }
+          {
+            category: "Single most defensible position",
+            description: "The only project management platform where 100% of your company's data ,tasks, documents, MoMs, communications ,stays on infrastructure you own. With MS Office document creation built in.",
+          },
+          {
+            category: "Segments to prioritise this year",
+            description: "1. Tech/SaaS companies (50–300 employees, India metros) ,highest urgency, fastest cycle, engineering teams drive adoption\n2. Professional Services (consulting, legal, audit) in India + GCC ,data sovereignty is a compliance requirement, MoM-to-task is immediately compelling\n3. Lockated existing clients (all industries) ,zero CAC, warm relationships, cross-sell motion",
+          },
+          {
+            category: "Competitor to displace most aggressively",
+            description: "Asana. It is the most common 'good enough' tool in target segments. Has no document creation, no MoM module, no sovereign storage.\nDisplacement message: 'Replace Asana + Google Docs with one platform where your data never leaves your building.'",
+          },
+          {
+            category: "What to STOP doing or saying",
+            description: "STOP: Pitching as 'just another PM tool' ,leads with feature list instead of sovereignty story\nSTOP: Saying 'we replace Jira' ,instead say 'keep Jira for engineering, use PTM for everyone else'\nSTOP: Discounting to compete with Notion/ClickUp pricing\nSTOP: Mentioning removed features (wallet, desk/space booking features, F&B, AI) in sales decks ,creates expectation confusion",
+          },
+          {
+            category: "Recommended GTM motion Year 1",
+            description: "Founder-led direct sales (first 20 accounts), India-first outbound to CTOs, VPs Engineering, Managing Partners. Lockated existing clients as cross-sell pipeline. 2–3 invite-only roundtables on 'data sovereignty in work management'. GITEX (Dubai) for GCC presence.",
+          },
         ],
         valuePropositions: [
-          { currentProp: "All-in-one platform, replace multiple tools", whoResonates: "IT heads, cost-conscious COOs", improvedVersion: "Stop paying for Asana, Google Docs, and a separate MoM tool. PTM does all three, and your data stays on your servers.", whyStronger: "Names the specific tools being replaced (Asana + Google Docs + MoM tool). More concrete than 'all-in-one'. Sovereignty angle makes the status quo feel uncomfortable." },
-          { currentProp: "Data sovereignty, your data stays on your servers", whoResonates: "CIOs, CISOs, compliance teams, BFSI, Legal", improvedVersion: "Your project plans, client deliverables, and meeting records shouldn't live on Asana's servers in Oregon. PTM keeps every byte on infrastructure you own, period.", whyStronger: "Names what data is at risk and where it currently lives. Sovereignty becomes visceral rather than abstract." },
-          { currentProp: "Document creation with MS Office export", whoResonates: "IT heads replacing MS 365, ops and finance teams", improvedVersion: "Write proposals and reports inside PTM. Share with anyone as a real Word or Excel file. Stop paying ₹750/user/month for MS 365 to create documents that live on Microsoft's servers.", whyStronger: "Names the financial saving and the sovereignty problem together. Choice becomes explicit." },
-          { currentProp: "MoM to task in one click", whoResonates: "Project managers, ops leads, consulting teams", improvedVersion: "Every action item from every meeting becomes a tracked task, assigned to a person, with a deadline, automatically. No more Word documents nobody follows up on.", whyStronger: "Frames the outcome ('no more Word documents nobody follows up on') rather than the feature. Addresses the specific frustration the buyer has already felt." },
-          { currentProp: "Replace Jira, Slack, and Asana", whoResonates: "Founders and CXOs frustrated with tool sprawl", improvedVersion: "Let engineering keep Jira. Give everyone else PTM — one login, one bill, one place where your data lives on your terms.", whyStronger: "Original sounds arrogant. Improved version acknowledges Jira's entrenchment, positions PTM for 'the majority,' and leads with simplicity." }
-        ]
+          {
+            currentProp: "'All-in-one platform ,replace multiple tools'",
+            segment: "IT heads, cost-conscious COOs",
+            weakness: "Stop paying for Asana, Google Docs, and a separate MoM tool. PTM does all three ,and your data stays on your servers.",
+            sharpened: "Names the specific tools being replaced (Asana + Google Docs + MoM tool). More concrete than 'all-in-one'. Sovereignty angle makes the status quo feel uncomfortable.",
+          },
+          {
+            currentProp: "Data sovereignty ,your data stays on your servers'",
+            segment: "CIOs, CISOs, compliance teams, BFSI, Legal",
+            weakness: "Your project plans, client deliverables, and meeting records shouldn't live on Asana's servers in Oregon. PTM keeps every byte on infrastructure you own ,period.'",
+            sharpened: "Names what data is at risk and where it currently lives. Sovereignty becomes visceral rather than abstract.",
+          },
+          {
+            currentProp: "'Document creation with MS Office export'",
+            segment: "IT heads replacing MS 365, ops and finance teams",
+            weakness: "'Write proposals and reports inside PTM. Share with anyone as a real Word or Excel file. Stop paying ₹750/user/month for MS 365 to create documents that live on Microsoft's servers.'",
+            sharpened: "Names the financial saving and the sovereignty problem together. Choice becomes explicit.",
+          },
+          {
+            currentProp: "'MoM to task in one click'",
+            segment: "Project managers, ops leads, consulting teams",
+            weakness: "'Every action item from every meeting becomes a tracked task, assigned to a person, with a deadline ,automatically. No more Word documents nobody follows up on.'",
+            sharpened: "Frames the outcome ('no more Word documents nobody follows up on') rather than the feature. Addresses the specific frustration the buyer has already felt.",
+          },
+          {
+            currentProp: "'Replace Jira, Slack, and Asana'",
+            segment: "Founders and CXOs frustrated with tool sprawl",
+            weakness: "Let engineering keep Jira. Give everyone else PTM ,one login, one bill, one place where your data lives on your terms.'",
+            sharpened: "Original sounds arrogant. Improved version acknowledges Jira's entrenchment, positions PTM for the majority, and leads with simplicity.",
+          },
+        ],
       },
       detailedUseCases: {
         industryUseCases: [
@@ -625,9 +918,796 @@ const taskManagerData: ProductData = {
             frequency: "Daily"
           }
         ]
+      },
+      detailedRoadmap: {
+        structuredRoadmap: [
+          {
+            timeframe: "PHASE 1 , IMMEDIATE (0–3 MONTHS)",
+            headline: "Stop losing deals we should be winning",
+            colorContext: "red",
+            phaseDescription: "These are features/fixes needed RIGHT NOW. Each one is actively costing us deals in current pipeline.",
+            items: [
+              {
+                featureName: "Mobile App (iOS + Android)",
+                whatItIs: "A fully functional mobile version of PTM covering tasks, to-dos, approvals, notifications, MoM, channels, and the task performance tracking. Field teams and executives make decisions on their phones.",
+                whyItMatters: "The #1 objection in every enterprise demo. Real estate site managers, healthcare admins, and any CXO will not adopt a desktop-only tool. Currently losing every deal where the primary user is away from a desk.",
+                unlockedSegment: "Real Estate site teams · Healthcare ops · All field-facing industries · Any CXO who checks status on the go",
+                dealRisk: "CRITICAL , actively losing deals. Every competitor (Jira, Asana, Monday, Notion) has a polished mobile app. This is table-stakes, not a differentiator.",
+                priority: "P0 , Highest",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Live Demo Environment",
+                whatItIs: "A publicly accessible, pre-seeded demo instance showing a fully configured PTM account with sample projects, tasks, milestones, MoM, kanban board, issues, documents, and dashboards , accessible without sales involvement.",
+                whyItMatters: "Prospects cannot evaluate a product they cannot see. Currently every prospect requires a founder-led demo, creating a bottleneck that limits how many deals can run in parallel. A self-serve demo environment also qualifies inbound leads before sales time is spent.",
+                unlockedSegment: "All segments , but especially Tech/SaaS (who self-evaluate tools before contacting sales) and Professional Services (who want to explore before committing a meeting).",
+                dealRisk: "HIGH , currently every conversation requires a live demo call. Without a sandbox, the sales cycle is bottlenecked on founder availability.",
+                priority: "P0 , Highest",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "GitHub / GitLab Integration",
+                whatItIs: "Two-way sync between GitHub/GitLab and PTM. Commits and PRs link to PTM sprint tasks. When a PR is merged, linked task auto-moves to Done. Sprint boards reflect real code progress without manual updates.",
+                whyItMatters: "Tech/SaaS companies use GitHub or GitLab for code. Without this, dev teams won't adopt PTM for sprint tracking ,they'll stay in Jira. This is the bridge that makes PTM credible for engineering teams at tech companies.",
+                unlockedSegment: "Tech / SaaS companies ,engineering and product teams",
+                dealRisk: "HIGH for Tech segment ,engineering adoption blocked without code integration",
+                priority: "P1 ,High",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Velocity Tracking & Burndown Charts for Sprints",
+                whatItIs: "Auto-calculated sprint velocity (story points completed per sprint), burndown chart showing remaining work vs time, and a 'sprint health score' updated in real time during the sprint.",
+                whyItMatters: "Tech/SaaS companies using PTM for engineering sprint management will benchmark sprint tooling against Jira. Without velocity and burndown, PTM loses every head-to-head evaluation against Jira for dev teams.",
+                unlockedSegment: "Tech / SaaS companies (Engineering and Product teams) · Any org running agile methodology",
+                dealRisk: "HIGH for Tech segment , without this, engineering teams will keep Jira and PTM never gets adopted by the most influential users in tech companies.",
+                priority: "P1 , High",
+                effort: "",
+                owner: ""
+              }
+            ]
+          },
+          {
+            timeframe: "PHASE 2 , SHORT-TERM (3–6 MONTHS)",
+            headline: "Expand addressable market & move up-market",
+            colorContext: "green",
+            phaseDescription: "These features open new segments, increase ACV, and move PTM from SMB to mid-market.",
+            items: [
+              {
+                featureName: "No-Code Workflow Automation",
+                whatItIs: "Visual rule builder: 'When [trigger] happens → do [action]'. E.g.: When task moves to Done → notify assignee's manager + create follow-up task. When sprint ends → auto-generate retrospective MoM. No engineering required to configure.",
+                whyItMatters: "Automations are now table-stakes in the PM category. Asana and Monday both lead with this. Without automation, ops-heavy buyers (operations, marketing, HR) find the tool too manual. Automation also drives daily active usage , automated notifications keep users returning to the platform.",
+                unlockedSegment: "Operations teams · Marketing teams · HR teams · Any company with repetitive workflow patterns · Mid-market buyers comparing to Monday or Asana",
+                dealRisk: "Medium-HIGH , will begin losing to Asana and Monday in ops-buyer evaluations as deal sizes grow.",
+                priority: "P1 , High",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "GitHub / GitLab + Jira Integration",
+                whatItIs: "Two-way sync: GitHub/GitLab commits and PRs linked to PTM tasks. When a PR is merged, the linked task auto-moves to Done. Jira issues can be imported as PTM tasks. Allows engineering teams to stay in their existing dev tools while their work surfaces in PTM. Keep Jira for engineering, use PTM for everything else. Rollout pitch also needs Jira sync to stay credible.",
+                whyItMatters: "Tech companies almost universally use GitHub or GitLab for code. Without integration, PTM cannot win engineering adoption , and engineering teams are the most influential internal advocates for any PM tool. The 'Keep Jira for engineering, use PTM for everything else' pitch also needs Jira sync to stay credible.",
+                unlockedSegment: "Tech / SaaS companies (specifically Engineering teams) · Product companies using agile with existing GitHub workflows",
+                dealRisk: "HIGH for Tech segment , without this, engineering adoption is blocked and the cross-company rollout pitch fails.",
+                priority: "P1 , High",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Advanced Analytics & Custom Reports",
+                whatItIs: "Drag-and-drop report builder: select dimensions (project, assignee, milestone, time period, tag) and metrics (completion rate, delay rate, hours logged, MoM action completion rate). Schedule automated email reports. Export to PDF or CSV. Role-based report sharing.",
+                whyItMatters: "CXOs and PMOs need reports they can present to boards. Mid-market companies that have outgrown basic dashboards want to build their own views. This feature moves PTM from an operational tool to a strategic reporting layer, dramatically increasing ACV and stickiness.",
+                unlockedSegment: "CXOs and PMOs at 100+ employee companies · BFSI (compliance reports) · Real Estate (investor reporting) · Any company where project data feeds into board-level decisions",
+                dealRisk: "MEDIUM , current dashboards serve SMBs. Custom reports are required to win enterprise and 200+ employee accounts.",
+                priority: "P2 , Medium-High",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Freemium Entry Tier (5 users, forever free)",
+                whatItIs: "A genuinely useful free tier for up to 5 users , includes core project management, tasks, kanban, channels, and to-do. Excludes: advanced dashboards, custom reports, sprint velocity charts, and full export. No time limit , free forever.",
+                whyItMatters: "Notion's dominance in Indian startups is built on a free tier that creates viral adoption. Individual users adopt, drag their team in, team grows → paid plan. PTM needs bottom-up viral adoption to reduce CAC. A free tier also provides market intelligence , which features free users hit limits on first reveals the upgrade path.",
+                unlockedSegment: "Indian startup ecosystem (Bengaluru, Mumbai) · Individual contributors at SMBs · Teams currently on Notion or Trello who have outgrown it · GCC free-zone micro-businesses",
+                dealRisk: "MEDIUM , without a free tier, PTM is invisible to the viral adoption engine that drives PM tool growth.",
+                priority: "P2 , Medium-High",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "AI , MoM Auto-Extraction from Transcripts",
+                whatItIs: "User uploads or pastes a meeting transcript (or audio recording via Zoom/Meet integration). AI reads it, identifies action items, suggests responsible persons based on who was mentioned, and generates a draft MoM with tasks pre-filled. User reviews and approves in one click.",
+                whyItMatters: "MoM creation is the most time-consuming meeting admin task. This feature saves 20–40 minutes per meeting and is the kind of 'magic moment' that gets people to recommend PTM to a colleague. It also strengthens the MoM-to-task workflow , the single most unique process in the platform.",
+                unlockedSegment: "All knowledge-worker teams · Consulting and professional services (who live in client meetings) · Any team with more than 5 meetings per week",
+                dealRisk: "MEDIUM , not a deal-closer but a powerful activation and retention feature. Will drive NPS uplift.",
+                priority: "P2 , Medium",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Workflow Automation (No-code)",
+                whatItIs: "Visual no-code rule builder , 'When [trigger] → do [action]'. E.g.: task moves to Done → notify manager + create follow-up. Sprint ends → auto-generate retrospective MoM stub. Issue raised → assign by category rule. Configurable without engineering.",
+                whyItMatters: "Automations are table-stakes in PM. Asana and Monday lead with this. Without it, ops-heavy buyers find PTM too manual. Automation also drives DAU , automated notifications pull users back into the platform daily.",
+                unlockedSegment: "Operations teams · Marketing teams · All companies with repetitive workflow patterns",
+                dealRisk: "Medium-HIGH ,losing ops-buyer evaluations to Asana and Monday",
+                priority: "P1 , High",
+                effort: "",
+                owner: ""
+              }
+            ]
+          },
+          {
+            timeframe: "PHASE 3 , MEDIUM-TERM (6–18 MONTHS)",
+            headline: "Build the long-term moat",
+            colorContext: "purple",
+            phaseDescription: "These capabilities become structural advantages that are hard to copy. Build the moat here.",
+            items: [
+              {
+                featureName: "AI Copilot , Grounded on Sovereign Data (RAG)",
+                whatItIs: "An AI assistant (not in current scope) that answers questions using the company's own PTM data , not generic knowledge. 'Which projects are at risk of delay this quarter?' 'Summarize all action items from last month's client meetings.' 'Draft a project status email for Project Alpha based on current task completion.' All answers drawn from real company data, never hallucinated.",
+                whyItMatters: "This is the moat. Every competitor's AI is generic. PTM's AI is the only one trained on your sovereign data , meaning it gives answers that are accurate, contextual, and company-specific. This moves PTM from a 'tool' to an 'intelligence layer' , a category shift that dramatically increases switching cost and ACV.",
+                unlockedSegment: "All segments , but especially Enterprise accounts (200+ employees) where the volume of projects, tasks, and documents is large enough for AI to deliver obvious value. BFSI and Legal where AI grounded in their own data is safer than generic LLM output",
+                dealRisk: "MEDIUM now , HIGH in 12 months as AI-native work tools become the new baseline expectation.",
+                priority: "Strategic Moat",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "On-Premise / Private Cloud Deployment Option",
+                whatItIs: "A fully supported on-premise deployment package: PTM running entirely within the client's own data centre or private cloud (AWS India region, Azure India, or dedicated server). Includes installation scripts, monitoring, update management, and a professional services setup fee (₹2–5L one-time).",
+                whyItMatters: "Data sovereignty is our #1 USP , but currently it's a claim, not a product capability. On-premise deployment makes the claim provable. BFSI, Government, and large manufacturing clients require on-premise for regulatory compliance. This feature converts 'interested but can't approve' deals in regulated industries into signed contracts.",
+                unlockedSegment: "BFSI (RBI/SEBI data localisation) · Government and PSUs · Large manufacturing (sensitive production data) · Healthcare (HIPAA-equivalent requirements in GCC) · Any GCC entity under PDPL or Saudi NDMO regulation",
+                dealRisk: "HIGH for regulated industries , currently losing every BFSI and Government deal where 'cloud-only' is a disqualifier.",
+                priority: "Strategic Moat",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Time Tracking & Billable Hours",
+                whatItIs: "Built-in time tracking per task: start/stop timer or manual entry. Billable vs non-billable classification. Client-level billing rate configuration. Automated timesheet generation. Export to invoice format. Integration with accounting tools.",
+                whyItMatters: "Professional services firms (consulting, law, audit, agencies) bill clients by the hour. Without time tracking, PTM cannot displace their current tool stack. This feature unlocks the entire billable-hours segment , consulting, legal, creative agencies, IT services , which are high-ACV clients with strong retention.",
+                unlockedSegment: "Consulting firms · Law firms · Audit firms · Creative and marketing agencies · IT services and outsourcing companies · Any professional services firm billing clients by the hour",
+                dealRisk: "HIGH for Professional Services segment , without time tracking, this entire high-ACV segment will not migrate off their current tools.",
+                priority: "P1 for Professional Services segment",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Marketplace / Integration Ecosystem (50+ integrations)",
+                whatItIs: "A curated integration marketplace: Slack (message sync), Salesforce (opportunity → project), SAP (approval sync), Zoom/Meet (meeting → MoM), WhatsApp Business (task notifications), Accounting tools (Tally, Zoho Books, QuickBooks), and 40+ more. Open API + webhook framework for custom integrations.",
+                whyItMatters: "Enterprise buyers evaluate integration catalogues. Jira's 3,000+ integration marketplace is a moat , everything connects to it. PTM needs a credible integration story (not 3,000 , but the 20 integrations that matter to Indian and GCC enterprise buyers). An open API also enables partners and SIs to build integrations, creating an ecosystem flywheel.",
+                unlockedSegment: "All enterprise segments (200+ employees) · Tech companies (GitHub, Slack, Zoom) · Real Estate (SAP) · BFSI (Salesforce, Tally) · Professional Services (Zoom, QuickBooks)",
+                dealRisk: "HIGH for enterprise , without integrations, PTM stays in the SMB segment and cannot compete for 200+ employee accounts.",
+                priority: "Strategic , Ecosystem",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "PTM for External Clients (Client Portal)",
+                whatItIs: "A limited-access portal for external clients to view project status, raise issues (client issue register), review and approve deliverables, and communicate with the team , all without a PTM login or seat. Client sees only what they're permitted to see.",
+                whyItMatters: "Professional services firms, agencies, and real estate developers need to share project status with clients without giving them full system access. Currently requires email, PDF reports, or a separate client-facing tool. A built-in client portal eliminates external reporting overhead and makes PTM sticky for the vendor (can't switch without losing client visibility).",
+                unlockedSegment: "Professional services (consulting, agencies, IT services) · Real estate developers sharing project progress with investors and buyers · Any B2B company managing client projects",
+                dealRisk: "MEDIUM now , HIGH once PTM has traction in professional services segment.",
+                priority: "P2 , Medium",
+                effort: "",
+                owner: ""
+              },
+              {
+                featureName: "Task Performance Tracking (Roadmap) → Full Payroll Integration",
+                whatItIs: "Extend the task performance tracking into a full payroll integration layer: connect project milestone completion calculations to payroll software (Darwinbox, Keka, Razorpay Payroll). Auto-generate salary disbursement instructions based on project task tracking balances. Full audit trail from task completion → performance score → salary credit.",
+                whyItMatters: "Professional services firms and agencies need to share project progress with clients without granting full system access. A built-in client portal eliminates the weekly status email and PDF report. The vendor cannot switch without losing client visibility ,this creates high switching cost.",
+                unlockedSegment: "Companies with project milestone completion structures (sales teams, consulting, gig-adjacent workforces) · HR and finance heads who currently reconcile bonuses manually in Excel · Mid-market companies in India where Darwinbox / Keka are the payroll backbone",
+                dealRisk: "MEDIUM , the project task tracking is unique now. Full payroll integration makes it irreplaceable.",
+                priority: "Strategic Moat",
+                effort: "",
+                owner: ""
+              }
+            ]
+          }
+        ],
+        enhancementRoadmap: [
+          {
+            rowId: "1",
+            module: "Projects Dashboard",
+            featureName: "Smart Anomaly Alerts",
+            currentStatus: "Dashboard shows charts for project completion, milestone progress, and assignee performance, user must manually read and interpret trends.",
+            enhancedVersion: "AI layer auto-scans dashboards daily and surfaces proactive alerts like 'Project Alpha has 3 tasks at risk of missing deadline', 2 assignees haven't updated status in 4 days.' Sends digest to PM every morning with recommended actions.",
+            integrationType: "AI (LLM + rule engine)"
+          },
+          {
+            rowId: "2",
+            module: "Tasks Table",
+            featureName: "Natural Language Task Creation",
+            currentStatus: "User opens the task form, fills in title, assigns person, sets deadline, selects priority manually.",
+            enhancedVersion: "User types or voice-inputs: 'Assign the landing page redesign to Priya, due next Friday, high priority, linked to Q2 sprint.' AI parses the sentence and auto-fills the entire task form, user just confirms.",
+            integrationType: "AI (NLP / voice)"
+          },
+          {
+            rowId: "3",
+            module: "MoM , Convert to Task",
+            featureName: "Auto MoM Extraction",
+            currentStatus: "User manually types each MoM point, assigns responsible person, and sets due date one by one. Option to convert to task is a manual click.",
+            enhancedVersion: "User uploads or pastes meeting transcript / audio recording. AI reads it, identifies action items automatically, suggests responsible persons based on who was mentioned, and generates a draft MoM with tasks pre-filled. User reviews and approves.",
+            integrationType: "AI (transcript analysis) + MCP (calendar / meeting bot)"
+          },
+          {
+            rowId: "7",
+            module: "Issues Register",
+            featureName: "Smart Issue Routing & Triage",
+            currentStatus: "Client raises an issue manually. It is assigned to a responsible person by the project manager after reviewing the details.",
+            enhancedVersion: "AI reads the issue description on submission and auto-assigns it to the most relevant person based on past issue resolution history and category patterns. Flags if a similar issue was raised before ('This matches Issue #34, resolved by X') and suggests Y. Drafts a first-response message for the assignee to review and send. Issue routing time drops from hours to seconds.",
+            integrationType: "AI (classification + routing + entity matching)"
+          },
+          {
+            rowId: "5",
+            module: "Document Sharing & Export",
+            featureName: "Manual Export",
+            currentStatus: "When ready to share externally, user clicks export and downloads the file, then emails or shares it separately.",
+            enhancedVersion: "User types recipient's email in the share panel. System auto-converts the document to the right format (.docx / .pdf), attaches it, and sends directly, with a read-receipt back in the platform. Recipient gets a clean MS Office file. No extra steps.",
+            integrationType: "MCP (email / SMTP integration)"
+          },
+          {
+            rowId: "6",
+            module: "Opportunity Register",
+            featureName: "Static Suggestion Board",
+            currentStatus: "Anyone posts a suggestion. It sits in a list. Managers review when they remember to.",
+            enhancedVersion: "AI reads every new suggestion and auto-tags it by department, effort level, and strategic theme. Weekly digest is sent to relevant department heads. High-voted suggestions auto-generate a task proposal that manager can approve with one click.",
+            integrationType: "AI (classification + summarization)"
+          },
+          {
+            rowId: "7",
+            module: "Sprints",
+            featureName: "Manual Sprint Planning",
+            currentStatus: "Team lead manually selects tasks for each sprint based on rough capacity estimates. Effort and velocity data from past sprints is not used systematically.",
+            enhancedVersion: "AI analyses past sprint velocity (tasks/story points completed per sprint), current team availability, and task complexity. Recommends optimal sprint scope and shows a predicted completion % before the sprint starts. Flags tasks too large for the sprint window.",
+            integrationType: "AI (velocity prediction + capacity modelling)"
+          },
+          {
+            rowId: "8",
+            module: "To-Do , Eisenhower Matrix",
+            featureName: "Manual Quadrant Sorting",
+            currentStatus: "User drags To-Do items into the four quadrants (Urgent/Important, Not Urgent/Important, Urgent/Not Important, Neither) manually.",
+            enhancedVersion: "AI auto-suggests quadrant placement based on deadline proximity, task tags, project priority, and the user's historical patterns. Shows why it placed an item in a quadrant: 'This is Urgent/Important because the deadline is tomorrow and it's tagged to a client-facing milestone.'",
+            integrationType: "AI (classification)"
+          },
+          {
+            rowId: "12",
+            module: "Issues Register",
+            featureName: "Predictive Issue Escalation",
+            currentStatus: "Issues are escalated manually when someone remembers to follow up. TAT breaches are noticed after the fact.",
+            enhancedVersion: "AI monitors all open issues and predicts which ones are at risk of breaching their TAT based on assignee workload, issue age, and historical patterns for similar issues. Sends a proactive alert to the project manager 24 hours before predicted breach. Suggests reassignment if the current assignee is overloaded.",
+            integrationType: "AI (predictive analytics + workload monitoring)"
+          },
+          {
+            rowId: "13",
+            module: "Sprints",
+            featureName: "Sprint Scope Recommendation",
+            currentStatus: "Team lead manually selects which tasks to include in a sprint based on rough estimates and memory of team capacity.",
+            enhancedVersion: "AI analyses past sprint velocity (how many tasks/story points the team actually completed per sprint), current team availability, and task complexity tags. Automatically recommends an optimal sprint scope and flags tasks that are too large for the sprint window. Shows a 'predicted completion %' before the sprint starts.",
+            integrationType: "AI (velocity prediction + capacity modelling)"
+          },
+          {
+            rowId: "14",
+            module: "Documents",
+            featureName: "Smart Document Templates",
+            currentStatus: "User creates a new document from a blank page and structures it manually. Every proposal, MoM, or report starts from scratch.",
+            enhancedVersion: "When user clicks 'New Document', AI asks: 'What are you writing?', user selects from smart templates (client proposal, project brief, MoM summary, status report, SOW) pre-filled with company branding, project context from PTM, and placeholder sections. A 30-minute document creation task becomes a 5-minute review-and-personalise task.",
+            integrationType: "AI (generative + context injection) + MCP (company brand assets)"
+          },
+          {
+            rowId: "15",
+            module: "Channels",
+            featureName: "Smart Thread Summarisation",
+            currentStatus: "Team messages each other in group channels. Long threads lose context, important decisions are buried in scroll.",
+            enhancedVersion: "Any user can type '/summarise' in any channel or thread. AI produces a 3-bullet-point summary of the discussion, highlights any action items or decisions mentioned, and offers to convert them to MoM points or tasks with one click. Also auto-surfaces threads that mention deadlines or unresolved questions to the relevant project manager.",
+            integrationType: "AI (summarisation + entity linking) + MCP (notification)"
+          },
+          {
+            rowId: "17",
+            module: "Opportunity Register",
+            featureName: "AI-Powered Idea Intelligence",
+            currentStatus: "Anyone posts a suggestion. It sits in a list. Managers review when they remember to. No prioritisation or follow-through system.",
+            enhancedVersion: "AI reads every new suggestion and auto-tags it by department, effort level, strategic theme, and feasibility. Sends a weekly digest to relevant department heads with the top 3 ideas by upvote and impact score. High-voted suggestions auto-generate a task proposal that the relevant manager can approve with one click, turning ideas into action in 24 hours.",
+            integrationType: "AI (classification + summarisation + task generation)"
+          },
+          {
+            rowId: "18",
+            module: "Projects Dashboard",
+            featureName: "Cross-Project Dependency Alerts",
+            currentStatus: "Project managers view dashboards per project. If a delay in Project A will impact Project B, this is spotted manually, if at all.",
+            enhancedVersion: "AI maps task dependencies across projects and alerts the project manager when a delay in one project is predicted to cascade into another. Example: 'Task X in Project A (delayed by 3 days) is a predecessor of Task Y in Project B. Project B's milestone is now at risk.' Surfaces the ripple before it becomes a missed deadline.",
+            integrationType: "AI (dependency graph + predictive delay modelling)"
+          },
+          {
+            rowId: "16",
+            module: "Opportunity Register",
+            featureName: "Idea Prioritisation & Routing",
+            currentStatus: "Suggestions are submitted and sit in a chronological list. No automatic prioritisation or routing to the relevant team or decision-maker.",
+            enhancedVersion: "AI reads each new suggestion and auto-tags it by department, effort level, and strategic theme. Sends weekly digest to relevant department heads with top ideas ranked by upvote score and AI-assessed feasibility. High-voted items generate a one-click task proposal for the manager to approve.",
+            integrationType: "AI (classification + routing + summarisation)"
+          },
+          {
+            rowId: "18",
+            module: "Issues Register",
+            featureName: "Issue Pattern Detection & Knowledge Base",
+            currentStatus: "Each client issue is treated as a standalone record. Patterns across recurring issues are spotted manually, if at all.",
+            enhancedVersion: "AI identifies recurring issue patterns across the register (e.g., 'Waterproofing complaints spike in monsoon projects'). Builds a searchable resolution knowledge base. When a new issue is raised, AI surfaces similar past issues and their solutions. Reduces repeat escalations and resolution time for known issue types.",
+            integrationType: "AI (pattern recognition + knowledge base generation)"
+          }
+        ]
+      },
+      detailedBusinessPlan: {
+        planQuestions: [
+          {
+            id: "Q1",
+            question: "Why does your company exist? What impact are you here to make?",
+            answer: "We exist because every company in the world is haemorrhaging productivity, money, and intellectual property through the same broken pattern: 4–6 separate tools, none of which talk to each other, and all of which store your company's most sensitive data on servers you will never control. We built Project & Task Manager to give organisations , from a 50-person startup in Bengaluru to a 2,000-person enterprise in Dubai , a single platform where their teams plan, execute, communicate, and get paid, with every byte of data stored exclusively on infrastructure they own.\n\nThe impact we are here to make is simple: make data sovereignty the default expectation in work management, not a luxury. Every organisation we onboard stops paying rent on their own intellectual property and starts owning the infrastructure of their daily work.",
+            source: "Output 1 , Product Summary / Output 3 , Market Analysis (Pain Points)",
+            flag: "Ready",
+            colorContext: "blue"
+          },
+          {
+            id: "Q2",
+            question: "What 4–5 values or behaviours best represent your team or culture?",
+            answer: "Value 1: Ownership over access , we build for founders and leaders who want to own their data, not rent it. This is not just a product feature; it is how we operate internally. We own our decisions and our mistakes.\n\nValue 2: Clarity over complexity , in a category full of tools that overwhelm users with features, we are obsessed with making things simpler. Every decision we make , product, communication, pricing , must reduce complexity, not add to it.\n\nValue 3: Velocity with integrity , we move fast, but we ship what we promise. Speed without quality costs us the trust of the companies that have entrusted their data to our platform.\n\nValue 4: Sovereign mindset , we believe organisations have a right to control their own data, their own workflows, and their own productivity infrastructure. We advocate for this in product decisions, in sales conversations, and in the market.\n\nValue 5: Customer obsession over product ego , we listen more than we pitch. A feature that solves a real customer problem beats a technically elegant feature that no one asked for.",
+            source: "Output 8 , Positioning / Founder input required , please replace any values that don't reflect your actual team",
+            flag: "Founder Review",
+            colorContext: "red"
+          },
+          {
+            id: "Q3",
+            question: "What USPs make you stand out from competitors?",
+            answer: "USP 1 ,Data sovereignty (for IT Heads, CISOs, and compliance teams): We are the only work management platform at SMB pricing where 100% of company data ,tasks, documents, communications, MoMs ,stays on infrastructure the client owns and controls. No competitor offers this without an enterprise contract. This directly addresses RBI/SEBI data localisation requirements in India and PDPL/NDMO regulations in the GCC.\n\nUSP 2 ,MS Office document creation and export (for IT heads replacing MS 365, ops and finance teams): Teams can create Word documents, Excel sheets, PowerPoint presentations, and PDFs inside PTM and export them as official Microsoft Office files. No other PM tool in our price range does this. We replace a ₹750+/user/month MS 365 subscription for document creation.\n\nUSP 3 ,MoM-to-task auto-conversion (for project managers, ops leads, and consulting teams): Every meeting action item is automatically converted into an assigned task with a deadline and responsible person ,in one click. No more Word documents with action points nobody follows up on. No PM competitor has this as a native, structured workflow.\n\nUSP 4 ,Opportunity Register (for leadership and product teams): A public suggestion forum where any employee or external stakeholder can post ideas that are tagged, prioritised, and converted to tasks. No PM competitor has this built natively into the project management workflow. PTM becomes an innovation management layer.\n\nUSP 5 ,All-in-one consolidation at mid-market price (for cost-conscious COOs and founders): PTM replaces Jira/Asana + Slack + Google Docs + a MoM/notes tool ,typically 4 separate subscriptions ,with one platform at ₹599–799/user/month. All on infrastructure the client owns.",
+            source: "Output 4 , Competitor Mapping / Output 5 , Feature Comparison (Features & Pricing sheet)",
+            flag: "Ready",
+            colorContext: "green"
+          },
+          {
+            id: "Q4",
+            question: "What bold outcome do you want to achieve in the next 10–15 years? Your BHAG.",
+            answer: "In 15 years, data sovereignty in work management will be the global default , not a premium feature , and Project & Task Manager will be the platform that made it so.\n\nSpecifically: by 2038, PTM will be the work OS of choice for 100,000 companies across India and the GCC , the region where data sovereignty regulation, rapid digital adoption, and affordable enterprise software are converging into the largest greenfield opportunity in the work management category. We will have built the first work management platform that also functions as the financial accountability layer for an organisation , where every task completed flows directly into payroll, and where every piece of company data lives permanently on infrastructure the company owns.\n\nThe transformation we are driving: organisations stop being tenants on vendor infrastructure and become owners of their own digital operations.",
+            source: "Output 2 , Market Fit Analysis / Output 8 , Strategic Positioning , Adjust ambition level to match your personal conviction",
+            flag: "Founder Review",
+            colorContext: "purple"
+          },
+          {
+            id: "Q5",
+            question: "What do you want to achieve in the next 3–5 years?",
+            answer: "Revenue and scale targets:\n, Year 2: ₹2–3 crore ARR. 150–200 paying companies. Average contract value of ₹12–18L/year. India-first with initial GCC accounts.\n, Year 3: ₹8–12 crore ARR. 500+ companies. Expand to UAE and Saudi Arabia as primary GCC markets. Launch partner/reseller channel in GCC with 5–10 SI partners contributing 20–30% of new ARR.\n, Year 4–5: ₹25–40 crore ARR. 1,500+ companies. Mobile app fully mature. On-premise enterprise tier available. HRMS and payroll integrations live. AI Copilot grounded on sovereign data launched and positioned as category leader.\n\nGeographies: India metros (Bengaluru, Mumbai, Delhi, Pune, Hyderabad) → GCC (Dubai, Abu Dhabi, Riyadh, Doha) → Southeast Asia exploratory (Singapore, Indonesia) by Year 5.\n\nProduct milestones: Mobile app (Year 1), Gantt + automations (Year 1), GitHub/Jira integration (Year 2), on-premise deployment (Year 2), AI Copilot on sovereign data (Year 3), payroll integration (Year 3).\n\nCategory leadership: Be the brand that defines 'data sovereign work management' , the way Notion defined 'flexible wiki-meets-tasks'.",
+            source: "Output 6 , Pricing Evolution / Output 8 , Strategic Positioning , Adjust revenue numbers to match your actual financial model",
+            flag: "Founder Review",
+            colorContext: "teal"
+          },
+          {
+            id: "Q6",
+            question: "What are your main business goals for this financial year?",
+            answer: "Goal 1 , Revenue: Reach ₹75L–1.2 crore ARR by end of financial year. Requires 8–12 paid accounts at ₹8–12L ACV each, plus a long tail of 40–60 smaller accounts at ₹1–3L ACV.\n\nGoal 2 , Customer acquisition: Sign 50–75 paying companies. Priority segments: Tech/SaaS companies (25 accounts), Real Estate developers (15 accounts), Professional Services firms (15 accounts). At least 5 GCC accounts to validate international pricing.\n\nGoal 3 , Product milestone: Ship mobile app (iOS + Android) by Month 3 and live demo environment by Month 2. These are the two highest-priority deal blockers in current pipeline.\n\nGoal 4 , Market entry: Establish PTM brand in the 'data sovereign work management' category in India. Target: 3 published case studies with named customers, 1 speaking slot at a relevant industry event (NASSCOM Product Conclave, TechSparks, or equivalent), 500+ LinkedIn followers on PTM product page.\n\nGoal 5 , Team: Hire 1 dedicated sales person (SDR or AE with PM software experience) by Month 4. Hire 1 customer success manager by Month 6 to manage onboarding and reduce early churn.",
+            source: "Output 6 , Current Pricing / Output 7 , Product Roadmap (0–3 months) , Adjust revenue numbers to your actual plan",
+            flag: "Founder Review",
+            colorContext: "red"
+          },
+          {
+            id: "Q7",
+            question: "Which customer segments or geographies will you focus on this year?",
+            answer: "Segment 1 , Tech / SaaS companies, India metros (Bengaluru, Pune, Hyderabad, Mumbai), 50–300 employees:\nChosen because: highest urgency (Jira + Slack + Google Docs fragmentation is a daily pain they can articulate), fastest sales cycle (product-literate buyers self-evaluate quickly), and highest internal advocacy potential (engineering teams who adopt PTM drag the rest of the company in). Entry point: pitch to CTO or VP Engineering on the sovereignty + sprint consolidation story.\n\nSegment 2 , Professional Services (consulting, legal, audit), India metros + Dubai/Abu Dhabi, 20–150 professionals:\nChosen because: data sovereignty is a compliance obligation in this segment (DIFC-regulated entities in Dubai, SEBI-regulated advisors in India). High ACV (₹10–20L per account). MoM-to-task and document creation features are immediately compelling. Decision cycle is 4–8 weeks , manageable. Entry point: the 'your client data should not live on Google's servers' pitch to Managing Partner or Practice Head.\n\nSegment 3 , Locksted FM Matrix and Loyalty existing clients (cross-sell), all geographies:\nChosen because: zero CAC. Trust already established. PTM is a natural extension of the Locksted platform relationship. Positioning: 'You already use Locksted for FM and customer experience , now use it for the work management layer that connects your teams.' Fastest path to first 10–15 accounts with short sales cycles.",
+            source: "Output 2 , Market Fit Analysis / Output 8 , Strategic Positioning",
+            flag: "Ready",
+            colorContext: "blue"
+          },
+          {
+            id: "Q8",
+            question: "What 3 key actions or projects will help achieve this year's goals?",
+            answer: "Initiative 1 , Build a direct outbound sales motion targeting CTOs and VP Engineering at Tech/SaaS companies with 50–300 employees in Bengaluru, Pune, and Hyderabad.\nExecution: Founder-led for first 3 months. Build a list of 300 target companies from LinkedIn Sales Navigator. Outbound sequence: LinkedIn connection + personalised note on data sovereignty → 3-touch email sequence → phone call. Aim for 5 qualified demo calls per week. Message: 'your engineering team's sprint data, product roadmap, and client communications are on Atlassian's servers in the US , let's fix that.' Hire 1 SDR by Month 4 to take over outbound as founder moves to closing.\n\nInitiative 2 , Launch the 'Data Sovereign Work Management' category through a hosted roundtable series and LinkedIn content engine.\nExecution: Host 3 invite-only roundtables (40–60 attendees each) in Bengaluru, Mumbai, and Dubai on the topic of data sovereignty in enterprise tools. Position PTM as the convener, not the pitch. Follow up every attendee with a personalised case for PTM within 48 hours. Simultaneously, publish 2 pieces of long-form content per month on LinkedIn (Founder account + PTM company page) on topics: data localisation regulations, SaaS data risk, tool consolidation ROI. Goal: 10 inbound demo requests per month by Month 6.\n\nInitiative 3 , Execute a zero-CAC cross-sell campaign through Locksted's existing FM Matrix and Loyalty client base.\nExecution: Map all current Locksted clients with 50+ employees who do not yet use PTM. Build a personalised outreach sequence for each account manager relationship. Offer existing clients a 90-day free trial of PTM with dedicated onboarding. Target: 15 converted accounts from existing client base by Month 6. Case studies from these accounts become the proof-of-concept material for new segment outbound.",
+            source: "Output 7 , Product Roadmap / Output 8 , GTM Recommendation , Confirm these initiatives match your team's actual resourcing",
+            flag: "Founder Review",
+            colorContext: "green"
+          },
+          {
+            id: "Q9",
+            question: "What are the key numbers or metrics to track regularly?",
+            answer: "COMMERCIAL KPIs:\n1. Monthly Recurring Revenue (MRR) and MRR growth rate (%) month-on-month , primary health metric\n2. New logo count per month , number of new paying companies (not seats)\n3. Average Contract Value (ACV), target ₹8–12L for mid-market accounts; track separately for India vs GCC\n4. Sales cycle length , days from first demo to signed contract; target under 45 days for SMB, 60–90 for mid-market\n5. Customer Acquisition Cost (CAC) , total sales + marketing spend ÷ new logos. Target CAC payback under 12 months\n6. Net Revenue Retention (NRR) , if existing customers expand (add seats), NRR > 100% means growth even without new logos\n\nPRODUCT KPIs:\n1. Week-1 activation rate , % of new accounts that complete their first full project setup (project + milestone + 3 tasks + 1 MoM) within 7 days of signup. Target: 60%+\n2. Daily Active Users / Monthly Active Users (DAU/MAU ratio) , measures habit formation. Target: 40%+ ratio (40 daily users for every 100 monthly users)\n3. Feature adoption by module , % of accounts using each core module (kanban, MoM, wallet, docs). Flags which features drive retention vs which are underused\n4. Time-to-value , how many days from account creation to first completed milestone. Target: under 14 days\n5. Support ticket volume per account , leading indicator of onboarding friction or UX gaps. Spike = intervention needed\n6. NPS / CSAT , quarterly pulse. Target NPS 40+ in Year 1. Below 30 = product-market fit is not solid yet",
+            source: "Output 2 , Buyer Priorities / Output 6 , Pricing & Market Metrics",
+            flag: "Ready",
+            colorContext: "teal"
+          },
+          {
+            id: "Q10",
+            question: "What improvements do you need in your people or processes to succeed?",
+            answer: "Gap 1 , Mobile app engineering capability: We do not have a mobile app. Every deal involving field teams, real estate site managers, or CXOs who check status on their phones is currently at risk. We need to either hire 1–2 mobile engineers (React Native or Flutter) or engage a specialist mobile development partner in the next 60 days. This is the single highest-priority people/capability gap.\n\nGap 2 , Sales function (first hire): Currently running on founder-led sales, which caps how many deals can run in parallel. By Month 4, we need a first sales hire , ideally an SDR with SaaS PM software experience who can run outbound sequences and qualify inbound leads, freeing the founder for closing and strategy. Without this, growth above ₹50L ARR is bottlenecked.\n\nGap 3 , Customer success and onboarding: We have no formal onboarding process. Activation rates will suffer without a structured 30-day onboarding playbook and a dedicated person (even part-time initially) to walk new accounts through their first project, first MoM, and first MoM-to-task conversion. A single Customer Success hire by Month 6 can protect the first 50 accounts from churn.\n\nGap 4 , Integration engineering: The roadmap requires calendar integration (Month 1–3), GitHub/GitLab sync (Month 3–6), and HRMS connections (Month 6+). These are not trivial builds. We need a dedicated integrations engineer or a structured partnership with an SI who can build and maintain these integrations. Without integrations, enterprise accounts are out of reach.\n\nGap 5 , Brand and content function: Data sovereignty is a positioning story that needs to be told consistently , on LinkedIn, at events, in sales decks, in case studies. Currently there is no content or brand function. A part-time content marketer or a founder-facing ghostwriting arrangement is needed in Month 3–4 to maintain visibility.",
+            source: "Output 5 , Feature Gaps / Output 8 , Winning Capabilities",
+            flag: "Founder Review",
+            colorContext: "red"
+          }
+        ],
+        founderChecklist: [
+          { id: "Q2", item: "Values", verify: "Claude has suggested 5 values based on product positioning and category research. Replace any that don't reflect your actual team culture. These are yours to own , not derived from market data.", status: "PENDING" },
+          { id: "Q4", item: "BHAG (10–15 year goal)", verify: "The suggested BHAG is grounded in market trajectory and product vision. Adjust the ambition level, geography, or transformation statement to match your personal conviction. A BHAG you don't believe is useless in a planning session.", status: "PENDING" },
+          { id: "Q5", item: "3–5 year targets", verify: "Revenue ranges and seat counts are benchmarked against realistic growth rates in this category. Adjust to match your actual financial model and fundraising assumptions.", status: "PENDING" },
+          { id: "Q6", item: "This year's goals", verify: "Revenue targets and hiring timelines must be adjusted to match your actual financial plan, runway, and team capacity. These are suggested anchors, not commitments.", status: "PENDING" },
+          { id: "Q8", item: "3 key initiatives", verify: "Confirm these three initiatives match what your team is actually resourced to execute this year. Initiative 1 (outbound sales) requires founder time. Initiative 2 (roundtables) requires budget and organising capacity. Initiative 3 (cross-sell) requires coordination with account management. Resource-check before committing.", status: "PENDING" },
+          { id: "Q10", item: "People & process gaps", verify: "The 5 gaps identified are based on product roadmap requirements and common deal-loss patterns. Prioritise based on your current burn rate and hiring runway. Gap 1 (mobile) and Gap 2 (sales hire) are non-negotiable for Year 1 growth.", status: "PENDING" }
+        ]
+      },
+      detailedGTM: {
+        targetGroups: [
+          {
+            id: "TG1",
+            title: "Tech / SaaS Companies (50–300 employees, India metros)",
+            components: [
+              { component: "Sales Motion", detail: "Founder-led direct outbound for first 20 accounts. Transition to SDR + AE model at Month 4." },
+              { component: "Marketing Channels", detail: "LinkedIn organic + paid, cold outreach, events & conferences, SEO & content marketing, referral & word of mouth, community & associations." },
+              { component: "90-Day Launch", detail: "Days 1–30: Foundation. Days 31–60: Traction. Days 61–90: Conversion." },
+              { component: "Partnership Strategy", detail: "Indian SaaS consultants (referral-only, post 10 direct customers). Talent platforms & HRMS vendors (cross-sell)." }
+            ],
+            summaryBox: "Founder-led direct outbound → SDR + AE by Month 4. LinkedIn organic + personalised cold outreach. 5 demo calls → 3 trials → 2 signed contracts + 1 case study. Indian SaaS consultants (referral-only). CTO / VP Engineering (50–200 employees) | COO / CFO (200+ employees)."
+          },
+          {
+            id: "TG2",
+            title: "Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+            components: [
+              { component: "Sales Motion", detail: "Founder-led direct + field sales (in-person meetings). Relationship and trust based." },
+              { component: "Marketing Channels", detail: "LinkedIn organic, cold outreach, FICCI/CII/DIFC events, SEO & content marketing, referral & word of mouth, community & associations." },
+              { component: "90-Day Launch", detail: "Days 1–30: Foundation. Days 31–60: Traction. Days 61–90: Conversion." },
+              { component: "Partnership Strategy", detail: "Ex-Big4 boutique consultants (referral) + GCC RegTech vendors (co-marketing)." }
+            ],
+            summaryBox: "Founder-led field sales + warm introductions. LinkedIn organic (compliance + data security content) + hosted roundtables. 3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study. Ex-Big4 boutique consultants. Managing Partner (small firms) | COO / Practice Head (large firms)."
+          }
+        ],
+        sheet: {
+          title: "Project & Task Manager , Go-To-Market Strategy",
+          targetGroups: [
+            {
+              title: "TARGET GROUP 1 , Tech / SaaS Companies (50–300 employees, India metros)",
+              sections: [
+                {
+                  title: "Profile: Company size: 50–300 employees · Industry: Technology, SaaS, Product companies · Geography: Bengaluru, Pune, Hyderabad, Mumbai (India primary); Dubai, Abu Dhabi (GCC secondary) · Buyer: CTO / VP Engineering / COO · Budget: ₹6–18L/year · Current stack: Jira + Slack + Confluence + Google Workspace",
+                  columns: [],
+                  rows: []
+                },
+                {
+                  title: "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+                  columns: ["Sales element", "Details"],
+                  rows: [
+                    ["Primary sales motion", "Founder-led direct outbound for first 20 accounts. Transition to SDR + AE model at Month 4. Deal size (₹6–15L/year) justifies high-touch sales; product complexity (sovereignty story) requires a human in the room for the first call."],
+                    ["Avg. sales cycle", "4–8 weeks for SMB tech companies (50–150 employees). 8–14 weeks for mid-market (150–500 employees). Flag: this is longer than typical for a tool-level SaaS purchase , driven by IT approval for data migration and procurement sign-off. Pre-empt by engaging IT Head in Week 1, not Week 6."],
+                    ["Economic buyer (signs)", "CTO or VP Engineering for companies under 200 employees. COO or CFO for companies over 200 employees where the purchase spans multiple departments."],
+                    ["Champion (internal advocate)", "VP Engineering or Head of Product , they feel the Jira + Slack + Confluence fragmentation pain daily. Engineering managers who have been complaining about data security are natural champions."],
+                    ["Blocker to anticipate", "IT/Security Head who will demand a security audit and data flow documentation before approving any new platform. Pre-empt with a one-pager on PTM's data architecture and sovereignty compliance before the IT conversation begins."],
+                    ["What closes this TG", "A live demo showing the full project → sprint → MoM → task → documents → issues flow, followed by a 14-day sandbox trial where their actual team sets up one real project. Reference customer in a similar-stage tech company seals it. Sovereignty architecture documentation closes the IT objection."]
+                  ]
+                },
+                {
+                  title: "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+                  columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+                  rows: [
+                    ["LinkedIn (organic + paid)", "Yes", "Organic: 2 posts/week from Founder account , topics: data sovereignty in SaaS, Jira alternatives, sprint productivity. Target personas: CTOs, VPs Engineering, Product Managers. Paid: LinkedIn Sponsored Content targeting 'Software Engineering' + 'Product Management' job titles at companies 50–500 employees in Bengaluru, Pune, Hyderabad. Budget: ₹50–80k/month. Start organic for 60 days, layer paid after first 3 case studies.", "#1 , Start immediately"],
+                    ["Cold outreach (email + LinkedIn DM)", "Yes", "Sequence: Day 1 , LinkedIn connection request with note referencing a specific pain ('noticed your team uses Jira + Confluence , have 10 min to show you something interesting?'). Day 4 , email with 1-line data sovereignty hook + 30-second Loom video of PTM sprint view. Day 8 , follow-up with a relevant case study or stat. Day 14 , final breakup email. Best day/time: Tuesday–Thursday, 9–11am IST. List size target: 50 personalised outreaches per week.", "#1 , Start immediately"],
+                    ["Events & conferences", "Yes", "India: NASSCOM Product Conclave (Bengaluru, annual), TechSparks by YourStory (Bengaluru), SaaS Insider events. Host a 40-person invite-only roundtable: 'Data sovereignty in the SaaS stack , what engineering leaders need to know.' GCC: GITEX Technology Week (Dubai, October) for enterprise tech audience.", "#2 , Month 2 onward"],
+                    ["SEO & content marketing", "Yes", "Top 3 search topics this TG looks for: 'Jira alternatives India', 'best project management software for startups', 'data localisation SaaS India'. Content format: long-form blog posts (2,000+ words) targeting comparison keywords. Timeline: 90+ days to see SEO results , start now but don't count on it for Month 1.", "#3 , Medium-term"],
+                    ["Referral & word of mouth", "Yes", "Trigger: when a team completes their first sprint fully in PTM and reports velocity improvement. Engineer the referral: at Day 30 check-in, ask satisfied users to intro PTM to 1 peer at another company. Offer: free 30-day seat extension for each successful referral that converts to a trial.", "#2 , Month 2"],
+                    ["Community & associations", "Yes", "LinkedIn groups: SaaS India, Product Management India. Slack communities: SaaSBoomi, The Hustle (India SaaS community), Product Folks, YourStory and Inc42 founder communities. Engage authentically , answer questions about PM tools, sovereignty, sprint management , don't pitch directly.", "#3 , Medium-term"]
+                  ]
+                },
+                {
+                  title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+                  columns: [],
+                  rows: []
+                },
+                {
+                  title: "DAYS 1–30 , FOUNDATION: Get first 5 qualified conversations with CTOs/VPs Engineering",
+                  columns: ["", "", ""],
+                  rows: [
+                    ["Goal", "Get 5 qualified demo calls booked with CTOs or VP Engineering at tech companies with 50–300 employees in Bengaluru/Pune/Hyderabad.", ""],
+                    ["Action 1: Build a 300-company target list from LinkedIn Sales Navigator", "Owner: Founder", "Output: Segmented list: company size 50–300, tech/SaaS industry, Bengaluru/Pune/Hyderabad HQ. 300 names with decision-maker contacts."],
+                    ["Action 2: Launch 50 personalised outreach sequences per week (LinkedIn + email)", "Owner: Founder", "Output: 5% response rate target = 15 replies per week. 3 qualified demo calls from first 300 outreaches."],
+                    ["Action 3: Create a 5-minute sovereignty demo video + 1-page architecture doc", "Owner: Founder + Product", "Output: A self-serve asset that qualifies leads before the live demo , reduces time spent on non-ICP prospects."],
+                    ["Key milestone", "5 qualified demo calls booked with ICP tech companies.", ""],
+                    ["Biggest risk", "Outreach personalisation falls flat , generic 'we replace Jira' messaging gets ignored. Pre-empt: invest 10 minutes in researching each company before outreach. Reference their actual tech stack, team size, or a recent engineering blog post.", ""]
+                  ]
+                },
+                {
+                  title: "DAYS 31–60 , TRACTION: Convert conversations to demos and trials",
+                  columns: ["", "", ""],
+                  rows: [
+                    ["Goal", "Run 5+ live demos, convert minimum 3 to 14-day sandbox trials with their actual team.", ""],
+                    ["Action 1: Run live demo: project → sprint → MoM → task → documents → issues flow in 30 minutes", "Owner: Founder", "Output: Demo-to-trial conversion target: 60%. Each demo ends with a specific next step , not 'let us know', but 'let's set up your trial environment on Thursday'."],
+                    ["Action 2: Set up personalised trial environments pre-loaded with their team structure", "Owner: Product", "Output: Sandbox that mirrors their actual project structure reduces time-to-value from 7 days to 2 days."],
+                    ["Action 3: Engage IT Head at each trial account with architecture documentation", "Owner: Founder", "Output: IT objection handled proactively , sovereignty architecture doc + security Q&A pre-sent. Removes the 6-week IT review delay."],
+                    ["Key milestone", "3 active 14-day trials running with real teams at tech companies.", ""],
+                    ["Biggest risk", "Trial accounts go quiet after Day 3 because onboarding is self-serve. Pre-empt: assign a dedicated 30-minute onboarding call per account within 48 hours of trial start. Identify 1 champion per account who owns the trial internally.", ""]
+                  ]
+                },
+                {
+                  title: "DAYS 61–90 , CONVERSION: Close first paying customer or committed pilot",
+                  columns: ["", "", ""],
+                  rows: [
+                    ["Goal", "Sign first 2–3 paying tech company accounts. Minimum: 1 signed contract + 1 committed pilot with a start date.", ""],
+                    ["Action 1: Week 9 check-in call: review trial usage data, surface wins and friction points", "Owner: Founder + CS", "Output: Data-driven closing conversation , show them their own usage metrics (tasks created, MoMs converted, MoM-to-task conversions and issue closures). Make the ROI tangible."],
+                    ["Action 2: Present a custom ROI summary: tool consolidation savings + sovereignty compliance value", "Owner: Founder", "Output: Quantify: X seats × ₹750/month MS 365 savings + Jira/Confluence licence offset + 0 SaaS data risk = ₹Y saved. Make the number specific to their company."],
+                    ["Action 3: Request a reference introduction: 'Who else in your network has this problem?'", "Owner: Founder", "Output: Every signed account should generate 1–2 warm intros to peer companies. This becomes the referral engine for Month 4+."],
+                    ["Key milestone", "2 signed contracts from tech companies. 1 published case study (anonymised or named).", ""],
+                    ["Biggest risk", "Procurement delays the signed contract even after verbal commitment. Pre-empt: get a PO number or payment intent confirmed in the closing call. Offer an early payment discount (1 free month on annual) to accelerate the paper process.", ""]
+                  ]
+                },
+                {
+                  title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+                  columns: ["Partnership element", "Details"],
+                  rows: [
+                    ["Timing for partnerships", "Yes , but only after first 10 direct customers. Build direct sales motion first to understand the buyer deeply before training partners to sell it."],
+                    ["Partner type 1: Indian SaaS consultants / implementation partners", "Who: boutique IT consulting firms that help tech companies set up their SaaS stack (Notion consultants, Atlassian partners, productivity consultants). Why they have access: they are already in procurement conversations about PM tools. What we offer: 20% referral commission on Year 1 ARR + co-marketing. India profile: SaaS implementation firms in Bengaluru (example: productivity-focused boutiques in Koramangala). Red flag to avoid: large SIs who will over-promise and under-deliver for a ₹8L deal."],
+                    ["Partner type 2: Talent platforms & HRMS vendors (cross-sell)", "Who: Darwinbox, Keka, or GreytHR , once PTM has HRMS integration built (Month 6+), these platforms have direct access to the same HR and IT heads we target. What we offer: joint webinars, co-marketing content, integration badge on their marketplace. What they offer: reach into their client base without a cold outreach. Red flag: do not position PTM as an HRMS replacement , we complement them."],
+                    ["Year 1 partnership structure", "Referral-only for Year 1. No reseller margin, no white-label. A referred deal that closes earns the partner 20% of Year 1 ARR, paid 30 days after client payment clears. Reason: at our current stage, reseller complexity (training, support, margin management) will slow us down more than the incremental deals are worth. Direct sales builds the muscle first."]
+                  ]
+                },
+                {
+                  title: "◆ TG 1 ONE-PAGE SUMMARY , Tech / SaaS Companies (50–300 employees, India metros)",
+                  columns: ["Element", "Answer", "Element", "Answer"],
+                  rows: [
+                    ["Best sales motion", "Founder-led direct outbound (Month 1–4) → SDR + AE by Month 4", "Single most important Week 1 action", "Build 300-company target list + send first 50 personalised outreach sequences"],
+                    ["Top 2 marketing channels", "LinkedIn organic (founder content) + personalised cold outreach", "Biggest risk to watch", "IT security review delays , engage IT Head in Week 1, not Week 6"],
+                    ["90-day goal", "5 demo calls → 3 trials → 2 signed contracts + 1 case study", "What closes this TG", "14-day sandbox trial + sovereignty architecture doc + peer reference customer"],
+                    ["Key partner type", "Indian SaaS consultants (referral-only, post 10 direct customers)", "Primary buyer", "CTO / VP Engineering (50–200 employees) | COO / CFO (200+ employees)"]
+                  ]
+                }
+              ],
+              summary: "Founder-led direct outbound → SDR + AE by Month 4. LinkedIn organic + personalised cold outreach. 5 demo calls → 3 trials → 2 signed contracts + 1 case study. Indian SaaS consultants (referral-only). CTO / VP Engineering (50–200) | COO / CFO (200+)."
+            },
+            {
+              title: "TARGET GROUP 2 , Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+              sections: [
+                {
+                  title: "Profile: Company size: 20–200 professionals · Industry: Management consulting, legal, audit · Geography: Mumbai, Delhi, Bengaluru (India); Dubai (GCC), Abu Dhabi (GCC) · Buyer: Managing Partner / COO / Practice Head · Budget: ₹4–12L/year",
+                  columns: [],
+                  rows: []
+                },
+                {
+                  title: "COMPONENT 1 , SALES MOTION | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+                  columns: ["Sales element", "Details"],
+                  rows: [
+                    ["Primary sales motion", "Founder-led direct + field sales (in-person meetings). This TG buys on relationships and trust , not self-serve trials. A lunch meeting with a Managing Partner is worth more than 20 cold emails. Average deal size (₹10–20L) justifies in-person investment."],
+                    ["Avg. sales cycle", "6–10 weeks. Slower than tech , requires partner approval and often a legal/compliance review of the data architecture. Flag: in DIFC-regulated Dubai entities, legal team review can add 3–4 weeks. Engage the compliance team in Week 2."],
+                    ["Economic buyer (signs)", "Managing Partner (small firms) or COO / Practice Head (larger firms). In GCC: General Manager or Regional Director with P&L authority."],
+                    ["Champion (internal advocate)", "Senior Manager or Associate Director who manages client project delivery , they feel the MoM + task tracking pain daily. Engineering managers who have been complaining about data security are natural champions. They will champion PTM internally once they see the MoM-to-task demo."],
+                    ["Blocker to anticipate", "Legal/compliance partner who will ask: 'Where does our client data go?' This is our strongest moment , the answer ('your servers, not ours') closes the objection immediately. Pre-arm the champion with a one-pager on data sovereignty before the compliance conversation."],
+                    ["What closes this TG", "A single compelling demo of MoM-to-task auto-conversion + document creation with data sovereignty explanation. Followed by a reference from a similarly regulated firm (or a DIFC/SEBI compliance note). This TG buys on 'I trust this is safe and it solves my meeting-to-action problem.'"]
+                  ]
+                },
+                {
+                  title: "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+                  columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+                  rows: [
+                    ["LinkedIn (organic + paid)", "Yes", "Organic: content targeting Practice Heads and Managing Partners , topics: client data security, meeting productivity, billable hour optimisation, DIFC/SEBI compliance for SaaS. Paid: LinkedIn targeting 'Management Consulting', 'Legal Services', 'Audit' industries + 'Managing Partner', 'Practice Head' titles. Mumbai, Delhi, Dubai, Abu Dhabi. Budget: ₹40–60k/month.", "#1 , High priority"],
+                    ["Cold outreach (email + LinkedIn DM)", "Yes", "Hook: 'Your client contracts and project plans live on Google's servers in Singapore. Here's an alternative.' 5-touch sequence over 21 days. Best timing: Monday–Wednesday, 8–10am IST / GST. Personalise heavily , reference their practice area, recent client industry (from LinkedIn/website).", "#1 , High priority"],
+                    ["Events & conferences", "Yes", "India: FICCI conferences, CII conferences, Big4 alumni roundtables, Bar Council events for legal firms. GCC: DIFC events, LEAP (Riyadh), Arabian Business Summit (Dubai). Recommended: Host a breakfast roundtable , 'Protecting client confidentiality in a SaaS world' , 20 invitees, a thought leadership talk, and then PTM demo. Strong conversion environment.", "#2 , Start Month 2"],
+                    ["SEO & content marketing", "Yes", "Top 3 search topics this TG looks for: 'client data security project management', 'DIFC compliance software', 'data localisation consulting firms India'. Long-form content: 'How consulting firms are violating client confidentiality without knowing it' (pillar article). Case study format works best for this TG , they trust peers.", "#3 , Medium-term"],
+                    ["Referral & word of mouth", "Yes", "This TG's referral network is tight , a Managing Partner's recommendation to a peer carries 10x the weight of any ad. Engineer it: at Month 2, ask your first consulting client to make 2 warm introductions over coffee. Offer a joint webinar co-branded with them.", "#2 , Very high value when triggered"],
+                    ["Community & associations", "Yes", "India: ICAI (chartered accountants), IBA India (legal), MCA alumni networks, NASSCOM for consulting. GCC: DIFC Authority events, UAE Chartered Accountants group, ACCA Middle East. WhatsApp groups: boutique consulting firm founder networks in Mumbai/Delhi.", "#3 , Medium-term"]
+                  ]
+                },
+                {
+                  title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+                  columns: [],
+                  rows: []
+                },
+                {
+                  title: "DAYS 1–30 , FOUNDATION: Map the segment and get first 3 warm conversations",
+                  columns: ["", "", ""],
+                  rows: [
+                    ["Goal", "Get 3 qualified conversations with Managing Partners or Practice Heads at professional services firms through warm introductions.", ""],
+                    ["Action 1: Map target firms: 50 consulting/legal/audit firms in Mumbai, Delhi, Dubai , identify 1 contact per firm", "Owner: Founder", "Output: Prioritised hit list of 50 firms with decision-maker LinkedIn profiles and email addresses."],
+                    ["Action 2: Request warm introductions from Lockated's existing network (investors, advisors, existing clients)", "Owner: Founder", "Output: 5 warm intros from existing network. Warm intro → meeting conversion rate is 40–60% vs 3–5% for cold."],
+                    ["Action 3: Draft a sovereign data one-pager specifically for professional services: 'Where does your client data live?'", "Owner: Founder + Marketing", "Output: A 1-page PDF that the champion can forward to their compliance partner before the meeting."],
+                    ["Key milestone", "3 qualified meetings booked with Managing Partners or Practice Heads.", ""],
+                    ["Biggest risk", "Warm intros don't materialise quickly enough. Pre-empt: run cold outreach in parallel , 30 personalised emails per week with the hook 'your client data is on Google's servers.'", ""]
+                  ]
+                },
+                {
+                  title: "DAYS 31–60 , TRACTION: Demo and build trust",
+                  columns: ["", "", ""],
+                  rows: [
+                    ["Goal", "Run 3+ demos. Convert minimum 2 to paid pilots or extended trials. At least 1 GCC (Dubai/Abu Dhabi) account in conversation.", ""],
+                    ["Action 1: In-person demo: MoM-to-task flow + document creation + sovereignty walkthrough , 45 minutes max", "Owner: Founder", "Output: Demo conversion target: 70%. End with: 'Which upcoming client project can we set up in PTM this week?'"],
+                    ["Action 2: Set up a pilot for 1 practice team on a live client project (not internal admin , real work)", "Owner: Founder + Product", "Output: Real-work pilot creates stickiness that an internal demo never achieves. The team using it for a live project won't want to switch back."],
+                    ["Action 3: Send a DIFC/SEBI compliance brief to all GCC prospects covering PTM's data architecture", "Owner: Founder", "Output: Pre-removes the legal/compliance objection in GCC accounts , saves 3 weeks of review time."],
+                    ["Key milestone", "2 paid pilots underway. At least 1 demo with a GCC-based professional services firm.", ""],
+                    ["Biggest risk", "Pilots run but no one uses them because 'we're busy with client work.' Pre-empt: set up the pilot around one specific MoM they have scheduled. Low activation = low conversion.", ""]
+                  ]
+                },
+                {
+                  title: "DAYS 61–90 , CONVERSION: First signed contracts and case study",
+                  columns: ["", "", ""],
+                  rows: [
+                    ["Goal", "Sign 2 paying accounts. Get permission to write 1 anonymised case study on efficiency gains from MoM-to-task.", ""],
+                    ["Action 1: Pilot review: show them their own data , MoMs created, tasks auto-converted, docs created", "Owner: Founder + CS", "Output: Present: 'In 30 days, your team auto-converted X meeting action points into tasks. Here's how many were completed on time vs your old process.'"],
+                    ["Action 2: ROI presentation: time saved on MoM creation + document creation cost offset vs Google Workspace", "Owner: Founder", "Output: Quantified: X hours/week saved on MoM × ₹Y hourly billing rate = ₹Z/month saved. Plus ₹750/user MS 365 offset. Make the ROI tangible."],
+                    ["Action 3: Request anonymised case study permission + 1 warm introduction to a peer firm", "Owner: Founder", "Output: 1 case study + 1 referral. This is the compound interest of professional services sales."],
+                    ["Key milestone", "2 signed contracts. 1 anonymised case study. 1 warm referral to a peer firm.", ""],
+                    ["Biggest risk", "Contract negotiation drags on because procurement is slow in professional services. Pre-empt: offer a 'start now, invoice in 30 days' arrangement for first 3 clients to bypass the procurement delay.", ""]
+                  ]
+                },
+                {
+                  title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+                  columns: ["Partnership element", "Details"],
+                  rows: [
+                    ["Timing for partnerships", "Yes , after 5 direct customers. Professional services referral networks are high-trust; a premature partnership with the wrong firm can damage brand credibility more than no partnership."],
+                    ["Partner type 1: Big4 and mid-tier consulting alumni networks", "Who: Former Big4 (Deloitte, EY, KPMG, PwC) partners who have set up boutique consulting or advisory practices. Why they have access: direct relationships with the exact buyers we target (Managing Partners at peer firms). What we offer: 20% referral fee on Year 1 ARR + 'recommended by' co-branding. India profile: boutique strategy consulting firms run by ex-Big4 partners in Mumbai/Delhi. GCC profile: former Big4 Gulf partners who have set up independent advisory practices in DIFC."],
+                    ["Partner type 2: Legal tech / RegTech vendors (GCC)", "Who: Vendors selling DIFC/PDPL compliance tools to professional services firms , they are calling the same CIO and compliance heads we need to reach. What we offer: joint co-marketing content on data sovereignty + referral agreement. What they offer: warm access to compliance-minded buyers who have already acknowledged the data risk problem. GCC profile: RegTech firms operating in DIFC or ADGM (Abu Dhabi Global Market)."],
+                    ["Year 1 partnership structure", "Referral-only. 20% of Year 1 ARR paid to referring partner within 30 days of client payment. No white-label, no reseller complexity. Keep it clean and fast."]
+                  ]
+                },
+                {
+                  title: "◆ TG 2 ONE-PAGE SUMMARY , Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+                  columns: ["Element", "Answer", "Element", "Answer"],
+                  rows: [
+                    ["Best sales motion", "Founder-led field sales + warm introductions (relationship-first)", "Single most important Week 1 action", "Map 50 target firms + request 5 warm intros from existing Lockated network"],
+                    ["Top 2 marketing channels", "LinkedIn organic (compliance + data security content) + hosted roundtables", "Biggest risk to watch", "Compliance review delays , arm champion with sovereignty one-pager before internal review"],
+                    ["90-day goal", "3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study", "What closes this TG", "In-person demo + real-work pilot + DIFC/SEBI compliance documentation"],
+                    ["Key partner type", "Ex-Big4 boutique consultants (referral) + GCC RegTech vendors (co-marketing)", "Primary buyer", "Managing Partner (small firms) | COO / Practice Head (large firms)"]
+                  ]
+                }
+              ],
+              summary: "Founder-led field sales + warm introductions. LinkedIn organic + hosted roundtables. 3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study. Ex-Big4 boutique consultants + GCC RegTech vendors. Managing Partner (small firms) | COO / Practice Head (large firms)."
+            }
+          ]
+        }
+      },
+      detailedMetrics: {
+        clientImpact: [
+          { metric: "Sprint Velocity Improvement", baseline: "% increase in story points or tasks completed per sprint cycle after adopting PTM vs baseline", withSnag: "15–30% increase", claim: "Engineering teams using PTM completed 22% more sprint tasks in the first quarter vs their Jira baseline." },
+          { metric: "MoM Action Completion Rate", baseline: "% of action items raised in meetings that are formally completed and closed within their due date", withSnag: "2x–4x improvement (from ~30% to 70–90%)", claim: "After using PTM's MoM module, action item follow-through improved from 28% to 87% within 60 days." },
+          { metric: "SaaS Subscription Cost Reduction", baseline: "Annual ₹ or $ savings achieved by consolidating fragmented SaaS tools into PTM", withSnag: "₹750–1,200/user/month saved (₹9,000–14,400/user/year)", claim: "A 120-person consulting firm saved ₹1.8 crore/year by replacing MS 365, Asana, and their notes tool with PTM, with all documents on their own servers." },
+          { metric: "Client Issue Resolution Speed", baseline: "Average time (days) from client issue being raised to formal resolution in the Issues Register", withSnag: "30–50% reduction in resolution time (10–15 days → 5–8 days)", claim: "Client-raised issues resolved 42% faster at PTM client companies, with a full audit trail and zero issues lost in email." },
+          { metric: "Employee Daily Tool Switching Reduction", baseline: "Number of different tools an employee switches between in a workday to complete their tasks", withSnag: "From 6–8 tools to 1–2 (60–75% reduction)", claim: "Employees at PTM client companies reduced daily app-switching by 60%+, saving approximately 60 minutes per person per day." },
+          { metric: "Project On-Time Delivery Rate", baseline: "% of project milestones delivered on or before the agreed deadline", withSnag: "15–25 percentage point improvement (e.g., 55% → 75% on-time)", claim: "Real estate project teams using PTM improved on-time milestone delivery from 54% to 79% within one quarter." },
+          { metric: "Client Issue Resolution Time", baseline: "Average time (days) from a client issue being raised to formal resolution and closure", withSnag: "30–50% reduction in resolution time", claim: "Client-raised issues resolved 42% faster after implementing PTM's structured issue register, with full audit trail per issue." },
+          { metric: "Onboarding Time for New Employees", baseline: "Days from a new employee's first day to full operational productivity (first task assigned + completed + first MoM attended)", withSnag: "3–5 days faster vs traditional onboarding", claim: "New team members contribute to active projects 3 days faster, all project context, docs, and past MoMs accessible from Day 1." },
+          { metric: "Document Turnaround Time", baseline: "Hours saved per document cycle (creation → collaborative review → client-ready export)", withSnag: "2–4 hours saved per cycle (40–60% reduction in turnaround time)", claim: "Teams using PTM reduced proposal and report turnaround time by 52%, from first draft to client-ready file in half the time." },
+          { metric: "Management Reporting Time", baseline: "Hours per week saved by senior leaders and department heads who previously built manual status reports from Excel/email", withSnag: "5–12 hours/week saved per senior manager", claim: "Department heads using PTM reclaimed an average of 8 hours/week previously spent on manual status reporting, equivalent to 1 full working day." }
+        ],
+        businessTargets: [
+          { metric: "Monthly Recurring Revenue (MRR)", definition: "Total monthly revenue from active paying clients", d30Current: "₹2–5L MRR (3–6 paying accounts at ₹50–80k/month)", d30Phase1: "₹4–8L MRR (Demo env removes biggest friction; 5–10 accounts possible)", m3Current: "₹15–30L MRR (15–25 accounts; mix of SMB + mid-market)", m3Phase1: "₹25–50L MRR (Mobile app + integrations unlock tech companies fully; 25–40 accounts)" },
+          { metric: "New Logo Count", definition: "Number of new paying companies onboarded (not seats)", d30Current: "3–6 new logos (founder-led, warm leads and cross-sell)", d30Phase1: "5–10 new logos (demo env enables self-qualify → faster pipeline)", m3Current: "15–25 new logos (3-segment motion in full flight)", m3Phase1: "25–40 new logos (mobile unlocks field-team industries; broader addressable market)" },
+          { metric: "Week-1 Activation Rate", definition: "% of new accounts where 3+ users create/update tasks within 7 days of signup", d30Current: "35–50% (self-serve onboarding, no structured playbook yet)", d30Phase1: "45–60% (demo env pre-qualifies better-fit accounts and activate faster)", m3Current: "50–65% (onboarding playbook refined through first 15 accounts)", m3Phase1: "65–80% (mobile app means users activate from their phone on Day 1, removes desktop-only friction)" },
+          { metric: "DAU/MAU Ratio (Habit Score)", definition: "Daily Active Users ÷ Monthly Active Users. Measures daily habit formation.", d30Current: "25–35% (desktop-only tool limits daily check-in habit)", d30Phase1: "30–40% (better-fit accounts from qualified demo pipeline)", m3Current: "35–45% (habit forming as teams embed PTM in weekly rhythms)", m3Phase1: "50–65% (mobile app transforms PTM into a daily-open tool like Slack, habit score jumps significantly)" },
+          { metric: "Customer Acquisition Cost (CAC)", definition: "Total sales + marketing spend ÷ new logos acquired in the period", d30Current: "₹80,000–1,50,000/logo (founder time + outreach costs, no paid marketing)", d30Phase1: "₹60,000–1,20,000/logo (demo env reduces sales cycle duration → lower cost per close)", m3Current: "₹60,000–1,20,000/logo (as referral engine starts, CAC begins to fall)", m3Phase1: "₹40,000–80,000/logo (freemium tier in Phase 1 creates self-serve inbound → CAC drops significantly)" },
+          { metric: "Net Revenue Retention (NRR)", definition: "MRR from existing accounts at end of period ÷ MRR from same accounts at start. >100% = expansion exceeds churn.", d30Current: "90–100% (early accounts, churn risk is real if onboarding is weak)", d30Phase1: "95–105% (better-fit accounts churn less; some early expansions possible)", m3Current: "100–115% (seat expansions as teams grow; first upsell from SMB to Growth tier)", m3Phase1: "110–125% (automation and Gantt features trigger upsell from Starter to Professional; strong NRR signal)" },
+          { metric: "Sales Cycle Length", definition: "Average days from first demo to signed contract", d30Current: "35–55 days (founder-led, warm + cross-sell accounts close faster)", d30Phase1: "25–45 days (demo env allows self-evaluation before first call → shorter qualification)", m3Current: "30–50 days (playbook refined; SDR hired by Month 4 speeds pipeline)", m3Phase1: "20–35 days (freemium entry tier means tech companies start a trial before first talk to sales → cycle starts later but closes faster)" },
+          { metric: "Churn Rate (Monthly)", definition: "% of paying accounts that cancel in a given month", d30Current: "0–5% (early accounts are high-touch; churn is survivable if must be understood)", d30Phase1: "0–3% (qualified accounts churn less; demo env filters out mis-fit buyers)", m3Current: "0–3% (structured onboarding reduces churn from activation failure)", m3Phase1: "0–2% (mobile app increases daily engagement → reduces passive churn from disengagement)" },
+          { metric: "Demo-to-Trial Conversion Rate", definition: "% of demos that convert to a free trial or paid pilot", d30Current: "30–45% (founder-led demo with a strong data sovereignty story, some drop-off on 'no mobile app prospect objection')", d30Phase1: "45–60% (demo env allows pre-demo self-exploration; prospects arrive at the call already partially activated)", m3Current: "45–60% (consistent demo playbook; objection handling refined)", m3Phase1: "55–70% (mobile app removes the biggest objection; Gantt view becomes the second biggest; conversion improves significantly)" },
+          { metric: "Net Promoter Score (NPS)", definition: "Standard 0–10 likelihood-to-recommend score. Above 40 = strong. Above 70 = exceptional.", d30Current: "NPS: 25–40 (early accounts are enthusiasts but product gaps create detractors)", d30Phase1: "NPS: 35–50 (better-fit accounts have fewer friction points → fewer detractors)", m3Current: "NPS: 40–55 (first wave of case studies signals product confidence; onboarding polish improves passives → promoters)", m3Phase1: "NPS: 55–70 (mobile app is the single biggest NPS driver in PM tools; its absence is the #1 complaint in early accounts)" }
+        ],
+        sheet: {
+          title: "Project & Task Manager , Metrics",
+          sections: [
+            {
+              title: "Section 1: Client impact metrics (landing page proof points) | Section 2: Product launch tracking (30-day & 3-month, with and without Phase 1 roadmap)",
+              columns: [],
+              rows: []
+            },
+            {
+              title: "SECTION 1, CLIENT IMPACT METRICS (What to track after go-live · Landing page proof points)",
+              columns: [],
+              rows: []
+            },
+            {
+              title: "These 10 metrics measure the real-world business impact PTM creates in client companies. Track these with every client from Day 30. Use the best results as landing page social proof.",
+              columns: [],
+              rows: []
+            },
+            {
+              title: "",
+              columns: ["#", "Metric Name", "What it measures", "Impact range", "Feature driving the impact", "How the impact is caused", "Example landing page claim"],
+              rows: [
+                ["1", "Sprint Velocity Improvement", "% increase in story points or tasks completed per sprint cycle after adopting PTM vs baseline", "15–30% increase", "Sprints module + Kanban board", "Sprint tasks are visible in real time on the kanban board. Blockers surface automatically when tasks stay in 'In Progress' past estimated time. Team leads no longer chase status via WhatsApp, the board is the single source of truth, reducing coordination overhead.", "Engineering teams using PTM completed 22% more sprint tasks in the first quarter vs their Jira baseline."],
+                ["2", "MoM Action Completion Rate", "% of action items raised in meetings that are formally completed and closed within their due date", "2x–4x improvement (from ~30% to 70–90%)", "MoM module → auto-convert to Task", "In a traditional workflow, meeting action items written in a Word doc or email have no owner, no deadline enforcement, and no visibility. PTM's MoM auto-convert action points to assigned tasks with deadlines. The responsible person receives a task notification. Progress is tracked on the dashboard. Nothing falls through the cracks.", "After using PTM's MoM module, action item follow-through improved from 28% to 87% within 60 days."],
+                ["3", "SaaS Subscription Cost Reduction", "Annual ₹ or $ savings achieved by consolidating fragmented SaaS tools into PTM", "₹750–1,200/user/month saved (₹9,000–14,400/user/year)", "Documents · Channels · Projects · MoM", "PTM replaces: MS 365 (₹750/user/month for Word/Excel/PPT) + a PM tool like Asana (₹900/user/month) + separate notes/MoM tool. For a 100-person company, this saves ₹1.65–2.4 crore per year in SaaS spend. Documents export as official MS Office files, no compatibility friction with external parties.", "A 120-person consulting firm saved ₹1.8 crore/year by replacing MS 365, Asana, and their notes tool with PTM, with all documents on their own servers."],
+                ["4", "Client Issue Resolution Speed", "Average time (days) from client issue being raised to formal resolution in the Issues Register", "30–50% reduction in resolution time (10–15 days → 5–8 days)", "Issues Register module", "Before PTM: client issues raised via email → forwarded manually → assigned via WhatsApp → closed when someone remembers. After PTM: structured register with deadline, responsible person, escalation, and formal closure, full audit trail.", "Client-raised issues resolved 42% faster at PTM client companies, with a full audit trail and zero issues lost in email."],
+                ["5", "Employee Daily Tool Switching Reduction", "Number of different tools an employee switches between in a workday to complete their tasks", "From 6–8 tools to 1–2 (60–75% reduction)", "Projects · Documents · Channels · MoM · Todo", "Before PTM: a typical employee checks Jira for tasks, Slack for messages, Google Docs for writing, Excel for tracking, and WhatsApp for quick decisions, 4+ context switches per day. After PTM: tasks, documents, channels, MoMs, and to-dos all live in one platform. Context switching drops to PTM + email (external only). Estimated time saving: 45–90 minutes per employee per day.", "Employees at PTM client companies reduced daily app-switching by 60%+, saving approximately 60 minutes per person per day."],
+                ["6", "Project On-Time Delivery Rate", "% of project milestones delivered on or before the agreed deadline", "15–25 percentage point improvement (e.g., 55% → 75% on-time)", "Projects dashboard · Milestone tracking · 5-level escalation", "PTM's project dashboard shows milestone completion % in real time. When a milestone falls behind, the system flags it for the project manager before the deadline passes. The 5-level escalation ensures no blocker stays invisible for more than a defined TAT. Assignee-wise completion tracking identifies chronic delay patterns at the individual level.", "Real estate project teams using PTM improved on-time milestone delivery from 54% to 79% within one quarter."],
+                ["7", "Client Issue Resolution Time", "Average time (days) from a client issue being raised to formal resolution and closure", "30–50% reduction in resolution time", "Issues register module", "Before PTM: client issues are raised via email → forwarded internally → assigned manually → followed up manually → closed when someone remembers to reply. Average resolution: 10–15 days. After PTM: client raises an issue in the register → auto-assigned to responsible person → deadline set → escalation triggered if breached → closure requires formal acknowledgement. Average resolution: 5–8 days.", "Client-raised issues resolved 42% faster after implementing PTM's structured issue register, with full audit trail per issue."],
+                ["8", "Onboarding Time for New Employees", "Days from a new employee's first day to full operational productivity (first task assigned + completed + first MoM attended)", "3–5 days faster vs traditional onboarding", "Projects · Documents · MoM · Opportunity Register", "Before PTM: new employees spend Days 1–5 asking colleagues for project context, document access, and task assignments via email and WhatsApp. After PTM: on Day 1, new member is added to relevant projects, assigned tasks, and can access all project documents and past MoMs immediately. Reduction in unproductive onboarding time: 2–4 days per employee.", "New team members contribute to active projects 3 days faster, all project context, docs, and past MoMs accessible from Day 1."],
+                ["9", "Document Turnaround Time", "Hours saved per document cycle (creation → collaborative review → client-ready export)", "2–4 hours saved per cycle (40–60% reduction in turnaround time)", "Documents module · in-platform creation, live collaboration, MS Office export", "Before PTM: write in Google Docs → share link → collect comments → download → format in Word → email to client. After PTM: create in PTM → collaborators edit live → one-click export as .docx → share directly from platform. No reformatting. No 'which version is final?' confusion.", "Teams using PTM reduced proposal and report turnaround time by 52%, from first draft to client-ready file in half the time."],
+                ["10", "Management Reporting Time", "Hours per week saved by senior leaders and department heads who previously built manual status reports from Excel/email", "5–12 hours/week saved per senior manager", "Projects Dashboard · Assignee analytics · Profile analytics", "Before PTM: every Monday, a project manager collects WhatsApp updates, formats a PPT, and presents it in a status call. 3–5 hours of management time wasted per week. After PTM: the dashboard shows project completion %, milestone status, assignee workload, and issue counts in real time. The Monday PPT becomes a 5-minute dashboard review instead of a 3-hour preparation exercise.", "Department heads using PTM reclaimed an average of 8 hours/week previously spent on manual status reporting, equivalent to 1 full working day." ]
+              ]
+            },
+            {
+              title: "SECTION 2, PRODUCT LAUNCH TRACKING METRICS (North Star + Top 10, with Phase 1 roadmap comparison)",
+              columns: [],
+              rows: []
+            },
+            {
+              title: "These metrics track the health of PTM's own product launch. North Star metric identified first. Then top 10 split by 30-day and 3-month windows, with expected ranges with and without Phase 1 roadmap improvements.",
+              columns: [],
+              rows: []
+            },
+            {
+              title: "★ NORTH STAR METRIC",
+              columns: [],
+              rows: []
+            },
+            {
+              title: "",
+              columns: ["Metric", "Definition"],
+              rows: [
+                ["Weekly Active Teams", "Number of companies (teams) that have at least 3 active users who created or updated a task, MoM, or document in the past 7 days. This metric captures genuine habitual usage, not just accounts created. A team that uses PTM every week has embedded it into their workflow. A team that logs in once a month has not. Everything else follows from this: revenue, retention, referrals, and NPS all correlate with Weekly active team count."],
+                ["Why this is the North Star", "Weekly active teams predict MRR growth (teams that are active expand seats). They predict NRR (teams that use PTM weekly are the ones who recommend it). They predict churn prevention (teams that go quiet for 2+ weeks are at-risk accounts to intervene on). A stagnant Weekly Active Teams count, even with rising new signups, is an early warning of a product-market fit problem."]
+              ]
+            },
+            {
+              title: "",
+              columns: ["#", "Metric", "What it measures", "30-day target\n(current product)", "30-day target\n(with Phase 1 roadmap)\n★ Phase 1: Mobile app · Gantt view · Sprint velocity charts · Live demo env", "3-month target\n(current product)", "3-month target\n(with Phase 1 roadmap)\n★ Phase 1 delivered + addressable market expands significantly", "Why it matters"],
+              rows: [
+                ["1", "Monthly Recurring Revenue (MRR)", "Total monthly revenue from active paying clients", "₹2–5L MRR\n(3–6 paying accounts at ₹50–80k/month)", "₹4–8L MRR\n(Demo env removes biggest friction; 5–10 accounts possible)", "₹15–30L MRR\n(15–25 accounts; mix of SMB + mid-market)", "₹25–50L MRR\n(Mobile app + integrations unlock tech companies fully; 25–40 accounts)", "Primary revenue health metric. Everything else e.g. hiring, product investment, marketing spend, should be proportional to MRR trajectory."],
+                ["2", "New Logo Count", "Number of new paying companies onboarded (not seats)", "3–6 new logos\n(founder-led, warm leads and cross-sell)", "5–10 new logos\n(demo env enables self-qualify → faster pipeline)", "15–25 new logos\n(3-segment motion in full flight)", "25–40 new logos\n(mobile unlocks field-team industries; broader addressable market)", "Tracks market penetration speed. MRR without new logos = expansion only. New logos = market share gain."],
+                ["3", "Week-1 Activation Rate", "% of new accounts where 3+ users create/update tasks within 7 days of signup", "35–50%\n(self-serve onboarding, no structured playbook yet)", "45–60%\n(demo env pre-qualifies better-fit accounts and activate faster)", "50–65%\n(onboarding playbook refined through first 15 accounts)", "65–80%\n(mobile app means users activate from their phone on Day 1, removes desktop-only friction)", "The single most important early retention signal. Below 40% = onboarding is broken. Below 30% = product-market fit problem. Intervene personally on every account below threshold."],
+                ["4", "DAU/MAU Ratio (Habit Score)", "Daily Active Users ÷ Monthly Active Users. Measures daily habit formation.", "25–35%\n(desktop-only tool limits daily check-in habit)", "30–40%\n(better-fit accounts from qualified demo pipeline)", "35–45%\n(habit forming as teams embed PTM in weekly rhythms)", "50–65%\n(mobile app transforms PTM into a daily-open tool like Slack, habit score jumps significantly)", "Below 20% = the tool is used occasionally, not habitually. Below 20% at Month 3 is an early churn warning. Mobile app is the single biggest lever for this metric."],
+                ["5", "Customer Acquisition Cost (CAC)", "Total sales + marketing spend ÷ new logos acquired in the period", "₹80,000–1,50,000/logo\n(founder time + outreach costs, no paid marketing)", "₹60,000–1,20,000/logo\n(demo env reduces sales cycle duration → lower cost per close)", "₹60,000–1,20,000/logo\n(as referral engine starts, CAC begins to fall)", "₹40,000–80,000/logo\n(freemium tier in Phase 1 creates self-serve inbound → CAC drops significantly)", "CAC payback target: under 12 months. At ₹80k CAC and ₹8L ACV, payback is ~1.2 months, excellent. Monitor CAC vs ACV ratio monthly."],
+                ["6", "Net Revenue Retention (NRR)", "MRR from existing accounts at end of period ÷ MRR from same accounts at start. >100% = expansion exceeds churn.", "90–100%\n(early accounts, churn risk is real if onboarding is weak)", "95–105%\n(better-fit accounts churn less; some early expansions possible)", "100–115%\n(seat expansions as teams grow; first upsell from SMB to Growth tier)", "110–125%\n(automation and Gantt features trigger upsell from Starter to Professional; strong NRR signal)", "NRR >100% means the business grows even without new customers. NRR <90% at Month 3 = retention crisis. NRR is the compound interest of SaaS."],
+                ["7", "Sales Cycle Length", "Average days from first demo to signed contract", "35–55 days\n(founder-led, warm + cross-sell accounts close faster)", "25–45 days\n(demo env allows self-evaluation before first call → shorter qualification)", "30–50 days\n(playbook refined; SDR hired by Month 4 speeds pipeline)", "20–35 days\n(freemium entry tier means tech companies start a trial before first talk to sales → cycle starts later but closes faster)", "Below 45 days is healthy for this ACV. Above 60 days = friction in the process (usually IT approval or procurement). Monitor where deals stall."],
+                ["8", "Churn Rate (Monthly)", "% of paying accounts that cancel in a given month", "0–5%\n(early accounts are high-touch; churn is survivable if must be understood)", "0–3%\n(qualified accounts churn less; demo env filters out mis-fit buyers)", "0–3%\n(structured onboarding reduces churn from activation failure)", "0–2%\n(mobile app increases daily engagement → reduces passive churn from disengagement)", "Above 5% monthly churn is an existential risk for SaaS. The number one cause of early churn is activation failure, the team signed up but never embedded the tool in their workflow. Intervene aggressively."],
+                ["9", "Demo-to-Trial Conversion Rate", "% of demos that convert to a free trial or paid pilot", "30–45%\n(founder-led demo with a strong data sovereignty story, some drop-off on 'no mobile app prospect objection')", "45–60%\n(demo env allows pre-demo self-exploration; prospects arrive at the call already partially activated)", "45–60%\n(consistent demo playbook; objection handling refined)", "55–70%\n(mobile app removes the biggest objection; Gantt view becomes the second biggest; conversion improves significantly)", "Below 30% = demo is not landing the value proposition. Below 30% for 3+ consecutive weeks = revisit the demo script. Track which specific objection kills the conversion ('no mobile' vs 'no gantt' vs 'price')."],
+                ["10", "Net Promoter Score (NPS)", "Standard 0–10 likelihood-to-recommend score. Above 40 = strong. Above 70 = exceptional.", "NPS: 25–40\n(early accounts are enthusiasts but product gaps create detractors)", "NPS: 35–50\n(better-fit accounts have fewer friction points → fewer detractors)", "NPS: 40–55\n(first wave of case studies signals product confidence; onboarding polish improves passives → promoters)", "NPS: 55–70\n(mobile app is the single biggest NPS driver in PM tools; its absence is the #1 complaint in early accounts)", "NPS below 30 at Month 3 = something is fundamentally wrong. Survey every account at Day 30 and Day 90. Listen specifically to the 6s and 7s (passives), they will tell you exactly what would make them a 9 or 10." ]
+              ]
+            },
+            {
+              title: "LEGEND: White columns = current product, no Phase 1 roadmap changes | Green columns = projections with Phase 1 roadmap (Mobile app, Live demo env, Gantt, Calendar sync, Sprint velocity charts) | All ranges are realistic targets, not guarantees, calibrate against your actual sales cycle and onboarding playbook as data emerges",
+              columns: [],
+              rows: []
+            }
+          ]
+        }
+      },
+      detailedSWOT: {
+        strengths: [
+          { headline: "Data sovereignty", explanation: "the single strongest differentiator; no competitor offers this in the SMB space" },
+          { headline: "All-in-one platform", explanation: "replacing 4–5 separate tools (PM, documents, channels, MoM, opportunity tracking) at one price" },
+          { headline: "Document creation with MS Office export", explanation: "eliminates need for MS 365 subscription" },
+          { headline: "MoM-to-task auto-conversion and Opportunity Register", explanation: "unique productivity workflows no competitor offers natively" },
+          { headline: "Simple, low-learning-curve UI", explanation: "faster adoption vs Jira or Monday" },
+          { headline: "Document creation with MS Office export and MoM-to-task", explanation: "provide strong daily workflow hooks that drive habitual use" },
+          { headline: "Eisenhower Matrix + Kanban dual view", explanation: "for personal task management is rare in enterprise tools" },
+          { headline: "Cross-sell opportunity", explanation: "within existing Lockated FM Matrix and Loyalty client base" },
+          { headline: "MoM module with direct task conversion", explanation: "reduces meeting-to-action drop-off" },
+          { headline: "Opportunity Register", explanation: "enables bottom-up innovation capture" }
+        ],
+        weaknesses: [
+          { headline: "Currently no live demo environment", explanation: "limits sales conversations and proof-of-concept velocity" },
+          { headline: "No mobile app yet", explanation: "field teams and executives rely on mobile-first tools" },
+          { headline: "Extremely crowded category", explanation: "with well-funded, mature competitors (Jira, Asana, Monday, ClickUp)" },
+          { headline: "Missing advanced features", explanation: "Gantt chart, time tracking, automation rules, AI task suggestions" },
+          { headline: "No third-party integrations yet", explanation: "(GitHub, Jira, Slack), limits adoption in dev-heavy teams and enterprise accounts" },
+          { headline: "Brand visibility is low vs Asana and Monday", explanation: "requires consistent content marketing and event presence to build awareness" },
+          { headline: "Data sovereignty USP", explanation: "requires client IT buy-in, longer sales cycle for procurement" },
+          { headline: "Some UX redundancy", explanation: "(MoM and To-Do appear in both top nav and projects sidebar)" },
+          { headline: "No mobile app", explanation: "is the most critical deal-blocker, affects all segments, especially real estate, manufacturing, and any field-based team" },
+          { headline: "Document collaboration quality", explanation: "will be benchmarked against Google Docs, hard bar to clear" }
+        ],
+        opportunities: [
+          { headline: "Rising enterprise backlash against SaaS data practices", explanation: "data sovereignty is a growing C-suite concern" },
+          { headline: "Indian SMB market", explanation: "is underserved by affordable, locally-hosted PM tools" },
+          { headline: "Post-COVID distributed work", explanation: "has accelerated demand for unified project coordination tools that work across teams without WhatsApp or email" },
+          { headline: "MS 365 and Google Workspace pricing increases", explanation: "have made organisations open to alternatives" },
+          { headline: "Government and BFSI sectors in India", explanation: "have regulatory mandates around data localization" },
+          { headline: "Existing Lockated clients", explanation: "(FM Matrix, Loyalty) are warm leads with established trust" },
+          { headline: "Opportunity to build vertical-specific templates", explanation: "(Real Estate PM, Facility Project Tracker) on top of core" },
+          { headline: "AI integration", explanation: "(document drafting, smart task prioritization, MoM auto-summary) is a near-term differentiator" },
+          { headline: "MoM module", explanation: "can expand into AI-powered meeting intelligence (auto-transcription, action item extraction), natural upsell for professional services firms" },
+          { headline: "Open-source document layer", explanation: "could attract developer communities and build ecosystem moat" }
+        ],
+        threats: [
+          { headline: "Notion, Linear, ClickUp", explanation: "all offer free tiers, user acquisition cost is near-zero for competitors" },
+          { headline: "Microsoft Teams + Project bundle", explanation: "is sticky in enterprise already in the MS ecosystem" },
+          { headline: "Google Workspace", explanation: "deeply embedded in Indian startups and SMBs, high switching cost" },
+          { headline: "Jira/Confluence combo", explanation: "dominates tech companies, changing PM tools mid-flight is painful" },
+          { headline: "AI-native PM tools", explanation: "(Notion AI, Linear's AI features) are raising the baseline feature expectation" },
+          { headline: "Buyers", explanation: "may prefer best-of-breed point solutions over an all-in-one if individual tools are stronger" },
+          { headline: "If document collaboration quality lags", explanation: "users will revert to Google Docs while 'using' the platform" },
+          { headline: "Platform complexity risk", explanation: "trying to replace 7 tools means 7 things that could be done better elsewhere" },
+          { headline: "Large enterprise clients", explanation: "may have pre-existing SaaS contracts that are hard to displace" },
+          { headline: "Data sovereignty hosting requirements", explanation: "increase infra cost and implementation complexity for clients" }
+        ]
       }
-
-    }
   }
 };
 
