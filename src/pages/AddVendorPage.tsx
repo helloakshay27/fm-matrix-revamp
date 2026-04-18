@@ -176,6 +176,16 @@ const fieldStyles = {
   },
 };
 
+const initialAddress = {
+  addressType: 'billing',
+  country: '',
+  state: '',
+  city: '',
+  pincode: '',
+  addressLine1: '',
+  addressLine2: '',
+};
+
 const initialFormData = {
   companyName: '',
   primaryPhone: '',
@@ -188,12 +198,12 @@ const initialFormData = {
   serviceDescription: '',
   date: null as Date | null,
   services: '',
-  country: '',
-  state: '',
-  city: '',
-  pincode: '',
-  addressLine1: '',
-  addressLine2: '',
+  addresses: [initialAddress],
+  gstTreatment: '',
+  gstin: '',
+  businessLegalName: '',
+  businessTradeName: '',
+  placeOfSupply: '',
   accountName: '',
   accountNumber: '',
   bankBranchName: '',
@@ -220,6 +230,7 @@ export const AddVendorPage = () => {
   const [errors, setErrors] = useState<any>({});
   const [contactPersons, setContactPersons] = useState([initialContactPerson]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentAddressIndex, setCurrentAddressIndex] = useState(0);
 
   const [panAttachments, setPanAttachments] = useState<File[]>([]);
   const [tanAttachments, setTanAttachments] = useState<File[]>([]);
@@ -285,9 +296,30 @@ export const AddVendorPage = () => {
         isValid = false;
       }
       
-      if (formData.gst.trim() && !gstRegex.test(formData.gst.trim().toUpperCase())) {
-        newErrors.gst = 'Please enter a valid GST number (15 characters)';
+      // Other Details validation
+      if (!formData.gstTreatment.trim()) {
+        newErrors.gstTreatment = 'GST Treatment is required';
         isValid = false;
+      } else {
+        // Validate GSTIN format if provided and for registered businesses
+        if (formData.gstin.trim() && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(formData.gstin.trim().toUpperCase())) {
+          newErrors.gstin = 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5';
+          isValid = false;
+        }
+        
+        // Validate Business Legal Name for registered businesses
+        if ((formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') &&
+            formData.businessLegalName.trim() && !alphabeticRegex.test(formData.businessLegalName.trim())) {
+          newErrors.businessLegalName = 'Business Legal Name should only contain alphabets and spaces';
+          isValid = false;
+        }
+        
+        // Validate Business Trade Name for registered businesses
+        if ((formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') &&
+            formData.businessTradeName.trim() && !alphabeticRegex.test(formData.businessTradeName.trim())) {
+          newErrors.businessTradeName = 'Business Trade Name should only contain alphabets and spaces';
+          isValid = false;
+        }
       }
       
       if (formData.websiteUrl.trim() && !urlRegex.test(formData.websiteUrl.trim())) {
@@ -298,43 +330,61 @@ export const AddVendorPage = () => {
     
     // Address validation for step 1
     if (activeStep === 1) {
-      // Country validation (REQUIRED - has red asterisk)
-      if (!formData.country.trim()) {
-        newErrors.country = 'Country is required';
+      // Validate at least one address exists
+      if (!formData.addresses || formData.addresses.length === 0) {
+        newErrors.addresses = 'At least one address is required';
         isValid = false;
       } else {
-        validateAlphabeticField(formData.country, 'Country');
-      }
-      
-      // State validation (REQUIRED - has red asterisk)
-      if (!formData.state.trim()) {
-        newErrors.state = 'State is required';
-        isValid = false;
-      } else {
-        validateAlphabeticField(formData.state, 'State');
-      }
-      
-      // City validation (REQUIRED - has red asterisk)
-      if (!formData.city.trim()) {
-        newErrors.city = 'City is required';
-        isValid = false;
-      } else {
-        validateAlphabeticField(formData.city, 'City');
-      }
-      
-      // Address Line1 validation (REQUIRED - has red asterisk)
-      if (!formData.addressLine1.trim()) {
-        newErrors.addressLine1 = 'Address Line 1 is required';
-        isValid = false;
-      }
-      
-      // Optional fields - only validate format if provided
-      if (formData.pincode.trim()) {
-        const pincodeRegex = /^[0-9]{6}$/;
-        if (!pincodeRegex.test(formData.pincode.trim())) {
-          newErrors.pincode = 'Please enter a valid 6-digit pincode';
-          isValid = false;
-        }
+        // Validate each address
+        formData.addresses.forEach((address: any, index: number) => {
+          // Country validation (REQUIRED)
+          if (!address.country.trim()) {
+            newErrors[`address_${index}_country`] = 'Country is required';
+            isValid = false;
+          } else {
+            if (address.country.trim() && !alphabeticRegex.test(address.country.trim())) {
+              newErrors[`address_${index}_country`] = 'Country should only contain alphabets and spaces';
+              isValid = false;
+            }
+          }
+          
+          // State validation (REQUIRED)
+          if (!address.state.trim()) {
+            newErrors[`address_${index}_state`] = 'State is required';
+            isValid = false;
+          } else {
+            if (address.state.trim() && !alphabeticRegex.test(address.state.trim())) {
+              newErrors[`address_${index}_state`] = 'State should only contain alphabets and spaces';
+              isValid = false;
+            }
+          }
+          
+          // City validation (REQUIRED)
+          if (!address.city.trim()) {
+            newErrors[`address_${index}_city`] = 'City is required';
+            isValid = false;
+          } else {
+            if (address.city.trim() && !alphabeticRegex.test(address.city.trim())) {
+              newErrors[`address_${index}_city`] = 'City should only contain alphabets and spaces';
+              isValid = false;
+            }
+          }
+          
+          // Address Line1 validation (REQUIRED)
+          if (!address.addressLine1.trim()) {
+            newErrors[`address_${index}_addressLine1`] = 'Address Line 1 is required';
+            isValid = false;
+          }
+          
+          // Pincode validation (optional - only validate format if provided)
+          if (address.pincode.trim()) {
+            const pincodeRegex = /^[0-9]{6}$/;
+            if (!pincodeRegex.test(address.pincode.trim())) {
+              newErrors[`address_${index}_pincode`] = 'Please enter a valid 6-digit pincode';
+              isValid = false;
+            }
+          }
+        });
       }
     }
     
@@ -417,8 +467,9 @@ export const AddVendorPage = () => {
     apiFormData.append('pms_supplier[mobile1]', formData.primaryPhone || '');
     apiFormData.append('pms_supplier[mobile2]', formData.secondaryPhone || '');
     apiFormData.append('pms_supplier[email]', formData.email || '');
-    apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
-    apiFormData.append('pms_supplier[gstin_number]', formData.gst || '');
+    // GST and PAN fields moved to primary_gst_detail_attributes
+    // apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
+    // apiFormData.append('pms_supplier[gstin_number]', formData.gst || '');
     if (formData.supplierType) {
       apiFormData.append('pms_supplier[supplier_type][]', formData.supplierType);
     }
@@ -430,13 +481,46 @@ export const AddVendorPage = () => {
       apiFormData.append('pms_supplier[services_ids][]', formData.services);
     }
 
-    // Step 1: Address - Send all fields
-    apiFormData.append('pms_supplier[country]', formData.country || '');
-    apiFormData.append('pms_supplier[state]', formData.state || '');
-    apiFormData.append('pms_supplier[city]', formData.city || '');
-    apiFormData.append('pms_supplier[pincode]', formData.pincode || '');
-    apiFormData.append('pms_supplier[address]', formData.addressLine1 || '');
-    apiFormData.append('pms_supplier[address2]', formData.addressLine2 || '');
+    // Other Details: Primary GST Details - Add with conditional logic
+    if (formData.gstTreatment) {
+      apiFormData.append('pms_supplier[primary_gst_detail_attributes][gst_preference]', formData.gstTreatment);
+      apiFormData.append('pms_supplier[primary_gst_detail_attributes][gstin]', formData.gstin || '');
+      
+      // Business Legal Name - show only for registered regular/composition
+      if (formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') {
+        apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_legal_name]', formData.businessLegalName || '');
+      } else {
+        apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_legal_name]', '');
+      }
+      
+      // Business Trade Name - show only for registered regular/composition
+      if (formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') {
+        apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_trade_name]', formData.businessTradeName || '');
+      } else {
+        apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_trade_name]', '');
+      }
+      
+      // Place of Supply - hide only for overseas
+      if (formData.gstTreatment !== 'overseas') {
+        apiFormData.append('pms_supplier[primary_gst_detail_attributes][place_of_supply]', formData.placeOfSupply || '');
+      } else {
+        apiFormData.append('pms_supplier[primary_gst_detail_attributes][place_of_supply]', '');
+      }
+    }
+    
+    // PAN - Send as separate field
+    apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
+
+    // Step 1: Addresses - Send addresses array with correct nested structure
+    formData.addresses.forEach((address: any, index: number) => {
+      apiFormData.append(`pms_supplier[addresses][${index}][address]`, address.addressLine1 || '');
+      apiFormData.append(`pms_supplier[addresses][${index}][address_type]`, address.addressType || 'billing');
+      apiFormData.append(`pms_supplier[addresses][${index}][country]`, address.country || '');
+      apiFormData.append(`pms_supplier[addresses][${index}][state]`, address.state || '');
+      apiFormData.append(`pms_supplier[addresses][${index}][city]`, address.city || '');
+      apiFormData.append(`pms_supplier[addresses][${index}][pin_code]`, address.pincode || '');
+      apiFormData.append(`pms_supplier[addresses][${index}][address_line_two]`, address.addressLine2 || '');
+    });
 
     // Step 2: Bank Details - Send all fields
     apiFormData.append('pms_supplier[account_name]', formData.accountName || '');
@@ -655,6 +739,7 @@ export const AddVendorPage = () => {
     switch (step) {
       case 0:
         return (
+          <>
           <SectionCard>
             <SectionHeader>
               <Building className="text-[#C72030]" />
@@ -696,7 +781,8 @@ export const AddVendorPage = () => {
                   error={!!errors.email}
                   helperText={errors.email}
                 />
-                <TextField
+                {/* GST and PAN moved to Other Details section */}
+                {/* <TextField
                   label="PAN"
                   fullWidth
                   value={formData.pan}
@@ -713,7 +799,7 @@ export const AddVendorPage = () => {
                   error={!!errors.gst}
                   helperText={errors.gst}
                   placeholder="22AAAAA0000A1Z5"
-                />
+                /> */}
                 <TextField
                   label="Supplier Type"
                   select
@@ -814,6 +900,113 @@ export const AddVendorPage = () => {
               </div>
             </Box>
           </SectionCard>
+          <SectionCard>
+            <SectionHeader>
+              <Landmark className="text-[#C72030]" />
+              <SectionTitle>OTHER DETAILS</SectionTitle>
+            </SectionHeader>
+            <Box p={3}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                {/* GST Treatment - Dropdown */}
+                <TextField
+                  label={<span>GST Treatment <span style={{ color: 'red' }}>*</span></span>}
+                  select
+                  fullWidth
+                  value={formData.gstTreatment}
+                  onChange={(e) => setFormData({ ...formData, gstTreatment: e.target.value })}
+                  error={!!errors.gstTreatment}
+                  helperText={errors.gstTreatment}
+                >
+                  <MenuItem value="">Select GST Treatment</MenuItem>
+                  <MenuItem value="registered_regular">Registered Business – Regular</MenuItem>
+                  <MenuItem value="registered_composition">Registered Business – Composition</MenuItem>
+                  <MenuItem value="unregistered">Unregistered Business</MenuItem>
+                  <MenuItem value="consumer">Consumer</MenuItem>
+                  <MenuItem value="overseas">Overseas</MenuItem>
+                  <MenuItem value="sez_unit">Special Economic Zone (SEZ) Unit</MenuItem>
+                  <MenuItem value="deemed_export">Deemed Export</MenuItem>
+                  <MenuItem value="tax_deductor">Tax Deductor</MenuItem>
+                  <MenuItem value="sez_developer">SEZ Developer</MenuItem>
+                  <MenuItem value="isd">Input Service Distributor (ISD)</MenuItem>
+                </TextField>
+
+                {/* Conditionally render fields based on GST Treatment */}
+                {(formData.gstTreatment === 'registered_regular' || 
+                  formData.gstTreatment === 'registered_composition') && (
+                  <>
+                    {/* GSTIN / UIN */}
+                    <TextField
+                      label="GSTIN / UIN"
+                      fullWidth
+                      value={formData.gstin}
+                      onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
+                      error={!!errors.gstin}
+                      helperText={errors.gstin || (formData.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(formData.gstin) ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5' : '')}
+                      placeholder="Enter 15 digit GSTIN"
+                      inputProps={{ maxLength: 15, style: { textTransform: 'uppercase' } }}
+                    />
+
+                    {/* Business Legal Name */}
+                    <TextField
+                      label="Business Legal Name"
+                      fullWidth
+                      value={formData.businessLegalName}
+                      onChange={(e) => setFormData({ ...formData, businessLegalName: e.target.value })}
+                      error={!!errors.businessLegalName}
+                      helperText={errors.businessLegalName}
+                    />
+
+                    {/* Business Trade Name */}
+                    <TextField
+                      label="Business Trade Name"
+                      fullWidth
+                      value={formData.businessTradeName}
+                      onChange={(e) => setFormData({ ...formData, businessTradeName: e.target.value })}
+                      error={!!errors.businessTradeName}
+                      helperText={errors.businessTradeName}
+                    />
+                  </>
+                )}
+
+                {/* Place of Supply - shown for all GST types except overseas */}
+                {formData.gstTreatment !== 'overseas' && formData.gstTreatment && (
+                  <TextField
+                    label="Place of Supply"
+                    select
+                    fullWidth
+                    value={formData.placeOfSupply}
+                    onChange={(e) => setFormData({ ...formData, placeOfSupply: e.target.value })}
+                    error={!!errors.placeOfSupply}
+                    helperText={errors.placeOfSupply}
+                  >
+                    <MenuItem value="">Select State</MenuItem>
+                    <MenuItem value="Maharashtra">Maharashtra</MenuItem>
+                    <MenuItem value="Karnataka">Karnataka</MenuItem>
+                    <MenuItem value="Delhi">Delhi</MenuItem>
+                    <MenuItem value="Tamil Nadu">Tamil Nadu</MenuItem>
+                    <MenuItem value="Telangana">Telangana</MenuItem>
+                    <MenuItem value="Uttar Pradesh">Uttar Pradesh</MenuItem>
+                    <MenuItem value="Gujarat">Gujarat</MenuItem>
+                    <MenuItem value="West Bengal">West Bengal</MenuItem>
+                    <MenuItem value="Punjab">Punjab</MenuItem>
+                    <MenuItem value="Rajasthan">Rajasthan</MenuItem>
+                  </TextField>
+                )}
+
+                {/* PAN - Always shown */}
+                <TextField
+                  label="PAN"
+                  fullWidth
+                  value={formData.pan}
+                  onChange={(e) => setFormData({ ...formData, pan: e.target.value.toUpperCase() })}
+                  error={!!errors.pan}
+                  helperText={errors.pan}
+                  placeholder="ABCDE1234F"
+                />
+              </div>
+            </Box>
+          </SectionCard>
+          </>
         );
       case 1:
         return (
@@ -823,80 +1016,152 @@ export const AddVendorPage = () => {
               <SectionTitle>ADDRESS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <TextField
-                  label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
-                  fullWidth
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  onKeyDown={(e) => {
-                    const char = e.key;
-                    if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  error={!!errors.country}
-                  helperText={errors.country}
-                  placeholder="e.g., India"
-                />
-                <TextField
-                  label={<span>State <span style={{ color: 'red' }}>*</span></span>}
-                  fullWidth
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  onKeyDown={(e) => {
-                    const char = e.key;
-                    if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  error={!!errors.state}
-                  helperText={errors.state}
-                  placeholder="e.g., Maharashtra"
-                />
-                <TextField
-                  label={<span>City <span style={{ color: 'red' }}>*</span></span>}
-                  fullWidth
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  onKeyDown={(e) => {
-                    const char = e.key;
-                    if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  error={!!errors.city}
-                  helperText={errors.city}
-                  placeholder="e.g., Mumbai"
-                />
-                <TextField
-                  label="Pincode"
-                  fullWidth
-                  value={formData.pincode}
-                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  error={!!errors.pincode}
-                  helperText={errors.pincode}
-                  placeholder="123456"
-                />
-                <div className="lg:col-span-2">
-                  <TextField
-                    label={<span>Address Line1 <span style={{ color: 'red' }}>*</span></span>}
-                    fullWidth
-                    value={formData.addressLine1}
-                    onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                    error={!!errors.addressLine1}
-                    helperText={errors.addressLine1}
-                  />
-                </div>
-                <div className="lg:col-span-3">
-                  <TextField
-                    label="Address Line2"
-                    fullWidth
-                    value={formData.addressLine2}
-                    onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-6">
+                {formData.addresses.map((address: any, index: number) => (
+                  <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-sm font-semibold text-gray-700">Address {index + 1}</span>
+                      {formData.addresses.length > 1 && (
+                        <button
+                          onClick={() => {
+                            const newAddresses = formData.addresses.filter((_: any, i: number) => i !== index);
+                            setFormData({ ...formData, addresses: newAddresses });
+                          }}
+                          className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                        >
+                          <Trash2 size={16} /> Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      <TextField
+                        select
+                        label={<span>Address Type <span style={{ color: 'red' }}>*</span></span>}
+                        fullWidth
+                        value={address.addressType}
+                        onChange={(e) => {
+                          const newAddresses = [...formData.addresses];
+                          newAddresses[index].addressType = e.target.value;
+                          setFormData({ ...formData, addresses: newAddresses });
+                        }}
+                      >
+                        <MenuItem value="billing">Billing Address</MenuItem>
+                        <MenuItem value="shipping">Shipping Address</MenuItem>
+                      </TextField>
+
+                      <TextField
+                        label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                        fullWidth
+                        value={address.country}
+                        onChange={(e) => {
+                          const newAddresses = [...formData.addresses];
+                          newAddresses[index].country = e.target.value;
+                          setFormData({ ...formData, addresses: newAddresses });
+                        }}
+                        onKeyDown={(e) => {
+                          const char = e.key;
+                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        error={!!errors[`address_${index}_country`]}
+                        helperText={errors[`address_${index}_country`]}
+                        placeholder="e.g., India"
+                      />
+
+                      <TextField
+                        label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                        fullWidth
+                        value={address.state}
+                        onChange={(e) => {
+                          const newAddresses = [...formData.addresses];
+                          newAddresses[index].state = e.target.value;
+                          setFormData({ ...formData, addresses: newAddresses });
+                        }}
+                        onKeyDown={(e) => {
+                          const char = e.key;
+                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        error={!!errors[`address_${index}_state`]}
+                        helperText={errors[`address_${index}_state`]}
+                        placeholder="e.g., Maharashtra"
+                      />
+
+                      <TextField
+                        label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                        fullWidth
+                        value={address.city}
+                        onChange={(e) => {
+                          const newAddresses = [...formData.addresses];
+                          newAddresses[index].city = e.target.value;
+                          setFormData({ ...formData, addresses: newAddresses });
+                        }}
+                        onKeyDown={(e) => {
+                          const char = e.key;
+                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        error={!!errors[`address_${index}_city`]}
+                        helperText={errors[`address_${index}_city`]}
+                        placeholder="e.g., Mumbai"
+                      />
+
+                      <TextField
+                        label="Pincode"
+                        fullWidth
+                        value={address.pincode}
+                        onChange={(e) => {
+                          const newAddresses = [...formData.addresses];
+                          newAddresses[index].pincode = e.target.value;
+                          setFormData({ ...formData, addresses: newAddresses });
+                        }}
+                        error={!!errors[`address_${index}_pincode`]}
+                        helperText={errors[`address_${index}_pincode`]}
+                        placeholder="123456"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <TextField
+                        label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                        fullWidth
+                        value={address.addressLine1}
+                        onChange={(e) => {
+                          const newAddresses = [...formData.addresses];
+                          newAddresses[index].addressLine1 = e.target.value;
+                          setFormData({ ...formData, addresses: newAddresses });
+                        }}
+                        error={!!errors[`address_${index}_addressLine1`]}
+                        helperText={errors[`address_${index}_addressLine1`]}
+                      />
+                      <TextField
+                        label="Address Line 2"
+                        fullWidth
+                        value={address.addressLine2}
+                        onChange={(e) => {
+                          const newAddresses = [...formData.addresses];
+                          newAddresses[index].addressLine2 = e.target.value;
+                          setFormData({ ...formData, addresses: newAddresses });
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              <button
+                onClick={() => {
+                  const newAddresses = [...formData.addresses, { ...initialAddress }];
+                  setFormData({ ...formData, addresses: newAddresses });
+                }}
+                className="mt-6 flex items-center gap-2 px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#B8252F] transition-colors"
+              >
+                <Plus size={18} /> Add Another Address
+              </button>
             </Box>
           </SectionCard>
         );

@@ -49,14 +49,21 @@ const getAuthHeaders = (): Record<string, string> => {
 // ─────────────────────────────────────────────
 const safeParseJSON = (data: any): Record<string, any> => {
   if (!data) return {};
-  if (typeof data === "string") {
+  let parsed = data;
+
+  while (typeof parsed === "string") {
     try {
-      return JSON.parse(data);
+      const next = JSON.parse(parsed);
+      if (typeof next === "string" && next === parsed) break; 
+      parsed = next;
     } catch {
-      return {};
+      break; 
     }
   }
-  if (typeof data === "object" && !Array.isArray(data)) return data;
+
+  if (typeof parsed === "object" && !Array.isArray(parsed) && parsed !== null) {
+    return parsed;
+  }
   return {};
 };
 
@@ -66,47 +73,39 @@ const safeParseJSON = (data: any): Record<string, any> => {
 const parseBrandPromisesRecord = (
   json: any
 ): { promises: BrandPromise[]; videoUrl: string } => {
+  const rows: any[] = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [];
+  const record = rows.find((r: any) => r.group_name === "business_plan_brand_promises") ?? rows[0];
+
+  let rawValues: string[] = [];
+  let rawVideoUrl = "";
+  let rawPromiseKpis: any = null;
+
   if (json?.grouped_data?.business_plan_brand_promises) {
     const group = json.grouped_data.business_plan_brand_promises;
-    const values: string[] = group.values ?? [];
-    const videoUrl: string = group.video_url ?? "";
-    const promiseKpis: Record<string, string[]> = safeParseJSON(group.promise_kpis);
-    const rows: any[] = Array.isArray(json.data) ? json.data : [];
-    const promises: BrandPromise[] = values.map((text: string, idx: number) => ({
-      id: rows[idx]?.id ?? null,
-      text,
-      kpis: promiseKpis[`item_${idx + 1}`] ?? [],
-    }));
-    return { promises, videoUrl };
+    rawValues = group.values ?? [];
+    rawVideoUrl = group.video_url ?? "";
+    rawPromiseKpis = group.promise_kpis ?? record?.promise_kpis;
+  } else if (json?.extra_field) {
+    const ef = json.extra_field;
+    rawValues = ef.values ?? [];
+    rawVideoUrl = ef.video_url ?? "";
+    rawPromiseKpis = ef.promise_kpis;
+  } else if (record) {
+    rawValues = record.values ?? (record.value ? [record.value] : []);
+    rawVideoUrl = record.video_url ?? "";
+    rawPromiseKpis = record.promise_kpis;
   }
-  if (json?.extra_field) {
-    const record = json.extra_field;
-    const values: string[] = record.values ?? [];
-    const videoUrl: string = record.video_url ?? "";
-    const promiseKpis: Record<string, string[]> = safeParseJSON(record.promise_kpis);
-    const promises: BrandPromise[] = values.map((text: string, idx: number) => ({
-      id: null,
-      text,
-      kpis: promiseKpis[`item_${idx + 1}`] ?? [],
-    }));
-    return { promises, videoUrl };
-  }
-  if (Array.isArray(json)) {
-    const record =
-      json.find((r: any) => r.group_name === "business_plan_brand_promises") ?? json[0];
-    if (!record) return { promises: [], videoUrl: "" };
-    const values: string[] = record.values ?? (record.value ? [record.value] : []);
-    const videoUrl: string = record.video_url ?? "";
-    const promiseKpis: Record<string, string[]> = safeParseJSON(record.promise_kpis);
-    const efv: any[] = record.extra_field_values ?? [];
-    const promises: BrandPromise[] = values.map((text: string, idx: number) => ({
-      id: efv[idx]?.id ?? null,
-      text,
-      kpis: promiseKpis[`item_${idx + 1}`] ?? [],
-    }));
-    return { promises, videoUrl };
-  }
-  return { promises: [], videoUrl: "" };
+
+  const promiseKpis: Record<string, string[]> = safeParseJSON(rawPromiseKpis);
+  const efv: any[] = record?.extra_field_values ?? [];
+
+  const promises: BrandPromise[] = rawValues.map((text: string, idx: number) => ({
+    id: rows[idx]?.id ?? efv[idx]?.id ?? null,
+    text,
+    kpis: promiseKpis[`item_${idx + 1}`] ?? [],
+  }));
+
+  return { promises, videoUrl: rawVideoUrl };
 };
 
 const fetchBrandPromisesFromApi = async (): Promise<{
@@ -126,37 +125,38 @@ const fetchBrandPromisesFromApi = async (): Promise<{
   return parseBrandPromisesRecord(json);
 };
 
-// FIX: stringify promise_kpis so backend stores it correctly,
-// and return local data as source of truth instead of trusting the save response.
 const saveBrandPromisesToApi = async (
   promises: { text: string; kpis: string[] }[],
   videoUrl: string
 ): Promise<void> => {
   const promiseKpis: Record<string, string[]> = {};
+  
   promises.forEach((p, idx) => {
-    promiseKpis[`item_${idx + 1}`] = p.kpis;
+    if (p.kpis && p.kpis.length > 0) {
+      promiseKpis[`item_${idx + 1}`] = p.kpis;
+    }
   });
+
   const payload = {
     extra_field: {
       group_name: "business_plan_brand_promises",
       values: promises.map((p) => p.text),
       video_url: videoUrl,
-      promise_kpis: JSON.stringify(promiseKpis), // ← explicit stringify
+      promise_kpis: promiseKpis, 
     },
   };
+
   const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
+  
   const rawText = await res.text();
   if (!res.ok)
     throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
 };
 
-// ─────────────────────────────────
-//  DELETE API helper
-// ─────────────────────────────────
 const deleteExtraFieldFromApi = async (id: number): Promise<void> => {
   const res = await fetch(`${BASE_URL}/extra_fields/${id}`, {
     method: "DELETE",
@@ -643,6 +643,42 @@ const InlineImageSlider = ({
 };
 
 // ─────────────────────────────────
+//  Video Preview Helper
+// ─────────────────────────────────
+const extractYouTubeId = (url: string) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+};
+
+const VideoPreview = ({ url }: { url: string }) => {
+  if (!url) return null;
+  const videoId = extractYouTubeId(url);
+  if (!videoId) {
+    return (
+      <a href={url} target="_blank" rel="noreferrer" className="text-[12px] text-blue-500 underline mt-3 block break-all">
+        {url}
+      </a>
+    );
+  }
+  return (
+    <div className="mb-4 relative w-full">
+      <div className="rounded-xl overflow-hidden shadow-sm border w-full relative" style={{ paddingTop: "56.25%", borderColor: C.borderLgt }}>
+        <iframe
+          className="absolute top-0 left-0 w-full h-full"
+          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+          title="Video Preview"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────
 //  Inline Video Player
 // ─────────────────────────────────
 const InlineVideoPlayer: React.FC<{
@@ -651,7 +687,7 @@ const InlineVideoPlayer: React.FC<{
   isSaving: boolean;
 }> = ({ videos, onDelete, isSaving }) => {
   const [current, setCurrent] = useState(0);
-  const safeIdx = videos.length > 0 ? Math.min(current, videos.length - 1) : 0;
+  const safeIdx = (videos || []).length > 0 ? Math.min(current, (videos || []).length - 1) : 0;
 
   useEffect(() => {
     if (safeIdx !== current) setCurrent(safeIdx);
@@ -819,20 +855,22 @@ const BtnOutline = ({ children, onClick, className = "", disabled = false }: any
   </button>
 );
 
-const BtnIcon = ({ children, onClick, title = "" }: any) => (
+const BtnIcon = ({ children, onClick, title = "", onMouseEnter, onMouseLeave }: any) => (
   <button
     onClick={onClick}
     title={title}
-    className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white shadow-sm transition-all duration-150 active:scale-[0.95] border"
-    style={{ borderColor: C.primaryBord, color: "#9ca3af" }}
     onMouseEnter={(e) => {
       e.currentTarget.style.background = C.primaryBg;
       e.currentTarget.style.color = C.primary;
+      if (onMouseEnter) onMouseEnter(e);
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.background = "#fff";
       e.currentTarget.style.color = "#9ca3af";
+      if (onMouseLeave) onMouseLeave(e);
     }}
+    className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white shadow-sm transition-all duration-150 active:scale-[0.95] border"
+    style={{ borderColor: C.primaryBord, color: "#9ca3af", position: "relative" }}
   >
     {children}
   </button>
@@ -929,7 +967,7 @@ const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () =
 };
 
 // ─────────────────────────────────
-//  Types
+//  Types & Info Card Data
 // ─────────────────────────────────
 interface BrandPromise {
   id: number | null;
@@ -940,6 +978,24 @@ interface KPI {
   id: number;
   name: string;
 }
+
+const TOOLTIP_CONTENT: Record<string, { title: string, desc: string, example: string }> = {
+  core: {
+    title: "Core Values - Your Foundation",
+    desc: "The 3-5 non-negotiable principles that guide every business decision. These should be actionable, not just words on a wall.",
+    example: "Example: For a family restaurant in Mumbai - \"Fresh ingredients daily\", \"Treat guests like family\", \"Never compromise on taste\""
+  },
+  purpose: {
+    title: "Purpose - Your \"Why\"",
+    desc: "Why does your business exist beyond making money? This inspires your team and attracts customers who share your values.",
+    example: "Example: A textile manufacturer in Surat might say \"To preserve traditional Indian craftsmanship while empowering rural artisans\""
+  },
+  brand: {
+    title: "Brand Promises - Your Commitments",
+    desc: "What can customers ALWAYS count on from you? Make these specific and measurable promises that differentiate you from competitors.",
+    example: "Example: An IT services company in Bangalore - \"24-hour response time\", \"English + Hindi support\", \"Fixed-price projects (no surprises)\""
+  }
+};
 
 // ─────────────────────────────────
 //  CoreValuesInlineCard
@@ -969,7 +1025,7 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({ values 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        {values.map((v, idx) => (
+        {(values || []).map((v, idx) => (
           <span
             key={v.id ?? idx}
             className="px-4 py-1.5 text-[11px] font-black rounded-full shadow-sm text-white tracking-tight"
@@ -1006,42 +1062,6 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({ values 
   );
 };
 
-// ─────────────────────────────────
-//  Video Preview Helper
-// ─────────────────────────────────
-const extractYouTubeId = (url: string) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
-};
-
-const VideoPreview = ({ url }: { url: string }) => {
-  if (!url) return null;
-  const videoId = extractYouTubeId(url);
-  if (!videoId) {
-    return (
-      <a href={url} target="_blank" rel="noreferrer" className="text-[12px] text-blue-500 underline mt-3 block break-all">
-        {url}
-      </a>
-    );
-  }
-  return (
-    <div className="mb-4 relative w-full">
-      <div className="rounded-xl overflow-hidden shadow-sm border w-full relative" style={{ paddingTop: "56.25%", borderColor: C.borderLgt }}>
-        <iframe
-          className="absolute top-0 left-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-          title="Video Preview"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-    </div>
-  );
-};
-
 // ==========================================
 //  MAIN COMPONENT
 // ==========================================
@@ -1050,6 +1070,37 @@ const BusinessPlanAndGoles = () => {
   const [showAddContent, setShowAddContent] = useState(false);
   const [addContentTab, setAddContentTab] = useState("images");
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
+  
+  // Info hover state for main header
+  const [isInfoHovered, setIsInfoHovered] = useState(false);
+  const [infoPos, setInfoPos] = useState({ top: 0, right: 0 });
+  const infoBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Info hover state for 3 cards
+  const [activeCardInfo, setActiveCardInfo] = useState<"core" | "purpose" | "brand" | null>(null);
+  const [cardInfoCoords, setCardInfoCoords] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
+
+  const handleCardInfoEnter = (e: React.MouseEvent, type: "core" | "purpose" | "brand") => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    let left = rect.left + window.scrollX + rect.width / 2;
+    let transform = "translateX(-50%)";
+
+    // Align tooltips so they don't break outside the screen
+    if (type === "core") {
+      left = rect.left + window.scrollX;
+      transform = "translateX(0%)"; 
+    } else if (type === "brand") {
+      left = rect.right + window.scrollX;
+      transform = "translateX(-100%)";
+    }
+
+    setCardInfoCoords({
+      top: rect.bottom + window.scrollY + 10,
+      left,
+      transform
+    });
+    setActiveCardInfo(type);
+  };
 
   const [isCopyingPlan, setIsCopyingPlan] = useState(false);
 
@@ -1200,200 +1251,191 @@ const BusinessPlanAndGoles = () => {
   }, [loadBrandPromises, loadPurpose, loadCoreValues, loadKpis, loadOverviewMedia]);
 
   // ── COPY PLAN ──
-const handleCopyPlan = async () => {
-  setIsCopyingPlan(true);
-  try {
-    const headers = getAuthHeaders();
-
-    // ── Fetch KPIs ──
-    let kpis: any[] = [];
+  const handleCopyPlan = async () => {
+    setIsCopyingPlan(true);
     try {
-      const res = await fetch(`${BASE_URL}/kpis`, { headers });
-      const json = await res.json();
-      kpis = Array.isArray(json?.data?.kpis) ? json.data.kpis
-        : Array.isArray(json?.data) ? json.data
-        : Array.isArray(json) ? json : [];
-    } catch (e) { console.error("KPI fetch error", e); }
+      const headers = getAuthHeaders();
+      let kpis: any[] = [];
+      try {
+        const res = await fetch(`${BASE_URL}/kpis`, { headers });
+        const json = await res.json();
+        kpis = Array.isArray(json?.data?.kpis) ? json.data.kpis
+          : Array.isArray(json?.data) ? json.data
+          : Array.isArray(json) ? json : [];
+      } catch (e) { console.error("KPI fetch error", e); }
 
-    // ── Fetch SOPs ──
-    let sops: any[] = [];
-    try {
-      const res = await fetch(`${BASE_URL}/system_sops`, { headers });
-      const json = await res.json();
-      sops = Array.isArray(json?.data?.system_sops) ? json.data.system_sops
-        : Array.isArray(json?.data) ? json.data
-        : Array.isArray(json) ? json : [];
-    } catch (e) { console.error("SOP fetch error", e); }
+      let sops: any[] = [];
+      try {
+        const res = await fetch(`${BASE_URL}/system_sops`, { headers });
+        const json = await res.json();
+        sops = Array.isArray(json?.data?.system_sops) ? json.data.system_sops
+          : Array.isArray(json?.data) ? json.data
+          : Array.isArray(json) ? json : [];
+      } catch (e) { console.error("SOP fetch error", e); }
 
-    // ── Fetch SWOT ──
-    let swotData = { strengths: [] as string[], weaknesses: [] as string[], opportunities: [] as string[], threats: [] as string[] };
-    try {
-      const res = await fetch(
-        `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
-        { headers }
-      );
-      const json = await res.json();
-      swotData = {
-        strengths: json?.grouped_data?.business_plan_strengths?.values || [],
-        weaknesses: json?.grouped_data?.business_plan_weaknesses?.values || [],
-        opportunities: json?.grouped_data?.business_plan_opportunities?.values || [],
-        threats: json?.grouped_data?.business_plan_threats?.values || [],
-      };
-    } catch (e) { console.error("SWOT fetch error", e); }
+      let swotData = { strengths: [] as string[], weaknesses: [] as string[], opportunities: [] as string[], threats: [] as string[] };
+      try {
+        const res = await fetch(
+          `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
+          { headers }
+        );
+        const json = await res.json();
+        swotData = {
+          strengths: json?.grouped_data?.business_plan_strengths?.values || [],
+          weaknesses: json?.grouped_data?.business_plan_weaknesses?.values || [],
+          opportunities: json?.grouped_data?.business_plan_opportunities?.values || [],
+          threats: json?.grouped_data?.business_plan_threats?.values || [],
+        };
+      } catch (e) { console.error("SWOT fetch error", e); }
 
-    // ── Fetch BHAG ──
-    let bhag: { title: string; initiatives: { name: string; progress: number }[] } = { title: "", initiatives: [] };
-    try {
-      const res = await fetch(`${BASE_URL}/business_compass/bhag`, { headers });
-      const json = await res.json();
-      bhag = {
-        title: json?.title || json?.data?.title || json?.bhag?.title || json?.goal || "",
-        initiatives: (json?.initiatives || json?.data?.initiatives || json?.bhag?.initiatives || []).map((i: any) => ({
-          name: i.name || i.title || "",
-          progress: i.progress ?? i.completion ?? 0,
-        })),
-      };
-    } catch (e) { console.error("BHAG fetch error", e); }
+      let bhag: { title: string; initiatives: { name: string; progress: number }[] } = { title: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/bhag`, { headers });
+        const json = await res.json();
+        bhag = {
+          title: json?.title || json?.data?.title || json?.bhag?.title || json?.goal || "",
+          initiatives: (json?.initiatives || json?.data?.initiatives || json?.bhag?.initiatives || []).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) { console.error("BHAG fetch error", e); }
 
-    // ── Fetch Medium Term (This Year) ──
-    let year: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
-    try {
-      const res = await fetch(`${BASE_URL}/business_compass/medium_term`, { headers });
-      const json = await res.json();
-      const raw = json?.data || json?.medium_term || json;
-      year = {
-        title: raw?.title || raw?.goal || "",
-        targetDate: raw?.target_date || raw?.targetDate || "",
-        initiatives: (raw?.initiatives || []).map((i: any) => ({
-          name: i.name || i.title || "",
-          progress: i.progress ?? i.completion ?? 0,
-        })),
-      };
-    } catch (e) { console.error("Medium term fetch error", e); }
+      let year: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/medium_term`, { headers });
+        const json = await res.json();
+        const raw = json?.data || json?.medium_term || json;
+        year = {
+          title: raw?.title || raw?.goal || "",
+          targetDate: raw?.target_date || raw?.targetDate || "",
+          initiatives: (raw?.initiatives || []).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) { console.error("Medium term fetch error", e); }
 
-    // ── Fetch Short Term / Quarter (Rocks) ──
-    let quarter: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
-    try {
-      const res = await fetch(`${BASE_URL}/business_compass/short_term`, { headers });
-      const json = await res.json();
-      const raw = json?.data || json?.short_term || json;
-      quarter = {
-        title: raw?.title || raw?.goal || "",
-        targetDate: raw?.target_date || raw?.targetDate || "",
-        initiatives: (raw?.initiatives || []).map((i: any) => ({
-          name: i.name || i.title || "",
-          progress: i.progress ?? i.completion ?? 0,
-        })),
-      };
-    } catch (e) { console.error("Short term fetch error", e); }
+      let quarter: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/short_term`, { headers });
+        const json = await res.json();
+        const raw = json?.data || json?.short_term || json;
+        quarter = {
+          title: raw?.title || raw?.goal || "",
+          targetDate: raw?.target_date || raw?.targetDate || "",
+          initiatives: (raw?.initiatives || []).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) { console.error("Short term fetch error", e); }
 
-    // ── Fetch Quarterly Rocks ──
-    let rocks: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
-    try {
-      const res = await fetch(`${BASE_URL}/business_compass/quarterly`, { headers });
-      const json = await res.json();
-      const raw = json?.data || json?.quarterly || json;
-      rocks = {
-        title: raw?.title || raw?.goal || "",
-        targetDate: raw?.target_date || raw?.targetDate || "",
-        initiatives: (raw?.initiatives || []).map((i: any) => ({
-          name: i.name || i.title || "",
-          progress: i.progress ?? i.completion ?? 0,
-        })),
-      };
-    } catch (e) { console.error("Quarterly fetch error", e); }
+      let rocks: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
+      try {
+        const res = await fetch(`${BASE_URL}/business_compass/quarterly`, { headers });
+        const json = await res.json();
+        const raw = json?.data || json?.quarterly || json;
+        rocks = {
+          title: raw?.title || raw?.goal || "",
+          targetDate: raw?.target_date || raw?.targetDate || "",
+          initiatives: (raw?.initiatives || []).map((i: any) => ({
+            name: i.name || i.title || "",
+            progress: i.progress ?? i.completion ?? 0,
+          })),
+        };
+      } catch (e) { console.error("Quarterly fetch error", e); }
 
-    // ── Build Text ──
-    const d = new Date();
-    const dateStr = d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
+      const d = new Date();
+      const dateStr = d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+      let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
 
-    text += `CORE VALUES\n${"-".repeat(60)}\n`;
-    coreValues.length
-      ? coreValues.forEach((v, i) => { text += `${i + 1}. ${v.value}\n`; })
-      : (text += `(No core values)\n`);
-    text += `\n`;
-
-    text += `PURPOSE\n${"-".repeat(60)}\n`;
-    text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
-
-    text += `BRAND PROMISES\n${"-".repeat(60)}\n`;
-    brandPromises.length
-      ? brandPromises.forEach((p, i) => {
-          text += `${i + 1}. ${p.text}\n`;
-          if (p.kpis.length) text += `   KPIs: ${p.kpis.join(", ")}\n`;
-        })
-      : (text += `(No brand promises)\n`);
-    text += `\n`;
-
-    text += `BHAG (BIG HAIRY AUDACIOUS GOAL)\n${"-".repeat(60)}\n`;
-    text += bhag.title ? `${bhag.title}\n` : `(No BHAG defined)\n`;
-    if (bhag.initiatives.length) {
-      text += `\nKey Initiatives:\n`;
-      bhag.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — Progress: ${init.progress}%\n`; });
-    }
-    text += `\n`;
-
-    text += `THIS YEAR'S PLAN\n${"-".repeat(60)}\n`;
-    text += year.title ? `${year.title}\n` : `(No annual plan defined)\n`;
-    if (year.targetDate) text += `Target: ${year.targetDate}\n`;
-    if (year.initiatives.length) {
-      text += `\nAnnual Initiatives:\n`;
-      year.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
-    }
-    text += `\n`;
-
-    text += `THIS QUARTER (ROCKS)\n${"-".repeat(60)}\n`;
-    const q = rocks.title ? rocks : quarter;
-    text += q.title ? `${q.title}\n` : `(No quarterly plan defined)\n`;
-    if (q.targetDate) text += `Target: ${q.targetDate}\n`;
-    if (q.initiatives.length) {
-      text += `\nQuarterly Initiatives:\n`;
-      q.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
-    }
-    text += `\n`;
-
-    text += `CRITICAL NUMBERS\n${"-".repeat(60)}\n`;
-    kpis.length
-      ? kpis.forEach((kpi: any, i: number) => {
-          text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
-          text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
-          text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
-          const owner = kpi.owner || kpi.assignee?.name || kpi.assignee?.full_name || kpi.assignee?.email;
-          if (owner) text += `   Owner: ${owner}\n`;
-        })
-      : (text += `(No KPIs)\n`);
-    text += `\n`;
-
-    text += `KEY PROCESSES\n${"-".repeat(60)}\n`;
-    sops.length
-      ? sops.forEach((sop: any, i: number) => {
-          text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
-          text += `   Status: ${sop.status || "to_start"}\n`;
-          const owner = sop.owner || sop.assignee?.name || sop.assignee?.full_name || sop.assignee?.email;
-          if (owner) text += `   Owner: ${owner}\n`;
-        })
-      : (text += `(No SOPs)\n`);
-    text += `\n`;
-
-    text += `SWOT ANALYSIS\n${"-".repeat(60)}\n\n`;
-    (["strengths", "weaknesses", "opportunities", "threats"] as const).forEach((key) => {
-      text += `${key.charAt(0).toUpperCase() + key.slice(1)}:\n`;
-      swotData[key].length
-        ? swotData[key].forEach((item, i) => { text += `  ${i + 1}. ${item}\n`; })
-        : (text += `  (No items)\n`);
+      text += `CORE VALUES\n${"-".repeat(60)}\n`;
+      coreValues.length
+        ? coreValues.forEach((v, i) => { text += `${i + 1}. ${v.value}\n`; })
+        : (text += `(No core values)\n`);
       text += `\n`;
-    });
 
-    await navigator.clipboard.writeText(text.trim());
-    alert("Business Plan copied to clipboard!");
-  } catch (err) {
-    console.error("Copy failed", err);
-    alert("Failed to copy plan.");
-  } finally {
-    setIsCopyingPlan(false);
-  }
-};
+      text += `PURPOSE\n${"-".repeat(60)}\n`;
+      text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
+
+      text += `BRAND PROMISES\n${"-".repeat(60)}\n`;
+      brandPromises.length
+        ? brandPromises.forEach((p, i) => {
+            text += `${i + 1}. ${p.text}\n`;
+            if (p.kpis && p.kpis.length) text += `   KPIs: ${p.kpis.join(", ")}\n`;
+          })
+        : (text += `(No brand promises)\n`);
+      text += `\n`;
+
+      text += `BHAG (BIG HAIRY AUDACIOUS GOAL)\n${"-".repeat(60)}\n`;
+      text += bhag.title ? `${bhag.title}\n` : `(No BHAG defined)\n`;
+      if (bhag.initiatives.length) {
+        text += `\nKey Initiatives:\n`;
+        bhag.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — Progress: ${init.progress}%\n`; });
+      }
+      text += `\n`;
+
+      text += `THIS YEAR'S PLAN\n${"-".repeat(60)}\n`;
+      text += year.title ? `${year.title}\n` : `(No annual plan defined)\n`;
+      if (year.targetDate) text += `Target: ${year.targetDate}\n`;
+      if (year.initiatives.length) {
+        text += `\nAnnual Initiatives:\n`;
+        year.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
+      }
+      text += `\n`;
+
+      text += `THIS QUARTER (ROCKS)\n${"-".repeat(60)}\n`;
+      const q = rocks.title ? rocks : quarter;
+      text += q.title ? `${q.title}\n` : `(No quarterly plan defined)\n`;
+      if (q.targetDate) text += `Target: ${q.targetDate}\n`;
+      if (q.initiatives.length) {
+        text += `\nQuarterly Initiatives:\n`;
+        q.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
+      }
+      text += `\n`;
+
+      text += `CRITICAL NUMBERS\n${"-".repeat(60)}\n`;
+      kpis.length
+        ? kpis.forEach((kpi: any, i: number) => {
+            text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
+            text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
+            text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
+            const owner = kpi.owner || kpi.assignee?.name || kpi.assignee?.full_name || kpi.assignee?.email;
+            if (owner) text += `   Owner: ${owner}\n`;
+          })
+        : (text += `(No KPIs)\n`);
+      text += `\n`;
+
+      text += `KEY PROCESSES\n${"-".repeat(60)}\n`;
+      sops.length
+        ? sops.forEach((sop: any, i: number) => {
+            text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
+            text += `   Status: ${sop.status || "to_start"}\n`;
+            const owner = sop.owner || sop.assignee?.name || sop.assignee?.full_name || sop.assignee?.email;
+            if (owner) text += `   Owner: ${owner}\n`;
+          })
+        : (text += `(No SOPs)\n`);
+      text += `\n`;
+
+      text += `SWOT ANALYSIS\n${"-".repeat(60)}\n\n`;
+      (["strengths", "weaknesses", "opportunities", "threats"] as const).forEach((key) => {
+        text += `${key.charAt(0).toUpperCase() + key.slice(1)}:\n`;
+        swotData[key].length
+          ? swotData[key].forEach((item, i) => { text += `  ${i + 1}. ${item}\n`; })
+          : (text += `  (No items)\n`);
+        text += `\n`;
+      });
+
+      await navigator.clipboard.writeText(text.trim());
+      alert("Business Plan copied to clipboard!");
+    } catch (err) {
+      console.error("Copy failed", err);
+      alert("Failed to copy plan.");
+    } finally {
+      setIsCopyingPlan(false);
+    }
+  };
 
   // ── Overview Media Handlers ──
   const handleAddImage = async () => {
@@ -1402,7 +1444,7 @@ const handleCopyPlan = async () => {
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      const updated = [...overviewImages, trimmed];
+      const updated = [...(overviewImages || []), trimmed];
       await saveOverviewImagesApi(updated);
       setOverviewImages(updated);
       setNewImageUrl("");
@@ -1414,7 +1456,7 @@ const handleCopyPlan = async () => {
   };
 
   const handleDeleteImage = async (index: number) => {
-    const updated = overviewImages.filter((_, i) => i !== index);
+    const updated = (overviewImages || []).filter((_, i) => i !== index);
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
@@ -1433,7 +1475,7 @@ const handleCopyPlan = async () => {
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
-      const updated = [...overviewVideos, trimmed];
+      const updated = [...(overviewVideos || []), trimmed];
       await saveOverviewVideosApi(updated);
       setOverviewVideos(updated);
       setNewVideoUrl("");
@@ -1445,7 +1487,7 @@ const handleCopyPlan = async () => {
   };
 
   const handleDeleteVideo = async (index: number) => {
-    const updated = overviewVideos.filter((_, i) => i !== index);
+    const updated = (overviewVideos || []).filter((_, i) => i !== index);
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
@@ -1465,12 +1507,12 @@ const handleCopyPlan = async () => {
       setTempPurposeVideoUrl(purposeVideoUrl);
       setPurposeSaveError(null);
     } else if (modalName === "core") {
-      setTempCoreValues(coreValues.map((v) => ({ ...v })));
+      setTempCoreValues((coreValues || []).map((v) => ({ ...v })));
       setTempCoreVideoUrl(coreVideoUrl);
       setCoreSaveError(null);
       setPendingCoreDeleteIds([]);
     } else if (modalName === "brand") {
-      setTempBrandPromises(brandPromises.map((p) => ({ ...p, kpis: [...p.kpis] })));
+      setTempBrandPromises((brandPromises || []).map((p) => ({ ...p, kpis: [...(p.kpis || [])] })));
       setTempBrandVideoUrl(brandVideoUrl);
       setBrandSaveError(null);
       setPendingDeleteIds([]);
@@ -1506,7 +1548,7 @@ const handleCopyPlan = async () => {
   };
 
   const saveCoreValues = async () => {
-    const filtered = tempCoreValues.filter((v) => v.value.trim() !== "");
+    const filtered = (tempCoreValues || []).filter((v) => v.value.trim() !== "");
     setIsSavingCore(true);
     setCoreSaveError(null);
     try {
@@ -1531,9 +1573,8 @@ const handleCopyPlan = async () => {
     }
   };
 
-  // FIX: saveBrandPromises now uses local tempBrandPromises as the source of truth for KPIs
   const saveBrandPromises = async () => {
-    const filtered = tempBrandPromises.filter((p) => p.text.trim() !== "");
+    const filtered = (tempBrandPromises || []).filter((p) => p.text.trim() !== "");
     setIsSavingBrand(true);
     setBrandSaveError(null);
     try {
@@ -1543,10 +1584,8 @@ const handleCopyPlan = async () => {
       setPendingDeleteIds([]);
 
       if (filtered.length > 0 || tempBrandVideoUrl.trim() !== "") {
-        // Save to API (fire and forget the response — we trust local state)
         await saveBrandPromisesToApi(filtered, tempBrandVideoUrl);
-        // Use local filtered data directly — KPIs are guaranteed correct here
-        setBrandPromises(filtered.map((p) => ({ ...p, kpis: [...p.kpis] })));
+        setBrandPromises(filtered.map((p) => ({ ...p, kpis: [...(p.kpis || [])] })));
         setBrandVideoUrl(tempBrandVideoUrl);
       } else {
         await saveBrandPromisesToApi([], tempBrandVideoUrl);
@@ -1564,28 +1603,30 @@ const handleCopyPlan = async () => {
 
   // ── Brand promise handlers ──
   const handleBrandPromiseChange = (index: number, value: string) => {
-    const updated = [...tempBrandPromises];
+    const updated = [...(tempBrandPromises || [])];
     updated[index] = { ...updated[index], text: value };
     setTempBrandPromises(updated);
   };
   const handleDeleteBrandPromise = (index: number) => {
     const promise = tempBrandPromises[index];
-    if (promise.id !== null) setPendingDeleteIds((prev) => [...prev, promise.id as number]);
-    setTempBrandPromises(tempBrandPromises.filter((_, i) => i !== index));
+    if (promise && promise.id !== null) setPendingDeleteIds((prev) => [...prev, promise.id as number]);
+    setTempBrandPromises((tempBrandPromises || []).filter((_, i) => i !== index));
   };
   const handleAddBrandPromise = () =>
-    setTempBrandPromises([...tempBrandPromises, { id: null, text: "", kpis: [] }]);
+    setTempBrandPromises([...(tempBrandPromises || []), { id: null, text: "", kpis: [] }]);
   const handleAddKpiToBrandPromise = (promiseIndex: number, kpi: string) => {
     if (!kpi) return;
-    const updated = [...tempBrandPromises];
-    const current = updated[promiseIndex].kpis;
+    const updated = [...(tempBrandPromises || [])];
+    if(!updated[promiseIndex]) return;
+    const current = updated[promiseIndex].kpis || [];
     if (current.length >= 3 || current.includes(kpi)) return;
     updated[promiseIndex] = { ...updated[promiseIndex], kpis: [...current, kpi] };
     setTempBrandPromises(updated);
   };
   const handleRemoveKpiFromBrandPromise = (promiseIndex: number, kpi: string) => {
-    const updated = [...tempBrandPromises];
-    updated[promiseIndex] = { ...updated[promiseIndex], kpis: updated[promiseIndex].kpis.filter((k) => k !== kpi) };
+    const updated = [...(tempBrandPromises || [])];
+    if(!updated[promiseIndex]) return;
+    updated[promiseIndex] = { ...updated[promiseIndex], kpis: (updated[promiseIndex].kpis || []).filter((k) => k !== kpi) };
     setTempBrandPromises(updated);
   };
 
@@ -1601,7 +1642,7 @@ const handleCopyPlan = async () => {
   };
   const onDragEndBrand = () => {
     if (dragBrandItem.current !== null && dragBrandOverItem.current !== null) {
-      const copy = [...tempBrandPromises];
+      const copy = [...(tempBrandPromises || [])];
       const item = copy[dragBrandItem.current];
       copy.splice(dragBrandItem.current, 1);
       copy.splice(dragBrandOverItem.current, 0, item);
@@ -1614,17 +1655,17 @@ const handleCopyPlan = async () => {
 
   // ── Core value handlers ──
   const handleCoreValueChange = (index: number, value: string) => {
-    const updated = [...tempCoreValues];
+    const updated = [...(tempCoreValues || [])];
     updated[index] = { ...updated[index], value };
     setTempCoreValues(updated);
   };
   const handleDeleteCoreValue = (index: number) => {
     const item = tempCoreValues[index];
-    if (item.id !== null) setPendingCoreDeleteIds((prev) => [...prev, item.id as number]);
-    setTempCoreValues(tempCoreValues.filter((_, i) => i !== index));
+    if (item && item.id !== null) setPendingCoreDeleteIds((prev) => [...prev, item.id as number]);
+    setTempCoreValues((tempCoreValues || []).filter((_, i) => i !== index));
   };
   const handleAddCoreValue = () =>
-    setTempCoreValues([...tempCoreValues, { id: null, value: "" }]);
+    setTempCoreValues([...(tempCoreValues || []), { id: null, value: "" }]);
 
   // ── Core Drag & Drop ──
   const onDragStartCore = (e: React.DragEvent<HTMLDivElement>, position: number) => {
@@ -1638,7 +1679,7 @@ const handleCopyPlan = async () => {
   };
   const onDragEndCore = () => {
     if (dragCoreItem.current !== null && dragCoreOverItem.current !== null) {
-      const copy = [...tempCoreValues];
+      const copy = [...(tempCoreValues || [])];
       const item = copy[dragCoreItem.current];
       copy.splice(dragCoreItem.current, 1);
       copy.splice(dragCoreOverItem.current, 0, item);
@@ -1722,17 +1763,75 @@ const handleCopyPlan = async () => {
       {activeMainTab === "strategic" && (
         <div className="space-y-6">
           {/* Our Business Plan header */}
-          <div className="rounded-[8px] p-5 flex items-center justify-between" style={{ background: C.tealBg }}>
+          <div className="rounded-[8px] p-5 flex items-center justify-between relative" style={{ background: C.tealBg }}>
             <div className="flex items-center gap-3">
               <div className="bg-white/30 p-2 rounded-full"><EyeIcon /></div>
               <span className="text-[12px] font-black tracking-[0.15em] text-[#070707] uppercase">Our Business Plan</span>
             </div>
             <div className="flex items-center gap-2">
-              <BtnIcon title="Info">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </BtnIcon>
+              <div style={{ position: "relative" }}>
+                <BtnIcon 
+                  title="Info" 
+                  onMouseEnter={() => {
+                    if (infoBtnRef.current) {
+                      const rect = infoBtnRef.current.getBoundingClientRect();
+                      setInfoPos({ top: rect.bottom + window.scrollY + 10, right: window.innerWidth - rect.right - window.scrollX });
+                    }
+                    setIsInfoHovered(true);
+                  }}
+                  onMouseLeave={() => setIsInfoHovered(false)}
+                >
+                  <span ref={infoBtnRef}>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                </BtnIcon>
+
+                {isInfoHovered && ReactDOM.createPortal(
+                  <div 
+                    style={{
+                      position: "absolute",
+                      top: infoPos.top,
+                      right: infoPos.right,
+                      zIndex: 99999,
+                      background: "#16102b", // Dark purple/blue tint like in image
+                      color: "#fff",
+                      borderRadius: 16,
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                      padding: "20px",
+                      width: 380,
+                      fontFamily: "'Poppins', sans-serif",
+                      pointerEvents: "none"
+                    }}
+                  >
+                    <h4 style={{ margin: "0 0 16px 0", fontSize: 14, fontWeight: 800, color: "#e2baff", textAlign: "center" }}>
+                      How to Create Business Plan Infographics
+                    </h4>
+                    <ol style={{ paddingLeft: 16, margin: 0, fontSize: 12, lineHeight: 1.6, color: "#d1d5db", listStyleType: "decimal" }}>
+                      <li style={{ marginBottom: 12 }}>
+                        First, complete your business plan sections above (Core Values, Purpose, Brand Promises, BHAG, Goals, etc.)
+                      </li>
+                      <li style={{ marginBottom: 12 }}>
+                        Click the <strong style={{ color: "#fff" }}>'Copy Text'</strong> button at the top of the page to copy your plan
+                      </li>
+                      <li style={{ marginBottom: 12 }}>
+                        Go to <strong style={{ color: "#fff" }}>gemini.google.com</strong>
+                      </li>
+                      <li style={{ marginBottom: 12 }}>
+                        Use this prompt:
+                        <div style={{ background: "rgba(255,255,255,0.08)", padding: "10px", borderRadius: 8, marginTop: 6, fontStyle: "italic", border: "1px solid rgba(255,255,255,0.15)" }}>
+                          "Create an infographic for the business plan of my company in landscape mode (red, black & white colors) from the plan given below: &lt;paste your business plan here&gt;"
+                        </div>
+                      </li>
+                      <li>
+                        Download the generated infographic and add it here using the image URL or upload feature
+                      </li>
+                    </ol>
+                  </div>,
+                  document.body
+                )}
+              </div>
               <BtnIcon onClick={() => setShowAddContent(!showAddContent)}>
                 <ChevronIcon isExpanded={showAddContent} />
               </BtnIcon>
@@ -1782,12 +1881,12 @@ const handleCopyPlan = async () => {
                       </button>
                     </div>
                     <p className="text-[11px] mb-4 font-semibold" style={{ color: C.textMuted }}>
-                      {overviewImages.length}/12 images • Max 1 MB per image.{" "}
+                      {(overviewImages || []).length}/12 images • Max 1 MB per image.{" "}
                       <a href="#" style={{ color: C.primary }} className="hover:underline">Compress images here</a>
                     </p>
                     {isFetchingMedia ? (
                       <div className="w-full rounded-2xl animate-pulse mb-5" style={{ height: 340, background: "#e5e1d8" }} />
-                    ) : overviewImages.length === 0 ? (
+                    ) : (overviewImages || []).length === 0 ? (
                       <div className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed" style={{ borderColor: C.primaryBord }}>
                         <ImagePlaceholder />
                         <p className="text-[13px] font-black" style={{ color: C.textMuted }}>No images added yet</p>
@@ -1821,10 +1920,10 @@ const handleCopyPlan = async () => {
                         {isSavingVideos ? <LoaderIcon /> : "+ Add"}
                       </button>
                     </div>
-                    <p className="text-[11px] font-black mb-4" style={{ color: C.textMuted }}>{overviewVideos.length}/12 videos added</p>
+                    <p className="text-[11px] font-black mb-4" style={{ color: C.textMuted }}>{(overviewVideos || []).length}/12 videos added</p>
                     {isFetchingMedia ? (
                       <div className="w-full rounded-2xl animate-pulse mb-5" style={{ height: 340, background: "#e5e1d8" }} />
-                    ) : overviewVideos.length === 0 ? (
+                    ) : (overviewVideos || []).length === 0 ? (
                       <div className="flex flex-col items-center py-10 mb-5 rounded-2xl border-2 border-dashed" style={{ borderColor: C.primaryBord }}>
                         <VideoPlaceholder />
                         <p className="text-[13px] font-black" style={{ color: C.textMuted }}>No explainer videos added yet</p>
@@ -1846,10 +1945,20 @@ const handleCopyPlan = async () => {
           <div className="rounded-[8px] p-6" style={{ background: C.tealBg }}>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">Strategic Essentials</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              
               {/* Core Values */}
               <div className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col" style={{ background: C.cardBg, borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>Core Values <InfoIcon /></h3>
+                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>
+                    Core Values 
+                    <span 
+                      onMouseEnter={(e) => handleCardInfoEnter(e, "core")}
+                      onMouseLeave={() => setActiveCardInfo(null)}
+                      style={{ cursor: "help" }}
+                    >
+                      <InfoIcon />
+                    </span>
+                  </h3>
                   <button onClick={() => openTopModal("core")} className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]" style={{ color: "#9ca3af" }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
@@ -1860,7 +1969,7 @@ const handleCopyPlan = async () => {
                   <div className="flex flex-wrap gap-2">{[1, 2, 3, 4].map((n) => <Shimmer key={n} w="80px" h={28} />)}</div>
                 ) : coreFetchError ? (
                   <div className="text-[12px] text-red-500 font-semibold">⚠ {coreFetchError}{" "}<button onClick={loadCoreValues} className="underline">Retry</button></div>
-                ) : coreValues.length === 0 && !coreVideoUrl ? (
+                ) : (coreValues || []).length === 0 && !coreVideoUrl ? (
                   <div className="flex flex-col gap-3">
                     {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
                     <p className="text-[12px] leading-relaxed" style={{ color: C.textMuted }}>
@@ -1870,7 +1979,7 @@ const handleCopyPlan = async () => {
                 ) : (
                   <div className="flex flex-col h-full">
                     {coreVideoUrl && <VideoPreview url={coreVideoUrl} />}
-                    {coreValues.length === 0 ? (
+                    {(coreValues || []).length === 0 ? (
                       <div>{emptyAddBtn(() => openTopModal("core"), "Add Core Values")}</div>
                     ) : (
                       <div><CoreValuesInlineCard values={coreValues} /></div>
@@ -1882,7 +1991,16 @@ const handleCopyPlan = async () => {
               {/* Purpose */}
               <div className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col" style={{ background: C.cardBg, borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>Purpose <InfoIcon /></h3>
+                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>
+                    Purpose 
+                    <span 
+                      onMouseEnter={(e) => handleCardInfoEnter(e, "purpose")}
+                      onMouseLeave={() => setActiveCardInfo(null)}
+                      style={{ cursor: "help" }}
+                    >
+                      <InfoIcon />
+                    </span>
+                  </h3>
                   <button onClick={() => openTopModal("purpose")} className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]" style={{ color: "#9ca3af" }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
@@ -1910,7 +2028,16 @@ const handleCopyPlan = async () => {
               {/* Brand Promises */}
               <div className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col" style={{ background: C.cardBg, borderTop: `4px solid ${C.primary}`, borderColor: C.borderLgt }}>
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>Brand Promises <InfoIcon /></h3>
+                  <h3 className="font-black text-[14px] flex items-center gap-1.5" style={{ color: C.textMain }}>
+                    Brand Promises 
+                    <span 
+                      onMouseEnter={(e) => handleCardInfoEnter(e, "brand")}
+                      onMouseLeave={() => setActiveCardInfo(null)}
+                      style={{ cursor: "help" }}
+                    >
+                      <InfoIcon />
+                    </span>
+                  </h3>
                   <button onClick={() => openTopModal("brand")} className="p-1.5 rounded-xl transition-colors hover:bg-[#f3f4f6]" style={{ color: "#9ca3af" }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
@@ -1921,21 +2048,21 @@ const handleCopyPlan = async () => {
                   <div className="space-y-2">{[1, 2, 3].map((n) => <Shimmer key={n} w={n === 3 ? "60%" : "90%"} h={14} />)}</div>
                 ) : brandFetchError ? (
                   <div className="text-[12px] text-red-500 font-semibold">⚠ {brandFetchError}{" "}<button onClick={loadBrandPromises} className="underline">Retry</button></div>
-                ) : brandPromises.length === 0 && !brandVideoUrl ? (
+                ) : (brandPromises || []).length === 0 && !brandVideoUrl ? (
                   emptyAddBtn(() => openTopModal("brand"), "Add Promise")
                 ) : (
                   <div className="flex flex-col h-full">
                     {brandVideoUrl && <VideoPreview url={brandVideoUrl} />}
-                    {brandPromises.length === 0 ? (
+                    {(brandPromises || []).length === 0 ? (
                       <div>{emptyAddBtn(() => openTopModal("brand"), "Add Promise")}</div>
                     ) : (
                       <ul className="space-y-3 text-[12px]" style={{ color: C.textMuted }}>
-                        {brandPromises.map((p, idx) => (
+                        {(brandPromises || []).map((p, idx) => (
                           <li key={p.id ?? idx} className="flex items-start">
                             <span className="mr-2 mt-0.5 shrink-0 font-black" style={{ color: C.primary }}>•</span>
                             <div>
-                              <div dangerouslySetInnerHTML={{ __html: p.text.replace(/([^-]+)/, `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`) }} />
-                              {p.kpis.length > 0 ? (
+                              <div dangerouslySetInnerHTML={{ __html: (p.text || "").replace(/([^-]+)/, `<strong style="color:${C.textMain};font-weight:800;">$1</strong>`) }} />
+                              {p.kpis && p.kpis.length > 0 ? (
                                 <p className="text-[11px] text-gray-400 mt-0.5">{p.kpis.join(", ")}</p>
                               ) : (
                                 <p className="text-[11px] text-gray-400 italic mt-0.5">No KPIs linked</p>
@@ -1950,6 +2077,39 @@ const handleCopyPlan = async () => {
               </div>
             </div>
           </div>
+
+          {/* Render Active Tooltip for 3 Cards */}
+          {activeCardInfo && ReactDOM.createPortal(
+            <div
+              style={{
+                position: "absolute",
+                top: cardInfoCoords.top,
+                left: cardInfoCoords.left,
+                transform: cardInfoCoords.transform,
+                zIndex: 99999,
+                background: "#16102b",
+                color: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                padding: "16px",
+                width: 300,
+                textAlign: "center",
+                fontFamily: "'Poppins', sans-serif",
+                pointerEvents: "none"
+              }}
+            >
+              <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800 }}>
+                {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo] ? TOOLTIP_CONTENT[activeCardInfo].title : ""}
+              </h4>
+              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
+                {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo] ? TOOLTIP_CONTENT[activeCardInfo].desc : ""}
+              </p>
+              <p style={{ margin: 0, fontSize: 11, fontStyle: "italic", color: "#d1d5db" }}>
+                {activeCardInfo && TOOLTIP_CONTENT[activeCardInfo] ? TOOLTIP_CONTENT[activeCardInfo].example : ""}
+              </p>
+            </div>,
+            document.body
+          )}
 
           {/* Sub-sections */}
           <BhagSection />
@@ -2016,7 +2176,7 @@ const handleCopyPlan = async () => {
                   <div>
                     <label className="block text-[12px] font-black mb-3" style={{ color: C.textMain }}>Core Values</label>
                     <div className="space-y-2.5 mb-3">
-                      {tempCoreValues.map((item, idx) => (
+                      {(tempCoreValues || []).map((item, idx) => (
                         <div
                           key={item.id ?? idx}
                           draggable
@@ -2034,7 +2194,7 @@ const handleCopyPlan = async () => {
                             className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add core value"
-                            autoFocus={idx === tempCoreValues.length - 1 && item.value === ""}
+                            autoFocus={idx === (tempCoreValues || []).length - 1 && item.value === ""}
                           />
                           <button onClick={() => handleDeleteCoreValue(idx)} className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50">
                             <TrashIcon />
@@ -2070,7 +2230,7 @@ const handleCopyPlan = async () => {
                   <div>
                     <label className="block text-[12px] font-black mb-3" style={{ color: C.textMain }}>Promises</label>
                     <div className="space-y-2.5 mb-3">
-                      {tempBrandPromises.map((item, idx) => (
+                      {(tempBrandPromises || []).map((item, idx) => (
                         <div
                           key={item.id ?? idx}
                           draggable
@@ -2088,7 +2248,7 @@ const handleCopyPlan = async () => {
                             className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add promise"
-                            autoFocus={idx === tempBrandPromises.length - 1 && item.text === ""}
+                            autoFocus={idx === (tempBrandPromises || []).length - 1 && item.text === ""}
                           />
                           <button onClick={() => handleDeleteBrandPromise(idx)} className="shrink-0 p-1.5 rounded-xl transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50">
                             <TrashIcon />
@@ -2114,12 +2274,12 @@ const handleCopyPlan = async () => {
                       <span className="font-semibold text-gray-400">(Max 3 per promise)</span>
                     </label>
                     <div className="max-h-[280px] overflow-y-auto bp-scroll space-y-3 pr-1">
-                      {tempBrandPromises
+                      {(tempBrandPromises || [])
                         .filter((p) => p.text.trim() !== "")
                         .map((item, idx) => (
                           <div key={item.id ?? idx} className="border p-4 rounded-2xl bg-white shadow-sm" style={{ borderColor: C.borderLgt }}>
                             <div className="text-[13px] font-black mb-3 leading-snug" style={{ color: C.textMain }}>{item.text}</div>
-                            {item.kpis.length > 0 && (
+                            {item.kpis && item.kpis.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mb-2">
                                 {item.kpis.map((kpi) => (
                                   <span key={kpi} className="flex items-center gap-1 px-3 py-1 text-[11px] font-black rounded-full text-white" style={{ background: C.primary }}>
@@ -2129,14 +2289,14 @@ const handleCopyPlan = async () => {
                                 ))}
                               </div>
                             )}
-                            {item.kpis.length < 3 ? (
+                            {(!item.kpis || item.kpis.length < 3) ? (
                               <select
                                 className="bp-select text-gray-500" value=""
                                 onChange={(e) => handleAddKpiToBrandPromise(idx, e.target.value)}
                                 disabled={isFetchingKpis}
                               >
                                 <option value="">{isFetchingKpis ? "Loading KPIs..." : "Link a KPI..."}</option>
-                                {availableKpis.map((kpi) => (
+                                {(availableKpis || []).map((kpi) => (
                                   <option key={kpi.id} value={kpi.name}>{kpi.name}</option>
                                 ))}
                               </select>
@@ -2145,7 +2305,7 @@ const handleCopyPlan = async () => {
                             )}
                           </div>
                         ))}
-                      {tempBrandPromises.filter((p) => p.text.trim() !== "").length === 0 && (
+                      {(tempBrandPromises || []).filter((p) => p.text.trim() !== "").length === 0 && (
                         <p className="text-[13px] text-gray-400 italic">Add promises above to link KPIs.</p>
                       )}
                     </div>

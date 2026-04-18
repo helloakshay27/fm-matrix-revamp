@@ -378,7 +378,7 @@ const Products: React.FC = () => {
       case "whoTheyServe":
       case "purposeTheyServe":
         return (
-          <span className="text-[10px] text-gray-500 leading-relaxed">
+          <span className="text-[10px] text-gray-500 leading-relaxed whitespace-normal break-words max-w-xs line-clamp-3">
             {product[columnKey as keyof Product]}
           </span>
         );
@@ -603,6 +603,95 @@ const Products: React.FC = () => {
 
       {/* Enhanced Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Filter Controls and Table Search in Same Row */}
+        <div className="border-b border-gray-200 p-4 bg-gray-50">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+            {/* Product Type Filter */}
+            <div className="lg:col-span-3">
+              <label className="block text-xs font-semibold text-gray-700 mb-2">
+                Product Type
+              </label>
+              <select
+                value={selectedProductType}
+                onChange={(e) => setSelectedProductType(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Product Type</option>
+                {[
+                  "CRM",
+                  "Visitor Management",
+                  "Facility Management",
+                  "Loyalty",
+                  "Pre - Sales",
+                  "Post - Sales",
+                  "Vendor Portal",
+                  "Customer Portal",
+                ].map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Industry Type Filter */}
+            <div className="lg:col-span-3">
+              <label className="block text-xs font-semibold text-gray-700 mb-2">
+                Industry Type
+              </label>
+              <select
+                value={selectedIndustry}
+                onChange={(e) => setSelectedIndustry(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Industry Type</option>
+                {[
+                  "Real Estate Developers",
+                  "Property & Facility Management",
+                  "Real Estate Developer & FM",
+                  "Real Estate & Construction",
+                  "Government",
+                  "Real Estate & Sales",
+                  "Facility Management",
+                  "Enterprise Digital Workplace",
+                  "Coworking Space",
+                  "Work Management / All Industries",
+                  "Procurement & Supply Chain",
+                  "Real Estate & Manufacturing",
+                  "Referral & Loyalty",
+                  "Health, Safety & Wellbeing",
+                  "Health, Safety & Environment",
+                  "Real Estate",
+                  "Sports & Recreation",
+                ].map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Project Status Filter */}
+            <div className="lg:col-span-3">
+              <label className="block text-xs font-semibold text-gray-700 mb-2">
+                Project Status
+              </label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Project Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+
+            {/* Table Search Area will be below */}
+          </div>
+        </div>
+
+        {/* Enhanced Table */}
         <EnhancedTable
           data={filteredProducts}
           columns={columns}

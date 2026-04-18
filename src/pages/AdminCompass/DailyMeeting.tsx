@@ -29,7 +29,8 @@ const tabs = [
 ];
 
 const DailyMeeting = () => {
-  const [activeTab, setActiveTab] = useState("Daily Log");
+  // Yahan par initial state "Daily" set kar diya hai
+  const [activeTab, setActiveTab] = useState("Daily");
   const [selectedDateId, setSelectedDateId] = useState(7);
 
   return (

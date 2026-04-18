@@ -59,7 +59,16 @@ import { Textarea } from "@/components/ui/textarea";
 const BASE_URL = () => localStorage.getItem("baseUrl") || "";
 const getToken = () => localStorage.getItem("token") || "";
 
-const getUserId = () => localStorage.getItem("user_id") || "1";
+// FIX: User data is stored as a JSON object under the "user" key in localStorage.
+// Structure: { id: 188925, email: "...", firstname: "...", ... }
+const getUserId = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return String(user?.id || "");
+  } catch {
+    return "";
+  }
+};
 
 const apiHeaders = () => ({
   Accept: "application/json",
@@ -136,6 +145,7 @@ const fetchMySops = async (): Promise<SopCardData[]> => {
     ? json
     : (json.data ?? json.system_sops ?? []);
 
+  // FIX: Now correctly compares against the real logged-in user's id
   const mySops = arr.filter(
     (sop: any) => String(sop.assignee_id) === String(userId)
   );
@@ -147,7 +157,6 @@ const fetchMySops = async (): Promise<SopCardData[]> => {
 const fetchUsersData = async (): Promise<
   { value: string; label: string }[]
 > => {
-  // YAHAN CHANGE KIYA HAI: "organization_id" se "org_id" kar diya
   const orgId = localStorage.getItem("org_id") || "";
 
   if (!orgId) {
