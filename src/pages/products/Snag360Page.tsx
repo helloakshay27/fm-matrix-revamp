@@ -49,8 +49,39 @@ import {
 const productData = {
   name: "Snag 360",
   excelLikeFeatures: true,
+  excelLikeRoadmap: false,
+  excelLikeBusinessPlan: true,
+  excelLikeSwot: true,
+  excelLikePricing: true,
+  tabOrder: [
+    "summary",
+    "features",
+    "market",
+    "pricing",
+    "usecases",
+    "roadmap",
+    "business",
+    "gtm",
+    "metrics",
+    "swot",
+    "enhancements",
+    "assets",
+  ] as (
+    | "summary"
+    | "features"
+    | "usecases"
+    | "market"
+    | "pricing"
+    | "swot"
+    | "roadmap"
+    | "enhancements"
+    | "metrics"
+    | "business"
+    | "gtm"
+    | "assets"
+  )[],
   description:
-    "Snag 360 is a Mobile based QC Application specially designed and developed for the Real Estate industry. Its objective is to deliver a zero defect product to the End consumer.",
+    "Mobile-first quality inspection and snagging platform that digitizes defect detection, multi-stage checklist workflows, and pre-handover quality control for real estate and construction projects.",
   brief:
     "Ensures reduction in follow up on complaints from customers. Dynamic Workflow Management validates checkpoints across functions before final delivery.",
   userStories: [
@@ -932,41 +963,282 @@ const productData = {
     detailedPricing: {
       isSnagPricing: true,
       snagFeatureComparison: [
-        { feature: "On-premise / client-side data storage", snag360: "Yes - core architecture", falconBrick: "No", procore: "No", novade: "No", snagR: "No", safetyCulture: "No", status: "AHEAD" },
-        { feature: "Ad-hoc snag logging outside checklist", snag360: "Yes - USP feature", falconBrick: "No", procore: "Partial", novade: "No", snagR: "Yes", safetyCulture: "No", status: "AHEAD" },
-        { feature: "Multi-stage project configuration", snag360: "Yes - unlimited stages", falconBrick: "Yes", procore: "Yes", novade: "Yes", snagR: "Limited", safetyCulture: "No", status: "AT PAR" },
-        { feature: "Multi-level checkpoints per stage", snag360: "Yes - USP feature", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AHEAD" },
-        { feature: "Positive / negative scoring engine", snag360: "Yes - USP feature", falconBrick: "No", procore: "No", novade: "No", snagR: "No", safetyCulture: "No", status: "AHEAD" },
-        { feature: "Photo annotation (in-app)", snag360: "Yes - arrows, text, circles", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "Yes", safetyCulture: "Yes", status: "AT PAR" },
-        { feature: "Dynamic workflow engine (stage gates)", snag360: "Yes - USP feature", falconBrick: "Partial", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
-        { feature: "Real-time live dashboard", snag360: "Yes - USP feature", falconBrick: "Yes", procore: "Yes", novade: "Yes", snagR: "Limited", safetyCulture: "Yes", status: "AT PAR" },
-        { feature: "DPR auto-generation", snag360: "Yes", falconBrick: "Yes", procore: "No", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AHEAD" },
-        { feature: "FM handover support module", snag360: "Yes", falconBrick: "No", procore: "No", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AHEAD" },
-        { feature: "Pre-handover inspection workflow", snag360: "Yes", falconBrick: "Yes", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
-        { feature: "Enterprise integrations (SAP, SFDC)", snag360: "Yes", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
-        { feature: "Offline mobile functionality", snag360: "Partial", falconBrick: "Partial", procore: "Yes", novade: "Yes", snagR: "Yes", safetyCulture: "Yes", status: "GAP" },
-        { feature: "BIM floor plan integration", snag360: "No", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "GAP" },
-        { feature: "AI defect detection from photos", snag360: "No", falconBrick: "No", procore: "Yes (Procore Insights)", novade: "Partial", snagR: "No", safetyCulture: "No", status: "GAP" },
-        { feature: "Multilingual support (Hindi, regional)", snag360: "No", falconBrick: "No", procore: "No", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
-        { feature: "India RERA compliance features", snag360: "Partial", falconBrick: "Yes", procore: "No", novade: "No", snagR: "No", safetyCulture: "No", status: "AT PAR" }
+        {
+          feature: "On-premise / client-side data storage",
+          snag360: "Yes - core architecture",
+          falconBrick: "No",
+          procore: "No",
+          novade: "No",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AHEAD",
+        },
+        {
+          feature: "Ad-hoc snag logging outside checklist",
+          snag360: "Yes - USP feature",
+          falconBrick: "No",
+          procore: "Partial",
+          novade: "No",
+          snagR: "Yes",
+          safetyCulture: "No",
+          status: "AHEAD",
+        },
+        {
+          feature: "Multi-stage project configuration",
+          snag360: "Yes - unlimited stages",
+          falconBrick: "Yes",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "Limited",
+          safetyCulture: "No",
+          status: "AT PAR",
+        },
+        {
+          feature: "Multi-level checkpoints per stage",
+          snag360: "Yes - USP feature",
+          falconBrick: "No",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AHEAD",
+        },
+        {
+          feature: "Positive / negative scoring engine",
+          snag360: "Yes - USP feature",
+          falconBrick: "No",
+          procore: "No",
+          novade: "No",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AHEAD",
+        },
+        {
+          feature: "Photo annotation (in-app)",
+          snag360: "Yes - arrows, text, circles",
+          falconBrick: "No",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "Yes",
+          safetyCulture: "Yes",
+          status: "AT PAR",
+        },
+        {
+          feature: "Dynamic workflow engine (stage gates)",
+          snag360: "Yes - USP feature",
+          falconBrick: "Partial",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AT PAR",
+        },
+        {
+          feature: "Real-time live dashboard",
+          snag360: "Yes - USP feature",
+          falconBrick: "Yes",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "Limited",
+          safetyCulture: "Yes",
+          status: "AT PAR",
+        },
+        {
+          feature: "DPR auto-generation",
+          snag360: "Yes",
+          falconBrick: "Yes",
+          procore: "No",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AHEAD",
+        },
+        {
+          feature: "FM handover support module",
+          snag360: "Yes",
+          falconBrick: "No",
+          procore: "No",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AHEAD",
+        },
+        {
+          feature: "Pre-handover inspection workflow",
+          snag360: "Yes",
+          falconBrick: "Yes",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AT PAR",
+        },
+        {
+          feature: "Enterprise integrations (SAP, SFDC)",
+          snag360: "Yes",
+          falconBrick: "No",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AT PAR",
+        },
+        {
+          feature: "Offline mobile functionality",
+          snag360: "Partial",
+          falconBrick: "Partial",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "Yes",
+          safetyCulture: "Yes",
+          status: "GAP",
+        },
+        {
+          feature: "BIM floor plan integration",
+          snag360: "No",
+          falconBrick: "No",
+          procore: "Yes",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "GAP",
+        },
+        {
+          feature: "AI defect detection from photos",
+          snag360: "No",
+          falconBrick: "No",
+          procore: "Yes (Procore Insights)",
+          novade: "Partial",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "GAP",
+        },
+        {
+          feature: "Multilingual support (Hindi, regional)",
+          snag360: "No",
+          falconBrick: "No",
+          procore: "No",
+          novade: "Yes",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AT PAR",
+        },
+        {
+          feature: "India RERA compliance features",
+          snag360: "Partial",
+          falconBrick: "Yes",
+          procore: "No",
+          novade: "No",
+          snagR: "No",
+          safetyCulture: "No",
+          status: "AT PAR",
+        },
       ],
       pricingLandscapeRows: [
-        { tier: "Snag 360 - Starter", model: "Per user per month (annual billing)", indiaPrice: "INR 600-1,200", globalPrice: "USD 8-15", included: "Up to 3 projects, basic checklist, snag management, standard dashboard", segment: "Boutique developers, small EPC firms, pilot projects" },
-        { tier: "Snag 360 - Professional", model: "Per user per month (annual billing)", indiaPrice: "INR 1,500-2,500", globalPrice: "USD 18-30", included: "Unlimited projects, multi-stage config, ad-hoc logging, photo annotation, DPR, real-time dashboard", segment: "Mid-size real estate developers, EPC contractors" },
-        { tier: "Snag 360 - Enterprise", model: "Custom annual contract", indiaPrice: "INR 3,000-6,000+", globalPrice: "USD 35-70+", included: "All features + SAP/SFDC integrations, on-premise deployment, SLA support, custom reporting, upsell", segment: "Large developers (top 100), government EPC, FM organizations" },
-        { tier: "FalconBrick (benchmark)", model: "Per user per month", indiaPrice: "INR 1,500-4,000", globalPrice: "Not available globally", included: "Construction management + basic QC; limited snagging depth", segment: "Residential real estate India" },
-        { tier: "Procore (benchmark)", model: "Annual contract per user", indiaPrice: "INR 8,000-15,000", globalPrice: "USD 99+ (custom)", included: "Full construction PM + snagging; deep integrations; complex setup", segment: "Large GCs, global real estate" },
-        { tier: "SnagR (benchmark)", model: "Per user per month", indiaPrice: "INR 1,400-3,200", globalPrice: "USD 19-39", included: "Purpose-built snagging; mobile-first; no workflow engine depth", segment: "SME construction, UK/Europe focus" },
-        { tier: "SafetyCulture (benchmark)", model: "Per user per month", indiaPrice: "INR 2,500-5,000", globalPrice: "USD 24+", included: "Safety and quality audits; template library; not snagging-specific", segment: "Safety teams, multi-industry" }
+        {
+          tier: "Snag 360 - Starter",
+          model: "Per user per month (annual billing)",
+          indiaPrice: "INR 600-1,200",
+          globalPrice: "USD 8-15",
+          included:
+            "Up to 3 projects, basic checklist, snag management, standard dashboard",
+          segment: "Boutique developers, small EPC firms, pilot projects",
+        },
+        {
+          tier: "Snag 360 - Professional",
+          model: "Per user per month (annual billing)",
+          indiaPrice: "INR 1,500-2,500",
+          globalPrice: "USD 18-30",
+          included:
+            "Unlimited projects, multi-stage config, ad-hoc logging, photo annotation, DPR, real-time dashboard",
+          segment: "Mid-size real estate developers, EPC contractors",
+        },
+        {
+          tier: "Snag 360 - Enterprise",
+          model: "Custom annual contract",
+          indiaPrice: "INR 3,000-6,000+",
+          globalPrice: "USD 35-70+",
+          included:
+            "All features + SAP/SFDC integrations, on-premise deployment, SLA support, custom reporting, upsell",
+          segment:
+            "Large developers (top 100), government EPC, FM organizations",
+        },
+        {
+          tier: "FalconBrick (benchmark)",
+          model: "Per user per month",
+          indiaPrice: "INR 1,500-4,000",
+          globalPrice: "Not available globally",
+          included:
+            "Construction management + basic QC; limited snagging depth",
+          segment: "Residential real estate India",
+        },
+        {
+          tier: "Procore (benchmark)",
+          model: "Annual contract per user",
+          indiaPrice: "INR 8,000-15,000",
+          globalPrice: "USD 99+ (custom)",
+          included:
+            "Full construction PM + snagging; deep integrations; complex setup",
+          segment: "Large GCs, global real estate",
+        },
+        {
+          tier: "SnagR (benchmark)",
+          model: "Per user per month",
+          indiaPrice: "INR 1,400-3,200",
+          globalPrice: "USD 19-39",
+          included:
+            "Purpose-built snagging; mobile-first; no workflow engine depth",
+          segment: "SME construction, UK/Europe focus",
+        },
+        {
+          tier: "SafetyCulture (benchmark)",
+          model: "Per user per month",
+          indiaPrice: "INR 2,500-5,000",
+          globalPrice: "USD 24+",
+          included:
+            "Safety and quality audits; template library; not snagging-specific",
+          segment: "Safety teams, multi-industry",
+        },
       ],
-      competitivePositioningStatement: "Snag 360 occupies the PRECISION COMPLIANCE quadrant: purpose-built snagging depth at mid-market price, with on-premise data sovereignty that no other competitor offers. Against FalconBrick: Snag 360 wins on workflow sophistication and data control. Against Procore/ACC: Snag 360 wins on price, simplicity, and deployment speed. Against SnagR/SafetyCulture: Snag 360 wins on India-market fit, data sovereignty, and handover management depth. No other product in the market simultaneously delivers all four USPs: on-premise storage + ad-hoc logging + multi-level scoring + dynamic stage gates.",
-      valuePropositions: [
-        { role: "Quality Head / VP Projects", prop: "Eliminate project handover delays caused by untracked snags and failed quality gates", outcome: "30-40% reduction in snag backlog at handover; 2-3 week faster final completion", feature: "Dynamic Workflow Engine + Real-time Dashboard" },
-        { role: "Site Inspector", prop: "Replace paper checklists and WhatsApp photos with structured, evidence-backed digital logging", outcome: "3-5 hours saved per day per site team; zero lost snag records", feature: "Ad-hoc Snag Logging + Photo Annotation" },
-        { role: "Project Head / MD", prop: "Real-time visibility into quality health across all projects without manual reporting", outcome: "Zero surprise defect discoveries at customer walkthrough; RERA complaint risk reduced", feature: "Real-time Dashboard + Stage Gate Validation" },
-        { role: "IT / CIO", prop: "Deploy quality management software with all data on company-owned servers - no third-party cloud exposure", outcome: "Full data sovereignty; passes internal security audit; no vendor lock-in on data", feature: "On-premise architecture + SAP/SFDC integration" },
-        { role: "FM Head", prop: "Receive fully documented digital handover package with full snag history and quality scores per unit", outcome: "FM onboarding time reduced by 50%; maintenance team has complete unit history", feature: "FM Handover Support + HOTO Module" }
-      ]
+      competitivePositioningStatement:
+        "Snag 360 occupies the PRECISION COMPLIANCE quadrant: purpose-built snagging depth at mid-market price, with on-premise data sovereignty that no other competitor offers. Against FalconBrick: Snag 360 wins on workflow sophistication and data control. Against Procore/ACC: Snag 360 wins on price, simplicity, and deployment speed. Against SnagR/SafetyCulture: Snag 360 wins on India-market fit, data sovereignty, and handover management depth. No other product in the market simultaneously delivers all four USPs: on-premise storage + ad-hoc logging + multi-level scoring + dynamic stage gates.",
+      valueProps: [
+        {
+          role: "Quality Head / VP Projects",
+          prop: "Eliminate project handover delays caused by untracked snags and failed quality gates",
+          outcome:
+            "30-40% reduction in snag backlog at handover; 2-3 week faster final completion",
+          feature: "Dynamic Workflow Engine + Real-time Dashboard",
+        },
+        {
+          role: "Site Inspector",
+          prop: "Replace paper checklists and WhatsApp photos with structured, evidence-backed digital logging",
+          outcome:
+            "3-5 hours saved per day per site team; zero lost snag records",
+          feature: "Ad-hoc Snag Logging + Photo Annotation",
+        },
+        {
+          role: "Project Head / MD",
+          prop: "Real-time visibility into quality health across all projects without manual reporting",
+          outcome:
+            "Zero surprise defect discoveries at customer walkthrough; RERA complaint risk reduced",
+          feature: "Real-time Dashboard + Stage Gate Validation",
+        },
+        {
+          role: "IT / CIO",
+          prop: "Deploy quality management software with all data on company-owned servers - no third-party cloud exposure",
+          outcome:
+            "Full data sovereignty; passes internal security audit; no vendor lock-in on data",
+          feature: "On-premise architecture + SAP/SFDC integration",
+        },
+        {
+          role: "FM Head",
+          prop: "Receive fully documented digital handover package with full snag history and quality scores per unit",
+          outcome:
+            "FM onboarding time reduced by 50%; maintenance team has complete unit history from day one",
+          feature: "FM Handover Support + HOTO Module",
+        },
+      ],
     },
     featuresAndPricing: {
       overview:
@@ -1025,9 +1297,9 @@ const productData = {
           useCase:
             "RERA-compliant pre-handover inspection for apartment units before customer possession",
           workflow:
-            "1. Quality Head configures pre-handover stage and checklist. 2. Inspector does walkthrough using mobile app. 3. Any fail raises a snag with photo. 4. Repair team marks completion. 5. Stage gate validates closure. 6. Digital certificate generated.",
+            "1. Quality Head configures pre-handover stage and checklist in web portal. 2. Inspector does room-by-room walkthrough using mobile app, marking each checkpoint pass/fail. 3. Any fail raises a snag with annotated photo, assigned to repair team. 4. Repair team marks fix complete; supervisor verifies on-site. 5. Stage gate validates all snags closed before handover clearance. 6. Digital handover certificate generated with full audit trail.",
           features:
-            "Multi-stage Config, Stage Gate Validation, Photo Annotation, FM Handover Support, Real-time Dashboard",
+            "Multi-stage Configuration, Stage Gate Validation, Photo Annotation, FM Handover Support, Real-time Dashboard",
           outcome:
             "Zero snag backlog at customer walkthrough; RERA complaint rate reduced; handover documentation ready in one click",
         },
@@ -1037,9 +1309,9 @@ const productData = {
           useCase:
             "Multi-site quality monitoring across highway, bridge, or large infrastructure project stages",
           workflow:
-            "1. Project Director configures stages (Structure, MEP, etc.). 2. Multiple inspector teams assigned per zone. 3. Each logs snags daily. 4. Supervisors review dashboard for open issues. 5. DPR auto-generated at day-end.",
+            "1. Project Director configures stages: Earthwork, Foundation, Structure, MEP, Finishing. 2. Multiple inspector teams assigned per zone. 3. Each team logs snags and completes checklists daily from field via mobile app. 4. Supervisors review dashboard for open snags across all zones. 5. DPR auto-generated at day-end and emailed to client PMC. 6. Stage gates ensure no zone advances to next phase without clearing current stage.",
           features:
-            "Multi-stage Config, Multi-level Checkpoints, Dynamic Workflow Engine, DPR and Reporting, Real-time Dashboard",
+            "Multi-stage Configuration, Multi-level Checkpoints, Dynamic Workflow Engine, DPR and Reporting, Real-time Dashboard",
           outcome:
             "Structured quality audit trail for client and government submission; reduced rework; stage-by-stage delivery proof",
         },
@@ -1049,7 +1321,7 @@ const productData = {
           useCase:
             "Pre-occupancy snagging for Grade A corporate office or retail fit-out before tenant handover",
           workflow:
-            "1. PM sets up office fit-out stages. 2. Inspector logs snags per zone with severity. 3. Positive/negative scoring tracks quality score. 4. FM Head reviews package. 5. Critical snags block handover.",
+            "1. Project Manager sets up office fit-out stages: MEP rough-in, Ceiling, Flooring, Partitions, AV-IT, Final Clean. 2. Inspector logs snags per zone with severity tags (critical, major, minor). 3. Positive/negative scoring tracks quality score per zone against tenant SLA minimum. 4. FM Head reviews FM Handover Support package before tenant walkthrough. 5. Any critical open snags block handover clearance automatically.",
           features:
             "Positive/Negative Marking, Ad-hoc Snag Logging, Stage Gate Validation, FM Handover Support",
           outcome:
@@ -1061,7 +1333,7 @@ const productData = {
           useCase:
             "MEP and civil quality inspection for large-format logistics park units before occupancy",
           workflow:
-            "1. QM configures warehouse-specific checklist (civil slab, fire suppression, etc.). 2. Inspector completes checklist per bay. 3. Ad-hoc snag logging for issues not in checklist. 5. Pre-handover stage confirms bay is defect-free.",
+            "1. Quality Manager configures warehouse-specific checklist: civil slab, dock levelers, fire suppression, electrical, CCTV, HVAC. 2. Inspector completes checklist per bay and raises snags for non-conformances. 3. Ad-hoc snag logging captures defects like cracked panels or alignment issues not in checklist. 4. Snags assigned to relevant trade contractor for repair. 5. Pre-handover inspection stage confirms all bays are defect-free before tenant possession.",
           features:
             "Checklist-based Inspection, Ad-hoc Snag Logging, Multi-role Snag Workflow, Pre-handover Inspection",
           outcome:
@@ -1073,7 +1345,7 @@ const productData = {
           useCase:
             "Post-handover snag tracking and asset condition documentation for FM takeover",
           workflow:
-            "1. FM team completes HOTO walkthrough. 2. Defects raised as snags and assigned to developer. 3. FM team documents all asset conditions. 4. FM Matrix module tracks maintenance tickets.",
+            "1. FM team completes HOTO walkthrough of all units using Snag 360 HOTO module. 2. Any post-handover defects raised as snags and assigned to developer for warranty resolution. 3. FM team documents all asset conditions with photos at takeover. 4. FM Matrix module tracks ongoing maintenance tickets linked to original snag history. 5. Reporting shows open warranty claims by category for monthly developer review.",
           features:
             "FM Handover Support, HOTO Module, FM Matrix, Photo Annotation, DPR and Reporting",
           outcome:
@@ -1085,7 +1357,7 @@ const productData = {
           useCase:
             "Third-party quality audit documentation for PWD or NHAI project inspections",
           workflow:
-            "1. PMC inspector team configured with read-only access. 2. Inspectors log snags independently. 3. Supervisor compares team findings vs third-party findings. 4. Stage gates require PMC sign-off.",
+            "1. PMC inspector team configured with read-only access for third-party audit role. 2. Inspectors log snags independently from site team with same platform. 3. Supervisor and PMC can compare site team findings vs third-party findings. 4. Stage gates require PMC sign-off before government billing milestone is triggered. 5. Audit trail exportable as evidence for government review and payment certification.",
           features:
             "Multi-role Snag Workflow, Stage Gate Validation, Dynamic Workflow Engine, Evidence Capture, DPR and Reporting",
           outcome:
@@ -1097,9 +1369,9 @@ const productData = {
           useCase:
             "Infection control and finish quality inspection for hospital or university construction before commissioning",
           workflow:
-            "1. PM sets up hospital specific stages (Clean Room, Infection Control, etc.). 2. Inspectors complete specialized checklists with zero-tolerance. 4. Safety compliance tracking monitors fire/emergency checkpoints.",
+            "1. Project Manager sets up commissioning stages specific to healthcare: Civil, MEP, Medical Gas, Clean Room, Infection Control, Final Walkthrough. 2. Inspectors complete specialized checklists with zero-tolerance thresholds on infection control points. 3. Positive/negative scoring flags any unit below minimum score for re-inspection. 4. Safety compliance tracking monitors fire safety and emergency system checkpoints. 5. Full commissioning evidence package generated for hospital operations team.",
           features:
-            "Multi-stage Config, Positive/Negative Marking, Safety Compliance Tracking, Multi-level Checkpoints",
+            "Multi-stage Configuration, Positive/Negative Marking, Safety Compliance Tracking, Multi-level Checkpoints",
           outcome:
             "Hospital commissioning sign-off backed by complete inspection evidence; zero infection control non-conformances at opening",
         },
@@ -1109,7 +1381,7 @@ const productData = {
           useCase:
             "Precision commissioning inspection for raised floor, cooling, power, and cable management before go-live",
           workflow:
-            "1. Technical PM configures data center stages. 2. Inspectors complete multi-level checkpoints per rack zone. 3. Any deviation raises critical snag with photo. 5. SAP integration for billing.",
+            "1. Technical project manager configures data center-specific stages: Civil, Power Infrastructure, Cooling, Raised Floor, Cabling, UPS, Fire Suppression, Testing. 2. Inspectors complete multi-level checkpoints per rack zone. 3. Any deviation from tolerance spec raises a critical snag with annotated photo. 4. Stage gate requires 100% checkpoint pass rate (no threshold tolerance) before proceeding. 5. SAP integration syncs commissioning milestones with client ERP for billing.",
           features:
             "Multi-level Checkpoints, Dynamic Workflow Engine, Stage Gate Validation, Enterprise Integrations (SAP), Photo Annotation",
           outcome:
@@ -1121,11 +1393,11 @@ const productData = {
           useCase:
             "Bulk unit inspection and government compliance documentation for state housing authority delivery",
           workflow:
-            "1. State PMC configures standardized checklist across units (500+). 2. Inspector teams work in parallel across buildings. 3. Daily progress consolidated in dashboard. 4. DPR submitted to authority.",
+            "1. State PMC configures standardized inspection checklist across all units (500+ units per project). 2. Inspector teams work in parallel across buildings using mobile app offline-capable mode. 3. Daily inspection progress uploaded and consolidated in real-time dashboard. 4. DPR submitted to state authority as compliance evidence for payment tranche release. 5. Handover package generated per unit for resident possession record.",
           features:
             "Checklist-based Inspection, DPR and Reporting, Real-time Dashboard, Pre-handover Inspection, Time-saving Automation",
           outcome:
-            "Government compliance documentation delivered on schedule; payment tranche released without audit disputes; 500+ unit inspection managed with 5-person team",
+            "Government compliance documentation delivered on schedule; payment tranche released without audit disputes; 500+ unit inspection managed with 5-person quality team",
         },
         {
           rank: 10,
@@ -1133,9 +1405,9 @@ const productData = {
           useCase:
             "Multi-building phased delivery inspection with tenant-specific punch lists before lease commencement",
           workflow:
-            "1. Park developer configures tenant-specific finish checklist (office, manufacturing, etc.). 2. Inspectors complete checklist per unit. 3. Tenant can raise punch items via shared link.",
+            "1. Park developer configures tenant-specific finish checklist per unit (office, manufacturing, cold storage). 2. Inspectors complete checklists per unit with tenant rep present during final walkthrough. 3. Tenant can raise their own punch list items via a shared link (reviewer access only). 4. All tenant punch list items tracked to closure before lease commencement certificate issued. 5. FM handover documentation generated per building.",
           features:
-            "Multi-stage Config, Ad-hoc Snag Logging, Multi-role Snag Workflow, FM Handover Support, Real-time Dashboard",
+            "Multi-stage Configuration, Ad-hoc Snag Logging, Multi-role Snag Workflow, FM Handover Support, Real-time Dashboard",
           outcome:
             "Lease commencement without post-possession disputes; tenant satisfaction score improved; legal liability reduced with documented sign-off",
         },
@@ -1184,7 +1456,7 @@ const productData = {
         {
           team: "Customer Service / CRM Team",
           usage:
-            "Access handover documentation and snag history per unit to resolve customer complaints post-possession. SFDC integration links snag data to CRM.",
+            "Access handover documentation and snag history per unit to resolve customer complaints post-possession. SFDC integration links snag data to customer records.",
           problem:
             "Customer complaints handled without construction data context; manual lookup of snag history per unit",
           features:
@@ -1246,7 +1518,7 @@ const productData = {
           answer:
             "We price on a SaaS subscription model with three tiers. Starter at INR 600-1,200 per user per month for teams with up to 3 projects. Professional at INR 1,500-2,500 per user per month with unlimited projects and all core USP features. Enterprise at INR 3,000-6,000+ per user per month with on-premise deployment, SAP/SFDC integrations, and custom SLA. A typical mid-size developer with 50 inspectors on Professional plan generates INR 9-15 Lakh ARR. Upsell modules - HOTO, FM Matrix, Cleaning, Hi-Society - add 15-30% to base contract value. Enterprise SAP integration is a custom pricing add-on.",
           source: "Tab 4",
-          flag: "Requires founder input: Confirm actual ACV range from existing customer contracts",
+          flag: "Requires founder input: Confirm current active ACV range from existing customer contracts",
         },
         {
           id: "Q5",
@@ -1277,7 +1549,7 @@ const productData = {
           id: "Q8",
           question: "What are the 3 biggest risks and how do we mitigate them?",
           answer:
-            "Risk 1: FalconBrick accelerates product development and closes feature gap. Mitigation: We accelerate AI photo detection and BIM integration (Phase 2) to widen the gap before FalconBrick can respond. Risk 2: Procore or Autodesk launches a low-cost India-specific snagging SKU. Mitigation: Data sovereignty is a structural moat, not a feature race. Risk 3: Enterprise IT procurement cycles are too slow for our cash flow plan. Mitigation: We target mid-market accounts (INR 5-15 Lakh ACV) with a 30-day pilot to paid conversion model, reducing reliance on 6-12 month enterprise procurement cycles.",
+            "Risk 1: FalconBrick accelerates product development and closes feature gap. Mitigation: We accelerate AI photo detection and BIM integration (Phase 2) to widen the gap before FalconBrick can respond. Risk 2: Procore or Autodesk launches a low-cost India-specific snagging SKU. Mitigation: Data sovereignty architecture cannot be replicated by cloud-native competitors without rebuilding their infrastructure. This is a structural moat, not a feature race. Risk 3: Enterprise IT procurement cycles are too slow for our cash flow plan. Mitigation: We target mid-market accounts (INR 5-15 Lakh ACV) with a 30-day pilot to paid conversion model, reducing reliance on 6-12 month enterprise procurement cycles.",
           source: "Tab 10, Tab 3",
           flag: "Requires founder input: Validate current enterprise sales cycle length from existing deals",
         },
@@ -1308,7 +1580,7 @@ const productData = {
         },
         {
           id: "Q4",
-          item: "Actual ACV range from existing customer contracts",
+          item: "Current active ACV range from existing customer contracts",
           verify:
             "Pull from finance: current annual contract values by tier; average per account",
           status: "Pending",
@@ -2250,292 +2522,1577 @@ const productData = {
         },
       ],
     },
-    detailedPricing: {
-      featureComparison: [
-        {
-          feature: "On-premise / client-side data storage",
-          snag: "Yes - core architecture",
-          falcon: "No",
-          procore: "No",
-          novade: "No",
-          snagR: "No",
-          safety: "No",
-          status: "AHEAD",
-        },
-        {
-          feature: "Ad-hoc snag logging outside checklist",
-          snag: "Yes - USP feature",
-          falcon: "No",
-          procore: "Partial",
-          novade: "No",
-          snagR: "Yes",
-          safety: "No",
-          status: "AHEAD",
-        },
-        {
-          feature: "Multi-stage project configuration",
-          snag: "Yes - unlimited stages",
-          falcon: "Yes",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "Limited",
-          safety: "No",
-          status: "AT PAR",
-        },
-        {
-          feature: "Multi-level checkpoints per stage",
-          snag: "Yes - USP feature",
-          falcon: "No",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "AHEAD",
-        },
-        {
-          feature: "Positive / negative scoring engine",
-          snag: "Yes - USP feature",
-          falcon: "No",
-          procore: "No",
-          novade: "No",
-          snagR: "No",
-          safety: "No",
-          status: "AHEAD",
-        },
-        {
-          feature: "Photo annotation (in-app)",
-          snag: "Yes - arrows, text, circles",
-          falcon: "No",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "Yes",
-          safety: "Yes",
-          status: "AT PAR",
-        },
-        {
-          feature: "Dynamic workflow engine (stage gates)",
-          snag: "Yes - USP feature",
-          falcon: "Partial",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "AT PAR",
-        },
-        {
-          feature: "Real-time live dashboard",
-          snag: "Yes - USP feature",
-          falcon: "Yes",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "Limited",
-          safety: "Yes",
-          status: "AT PAR",
-        },
-        {
-          feature: "DPR auto-generation",
-          snag: "Yes",
-          falcon: "Yes",
-          procore: "No",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "AHEAD",
-        },
-        {
-          feature: "FM handover support module",
-          snag: "Yes",
-          falcon: "No",
-          procore: "No",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "AHEAD",
-        },
-        {
-          feature: "Pre-handover inspection workflow",
-          snag: "Yes",
-          falcon: "Yes",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "AT PAR",
-        },
-        {
-          feature: "Enterprise integrations (SAP, SFDC)",
-          snag: "Yes",
-          falcon: "No",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "AT PAR",
-        },
-        {
-          feature: "Offline mobile functionality",
-          snag: "Partial",
-          falcon: "Partial",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "Yes",
-          safety: "Yes",
-          status: "GAP",
-        },
-        {
-          feature: "BIM floor plan integration",
-          snag: "No",
-          falcon: "No",
-          procore: "Yes",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "GAP",
-        },
-        {
-          feature: "AI defect detection from photos",
-          snag: "No",
-          falcon: "No",
-          procore: "Yes (Procore Insights)",
-          novade: "Partial",
-          snagR: "No",
-          safety: "No",
-          status: "GAP",
-        },
-        {
-          feature: "Multilingual support (Hindi, regional)",
-          snag: "No",
-          falcon: "No",
-          procore: "No",
-          novade: "Yes",
-          snagR: "No",
-          safety: "No",
-          status: "AT PAR",
-        },
-        {
-          feature: "India RERA compliance features",
-          snag: "Partial",
-          falcon: "Yes",
-          procore: "No",
-          novade: "No",
-          snagR: "No",
-          safety: "No",
-          status: "AT PAR",
-        },
-      ],
-      pricingLandscape: [
-        {
-          tier: "Snag 360 - Starter",
-          model: "Per user per month (annual billing)",
-          india: "INR 600-1,200",
-          global: "USD 8-15",
-          included:
-            "Up to 3 projects, basic checklist, snag management, standard dashboard",
-          target: "Boutique developers, small EPC firms, pilot projects",
-        },
-        {
-          tier: "Snag 360 - Professional",
-          model: "Per user per month (annual billing)",
-          india: "INR 1,500-2,500",
-          global: "USD 18-30",
-          included:
-            "Unlimited projects, multi-stage config, ad-hoc logging, photo annotation, DPR, real-time dashboard",
-          target: "Mid-size real estate developers, EPC contractors",
-        },
-        {
-          tier: "Snag 360 - Enterprise",
-          model: "Custom annual contract",
-          india: "INR 3,000-6,000+",
-          global: "USD 35-70+",
-          included:
-            "All features + SAP/SFDC integrations, on-premise deployment, SLA support, custom reporting, upsell modules",
-          target:
-            "Large developers (top 100), government EPC, FM organizations",
-        },
-        {
-          tier: "FalconBrick (benchmark)",
-          model: "Per user per month",
-          india: "INR 1,500-4,000",
-          global: "Not available globally",
-          included:
-            "Construction management + basic QC; limited snagging depth",
-          target: "Residential real estate India",
-        },
-        {
-          tier: "Procore (benchmark)",
-          model: "Annual contract per user",
-          india: "INR 8,000-15,000",
-          global: "USD 99+ (custom)",
-          included:
-            "Full construction PM + snagging; deep integrations; complex setup",
-          target: "Large GCs, global real estate",
-        },
-        {
-          tier: "SnagR (benchmark)",
-          model: "Per user per month",
-          india: "INR 1,400-3,200",
-          global: "USD 19-39",
-          included:
-            "Purpose-built snagging; mobile-first; no workflow engine depth",
-          target: "SME construction, UK/Europe focus",
-        },
-        {
-          tier: "SafetyCulture (benchmark)",
-          model: "Per user per month",
-          india: "INR 2,500-5,000",
-          global: "USD 24+",
-          included:
-            "Safety and quality audits; template library; not snagging-specific",
-          target: "Safety teams, multi-industry",
-        },
-      ],
-      positioningStatement:
-        "Snag 360 occupies the PRECISION COMPLIANCE quadrant: purpose-built snagging depth at mid-market price, with on-premise data sovereignty that no other competitor offers. Against FalconBrick: Snag 360 wins on workflow sophistication and data control. Against Procore/ACC: Snag 360 wins on price, simplicity, and deployment speed. Against SnagR/SafetyCulture: Snag 360 wins on India-market fit, data sovereignty, and handover management depth. No other product in the market simultaneously delivers all four USPs: on-premise storage + ad-hoc logging + multi-level scoring + dynamic stage gates.",
-      valueProps: [
-        {
-          role: "Quality Head / VP Projects",
-          prop: "Eliminate project handover delays caused by untracked snags and failed quality gates",
-          outcome:
-            "30-40% reduction in snag backlog at handover; 2-3 week faster final completion",
-          feature: "Dynamic Workflow Engine + Real-time Dashboard",
-        },
-        {
-          role: "Site Inspector",
-          prop: "Replace paper checklists and WhatsApp photos with structured, evidence-backed digital logging",
-          outcome:
-            "3-5 hours saved per day per site team; zero lost snag records",
-          feature: "Ad-hoc Snag Logging + Photo Annotation",
-        },
-        {
-          role: "Project Head / MD",
-          prop: "Real-time visibility into quality health across all projects without manual reporting",
-          outcome:
-            "Zero surprise defect discoveries at customer walkthrough; RERA complaint risk reduced",
-          feature: "Real-time Dashboard + Stage Gate Validation",
-        },
-        {
-          role: "IT / CIO",
-          prop: "Deploy quality management software with all data on company-owned servers - no third-party cloud exposure",
-          outcome:
-            "Full data sovereignty; passes internal security audit; no vendor lock-in on data",
-          feature: "On-premise architecture + SAP/SFDC integration",
-        },
-        {
-          role: "FM Head",
-          prop: "Receive fully documented digital handover package with full snag history and quality scores per unit",
-          outcome:
-            "FM onboarding time reduced by 50%; maintenance team has complete unit history",
-          feature: "FM Handover Support + HOTO Module",
-        },
-      ],
-    },
   },
 };
 
-import BaseProductPage from "./BaseProductPage";
+import Snag360UseCasesTab from "./tabs/Snag360UseCasesTab";
 
+// Tab Labels for Snag 360
+const snagTabLabels: Record<string, string> = {
+  summary: "Product Summary",
+  features: "Feature List",
+  usecases: "Use Cases",
+  market: "Market Analysis",
+  pricing: "Features and Pricing",
+  swot: "SWOT Analysis",
+  roadmap: "Product Roadmap",
+  enhancements: "Enhancement Roadmap",
+  metrics: "Metrics",
+  business: "Business Plan Builder",
+  gtm: "GTM Strategy",
+  assets: "Assets",
+};
+
+// ============== SNAG 360 CUSTOM TABS ==============
+
+// Summary Tab for Snag 360
+const Snag360SummaryTab: React.FC = () => {
+  const identity =
+    productData.extendedContent?.productSummaryNew?.identity || [];
+  const problemSolves =
+    productData.extendedContent?.productSummaryNew?.problemSolves || [];
+  const whoItIsFor =
+    productData.extendedContent?.productSummaryNew?.whoItIsFor || [];
+  const featureSummary =
+    productData.extendedContent?.productSummaryNew?.featureSummary || "";
+  const today = productData.extendedContent?.productSummaryNew?.today || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in overflow-x-auto">
+      {/* Identity Section */}
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-2xl font-semibold tracking-tight font-poppins">
+          {productData.name} - Product Identity
+        </h2>
+        <p className="text-[10px] font-medium text-[#2C2C2C]/40 tracking-widest mt-1">
+          LOCKATED / GOPHYGITAL.WORK | MOBILE-FIRST QUALITY INSPECTION &
+          SNAGGING PLATFORM | INDIA PRIMARY, GLOBAL SECONDARY
+        </p>
+      </div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-4 text-center w-1/4 font-poppins">
+                Field
+              </th>
+              <th className="border border-[#b8cce4] p-4 text-center font-poppins">
+                Detail
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {identity.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.field}
+                </td>
+                <td className="border border-[#b8cce4] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.detail}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Problem Solves Section */}
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins">
+        The Problem It Solves
+      </div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-4 text-center w-1/3 font-poppins">
+                Pain Point
+              </th>
+              <th className="border border-[#b8cce4] p-4 text-center font-poppins">
+                How Snag 360 Solves It
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {problemSolves.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.painPoint}
+                </td>
+                <td className="border border-[#b8cce4] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.solution}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Who It Is For Section */}
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
+        Who It Is For
+      </div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-3 text-center w-1/5 font-poppins">
+                Role
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+                What They Use It For
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+                Key Frustration Today
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+                What They Gain
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {whoItIsFor.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.role}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.useCase}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">
+                  {r.frustration}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.gain}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Feature Summary Section */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">
+        Feature Summary
+      </div>
+      <div className="border border-t-0 border-[#b8cce4] p-4 text-sm text-[#2C2C2C]/80 bg-white font-medium leading-relaxed rounded-b-xl font-poppins">
+        {featureSummary}
+      </div>
+
+      {/* Where We Are Today Section */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">
+        Where We Are Today
+      </div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+                Dimension
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center w-3/4 font-poppins">
+                Current State
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {today.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.dimension}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.state}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// Features Tab for Snag 360
+const Snag360FeaturesTab: React.FC = () => {
+  const features = productData.extendedContent?.detailedFeatures || [];
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Feature List
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        All features from product brief. USP rows highlighted in blue. Star
+        denotes unique competitive advantage.
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-3 text-center">
+                Module
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center">
+                Feature
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center">
+                Sub-Features
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center">
+                How It Currently Works
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center">
+                User Type
+              </th>
+              <th className="border border-[#b8cce4] p-3 text-center">USP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {features.map((f, i) => (
+              <tr
+                key={i}
+                className={
+                  f.usp
+                    ? "bg-[#d9e1f2]"
+                    : i % 2 === 0
+                      ? "bg-white"
+                      : "bg-[#F6F4EE]"
+                }
+              >
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C] font-medium">
+                  {f.module}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-3 ${f.usp ? "font-semibold text-[#1f3a5f]" : "text-[#2C2C2C]"}`}
+                >
+                  {f.feature}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">
+                  {f.subFeatures}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">
+                  {f.works}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">
+                  {f.userType}
+                </td>
+                <td className="border border-[#b8cce4] p-3 text-center font-semibold text-[#DA7756]">
+                  {f.usp ? "* USP" : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// Market Tab for Snag 360
+const Snag360MarketTab: React.FC = () => {
+  const marketSize =
+    productData.extendedContent?.detailedMarketAnalysis?.marketSize || [];
+  const topIndustries =
+    productData.extendedContent?.detailedMarketAnalysis?.topIndustries || [];
+  const competitors =
+    productData.extendedContent?.detailedMarketAnalysis?.competitors || [];
+  const competitorSummary =
+    productData.extendedContent?.detailedMarketAnalysis?.competitorSummary ||
+    "";
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Market Size Section */}
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Market Analysis
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        Section 1: Market Size and Growth | Section 2: Top 10 Industries |
+        Section 3: 10 Key Competitors
+      </p>
+
+      {/* Market Size Table */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+        Section 1: Market Size and Growth Drivers
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Segment
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                2024-25 Value
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                2026 Value
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Forecast
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">CAGR</th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Primary Driver
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                India Relevance
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {marketSize.map((m, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {m.segment}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                  {m.val2425}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                  {m.val26}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                  {m.forecast}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-center">
+                  {m.cagr}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {m.driver}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {m.india}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Top Industries Table */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+        Section 2: Top 10 Industries for Snag 360
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">Rank</th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Industry
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Why They Buy
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Scale / Evidence
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Decision Maker
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Deal Size (Annual)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {topIndustries.map((ind, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                  {ind.rank}
+                </td>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {ind.industry}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {ind.buyReason}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {ind.scale}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {ind.decisionMaker}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                  {ind.dealSize}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Competitors Table */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+        Section 3: 10 Key Competitors
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Competitor
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                HQ / Market
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                India Price
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Global Price
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Key Strength
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Key Weakness
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Data Sovereignty
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Target Segment
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {competitors.map((c, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {c.name}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.hq}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.indiaPrice}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.globalPrice}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.strength}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.weakness}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80">
+                  {c.sovereignty}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.segment}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Competitor Summary */}
+      <div className="bg-[#d9e1f2] border border-[#b8cce4] p-4 text-sm text-[#2C2C2C] font-medium leading-relaxed font-poppins mt-4">
+        <strong>Competitive Summary:</strong> {competitorSummary}
+      </div>
+    </div>
+  );
+};
+
+// Pricing Tab for Snag 360
+const Snag360PricingTab: React.FC = () => {
+  const pricing = productData.extendedContent?.detailedPricing;
+  const featureComparison = pricing?.snagFeatureComparison || [];
+  const pricingLandscape = pricing?.pricingLandscapeRows || [];
+  const valueProps = pricing?.valueProps || [];
+  const positioningStatement = pricing?.competitivePositioningStatement || "";
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Features and Pricing
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        Section 1: Feature Comparison vs Competitors | Section 2: Pricing Tiers
+        | Section 3: Value Proposition by Role
+      </p>
+
+      {/* Feature Comparison Table */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+        Section 1: Feature Comparison vs Key Competitors
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[10px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Feature
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center bg-[#DA7756]">
+                Snag 360
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                FalconBrick
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Procore
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Novade
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">SnagR</th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                SafetyCulture
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {featureComparison.map((f, i) => (
+              <tr
+                key={i}
+                className={
+                  f.status === "AHEAD"
+                    ? "bg-[#e2efda]"
+                    : f.status === "GAP"
+                      ? "bg-[#fce4d6]"
+                      : i % 2 === 0
+                        ? "bg-white"
+                        : "bg-[#F6F4EE]"
+                }
+              >
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {f.feature}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C] font-medium bg-[#DA7756]/10">
+                  {f.snag360}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {f.falconBrick}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {f.procore}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {f.novade}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {f.snagR}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {f.safetyCulture}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 text-center font-semibold ${f.status === "AHEAD" ? "text-green-600" : f.status === "GAP" ? "text-red-600" : "text-[#2C2C2C]"}`}
+                >
+                  {f.status}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pricing Landscape Table */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+        Section 2: Pricing Landscape
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Tier / Product
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">Model</th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                India Price
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Global Price
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                What's Included
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Target Segment
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {pricingLandscape.map((p, i) => (
+              <tr
+                key={i}
+                className={
+                  p.tier.includes("Snag 360")
+                    ? "bg-[#DA7756]/10"
+                    : i % 2 === 0
+                      ? "bg-white"
+                      : "bg-[#F6F4EE]"
+                }
+              >
+                <td
+                  className={`border border-[#b8cce4] p-2 ${p.tier.includes("Snag 360") ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C]"}`}
+                >
+                  {p.tier}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {p.model}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {p.indiaPrice}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {p.globalPrice}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {p.included}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {p.segment}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Positioning Statement */}
+      <div className="bg-[#d9e1f2] border border-[#b8cce4] p-4 text-sm text-[#2C2C2C] font-medium leading-relaxed font-poppins mt-4">
+        <strong>Competitive Positioning:</strong> {positioningStatement}
+      </div>
+
+      {/* Value Props Table */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+        Section 3: Value Proposition by Role
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Buyer Role
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Value Proposition Statement
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Measurable Outcome
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Key Feature
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {valueProps.map((v, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {v.role}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {v.prop}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {v.outcome}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {v.feature}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// Roadmap Tab for Snag 360
+const Snag360RoadmapTab: React.FC = () => {
+  const phases = productData.extendedContent?.detailedRoadmap?.phases || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Product Roadmap
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        3 phases | 15 initiatives | First phase focused on core stability and
+        market expansion readiness
+      </p>
+
+      {phases.map((phase, phaseIdx) => (
+        <div key={phaseIdx} className="space-y-4">
+          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+            {phase.title}
+          </div>
+          <div className="bg-[#d9e1f2] border border-[#b8cce4] p-3 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins italic">
+            {phase.summary}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[11px] font-poppins">
+              <thead>
+                <tr className="bg-[#4f81bd] text-white font-semibold">
+                  <th className="border border-[#b8cce4] p-2 text-center">
+                    Initiative
+                  </th>
+                  <th className="border border-[#b8cce4] p-2 text-center">
+                    Feature Description
+                  </th>
+                  <th className="border border-[#b8cce4] p-2 text-center">
+                    Segment Unlocked
+                  </th>
+                  <th className="border border-[#b8cce4] p-2 text-center">
+                    Business Impact
+                  </th>
+                  <th className="border border-[#b8cce4] p-2 text-center">
+                    Timeline
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {phase.initiatives.map((init, i) => (
+                  <tr
+                    key={i}
+                    className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
+                  >
+                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                      {init.initiative}
+                    </td>
+                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                      {init.feature}
+                    </td>
+                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                      {init.segment}
+                    </td>
+                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                      {init.impact}
+                    </td>
+                    <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#DA7756]">
+                      {init.timeline}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Business Plan Tab for Snag 360
+const Snag360BusinessPlanTab: React.FC = () => {
+  const planQuestions =
+    productData.extendedContent?.detailedBusinessPlan?.planQuestions || [];
+  const founderChecklist =
+    productData.extendedContent?.detailedBusinessPlan?.founderChecklist || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Business Plan Builder
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        10 investor-ready Q&A blocks + Founder checklist for data validation
+      </p>
+
+      {/* Q&A Table */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+        Investor Q&A Framework
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center w-[5%]">
+                #
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center w-[20%]">
+                Question
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center w-[55%]">
+                Answer
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center w-[10%]">
+                Source
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center w-[10%]">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {planQuestions.map((q, i) => (
+              <tr
+                key={i}
+                className={
+                  q.flag?.includes("Requires founder")
+                    ? "bg-[#fff2cc]"
+                    : i % 2 === 0
+                      ? "bg-white"
+                      : "bg-[#F6F4EE]"
+                }
+              >
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                  {q.id}
+                </td>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {q.question}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 leading-relaxed">
+                  {q.answer}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/60 text-center">
+                  {q.source}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 text-center text-[10px] ${q.flag?.includes("Ready") ? "text-green-600" : "text-orange-600"}`}
+                >
+                  {q.flag}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Founder Checklist */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+        Founder Checklist - Data to Validate
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Linked Q
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Item to Verify
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                How to Verify
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {founderChecklist.map((c, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                  {c.id}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.item}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {c.verify}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-orange-600">
+                  {c.status}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// GTM Tab for Snag 360
+const Snag360GTMTab: React.FC = () => {
+  const targetGroups =
+    productData.extendedContent?.detailedGTM?.targetGroups || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - GTM Strategy
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        3 Target Groups | Each with: Why, Sales Motion, Marketing Channels,
+        90-Day Sequence, Partnership Strategy, Summary Box
+      </p>
+
+      {targetGroups.map((tg, tgIdx) => (
+        <div key={tgIdx} className="space-y-4 mb-8">
+          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+            {tg.title}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[11px] font-poppins">
+              <thead>
+                <tr className="bg-[#4f81bd] text-white font-semibold">
+                  <th className="border border-[#b8cce4] p-2 text-center w-[20%]">
+                    Component
+                  </th>
+                  <th className="border border-[#b8cce4] p-2 text-center w-[80%]">
+                    Detail
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {tg.components.map((comp, i) => (
+                  <tr
+                    key={i}
+                    className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
+                  >
+                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                      {comp.component}
+                    </td>
+                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 leading-relaxed">
+                      {comp.detail}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="bg-[#d9e1f2] border border-[#b8cce4] p-4 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins">
+            <strong>TG Summary:</strong> {tg.summaryBox}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Metrics Tab for Snag 360
+const Snag360MetricsTab: React.FC = () => {
+  const clientImpact =
+    productData.extendedContent?.detailedMetrics?.clientImpact || [];
+  const businessTargets =
+    productData.extendedContent?.detailedMetrics?.businessTargets || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Key Metrics and Targets
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        Section 1: Client Impact Metrics for Landing Page | Section 2: Product
+        and Business Metrics with 4-column targets
+      </p>
+
+      {/* Client Impact Metrics */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+        Section 1: Client Impact Metrics (for Landing Page and Sales Deck)
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">#</th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Metric
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Current Baseline (Manual / Paper)
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                With Snag 360
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Landing Page Claim
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {clientImpact.map((m, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                  {i + 1}
+                </td>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {m.metric}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {m.baseline}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {m.withSnag}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#DA7756] font-semibold">
+                  {m.claim}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Business Targets */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+        Section 2: Product and Business Metrics with Targets
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Metric
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Activation Definition
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                30-Day Current Product
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                30-Day with Phase 1
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                3-Month Current Product
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                3-Month with Phase 1
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {businessTargets.map((t, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {t.metric}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {t.definition}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {t.d30Current}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {t.d30Phase1}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {t.m3Current}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {t.m3Phase1}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// SWOT Tab for Snag 360
+const Snag360SWOTTab: React.FC = () => {
+  const swot = productData.extendedContent?.detailedSWOT;
+  const strengths = swot?.strengths || [];
+  const weaknesses = swot?.weaknesses || [];
+  const opportunities = swot?.opportunities || [];
+  const threats = swot?.threats || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - SWOT Analysis
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        10 items per quadrant. Bold headline + one-sentence explanation.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Strengths */}
+        <div>
+          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+            STRENGTHS
+          </div>
+          <div className="border border-[#b8cce4]">
+            {strengths.map((s, i) => (
+              <div
+                key={i}
+                className="bg-[#e2efda] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+              >
+                <strong>
+                  {i + 1}. {s.headline}:
+                </strong>{" "}
+                {s.explanation}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Weaknesses */}
+        <div>
+          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+            WEAKNESSES
+          </div>
+          <div className="border border-[#b8cce4]">
+            {weaknesses.map((w, i) => (
+              <div
+                key={i}
+                className="bg-[#fce4d6] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+              >
+                <strong>
+                  {i + 1}. {w.headline}:
+                </strong>{" "}
+                {w.explanation}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Opportunities */}
+        <div>
+          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+            OPPORTUNITIES
+          </div>
+          <div className="border border-[#b8cce4]">
+            {opportunities.map((o, i) => (
+              <div
+                key={i}
+                className="bg-[#deeaf1] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+              >
+                <strong>
+                  {i + 1}. {o.headline}:
+                </strong>{" "}
+                {o.explanation}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Threats */}
+        <div>
+          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+            THREATS
+          </div>
+          <div className="border border-[#b8cce4]">
+            {threats.map((t, i) => (
+              <div
+                key={i}
+                className="bg-[#fff2cc] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+              >
+                <strong>
+                  {i + 1}. {t.headline}:
+                </strong>{" "}
+                {t.explanation}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Enhancements Tab for Snag 360
+const Snag360EnhancementsTab: React.FC = () => {
+  const innovationLayer =
+    productData.extendedContent?.detailedRoadmap?.innovationLayer || [];
+  const top5Impact =
+    productData.extendedContent?.detailedRoadmap?.top5Impact || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Future Enhancement Roadmap (Innovation Layer)
+        </h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        Future-state innovations only. Minimum 5 AI/LLM features. Minimum 3
+        MCP/automation features. High-impact rows highlighted.
+      </p>
+
+      {/* Innovation Layer Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[10px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">#</th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Enhancement Name
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Category
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Description
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Business Value
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Competitor Leapfrogged
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Priority
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {innovationLayer.map((item, i) => (
+              <tr
+                key={i}
+                className={
+                  item.priority === "High Impact"
+                    ? "bg-[#d9e1f2]"
+                    : i % 2 === 0
+                      ? "bg-white"
+                      : "bg-[#F6F4EE]"
+                }
+              >
+                <td
+                  className={`border border-[#b8cce4] p-2 text-center ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                >
+                  {item.id}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold text-[#1f3a5f]" : "text-[#2C2C2C]"}`}
+                >
+                  {item.name}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                >
+                  {item.category}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                >
+                  {item.description}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                >
+                  {item.value}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                >
+                  {item.leapfrog}
+                </td>
+                <td
+                  className={`border border-[#b8cce4] p-2 text-center ${item.priority === "High Impact" ? "font-semibold text-[#DA7756]" : ""}`}
+                >
+                  {item.priority}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Top 5 Impact Summary */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+        Top 5 Highest-Impact Enhancements Summary
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">Rank</th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Enhancement
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Why It Matters Most
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Competitor It Leapfrogs
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {top5Impact.map((item, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                  {item.rank}
+                </td>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                  {item.name}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {item.logic}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                  {item.leapfrog}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// Assets Tab for Snag 360
+const Snag360AssetsTab: React.FC = () => {
+  const assets = productData.assets || [];
+  const credentials = productData.credentials || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">
+          SNAG 360 - Assets & Credentials
+        </h2>
+      </div>
+
+      {/* Assets Section */}
+      <div className="bg-white border border-[#C4B89D] rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-[#2C2C2C] mb-4 font-poppins">
+          Sales & Marketing Assets
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {assets.map((asset, i) => (
+            <a
+              key={i}
+              href={asset.url}
+              className="flex items-center gap-3 p-4 bg-[#F6F4EE] rounded-lg border border-[#C4B89D] hover:border-[#DA7756] hover:bg-[#DA7756]/5 transition-all"
+            >
+              <div className="p-2 bg-[#DA7756]/10 rounded-lg text-[#DA7756]">
+                {asset.icon}
+              </div>
+              <div>
+                <p className="font-medium text-[#2C2C2C] font-poppins">
+                  {asset.title}
+                </p>
+                <p className="text-xs text-[#2C2C2C]/60 font-poppins">
+                  {asset.type}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* Credentials Section */}
+      <div className="bg-white border border-[#C4B89D] rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-[#2C2C2C] mb-4 font-poppins">
+          Demo Credentials
+        </h3>
+        <div className="space-y-4">
+          {credentials.map((cred, i) => (
+            <div
+              key={i}
+              className="p-4 bg-[#F6F4EE] rounded-lg border border-[#C4B89D]"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-[#DA7756]/10 rounded-lg text-[#DA7756]">
+                  {cred.icon}
+                </div>
+                <p className="font-semibold text-[#2C2C2C] font-poppins">
+                  {cred.title}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                <div>
+                  <span className="text-[#2C2C2C]/60 font-poppins">URL: </span>
+                  <a
+                    href={cred.url}
+                    className="text-[#DA7756] hover:underline font-poppins"
+                  >
+                    {cred.url}
+                  </a>
+                </div>
+                <div>
+                  <span className="text-[#2C2C2C]/60 font-poppins">ID: </span>
+                  <span className="text-[#2C2C2C] font-medium font-poppins">
+                    {cred.id}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#2C2C2C]/60 font-poppins">
+                    Password:{" "}
+                  </span>
+                  <span className="text-[#2C2C2C] font-medium font-poppins">
+                    {cred.pass}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Product Owner */}
+      <div className="bg-white border border-[#C4B89D] rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-[#2C2C2C] mb-4 font-poppins">
+          Product Owner
+        </h3>
+        <div className="flex items-center gap-4">
+          {productData.ownerImage && (
+            <img
+              src={productData.ownerImage}
+              alt={productData.owner}
+              className="w-16 h-16 rounded-full object-cover border-2 border-[#DA7756]"
+            />
+          )}
+          <div>
+            <p className="font-semibold text-[#2C2C2C] font-poppins">
+              {productData.owner}
+            </p>
+            <p className="text-sm text-[#2C2C2C]/60 font-poppins">
+              Product Owner - {productData.name}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============== MAIN SNAG 360 PAGE COMPONENT ==============
 const Snag360Page: React.FC = () => {
-  return <BaseProductPage productData={productData} tabsVariant="snag360" />;
+  const navigate = useNavigate();
+  const snagTabsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Extract use cases data for custom component
+  const industryUseCases =
+    productData.extendedContent?.detailedUseCases?.industryUseCases || [];
+  const internalTeamUseCases =
+    productData.extendedContent?.detailedUseCases?.internalTeamUseCases || [];
+
+  const tabOrder = productData.tabOrder;
+
+  return (
+    <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">
+      {/* Header */}
+      <div className="relative mb-4 flex flex-col items-center bg-[#F6F4EE] pt-4">
+        <div className="w-full max-w-7xl px-6 lg:px-10 mb-4">
+          <button
+            onClick={() => navigate("/products")}
+            className="flex items-center gap-2 text-[#2C2C2C] border border-[#C4B89D]/50 px-3 py-1.5 rounded-full hover:bg-[#DA7756]/8 hover:border-[#DA7756]/30 hover:text-[#DA7756] transition-all font-semibold text-xs"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+
+        <div className="text-center w-full max-w-7xl px-6 lg:px-10">
+          <div className="inline-block px-4 py-1.5 bg-[#DA7756]/10 text-[#DA7756] text-[10px] font-semibold rounded-full mb-3 tracking-[0.15em] uppercase border border-[#DA7756]/20">
+            {productData.industries}
+          </div>
+          <h1 className="text-4xl font-semibold text-[#2C2C2C] mb-4 tracking-tight lg:text-5xl font-poppins">
+            {productData.name}
+          </h1>
+          <p className="text-sm text-[#2C2C2C]/70 leading-relaxed max-w-3xl mx-auto font-poppins">
+            {productData.description}
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl px-6 lg:px-10 mx-auto">
+        <Tabs defaultValue="summary" className="w-full">
+          <div
+            ref={snagTabsScrollRef}
+            className="overflow-x-auto no-scrollbar mb-8"
+          >
+            <div className="flex justify-start pb-2 px-1">
+              <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5 h-auto items-center justify-start">
+                {tabOrder.map((tabId) => (
+                  <TabsTrigger
+                    key={tabId}
+                    value={tabId}
+                    className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:font-semibold data-[state=inactive]:text-[#2C2C2C]/50 data-[state=inactive]:hover:text-[#DA7756]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
+                  >
+                    {snagTabLabels[tabId]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+          </div>
+
+          {/* Summary Tab */}
+          <TabsContent value="summary" className="space-y-6 animate-fade-in">
+            <Snag360SummaryTab />
+          </TabsContent>
+
+          {/* Features Tab */}
+          <TabsContent value="features" className="space-y-6 animate-fade-in">
+            <Snag360FeaturesTab />
+          </TabsContent>
+
+          {/* Market Tab */}
+          <TabsContent value="market" className="space-y-6 animate-fade-in">
+            <Snag360MarketTab />
+          </TabsContent>
+
+          {/* Pricing Tab */}
+          <TabsContent value="pricing" className="space-y-6 animate-fade-in">
+            <Snag360PricingTab />
+          </TabsContent>
+
+          {/* Use Cases Tab */}
+          <TabsContent value="usecases" className="space-y-6 animate-fade-in">
+            <Snag360UseCasesTab
+              industryUseCases={industryUseCases}
+              internalTeamUseCases={internalTeamUseCases}
+              productName={productData.name}
+            />
+          </TabsContent>
+
+          {/* Roadmap Tab */}
+          <TabsContent value="roadmap" className="space-y-12 animate-fade-in">
+            <Snag360RoadmapTab />
+          </TabsContent>
+
+          {/* Business Plan Tab */}
+          <TabsContent value="business" className="space-y-10">
+            <Snag360BusinessPlanTab />
+          </TabsContent>
+
+          {/* GTM Tab */}
+          <TabsContent value="gtm" className="space-y-6 animate-fade-in">
+            <Snag360GTMTab />
+          </TabsContent>
+
+          {/* Metrics Tab */}
+          <TabsContent value="metrics" className="space-y-6 animate-fade-in">
+            <Snag360MetricsTab />
+          </TabsContent>
+
+          {/* SWOT Tab */}
+          <TabsContent value="swot" className="space-y-6 animate-fade-in">
+            <Snag360SWOTTab />
+          </TabsContent>
+
+          {/* Enhancements Tab */}
+          <TabsContent
+            value="enhancements"
+            className="space-y-12 animate-fade-in"
+          >
+            <Snag360EnhancementsTab />
+          </TabsContent>
+
+          {/* Assets Tab */}
+          <TabsContent value="assets" className="space-y-8">
+            <Snag360AssetsTab />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
 };
 
 export default Snag360Page;

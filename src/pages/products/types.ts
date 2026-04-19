@@ -317,14 +317,14 @@ export interface ProductData {
     };
     detailedUseCases?: {
       industryUseCases: {
-        rank: string;
+        rank: string | number;
         industry: string;
         features: string;
         useCase?: string;
         corePainPoint?: string;
         workflow?: string;
-        profile: string;
-        currentTool: string;
+        profile?: string;
+        currentTool?: string;
         outcome?: string;
         urgency?: string;
         primaryBuyer?: string;
@@ -335,7 +335,7 @@ export interface ProductData {
         team: string;
         features: string;
         process?: string;
-        benefit: string;
+        benefit?: string;
         howTheyUse?: string;
         frequency?: string;
         modules?: string;
@@ -343,6 +343,9 @@ export interface ProductData {
         keyPainWithoutTool?: string;
         collaborationWith?: string;
         successMetric?: string;
+        usage?: string;
+        problem?: string;
+        gain?: string;
       }[];
     };
     detailedRoadmap?: {
@@ -413,8 +416,27 @@ export interface ProductData {
       }[];
     };
     detailedBusinessPlan?: {
-      planQuestions: { id?: string; question: string; answer: string; source?: string; flag: string; colorContext?: "blue" | "red" | "green" | "purple" | "teal" | "yellow" | "orange" }[];
-      founderChecklist?: { id?: string; item: string; verify: string; status: string }[];
+      planQuestions: {
+        id?: string;
+        question: string;
+        answer: string;
+        source?: string;
+        flag: string;
+        colorContext?:
+          | "blue"
+          | "red"
+          | "green"
+          | "purple"
+          | "teal"
+          | "yellow"
+          | "orange";
+      }[];
+      founderChecklist?: {
+        id?: string;
+        item: string;
+        verify: string;
+        status: string;
+      }[];
     };
     detailedGTM?: {
       targetGroups: {

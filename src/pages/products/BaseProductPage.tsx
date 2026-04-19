@@ -35,6 +35,7 @@ interface BaseProductPageProps {
   productData: ProductData;
   backPath?: string;
   tabsVariant?: "scroll" | "wrap" | "snag360";
+  customTabContent?: Partial<Record<TabId, React.ReactNode>>;
 }
 
 type TabId =
@@ -55,6 +56,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
   productData,
   backPath = "/products",
   tabsVariant = "scroll",
+  customTabContent = {},
 }) => {
   const navigate = useNavigate();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
@@ -107,7 +109,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
   };
   const tabLabels =
     tabsVariant === "snag360" ? snagTabLabels : standardTabLabels;
-  const tabContentMap: Record<TabId, React.ReactNode> = {
+  const defaultTabContentMap: Record<TabId, React.ReactNode> = {
     summary: <SummaryTab productData={productData} />,
     features: <FeaturesTab productData={productData} />,
     usecases: <UseCasesTab productData={productData} />,
@@ -120,6 +122,11 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
     business: <BusinessPlanTab productData={productData} />,
     gtm: <GTMTab productData={productData} />,
     assets: <AssetsTab productData={productData} />,
+  };
+  // Merge custom tab content with defaults
+  const tabContentMap: Record<TabId, React.ReactNode> = {
+    ...defaultTabContentMap,
+    ...customTabContent,
   };
 
   // Camera permission gate — must grant before seeing content

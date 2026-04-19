@@ -23,6 +23,16 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
     (!!detailedMarketAnalysis?.targetAudience?.length ||
       !!detailedMarketAnalysis?.competitorMapping?.length);
 
+  // Snag360-specific format detection
+  const isSnag360Format =
+    productData.name === "Snag 360" ||
+    !!detailedMarketAnalysis?.topIndustries?.some(
+      (ind) => ind.buyReason || ind.scale || ind.decisionMaker || ind.dealSize
+    ) ||
+    !!detailedMarketAnalysis?.competitors?.some(
+      (comp) => comp.sovereignty || comp.segment
+    );
+
   return (
     <>
       <div className="bg-white text-gray-900 border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
@@ -862,35 +872,64 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 <div className="overflow-x-auto border border-[#D3D1C7] border-t-0">
                   <table className="w-full border-collapse text-[13px] leading-relaxed bg-transparent font-poppins">
                     <thead>
-                      <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
-                        <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
-                          Competitor
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 w-[7%] text-center">
-                          HQ
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 w-[8%] text-center">
-                          India Pricing (INR/yr)
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-center">
-                          Global Pricing (USD/yr)
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left">
-                          Key Strength
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left">
-                          Key Gap vs VMS
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
-                          India Presence
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
-                          Target Segment
-                        </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 w-[12%] text-left">
-                          2026 Differentiator
-                        </th>
-                      </tr>
+                      {isSnag360Format ? (
+                        <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[10%] text-left">
+                            Competitor
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[8%] text-center">
+                            HQ
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[10%] text-center">
+                            India Pricing (INR/yr)
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[10%] text-center">
+                            Global Pricing (USD/yr)
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[16%] text-left">
+                            Key Strength
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[18%] text-left">
+                            Key Gap vs Snag 360
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[10%] text-left">
+                            Data Sovereignty?
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[12%] text-left">
+                            Target Segment
+                          </th>
+                        </tr>
+                      ) : (
+                        <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
+                            Competitor
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[7%] text-center">
+                            HQ
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[8%] text-center">
+                            India Pricing (INR/yr)
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-center">
+                            Global Pricing (USD/yr)
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 text-left">
+                            Key Strength
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 text-left">
+                            Key Gap vs VMS
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
+                            India Presence
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
+                            Target Segment
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 w-[12%] text-left">
+                            2026 Differentiator
+                          </th>
+                        </tr>
+                      )}
                     </thead>
                     <tbody>
                       {productData.extendedContent.detailedMarketAnalysis.competitors.map(
@@ -917,15 +956,28 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                             <td className="border border-[#D3D1C7] px-3 py-3 text-red-700 font-semibold leading-snug whitespace-pre-line break-words">
                               {comp.weakness}
                             </td>
-                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
-                              {comp.indiaPresence ?? ""}
-                            </td>
-                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold leading-snug whitespace-pre-line break-words">
-                              {comp.targetSegment ?? ""}
-                            </td>
-                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#374151] font-medium leading-snug italic whitespace-pre-line break-words">
-                              {comp.differentiator2026 ?? ""}
-                            </td>
+                            {isSnag360Format ? (
+                              <>
+                                <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
+                                  {comp.sovereignty ?? ""}
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold leading-snug whitespace-pre-line break-words">
+                                  {comp.segment ?? ""}
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
+                                  {comp.indiaPresence ?? ""}
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold leading-snug whitespace-pre-line break-words">
+                                  {comp.targetSegment ?? ""}
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-3 text-[#374151] font-medium leading-snug italic whitespace-pre-line break-words">
+                                  {comp.differentiator2026 ?? ""}
+                                </td>
+                              </>
+                            )}
                           </tr>
                         )
                       )}
@@ -952,37 +1004,62 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
             ?.topIndustries && (
             <div className="space-y-0 mt-6">
               <div className="bg-white text-gray-900 border border-[#D3D1C7] px-4 py-3 font-semibold text-sm uppercase tracking-wider font-poppins">
-                Part 2 — Top 10 Industries by VMS Relevance (India)
+                {isSnag360Format
+                  ? "Part 2 — Top 10 Industries Ranked by Addressability (India Primary)"
+                  : "Part 2 — Top 10 Industries by VMS Relevance (India)"}
               </div>
               <div className="overflow-x-auto border border-[#D3D1C7] border-t-0">
                 <table className="w-full border-collapse text-[13px] leading-relaxed bg-transparent font-poppins">
                   <thead>
-                    <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
-                      <th className="border border-[#D3D1C7] px-2 py-2 w-[4%] text-center">
-                        Rank
-                      </th>
-                      <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
-                        Industry
-                      </th>
-                      <th className="border border-[#D3D1C7] px-2 py-2 w-[8%] text-center">
-                        India Market Relevance
-                      </th>
-                      <th className="border border-[#D3D1C7] px-2 py-2 w-[12%] text-left">
-                        Vendor Complexity
-                      </th>
-                      <th className="border border-[#D3D1C7] px-2 py-2 text-left">
-                        Key VMS Use Case
-                      </th>
-                      <th className="border border-[#D3D1C7] px-2 py-2 w-[8%] text-center">
-                        Approx Vendor Count (Org)
-                      </th>
-                      <th className="border border-[#D3D1C7] px-2 py-2 w-[10%] text-left">
-                        Compliance Need
-                      </th>
-                      <th className="border border-[#D3D1C7] px-2 py-2 w-[14%] text-left">
-                        Growth Driver 2026
-                      </th>
-                    </tr>
+                    {isSnag360Format ? (
+                      <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[4%] text-center">
+                          Rank
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[14%] text-left">
+                          Industry
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[26%] text-left">
+                          Why They Buy Snagging Software
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[26%] text-left">
+                          India Market Size / Scale
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[15%] text-left">
+                          Decision Maker
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[15%] text-left">
+                          Avg Deal Size (INR/yr)
+                        </th>
+                      </tr>
+                    ) : (
+                      <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[4%] text-center">
+                          Rank
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
+                          Industry
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[8%] text-center">
+                          India Market Relevance
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[12%] text-left">
+                          Vendor Complexity
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left">
+                          Key VMS Use Case
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[8%] text-center">
+                          Approx Vendor Count (Org)
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[10%] text-left">
+                          Compliance Need
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 w-[14%] text-left">
+                          Growth Driver 2026
+                        </th>
+                      </tr>
+                    )}
                   </thead>
                   <tbody>
                     {productData.extendedContent.detailedMarketAnalysis.topIndustries.map(
@@ -997,24 +1074,43 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                           <td className="border border-[#D3D1C7] px-3 py-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
                             {ind.industry}
                           </td>
-                          <td className="border border-[#D3D1C7] px-3 py-3 text-center font-semibold text-[#374151] whitespace-pre-line break-words">
-                            {ind.indiaRelevance ?? ""}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
-                            {ind.vendorComplexity ?? ""}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
-                            {ind.keyVmsUseCase ?? ind.buyReason}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-3 text-center font-semibold text-[#374151] whitespace-pre-line break-words">
-                            {ind.approxVendorCount ?? ""}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
-                            {ind.complianceNeed ?? ""}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold leading-snug whitespace-pre-line break-words">
-                            {ind.growthDriver2026 ?? ""}
-                          </td>
+                          {isSnag360Format ? (
+                            <>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
+                                {ind.buyReason ?? ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
+                                {ind.scale ?? ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold whitespace-pre-line break-words">
+                                {ind.decisionMaker ?? ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#798C5E] font-semibold whitespace-pre-line break-words">
+                                {ind.dealSize ?? ""}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-center font-semibold text-[#374151] whitespace-pre-line break-words">
+                                {ind.indiaRelevance ?? ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
+                                {ind.vendorComplexity ?? ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
+                                {ind.keyVmsUseCase ?? ind.buyReason}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-center font-semibold text-[#374151] whitespace-pre-line break-words">
+                                {ind.approxVendorCount ?? ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
+                                {ind.complianceNeed ?? ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold leading-snug whitespace-pre-line break-words">
+                                {ind.growthDriver2026 ?? ""}
+                              </td>
+                            </>
+                          )}
                         </tr>
                       )
                     )}
