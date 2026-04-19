@@ -18,7 +18,7 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
     ) ?? false;
   const hasDetailedIndustryLayout =
     detailedUseCases?.industryUseCases?.some(
-      (item) => item.corePainPoint || item.workflow || item.outcome
+      (item) => item.corePainPoint && item.workflow && item.outcome
     ) ?? false;
   const hasDetailedInternalLayout =
     detailedUseCases?.internalTeamUseCases?.some(
@@ -42,7 +42,125 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
       </div>
       {detailedUseCases && (
         <div className="space-y-8">
-          {hasWideIndustrySheet || hasWideInternalSheet ? (
+          {hasDetailedIndustryLayout ? (
+            <div className="space-y-4">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
+                {productData.name} - Use Cases by Industry and Internal Team
+              </div>
+              <div className="bg-[#F6F4EE] border border-[#D3D1C7] px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
+                10 industries from Market Analysis + key internal team use cases
+              </div>
+
+              <div className="space-y-3">
+                <div className="bg-[#1F3A5F] text-white border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
+                  Part 1 - Industry Use Cases (same 10 industries as Market
+                  Analysis Tab)
+                </div>
+                <div className="border border-[#D3D1C7] bg-white">
+                  <table className="w-full border-collapse table-fixed text-[10px] leading-[1.45] font-poppins">
+                    <thead>
+                      <tr className="bg-[#4F81BD] text-white font-semibold uppercase">
+                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[9%]">
+                          Industry
+                        </th>
+                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[8%]">
+                          Primary User
+                        </th>
+                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[18%]">
+                          Core Pain Point
+                        </th>
+                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[16%]">
+                          VMS Features Used
+                        </th>
+                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[32%]">
+                          Workflow Step-by-Step
+                        </th>
+                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[17%]">
+                          Business Outcome
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailedUseCases.industryUseCases?.map((u, i) => (
+                        <tr
+                          key={i}
+                          className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                        >
+                          <td className="border border-[#D3D1C7] px-3 py-2 font-bold text-[#1A1A2E] whitespace-pre-line break-words">
+                            {u.industry}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            {u.primaryUser}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            {u.corePainPoint || u.useCase}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            {u.features}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            {u.workflow || u.useCase}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            {u.outcome}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {hasDetailedInternalLayout && (
+                <div className="space-y-3">
+                  <div className="bg-[#1F3A5F] text-white border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
+                    Part 2 - Internal Team Use Cases
+                  </div>
+                  <div className="border border-[#D3D1C7] bg-white">
+                    <table className="w-full border-collapse table-fixed text-[10px] leading-[1.45] font-poppins">
+                      <thead>
+                        <tr className="bg-[#4F81BD] text-white font-semibold uppercase">
+                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[12%]">
+                            Internal Team
+                          </th>
+                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[24%]">
+                            How They Use VMS
+                          </th>
+                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[24%]">
+                            Key Features
+                          </th>
+                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[40%]">
+                            Benefit
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detailedUseCases.internalTeamUseCases?.map((t, i) => (
+                          <tr
+                            key={i}
+                            className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                          >
+                            <td className="border border-[#D3D1C7] px-3 py-2 font-bold text-[#1A1A2E] whitespace-pre-line break-words">
+                              {t.team}
+                            </td>
+                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                              {t.howTheyUse || t.process}
+                            </td>
+                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                              {t.features}
+                            </td>
+                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                              {t.benefit}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : hasWideIndustrySheet || hasWideInternalSheet ? (
             <div className="space-y-4">
               <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
                 {productData.name} - Use Cases
@@ -119,7 +237,9 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                             </span>
                           </td>
                           <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {[u.primaryBuyer, u.primaryUser].filter(Boolean).join("\n")}
+                            {[u.primaryBuyer, u.primaryUser]
+                              .filter(Boolean)
+                              .join("\n")}
                           </td>
                         </tr>
                       ))}
@@ -299,7 +419,7 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                             key={i}
                             className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                           >
-                            <td className="border border-[#E5E7EB] px-3 py-3 font-semibold text-gray-800 whitespace-pre-line break-words">
+                            <td className="border border-[#E5E7EB] px-3 py-3 font-semibold text-gray-800 whitespace-pre-line  break-words">
                               {t.team}
                             </td>
                             <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
@@ -313,123 +433,6 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                             </td>
                             <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.frequency}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : hasDetailedIndustryLayout ? (
-            <div className="space-y-4">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
-                {productData.name} - Use Cases by Industry and Internal Team
-              </div>
-              <div className="bg-[#F6F4EE] border border-[#D3D1C7] px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
-                10 industries from Market Analysis + key internal team use cases
-              </div>
-
-              <div className="space-y-3">
-                <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
-                  Part 1 - Industry Use Cases
-                </div>
-                <div className="border border-[#D3D1C7] bg-white">
-                  <table className="w-full border-collapse table-fixed text-[10px] leading-[1.45] font-poppins">
-                    <thead>
-                      <tr className="bg-[#DA7756] text-white font-semibold">
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[9%]">
-                          Industry
-                        </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[8%]">
-                          Primary User
-                        </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[18%]">
-                          Core Pain Point
-                        </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[16%]">
-                          VMS Features Used
-                        </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[32%]">
-                          Workflow Step-by-Step
-                        </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[17%]">
-                          Business Outcome
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detailedUseCases.industryUseCases?.map((u, i) => (
-                        <tr
-                          key={i}
-                          className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
-                        >
-                          <td className="border border-[#D3D1C7] px-3 py-2 font-semibold text-gray-800 whitespace-pre-line break-words">
-                            {u.industry}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-gray-700 font-medium whitespace-pre-line break-words">
-                            {u.primaryUser}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {u.corePainPoint || u.useCase}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {u.features}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C]/85 font-medium whitespace-pre-line break-words">
-                            {u.workflow || u.useCase}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {u.outcome}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {hasDetailedInternalLayout && (
-                <div className="space-y-3">
-                  <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
-                    Part 2 - Internal Team Use Cases
-                  </div>
-                  <div className="border border-[#D3D1C7] bg-white">
-                    <table className="w-full border-collapse table-fixed text-[10px] leading-[1.45] font-poppins">
-                      <thead>
-                        <tr className="bg-[#DA7756] text-white font-semibold">
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[12%]">
-                            Internal Team
-                          </th>
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[24%]">
-                            How They Use VMS
-                          </th>
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[24%]">
-                            Key Features
-                          </th>
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[40%]">
-                            Benefit
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {detailedUseCases.internalTeamUseCases?.map((t, i) => (
-                          <tr
-                            key={i}
-                            className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
-                          >
-                            <td className="border border-[#D3D1C7] px-3 py-2 font-semibold text-gray-800 whitespace-pre-line break-words">
-                              {t.team}
-                            </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                              {t.howTheyUse || t.process}
-                            </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C]/85 font-medium whitespace-pre-line break-words">
-                              {t.features}
-                            </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                              {t.benefit}
                             </td>
                           </tr>
                         ))}
