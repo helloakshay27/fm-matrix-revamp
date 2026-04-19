@@ -45,14 +45,14 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                               <div className="border-b border-[#E5E7EB] bg-white px-3 py-2 text-[11px] font-bold uppercase text-gray-700 font-poppins">
                                 {sec.title}
                               </div>
-                              <table className="w-full border-collapse text-[11px] leading-[1.5] font-poppins">
+                              <table className="w-full table-fixed border-collapse text-[11px] leading-[1.5] font-poppins">
                                 <thead>
                                   {sec.columns.some(c => c !== "") && (
                                   <tr className="bg-white text-[#2C2C2C] font-semibold uppercase border-b border-[#D3D1C7]">
                                     {sec.columns.map((c, i) => (
                                       <th
                                         key={i}
-                                        className="border border-[#E5E7EB] px-3 py-2 text-left"
+                                        className={`border border-[#E5E7EB] px-3 py-2 text-left ${i === 0 ? "w-[16%]" : "w-[28%]"}`}
                                       >
                                         {c}
                                       </th>
@@ -69,7 +69,7 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                                       {row.map((cell, cIdx) => (
                                         <td
                                           key={cIdx}
-                                          className={`border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium break-words ${cIdx === 0 ? "font-semibold" : ""}`}
+                                          className={`border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium break-words whitespace-pre-line align-top ${cIdx === 0 ? "font-semibold" : ""}`}
                                         >
                                           {cell}
                                         </td>

@@ -32,8 +32,8 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                       <thead>
                         <tr className="bg-gray-100 text-gray-800 font-semibold uppercase text-[9px]">
                           <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[58%]">Suggested Answer</th>
-                          <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[22%]">Source Tab</th>
-                          <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[20%]">Founder Review</th>
+                          <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[22%]">Context / Prompt</th>
+                          <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[20%]">Review Status</th>
                         </tr>
                       </thead>
                       <tbody>
