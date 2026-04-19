@@ -5,6 +5,10 @@ interface PricingTabProps {
   productData: ProductData;
 }
 
+type PricingDetails = NonNullable<
+  NonNullable<ProductData["extendedContent"]>["detailedPricing"]
+>;
+
 /* ── Badge helper ─────────────────────────────────────────────────────────── */
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const s = (status || "").toUpperCase().trim();
@@ -25,7 +29,20 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 };
 
 const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
-  const dp = productData.extendedContent?.detailedPricing;
+  const dp = productData.extendedContent?.detailedPricing as
+    | PricingDetails
+    | undefined;
+  const hasRichFeatureBenchmark =
+    !!dp?.featuresVsMarket?.some(
+      (row) => row.liveStatus || row.whereWeStand || row.dealImpact
+    );
+  const hasRichValueProps =
+    !!dp?.valuePropositions?.some(
+      (row) => row.communicatesToday || row.proofPoint || row.rank
+    );
+  const snagFeatureRows = dp?.snagFeatureComparison || dp?.featureComparison;
+  const snagPricingRows = dp?.pricingLandscapeRows || dp?.pricingLandscape;
+  const snagValueRows = dp?.valuePropositions || dp?.valueProps;
 
   return (
     <>
@@ -270,6 +287,145 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
             </div>
           </div>
         </div>
+      ) : (dp?.isSnagPricing || (dp?.featureComparison && dp?.featureComparison[0]?.snag !== undefined)) ? (
+        /* ── SNAG 360 LAYOUT ───────────────────────────────────────────── */
+        <>
+          {/* Legend bar */}
+          <div className="bg-[#F6F4EE] border border-[#D3D1C7] px-4 py-2 mt-2">
+            <p className="text-[11px] text-gray-800 font-semibold italic uppercase tracking-tighter font-poppins">
+              <span className="text-[#A1A1AA]">AHEAD = Snag 360 leads</span>
+              &nbsp;&nbsp;|&nbsp;&nbsp;
+              <span className="text-[#A1A1AA]">AT PAR = Equal capability</span>
+              &nbsp;&nbsp;|&nbsp;&nbsp;
+              <span className="text-[#A1A1AA]">GAP = Competitor leads</span>
+            </p>
+          </div>
+
+          {/* Section 1: Feature Comparison vs Top Competitors */}
+          {snagFeatureRows && snagFeatureRows.length > 0 && (
+            <div className="mt-4">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 1: Feature Comparison vs Top Competitors
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                <table className="w-full border-collapse text-[13px] bg-transparent font-poppins leading-[1.45] table-fixed">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-center">
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[22%] text-left">Feature / Capability</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Snag 360</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">FalconBrick</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Procore</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Novade</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">SnagR</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">SafetyCulture</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Status vs Market</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snagFeatureRows.map((f, i: number) => {
+                       const tone = (f.status || "").toUpperCase();
+                       const statusBg = tone.includes("AHEAD") ? "bg-[#798C5E] text-white" : tone.includes("GAP") ? "bg-[#C72030] text-white" : "bg-[#F4E6C8] text-[#D97706]";
+                       return (
+                         <tr key={i} className={`align-middle border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                           <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{f.feature}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">{"snag360" in f ? (f.snag360 || f.snag) : f.snag}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{"falconBrick" in f ? (f.falconBrick || f.falcon) : f.falcon}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium whitespace-pre-line">{f.procore}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.novade}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.snagR}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{"safetyCulture" in f ? (f.safetyCulture || f.safety) : f.safety}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${statusBg}`}>
+                               {f.status}
+                             </div>
+                           </td>
+                         </tr>
+                       );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Section 2: Pricing Landscape (India and Global) */}
+          {snagPricingRows && snagPricingRows.length > 0 && (
+            <div className="mt-6">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 2: Pricing Landscape (India and Global)
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                <table className="w-full border-collapse text-[13px] bg-transparent font-poppins leading-[1.45] table-fixed">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-left">
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Tier</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Pricing Model</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">India Price Range<br/>(INR/user/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Global Price<br/>(USD/user/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[22%]">What's Included</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">Target Segment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snagPricingRows.map((r, i: number) => (
+                      <tr key={i} className={`align-top border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{r.tier}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">{r.model}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#798C5E] font-semibold whitespace-pre-line italic text-center">{r.indiaPrice || r.india}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium whitespace-pre-line italic text-center">{r.globalPrice || r.global}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{r.included}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium whitespace-pre-line break-words">{r.segment || r.target}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Section 3: Competitive Positioning Statement */}
+          {dp.competitivePositioningStatement && (
+            <div className="mt-6">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 3: Competitive Positioning Statement
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white px-4 py-4 font-medium text-[13px] text-[#2C2C2C] leading-relaxed font-poppins whitespace-pre-line">
+                {dp.competitivePositioningStatement}
+              </div>
+            </div>
+          )}
+
+          {/* Section 4: Value Propositions by Buyer Role */}
+          {snagValueRows && snagValueRows.length > 0 && (
+            <div className="mt-6 mb-8">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 4: Value Propositions by Buyer Role
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                <table className="w-full border-collapse text-[13px] bg-transparent font-poppins leading-[1.45] table-fixed">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-left">
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">Buyer Role</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[36%]">Primary Value Proposition</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[22%]">Quantified Outcome</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[24%]">Key Feature Driving This</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snagValueRows.map((r, i: number) => (
+                      <tr key={i} className={`align-top border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{r.role || ""}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-semibold break-words whitespace-pre-line leading-relaxed">{r.prop || ""}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#C72030] font-medium break-words whitespace-pre-line leading-relaxed italic">{r.outcome || ""}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#798C5E] font-bold break-words whitespace-pre-line leading-relaxed">{r.feature || ""}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
       ) : dp ? (
         /* ── STANDARD LAYOUT (VendorManagement & similar) ──────────────── */
         <>
@@ -352,6 +508,79 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                 );
               }
 
+              if (hasRichFeatureBenchmark) {
+                return (
+                  <div className="mt-4">
+                    <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-sm uppercase tracking-wider font-poppins">
+                      Part A — Current Features vs Market Standard
+                    </div>
+                    <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                      <table className="w-full border-collapse text-[10px] bg-transparent text-left font-poppins leading-[1.4] table-fixed">
+                        <thead>
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[16%] text-left">
+                              Feature Area
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[22%] text-left">
+                              Market Standard
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[16%] text-left">
+                              Our Product
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[9%] text-center">
+                              Status
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[16%] text-center">
+                              Where We Stand
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 text-left">
+                              Deal Impact
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dp.featuresVsMarket.map((f, i: number) => {
+                            const liveTone = (f.liveStatus || f.status || "")
+                              .toUpperCase()
+                              .trim();
+                            const liveClass = liveTone.includes("ROADMAP")
+                              ? "bg-[#F4E6C8] text-[#D97706]"
+                              : "bg-[#D8EEDB] text-[#2F855A]";
+                            return (
+                              <tr
+                                key={i}
+                                className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                              >
+                                <td className="border border-[#D3D1C7] px-3 py-2 font-bold text-[#2C2C2C] whitespace-pre-line break-words">
+                                  {f.featureArea}
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
+                                  {f.marketStandard}
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-2 text-[#4B5563] font-medium leading-snug whitespace-pre-line break-words">
+                                  {f.ourProduct}
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-2 text-center align-middle">
+                                  <span className={`px-2 py-1 text-[8px] font-semibold uppercase tracking-tight inline-block rounded-sm ${liveClass}`}>
+                                    {f.liveStatus || f.status}
+                                  </span>
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-2 text-center align-middle">
+                                  <StatusBadge status={f.whereWeStand || f.status} />
+                                </td>
+                                <td className="border border-[#D3D1C7] px-3 py-2 text-[#374151] font-medium leading-snug whitespace-pre-line break-words">
+                                  {f.dealImpact || f.summary}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              }
+
               // Fallback: legacy format (featureArea | marketStandard | ourProduct | status | summary)
               return (
                 <div className="mt-4">
@@ -408,6 +637,33 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                 </div>
               );
             })()}
+
+          {!!dp.pricingSummaryRows?.length && (
+            <div className="mt-4 border border-[#D3D1C7] bg-white">
+              <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.45]">
+                <tbody>
+                  {dp.pricingSummaryRows.map((row, i: number) => {
+                    const rowClass =
+                      row.tone === "green"
+                        ? "bg-[#D8EEDB] text-[#2F855A]"
+                        : row.tone === "yellow"
+                          ? "bg-[#D9E8F4] text-[#2563EB]"
+                          : "bg-[#F6D7D5] text-[#C72030]";
+                    return (
+                      <tr key={i} className={i > 0 ? "border-t border-[#D3D1C7]" : ""}>
+                        <td className={`w-[24%] border-r border-[#D3D1C7] px-3 py-2 font-bold uppercase whitespace-pre-line ${rowClass}`}>
+                          {row.label}
+                        </td>
+                        <td className={`px-3 py-2 font-medium leading-relaxed whitespace-pre-line ${rowClass}`}>
+                          {row.detail}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* ── Section 2: Competitive Position Summary ───────────────────── */}
           {dp.comparisonSummary &&
@@ -706,6 +962,69 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
             (() => {
               // New format: { proposition, quantifiedBenefit, targetBuyer }
               const isNewFormat = dp.valuePropositions[0]?.proposition != null;
+
+              if (hasRichValueProps) {
+                return (
+                  <div className="mt-6 mb-6">
+                    <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-sm uppercase tracking-wider font-poppins">
+                      Part D — Value Propositions & Improvements
+                    </div>
+                    <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                      <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.4] table-fixed">
+                        <thead>
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[5%] text-center">
+                              #
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[20%] text-left">
+                              Current Value Proposition
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[13%] text-left">
+                              What It Communicates Today
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[18%] text-left">
+                              Weakness / What's Missing
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[26%] text-left">
+                              Sharpened / Expanded Version
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[18%] text-left">
+                              Proof Point to Add
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dp.valuePropositions.map((v, i: number) => (
+                            <tr
+                              key={i}
+                              className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                            >
+                              <td className="border border-[#D3D1C7] px-3 py-2 text-center font-bold text-[#2C2C2C]">
+                                {v.rank || `${i + 1}`}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-2 font-bold text-[#2C2C2C] whitespace-pre-line break-words">
+                                {v.currentProp}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-2 text-gray-700 font-medium leading-snug whitespace-pre-line break-words">
+                                {v.communicatesToday || ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C]/70 font-medium leading-snug whitespace-pre-line break-words">
+                                {v.weakness}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-2 text-gray-800 font-semibold leading-snug whitespace-pre-line break-words">
+                                {v.sharpened}
+                              </td>
+                              <td className="border border-[#D3D1C7] px-3 py-2 text-[#4B5563] font-medium leading-snug whitespace-pre-line break-words">
+                                {v.proofPoint || ""}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              }
 
               if (isNewFormat) {
                 return (

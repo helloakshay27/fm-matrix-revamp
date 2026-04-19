@@ -6,13 +6,17 @@ interface GTMTabProps {
 }
 
 const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
+  const isCpManagement = productData.name === "CP Management";
+
   return (
     <>
       {productData.excelLikeGtm ? (
         <div className="bg-transparent p-3">
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
-              <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-bold font-poppins uppercase tracking-tight text-[14px] text-center">
+              <div
+                className={`bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-sm font-semibold tracking-wide text-left" : "font-bold tracking-tight text-[14px] text-center"}`}
+              >
                 {productData.extendedContent?.detailedGTM?.sheet?.title ||
                   "Post Possession — Go-to-market Strategy"}
               </div>

@@ -7,8 +7,12 @@ interface BusinessPlanTabProps {
 
 const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
   const bpData = productData.extendedContent?.detailedBusinessPlan;
+  const isCpManagement = productData.name === "CP Management";
   const hasColoredQuestions = bpData?.planQuestions?.some(
     (q) => q.colorContext
+  );
+  const hasFounderVoice = bpData?.planQuestions?.some(
+    (q) => q.source?.toLowerCase().includes("founder")
   );
 
   if (productData.excelLikeBusinessPlan && hasColoredQuestions) {
@@ -16,26 +20,43 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
       <div className="space-y-4 animate-fade-in">
         <div className="bg-transparent p-2">
           <div className="w-full bg-transparent">
-            <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 text-[14px] font-bold uppercase tracking-wide font-poppins">
-              {productData.name} - Business Plan Builder
+            <div
+              className={`bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins ${isCpManagement ? "text-sm font-semibold tracking-wide text-left" : "text-[14px] font-bold tracking-wide"}`}
+            >
+              {productData.name} - Business Plan
             </div>
             <div className="bg-[#F6F4EE] border border-[#D3D1C7] px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
-              10 investor/partner questions with suggested answers. Flagged
-              items require founder review before external use.
+              {hasFounderVoice
+                ? "Written in the first person by the founder. Specific, direct answers aligned to the current business plan."
+                : "10 investor/partner questions with suggested answers. Flagged items require founder review before external use."}
             </div>
 
             <div className="mt-3 space-y-4">
               {bpData!.planQuestions.map((q, i) => {
+                const headerTone =
+                  q.colorContext === "red"
+                    ? "bg-[#A52A1A] text-white"
+                    : q.colorContext === "green"
+                      ? "bg-[#0F5B2A] text-white"
+                      : q.colorContext === "yellow"
+                        ? "bg-[#B79000] text-white"
+                        : q.colorContext === "orange"
+                          ? "bg-[#D97706] text-white"
+                      : q.colorContext === "purple"
+                        ? "bg-[#6B2D84] text-white"
+                        : q.colorContext === "teal"
+                          ? "bg-[#006B5E] text-white"
+                          : "bg-[#1F4E79] text-white";
                 return (
                   <div key={i} className="border border-[#D3D1C7] bg-white">
-                    <div className="bg-white text-[#2C2C2C] border-b border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
+                    <div className={`${headerTone} border-b border-[#D3D1C7] px-4 py-3 text-sm font-semibold tracking-wide font-poppins`}>
                       {q.id}. {q.question}
                     </div>
                     <table className="w-full border-collapse table-fixed text-[10px] leading-[1.5] font-poppins">
                       <thead>
                         <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
                           <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[58%]">
-                            Suggested Answer
+                            {hasFounderVoice ? "Founder's Answer" : "Suggested Answer"}
                           </th>
                           <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[22%]">
                             Context / Prompt

@@ -37,6 +37,20 @@ interface BaseProductPageProps {
   tabsVariant?: "scroll" | "wrap" | "snag360";
 }
 
+type TabId =
+  | "summary"
+  | "features"
+  | "usecases"
+  | "market"
+  | "pricing"
+  | "swot"
+  | "roadmap"
+  | "enhancements"
+  | "metrics"
+  | "business"
+  | "gtm"
+  | "assets";
+
 const BaseProductPage: React.FC<BaseProductPageProps> = ({
   productData,
   backPath = "/products",
@@ -45,6 +59,68 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
   const navigate = useNavigate();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
   const security = useProductSecurity();
+  const defaultTabOrder: TabId[] = [
+    "summary",
+    "features",
+    "market",
+    "pricing",
+    "usecases",
+    "roadmap",
+    "business",
+    "gtm",
+    "metrics",
+    "swot",
+    "enhancements",
+    "assets",
+  ];
+  const tabOrder =
+    productData.tabOrder && productData.tabOrder.length > 0
+      ? productData.tabOrder
+      : defaultTabOrder;
+  const standardTabLabels: Record<TabId, string> = {
+    summary: "Product Summary",
+    features: "Features",
+    usecases: "Use Cases",
+    market: "Market Analysis",
+    pricing: "Pricing",
+    swot: "SWOT",
+    roadmap: "Roadmap",
+    enhancements: "Enhancements",
+    metrics: "Metrics",
+    business: "Business Plan",
+    gtm: "GTM Strategy",
+    assets: "Assets",
+  };
+  const snagTabLabels: Record<TabId, string> = {
+    summary: "Product Summary",
+    features: "Feature List",
+    usecases: "Use Cases",
+    market: "Market Analysis",
+    pricing: "Features and Pricing",
+    swot: "SWOT Analysis",
+    roadmap: "Product Roadmap",
+    enhancements: "Enhancement Roadmap",
+    metrics: "Metrics",
+    business: "Business Plan Builder",
+    gtm: "GTM Strategy",
+    assets: "Assets",
+  };
+  const tabLabels =
+    tabsVariant === "snag360" ? snagTabLabels : standardTabLabels;
+  const tabContentMap: Record<TabId, React.ReactNode> = {
+    summary: <SummaryTab productData={productData} />,
+    features: <FeaturesTab productData={productData} />,
+    usecases: <UseCasesTab productData={productData} />,
+    market: <MarketTab productData={productData} />,
+    pricing: <PricingTab productData={productData} />,
+    swot: <SWOTTab productData={productData} />,
+    roadmap: <RoadmapTab productData={productData} />,
+    enhancements: <EnhancementsTab productData={productData} />,
+    metrics: <MetricsTab productData={productData} />,
+    business: <BusinessPlanTab productData={productData} />,
+    gtm: <GTMTab productData={productData} />,
+    assets: <AssetsTab productData={productData} />,
+  };
 
   // Camera permission gate — must grant before seeing content
   if (security.cameraPermission === "pending") {
@@ -96,26 +172,13 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
             >
               <div className="flex justify-start pb-2 px-1">
                 <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
-                  {[
-                    { id: "summary", label: "Product Summary" },
-                    { id: "features", label: "Feature List" },
-                    { id: "market", label: "Market Analysis" },
-                    { id: "pricing", label: "Features and Pricing" },
-                    { id: "usecases", label: "Use Cases" },
-                    { id: "roadmap", label: "Product Roadmap" },
-                    { id: "business", label: "Business Plan Builder" },
-                    { id: "gtm", label: "GTM Strategy" },
-                    { id: "metrics", label: "Metrics" },
-                    { id: "swot", label: "SWOT Analysis" },
-                    { id: "enhancements", label: "Enhancement Roadmap" },
-                    { id: "assets", label: "Assets" },
-                  ].map((tab) => (
+                  {tabOrder.map((tabId) => (
                     <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
+                      key={tabId}
+                      value={tabId}
                       className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:font-semibold data-[state=inactive]:text-[#2C2C2C]/50 data-[state=inactive]:hover:text-[#DA7756]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
                     >
-                      {tab.label}
+                      {tabLabels[tabId]}
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -125,26 +188,13 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
             <div className="overflow-x-auto no-scrollbar mb-8">
               <div className="flex justify-start pb-2 px-1">
                 <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
-                  {[
-                    { id: "summary", label: "Product Summary" },
-                    { id: "features", label: "Features" },
-                    { id: "market", label: "Market Analysis" },
-                    { id: "pricing", label: "Pricing" },
-                    { id: "usecases", label: "Use Cases" },
-                    { id: "roadmap", label: "Roadmap" },
-                    { id: "business", label: "Business Plan" },
-                    { id: "gtm", label: "GTM Strategy" },
-                    { id: "metrics", label: "Metrics" },
-                    { id: "swot", label: "SWOT" },
-                    { id: "enhancements", label: "Enhancements" },
-                    { id: "assets", label: "Assets" },
-                  ].map((tab) => (
+                  {tabOrder.map((tabId) => (
                     <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
+                      key={tabId}
+                      value={tabId}
                       className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:font-semibold data-[state=inactive]:text-[#2C2C2C]/50 data-[state=inactive]:hover:text-[#DA7756]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
                     >
-                      {tab.label}
+                      {tabLabels[tabId]}
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -152,48 +202,24 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
             </div>
           )}
 
-          <TabsContent value="summary" className="space-y-6">
-            <SummaryTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="post-possession" className="space-y-6">
-            <PostPossessionTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="features" className="space-y-6">
-            <FeaturesTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="market" className="space-y-6 animate-fade-in">
-            <MarketTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="pricing" className="space-y-6 animate-fade-in">
-            <PricingTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="usecases" className="space-y-6 animate-fade-in">
-            <UseCasesTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="gtm" className="space-y-6 animate-fade-in">
-            <GTMTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="metrics" className="space-y-6 animate-fade-in">
-            <MetricsTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="swot" className="space-y-6 animate-fade-in">
-            <SWOTTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="roadmap" className="space-y-12 animate-fade-in">
-            <RoadmapTab productData={productData} />
-          </TabsContent>
-          <TabsContent
-            value="enhancements"
-            className="space-y-12 animate-fade-in"
-          >
-            <EnhancementsTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="business" className="space-y-10">
-            <BusinessPlanTab productData={productData} />
-          </TabsContent>
-          <TabsContent value="assets" className="space-y-8">
-            <AssetsTab productData={productData} />
-          </TabsContent>
+          {tabOrder.map((tabId) => {
+            const className =
+              tabId === "roadmap" || tabId === "enhancements"
+                ? "space-y-12 animate-fade-in"
+                : tabId === "business"
+                  ? "space-y-10"
+                  : tabId === "assets"
+                    ? "space-y-8"
+                    : tabId === "summary" || tabId === "features"
+                      ? "space-y-6"
+                      : "space-y-6 animate-fade-in";
+
+            return (
+              <TabsContent key={tabId} value={tabId} className={className}>
+                {tabContentMap[tabId]}
+              </TabsContent>
+            );
+          })}
         </Tabs>
       </div>
     </div>

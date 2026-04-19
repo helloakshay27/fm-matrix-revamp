@@ -32,7 +32,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
         </h2>
       </div>
       <div className="bg-transparent p-3 border-x border-[#D3D1C7]">
-        <p className="text-[10px] text-[#2C2C2C]/60 font-medium leading-relaxed font-poppins">
+        <p className="text-[12px] text-[#2C2C2C]/60 font-medium leading-relaxed font-poppins">
           {productData.excelLikeFeatures
             ? hasDetailedFeatureSheet
               ? "All features listed. USP rows highlighted in gray. No omissions."
@@ -43,12 +43,12 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
 
       {productData.excelLikeFeatures ? (
         <div className="border border-[#D3D1C7] bg-white">
-          <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide font-poppins">
+          <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
             {productData.name} - Full Feature List
           </div>
           <div className="w-full">
             {hasDetailedFeatureSheet ? (
-              <table className="w-full table-fixed border-collapse text-[12px] leading-[1.55] font-poppins">
+              <table className="w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
                 <thead>
                   <tr className="bg-[#F6F4EE] text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
                     <th className="border border-[#E5E7EB] px-2 py-3 text-left w-[16%]">
@@ -116,28 +116,28 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
                 </tbody>
               </table>
             ) : (
-              <table className="w-full border-collapse text-[9px] leading-[1.25] font-poppins">
+              <table className="w-full border-collapse text-[13px] leading-relaxed font-poppins table-fixed">
                 <thead>
                   <tr className="bg-[#F6F4EE] text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
-                    <th className="border border-[#E5E7EB] px-1 py-1.5 text-center w-[4%]">
+                    <th className="border border-[#E5E7EB] p-3 text-center w-[5%]">
                       #
                     </th>
-                    <th className="border border-[#E5E7EB] px-2 py-1.5 text-left w-[13%]">
+                    <th className="border border-[#E5E7EB] p-3 text-left w-[15%]">
                       Module
                     </th>
-                    <th className="border border-[#E5E7EB] px-2 py-1.5 text-left w-[14%]">
+                    <th className="border border-[#E5E7EB] p-3 text-left w-[15%]">
                       Feature
                     </th>
-                    <th className="border border-[#E5E7EB] px-2 py-1.5 text-left w-[16%]">
+                    <th className="border border-[#E5E7EB] p-3 text-left w-[18%]">
                       Sub Feature
                     </th>
-                    <th className="border border-[#E5E7EB] px-2 py-1.5 text-left">
+                    <th className="border border-[#E5E7EB] p-3 text-left w-[33%]">
                       How It Currently Works
                     </th>
-                    <th className="border border-[#E5E7EB] px-2 py-1.5 text-center w-[9%]">
+                    <th className="border border-[#E5E7EB] p-3 text-center w-[9%]">
                       User Type
                     </th>
-                    <th className="border border-[#E5E7EB] px-2 py-1.5 text-center w-[4%]">
+                    <th className="border border-[#E5E7EB] p-3 text-center w-[5%]">
                       USP
                     </th>
                   </tr>
@@ -178,33 +178,33 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
                             key={`${g.moduleKey}-${localIdx}-${f.feature}`}
                             className={`${zebra} align-top`}
                           >
-                            <td className="border border-[#E5E7EB] px-1 py-1.5 text-center font-bold text-[#2C2C2C]/50 text-[8px]">
+                            <td className="border border-[#E5E7EB] p-3 text-center font-bold text-[#2C2C2C]/50 text-[11px]">
                               {excelFeatureRowStart + i}
                             </td>
                             {showModuleCell && (
                               <td
                                 rowSpan={rowSpan}
-                                className="border border-[#E5E7EB] px-2 py-1.5 font-semibold align-top bg-[#F6F4EE] text-[#2C2C2C] text-[9px] break-words"
+                                className="border border-[#E5E7EB] p-3 font-semibold align-top bg-[#F6F4EE] text-[#2C2C2C] text-[13px] break-words whitespace-normal"
                               >
                                 {g.moduleLabel}
                               </td>
                             )}
-                            <td className="border border-[#E5E7EB] px-2 py-1.5 font-semibold text-[#2C2C2C] text-[9px] break-words">
+                            <td className="border border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] text-[13px] break-words whitespace-normal">
                               {f.feature}
                             </td>
-                            <td className="border border-[#E5E7EB] px-2 py-1.5 text-[#2C2C2C] font-medium text-[9px] whitespace-pre-line break-words">
+                            <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C] font-medium text-[13px] whitespace-pre-line break-words">
                               {f.subFeatures}
                             </td>
                             <td
-                              className={`border border-[#E5E7EB] px-2 py-1.5 text-[9px] whitespace-pre-line break-words leading-relaxed ${f.usp ? "text-[#DA7756] font-semibold" : "text-[#2C2C2C]/80 font-medium"}`}
+                              className={`border border-[#E5E7EB] p-3 text-[13px] whitespace-pre-line break-words leading-relaxed ${f.usp ? "text-[#DA7756] font-semibold" : "text-[#2C2C2C]/80 font-medium"}`}
                             >
                               {f.works || ""}
                             </td>
-                            <td className="border border-[#E5E7EB] px-1 py-1.5 text-center font-medium text-[8px] text-[#2C2C2C]/70 leading-snug break-words">
+                            <td className="border border-[#E5E7EB] p-3 text-center font-medium text-[12px] text-[#2C2C2C]/70 leading-snug break-words whitespace-normal">
                               {f.userType}
                             </td>
                             <td
-                              className={`border border-[#E5E7EB] px-1 py-1.5 text-center font-bold text-[8px] ${f.usp ? "bg-[#F6F4EE] text-[#DA7756]" : "bg-white text-[#D3D1C7]"}`}
+                              className={`border border-[#E5E7EB] p-3 text-center font-bold text-[12px] ${f.usp ? "bg-[#F6F4EE] text-[#DA7756]" : "bg-white text-[#D3D1C7]"}`}
                             >
                               {f.usp ? "★" : "—"}
                             </td>
@@ -218,7 +218,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
             )}
           </div>
           {hasDetailedFeatureSheet && (
-            <div className="border-t border-[#D3D1C7] px-3 py-2 text-[11px] text-[#4B5563] font-medium font-poppins bg-white">
+            <div className="border-t border-[#D3D1C7] px-4 py-3 text-[12px] text-[#4B5563] font-medium font-poppins bg-white">
               Legend: gray rows are USP features that should appear in sales and
               marketing materials.
             </div>
@@ -227,7 +227,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
       ) : (
         <>
           <div className="bg-transparent p-3 border-x border-[#D3D1C7]">
-            <p className="text-[10px] text-[#2C2C2C]/60 font-semibold italic leading-relaxed">
+            <p className="text-[12px] text-[#2C2C2C]/60 font-semibold italic leading-relaxed">
               <span className="text-gray-700">
                 ★ USP features highlighted in orange
               </span>{" "}
@@ -236,7 +236,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
             </p>
           </div>
           <div className="overflow-x-auto border border-[#D3D1C7] rounded-b-xl ">
-            <table className="w-full border-collapse text-[10px] bg-transparent font-poppins">
+            <table className="w-full border-collapse text-[13px] leading-relaxed bg-transparent font-poppins">
               <thead>
                 <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase text-center">
                   <th className="border border-[#D3D1C7] p-3 w-[5%]">#</th>
@@ -275,20 +275,20 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
                     <td className="border border-[#D3D1C7] p-3 text-center font-semibold text-[#2C2C2C]/60">
                       {i + 1}
                     </td>
-                    <td className="border border-[#D3D1C7] p-3 font-semibold text-gray-700 uppercase bg-white">
+                    <td className="border border-[#D3D1C7] p-3 font-semibold text-gray-700 uppercase bg-white break-words whitespace-normal">
                       {f.module}
                     </td>
-                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold">
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold break-words whitespace-normal">
                       {f.feature}
                     </td>
                     {productData.extendedContent?.detailedFeatures?.some(
                       (ft) => ft.subFeatures !== ""
                     ) && (
-                      <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium">
+                      <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium break-words whitespace-pre-line">
                         {f.subFeatures}
                       </td>
                     )}
-                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed italic break-words whitespace-pre-line">
                       {f.works}
                     </td>
                     {productData.extendedContent?.detailedFeatures?.some(

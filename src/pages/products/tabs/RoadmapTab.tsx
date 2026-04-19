@@ -332,7 +332,7 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                                           }
                                         : section.colorContext === "yellow"
                                           ? {
-                                              bar: "bg-white text-gray-800 border-b border-[#D3D1C7]",
+                                              bar: "bg-white text-gray-800 border-b",
                                               row: "bg-white",
                                             }
                                           : section.colorContext === "blue"
@@ -341,7 +341,7 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                                                 row: "bg-white",
                                               }
                                             : {
-                                                bar: "bg-white text-gray-800 border-b border-[#D3D1C7]",
+                                                bar: "bg-white text-gray-800 border-b",
                                                 row: "bg-white",
                                               };
 
@@ -422,7 +422,7 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                               <table className="w-full border-collapse font-poppins text-[9px] leading-[1.25] text-left">
                                 <thead>
                                   <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                                    <th className="border border-[#E5E7EB] bg-white text-gray-800 px-2 py-2 w-[8%] border-b border-[#D3D1C7]">
+                                    <th className="border border-[#E5E7EB] bg-white text-gray-800 px-2 py-2 w-[8%] border-b">
                                       Phase / Timeline
                                     </th>
                                     <th className="border border-[#E5E7EB] bg-white px-2 py-2 w-[18%]">
@@ -440,7 +440,7 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                                       </th>
                                     )}
                                     {hasOwner && (
-                                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-2 py-2 w-[10%] text-center border-b border-[#D3D1C7]">
+                                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-2 py-2 w-[10%] text-center border-b">
                                         Owner
                                       </th>
                                     )}
@@ -556,8 +556,17 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
         (() => {
           const allSections =
             productData.extendedContent!.detailedRoadmap!.structuredRoadmap!;
+          const hasFeatureNameTL = allSections.some((s) =>
+            s.items.some((it) => it.featureName?.trim())
+          );
+          const hasSuccessMetricTL = allSections.some((s) =>
+            s.items.some((it) => it.successMetric?.trim())
+          );
           const hasEffortTL = allSections.some((s) =>
             s.items.some((it) => it.effort?.trim())
+          );
+          const hasPriorityTL = allSections.some((s) =>
+            s.items.some((it) => it.priority?.trim())
           );
           const hasOwnerTL = allSections.some((s) =>
             s.items.some((it) => it.owner?.trim())
@@ -592,19 +601,33 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                     >
                       {section.timeframe} — {section.headline}
                     </div>
+                    {section.phaseDescription && (
+                      <div className="bg-[#F6F4EE] px-4 py-2 text-[11px] text-gray-700 font-medium italic font-poppins border-b border-[#D3D1C7]">
+                        {section.phaseDescription}
+                      </div>
+                    )}
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse font-poppins text-[11px] bg-white text-left">
                         <thead>
                           <tr
                             className={`bg-white text-gray-900 font-semibold text-xs uppercase text-left border-b border-[#D3D1C7]`}
                           >
+                            {hasFeatureNameTL && (
+                              <th className="p-3 w-[16%]">Initiative</th>
+                            )}
                             <th className="p-3 w-[15%]">What It Is</th>
                             <th className="p-3 w-[25%]">Why It Matters</th>
                             <th className="p-3 w-[20%]">
                               Which Customer Segment It Unlocks
                             </th>
+                            {hasSuccessMetricTL && (
+                              <th className="p-3 w-[18%]">Success Metric</th>
+                            )}
                             {hasEffortTL && (
-                              <th className="p-3 w-[22%]">Effort Estimate</th>
+                              <th className="p-3 w-[10%]">Effort Estimate</th>
+                            )}
+                            {hasPriorityTL && (
+                              <th className="p-3 w-[8%]">Priority</th>
                             )}
                             {hasOwnerTL && (
                               <th className="p-3 w-[10%]">Owner</th>
@@ -617,22 +640,49 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                               key={i}
                               className={`${rowTint} border-b border-[#E5E7EB] last:border-0`}
                             >
-                              <td className="p-3 text-[#2C2C2C] font-semibold leading-relaxed">
+                              {hasFeatureNameTL && (
+                                <td className="p-3 text-[#2C2C2C] font-semibold leading-relaxed whitespace-pre-line break-words">
+                                  {item.featureName}
+                                </td>
+                              )}
+                              <td className="p-3 text-[#2C2C2C] font-semibold leading-relaxed whitespace-pre-line break-words">
                                 {item.whatItIs}
                               </td>
-                              <td className="p-3 text-[#2C2C2C]/80 font-medium leading-relaxed">
+                              <td className="p-3 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
                                 {item.whyItMatters}
                               </td>
-                              <td className="p-3 text-[#2C2C2C]/80 font-medium leading-relaxed">
+                              <td className="p-3 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
                                 {item.unlockedSegment}
                               </td>
+                              {hasSuccessMetricTL && (
+                                <td className="p-3 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
+                                  {item.successMetric}
+                                </td>
+                              )}
                               {hasEffortTL && (
-                                <td className="p-3 text-[#2C2C2C]/70 leading-relaxed">
+                                <td className="p-3 text-[#2C2C2C]/70 leading-relaxed whitespace-pre-line break-words">
                                   {item.effort}
                                 </td>
                               )}
+                              {hasPriorityTL && (
+                                <td className="p-3 font-semibold whitespace-pre-line break-words">
+                                  <span
+                                    className={
+                                      item.priority?.includes("P0")
+                                        ? "text-[#C72030]"
+                                        : item.priority?.includes("P1")
+                                          ? "text-[#D97706]"
+                                          : item.priority?.includes("P2")
+                                            ? "text-[#B45309]"
+                                            : "text-[#2C2C2C]"
+                                    }
+                                  >
+                                    {item.priority}
+                                  </span>
+                                </td>
+                              )}
                               {hasOwnerTL && (
-                                <td className="p-3 text-[#2C2C2C] font-semibold">
+                                <td className="p-3 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                   {item.owner}
                                 </td>
                               )}
@@ -641,6 +691,11 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                         </tbody>
                       </table>
                     </div>
+                    {section.summary && (
+                      <div className="bg-[#F6F4EE] px-4 py-2 text-[11px] text-gray-700 font-medium italic font-poppins border-t border-[#D3D1C7]">
+                        {section.summary}
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -8,6 +8,16 @@ interface MarketTabProps {
 const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
   const detailedMarketAnalysis =
     productData.extendedContent?.detailedMarketAnalysis;
+  const hasTargetAudienceIndustry =
+    !!detailedMarketAnalysis?.targetAudience?.some((row) => row.industry);
+  const hasTargetAudienceUrgency =
+    !!detailedMarketAnalysis?.targetAudience?.some((row) => row.urgency);
+  const hasTargetAudiencePrimaryBuyer =
+    !!detailedMarketAnalysis?.targetAudience?.some((row) => row.primaryBuyer);
+  const hasTargetAudienceTriggerToSwitch =
+    !!detailedMarketAnalysis?.targetAudience?.some(
+      (row) => row.triggerToSwitch
+    );
   const hasCpMarketSheet =
     productData.name === "CP Management" &&
     (!!detailedMarketAnalysis?.targetAudience?.length ||
@@ -65,22 +75,22 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                         key={index}
                         className={`align-top ${index % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                       >
-                        <td className="border border-[#D3D1C7] px-3 py-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-semibold text-[#cdcdcd] whitespace-pre-line break-words">
                           {row.segment}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
                           {row.demographics}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
                           {row.industry}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
                           {row.painPoints}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
                           {row.notSolved}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
                           {row.goodEnough}
                         </td>
                       </tr>
@@ -323,30 +333,29 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                     India & Global)
                   </div>
                   <div className="bg-transparent">
-                    <table className="w-full border-collapse text-[9px] leading-[1.2] table-fixed font-poppins">
+                    <table className="w-full border-collapse text-[12px] leading-[1.45] table-fixed font-poppins">
                       <thead>
                         <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-bold uppercase text-center">
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[16%]">
-                            Industry & Company Profile
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
+                            Audience Segment
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[22%]">
-                            Key Pain Points
-                            <br />
-                            (Referral + Loyalty + Home Loan lens)
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
+                            Demographics & Industry
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[18%]">
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[12%]">
+                            Geography
+                          </th>
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[20%]">
+                            3 Key Pain Points
+                          </th>
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">
                             What Happens If NOT Solved
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[16%]">
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
                             'Good Enough' Today
-                            <br />
-                            (Status quo they live with)
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[18%]">
-                            Revenue Opportunity for Post Sales
-                          </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[10%]">
-                            Urgency Signal
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
+                            Trigger to Switch
                           </th>
                         </tr>
                       </thead>
@@ -354,23 +363,26 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                         {productData.extendedContent.detailedMarketAnalysis.targetAudience.map(
                           (t, i) => (
                             <tr key={i} className="align-top">
-                              <td className="border border-[#D3D1C7] p-2 font-bold text-[#2C2C2C] bg-white whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 font-bold text-[#2C2C2C] bg-white whitespace-pre-line">
                                 {t.segment}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line">
+                                {t.demographics}
+                              </td>
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line">
+                                {t.geography || ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold whitespace-pre-line">
                                 {t.painPoints}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-medium whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line">
                                 {t.notSolved}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C]/80 font-medium whitespace-pre-line italic">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line italic">
                                 {t.goodEnough}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#374151] font-bold whitespace-pre-line">
-                                {t.revenueOpportunity}
-                              </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#b91c1c] font-bold text-center text-[8px] whitespace-pre-line">
-                                {t.urgencySignal}
+                              <td className="border border-[#D3D1C7] p-3 text-[#4B5563] font-medium whitespace-pre-line">
+                                {t.triggerToSwitch || ""}
                               </td>
                             </tr>
                           )
@@ -455,38 +467,29 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 .competitorMapping?.length && (
                 <div className="border-x border-gray-400">
                   <div className="bg-transparent">
-                    <table className="w-full border-collapse text-[8px] leading-[1.1] table-fixed font-poppins">
+                    <table className="w-full border-collapse text-[12px] leading-[1.45] table-fixed font-poppins">
                       <thead>
                         <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-bold uppercase text-center">
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[10%]">
-                            Competitor
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
+                            Competitor Name / Type
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[11%]">
-                            Primary Target
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[13%]">
+                            Primary Target Customer
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[11%]">
-                            Pricing Model
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
+                            Pricing Model & Approx. Price Point
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[11%]">
-                            How Buyers Find Them
-                          </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[11%]">
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">
                             Strongest Features & USPs
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[10%]">
-                            Their Weakness
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">
+                            Weaknesses
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[11%]">
-                            The Gap They Leave (Our Opportunity)
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
+                            Market Gap & How We Exploit It
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[10%]">
-                            Their Innovations (Our Threat)
-                          </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[8%]">
-                            Pricing Risk to Us
-                          </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[7%]">
-                            Overall Threat Level
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
+                            Their Innovations That Threaten Us
                           </th>
                         </tr>
                       </thead>
@@ -494,45 +497,36 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                         {productData.extendedContent.detailedMarketAnalysis.competitorMapping.map(
                           (c, i) => (
                             <tr key={i} className="align-top">
-                              <td className="border border-[#D3D1C7] p-2 font-bold text-[#2C2C2C] bg-white">
+                              <td className="border border-[#D3D1C7] p-3 font-bold text-[#2C2C2C] bg-white whitespace-pre-line">
                                 {c.name}
                                 {c.isPrimary && (
-                                  <div className="text-[7px] text-red-600 mt-1 uppercase font-black">
+                                  <div className="text-[10px] text-red-600 mt-1 uppercase font-black">
                                     ★ Primary Direct Competitor
                                   </div>
                                 )}
                                 {c.location && (
-                                  <div className="text-[7px] text-gray-400 font-medium mt-1 uppercase italic">
-                                    📍 {c.location}
+                                  <div className="text-[10px] text-gray-500 font-medium mt-1 uppercase italic whitespace-pre-line">
+                                    {c.location}
                                   </div>
                                 )}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold whitespace-pre-line">
                                 {c.targetCustomer}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-medium whitespace-pre-line italic">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line italic">
                                 {c.pricing}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C]/80 font-medium whitespace-pre-line">
-                                {c.discovery}
+                              <td className="border border-[#D3D1C7] p-3 text-[#798C5E] font-bold whitespace-pre-line">
+                                {c.strongestFeatures}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#798C5E] font-bold whitespace-pre-line">
-                                • {c.strongestFeatures}
+                              <td className="border border-[#D3D1C7] p-3 text-[#b91c1c] font-bold whitespace-pre-line">
+                                {c.weakness}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#b91c1c] font-bold whitespace-pre-line">
-                                • {c.weakness}
-                              </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#4B5563] font-bold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 text-[#4B5563] font-bold whitespace-pre-line">
                                 {c.marketGaps}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#D97706] font-bold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 text-[#D97706] font-bold whitespace-pre-line">
                                 {c.threats}
-                              </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold text-center">
-                                {c.pricingRisk || "MEDIUM"}
-                              </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#b91c1c] font-black text-center text-[9px] uppercase leading-tight">
-                                {c.threatLevel || "HIGH"}
                               </td>
                             </tr>
                           )
@@ -561,37 +555,42 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 PART A — TARGET AUDIENCE (India and GCC Only)
               </div>
               <div className="overflow-x-auto border border-[#C4B89D] rounded-xl ">
-                <table className="w-full border-collapse text-[10px] bg-transparent text-left font-poppins">
+                <table className="min-w-[1400px] table-auto border-collapse text-[13px] leading-relaxed bg-transparent text-left font-poppins">
                   <thead>
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
-                      <th className="border border-[#C4B89D] p-3 w-[15%]">
+                      <th className="border border-[#C4B89D] p-3 min-w-[190px]">
                         Audience Segment
                       </th>
-                      <th className="border border-[#C4B89D] p-3 w-[15%]">
+                      <th className="border border-[#C4B89D] p-3 min-w-[220px]">
                         Demographics
                       </th>
-                      <th className="border border-[#C4B89D] p-3 w-[15%]">
-                        Industry
-                      </th>
-                      <th className="border border-[#C4B89D] p-3 w-[20%]">
+                      {hasTargetAudienceIndustry && (
+                        <th className="border border-[#C4B89D] p-3 min-w-[130px]">
+                          Industry
+                        </th>
+                      )}
+                      <th className="border border-[#C4B89D] p-3 min-w-[280px]">
                         Pain Points (3 per segment)
                       </th>
-                      <th className="border border-[#C4B89D] p-3 w-[15%]">
+                      <th className="border border-[#C4B89D] p-3 min-w-[240px]">
                         What Happens If NOT Solved
                       </th>
-                      <th className="border border-[#C4B89D] p-3 w-[15%]">
+                      <th className="border border-[#C4B89D] p-3 min-w-[220px]">
                         What 'Good Enough' Looks Like Today
                       </th>
-                      {productData.extendedContent.detailedMarketAnalysis
-                        .targetAudience[0]?.urgency && (
-                        <th className="border border-[#C4B89D] p-3 w-[5%]">
+                      {hasTargetAudienceUrgency && (
+                        <th className="border border-[#C4B89D] p-3 min-w-[90px]">
                           Urgency
                         </th>
                       )}
-                      {productData.extendedContent.detailedMarketAnalysis
-                        .targetAudience[0]?.primaryBuyer && (
-                        <th className="border border-[#C4B89D] p-3 w-[10%]">
+                      {hasTargetAudiencePrimaryBuyer && (
+                        <th className="border border-[#C4B89D] p-3 min-w-[150px]">
                           Primary Buyer
+                        </th>
+                      )}
+                      {hasTargetAudienceTriggerToSwitch && (
+                        <th className="border border-[#C4B89D] p-3 min-w-[280px]">
+                          Trigger to Switch
                         </th>
                       )}
                     </tr>
@@ -606,9 +605,11 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                           <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed">
                             {t.demographics}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C] font-semibold">
-                            {t.industry}
-                          </td>
+                          {hasTargetAudienceIndustry && (
+                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C] font-semibold">
+                              {t.industry || ""}
+                            </td>
+                          )}
                           <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
                             {t.painPoints}
                           </td>
@@ -618,16 +619,21 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                           <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/60 font-medium">
                             {t.goodEnough}
                           </td>
-                          {t.urgency && (
+                          {hasTargetAudienceUrgency && (
                             <td
                               className={`border border-[#C4B89D] p-3 font-semibold text-center ${t.urgency === "HIGH" ? "text-[#798C5E] bg-[#F6F4EE]" : "text-[#2C2C2C]/80"}`}
                             >
-                              {t.urgency}
+                              {t.urgency || ""}
                             </td>
                           )}
-                          {t.primaryBuyer && (
+                          {hasTargetAudiencePrimaryBuyer && (
                             <td className="border border-[#C4B89D] p-3 text-gray-700 font-semibold">
-                              {t.primaryBuyer}
+                              {t.primaryBuyer || ""}
+                            </td>
+                          )}
+                          {hasTargetAudienceTriggerToSwitch && (
+                            <td className="border border-[#C4B89D] p-3 text-[#4B5563] font-medium leading-relaxed whitespace-pre-line">
+                              {t.triggerToSwitch || ""}
                             </td>
                           )}
                         </tr>
@@ -646,7 +652,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 PART A.2 — COMPANY-LEVEL PAIN POINTS (India and GCC)
               </div>
               <div className="overflow-x-auto border border-[#C4B89D] rounded-xl ">
-                <table className="w-full border-collapse text-[10px] bg-transparent text-left font-poppins">
+                <table className="w-full border-collapse text-[13px] leading-relaxed bg-transparent text-left font-poppins">
                   <thead>
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
                       <th className="border border-[#C4B89D] p-3 w-[20%]">
@@ -670,19 +676,19 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                     {productData.extendedContent.detailedMarketAnalysis.companyPainPoints.map(
                       (c, i) => (
                         <tr key={i} className="">
-                          <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 bg-white">
+                          <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 bg-white whitespace-pre-line break-words">
                             {c.companyType}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
+                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic whitespace-pre-line break-words">
                             {c.pain1}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
+                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic whitespace-pre-line break-words">
                             {c.pain2}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
+                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed italic whitespace-pre-line break-words">
                             {c.pain3}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#C72030] font-semibold leading-relaxed">
+                          <td className="border border-[#C4B89D] p-3 text-[#C72030] font-semibold leading-relaxed whitespace-pre-line break-words">
                             {c.costRisk}
                           </td>
                         </tr>
@@ -701,7 +707,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 PART B — COMPETITOR MAPPING (India and GCC)
               </div>
               <div className="overflow-x-auto border border-[#C4B89D] rounded-xl ">
-                <table className="w-full border-collapse text-[10px] bg-transparent text-left font-poppins">
+                <table className="min-w-[1500px] table-fixed border-collapse text-[13px] leading-relaxed bg-transparent text-left font-poppins">
                   <thead>
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
                       <th className="border border-[#C4B89D] p-3">
@@ -734,28 +740,33 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                     {productData.extendedContent.detailedMarketAnalysis.competitorMapping.map(
                       (c, i) => (
                         <tr key={i} className="">
-                          <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 bg-transparent whitespace-pre-line break-words">
                             {c.name}
+                            {c.location && (
+                              <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[#6B7280]">
+                                {c.location}
+                              </div>
+                            )}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed bg-transparent whitespace-pre-line break-words">
                             {c.targetCustomer}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C] italic bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C] italic bg-transparent whitespace-pre-line break-words">
                             {c.pricing}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed bg-transparent whitespace-pre-line break-words">
                             {c.discovery}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#798C5E] font-semibold leading-relaxed bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 text-[#798C5E] font-semibold leading-relaxed bg-transparent whitespace-pre-line break-words">
                             {c.strongestFeatures}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-red-700 font-semibold leading-relaxed bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 text-red-700 font-semibold leading-relaxed bg-transparent whitespace-pre-line break-words">
                             {c.weakness}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#4B5563] font-semibold leading-relaxed bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 text-[#4B5563] font-semibold leading-relaxed bg-transparent whitespace-pre-line break-words">
                             {c.marketGaps}
                           </td>
-                          <td className="border border-[#C4B89D] p-3 text-[#6B7280] font-medium italic bg-transparent">
+                          <td className="border border-[#C4B89D] p-3 text-[#6B7280] font-medium italic bg-transparent whitespace-pre-line break-words">
                             {c.threats}
                           </td>
                         </tr>
@@ -777,7 +788,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 </div>
                 <div className="overflow-x-auto border border-[#C4B89D] bg-transparent p-3  rounded-b-xl">
                   <table
-                    className="w-full border-collapse text-[10px] bg-transparent text-center font-poppins rounded-lg overflow-hidden border border-[#D3D1C7]"
+                    className="w-full border-collapse text-[13px] leading-relaxed bg-transparent text-center font-poppins rounded-lg overflow-hidden border border-[#D3D1C7]"
                     style={{}}
                   >
                     <thead>
@@ -809,25 +820,25 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                       {productData.extendedContent.detailedMarketAnalysis.marketSize.map(
                         (m, i) => (
                           <tr key={i} className="">
-                            <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 uppercase bg-transparent/50">
+                            <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 uppercase bg-gray-50 whitespace-normal break-words">
                               {m.segment}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium">
+                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium whitespace-normal break-words">
                               {m.val2425}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C] font-semibold">
+                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C] font-semibold whitespace-normal break-words">
                               {m.val26}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium italic">
+                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium italic whitespace-normal break-words">
                               {m.forecast}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 text-center font-semibold text-[#4B5563]">
+                            <td className="border border-[#C4B89D] p-3 text-center font-semibold text-[#4B5563] whitespace-normal break-words">
                               {m.cagr}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium text-left">
+                            <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium text-left whitespace-normal break-words">
                               {m.driver}
                             </td>
-                            <td className="border border-[#C4B89D] p-3 text-[#4B5563] leading-relaxed font-semibold text-left">
+                            <td className="border border-[#C4B89D] p-3 text-[#4B5563] leading-relaxed font-semibold text-left whitespace-normal break-words">
                               {m.india}
                             </td>
                           </tr>
@@ -849,7 +860,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                   Secondary)
                 </div>
                 <div className="overflow-x-auto border border-[#D3D1C7] border-t-0">
-                  <table className="w-full border-collapse text-[9px] bg-transparent font-poppins leading-[1.25]">
+                  <table className="w-full border-collapse text-[13px] leading-relaxed bg-transparent font-poppins">
                     <thead>
                       <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
                         <th className="border border-[#D3D1C7] px-2 py-2 w-[9%] text-left">
@@ -888,31 +899,31 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                             key={i}
                             className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                           >
-                            <td className="border border-[#D3D1C7] px-2 py-2 font-bold text-[#2C2C2C]">
+                            <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] whitespace-pre-line break-words">
                               {comp.name}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C]/70 font-medium text-center">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/70 font-medium text-center whitespace-pre-line break-words">
                               {comp.hq}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-gray-700 font-semibold text-center">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-gray-700 font-semibold text-center whitespace-pre-line break-words">
                               {comp.indiaPrice}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C]/70 font-medium text-center italic">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/70 font-medium text-center italic whitespace-pre-line break-words">
                               {comp.globalPrice}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#374151] font-semibold leading-snug">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#374151] font-semibold leading-snug whitespace-pre-line break-words">
                               {comp.strength}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-red-700 font-semibold leading-snug">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-red-700 font-semibold leading-snug whitespace-pre-line break-words">
                               {comp.weakness}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C]/80 font-medium leading-snug">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
                               {comp.indiaPresence ?? ""}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#4B5563] font-semibold leading-snug">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold leading-snug whitespace-pre-line break-words">
                               {comp.targetSegment ?? ""}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#374151] font-medium leading-snug italic">
+                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#374151] font-medium leading-snug italic whitespace-pre-line break-words">
                               {comp.differentiator2026 ?? ""}
                             </td>
                           </tr>
@@ -944,7 +955,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 Part 2 — Top 10 Industries by VMS Relevance (India)
               </div>
               <div className="overflow-x-auto border border-[#D3D1C7] border-t-0">
-                <table className="w-full border-collapse text-[9px] bg-transparent font-poppins leading-[1.25]">
+                <table className="w-full border-collapse text-[13px] leading-relaxed bg-transparent font-poppins">
                   <thead>
                     <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
                       <th className="border border-[#D3D1C7] px-2 py-2 w-[4%] text-center">
@@ -980,28 +991,28 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                           key={i}
                           className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                         >
-                          <td className="border border-[#D3D1C7] px-2 py-2 font-bold text-gray-600 text-center">
+                          <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-gray-600 text-center whitespace-pre-line break-words">
                             {ind.rank ?? i + 1}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 font-semibold text-[#2C2C2C]">
+                          <td className="border border-[#D3D1C7] px-3 py-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
                             {ind.industry}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-center font-semibold text-[#374151]">
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-center font-semibold text-[#374151] whitespace-pre-line break-words">
                             {ind.indiaRelevance ?? ""}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C]/80 font-medium">
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
                             {ind.vendorComplexity ?? ""}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C]/80 font-medium leading-snug">
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
                             {ind.keyVmsUseCase ?? ind.buyReason}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-center font-semibold text-[#374151]">
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-center font-semibold text-[#374151] whitespace-pre-line break-words">
                             {ind.approxVendorCount ?? ""}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C]/80 font-medium leading-snug">
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium leading-snug whitespace-pre-line break-words">
                             {ind.complianceNeed ?? ""}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#4B5563] font-semibold leading-snug">
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold leading-snug whitespace-pre-line break-words">
                             {ind.growthDriver2026 ?? ""}
                           </td>
                         </tr>

@@ -48,6 +48,7 @@ import {
 // --- DATA ---
 const productData = {
   name: "Snag 360",
+  excelLikeFeatures: true,
   description:
     "Snag 360 is a Mobile based QC Application specially designed and developed for the Real Estate industry. Its objective is to deliver a zero defect product to the End consumer.",
   brief:
@@ -927,6 +928,45 @@ const productData = {
       ],
       competitorSummary:
         "Snag 360 is the ONLY India-built snagging platform offering on-premise data sovereignty + ad-hoc snag logging + multi-stage multi-level configurable checklists + positive/negative scoring. FalconBrick is nearest India competitor but lacks 4 of 8 USP features. Procore and ACC are over-engineered for pure QC use cases and priced 3-5x above Snag 360 target positioning.",
+    },
+    detailedPricing: {
+      isSnagPricing: true,
+      snagFeatureComparison: [
+        { feature: "On-premise / client-side data storage", snag360: "Yes - core architecture", falconBrick: "No", procore: "No", novade: "No", snagR: "No", safetyCulture: "No", status: "AHEAD" },
+        { feature: "Ad-hoc snag logging outside checklist", snag360: "Yes - USP feature", falconBrick: "No", procore: "Partial", novade: "No", snagR: "Yes", safetyCulture: "No", status: "AHEAD" },
+        { feature: "Multi-stage project configuration", snag360: "Yes - unlimited stages", falconBrick: "Yes", procore: "Yes", novade: "Yes", snagR: "Limited", safetyCulture: "No", status: "AT PAR" },
+        { feature: "Multi-level checkpoints per stage", snag360: "Yes - USP feature", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AHEAD" },
+        { feature: "Positive / negative scoring engine", snag360: "Yes - USP feature", falconBrick: "No", procore: "No", novade: "No", snagR: "No", safetyCulture: "No", status: "AHEAD" },
+        { feature: "Photo annotation (in-app)", snag360: "Yes - arrows, text, circles", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "Yes", safetyCulture: "Yes", status: "AT PAR" },
+        { feature: "Dynamic workflow engine (stage gates)", snag360: "Yes - USP feature", falconBrick: "Partial", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
+        { feature: "Real-time live dashboard", snag360: "Yes - USP feature", falconBrick: "Yes", procore: "Yes", novade: "Yes", snagR: "Limited", safetyCulture: "Yes", status: "AT PAR" },
+        { feature: "DPR auto-generation", snag360: "Yes", falconBrick: "Yes", procore: "No", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AHEAD" },
+        { feature: "FM handover support module", snag360: "Yes", falconBrick: "No", procore: "No", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AHEAD" },
+        { feature: "Pre-handover inspection workflow", snag360: "Yes", falconBrick: "Yes", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
+        { feature: "Enterprise integrations (SAP, SFDC)", snag360: "Yes", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
+        { feature: "Offline mobile functionality", snag360: "Partial", falconBrick: "Partial", procore: "Yes", novade: "Yes", snagR: "Yes", safetyCulture: "Yes", status: "GAP" },
+        { feature: "BIM floor plan integration", snag360: "No", falconBrick: "No", procore: "Yes", novade: "Yes", snagR: "No", safetyCulture: "No", status: "GAP" },
+        { feature: "AI defect detection from photos", snag360: "No", falconBrick: "No", procore: "Yes (Procore Insights)", novade: "Partial", snagR: "No", safetyCulture: "No", status: "GAP" },
+        { feature: "Multilingual support (Hindi, regional)", snag360: "No", falconBrick: "No", procore: "No", novade: "Yes", snagR: "No", safetyCulture: "No", status: "AT PAR" },
+        { feature: "India RERA compliance features", snag360: "Partial", falconBrick: "Yes", procore: "No", novade: "No", snagR: "No", safetyCulture: "No", status: "AT PAR" }
+      ],
+      pricingLandscapeRows: [
+        { tier: "Snag 360 - Starter", model: "Per user per month (annual billing)", indiaPrice: "INR 600-1,200", globalPrice: "USD 8-15", included: "Up to 3 projects, basic checklist, snag management, standard dashboard", segment: "Boutique developers, small EPC firms, pilot projects" },
+        { tier: "Snag 360 - Professional", model: "Per user per month (annual billing)", indiaPrice: "INR 1,500-2,500", globalPrice: "USD 18-30", included: "Unlimited projects, multi-stage config, ad-hoc logging, photo annotation, DPR, real-time dashboard", segment: "Mid-size real estate developers, EPC contractors" },
+        { tier: "Snag 360 - Enterprise", model: "Custom annual contract", indiaPrice: "INR 3,000-6,000+", globalPrice: "USD 35-70+", included: "All features + SAP/SFDC integrations, on-premise deployment, SLA support, custom reporting, upsell", segment: "Large developers (top 100), government EPC, FM organizations" },
+        { tier: "FalconBrick (benchmark)", model: "Per user per month", indiaPrice: "INR 1,500-4,000", globalPrice: "Not available globally", included: "Construction management + basic QC; limited snagging depth", segment: "Residential real estate India" },
+        { tier: "Procore (benchmark)", model: "Annual contract per user", indiaPrice: "INR 8,000-15,000", globalPrice: "USD 99+ (custom)", included: "Full construction PM + snagging; deep integrations; complex setup", segment: "Large GCs, global real estate" },
+        { tier: "SnagR (benchmark)", model: "Per user per month", indiaPrice: "INR 1,400-3,200", globalPrice: "USD 19-39", included: "Purpose-built snagging; mobile-first; no workflow engine depth", segment: "SME construction, UK/Europe focus" },
+        { tier: "SafetyCulture (benchmark)", model: "Per user per month", indiaPrice: "INR 2,500-5,000", globalPrice: "USD 24+", included: "Safety and quality audits; template library; not snagging-specific", segment: "Safety teams, multi-industry" }
+      ],
+      competitivePositioningStatement: "Snag 360 occupies the PRECISION COMPLIANCE quadrant: purpose-built snagging depth at mid-market price, with on-premise data sovereignty that no other competitor offers. Against FalconBrick: Snag 360 wins on workflow sophistication and data control. Against Procore/ACC: Snag 360 wins on price, simplicity, and deployment speed. Against SnagR/SafetyCulture: Snag 360 wins on India-market fit, data sovereignty, and handover management depth. No other product in the market simultaneously delivers all four USPs: on-premise storage + ad-hoc logging + multi-level scoring + dynamic stage gates.",
+      valuePropositions: [
+        { role: "Quality Head / VP Projects", prop: "Eliminate project handover delays caused by untracked snags and failed quality gates", outcome: "30-40% reduction in snag backlog at handover; 2-3 week faster final completion", feature: "Dynamic Workflow Engine + Real-time Dashboard" },
+        { role: "Site Inspector", prop: "Replace paper checklists and WhatsApp photos with structured, evidence-backed digital logging", outcome: "3-5 hours saved per day per site team; zero lost snag records", feature: "Ad-hoc Snag Logging + Photo Annotation" },
+        { role: "Project Head / MD", prop: "Real-time visibility into quality health across all projects without manual reporting", outcome: "Zero surprise defect discoveries at customer walkthrough; RERA complaint risk reduced", feature: "Real-time Dashboard + Stage Gate Validation" },
+        { role: "IT / CIO", prop: "Deploy quality management software with all data on company-owned servers - no third-party cloud exposure", outcome: "Full data sovereignty; passes internal security audit; no vendor lock-in on data", feature: "On-premise architecture + SAP/SFDC integration" },
+        { role: "FM Head", prop: "Receive fully documented digital handover package with full snag history and quality scores per unit", outcome: "FM onboarding time reduced by 50%; maintenance team has complete unit history", feature: "FM Handover Support + HOTO Module" }
+      ]
     },
     featuresAndPricing: {
       overview:

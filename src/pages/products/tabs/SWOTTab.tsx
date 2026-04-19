@@ -6,13 +6,17 @@ interface SWOTTabProps {
 }
 
 const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
+  const isCpManagement = productData.name === "CP Management";
+
   return (
     <div className="space-y-6 animate-fade-in">
       {productData.excelLikeSwot ? (
         <div className="bg-transparent p-3">
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-bold font-poppins uppercase tracking-tight text-[16px] text-center">
+              <div
+                className={`bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-sm font-semibold tracking-wide text-left" : "font-bold tracking-tight text-[16px] text-center"}`}
+              >
                 {productData.name} - SWOT Analysis
               </div>
 

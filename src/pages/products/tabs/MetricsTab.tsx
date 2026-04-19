@@ -8,6 +8,7 @@ interface MetricsTabProps {
 const MetricsTab: React.FC<MetricsTabProps> = ({ productData }) => {
   const sheetSections =
     productData.extendedContent?.detailedMetrics?.sheet?.sections ?? [];
+  const isCpManagement = productData.name === "CP Management";
 
   return (
     <>
@@ -15,7 +16,9 @@ const MetricsTab: React.FC<MetricsTabProps> = ({ productData }) => {
         <div className="bg-transparent p-3">
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
-              <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-bold tracking-tight text-[16px] text-center font-poppins uppercase">
+              <div
+                className={`bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-left text-sm font-semibold tracking-wide" : "text-center text-[16px] font-bold tracking-tight"}`}
+              >
                 {productData.extendedContent?.detailedMetrics?.sheet?.title ||
                   `${productData.name} — Performance Metrics`}
               </div>

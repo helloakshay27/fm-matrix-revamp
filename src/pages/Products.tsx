@@ -847,6 +847,12 @@ const Products: React.FC = () => {
           padding-top: 12px !important;
           padding-bottom: 12px !important;
           border-right: 1px solid #e2e8f0 !important;
+          white-space: normal !important;
+          word-wrap: break-word !important;
+        }
+        th, [data-radix-scroll-area-viewport] thead tr th {
+          white-space: normal !important;
+          word-wrap: break-word !important;
         }
         /* Sharp Edges - No Rounding */
         * {
@@ -888,7 +894,7 @@ const Products: React.FC = () => {
         </div>
 
         {/* Table Container */}
-        <div className="bg-white shadow-sm border border-[#D3D1C7] overflow-x-auto w-full">
+        <div className="bg-white shadow-sm overflow-x-auto w-full">
           <EnhancedTable
             data={filteredProducts}
             columns={columns}

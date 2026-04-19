@@ -4,6 +4,20 @@ export interface ProductData {
   name: string;
   description: string;
   brief: string;
+  tabOrder?: (
+    | "summary"
+    | "features"
+    | "usecases"
+    | "market"
+    | "pricing"
+    | "swot"
+    | "roadmap"
+    | "enhancements"
+    | "metrics"
+    | "business"
+    | "gtm"
+    | "assets"
+  )[];
   excelLikeSummary?: boolean;
   excelLikeFeatures?: boolean;
   excelLikeUseCases?: boolean;
@@ -117,7 +131,9 @@ export interface ProductData {
         goodEnough: string;
         revenueOpportunity?: string;
         urgencySignal?: string;
+        triggerToSwitch?: string;
         demographics?: string;
+        geography?: string;
         industry?: string;
         urgency?: string;
         primaryBuyer?: string;
@@ -161,6 +177,7 @@ export interface ProductData {
       competitorSummary?: string;
     };
     detailedPricing?: {
+      isSnagPricing?: boolean;
       pricingMatrixSubtitle?: string;
       pricingFeatureRows?: {
         capability: string;
@@ -206,6 +223,9 @@ export interface ProductData {
         ourProduct: string;
         summary: string;
         status: string;
+        liveStatus?: string;
+        whereWeStand?: string;
+        dealImpact?: string;
         vmsStatus?: string;
         competitors?: {
           name: string;
@@ -224,6 +244,31 @@ export interface ProductData {
         price?: string;
         modules?: string;
       }[];
+      snagFeatureComparison?: {
+        feature: string;
+        snag360?: string;
+        snag?: string;
+        falconBrick?: string;
+        falcon?: string;
+        procore: string;
+        novade: string;
+        snagR: string;
+        safetyCulture?: string;
+        safety?: string;
+        status: string;
+      }[];
+      pricingLandscapeRows?: {
+        tier: string;
+        model: string;
+        indiaPrice?: string;
+        india?: string;
+        globalPrice?: string;
+        global?: string;
+        included: string;
+        segment?: string;
+        target?: string;
+      }[];
+      competitivePositioningStatement?: string;
       competitorMatrix?: {
         competitors: string[];
         rows: {
@@ -258,6 +303,13 @@ export interface ProductData {
         segment: string;
         weakness: string;
         sharpened: string;
+        role?: string;
+        prop?: string;
+        outcome?: string;
+        feature?: string;
+        rank?: string;
+        communicatesToday?: string;
+        proofPoint?: string;
         proposition?: string;
         quantifiedBenefit?: string;
         targetBuyer?: string;
@@ -288,6 +340,9 @@ export interface ProductData {
         frequency?: string;
         modules?: string;
         relevantFeatures?: string;
+        keyPainWithoutTool?: string;
+        collaborationWith?: string;
+        successMetric?: string;
       }[];
     };
     detailedRoadmap?: {
@@ -330,6 +385,7 @@ export interface ProductData {
           whatItIs: string;
           whyItMatters: string;
           unlockedSegment: string;
+          successMetric?: string;
           effort: string;
           owner: string;
           impact?: string;
@@ -357,7 +413,7 @@ export interface ProductData {
       }[];
     };
     detailedBusinessPlan?: {
-      planQuestions: { id?: string; question: string; answer: string; source?: string; flag: string; colorContext?: "blue" | "red" | "green" | "purple" | "teal" }[];
+      planQuestions: { id?: string; question: string; answer: string; source?: string; flag: string; colorContext?: "blue" | "red" | "green" | "purple" | "teal" | "yellow" | "orange" }[];
       founderChecklist?: { id?: string; item: string; verify: string; status: string }[];
     };
     detailedGTM?: {

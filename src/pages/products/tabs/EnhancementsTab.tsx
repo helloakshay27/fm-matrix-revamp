@@ -6,17 +6,34 @@ interface EnhancementsTabProps {
 }
 
 const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
+  const innovationLayer =
+    productData.extendedContent?.detailedRoadmap?.innovationLayer ?? [];
   const enhancementRoadmap =
     productData.extendedContent?.detailedRoadmap?.enhancementRoadmap ?? [];
   const top5Impact =
     productData.extendedContent?.detailedRoadmap?.top5Impact ?? [];
+  const displayEnhancements =
+    enhancementRoadmap.length > 0
+      ? enhancementRoadmap
+      : innovationLayer.map((item) => ({
+          rowId: `${item.id}`,
+          featureName: item.name,
+          category: item.category,
+          description: item.description,
+          competitorLeapfrogged: item.leapfrog,
+          impact: item.priority,
+          currentStatus: "",
+          enhancedVersion: "",
+          integrationType: "",
+        }));
   const hasModule = enhancementRoadmap.some((item) => item.module?.trim());
-  const hasRowId = enhancementRoadmap.some((item) => item.rowId?.trim());
+  const hasInnovationShape = innovationLayer.length > 0;
+  const hasRowId = displayEnhancements.some((item) => item.rowId?.trim());
   const hasEffort = enhancementRoadmap.some((item) => item.effort?.trim());
-  const hasImpact = enhancementRoadmap.some((item) => item.impact?.trim());
+  const hasImpact = displayEnhancements.some((item) => item.impact?.trim());
   const hasPriority = enhancementRoadmap.some((item) => item.priority?.trim());
   const hasOwner = enhancementRoadmap.some((item) => item.owner?.trim());
-  const hasVendorEnhancementShape = enhancementRoadmap.some(
+  const hasVendorEnhancementShape = displayEnhancements.some(
     (item) =>
       item.category?.trim() ||
       item.description?.trim() ||
@@ -39,15 +56,17 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
       </div>
 
       {/* 1. High-Impact Enhancements Matrix */}
-      {enhancementRoadmap.length > 0 && (
+      {displayEnhancements.length > 0 && (
         <div className="space-y-4">
           <div className="border border-[#C4B89D] bg-white rounded-xl p-3">
             <div className="w-full bg-white space-y-3">
               <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-bold font-poppins uppercase tracking-tight text-[14px] text-center">
-                {productData.name} - Feature Enhancement Roadmap
+                {productData.name} - Future Enhancement Roadmap
               </div>
               <div className="bg-transparent border border-[#D3D1C7] px-4 py-2 text-[11px] leading-[1.5] text-gray-600 italic font-medium font-poppins text-center">
-                {hasVendorEnhancementShape
+                {hasInnovationShape
+                  ? "Future-state innovations only. Minimum 5 AI/LLM features. Minimum 3 MCP/automation features. High-impact rows highlighted."
+                  : hasVendorEnhancementShape
                   ? "25+ future enhancements. AI/ML and MCP/automation innovations highlighted. Not duplicating product roadmap items."
                   : "Each row shows: current behaviour to enhanced behaviour with integration type"}
               </div>
@@ -62,7 +81,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                           </th>
                         )}
                         <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[18%]">
-                          Enhancement
+                          Enhancement Name
                         </th>
                         <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[10%]">
                           Category
@@ -70,21 +89,21 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                         <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[40%]">
                           Description
                         </th>
-                        <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[14%]">
-                          Target User
+                        <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[22%]">
+                          {hasInnovationShape ? "Business Value" : "Target User"}
                         </th>
                         <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[20%]">
                           Competitor Leapfrogged
                         </th>
                         {hasImpact && (
                           <th className="border border-[#E5E7EB] bg-white px-3 py-3 text-center w-[8%]">
-                            Impact
+                            {hasInnovationShape ? "Priority" : "Impact"}
                           </th>
                         )}
                       </tr>
                     </thead>
                     <tbody>
-                      {enhancementRoadmap.map((item, idx) => (
+                      {displayEnhancements.map((item, idx) => (
                         <tr
                           key={idx}
                           className={`align-top ${idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
@@ -104,7 +123,9 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                             {item.description}
                           </td>
                           <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {item.targetUser}
+                            {hasInnovationShape
+                              ? innovationLayer[idx]?.value
+                              : item.targetUser}
                           </td>
                           <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {item.competitorLeapfrogged}
@@ -167,7 +188,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {enhancementRoadmap.map((item, idx) => (
+                        {enhancementRoadmap.map((item, idx) => (
                         <tr
                           key={idx}
                           className={`align-top ${idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
@@ -329,13 +350,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
         </div>
       )}
 
-      {/* Empty State */}
-      {!productData.extendedContent?.detailedRoadmap?.enhancementRoadmap &&
-        !productData.extendedContent?.detailedEnhancements && (
-          <div className="p-20 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[3rem]">
-            Enhancement Matrix Data Coming Soon
-          </div>
-        )}
+
     </div>
   );
 };
