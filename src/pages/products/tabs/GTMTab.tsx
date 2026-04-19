@@ -10,24 +10,22 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
     <>
       {productData.excelLikeGtm ? (
         <div className="bg-transparent p-3">
-          <div
-            className="w-full rounded-md border border-[#C4B89D] bg-white"
-          >
+          <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-bold font-poppins uppercase tracking-tight text-[14px] text-center">
+              <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-bold font-poppins uppercase tracking-tight text-[14px] text-center">
                 {productData.extendedContent?.detailedGTM?.sheet?.title ||
                   "Post Possession — Go-to-market Strategy"}
               </div>
 
-              {productData.extendedContent?.detailedGTM?.sheet
-                ?.targetGroups?.length ? (
+              {productData.extendedContent?.detailedGTM?.sheet?.targetGroups
+                ?.length ? (
                 <div className="mt-3">
                   {/* Sheet tables */}
                   <div className="w-full space-y-4">
                     {productData.extendedContent.detailedGTM.sheet.targetGroups.map(
                       (tg, tgIdx) => (
                         <div key={tgIdx} className="space-y-3">
-                          <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-4 py-2 text-[13px] font-bold uppercase tracking-wide font-poppins">
+                          <div className="bg-white text-[#2C2C2C] border-b border-[#D3D1C7] px-4 py-2 text-[13px] font-bold uppercase tracking-wide font-poppins">
                             {tg.title}
                           </div>
 
@@ -36,49 +34,50 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                               key={sIdx}
                               className="bg-white border border-[#E5E7EB]"
                             >
-                              {sec.columns.length === 0 && sec.rows.length === 0 ? (
+                              {sec.columns.length === 0 &&
+                              sec.rows.length === 0 ? (
                                 <div className="px-4 py-2 text-[11px] font-medium text-gray-700 font-poppins italic leading-[1.5] break-words">
                                   {sec.title}
                                 </div>
                               ) : (
-                              <>
-                              <div className="border-b border-[#E5E7EB] bg-white px-3 py-2 text-[11px] font-bold uppercase text-gray-700 font-poppins">
-                                {sec.title}
-                              </div>
-                              <table className="w-full table-fixed border-collapse text-[11px] leading-[1.5] font-poppins">
-                                <thead>
-                                  {sec.columns.some(c => c !== "") && (
-                                  <tr className="bg-white text-[#2C2C2C] font-semibold uppercase border-b border-[#D3D1C7]">
-                                    {sec.columns.map((c, i) => (
-                                      <th
-                                        key={i}
-                                        className={`border border-[#E5E7EB] px-3 py-2 text-left ${i === 0 ? "w-[16%]" : "w-[28%]"}`}
-                                      >
-                                        {c}
-                                      </th>
-                                    ))}
-                                  </tr>
-                                  )}
-                                </thead>
-                                <tbody>
-                                  {sec.rows.map((row, rIdx) => (
-                                    <tr
-                                      key={rIdx}
-                                      className={`align-top ${rIdx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
-                                    >
-                                      {row.map((cell, cIdx) => (
-                                        <td
-                                          key={cIdx}
-                                          className={`border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium break-words whitespace-pre-line align-top ${cIdx === 0 ? "font-semibold" : ""}`}
+                                <>
+                                  <div className="border-b border-[#E5E7EB] bg-white px-3 py-2 text-[11px] font-bold uppercase text-gray-700 font-poppins">
+                                    {sec.title}
+                                  </div>
+                                  <table className="w-full table-fixed border-collapse text-[11px] leading-[1.5] font-poppins">
+                                    <thead>
+                                      {sec.columns.some((c) => c !== "") && (
+                                        <tr className="bg-white text-[#2C2C2C] font-semibold uppercase border-b border-[#D3D1C7]">
+                                          {sec.columns.map((c, i) => (
+                                            <th
+                                              key={i}
+                                              className={`border border-[#E5E7EB] px-3 py-2 text-left ${i === 0 ? "w-[16%]" : "w-[28%]"}`}
+                                            >
+                                              {c}
+                                            </th>
+                                          ))}
+                                        </tr>
+                                      )}
+                                    </thead>
+                                    <tbody>
+                                      {sec.rows.map((row, rIdx) => (
+                                        <tr
+                                          key={rIdx}
+                                          className={`align-top ${rIdx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                                         >
-                                          {cell}
-                                        </td>
+                                          {row.map((cell, cIdx) => (
+                                            <td
+                                              key={cIdx}
+                                              className={`border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium break-words whitespace-pre-line align-top ${cIdx === 0 ? "font-semibold" : ""}`}
+                                            >
+                                              {cell}
+                                            </td>
+                                          ))}
+                                        </tr>
                                       ))}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                              </>
+                                    </tbody>
+                                  </table>
+                                </>
                               )}
                             </div>
                           ))}
@@ -102,8 +101,6 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                       )
                     )}
                   </div>
-
-
                 </div>
               ) : (
                 <div className="p-10 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[2rem] m-4">
@@ -142,10 +139,7 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                         </thead>
                         <tbody>
                           {group.components.map((comp, cIdx) => (
-                            <tr
-                              key={cIdx}
-                              className=""
-                            >
+                            <tr key={cIdx} className="">
                               <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 uppercase bg-white">
                                 {comp.component}
                               </td>

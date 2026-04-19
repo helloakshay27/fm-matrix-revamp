@@ -59,23 +59,23 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
 
   return (
     <div
-      className={`min-h-screen bg-[#FAF9F6] pb-20 select-none font-poppins transition-all duration-300 ${security.showBlankScreen ? "blur-3xl brightness-50 pointer-events-none" : ""}`}
+      className={`min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300 ${security.showBlankScreen ? "blur-3xl brightness-50 pointer-events-none" : ""}`}
     >
       <SecurityOverlays security={security} />
 
       {/* Header */}
-      <div className="relative mb-4 flex flex-col items-center bg-[#FAF9F6] pt-4">
+      <div className="relative mb-4 flex flex-col items-center bg-[#F6F4EE] pt-4">
         <div className="w-full max-w-7xl px-6 lg:px-10 mb-4">
           <button
             onClick={() => navigate(backPath)}
-            className="flex items-center gap-2 text-gray-700 border border-gray-300/30 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-all font-semibold text-xs"
+            className="flex items-center gap-2 text-[#2C2C2C] border border-[#C4B89D]/50 px-3 py-1.5 rounded-full hover:bg-[#DA7756]/8 hover:border-[#DA7756]/30 hover:text-[#DA7756] transition-all font-semibold text-xs"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
 
         <div className="text-center w-full max-w-7xl px-6 lg:px-10">
-          <div className="inline-block px-4 py-1.5 bg-gray-100 text-gray-700 text-[10px] font-semibold rounded-full mb-3 tracking-[0.15em] uppercase border border-gray-300/20">
+          <div className="inline-block px-4 py-1.5 bg-[#DA7756]/10 text-[#DA7756] text-[10px] font-semibold rounded-full mb-3 tracking-[0.15em] uppercase border border-[#DA7756]/20">
             {productData.industries}
           </div>
           <h1 className="text-4xl font-semibold text-[#2C2C2C] mb-4 tracking-tight lg:text-5xl font-poppins">
@@ -95,28 +95,25 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
               className="overflow-x-auto no-scrollbar mb-8"
             >
               <div className="flex justify-start pb-2 px-1">
-                <TabsList className="inline-flex gap-1 bg-gray-100 border-[1.31px] border-[#D3D1C7] rounded-full p-1.5  h-auto items-center justify-start">
+                <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
                   {[
                     { id: "summary", label: "Product Summary" },
-                    { id: "features", label: "Features" },
-                    { id: "usecases", label: "Use Cases" },
+                    { id: "features", label: "Feature List" },
                     { id: "market", label: "Market Analysis" },
-                    { id: "pricing", label: "Pricing" },
-                    ...(productData.excelLikePostPossession ||
-                    productData.extendedContent?.detailedPostPossession
-                      ? [{ id: "post-possession", label: "Post Possession" }]
-                      : []),
-                    { id: "swot", label: "SWOT" },
-                    { id: "roadmap", label: "Roadmap" },
-                    { id: "enhancements", label: "Enhancements" },
-                    { id: "business", label: "Business Plan" },
+                    { id: "pricing", label: "Features and Pricing" },
+                    { id: "usecases", label: "Use Cases" },
+                    { id: "roadmap", label: "Product Roadmap" },
+                    { id: "business", label: "Business Plan Builder" },
                     { id: "gtm", label: "GTM Strategy" },
                     { id: "metrics", label: "Metrics" },
+                    { id: "swot", label: "SWOT Analysis" },
+                    { id: "enhancements", label: "Enhancement Roadmap" },
+                    { id: "assets", label: "Assets" },
                   ].map((tab) => (
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]: data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 whitespace-nowrap flex-shrink-0 bg-transparent"
+                      className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:font-semibold data-[state=inactive]:text-[#2C2C2C]/50 data-[state=inactive]:hover:text-[#DA7756]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
                     >
                       {tab.label}
                     </TabsTrigger>
@@ -127,7 +124,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
           ) : (
             <div className="overflow-x-auto no-scrollbar mb-8">
               <div className="flex justify-start pb-2 px-1">
-                <TabsList className="inline-flex gap-1 bg-gray-100 border-[1.31px] border-[#D3D1C7] rounded-full p-1.5  h-auto items-center justify-start">
+                <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
                   {[
                     { id: "summary", label: "Product Summary" },
                     { id: "features", label: "Features" },
@@ -145,7 +142,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]: data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 whitespace-nowrap flex-shrink-0 bg-transparent"
+                      className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:font-semibold data-[state=inactive]:text-[#2C2C2C]/50 data-[state=inactive]:hover:text-[#DA7756]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
                     >
                       {tab.label}
                     </TabsTrigger>
@@ -185,7 +182,10 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
           <TabsContent value="roadmap" className="space-y-12 animate-fade-in">
             <RoadmapTab productData={productData} />
           </TabsContent>
-          <TabsContent value="enhancements" className="space-y-12 animate-fade-in">
+          <TabsContent
+            value="enhancements"
+            className="space-y-12 animate-fade-in"
+          >
             <EnhancementsTab productData={productData} />
           </TabsContent>
           <TabsContent value="business" className="space-y-10">

@@ -8,7 +8,8 @@ interface EnhancementsTabProps {
 const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
   const enhancementRoadmap =
     productData.extendedContent?.detailedRoadmap?.enhancementRoadmap ?? [];
-  const top5Impact = productData.extendedContent?.detailedRoadmap?.top5Impact ?? [];
+  const top5Impact =
+    productData.extendedContent?.detailedRoadmap?.top5Impact ?? [];
   const hasModule = enhancementRoadmap.some((item) => item.module?.trim());
   const hasRowId = enhancementRoadmap.some((item) => item.rowId?.trim());
   const hasEffort = enhancementRoadmap.some((item) => item.effort?.trim());
@@ -28,7 +29,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
 
   return (
     <div className="space-y-12 animate-fade-in">
-      <div className="bg-white text-gray-900 border border-[#D3D1C7] p-6 rounded-t-xl mb-0 flex flex-col justify-start items-start gap-2">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-6 rounded-t-xl mb-0 flex flex-col justify-start items-start gap-2">
         <h2 className="text-2xl font-semibold font-poppins uppercase tracking-tight">
           {productData.name} - Enhancement Matrix
         </h2>
@@ -42,7 +43,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
         <div className="space-y-4">
           <div className="border border-[#C4B89D] bg-white rounded-xl p-3">
             <div className="w-full bg-white space-y-3">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-bold font-poppins uppercase tracking-tight text-[14px] text-center">
+              <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-bold font-poppins uppercase tracking-tight text-[14px] text-center">
                 {productData.name} - Feature Enhancement Roadmap
               </div>
               <div className="bg-transparent border border-[#D3D1C7] px-4 py-2 text-[11px] leading-[1.5] text-gray-600 italic font-medium font-poppins text-center">
@@ -54,7 +55,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                 {hasVendorEnhancementShape ? (
                   <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55] text-left">
                     <thead>
-                      <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                      <tr className="bg-white text-[#2C2C2C] border-b border-[#D3D1C7] font-semibold uppercase">
                         {hasRowId && (
                           <th className="border border-[#E5E7EB] bg-white px-2 py-3 text-center w-[5%]">
                             #
@@ -86,7 +87,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                       {enhancementRoadmap.map((item, idx) => (
                         <tr
                           key={idx}
-                          className={`align-top ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
+                          className={`align-top ${idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                         >
                           {hasRowId && (
                             <td className="border border-[#E5E7EB] px-2 py-3 font-semibold text-center text-gray-600 break-words">
@@ -120,7 +121,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                 ) : (
                   <table className="w-full border-collapse font-poppins text-[11px] leading-[1.5] text-left">
                     <thead>
-                      <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                      <tr className="bg-white text-[#2C2C2C] border-b border-[#D3D1C7] font-semibold uppercase">
                         {hasRowId && (
                           <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[5%]">
                             #
@@ -169,7 +170,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                       {enhancementRoadmap.map((item, idx) => (
                         <tr
                           key={idx}
-                          className={`align-top ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
+                          className={`align-top ${idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                         >
                           {hasRowId && (
                             <td className="border border-[#E5E7EB] px-2 py-2 font-semibold text-center text-gray-600">
@@ -227,7 +228,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
       {/* 2. Top 5 Summary */}
       {top5Impact.length > 0 && (
         <div className="space-y-4">
-          <div className="bg-white text-gray-800 border-y border-[#D3D1C7] px-4 py-2 font-semibold font-poppins text-xs uppercase tracking-wider">
+          <div className="bg-white text-[#2C2C2C] border-y border-[#D3D1C7] px-4 py-2 font-semibold font-poppins text-xs uppercase tracking-wider">
             Top 5 Highest-Impact Enhancements Summary
           </div>
           <div className="border border-[#C4B89D] rounded-xl bg-white">
@@ -250,23 +251,23 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
               </thead>
               <tbody>
                 {top5Impact.map((item, idx) => (
-                    <tr key={idx} className="bg-white">
-                      {hasTop5Rank && (
-                        <td className="border border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] text-center bg-white">
-                          {item.rank}
-                        </td>
-                      )}
-                      <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C] font-semibold break-words whitespace-pre-line">
-                        {item.name}
+                  <tr key={idx} className="bg-white">
+                    {hasTop5Rank && (
+                      <td className="border border-[#E5E7EB] p-3 font-semibold text-[#2C2C2C] text-center bg-white">
+                        {item.rank}
                       </td>
-                      <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed break-words whitespace-pre-line">
-                        {item.logic}
-                      </td>
-                      <td className="border border-[#E5E7EB] p-3 text-[#4B5563] font-medium break-words whitespace-pre-line">
-                        {item.leapfrog}
-                      </td>
-                    </tr>
-                  ))}
+                    )}
+                    <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C] font-semibold break-words whitespace-pre-line">
+                      {item.name}
+                    </td>
+                    <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed break-words whitespace-pre-line">
+                      {item.logic}
+                    </td>
+                    <td className="border border-[#E5E7EB] p-3 text-[#4B5563] font-medium break-words whitespace-pre-line">
+                      {item.leapfrog}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
