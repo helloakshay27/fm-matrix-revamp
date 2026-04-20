@@ -6,6 +6,113 @@ interface EnhancementsTabProps {
 }
 
 const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
+  const isClubEnhancement = !!productData.extendedContent?.detailedEnhancementRoadmap?.isClubEnhancement;
+  const clubEnhancements = productData.extendedContent?.detailedEnhancementRoadmap;
+
+  if (isClubEnhancement && clubEnhancements) {
+    return (
+      <div className="space-y-6 animate-fade-in mb-8">
+        <div className="bg-white w-full overflow-x-auto border border-[#E5E7EB] shadow-sm hide-scrollbar">
+          <table className="w-full table-fixed border-collapse text-[11pt] text-[#000000] font-poppins min-w-[1024px]">
+            <tbody>
+              {/* Table 1 Header */}
+              <tr>
+                <td className="bg-[#4B5563] text-white font-bold text-[13pt] px-3 py-2 text-left" colSpan={5}>
+                  CLUB MANAGEMENT - ENHANCEMENT ROADMAP (Future State Innovations)
+                </td>
+              </tr>
+              <tr>
+                <td className="bg-[#F3F4F6] text-[#4B5563] italic text-[10pt] px-3 py-1.5 text-left border-b border-[#D3D1C7]" colSpan={5}>
+                  Minimum 25 innovations | 7+ AI/LLM/NLP | 3+ MCP/Cross-Platform | 5 new enhancements for F&B, Channel, Accounting, Loyalty, and Asset modules | High-impact rows highlighted | No overlap with Product Roadmap Tab
+                </td>
+              </tr>
+              
+              {/* Table 1 Column Headers */}
+              <tr>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7] w-[18%]">
+                  Enhancement
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7] w-[12%]">
+                  Type
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7] w-[45%]">
+                  Description and Value
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7] w-[15%]">
+                  Segment Benefited
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-[#D3D1C7] w-[10%]">
+                  Impact Level
+                </td>
+              </tr>
+
+              {/* Table 1 Body */}
+              {clubEnhancements.innovations.map((item: any, idx: number) => {
+                const isHighImpact = item.impact?.toUpperCase() === "HIGH";
+                const rowClass = isHighImpact 
+                  ? "bg-[#F9FAFB] text-[#1F2937] font-bold text-[10pt]"
+                  : "bg-white text-[#4B5563] text-[10pt]";
+                return (
+                  <tr key={`innov-${idx}`} className="align-top">
+                    <td className={`${rowClass} px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap`}>{item.enhancement}</td>
+                    <td className={`${rowClass} px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap`}>{item.type}</td>
+                    <td className={`${isHighImpact ? 'bg-[#F9FAFB]' : 'bg-white'} text-[#4B5563] font-medium text-[10pt] px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap`}>{item.description}</td>
+                    <td className={`${rowClass} px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap`}>{item.segment}</td>
+                    <td className={`${rowClass} px-3 py-3 border-b border-[#D3D1C7] whitespace-pre-wrap`}>{item.impact}</td>
+                  </tr>
+                );
+              })}
+
+              {/* Spacing */}
+              <tr>
+                <td colSpan={5} className="h-6 bg-white border-none"></td>
+              </tr>
+
+              {/* Table 2 Header */}
+              <tr>
+                <td className="bg-[#4B5563] text-white font-bold text-[11pt] px-3 py-2 text-left" colSpan={5}>
+                  TOP 5 HIGHEST-IMPACT ENHANCEMENTS SUMMARY
+                </td>
+              </tr>
+              
+              {/* Table 2 Column Headers */}
+              <tr>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7]">
+                  Enhancement
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7]">
+                  Type
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7]">
+                  Why It Matters Most
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-r border-[#D3D1C7]">
+                  Which Competitor It Leapfrogs
+                </td>
+                <td className="bg-[#E5E7EB] text-[#1F2937] font-bold uppercase tracking-wide text-[11pt] px-3 py-3 text-center border-b border-[#D3D1C7]">
+                  Timeline Estimate
+                </td>
+              </tr>
+
+              {/* Table 2 Body */}
+              {clubEnhancements.top5.map((item: any, idx: number) => {
+                return (
+                  <tr key={`top-${idx}`} className="align-top">
+                    <td className="bg-white text-[#4B5563] font-medium text-[10pt] px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap">{item.enhancement}</td>
+                    <td className="bg-white text-[#4B5563] font-medium text-[10pt] px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap">{item.type}</td>
+                    <td className="bg-white text-[#4B5563] font-medium text-[10pt] px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap">{item.whyItMatters}</td>
+                    <td className="bg-white text-[#4B5563] font-medium text-[10pt] px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap">{item.competitor}</td>
+                    <td className="bg-white text-[#4B5563] font-medium text-[10pt] px-3 py-3 border-b border-[#D3D1C7] whitespace-pre-wrap">{item.timeline}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   const innovationLayer =
     productData.extendedContent?.detailedRoadmap?.innovationLayer ?? [];
   const enhancementRoadmap =

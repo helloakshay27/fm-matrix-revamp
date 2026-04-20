@@ -1,5 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+// Utility to map PO API response to bill fields
+function mapPurchaseOrderToBill(poData, customers, itemOptions) {
+    // Find the vendor/customer by ID
+    const vendor = customers.find(c => c.id === String(poData.pms_supplier_id));
+    // Map items
+    const items = Array.isArray(poData.purchase_order_items)
+        ? poData.purchase_order_items.map(item => {
+            const matchedItem = itemOptions.find(opt => String(opt.id) === String(item.lock_account_item_id));
+            return {
+                id: String(item.lock_account_item_id || Date.now()),
+                name: matchedItem?.name || item.name || '',
+                description: item.description || '',
+                quantity: item.quantity || 1,
+                rate: item.rate || 0,
+                discount: item.discount || 0,
+                discountType: 'percentage',
+                tax: '',
+                taxRate: 0,
+                amount: 0,
+                customer: '',
+                account: matchedItem?.account || '',
+                item_id: String(item.lock_account_item_id || ''),
+                item_tax_type: '',
+                tax_group_id: null,
+                tax_exemption_id: null,
+            };
+        })
+        : [];
+    return {
+        vendor,
+        items,
+        referenceNumber: poData.order_number || '',
+        subject: poData.subject || '',
+        // Add more mappings as needed
+    };
+}
 import {
     TextField,
     // Button,
@@ -40,6 +76,7 @@ import axios from 'axios';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
+ import { useLocation } from 'react-router-dom';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -124,6 +161,15 @@ interface ExternalUser {
 }
 
 export const BillsAdd: React.FC = () => {
+    // Get purchase order ID from URL if present
+    // const { purchaseOrderId } = useParams();
+    // ...existing code...
+
+const location = useLocation();
+const purchaseOrderId = location.state?.saleOrderId || location.state?.purchaseOrderId;
+
+        // Prefill state
+        const [poPrefill, setPoPrefill] = useState<any>(null);
     const [subject, setSubject] = useState('');
     // Fetch item list from API
     const lock_account_id = localStorage.getItem("lock_account_id");
@@ -147,13 +193,17 @@ export const BillsAdd: React.FC = () => {
                         tax_group_id: item.intra_state_tax_rate_id,
                         inter_state_tax_rate_id: item.inter_state_tax_rate_id
                     })));
-                    console.log('Fetched items:', res.data);
+                    // If PO prefill is pending, trigger it after items load
+                    if (purchaseOrderId && customers.length > 0) {
+                        fetchAndPrefillPO(purchaseOrderId, customers, res.data);
+                    }
                 }
             } catch (err) {
                 setItemOptions([]);
             }
         };
         fetchItems();
+        // eslint-disable-next-line
     }, []);
 
     // Fetch salespersons from API
@@ -462,21 +512,10 @@ export const BillsAdd: React.FC = () => {
                 }
             })
             .then(res => {
-                console.log("cust:", res)
                 setCustomers(res?.data?.pms_suppliers || []);
-                // Optionally fetch detail for first customer
-                if (res.data && res.data.length > 0) {
-                    const customerId = res.data[0].id;
-                    axios
-                        .get(`https://${baseUrl}/lock_account_customers/${customerId}.json`, {
-                            headers: {
-                                Authorization: token ? `Bearer ${token}` : undefined,
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(detailRes => {
-                            // Optionally handle detailRes.data
-                        });
+                // If PO prefill is pending, trigger it after customers load
+                if (purchaseOrderId && Array.isArray(res?.data?.pms_suppliers)) {
+                    fetchAndPrefillPO(purchaseOrderId, res.data.pms_suppliers, itemOptions);
                 }
             })
             .catch(error => {
@@ -485,7 +524,81 @@ export const BillsAdd: React.FC = () => {
             .finally(() => {
                 setLoadingCustomers(false);
             });
+        // eslint-disable-next-line
     }, []);
+    // Fetch and prefill PO details
+    const fetchAndPrefillPO = async (poId, customersList, itemsList) => {
+         const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        try {
+            const res = await axios.get(`https://${baseUrl}/pms/purchase_orders/${poId}.json?access_token=${token}`);
+            if (res.data && res.data.purchase_order) {
+                const mapped = mapPurchaseOrderToBill(res.data.purchase_order, customersList, itemsList || itemOptions);
+                setPoPrefill(mapped);
+                console.log('Mapped PO to Bill Prefill**:', mapped);
+            }
+        } catch (err) {
+            toast.error('Failed to fetch purchase order details');
+        }
+    };
+
+      console.log("Fetching PO details for ID:", purchaseOrderId);
+    useEffect(() => {
+  if (!purchaseOrderId) return;
+  console.log("Fetching PO details for ID:", purchaseOrderId);
+  const fetchPurchaseOrder = async () => {
+             const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+    try {
+      const res = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/${purchaseOrderId}.json?access_token=${token}`
+      );
+      const po = res.data;
+      console.log("p data :",res.data)
+      // Set vendor/customer
+      setSelectedCustomer({ id: po.supplier.id, name: po.supplier.company_name });
+      // Set items
+      setItems(
+        po.purchase_order_items.map(item => ({
+          id: item.lock_account_item_id,
+          name: item.name,
+          description: item.description,
+          quantity: item.quantity,
+          rate: item.rate,
+          discount: item.discount || 0,
+          discountType: 'percentage',
+          tax: '',
+          taxRate: 0,
+          amount: 0,
+          customer: '',
+          account: '',
+          item_id: item.lock_account_item_id,
+          item_tax_type: '',
+          tax_group_id: null,
+          tax_exemption_id: null,
+        }))
+      );
+      // Set reference number, subject, etc. as needed
+      setReferenceNumber(po.order_number || '');
+      setSubject(po.subject || '');
+    } catch (err) {
+      toast.error('Failed to fetch purchase order details');
+    }
+  };
+  fetchPurchaseOrder();
+}, [purchaseOrderId]);
+
+    // When PO prefill data is ready, set fields
+    useEffect(() => {
+        if (poPrefill) {
+            if (poPrefill.vendor) setSelectedCustomer(poPrefill.vendor);
+            if (poPrefill.items && poPrefill.items.length > 0) setItems(poPrefill.items);
+            if (poPrefill.referenceNumber) setReferenceNumber(poPrefill.referenceNumber);
+            if (poPrefill.subject) setSubject(poPrefill.subject);
+        }
+        // eslint-disable-next-line
+    }, [poPrefill]);
 
 
     // Fetch customers on mount
@@ -1298,7 +1411,7 @@ export const BillsAdd: React.FC = () => {
                                 placeholder="Enter billing address"
                                 disabled={!!selectedCustomer}
                             />
-                            <p className="text-xs text-gray-400 text-right mt-1">{billingAddress.length}/500</p>
+                            <p className="text-xs text-gray-400 text-right mt-1">{billingAddress?.length}/500</p>
                         </div>
 
                         <div>
@@ -1318,7 +1431,7 @@ export const BillsAdd: React.FC = () => {
                                 placeholder="Enter shipping address"
                                 disabled={!!selectedCustomer || sameAsBilling}
                             />
-                            <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p>
+                            {/* <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p> */}
                             {/* <FormControlLabel
                                 control={
                                     <Checkbox

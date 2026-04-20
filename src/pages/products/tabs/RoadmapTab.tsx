@@ -18,10 +18,68 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
           item.revenueImpact
       )
     ) ?? false;
+  const detailedRoadmap = productData.extendedContent?.detailedRoadmap;
+  const isClubRoadmap = !!detailedRoadmap?.isClubRoadmap;
 
   return (
     <div className="space-y-12 animate-fade-in">
-      {productData.excelLikeRoadmap ? (
+      {isClubRoadmap ? (
+        <div className="bg-transparent p-3">
+          <div className="w-full rounded-md border border-[#C4B89D] bg-white">
+            <div className="px-4 pt-4 pb-6">
+              <div className="bg-white text-gray-900 border border-[#D3D1C7] px-4 py-3 font-semibold font-poppins uppercase tracking-tight text-[15px] text-center">
+                {productData.name} - Product Roadmap
+              </div>
+              <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
+                3 Phases | Phase 1: Foundation Launch | Phase 2: Growth Features | Phase 3: AI and Enterprise Moat
+              </div>
+              <div className="mt-6 space-y-6">
+                {detailedRoadmap.phases?.map((section: any, sIdx: number) => (
+                  <div key={sIdx} className="space-y-0">
+                    <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                      {section.phaseTitle}
+                    </div>
+                    <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                      <table className="w-full border-collapse table-fixed text-[13px] leading-relaxed font-poppins">
+                        <thead>
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[12px]">
+                            <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[20%]">Feature / Initiative</th>
+                            <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[35%]">Description and Rationale</th>
+                            <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[20%]">Target Segment Unlocked</th>
+                            <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[10%]">Priority</th>
+                            <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[15%]">Est. Timeline</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {section.items.map((item: any, i: number) => (
+                            <tr key={i} className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                              <td className="border border-[#E5E7EB] px-4 py-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">{item.feature}</td>
+                              <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{item.description}</td>
+                              <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C]/85 font-medium whitespace-pre-line break-words">{item.segment}</td>
+                              <td className="border border-[#E5E7EB] px-4 py-3 font-semibold whitespace-pre-line break-words">
+                                <span className={
+                                  item.priority?.startsWith("Critical") ? "text-[#C72030]" :
+                                  item.priority?.startsWith("High") ? "text-[#D97706]" : "text-[#798C5E]"
+                                }>{item.priority}</span>
+                              </td>
+                              <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">{item.timeline}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {section.summary && (
+                      <div className="bg-[#1F3A5F] text-white border border-[#D3D1C7] border-t-0 px-4 py-3 text-[12px] font-semibold leading-relaxed font-poppins">
+                        {section.summary}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : productData.excelLikeRoadmap ? (
         <div
           className={`${hasVendorRoadmapGrid ? "bg-transparent p-3" : "overflow-x-auto bg-transparent p-3"}`}
         >

@@ -8,6 +8,63 @@ interface GTMTabProps {
 const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
   const isCpManagement = productData.name === "CP Management";
 
+  const gtmData = productData.extendedContent?.detailedGTM;
+  const isClubGTM = !!gtmData?.isClubGTM;
+
+  if (isClubGTM) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins text-[14px] font-bold tracking-wide">
+          {productData.name} - Go-To-Market Strategy
+        </div>
+        <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
+          3 Target Groups based on product fit | Each TG has Sales Motion, Marketing Channels, 90-Day Launch Sequence, Partnership Strategy, and Summary
+        </div>
+
+        <div className="mt-6 space-y-8">
+          {gtmData.targetGroups?.map((tg: any, i: number) => (
+            <div key={i} className="border border-[#D3D1C7] bg-white">
+              <div className="bg-[#1F3A5F] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide uppercase font-poppins">
+                {tg.title}
+              </div>
+              <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed font-poppins">
+                <tbody>
+                  {tg.components?.map((c: any, cIdx: number) => (
+                    <tr key={cIdx} className="align-top border-b border-[#D3D1C7] last:border-b-0 bg-white">
+                      <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#1A1A2E] bg-[#F6F4EE]">
+                        {c.component}
+                      </td>
+                      <td className="w-[80%] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">
+                        {c.detail}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {tg.summaryBox && (
+                <div className="bg-[#1F3A5F]/5 border-t border-[#D3D1C7]">
+                  <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed font-poppins">
+                    <tbody>
+                      <tr className="align-top">
+                        <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#1F3A5F] uppercase bg-transparent">
+                          TG SUMMARY AND KEY ASSUMPTIONS
+                        </td>
+                        <td className="w-[80%] px-4 py-3 text-[#1F3A5F] font-bold whitespace-pre-line leading-relaxed">
+                          {tg.summaryBox}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {productData.excelLikeGtm ? (

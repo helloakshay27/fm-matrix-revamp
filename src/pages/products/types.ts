@@ -28,6 +28,7 @@ export interface ProductData {
   excelLikeBusinessPlan?: boolean;
   excelLikeGtm?: boolean;
   excelLikeMetrics?: boolean;
+  modernSummary?: boolean;
   excelLikePostPossession?: boolean;
   excelFeatureRowStart?: number;
   userStories: {
@@ -58,6 +59,8 @@ export interface ProductData {
   owner: string;
   ownerImage: string;
   extendedContent: {
+    rawSummaryTable?: React.ReactNode | null;
+    rawFeaturesTable?: React.ReactNode | null;
     featureSummary?: string | React.ReactNode;
     productSummaryNew: {
       summarySubtitle?: string;
@@ -73,6 +76,22 @@ export interface ProductData {
       summaryFeatureModules?: { label: string; detail: string }[];
       summaryUsps?: { label: string; detail: string }[];
       tractionMilestones?: { label: string; detail: string }[];
+      perspectives?: {
+        title: string;
+        featureSummary?: string | React.ReactNode;
+        identity: { field: string; detail: string }[];
+        problemSolves: { painPoint: string; solution: string }[];
+        whoItIsFor: {
+          role: string;
+          useCase: string;
+          frustration: string;
+          gain: string;
+        }[];
+        today: { dimension: string; state: string }[];
+        summaryFeatureModules?: { label: string; detail: string }[];
+        summaryUsps?: { label: string; detail: string }[];
+        tractionMilestones?: { label: string; detail: string }[];
+      }[];
     };
     detailedFeatures: {
       module: string;

@@ -41,27 +41,30 @@ export const getDisplayModule = (moduleName: string, moduleIndexMap: Map<string,
   return index ? `${index}. ${moduleName}` : moduleName;
 };
 
-export const buildSummarySheetRows = (productData: ProductData) => {
+export const buildSummarySheetRows = (productData: ProductData, perspectiveIndex: number = -1) => {
   const rows: { kind: "section" | "data"; label: string; detail: string; tag?: string }[] = [];
-  const summaryData = productData.extendedContent?.productSummaryNew;
+  const baseSummaryData = productData.extendedContent?.productSummaryNew;
+  const isPerspective = perspectiveIndex >= 0 && baseSummaryData?.perspectives && baseSummaryData.perspectives[perspectiveIndex];
+  const summaryData = isPerspective ? baseSummaryData.perspectives?.[perspectiveIndex] : baseSummaryData;
+
   const summaryFeatureModules =
     summaryData?.summaryFeatureModules?.map((item) => ({
       label: item.label,
       detail: item.detail,
     })) ??
-    productData.userStories?.map((story) => ({
+    (!isPerspective ? productData.userStories?.map((story) => ({
       label: story.title,
       detail: story.items.join(" | "),
-    })) ?? [];
+    })) : []) ?? [];
   const summaryUsps =
     summaryData?.summaryUsps?.map((item) => ({
       label: item.label,
       detail: item.detail,
     })) ??
-    productData.usps?.map((usp, index) => ({
+    (!isPerspective ? productData.usps?.map((usp, index) => ({
       label: `USP ${index + 1}`,
       detail: usp,
-    })) ?? [];
+    })) : []) ?? [];
 
   if (summaryData?.identity?.length) {
     rows.push({ kind: "section", label: "WHAT IT IS", detail: "", tag: "" });
