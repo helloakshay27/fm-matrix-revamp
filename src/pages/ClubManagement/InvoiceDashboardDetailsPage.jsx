@@ -48,6 +48,12 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import axios from "axios";
+import {
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent,
+} from "@/components/ui/accordion";
 
 export const InvoiceDashboardDetailsPage = () => {
     const { id } = useParams();
@@ -295,7 +301,18 @@ export const InvoiceDashboardDetailsPage = () => {
         }
     });
     const taxRows = Object.entries(taxBreakdown);
+    const mapTransactionsToJournal = (transactions = []) => {
+        return transactions.map((t) => ({
+            account: t.ledger_name,
+            debit: t.tr_type === "dr" ? t.amount : 0,
+            credit: t.tr_type === "cr" ? t.amount : 0,
+        }));
+    };
 
+    const journalData = mapTransactionsToJournal(invoiceData?.transactions || []);
+
+    const totalDebit = journalData.reduce((sum, r) => sum + r.debit, 0);
+    const totalCredit = journalData.reduce((sum, r) => sum + r.credit, 0);
     return (
         <div className="min-h-screen bg-background p-6">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -450,6 +467,78 @@ export const InvoiceDashboardDetailsPage = () => {
 
                     {/* Invoice Details Tab */}
                     <TabsContent value="invoice-details" className="space-y-6">
+
+
+
+
+                        {invoiceData?.sale_order && (
+                            <Accordion type="single" collapsible 
+                            // defaultValue="sales-order"
+                            >
+                                <AccordionItem value="sales-order" className="border rounded-lg px-4">
+                                    <AccordionTrigger className="py-3 hover:no-underline">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-base">
+                                                Associated Sales Orders
+                                            </span>
+
+                                            <Badge
+                                                variant="secondary"
+                                                className="h-5 px-2 text-xs rounded-full"
+                                            >
+                                                1
+                                            </Badge>
+                                        </div>
+                                    </AccordionTrigger>
+
+                                    <AccordionContent>
+                                        <div className="border rounded-lg overflow-hidden mt-2">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="bg-muted/50">
+                                                        <TableHead>Date</TableHead>
+                                                        <TableHead>Sales Order#</TableHead>
+                                                        <TableHead>Status</TableHead>
+                                                        <TableHead>Shipment Date</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+
+                                                <TableBody>
+                                                    <TableRow>
+                                                        <TableCell>
+                                                            {formatDate(invoiceData.sale_order.date)}
+                                                        </TableCell>
+
+                                                        <TableCell>
+                                                            <button
+                                                                className="text-blue-600 hover:underline font-medium"
+                                                                onClick={() =>
+                                                                    navigate(`/accounting/sales-order/${invoiceData.sale_order.id}`)
+                                                                }
+                                                            >
+                                                                {invoiceData.sale_order.sale_order_number}
+                                                            </button>
+                                                        </TableCell>
+
+                                                        <TableCell>
+                                                            <Badge className={getStatusColor(invoiceData.sale_order.status)}>
+                                                                {invoiceData.sale_order.status?.toUpperCase()}
+                                                            </Badge>
+                                                        </TableCell>
+
+                                                        <TableCell>
+                                                            {formatDate(invoiceData.sale_order.shipment_date)}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        )}
+
+
                         {/* Invoice Information */}
                         <Card>
                             <CardHeader>
@@ -621,6 +710,70 @@ export const InvoiceDashboardDetailsPage = () => {
                                 </Card>
                             )}
                         </div>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Receipt className="h-5 w-5 text-primary" />
+                                    Journal
+                                </CardTitle>
+                            </CardHeader>
+
+                            <CardContent>
+                                {journalData.length > 0 ? (
+                                    <>
+                                        <div className="text-sm text-muted-foreground mb-3">
+                                            Amount is displayed in your base currency ₹
+                                        </div>
+
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="bg-muted/50">
+                                                        <TableHead>Account</TableHead>
+                                                        <TableHead className="text-right">Debit</TableHead>
+                                                        <TableHead className="text-right">Credit</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+
+                                                <TableBody>
+                                                    {journalData.map((row, index) => (
+                                                        <TableRow key={index}>
+                                                            <TableCell className="font-medium">
+                                                                {row.account}
+                                                            </TableCell>
+
+                                                            <TableCell className="text-right">
+                                                                {row.debit ? formatCurrency(row.debit) : "0.00"}
+                                                            </TableCell>
+
+                                                            <TableCell className="text-right">
+                                                                {row.credit ? formatCurrency(row.credit) : "0.00"}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+
+                                                    {/* TOTAL ROW */}
+                                                    <TableRow className="bg-muted/30 font-semibold">
+                                                        <TableCell>Total</TableCell>
+                                                        <TableCell className="text-right">
+                                                            {formatCurrency(totalDebit)}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {formatCurrency(totalCredit)}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">
+                                        No journal entries available
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
                     {/* Customer Info Tab */}
