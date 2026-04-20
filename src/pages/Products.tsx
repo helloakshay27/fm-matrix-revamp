@@ -1,719 +1,977 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, ArrowLeft, X } from "lucide-react";
+import {
+  Eye,
+  ArrowLeft,
+  X,
+  ExternalLink,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { EmployeeHeader } from "@/components/EmployeeHeader";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal } from "lucide-react";
 
 interface Product {
   id: string;
   name: string;
-  industry: string;
-  champion: string;
   slug: string;
+  company: string;
+  businessSPOC1: string;
+  businessSPOC2: string;
+  productDescription: string;
   purpose: string;
-  objective: string;
-  whoTheyServe: string;
-  purposeTheyServe: string;
+  industries: string;
+  problemSolved: string;
+  demoLink?: string;
+  type?: string;
 }
 
 const productData: Product[] = [
   {
     id: "1",
-    name: "Customer App",
-    industry: "Real Estate Developers",
-    champion: "Kshitij Rasal",
-    slug: "customer-app",
+    name: "Snag 360",
+    slug: "snag-360",
+    company: "Lockated",
+    businessSPOC1: "Siddharth",
+    businessSPOC2: "Sagar",
+    productDescription:
+      "Snag 360 is a mobile-first snagging and quality inspection platform for structured defect tracking and pre-handover QC.",
     purpose:
-      "A customer Lifecycle Management Mobile app being used by Real Estate Developers to manage their Customers across the Entire cycle from Booking to Handover and can be extended until Community Management.",
-    objective:
-      "CRM (SSO user registration, Buyer purchase details, Demand notes, construction updates, Smart NCF form, Registration scheduling, TDS Tutorials, Rule Engine gamification)",
-    whoTheyServe: "CRM, Referral & Loyalty",
-    purposeTheyServe:
-      "Customisation of Look & Feel, Data security, Partner experience, Referral Journey & Payout",
-  },
-  {
-    id: "1b",
-    name: "Customer Post Possession",
-    industry: "Real Estate Developers",
-    champion: "Kshitij Rasal",
-    slug: "customer-post-possession",
-    purpose:
-      "Post-possession customer journey modules focused on community, service, engagement, and retention—delivered in a developer-branded app experience.",
-    objective:
-      "Community modules (broadcasts, events), service workflows (helpdesk, visitors), and retention loops (loyalty/campaigns) with measurable adoption.",
-    whoTheyServe: "Community Ops, CX, Residents",
-    purposeTheyServe:
-      "Increase resident engagement, reduce support load, and build advocacy after handover.",
+      "Eliminate construction rework and defects through structured mobile QC workflows.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Mixed-use Real Estate, EPCE, Industrial & Logistic Parks, Warehousing, SEZ, Data Centers, IT Park, Hospitals, Health Care, Education, Facility Management, Manufacturing",
+    problemSolved:
+      "Paper checklists, WhatsApp photos, and Excel snag lists drive 5-15% rework costs, no audit trail, and RERA liability exposure at handover.",
+    demoLink: "https://demo.snag360.com",
+    type: "Facility Management",
   },
   {
     id: "2",
-    name: "Hi Society (Society Community Management)",
-    industry: "Property & Facility Management",
-    champion: "Deepak Gupta",
-    slug: "hi-society",
+    name: "CP Management",
+    slug: "cp-management",
+    company: "Lockated",
+    businessSPOC1: "Komal",
+    businessSPOC2: "Komal",
+    productDescription:
+      "CP Management is a channel partner operations platform for onboarding, brokerage tracking, commissions, and rewards.",
     purpose:
-      "Integrated Residential Property management Solution that manages helpdesk, security, visitor access, and daily community activities.",
-    objective:
-      "Comprehensive modules for Helpdesk, Communications, Visitor/Staff, Parking, Club, Fitout, and Accounting Management.",
-    whoTheyServe: "Gated Communities, RWA, and Real Estate Developers",
-    purposeTheyServe:
-      "Establishes effective communication, enhances security, automates facility management, and improves resident experience.",
+      "Manage and incentivise channel partners to improve sales velocity and loyalty.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Mixed-use Real Estate, Hospitality, Co-working, Offices, Asset Management, Co-living",
+    problemSolved:
+      "Developers manage CP onboarding, brokerage tracking, and payments in disconnected tools, causing CP disengagement, commission disputes, and broker loss to competitors.",
+    demoLink: "https://demo.cpmanagement.com",
+    type: "CRM",
   },
   {
     id: "3",
-    name: "Snag 360",
-    industry: "Real Estate Developer & FM",
-    champion: "Sagar Singh",
-    slug: "snag-360",
+    name: "GoPhygital.work (Corporate) / ZUWOS*",
+    slug: "gophygital-corporate",
+    company: "GoPhygital",
+    businessSPOC1: "Sadanand",
+    businessSPOC2: "Gayatri",
+    productDescription:
+      "GoPhygital.work (Corporate) / ZUWOS is a unified workplace platform for facilities, access, booking, parking, cafeteria, and analytics.",
     purpose:
-      "Mobile-based QC Application specially designed for the Real Estate industry to deliver a zero-defect product.",
-    objective:
-      "Ensures dynamic Workflow Management and validates checkpoints across various functions before final delivery.",
-    whoTheyServe: "Project Head, Quality Head, FM Head",
-    purposeTheyServe:
-      "Real-time visibility, Time saving, transparency, accountability, and collaboration.",
+      "Unify workplace and facility operations into a single platform on client-owned infrastructure.",
+    industries:
+      "Offices, Commercial Real Estate, IT Park, Co-working, Manufacturing, BFSI, IT/ITES, Banking, Education, Hospitals, Health Care, Retail Chain, FMCG, Facility Management, Property Management, Pharma, Industrial & Logistic Parks, SEZ",
+    problemSolved:
+      "Organisations use 6-12 disconnected workplace tools, creating data silos, compliance risk, and no unified view of space, people, or facility health.",
+    type: "Facility Management",
   },
   {
     id: "4",
-    name: "QC (Quality Control)",
-    industry: "Real Estate & Construction",
-    champion: "Sagar Singh",
-    slug: "qc",
+    name: "GoPhygital.work (Tenants Building)*",
+    slug: "gophygital-tenants",
+    company: "GoPhygital",
+    businessSPOC1: "Anjali",
+    businessSPOC2: "Ubaid",
+    productDescription:
+      "GoPhygital.work (Tenants Building) is a white-labelled tenant app for building services, access, bookings, and community engagement.",
     purpose:
-      "Mobile-based solution designed to ensure defect-free execution through stage-wise inspections and compliance monitoring.",
-    objective:
-      "Standardized checklists, real-time issue tracking, and validating work against drawings and specifications.",
-    whoTheyServe: "Developers, Contractors, and Project Teams",
-    purposeTheyServe:
-      "Real-time visibility, enhanced productivity, and zero-defect project delivery through accountability.",
+      "Provide occupants a seamless digital interface for daily building interactions.",
+    industries:
+      "Commercial Real Estate, Offices, IT Park, Co-working, Tenants, Retail, Malls, Hospitals, BFSI, IT/ITES, Retail Chain, SEZ, Warehousing",
+    problemSolved:
+      "Commercial tenants lack a single digital channel for building interactions, relying on WhatsApp, phone calls, and paper registers that cause delays, errors, and poor experience.",
+    type: "Customer Portal",
   },
   {
     id: "5",
-    name: "RHB (Rajasthan Housing Board Monitoring)",
-    industry: "Government",
-    champion: "Sagar Singh",
-    slug: "rhb",
+    name: "Project & Task PATM",
+    slug: "task-manager",
+    company: "Lockated",
+    businessSPOC1: "Gayatri",
+    businessSPOC2: "Deepak Yadav",
+    productDescription:
+      "Project & Task Manager (PATM) is a data-sovereign platform for project collaboration, documents, tasks, and sprint execution.",
     purpose:
-      "Periodically monitor project progress, quality, and financials across multiple locations for the Housing Board of Rajasthan.",
-    objective:
-      "Tracking completion time, financials, QC reports, site visits, hindrances, and ATR status with automated alerts.",
-    whoTheyServe: "Housing Commissioner, Chief Engineer, and Project Teams",
-    purposeTheyServe:
-      "Real-time visibility, documented progress, smooth project operations, and data-driven management.",
+      "Consolidate project management, communication, documents, and MOMs into one platform.",
+    industries:
+      "IT/ITES, Real Estate Development, EPCE, Professional Services, Manufacturing, BFSI, Banking, Co-working, Offices, Education, Hospitals, Health Care, Retail Chain, Pharma, Chemicals, Industrial & Logistic Parks, Facility Management",
+    problemSolved:
+      "Organisations run projects across 4-6 disconnected tools, each storing company data on vendor infrastructure, creating context-switching, data fragmentation, and IP leakage risk.",
+    type: "Facility Management",
   },
   {
     id: "6",
-    name: "Brokers (CP Management)",
-    industry: "Real Estate & Sales",
-    champion: "Kshitij Rasal",
-    slug: "brokers",
+    name: "Vendor Management",
+    slug: "vendor-management",
+    company: "Lockated",
+    businessSPOC1: "Saba",
+    businessSPOC2: "Dinesh",
+    productDescription:
+      "Vendor Management System (VMS) is a vendor lifecycle platform for onboarding, compliance, performance, procurement, and ERP linkage.",
     purpose:
-      "A Channel Partner Lifecycle Management mobile app used by Real Estate Developers to manage Channel Partners end-to-end.",
-    objective:
-      "Onboarding, project access, lead submission, booking conversion, and brokerage tracking.",
-    whoTheyServe:
-      "Channel Partners, Agencies, Developers, Sales & Marketing teams",
-    purposeTheyServe:
-      "Sales enablement, transparent payouts, real-time tracking, and zero manual dependency.",
+      "Digitise and control the full vendor lifecycle from onboarding to compliance and integration.",
+    industries:
+      "Manufacturing, Real Estate Development, EPCE, Retail Chain, E-Commerce, Industrial & Logistic Parks, Warehousing, Hospitals, Health Care, Pharma, BFSI, Banking, Hospitality, Facility Management, IT/ITES, Education, Chemicals, Commercial Real Estate",
+    problemSolved:
+      "Vendor onboarding happens through emails and spreadsheets, causing 12-18 day delays, GST blind spots, duplicate records, no self-service, and higher procurement and regulatory risk.",
+    type: "Vendor Portal",
   },
   {
     id: "7",
-    name: "FM Matrix",
-    industry: "Facility Management",
-    champion: "Abdul Ghaffar",
-    slug: "fm-matrix",
+    name: "Procurement / Contracts / Tendering*",
+    slug: "procurement",
+    company: "Lockated",
+    businessSPOC1: "Saba",
+    businessSPOC2: "Dinesh",
+    productDescription:
+      "Procurement, Contracts & Tendering is a procure-to-pay platform for RFQs, bids, POs, GRNs, inventory, and payments.",
     purpose:
-      "A unified Facility Management platform that digitizes and manages Maintenance, Security, Safety, Procurement, and community operations.",
-    objective:
-      "Real-time visibility, automated workflows, MIS dashboards, and seamless integrations to improve operational efficiency.",
-    whoTheyServe:
-      "Facility Managers, Operations Heads, Technicians, Finance/Procurement, Safety Officers, CXOs",
-    purposeTheyServe:
-      "Digital transformation of site operations, asset management, inventory control, and compliance risk monitoring.",
+      "Govern end-to-end procurement and tendering with compliance and audit trails.",
+    industries:
+      "Manufacturing, Real Estate Development, EPCE, Retail Chain, Industrial & Logistic Parks, Hospitals, Health Care, BFSI, Hospitality, Facility Management, IT/ITES, Education, Pharma, Chemicals, Commercial Real Estate, SEZ, Data Centers",
+    problemSolved:
+      "Procurement runs on emails, Excel comparatives, and manual approvals, creating compliance risk, weak vendor accountability, and no audit trail for contract terms.",
+    type: "Vendor Portal",
   },
   {
     id: "8",
-    name: "GoPhygital.work (Corporate)",
-    industry: "Enterprise Digital Workplace",
-    champion: "Aquil Husain",
-    slug: "gophygital-corporate",
+    name: "Loyalty Management & Cold Wallet",
+    slug: "loyalty-engine",
+    company: "Lockated",
+    businessSPOC1: "Vinayak",
+    businessSPOC2: "Komal",
+    productDescription:
+      "Loyalty Management & Cold Wallet is a configurable rewards platform for loyalty rules, wallet control, and redemptions.",
     purpose:
-      "A unified digital workplace platform designed to seamlessly bridge physical and digital operations for modern enterprises.",
-    objective:
-      "Manage employees, workplace operations, assets, access, safety, and compliance from a single secure ecosystem.",
-    whoTheyServe:
-      "Large Enterprises, IT Technology Firms, Coworking Providers, Facility Managers",
-    purposeTheyServe:
-      "Operational control, workforce engagement, and compliance readiness through an integrated platform.",
+      "Enable no-code design and automation of flexible customer loyalty programmes.",
+    industries:
+      "Real Estate Development, Residential, BFSI, Banking, Automobiles, Hospitality, Clubs, Retail Chain, Malls, E-Commerce, Health Care, Hospitals, Education, Telecom, FMCG, Professional Services, IT/ITES, F&B",
+    problemSolved:
+      "Loyalty programmes in complex industries rely on spreadsheets or rigid CRM modules, with no flexible rule engine, idle points, no escrow controls, and batch-blast marketing instead of event-triggered rewards.",
+    type: "Loyalty",
   },
   {
     id: "9",
-    name: "GoPhygital.work (Co working Space)",
-    industry: "Coworking Space",
-    champion: "Abdul Ghaffar",
-    slug: "gophygital-coworking",
+    name: "Incident Management*",
+    slug: "incident-management",
+    company: "GoPhygital",
+    businessSPOC1: "Abdul",
+    businessSPOC2: "Vinayak",
+    productDescription:
+      "Incident Management is an end-to-end incident resolution platform for reporting, RCA, CAPA, escalation, and closure.",
     purpose:
-      "A unified tenant experience platform designed to bridge the gap between physical workspace operations and digital community engagement.",
-    objective:
-      "Automates friction points like desk booking and visitor entry while fostering a connected community.",
-    whoTheyServe: "Coworking Operators, Community Managers, Members",
-    purposeTheyServe:
-      "Efficient monetization of space and providing members a seamless self-service experience.",
+      "Capture, investigate, and resolve incidents with full auditability and compliance.",
+    industries:
+      "Offices, Manufacturing, EPCE, Hospitals, Health Care, Facility Management, Commercial Real Estate, IT Park, Industrial & Logistic Parks, Data Centers, Pharma, Chemicals, SEZ, Warehousing",
+    problemSolved:
+      "Incidents are reported informally via WhatsApp and phone, with no investigation framework, SLA tracking, or corrective action management, causing repeat safety events, compliance failures, rising LTIR, and weak audit readiness.",
+    type: "Facility Management",
   },
   {
     id: "10",
-    name: "Project and Task Manager",
-    industry: "Work Management / All Industries",
-    champion: "Yash & Sadanand Gupta",
-    slug: "task-manager",
+    name: "HSE App (Piramal Safety)*",
+    slug: "hse-app",
+    company: "Lockated",
+    businessSPOC1: "Siddharth",
+    businessSPOC2: "Vinayak",
+    productDescription:
+      "The HSE App is a mobile HSE platform for safety observations, incidents, PTW, audits, and contractor checks.",
     purpose:
-      "An end-to-end work management solution designed to help teams plan, track, and execute projects efficiently.",
-    objective:
-      "Centralizes tasks, timelines, ownership, and progress tracking into a single platform.",
-    whoTheyServe:
-      "Project Managers, Team Leads, Cross-functional Teams, Founders",
-    purposeTheyServe:
-      "Transparency, accountability, and faster delivery with real-time status visibility.",
+      "Manage end-to-end workplace safety operations with real-time visibility and control.",
+    industries:
+      "Manufacturing, EPCE, Industrial & Logistic Parks, Warehousing, Pharma, Chemicals, Hospitals, Data Centers, SEZ",
+    problemSolved:
+      "Industrial operations rely on paper safety registers, phone-based reporting, and manual compliance tracking, causing near-miss under-reporting, contractor safety gaps, audit failures.",
+    type: "Facility Management",
   },
   {
     id: "11",
-    name: "Vendor Management",
-    industry: "Procurement & Supply Chain",
-    champion: "Ajay Ghenand",
-    slug: "vendor-management",
+    name: "PTW (Permit to Work)*",
+    slug: "ptw",
+    company: "GoPhygital",
+    businessSPOC1: "Abdul",
+    businessSPOC2: "Vinayak",
+    productDescription:
+      "The Permit to Work (PTW) platform is a digital permit system for approvals, field execution, compliance, and closure.",
     purpose:
-      "Complete vendor lifecycle management including onboarding, KYC, empanelment, contract administration, and performance assessment.",
-    objective:
-      "Automates friction points in vendor registration and compliance while ensuring high service quality through audits.",
-    whoTheyServe:
-      "Procurement Heads, Accounts Payable Teams, Vendor Relationship Managers",
-    purposeTheyServe:
-      "Eliminates manual tracking, ensures statutory compliance, and builds a transparent vendor ecosystem.",
+      "Control high-risk work through structured permits, approvals, and compliance tracking.",
+    industries:
+      "Manufacturing, EPCE, Industrial & Logistic Parks, Facility Management, Data Centers, IT Park, Pharma, Chemicals, Warehousing, SEZ",
+    problemSolved:
+      "Paper permit workflows let high-risk work proceed with bypassed approvals, undocumented risk assessments, and no field-level compliance tracking, making regulatory proof and safety auditing difficult.",
+    type: "Facility Management",
   },
   {
     id: "12",
-    name: "Procurement/Contracts",
-    industry: "Real Estate & Manufacturing",
-    champion: "Dinesh Shinde",
-    slug: "procurement",
+    name: "Parking*",
+    slug: "parking",
+    company: "GoPhygital",
+    businessSPOC1: "Ubaid",
+    businessSPOC2: "Abdul",
+    productDescription:
+      "The Parking Management platform is a parking operations platform for booking, allocation, entry tracking, and utilisation.",
     purpose:
-      "Complete management of the procurement and contract lifecycle, from Indent/Purchase Requisition to Contract Closure & Payment.",
-    objective:
-      "Seamless management of vendors, tenders, contracts, work orders, and material procurement, ensuring cost control and transparency.",
-    whoTheyServe:
-      "Procurement Heads, Contractors, Site Engineers, Store Teams, Vendors",
-    purposeTheyServe:
-      "Eliminates manual re-entry, ensures budget visibility, and streamlines the source-to-pay workflow.",
+      "Optimise parking allocation, booking, and utilisation across workplaces.",
+    industries:
+      "Commercial Real Estate, Offices, Retail, Malls, Hospitals, IT Park, Co-working, Residential, Mixed-use Real Estate, Hospitality, SEZ, Industrial & Logistic Parks, Data Centers",
+    problemSolved:
+      "Parking facilities use manual registers, uncontrolled entry, phone-based slot requests, and unreconciled revenue, causing congestion, overbooking, lost revenue, poor experience, and lack of data on demand.",
+    type: "Facility Management",
   },
   {
     id: "13",
-    name: "Loyalty Engine",
-    industry: "Referral & Loyalty",
-    champion: "Vinayak Mane & Kshitij Rasal",
-    slug: "loyalty-engine",
+    name: "Club Management",
+    slug: "club-management",
+    company: "Lockated",
+    businessSPOC1: "Saba",
+    businessSPOC2: "Deepak Yadav",
+    productDescription:
+      "Club Management by Lockated is a club operations platform for memberships, bookings, billing, POS, inventory, and loyalty.",
     purpose:
-      "A configurable system designed to automatically apply loyalty rewards, points, or benefits based on predefined business rules.",
-    objective:
-      "Evaluates user actions like payments, referrals, and bookings using logical operatives without requiring code changes.",
-    whoTheyServe: "Business, Sales, Finance, Operations, and Legal teams",
-    purposeTheyServe:
-      "Automation of complex business logic, ensuring consistency, transparency, and auditability in decision-making.",
+      "Manage all club operations—memberships, bookings, F&B, and finances—in one system.",
+    industries:
+      "Clubs, Hospitality, Residential, Education, Community Management, Co-living, Offices, F&B, Mixed-use Real Estate",
+    problemSolved:
+      "Over 70% of premium Tier-1 clubs still use manual bookings and renewals, global platforms store member data offshore in DPDPA-sensitive ways, and no Indian competitor offers co-player matching, community features, or AI analytics.",
+    type: "CRM",
   },
   {
     id: "14",
-    name: "MSafe",
-    industry: "Health, Safety & Wellbeing",
-    champion: "Sohail Ansari",
-    slug: "msafe",
+    name: "Facility Management",
+    slug: "facility-management",
+    company: "GoPhygital",
+    businessSPOC1: "Abdul & Anjali",
+    businessSPOC2: "Ubaid",
+    productDescription:
+      "FM Matrix is an enterprise FM platform for maintenance, utilities, security, space, finance, and people operations.",
     purpose:
-      "A HSW compliance application that helps stakeholders monitor various safety compliances and perform Key Risk Compliance checks (KRCC).",
-    objective:
-      "Enforce safety standards, prevent accidents during high-risk tasks, and comply with industry legal requirements.",
-    whoTheyServe: "HSW Heads, Operations Heads, Line Managers, @Risk Workforce",
-    purposeTheyServe:
-      "HSW governance through digitized risk assessments, compliance checks, and leadership safety engagement.",
+      "Unify multi-site facility management operations and reporting into one platform.",
+    industries:
+      "Commercial Real Estate, IT Park, Manufacturing, Hospitals, Co-working, Retail Chain, Malls, Education, Hospitality, Facility Management, Industrial & Logistic Parks, SEZ, Data Centers, Warehousing, Offices, Health Care, Pharma, Chemicals, EPCE, Residential",
+    problemSolved:
+      "Most organisations run 5-12 disconnected FM tools with no integration, creating blind spots on facility health, missed compliance deadlines, and fragmented tenant experience.",
+    type: "Facility Management",
   },
   {
     id: "15",
-    name: "Incident Management",
-    industry: "Health, Safety & Environment",
-    champion: "Shahab Anwar",
-    slug: "incident-management",
+    name: "Customer App Pre Sales*",
+    slug: "customer-app-pre-sales",
+    company: "Lockated",
+    businessSPOC1: "Komal",
+    businessSPOC2: "Ubaid",
+    productDescription:
+      "Customer App Pre Sales is a white-labelled buyer app for project discovery, walkthroughs, unit selection, and booking.",
     purpose:
-      "A structured, end-to-end solution designed to help organizations effectively identify, report, investigate, and resolve incidents.",
-    objective:
-      "Timely incident reporting followed by systematic investigation, root cause analysis, and preventive action (CAPA) tracking.",
-    whoTheyServe:
-      "Safety Officers, EHS Teams, Site Engineers, Operation Directors",
-    purposeTheyServe:
-      "Risk reduction, organizational safety standards, accountability, and legal defensibility through structured workflows.",
+      "Enable self-service buyer discovery, selection, and booking for real estate projects.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Mixed-use Real Estate",
+    problemSolved:
+      "Developers rely on broker-mediated and in-person sales with no direct digital buyer channel, losing leads, increasing broker dependency, and lacking pre-booking buyer behaviour data.",
+    type: "Pre - Sales",
   },
   {
     id: "16",
-    name: "Appointments",
-    industry: "Real Estate",
-    champion: "Deepak Gupta & Sagar Singh",
-    slug: "appointments",
+    name: "Customer App Post Sales",
+    slug: "customer-app-post-sales",
+    company: "Lockated",
+    businessSPOC1: "Komal",
+    businessSPOC2: "Ubaid",
+    productDescription:
+      "Customer App Post Sales is a referral and loyalty platform that turns buyers into advocates.",
     purpose:
-      "A digital solution that allows customers and site teams to schedule, manage, and property handover appointments.",
-    objective:
-      "Streamlines the unit handover process by enabling customers to book, reschedule, and confirm handover appointments digitally.",
-    whoTheyServe: "Relationship Managers, CRM Heads, Flat Owners, Site Teams",
-    purposeTheyServe:
-      "Hassle-free scheduling and organized possession process, reducing manual coordination and delays.",
+      "Convert homebuyers into referral-driven sales channels through loyalty and engagement.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Mixed-use Real Estate, Hospitality",
+    problemSolved:
+      "After booking, developers lose contact with buyers, leaving satisfied homebuyers idle with no referral system, no loyalty programme, and no way to capture home loan commission revenue.",
+    type: "Post - Sales",
   },
   {
     id: "17",
-    name: "HSE App",
-    industry: "Health, Safety & Environment",
-    champion: "Shahab Anwar",
-    slug: "hse-app",
+    name: "Customer App Post Possession",
+    slug: "customer-app-post-possession",
+    company: "Lockated",
+    businessSPOC1: "Deepak Gupta",
+    businessSPOC2: "Dinesh",
+    productDescription:
+      "Customer App Post Possession is a resident app for community services, gate management, bookings, billing, and engagement.",
     purpose:
-      "A unified digital solution that enhances workplace safety by streamlining incidents, audits, checklists, and safety violations.",
-    objective:
-      "Real-time reporting, role-based workflows, and automated approvals to capture and resolve safety issues efficiently.",
-    whoTheyServe: "Area Managers, Contractors, Safety Officers, EHS Teams",
-    purposeTheyServe:
-      "Risk identification, compliance enforcement, and maintaining audit-ready safety records across multi-site operations.",
+      "Provide residents and developers a unified post-handover community and operations platform.",
+    industries:
+      "Residential, Community Management, Mixed-use Real Estate, Co-living, Property Management",
+    problemSolved:
+      "After handover, developers lose contact with buyers while facility teams juggle 6-10 disconnected tools, unauthorised vendor apps expose community data, and satisfied residents are never formally captured for referrals.",
+    type: "Customer Portal",
   },
   {
     id: "18",
-    name: "Club Management",
-    industry: "Sports & Recreation",
-    champion: "Deepak Gupta",
-    slug: "club-management",
+    name: "Lease Management",
+    slug: "lease-management",
+    company: "Lockated",
+    businessSPOC1: "Deepak Yadav",
+    businessSPOC2: "Deepak Gupta",
+    productDescription:
+      "Lease Management is a lease administration platform for rent, compliance, AMC, utilities, maintenance, and reporting.",
     purpose:
-      "A comprehensive digital platform designed to help commercial clubs efficiently manage bookings, memberships, and daily operations.",
-    objective:
-      "Streamlines administrative tasks, enhances member experience, and increases revenue through automation and real-time insights.",
-    whoTheyServe: "Club Admins, Sports Clubs, Fitness Centers, Social Clubs",
-    purposeTheyServe:
-      "Unified management of memberships, self-service bookings, and centralized data across all club activities.",
+      "Centralise lease management, financial tracking, and compliance across properties.",
+    industries:
+      "Commercial Real Estate, Retail Chain, Malls, IT Park, SEZ, Industrial & Logistic Parks, Warehousing, Hospitals, Health Care, Education, Hospitality, F&B, Co-working, Co-living, BFSI, Banking, Manufacturing, Chemicals, Property Management, Asset Management, Landlords, Tenants, Offices, Residential",
+    problemSolved:
+      "Large organisations managing 50-500+ leased properties run on Excel and email, missing rent escalations, paying incorrect CAM charges, failing compliance audits, and lacking real-time lease liability visibility.",
+    type: "Facility Management",
+  },
+  {
+    id: "19",
+    name: "Life Compass *",
+    slug: "life-compass",
+    company: "GoPhygital",
+    businessSPOC1: "Gayatri",
+    businessSPOC2: "Deepak Yadav",
+    productDescription:
+      "Life Compass is a personal productivity app for goals, habits, tasks, journaling, and wellbeing.",
+    purpose:
+      "Align daily habits, tasks, and goals to drive productivity and personal wellbeing.",
+    industries:
+      "Professional Services, Education, Offices, Co-working, IT/ITES, Hospitals, BFSI, Banking, Retail Chain",
+    problemSolved:
+      "Individuals manage goals, habits, and personal development across scattered apps and notebooks, leading to inconsistent follow-through, untracked progress, burnout risk, and a gap between intention and execution.",
+    type: "Facility Management",
+  },
+  {
+    id: "20",
+    name: "Business Compass *",
+    slug: "business-compass",
+    company: "GoPhygital",
+    businessSPOC1: "Gayatri",
+    businessSPOC2: "Deepak Yadav",
+    productDescription:
+      "Business Compass is a strategy execution platform for OKRs, KPIs, reviews, and performance tracking.",
+    purpose:
+      "Cascade and track business goals and KPIs with real-time performance visibility.",
+    industries:
+      "Commercial Real Estate, Offices, Real Estate Development, Manufacturing, BFSI, IT/ITES, Retail Chain, Hospitality, Education, Co-working",
+    problemSolved:
+      "Business strategy lives in offline decks and spreadsheets disconnected from execution, causing team misalignment, missed review cycles, no real-time goal visibility, and no chance to course-correct before targets are missed.",
+    type: "Facility Management",
+  },
+  {
+    id: "21",
+    name: "Gate Management (Smart Secure & QuikGate) *",
+    slug: "gate-management",
+    company: "Lockated",
+    businessSPOC1: "Deepak Gupta",
+    businessSPOC2: "Ubaid",
+    productDescription:
+      "Gate Management (Smart Secure & QuikGate) is a digital access platform for visitors, vehicles, contractors, and materials.",
+    purpose:
+      "Digitise and control access for visitors, vehicles, contractors, and materials.",
+    industries:
+      "Residential, Commercial Real Estate, Offices, IT Park, Industrial & Logistic Parks, Warehousing, Manufacturing, Hospitals, Malls, Co-working, SEZ, Data Centers, Community Management",
+    problemSolved:
+      "Gate operations depend on physical registers, WhatsApp visitor approvals, and manual vehicle verification, creating unauthorised access risk, no real-time visibility, compliance audit gaps, and no traceable digital incident record.",
+    type: "Visitor Management",
+  },
+  {
+    id: "22",
+    name: "Surveys (Abdul OIG) *",
+    slug: "surveys",
+    company: "GoPhygital",
+    businessSPOC1: "Abdul",
+    businessSPOC2: "Dinesh",
+    productDescription:
+      "Surveys is a configurable feedback platform for questionnaires, distribution, analytics, and sentiment tracking.",
+    purpose:
+      "Collect and analyse structured feedback to drive data-led improvements.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Manufacturing, BFSI, IT/ITES, Hospitality, Education, Health Care, Hospitals, Retail Chain, Facility Management, Professional Services, Co-working, Clubs",
+    problemSolved:
+      "Feedback is collected through untracked email surveys, WhatsApp polls, and physical forms, resulting in low response rates, unstructured data, no sentiment analysis, no trend tracking, and no actionable insight.",
+    type: "Facility Management",
+  },
+  {
+    id: "23",
+    name: "LMS & Sales CRM",
+    slug: "lms-sales-crm",
+    company: "Lockated",
+    businessSPOC1: "Sagar",
+    businessSPOC2: "Sakshi",
+    productDescription:
+      "LMS & Sales CRM is a lead-to-training platform for pipeline management, follow-ups, content, and performance tracking.",
+    purpose:
+      "Enable sales teams with integrated training, content, and pipeline management tools.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Mixed-use Real Estate, Hospitality, Co-working, Clubs, Offices",
+    problemSolved:
+      "Real estate sales teams use separate training and CRM tools, so knowledge gaps in product features and project updates lead to lost sales and inconsistent buyer pitches.",
+    type: "CRM",
+  },
+  {
+    id: "24",
+    name: "Support CRM *",
+    slug: "support-crm",
+    company: "Lockated",
+    businessSPOC1: "Sagar",
+    businessSPOC2: "Sakshi",
+    productDescription:
+      "Support CRM is a ticketing platform for customer support, SLAs, escalations, and resolution tracking.",
+    purpose:
+      "Manage customer support with structured ticketing, SLAs, and resolution tracking.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Facility Management, Property Management, Hospitality, IT/ITES, BFSI, Education, Retail Chain, Clubs, Health Care",
+    problemSolved:
+      "Customer queries arrive via WhatsApp, email, and phone without unified tracking, causing missed SLAs, duplicate tickets, repeat follow-ups, and no visibility into backlog, resolution quality, or team performance.",
+    type: "CRM",
+  },
+  {
+    id: "25",
+    name: "Real Estate CRM*",
+    slug: "real-estate-crm",
+    company: "Lockated",
+    businessSPOC1: "Sagar",
+    businessSPOC2: "Sakshi",
+    productDescription:
+      "Real Estate CRM is a real estate sales ERP for leads, quotations, bookings, payments, and compliance.",
+    purpose:
+      "Manage the full real estate sales and buyer lifecycle from lead to possession.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Mixed-use Real Estate, Hospitality, Asset Management, Co-working, Offices",
+    problemSolved:
+      "Generic CRMs are not built for real estate, lacking unit inventory, RERA fields, brokerage tracking, and payment milestone workflows, forcing Excel workarounds.",
+    type: "CRM",
+  },
+  {
+    id: "26",
+    name: "MSafe *",
+    slug: "msafe",
+    company: "GoPhygital",
+    businessSPOC1: "Vinayak",
+    businessSPOC2: "Deepak Gupta",
+    productDescription:
+      "MSafe is a health and safety compliance platform for risk checks, training, observations, and access control.",
+    purpose:
+      "Monitor and enforce health, safety, and wellbeing compliance across workforces.",
+    industries:
+      "Manufacturing, EPCE, Industrial & Logistic Parks, Pharma, Chemicals, Data Centers, Warehousing, Hospitals, Facility Management, SEZ",
+    problemSolved:
+      "HSW compliance is tracked through paper registers and email follow-ups across distributed teams, creating gaps in at-risk monitoring, missed training, no leadership visibility on safety tours, and weak audit readiness.",
+    type: "Facility Management",
+  },
+  {
+    id: "27",
+    name: "Appointments *",
+    slug: "appointments",
+    company: "Lockated",
+    businessSPOC1: "Deepak Gupta",
+    businessSPOC2: "Sakshi",
+    productDescription:
+      "Appointments is a scheduling platform for availability, booking, calendar coordination, and MOM generation.",
+    purpose:
+      "Automate scheduling, calendar coordination, and meeting accountability with MOMs.",
+    industries:
+      "Hospitals, Health Care, Offices, Co-working, Professional Services, Education, BFSI, Clubs, Hospitality, Real Estate Development",
+    problemSolved:
+      "Appointments are managed through phone calls, WhatsApp, and manual calendars, causing scheduling conflicts, high no-show rates, poor resource use, and undocumented, unassigned meeting outcomes.",
+    type: "CRM",
+  },
+  {
+    id: "28",
+    name: "Accounting *",
+    slug: "accounting",
+    company: "Lockated",
+    businessSPOC1: "Saba",
+    businessSPOC2: "Deepak Yadav",
+    productDescription:
+      "Accounting is a financial management platform for GL, AP/AR, invoicing, compliance, budgeting, and reporting.",
+    purpose:
+      "Manage end-to-end financial operations with compliance and real-time reporting.",
+    industries:
+      "Real Estate Development, Residential, Commercial Real Estate, Clubs, Facility Management, Property Management, Manufacturing, BFSI, IT/ITES, Hospitality, Retail Chain, Education, Co-working, Offices",
+    problemSolved:
+      "Financial operations are split across disconnected invoicing, payroll, and ledger tools, causing delayed month-end close, reconciliation errors, missed GST/TDS deadlines, and no real-time cash flow or receivables visibility.",
+    type: "Facility Management",
+  },
+  {
+    id: "29",
+    name: "MOM with Phone Mic *",
+    slug: "mom-phone-mic",
+    company: "Lockated",
+    businessSPOC1: "Sadanand",
+    businessSPOC2: "",
+    productDescription:
+      "MOM with Phone Mic is an AI meeting notes tool that records, transcribes, and links action items to tasks.",
+    purpose:
+      "Automate meeting transcription, action tracking, and task-linked follow-ups.",
+    industries:
+      "Real Estate Development, EPCE, Manufacturing, IT/ITES, BFSI, Professional Services, Offices, Co-working, Education, Hospitals, Facility Management, Retail Chain",
+    problemSolved:
+      "Meeting minutes are written manually, shared informally over WhatsApp, and never tracked, causing forgotten action items, undocumented decisions, and no accountability for commitments across internal, contractor, or client meetings.",
+    type: "Facility Management",
+  },
+  {
+    id: "30",
+    name: "HRMS *",
+    slug: "hrms",
+    company: "GoPhygital",
+    businessSPOC1: "",
+    businessSPOC2: "",
+    productDescription:
+      "HRMS is a workforce management platform for attendance, payroll, leave, appraisals, and ESS.",
+    purpose:
+      "Manage the complete employee lifecycle with integrated HR operations and analytics.",
+    industries:
+      "Manufacturing, Real Estate Development, Commercial Real Estate, IT/ITES, BFSI, Hospitality, Retail Chain, Education, Hospitals, Facility Management, Co-working, Offices, Pharma, Clubs, FMCG",
+    problemSolved:
+      "HR operations are spread across attendance devices, Excel payroll sheets, email leave approvals, and manual appraisals, creating statutory risk, payroll errors, delayed close, and no unified workforce view.",
+    type: "Facility Management",
+  },
+  {
+    id: "31",
+    name: "ESG *",
+    slug: "esg",
+    company: "GoPhygital",
+    businessSPOC1: "",
+    businessSPOC2: "",
+    productDescription:
+      "ESG is a sustainability reporting platform for data capture, KPI tracking, and disclosure compliance.",
+    purpose:
+      "Digitise ESG tracking and reporting for regulatory and investor compliance.",
+    industries:
+      "Manufacturing, EPCE, Real Estate Development, Commercial Real Estate, Industrial & Logistic Parks, BFSI, IT/ITES, Pharma, Chemicals, Hospitals, SEZ, Data Centers, Warehousing",
+    problemSolved:
+      "ESG data is manually assembled from 10+ teams in Excel, creating inconsistent metrics, unverifiable claims, delayed disclosures, and no way to show measurable year-on-year progress in reviews.",
+    type: "Facility Management",
+  },
+  {
+    id: "32",
+    name: "Mailing *",
+    slug: "mailing",
+    company: "GoPhygital",
+    businessSPOC1: "",
+    businessSPOC2: "",
+    productDescription:
+      "Mailing is a communication platform for campaigns, notifications, OTPs, alerts, and delivery analytics.",
+    purpose:
+      "Manage campaigns, notifications, and alerts with segmentation and analytics.",
+    industries:
+      "All Industries — Real Estate Development, Commercial Real Estate, Manufacturing, BFSI, IT/ITES, Hospitality, Retail Chain, Education, Hospitals, Facility Management, Professional Services, Clubs, Co-working",
+    problemSolved:
+      "Organisations manage communication through separate tools for marketing emails, system notifications, and operational alerts, causing inconsistent messaging, no unified delivery tracking, manual campaign execution, and no visibility into sender reputation or cost.",
+    type: "Facility Management",
+  },
+  {
+    id: "33",
+    name: "Microsoft Office Alternative *",
+    slug: "office-alternative",
+    company: "GoPhygital",
+    businessSPOC1: "",
+    businessSPOC2: "",
+    productDescription:
+      "Microsoft Office Alternative is a data-sovereign productivity suite for docs, sheets, slides, and co-authoring.",
+    purpose:
+      "Provide a full productivity suite for documents, collaboration, and team workflows.",
+    industries:
+      "All Industries — Real Estate Development, Commercial Real Estate, Manufacturing, BFSI, IT/ITES, Hospitality, Education, Hospitals, Retail Chain, Facility Management, Professional Services, EPCE",
+    problemSolved:
+      "Organisations using Microsoft 365 or Google Workspace store documents and correspondence on foreign cloud servers, creating data sovereignty risk, subscription dependency, and compliance exposure under DPDPA or residency laws.",
+    type: "Facility Management",
+  },
+  {
+    id: "34",
+    name: "Budgeting (WBS) *",
+    slug: "budgeting-wbs",
+    company: "Lockated",
+    businessSPOC1: "",
+    businessSPOC2: "",
+    productDescription:
+      "Budgeting (WBS) is a project budgeting platform for WBS-level cost tracking, variance, and control.",
+    purpose:
+      "Track and control project budgets at WBS level with real-time variance insights.",
+    industries:
+      "EPCE, Real Estate Development, Manufacturing, Commercial Real Estate, Industrial & Logistic Parks, Data Centers, IT Park, Facility Management, SEZ",
+    problemSolved:
+      "Project budgets are built in Excel WBS files disconnected from procurement and accounting, causing cost overruns to surface late, manual variance calculations, and no early warning when costs near or exceed limits.",
+    type: "Facility Management",
+  },
+  {
+    id: "35",
+    name: "Liquidtext *",
+    slug: "liquidtext",
+    company: "Lockated",
+    businessSPOC1: "",
+    businessSPOC2: "",
+    productDescription:
+      "LiquidText is a multi-document analysis platform for annotation, cross-referencing, and insight synthesis.",
+    purpose:
+      "Analyse and synthesise insights across multiple documents in a unified workspace.",
+    industries:
+      "Professional Services, BFSI, Banking, Education, Real Estate Development, IT/ITES, Hospitals, Offices, Co-working",
+    problemSolved:
+      "Professionals handling multiple complex documents must read sequentially without cross-document insight, slowing synthesis, missing connections, and reducing knowledge extraction efficiency.",
+    type: "Facility Management",
+  },
+  {
+    id: "36",
+    name: "Vi Miles *",
+    slug: "vi-miles",
+    company: "GoPhygital",
+    businessSPOC1: "Vinayak",
+    businessSPOC2: "",
+    productDescription:
+      "Vi Miles is a multi-partner loyalty platform for earning and redeeming miles across categories.",
+    purpose:
+      "Enable a multi-partner rewards ecosystem for retention and cross-category engagement.",
+    industries:
+      "Hospitality, Telecom, BFSI, Clubs, Automobiles, Retail Chain, FMCG, E-Commerce, F&B, Education",
+    problemSolved:
+      "Single-brand loyalty programmes have low redemption and engagement because points are siloed, so customers disengage when they cannot redeem across the services they actually use.",
+    type: "Loyalty",
   },
 ];
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-
-  // Filter States
   const [selectedProductType, setSelectedProductType] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
 
-  // Column configuration for EnhancedTable
   const columns: ColumnConfig[] = [
     {
       key: "name",
-      label: "Product Name",
+      label: "product",
       sortable: true,
       draggable: true,
       defaultVisible: true,
     },
     {
-      key: "industry",
-      label: "Industry",
+      key: "company",
+      label: "company",
       sortable: true,
       draggable: true,
       defaultVisible: true,
     },
     {
-      key: "champion",
-      label: "Product Champion",
+      key: "businessSPOC1",
+      label: "business SPOC1",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "businessSPOC2",
+      label: "business SPOC2",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "productDescription",
+      label: "Product Description",
       sortable: true,
       draggable: true,
       defaultVisible: true,
     },
     {
       key: "purpose",
-      label: "Product Purpose",
+      label: "Purpose",
       sortable: true,
       draggable: true,
       defaultVisible: true,
     },
     {
-      key: "objective",
-      label: "Objective",
+      key: "industries",
+      label: "Industries",
       sortable: true,
       draggable: true,
       defaultVisible: true,
     },
     {
-      key: "whoTheyServe",
-      label: "Who they Serve",
+      key: "problemSolved",
+      label: "Problem it solved",
       sortable: true,
       draggable: true,
       defaultVisible: true,
     },
     {
-      key: "purposeTheyServe",
-      label: "Purpose they Serve",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "quickDemo",
-      label: "Quick Demo",
+      key: "demoLink",
+      label: "Demo Link",
       sortable: false,
       draggable: true,
       defaultVisible: true,
     },
   ];
 
-  // Custom cell renderer
   const renderCell = (product: Product, columnKey: string) => {
     switch (columnKey) {
-      case "industry":
+      case "industries":
         return (
-          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-medium border border-blue-100">
-            {product.industry}
-          </span>
+          <div className="flex flex-wrap gap-1 max-w-sm">
+            {product.industries &&
+              product.industries.split(",").map((ind, i) => (
+                <span
+                  key={i}
+                  className="px-1.5 py-0.5 bg-gray-50 text-gray-700 rounded text-[10px] font-bold border border-[#D3D1C7] whitespace-normal"
+                >
+                  {ind.trim()}
+                </span>
+              ))}
+          </div>
+        );
+      case "productDescription":
+      case "problemSolved":
+        return (
+          <div className="text-[11px] text-gray-700 leading-relaxed font-medium whitespace-normal min-w-[200px]">
+            {product[columnKey as keyof Product]}
+          </div>
         );
       case "purpose":
-      case "objective":
-      case "whoTheyServe":
-      case "purposeTheyServe":
         return (
-          <span className="text-[10px] text-gray-500 leading-relaxed whitespace-normal break-words max-w-xs line-clamp-3">
+          <div className="text-[11px] text-gray-600 whitespace-normal min-w-[150px]">
+            {product.purpose}
+          </div>
+        );
+      case "demoLink":
+        return product.demoLink ? (
+          <a
+            href={product.demoLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+          >
+            Watch Demo <ExternalLink className="w-3 h-3" />
+          </a>
+        ) : (
+          <span className="text-xs text-gray-400 font-medium italic">
+            Unavailable
+          </span>
+        );
+      case "company":
+        return (
+          <span className="text-xs font-bold text-gray-900">
+            {product.company}
+          </span>
+        );
+      case "businessSPOC1":
+      case "businessSPOC2":
+        return (
+          <span className="text-xs font-medium text-gray-700">
             {product[columnKey as keyof Product]}
           </span>
         );
-      case "quickDemo":
+      case "name":
         return (
-          <span className="text-xs font-semibold text-blue-600 underline cursor-pointer hover:text-blue-800 transition-colors">
-            Watch Video
-          </span>
+          <button
+            onClick={() => navigate(`/product/${product.slug}`)}
+            className="text-blue-600 font-extrabold hover:underline text-left text-xs"
+          >
+            {product.name}
+          </button>
         );
       default:
         return (
           <span className="text-xs text-gray-900">
-            {product[columnKey as keyof Product]}
+            {product[columnKey as keyof Product] as string}
           </span>
         );
     }
   };
 
   const renderActions = (product: Product) => (
-    <div className="flex items-center justify-center gap-2">
-      <Eye
-        className="w-4 h-4 cursor-pointer hover:text-blue-600 transition-colors"
+    <div className="flex items-center justify-center">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-all"
         onClick={() => navigate(`/product/${product.slug}`)}
-      />
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
     </div>
   );
 
   const filteredProducts = productData.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.industries.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.whoTheyServe.toLowerCase().includes(searchTerm.toLowerCase());
+      product.productDescription
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
     const matchesType =
-      !selectedProductType ||
-      product.whoTheyServe
-        .toLowerCase()
-        .includes(selectedProductType.toLowerCase()) ||
-      product.name.toLowerCase().includes(selectedProductType.toLowerCase()) ||
-      product.purpose.toLowerCase().includes(selectedProductType.toLowerCase());
-
+      !selectedProductType || product.type === selectedProductType;
     const matchesIndustry =
       !selectedIndustry ||
-      product.industry.toLowerCase().includes(selectedIndustry.toLowerCase()) ||
-      (selectedIndustry === "Others" &&
-        !["Residential", "Commercial", "ERP"].some((i) =>
-          product.industry.toLowerCase().includes(i.toLowerCase())
-        ));
+      product.industries.toLowerCase().includes(selectedIndustry.toLowerCase());
 
-    // For demonstration, we assume all listed products are "Active"
-    const matchesStatus = !selectedStatus || selectedStatus === "Active";
-
-    return matchesSearch && matchesType && matchesIndustry && matchesStatus;
+    return matchesSearch && matchesType && matchesIndustry;
   });
 
-  // Handle filter reset
-  const handleFilterReset = () => {
-    setSearchTerm("");
-    setSelectedIndustry("");
-    setSelectedProductType("");
-    setSelectedStatus("");
-  };
-
-  // Custom filter panel
-  const FilterModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Filter Products
-          </h3>
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] font-sans">
+      <style>{`
+        /* Standard Header Override */
+        [data-radix-scroll-area-viewport] thead tr th,
+        .bg-\\[\\#f6f4ee\\] {
+          background-color: #113262 !important;
+          color: #FFFFFF !important;
+          font-weight: 700 !important;
+          font-size: 11px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.025em !important;
+          border-bottom: 2px solid #081d3a !important;
+        }
+        /* Fix sorting icons */
+        [data-radix-scroll-area-viewport] thead tr th svg {
+          color: #FFFFFF !important;
+        }
+        /* Table content tweaks */
+        td {
+          vertical-align: top !important;
+          padding-top: 12px !important;
+          padding-bottom: 12px !important;
+          border-right: 1px solid #e2e8f0 !important;
+          white-space: normal !important;
+          word-wrap: break-word !important;
+        }
+        th, [data-radix-scroll-area-viewport] thead tr th {
+          white-space: normal !important;
+          word-wrap: break-word !important;
+        }
+        /* Sharp Edges - No Rounding */
+        * {
+          border-radius: 0 !important;
+        }
+        .filter-select {
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 1rem center;
+          background-size: 1em;
+        }
+      `}</style>
+      <EmployeeHeader />
+      <div className="max-w-[1700px] mx-auto px-6 lg:px-10 pt-20 pb-10 text-[#333333]">
+        {/* Back Button */}
+        <div className="mb-4">
           <button
-            onClick={() => setShowFilters(false)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            onClick={() => navigate("/employee/company-hub")}
+            className="group flex items-center gap-2 text-gray-500 transition-all"
           >
-            <X className="w-5 h-5" />
+            <div className="p-1.5 group-hover:bg-blue-50 transition-all">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-sm">Back</span>
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Type
-              </label>
-              <select
-                value={selectedProductType}
-                onChange={(e) => setSelectedProductType(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Product Type</option>
-                {[
-                  "All Types",
-                  "Wallet Management",
-                  "CRM",
-                  "Visitor Management",
-                  "Facility Management",
-                  "Loyalty",
-                  "Pre - Sales",
-                  "Post - Sales",
-                  "Vendor Portal",
-                  "Customer Portal",
-                ].map((option) => (
-                  <option
-                    key={option}
-                    value={option === "All Types" ? "" : option}
-                  >
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Industry Type
-              </label>
-              <select
-                value={selectedIndustry}
-                onChange={(e) => setSelectedIndustry(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Industry Type</option>
-                {[
-                  "All Industries",
-                  "Residential",
-                  "Commercial",
-                  "ERP",
-                  "Others",
-                ].map((option) => (
-                  <option
-                    key={option}
-                    value={option === "All Industries" ? "" : option}
-                  >
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Status
-              </label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Project Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-          <Button
-            onClick={() => setShowFilters(false)}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              handleFilterReset();
-              setShowFilters(false);
-            }}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Reset Filters
-          </Button>
-          <Button
-            onClick={() => setShowFilters(false)}
-            className="bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Apply Filters
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const [showFilters, setShowFilters] = useState(false);
-
-  return (
-    <div className="min-h-screen bg-[#FDFBF7] p-6 lg:p-10 font-sans">
-      <EmployeeHeader />
-      <div className="pt-16"></div>
-      {/* Header Container */}
-      <div className="relative mb-6">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate("/employee/company-hub")}
-          className="absolute left-0 top-0 flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors py-1"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="font-medium text-base">Back</span>
-        </button>
-
-        {/* Title & Description */}
-        <div className="text-center w-full max-w-3xl mx-auto pt-1">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        {/* Header Section - Centered */}
+        <div className="text-center mb-10 py-6">
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">
             Lockated Products
-          </h2>
-          <p className="text-gray-700 text-base leading-relaxed max-w-2xl mx-auto font-medium">
-            Lockated provides a comprehensive suite of smart proptech solutions
-            designed to digitize and streamline real estate operations. From
-            property management and visitor connectivity to resident engagement
-            and smart home integrations, our ecosystem brings intelligent
-            automation to modern communities and commercial spaces.
+          </h1>
+          <p className="text-gray-600 text-base leading-relaxed font-medium max-w-3xl mx-auto">
+            A comprehensive suite of smart proptech solutions designed to
+            digitize and streamline real estate operations. Our ecosystem brings
+            intelligent automation to modern communities and commercial spaces.
           </p>
         </div>
-      </div>
 
-      {/* Enhanced Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {/* Filter Controls and Table Search in Same Row */}
-        <div className="border-b border-gray-200 p-4 bg-gray-50">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            {/* Product Type Filter */}
-            <div className="lg:col-span-3">
-              <label className="block text-xs font-semibold text-gray-700 mb-2">
-                Product Type
-              </label>
-              <select
-                value={selectedProductType}
-                onChange={(e) => setSelectedProductType(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Product Type</option>
-                {[
-                  "CRM",
-                  "Visitor Management",
-                  "Facility Management",
-                  "Loyalty",
-                  "Pre - Sales",
-                  "Post - Sales",
-                  "Vendor Portal",
-                  "Customer Portal",
-                ].map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Table Container */}
+        <div className="bg-white shadow-sm overflow-x-auto w-full">
+          <EnhancedTable
+            data={filteredProducts}
+            columns={columns}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            storageKey="products-table-v8"
+            enableSearch={false}
+            hideTableSearch={true}
+            hideTableExport={true}
+            hideColumnsButton={false}
+            leftActions={
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Product Type */}
+                <select
+                  value={selectedProductType}
+                  onChange={(e) => setSelectedProductType(e.target.value)}
+                  className="h-8 px-3 bg-white border border-[#D3D1C7] text-xs text-gray-600 focus:ring-1 focus:ring-blue-400 outline-none transition-all filter-select appearance-none pr-7"
+                >
+                  <option value="">Product Type</option>
+                  {[
+                    "Wallet Management",
+                    "CRM",
+                    "Visitor Management",
+                    "Facility Management",
+                    "Loyalty",
+                    "Pre - Sales",
+                    "Post - Sales",
+                    "Vendor Portal",
+                    "Customer Portal",
+                  ].map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
 
-            {/* Industry Type Filter */}
-            <div className="lg:col-span-3">
-              <label className="block text-xs font-semibold text-gray-700 mb-2">
-                Industry Type
-              </label>
-              <select
-                value={selectedIndustry}
-                onChange={(e) => setSelectedIndustry(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Industry Type</option>
-                {[
-                  "Real Estate Developers",
-                  "Property & Facility Management",
-                  "Real Estate Developer & FM",
-                  "Real Estate & Construction",
-                  "Government",
-                  "Real Estate & Sales",
-                  "Facility Management",
-                  "Enterprise Digital Workplace",
-                  "Coworking Space",
-                  "Work Management / All Industries",
-                  "Procurement & Supply Chain",
-                  "Real Estate & Manufacturing",
-                  "Referral & Loyalty",
-                  "Health, Safety & Wellbeing",
-                  "Health, Safety & Environment",
-                  "Real Estate",
-                  "Sports & Recreation",
-                ].map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Project Status Filter */}
-            <div className="lg:col-span-3">
-              <label className="block text-xs font-semibold text-gray-700 mb-2">
-                Project Status
-              </label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Project Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-
-            {/* Table Search Area will be below */}
-          </div>
+                {/* Industry Type */}
+                <select
+                  value={selectedIndustry}
+                  onChange={(e) => setSelectedIndustry(e.target.value)}
+                  className="h-8 px-3 bg-white border border-[#D3D1C7] text-xs text-gray-600 focus:ring-1 focus:ring-blue-400 outline-none transition-all filter-select appearance-none pr-7"
+                >
+                  <option value="">Industry Type</option>
+                  {[
+                    "Real Estate Development",
+                    "Facility Management",
+                    "Manufacturing",
+                    "Government",
+                    "Hospitals",
+                    "Education",
+                    "Commercial Real Estate",
+                    "Enterprise",
+                  ].map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            }
+            rightActions={
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 pr-3 h-8 w-48 bg-white border border-[#D3D1C7] text-xs focus:ring-1 focus:ring-blue-400 outline-none transition-all"
+                />
+              </div>
+            }
+            emptyMessage="No products found matching your active filters."
+            className="products-table"
+          />
         </div>
-
-        {/* Enhanced Table */}
-        <EnhancedTable
-          data={filteredProducts}
-          columns={columns}
-          renderCell={renderCell}
-          renderActions={renderActions}
-          storageKey="products-table"
-          enableSearch={true}
-          searchPlaceholder="Search Product Name, industry"
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          enableExport={false}
-          onFilterClick={() => setShowFilters(true)}
-          hideTableSearch={false}
-          hideTableExport={true}
-          hideColumnsButton={false}
-          emptyMessage="No products found matching your active filters."
-          className="products-table"
-        />
       </div>
-
-      {/* Filter Modal */}
-      {showFilters && <FilterModal />}
     </div>
   );
 };

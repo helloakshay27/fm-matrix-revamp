@@ -56,6 +56,7 @@ const BtnPrimary = ({
   className = "",
   icon: Icon,
   disabled = false,
+  loading = false,
 }: any) => (
   <button
     disabled={disabled}
@@ -65,7 +66,7 @@ const BtnPrimary = ({
       className
     )}
   >
-    {Icon && <Icon className={cn("w-4 h-4", disabled && "animate-spin")} />}{" "}
+    {Icon && <Icon className={cn("w-4 h-4", loading && "animate-spin")} />}{" "}
     {children}
   </button>
 );
@@ -277,9 +278,13 @@ const DailyTab = () => {
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  // ── Stable calendar row — only refreshed on arrow navigation, not card clicks ──
+  const [calendarDateRow, setCalendarDateRow] = useState<any[]>([]);
+  const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
+  const [savedMeetingNotes, setSavedMeetingNotes] = useState("");
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -328,6 +333,11 @@ const DailyTab = () => {
 
       if (json.success) {
         setDailyData(json.data);
+        // Only update the visible calendar tiles on arrow navigation (or first load)
+        if (isArrowNav.current || calendarDateRow.length === 0) {
+          setCalendarDateRow(json.data?.date_row || []);
+        }
+        isArrowNav.current = false;
         const reports: any[] =
           json.data?.member_reports || json.data?.reports || [];
         const headId = json.data?.config?.meeting_head?.id;
@@ -358,17 +368,19 @@ const DailyTab = () => {
 
           if (savedDiscussion) {
             setMeetingNotes(savedDiscussion);
+            setSavedMeetingNotes(savedDiscussion);
           } else {
             const missed: any[] = json.data?.missed_members || [];
             if (missed.length > 0) {
-              setMeetingNotes(
+              const prefill =
                 `**Team Members Who Missed Report (${missed.length}):**\n` +
-                  missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
-                  `\n\n**Key Discussion Points:**\n`
-              );
+                missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
+                `\n\n**Key Discussion Points:**\n`;
+              setMeetingNotes(prefill);
             } else {
               setMeetingNotes("");
             }
+            setSavedMeetingNotes("");
           }
         }
       } else {
@@ -385,6 +397,15 @@ const DailyTab = () => {
   useEffect(() => {
     loadDailyData(false);
   }, [selectedMeetingId, activeDate]);
+
+  // ── Optimistically mark active date as "done" in calendar ──
+  const markActiveDateDone = () => {
+    setCalendarDateRow((prev) =>
+      prev.map((d: any) =>
+        d.full_date === activeDate ? { ...d, status: "done" } : d
+      )
+    );
+  };
 
   // ── GET Past Feedbacks ──
   const loadPastFeedbacks = async (targetUserId: string | number) => {
@@ -478,6 +499,7 @@ const DailyTab = () => {
   };
 
   const changeDate = (days: number) => {
+    isArrowNav.current = true;
     const d = new Date(activeDate);
     d.setDate(d.getDate() + days);
     setActiveDate(d.toISOString().split("T")[0]);
@@ -662,7 +684,7 @@ const DailyTab = () => {
     return meetingNotesArray;
   };
 
-  // ── Save Meeting (POST) ──
+  // ── Save Meeting (POST) — first time only ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
       toast.error("Please select a specific meeting.");
@@ -725,6 +747,8 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting saved successfully!");
+      // ── Optimistically mark calendar date as done ──
+      markActiveDateDone();
       loadDailyData(true);
     } catch (err: any) {
       toast.error("Error saving meeting: " + err.message);
@@ -733,7 +757,60 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Meeting (PATCH) ──
+  // ── Update Meeting Notes Only (PATCH) ──
+  const handleUpdateNotesOnly = async () => {
+    if (!meetingJournalId) {
+      toast.error("No saved meeting found to update.");
+      return;
+    }
+    setIsSavingMeeting(true);
+    try {
+      const allReports = dailyData?.member_reports || dailyData?.reports || [];
+      const allMissed = dailyData?.missed_members || [];
+      const meetingNotesArray = buildMeetingNotesArray(
+        allReports,
+        allMissed,
+        meetingNotes
+      );
+
+      const existingRd =
+        allReports.find(
+          (r: any) =>
+            r.journal_id === meetingJournalId &&
+            Array.isArray(r.report_data?.meeting_notes)
+        )?.report_data || {};
+
+      const payload = {
+        user_journal: {
+          report_data: {
+            ...existingRd,
+            meeting_notes: meetingNotesArray,
+          },
+        },
+      };
+
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
+        {
+          method: "PATCH",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+      toast.success("Meeting notes updated!");
+      // ── Optimistically mark calendar date as done ──
+      markActiveDateDone();
+      setSavedMeetingNotes(meetingNotes);
+      loadDailyData(true);
+    } catch (err: any) {
+      toast.error("Error updating meeting notes: " + err.message);
+    } finally {
+      setIsSavingMeeting(false);
+    }
+  };
+
+  // ── Update Full Meeting (PATCH) ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.", {
@@ -797,6 +874,9 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting updated successfully!");
+      // ── Optimistically mark calendar date as done ──
+      markActiveDateDone();
+      setSavedMeetingNotes(meetingNotes);
       loadDailyData(true);
     } catch (err: any) {
       toast.error("Error updating meeting: " + err.message);
@@ -807,10 +887,19 @@ const DailyTab = () => {
 
   // ── Derived Data ──
   const dateRow = dailyData?.date_row || [];
+  const calendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
   const config = dailyData?.config;
   const topDateStr = dailyData?.date || activeDate;
   const configName =
     config?.name || (selectedMeetingId === "all" ? "All Meetings" : "Meeting");
+
+  const activeDateStatus = calendarRow.find(
+    (d: any) => d.full_date === activeDate
+  )?.status;
+  const isActiveDateSubmitted =
+    activeDateStatus === "done" || activeDateStatus === "submitted";
+
+  const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
   let memberReports = dailyData?.member_reports || dailyData?.reports || [];
   let failedMembers = dailyData?.missed_members || [];
@@ -882,7 +971,6 @@ const DailyTab = () => {
 
         {/* ── Calendar Body ── */}
         {isLoading && !dailyData ? (
-          /* Skeleton loader */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -890,13 +978,12 @@ const DailyTab = () => {
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className="rounded-[18px] bg-[#F0EBE8] animate-pulse"
+                className="rounded-[18px] skeleton"
                 style={{ width: 100, height: 120 }}
               />
             ))}
           </div>
         ) : noMeetings ? (
-          /* ── No Meetings Empty State ── */
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5EFEB] border border-[#EAE3DF]">
               <Calendar className="w-7 h-7 text-[#CE8261] opacity-40" />
@@ -911,17 +998,15 @@ const DailyTab = () => {
             </div>
           </div>
         ) : (
-          /* ── Normal Calendar ── */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
           >
-            {dateRow.map((dateItem: any) => {
+            {calendarRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
               const isUpcoming = rawStatus === "upcoming";
-              // ── UPCOMING: plain text style (image jaisa) ──
-              // ── UPCOMING: plain text style (image jaisa) ──
+
               if (isUpcoming) {
                 return (
                   <div
@@ -953,8 +1038,6 @@ const DailyTab = () => {
                 );
               }
 
-              // ── PAST / TODAY: colored card ──
-              // ── PAST / TODAY / HOLIDAY: colored card ──
               let bg = "#F0EDEA",
                 textColor = "#9CA3AF",
                 labelBg = "rgba(0,0,0,0.07)",
@@ -977,7 +1060,6 @@ const DailyTab = () => {
                 rawStatus === "holiday" ||
                 rawStatus === "non_meeting"
               ) {
-                // 👇 Yahan "non_meeting" add kar diya hai
                 bg = "#F5D142";
                 textColor = "#8A6D3B";
                 labelBg = "rgba(0,0,0,0.09)";
@@ -1031,7 +1113,6 @@ const DailyTab = () => {
           </div>
         )}
 
-        {/* Legend — always show except when no meetings */}
         {!noMeetings && (
           <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-2">
             <div className="flex items-center gap-2.5">
@@ -1124,7 +1205,6 @@ const DailyTab = () => {
         </div>
       )}
 
-      {/* ══ NO MEETINGS — full info banner ══ */}
       {noMeetings && (
         <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 border border-orange-200 shrink-0 mt-0.5">
@@ -1146,27 +1226,27 @@ const DailyTab = () => {
         <div className="border border-[#F0EBE8] rounded-2xl shadow-sm overflow-hidden bg-white mt-4">
           <div className="p-4 border-b border-[#F0EBE8] flex justify-between items-center bg-[#FAFAFA] flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
+              <div className="h-9 w-9 rounded-2xl skeleton" />
               <div className="space-y-2">
-                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
+                <div className="w-32 h-4 rounded-full skeleton" />
+                <div className="w-20 h-3 rounded-full skeleton" />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
-              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
+              <div className="w-20 h-7 rounded-2xl skeleton" />
+              <div className="w-24 h-7 rounded-2xl skeleton" />
+              <div className="w-20 h-7 rounded-2xl skeleton" />
             </div>
           </div>
           <div className="p-4 space-y-6">
             <div className="border border-[#F0EBE8] rounded-2xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between p-3 border-b border-[#F0EBE8] bg-[#FAFAFA]">
-                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8] animate-pulse" />
+                <div className="w-24 h-4 rounded-full skeleton" />
+                <div className="w-8 h-8 rounded-xl skeleton" />
               </div>
               <div className="p-4 h-24 bg-white" />
               <div className="p-3 border-t border-[#F0EBE8] bg-[#FAFAFA] flex justify-end">
-                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
+                <div className="w-32 h-9 rounded-2xl skeleton" />
               </div>
             </div>
             <div className="space-y-4">
@@ -1176,15 +1256,15 @@ const DailyTab = () => {
                   className="border border-[#F0EBE8] rounded-2xl p-4 bg-white shadow-sm flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded bg-[#F0EBE8] animate-pulse" />
-                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full animate-pulse" />
-                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto animate-pulse" />
+                    <div className="w-4 h-4 rounded skeleton" />
+                    <div className="w-40 h-5 rounded-full skeleton" />
+                    <div className="w-16 h-4 rounded-full ml-auto skeleton" />
                   </div>
-                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7 animate-pulse" />
+                  <div className="w-48 h-3 rounded-full ml-7 skeleton" />
                   <div className="flex gap-2 ml-7">
-                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
+                    <div className="w-12 h-6 rounded-lg skeleton" />
+                    <div className="w-16 h-6 rounded-lg skeleton" />
+                    <div className="w-16 h-6 rounded-lg skeleton" />
                   </div>
                 </div>
               ))}
@@ -1245,7 +1325,7 @@ const DailyTab = () => {
                     <textarea
                       value={meetingNotes}
                       onChange={(e) => setMeetingNotes(e.target.value)}
-                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[80px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
+                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
                       placeholder="Enter meeting remarks, feedback, action items..."
                     />
                   </div>
@@ -1264,11 +1344,31 @@ const DailyTab = () => {
                         Select All
                       </span>
                     </label>
-                    {meetingJournalId ? (
+
+                    {/* ── Smart button logic ── */}
+                    {isActiveDateSubmitted ? (
+                      <div className="flex items-center gap-2">
+                        {!notesChanged && (
+                          <span className="text-[11px] text-neutral-400 font-medium italic">
+                            Edit notes to enable update
+                          </span>
+                        )}
+                        <BtnPrimary
+                          icon={isSavingMeeting ? Loader2 : RefreshCw}
+                          onClick={handleUpdateNotesOnly}
+                          disabled={isSavingMeeting || !notesChanged}
+                          loading={isSavingMeeting}
+                          className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                        >
+                          {isSavingMeeting ? "Updating..." : "Update Notes"}
+                        </BtnPrimary>
+                      </div>
+                    ) : meetingJournalId ? (
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : RefreshCw}
                         onClick={handleUpdateMeeting}
                         disabled={isSavingMeeting}
+                        loading={isSavingMeeting}
                         className="bg-blue-600 hover:bg-blue-700 border-blue-700"
                       >
                         {isSavingMeeting ? "Updating..." : "Update Meeting"}
@@ -1278,6 +1378,7 @@ const DailyTab = () => {
                         icon={isSavingMeeting ? Loader2 : FileText}
                         onClick={handleSaveMeeting}
                         disabled={isSavingMeeting}
+                        loading={isSavingMeeting}
                       >
                         {isSavingMeeting ? "Saving..." : "Save Meeting"}
                       </BtnPrimary>
@@ -1584,7 +1685,7 @@ const DailyTab = () => {
                                             >
                                               <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
                                               <span className="leading-relaxed">
-                                                {getItemTitle(item)}
+                                                {getItemTitle(item) || "—"}
                                               </span>
                                             </li>
                                           )
@@ -2087,6 +2188,18 @@ const DailyTab = () => {
         select option:checked, select option:hover { background: #FFF3EE; color: #CE7A5A; }
         select:focus { outline: none; }
         .calendar-row::-webkit-scrollbar { display: none; }
+        
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        
+        .skeleton {
+          background: #F0EBE8;
+          background-image: linear-gradient(to right, #F0EBE8 4%, #FAF8F7 25%, #F0EBE8 36%);
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite linear;
+        }
       `}</style>
     </div>
   );

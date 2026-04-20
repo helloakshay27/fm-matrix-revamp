@@ -4,6 +4,7 @@ import {
   Check, X, TrendingUp, TriangleAlert,
   Plus, Trash2, GripVertical, Info, ExternalLink,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // ── Design tokens — from BusinessPlanAndGoles ──
 const C = {
@@ -99,6 +100,26 @@ const ThemeStyle = () => (
     }
     
     .drag-over { border: 2px dashed ${C.primary} !important; opacity: 0.5; }
+
+    /* ── Custom Tooltip Styles for Detailed Info ── */
+    .swot-tooltip {
+      position: absolute;
+      top: 28px;
+      right: 0; /* Align to right since it's on the edge */
+      width: 380px;
+      background-color: #0B1221;
+      color: #ffffff;
+      padding: 18px 24px;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 99999;
+      font-size: 12px;
+      line-height: 1.6;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Poppins', sans-serif;
+      cursor: default;
+    }
   `}</style>
 );
 
@@ -233,6 +254,9 @@ export default function SWOTAnalysis() {
   const [isSaving, setIsSaving]         = useState(false);
   const [saveError, setSaveError]       = useState<string | null>(null);
 
+  // ── State for Image Info Tooltip ──
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+
   // For Drag and Drop
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -302,8 +326,10 @@ export default function SWOTAnalysis() {
       setData(prev => ({ ...prev, [editCategory]: filtered }));
       setIsModalOpen(false);
       fetchQuadrant(editCategory);
+      toast.success(`${CONFIG[editCategory].title} saved successfully!`);
     } catch (err: any) {
       setSaveError(err.message || 'Failed to save. Please try again.');
+      toast.error(err.message || 'Failed to save.');
     } finally {
       setIsSaving(false);
     }
@@ -368,7 +394,38 @@ export default function SWOTAnalysis() {
             SWOT Analysis
           </h1>
         </div>
-        <Info size={15} style={{ color: '#1a1a1a', opacity: 0.5, flexShrink: 0 }} />
+        
+        {/* ── Updated Info Icon with Image Exact Tooltip ── */}
+        <div
+          style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          onMouseEnter={() => setShowInfoTooltip(true)}
+          onMouseLeave={() => setShowInfoTooltip(false)}
+        >
+          <Info size={15} style={{ color: '#1a1a1a', opacity: 0.5, flexShrink: 0 }} />
+          {showInfoTooltip && (
+            <div className="swot-tooltip">
+              <div style={{ fontWeight: 800, marginBottom: 12, fontSize: 13 }}>
+                SWOT Analysis - Know Yourself
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <span style={{ fontWeight: 800 }}>Strengths & Weaknesses:</span> What you control inside your business
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontWeight: 800 }}>Opportunities & Threats:</span> External market forces you must respond to
+              </div>
+             
+              <div style={{ marginBottom: 4, color: "#cbd5e1" }}>
+                Indian context examples:
+              </div>
+              <div style={{ fontStyle: "italic", color: "#cbd5e1" }}>
+                Opportunity: Growing middle class, Digital India push, GST simplification
+              </div>
+              <div style={{ fontStyle: "italic", color: "#cbd5e1", marginTop: 4 }}>
+                Threat: New competitors, regulatory changes, talent shortage in smaller cities
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── SWOT 2×2 Grid ── */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
 // ── Design tokens — from BusinessPlanAndGoles ──
 const C = {
@@ -240,26 +241,32 @@ const createKpiInApi = async (
     selected: true,
   };
 };
-
 const updateKpiInApi = async (
   id: number,
   patch: Partial<{
+    name: string;
+    unit: string;
     current_value: number;
     target_value: number;
     frequency: string;
     department_id: number;
-    assignee_id: number;
+    assignee_ids: number[]; // Changed to array
+    weight?: number;
+    related_link_url?: string;
+    kpi_type?: string;
+    priority?: string;
   }>
 ) => {
   const payload = { kpi: patch };
-  const res = await fetch(`${BASE_URL}/kpis/${id}`, {
-    method: "PUT",
+  // URL update kiya .json ke sath aur method PATCH kar diya
+  const res = await fetch(`${BASE_URL}/kpis/${id}.json`, {
+    method: "PATCH",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
   const raw = await res.text();
   if (!res.ok)
-    throw new Error(`PUT error ${res.status}: ${raw || res.statusText}`);
+    throw new Error(`PATCH error ${res.status}: ${raw || res.statusText}`);
 };
 
 const deleteKpiFromApi = async (id: number) => {
@@ -283,7 +290,7 @@ const ThemeStyle = () => (
     @keyframes kpi-spin { to { transform: rotate(360deg); } }
     @keyframes kpi-pulse {
       0%, 100% { opacity: 1; }
-      50%       { opacity: .5; }
+      50%      { opacity: .5; }
     }
 
     .kpi-overlay {
@@ -702,6 +709,11 @@ export const CriticalNumbers = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Info Tooltip State
+  const [isInfoHovered, setIsInfoHovered] = useState(false);
+  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
+  const infoBtnRef = useRef<HTMLSpanElement>(null);
+
   // Users & Departments
   const [users, setUsers] = useState<UserOption[]>([]);
   const [departments, setDepartments] = useState<DeptOption[]>([]);
@@ -795,6 +807,7 @@ export const CriticalNumbers = () => {
   const handleCreate = async () => {
     if (!form.name.trim()) {
       setSaveError("KPI Name is required.");
+      toast.error("KPI Name is required.");
       return;
     }
     setIsSaving(true);
@@ -811,8 +824,10 @@ export const CriticalNumbers = () => {
       fetchKpisFromApi()
         .then((data) => setKpis(data))
         .catch(() => {});
+      toast.success("KPI created successfully!");
     } catch (err: any) {
       setSaveError(err.message || "Failed to create KPI.");
+      toast.error(err.message || "Failed to create KPI.");
     } finally {
       setIsSaving(false);
     }
@@ -822,23 +837,32 @@ export const CriticalNumbers = () => {
     if (!editingKpi) return;
     if (!form.name.trim()) {
       setSaveError("KPI Name is required.");
+      toast.error("KPI Name is required.");
       return;
     }
     setIsSaving(true);
     setSaveError(null);
     try {
-      const deptName = departments.find(
-        (d) => String(d.id) === form.department_id
-      )?.name;
+      // Naya payload structure
       const patch: any = {
+        name: form.name.trim(),
         target_value: form.target_value
           ? parseFloat(form.target_value)
           : undefined,
         frequency: form.frequency.toLowerCase(),
       };
-      if (deptName) patch.department = deptName;
-      if (form.assign_to_id)
-        patch.assignee_id = parseInt(form.assign_to_id, 10);
+
+      if (form.unit !== "Select unit") patch.unit = form.unit;
+
+      // Department ID pass kar rahe hain (pehle naam pass ho raha tha)
+      if (form.department_id) {
+        patch.department_id = parseInt(form.department_id, 10);
+      }
+
+      // Assignee ID ko array mein wrap kar ke bhej rahe hain
+      if (form.assign_to_id) {
+        patch.assignee_ids = [parseInt(form.assign_to_id, 10)];
+      }
 
       await updateKpiInApi(editingKpi.id, patch);
 
@@ -869,20 +893,23 @@ export const CriticalNumbers = () => {
       fetchKpisFromApi()
         .then((data) => setKpis(data))
         .catch(() => {});
+      toast.success("KPI updated successfully!");
     } catch (err: any) {
       setSaveError(err.message || "Failed to update KPI.");
+      toast.error(err.message || "Failed to update KPI.");
     } finally {
       setIsSaving(false);
     }
   };
-
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
       await deleteKpiFromApi(id);
       setKpis((prev) => prev.filter((k) => k.id !== id));
+      toast.success("KPI deleted successfully!");
     } catch (err: any) {
       setFetchError(err.message || "Failed to delete KPI.");
+      toast.error(err.message || "Failed to delete KPI.");
     } finally {
       setDeletingId(null);
     }
@@ -934,7 +961,70 @@ export const CriticalNumbers = () => {
           >
             Critical Numbers (KPIs)
           </h1>
-          <InfoIcon />
+          <span 
+            ref={infoBtnRef}
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setInfoPos({
+                top: rect.bottom + window.scrollY + 10,
+                left: rect.left + window.scrollX + rect.width / 2,
+                transform: "translateX(-50%)"
+              });
+              setIsInfoHovered(true);
+            }}
+            onMouseLeave={() => setIsInfoHovered(false)}
+            style={{ cursor: "help", display: "inline-flex" }}
+          >
+            <InfoIcon />
+          </span>
+
+          {isInfoHovered && ReactDOM.createPortal(
+            <div 
+              style={{
+                position: "absolute",
+                top: infoPos.top,
+                left: infoPos.left,
+                transform: infoPos.transform,
+                zIndex: 99999,
+                background: "#16102b", // Dark purple/blue tint
+                color: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                padding: "16px",
+                width: 380,
+                textAlign: "center",
+                fontFamily: "'Poppins', sans-serif",
+                pointerEvents: "none",
+                border: "1px solid rgba(218,119,86,0.2)"
+              }}
+            >
+              <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800, color: "#fff" }}>
+                Critical Numbers - Your Business Dashboard
+              </h4>
+              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
+                The 3-5 most important metrics that tell you if your business is healthy. These are leading indicators - numbers that predict future success.
+              </p>
+              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
+                Review these WEEKLY in your team meetings. Everyone should know these numbers by heart.
+              </p>
+              <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#9ca3af" }}>
+                From Scaling Up: "If you can't measure it, you can't improve it. Pick the vital few metrics, not the trivial many."
+              </p>
+              <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                <div style={{ fontStyle: "italic", marginBottom: 2 }}>
+                  Examples for Indian businesses:
+                </div>
+                <div style={{ fontStyle: "italic", marginBottom: 2 }}>
+                  <strong style={{ color: "#d1d5db" }}>Manufacturing:</strong> Daily production units, defect rate, on-time delivery %
+                </div>
+                <div style={{ fontStyle: "italic" }}>
+                  <strong style={{ color: "#d1d5db" }}>Services:</strong> Customer retention rate, average project margin, new client meetings/week
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+          
           {isFetching && <LoaderIcon />}
         </div>
 

@@ -755,7 +755,7 @@ export const BookingSetupDetailClubPage = () => {
                         {String(slot.endTime.hour).padStart(2, '0')}:{String(slot.endTime.minute).padStart(2, '0')}
                       </span>
                     </div>
-                    <div className="flex items-start">
+                    {/* <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Break Time Start</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">
@@ -768,7 +768,7 @@ export const BookingSetupDetailClubPage = () => {
                       <span className="text-gray-900 font-medium">
                         {String(slot.breakTimeEnd.hour).padStart(2, '0')}:{String(slot.breakTimeEnd.minute).padStart(2, '0')}
                       </span>
-                    </div>
+                    </div> */}
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Concurrent Slots</span>
                       <span className="text-gray-500 mx-2">:</span>
@@ -802,21 +802,33 @@ export const BookingSetupDetailClubPage = () => {
                     <span className="text-gray-500 min-w-[160px]">Booking Allowed Before</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {formData.bookingAllowedBefore.day}d {formData.bookingAllowedBefore.hour}h {formData.bookingAllowedBefore.minute}m
+                      {formData?.bookingAllowedBefore?.day ||
+                        formData?.bookingAllowedBefore?.hour ||
+                        formData?.bookingAllowedBefore?.minute
+                        ? `${formData.bookingAllowedBefore.day || 0}d ${formData.bookingAllowedBefore.hour || 0}h ${formData.bookingAllowedBefore.minute || 0}m`
+                        : "-"}
                     </span>
                   </div>
                   <div className="flex items-start">
                     <span className="text-gray-500 min-w-[160px]">Advance Booking</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {formData.advanceBooking.day}d {formData.advanceBooking.hour}h {formData.advanceBooking.minute}m
+                      {formData?.advanceBooking?.day ||
+                        formData?.advanceBooking?.hour ||
+                        formData?.advanceBooking?.minute
+                        ? `${formData.advanceBooking.day || 0}d ${formData.advanceBooking.hour || 0}h ${formData.advanceBooking.minute || 0}m`
+                        : "-"}
                     </span>
                   </div>
                   <div className="flex items-start">
                     <span className="text-gray-500 min-w-[160px]">Can Cancel Before</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                      {formData.canCancelBefore.day}d {formData.canCancelBefore.hour}h {formData.canCancelBefore.minute}m
+                      {formData?.canCancelBefore?.day ||
+                        formData?.canCancelBefore?.hour ||
+                        formData?.canCancelBefore?.minute
+                        ? `${formData.canCancelBefore.day || 0}d ${formData.canCancelBefore.hour || 0}h ${formData.canCancelBefore.minute || 0}m`
+                        : "-"}
                     </span>
                   </div>
                   <div className="flex items-start">
