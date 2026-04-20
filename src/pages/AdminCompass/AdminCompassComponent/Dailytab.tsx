@@ -263,6 +263,18 @@ const getItemStatus = (item: any): string => {
   return item.status || "open";
 };
 
+// ── Strip missed-members prefix from textarea value before saving ──
+// So only the actual discussion points typed by user go into key_discussion_points
+const stripMissedMembersPrefix = (text: string): string => {
+  const missedHeaderMatch = text.match(
+    /^Team Members Who Missed Report \(\d+\):\n(?:- .+\n)*\n?/
+  );
+  if (missedHeaderMatch) {
+    return text.slice(missedHeaderMatch[0].length);
+  }
+  return text;
+};
+
 // ─────────────────────────────────────────────
 const DailyTab = () => {
   const [activeDate, setActiveDate] = useState(
@@ -278,13 +290,11 @@ const DailyTab = () => {
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  // ── Stable calendar row — only refreshed on arrow navigation, not card clicks ──
   const [calendarDateRow, setCalendarDateRow] = useState<any[]>([]);
   const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
-  // ── CHANGE 1: Track originally saved notes to detect user edits ──
   const [savedMeetingNotes, setSavedMeetingNotes] = useState("");
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
@@ -334,11 +344,11 @@ const DailyTab = () => {
 
       if (json.success) {
         setDailyData(json.data);
-        // Only update the visible calendar tiles on arrow navigation (or first load)
         if (isArrowNav.current || calendarDateRow.length === 0) {
           setCalendarDateRow(json.data?.date_row || []);
         }
         isArrowNav.current = false;
+
         const reports: any[] =
           json.data?.member_reports || json.data?.reports || [];
         const headId = json.data?.config?.meeting_head?.id;
@@ -363,27 +373,41 @@ const DailyTab = () => {
         setMeetingJournalId(meetingJournalReport?.journal_id ?? null);
 
         if (!skipNotesRestore) {
-          const savedDiscussion: string =
-            meetingJournalReport?.report_data?.meeting_notes?.[0]
-              ?.key_discussion_points || "";
+          const DEFAULT_DISCUSSION = "Key Discussion Points:\n";
 
-          if (savedDiscussion) {
+          if (meetingJournalReport) {
+            // ── ALREADY SUBMITTED ──
+            // Show ONLY the saved discussion points — no missed members in textarea
+            const savedDiscussion: string =
+              meetingJournalReport?.report_data?.meeting_notes?.[0]
+                ?.key_discussion_points || DEFAULT_DISCUSSION;
             setMeetingNotes(savedDiscussion);
-            // ── CHANGE 2: Sync savedMeetingNotes with what came from the API ──
             setSavedMeetingNotes(savedDiscussion);
           } else {
-            const missed: any[] = json.data?.missed_members || [];
-            if (missed.length > 0) {
-              const prefill =
-                `**Team Members Who Missed Report (${missed.length}):**\n` +
-                missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
-                `\n\n**Key Discussion Points:**\n`;
-              setMeetingNotes(prefill);
-            } else {
-              setMeetingNotes("");
+            // ── NOT YET SUBMITTED ──
+            // Prefill missed members + discussion heading inside textarea
+            const allReports: any[] =
+              json.data?.member_reports || json.data?.reports || [];
+            const pureMissed = [
+              ...allReports
+                .filter((r: any) => r.status === "pending" && !r.daily_report)
+                .map((r: any) => r.name),
+              ...(json.data?.missed_members || []).map(
+                (m: any) => m.name || m.user
+              ),
+            ].filter(Boolean);
+            const uniqueMissed = [...new Set(pureMissed)] as string[];
+
+            let prefill = "";
+            if (uniqueMissed.length > 0) {
+              prefill =
+                `Team Members Who Missed Report (${uniqueMissed.length}):\n` +
+                uniqueMissed.map((name: string) => `- ${name}`).join("\n") +
+                `\n\n`;
             }
-            // ── CHANGE 3: No saved notes from API → baseline is empty ──
-            setSavedMeetingNotes("");
+            prefill += DEFAULT_DISCUSSION;
+            setMeetingNotes(prefill);
+            setSavedMeetingNotes(prefill);
           }
         }
       } else {
@@ -397,7 +421,7 @@ const DailyTab = () => {
     }
   };
 
-  // Reset calendar when meeting changes so the new meeting's tiles load fresh
+  // Reset calendar when meeting changes
   useEffect(() => {
     setCalendarDateRow([]);
   }, [selectedMeetingId]);
@@ -610,6 +634,10 @@ const DailyTab = () => {
   };
 
   // ── Meeting notes array builder ──
+  // meetingNotesText = raw textarea value
+  // For NOT-yet-submitted: strip the auto-prefilled missed-members block,
+  //   save missed members as array + clean discussion points separately
+  // For SUBMITTED (update): textarea only has discussion points, save as-is
   const buildMeetingNotesArray = (
     allReports: any[],
     allMissed: any[],
@@ -622,13 +650,17 @@ const DailyTab = () => {
       if (!pureMissedNames.includes(m.name)) pureMissedNames.push(m.name);
     });
 
+    // Strip the auto-prefilled missed-members block from textarea value
+    // so only the actual discussion points written by user go into key_discussion_points
+    const cleanDiscussion = stripMissedMembersPrefix(meetingNotesText).trim();
+
     const meetingNotesArray: any[] = [];
     const note1: any = {};
     if (pureMissedNames.length > 0) {
       note1[`Team Members Who Missed Report (${pureMissedNames.length})`] =
         pureMissedNames;
     }
-    note1["key_discussion_points"] = meetingNotesText || "";
+    note1["key_discussion_points"] = cleanDiscussion;
     meetingNotesArray.push(note1);
 
     allReports
@@ -747,6 +779,8 @@ const DailyTab = () => {
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting saved successfully!");
       loadDailyData(true);
+      // After save, reload fresh so textarea switches to discussion-points-only mode
+      loadDailyData(false);
     } catch (err: any) {
       toast.error("Error saving meeting: " + err.message);
     } finally {
@@ -754,9 +788,8 @@ const DailyTab = () => {
     }
   };
 
-  // ── CHANGE 4: Update Meeting Notes Only (PATCH) ──
-  // Called when the date is already submitted. Only patches key_discussion_points
-  // in the meeting_notes array — does NOT re-submit member data.
+  // ── Update Notes Only (PATCH) — for already-submitted meetings ──
+  // Textarea only contains discussion points at this point (no missed prefix)
   const handleUpdateNotesOnly = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.");
@@ -766,14 +799,12 @@ const DailyTab = () => {
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
-      // Rebuild meeting_notes array with the new discussion text
       const meetingNotesArray = buildMeetingNotesArray(
         allReports,
         allMissed,
         meetingNotes
       );
 
-      // Fetch the existing report_data so we don't clobber other fields
       const existingRd =
         allReports.find(
           (r: any) =>
@@ -800,7 +831,6 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting notes updated!");
-      // ── CHANGE 5: Sync baseline so the button disables again ──
       setSavedMeetingNotes(meetingNotes);
       loadDailyData(true);
     } catch (err: any) {
@@ -810,7 +840,7 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Full Meeting (PATCH) — kept for future use / manual call ──
+  // ── Update Full Meeting (PATCH) ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.", {
@@ -891,14 +921,12 @@ const DailyTab = () => {
   const configName =
     config?.name || (selectedMeetingId === "all" ? "All Meetings" : "Meeting");
 
-  // ── CHANGE 6: Derive whether the active date's meeting is already submitted ──
   const activeDateStatus = calendarRow.find(
     (d: any) => d.full_date === activeDate
   )?.status;
   const isActiveDateSubmitted =
     activeDateStatus === "done" || activeDateStatus === "submitted";
 
-  // ── CHANGE 7: Has the user typed something new compared to what's saved? ──
   const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
   let memberReports = dailyData?.member_reports || dailyData?.reports || [];
@@ -929,7 +957,6 @@ const DailyTab = () => {
     navigate("/admin-compass/feedback-dashboard");
   };
 
-  // ── No meetings state ──
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
 
   return (
@@ -971,7 +998,6 @@ const DailyTab = () => {
 
         {/* ── Calendar Body ── */}
         {isLoading && !dailyData ? (
-          /* Skeleton loader */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -985,7 +1011,6 @@ const DailyTab = () => {
             ))}
           </div>
         ) : noMeetings ? (
-          /* ── No Meetings Empty State ── */
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5EFEB] border border-[#EAE3DF]">
               <Calendar className="w-7 h-7 text-[#CE8261] opacity-40" />
@@ -1000,7 +1025,6 @@ const DailyTab = () => {
             </div>
           </div>
         ) : (
-          /* ── Normal Calendar ── */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -1009,12 +1033,13 @@ const DailyTab = () => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
               const isUpcoming = rawStatus === "upcoming";
-              // ── UPCOMING: plain text style ──
+
               if (isUpcoming) {
                 return (
                   <div
                     key={dateItem.full_date}
-                    className="relative select-none cursor-default"
+                    className="relative select-none cursor-not-allowed"
+                    title="Upcoming – not selectable"
                     style={{ width: 100, height: 120 }}
                   >
                     <div className="flex flex-col items-center justify-center w-full h-full border-[3px] border-[#C5BFBB] rounded-[18px] bg-transparent transition-all duration-200">
@@ -1041,7 +1066,6 @@ const DailyTab = () => {
                 );
               }
 
-              // ── PAST / TODAY / HOLIDAY: colored card ──
               let bg = "#F0EDEA",
                 textColor = "#9CA3AF",
                 labelBg = "rgba(0,0,0,0.07)",
@@ -1071,11 +1095,22 @@ const DailyTab = () => {
                 displayLabel = "Holiday";
               }
 
+              const isHoliday =
+                rawStatus === "holiday" || rawStatus === "non_meeting";
+
               return (
                 <div
                   key={dateItem.full_date}
-                  onClick={() => setActiveDate(dateItem.full_date)}
-                  className="relative select-none cursor-pointer"
+                  onClick={
+                    isHoliday
+                      ? undefined
+                      : () => setActiveDate(dateItem.full_date)
+                  }
+                  className={cn(
+                    "relative select-none",
+                    isHoliday ? "cursor-not-allowed" : "cursor-pointer"
+                  )}
+                  title={isHoliday ? "Holiday – not selectable" : undefined}
                 >
                   <div
                     className="flex flex-col items-center justify-center rounded-[18px] transition-all duration-200"
@@ -1117,7 +1152,6 @@ const DailyTab = () => {
           </div>
         )}
 
-        {/* Legend — always show except when no meetings */}
         {!noMeetings && (
           <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-2">
             <div className="flex items-center gap-2.5">
@@ -1210,7 +1244,6 @@ const DailyTab = () => {
         </div>
       )}
 
-      {/* ══ NO MEETINGS — full info banner ══ */}
       {noMeetings && (
         <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 border border-orange-200 shrink-0 mt-0.5">
@@ -1314,7 +1347,7 @@ const DailyTab = () => {
 
             {memberReports.length > 0 && (
               <div className="p-4 bg-[#FFFDFB]">
-                {/* Meeting Notes Box */}
+                {/* ══ Meeting Notes Box ══ */}
                 <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm mb-6">
                   <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#FFFAF8]">
                     <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
@@ -1327,14 +1360,26 @@ const DailyTab = () => {
                       <RefreshCw className="w-3.5 h-3.5" />
                     </BtnIcon>
                   </div>
+
                   <div className="p-4">
+                    {/* ── Textarea label changes based on submit state ── */}
+                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                      {isActiveDateSubmitted
+                        ? "Discussion Points"
+                        : "Meeting Notes"}
+                    </p>
                     <textarea
                       value={meetingNotes}
                       onChange={(e) => setMeetingNotes(e.target.value)}
                       className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
-                      placeholder="Enter meeting remarks, feedback, action items..."
+                      placeholder={
+                        isActiveDateSubmitted
+                          ? "Edit discussion points..."
+                          : "Team members who missed + discussion points will appear here..."
+                      }
                     />
                   </div>
+
                   <div className="flex items-center justify-between bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)]">
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input
@@ -1351,9 +1396,8 @@ const DailyTab = () => {
                       </span>
                     </label>
 
-                    {/* ── CHANGE 8: Smart button logic ── */}
+                    {/* ── Smart button logic ── */}
                     {isActiveDateSubmitted ? (
-                      // Date is already green (submitted) → only allow notes update
                       <div className="flex items-center gap-2">
                         {!notesChanged && (
                           <span className="text-[11px] text-neutral-400 font-medium italic">
@@ -1371,7 +1415,6 @@ const DailyTab = () => {
                         </BtnPrimary>
                       </div>
                     ) : meetingJournalId ? (
-                      // Has a journal but date not yet fully marked submitted
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : RefreshCw}
                         onClick={handleUpdateMeeting}
@@ -1382,7 +1425,6 @@ const DailyTab = () => {
                         {isSavingMeeting ? "Updating..." : "Update Meeting"}
                       </BtnPrimary>
                     ) : (
-                      // First time save
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : FileText}
                         onClick={handleSaveMeeting}
@@ -1395,7 +1437,7 @@ const DailyTab = () => {
                   </div>
                 </div>
 
-                {/* Report Cards */}
+                {/* ══ Report Cards ══ */}
                 <div className="space-y-4">
                   {memberReports
                     .filter(
@@ -1907,7 +1949,7 @@ const DailyTab = () => {
                                 {feedbackOpenId === rId && (
                                   <div className="border-t border-[#EAE3DF] pt-5 mt-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                      {/* COLUMN 1: Add New Feedback Form */}
+                                      {/* COLUMN 1: Add New Feedback */}
                                       <div>
                                         <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
                                           Provide Feedback
@@ -2198,7 +2240,6 @@ const DailyTab = () => {
         select:focus { outline: none; }
         .calendar-row::-webkit-scrollbar { display: none; }
         
-        /* SHIMMER SKELETON ANIMATION */
         @keyframes shimmer {
           0% { background-position: -1000px 0; }
           100% { background-position: 1000px 0; }

@@ -9,6 +9,7 @@ import { KeyProcessesSection } from "./AdminCompassComponent/KeyProcessesSection
 import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
+import { toast } from "sonner"; // Assuming you have sonner installed based on your previous tab
 
 // ── Design Tokens — reduced orange, neutral-first ──
 const C = {
@@ -1000,28 +1001,8 @@ const TOOLTIP_CONTENT: Record<string, { title: string, desc: string, example: st
 // ─────────────────────────────────
 //  CoreValuesInlineCard
 // ─────────────────────────────────
-const CV_STATIC_DESC = [
-  { letter: "I", label: "Innovation", desc: "We embrace innovative solutions to redefine real estate." },
-  { letter: "N", label: "Nurturing", desc: "We foster a supportive environment for growth." },
-  { letter: "A", label: "Agility", desc: "We adapt swiftly to industry changes." },
-  { letter: "R", label: "Resilience", desc: "We persist through challenges and setbacks." },
-  { letter: "E", label: "Empowerment", desc: "We empower our teams to take initiative and lead." },
-];
-const CV_FULL_TEXT = CV_STATIC_DESC.map((d) => `${d.letter} - ${d.label}: ${d.desc}`).join(" ");
-const TRUNCATED = CV_FULL_TEXT.length > 80 ? CV_FULL_TEXT.slice(0, 80).trimEnd() + "..." : CV_FULL_TEXT;
 
 const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({ values }) => {
-  const [hovered, setHovered] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const wrapRef = React.useRef<HTMLDivElement>(null);
-
-  const handleMouseEnter = () => {
-    if (!wrapRef.current) return;
-    const rect = wrapRef.current.getBoundingClientRect();
-    setPos({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
-    setHovered(true);
-  };
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
@@ -1034,29 +1015,6 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({ values 
             {v.value}
           </span>
         ))}
-      </div>
-      <div ref={wrapRef} className="cursor-default" onMouseEnter={handleMouseEnter} onMouseLeave={() => setHovered(false)}>
-        <p className="text-[12px] leading-relaxed select-none" style={{ color: C.textMuted }}>
-          {TRUNCATED}{" "}
-          <span className="font-bold" style={{ color: C.primary }}>Read more</span>
-        </p>
-        {hovered && ReactDOM.createPortal(
-          <div style={{
-            position: "absolute", top: pos.top, left: pos.left, zIndex: 99999,
-            background: "#fffaf8", border: "1px solid rgba(218,119,86,0.20)",
-            borderRadius: 16, boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-            padding: "16px 18px", width: 340, fontSize: 13, lineHeight: 1.6,
-            color: C.textMuted, pointerEvents: "none", fontFamily: "'Poppins', sans-serif",
-          }}>
-            {CV_STATIC_DESC.map((d) => (
-              <p key={d.letter} style={{ margin: "0 0 6px" }}>
-                <strong style={{ color: C.primary, fontWeight: 800 }}>{d.letter}</strong>
-                {" - "}{d.label}: {d.desc}
-              </p>
-            ))}
-          </div>,
-          document.body
-        )}
       </div>
     </div>
   );
@@ -1250,27 +1208,26 @@ const BusinessPlanAndGoles = () => {
     loadOverviewMedia();
   }, [loadBrandPromises, loadPurpose, loadCoreValues, loadKpis, loadOverviewMedia]);
 
-  // ── COPY PLAN ──
+
+// ── COPY PLAN (SMART FORMATTING DOM EXTRACTION) ──
   const handleCopyPlan = async () => {
     setIsCopyingPlan(true);
     try {
       const headers = getAuthHeaders();
+      
+      // 1. Fetch auxiliary items directly
       let kpis: any[] = [];
       try {
         const res = await fetch(`${BASE_URL}/kpis`, { headers });
         const json = await res.json();
-        kpis = Array.isArray(json?.data?.kpis) ? json.data.kpis
-          : Array.isArray(json?.data) ? json.data
-          : Array.isArray(json) ? json : [];
+        kpis = Array.isArray(json?.data?.kpis) ? json.data.kpis : Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
       } catch (e) { console.error("KPI fetch error", e); }
 
       let sops: any[] = [];
       try {
         const res = await fetch(`${BASE_URL}/system_sops`, { headers });
         const json = await res.json();
-        sops = Array.isArray(json?.data?.system_sops) ? json.data.system_sops
-          : Array.isArray(json?.data) ? json.data
-          : Array.isArray(json) ? json : [];
+        sops = Array.isArray(json?.data?.system_sops) ? json.data.system_sops : Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
       } catch (e) { console.error("SOP fetch error", e); }
 
       let swotData = { strengths: [] as string[], weaknesses: [] as string[], opportunities: [] as string[], threats: [] as string[] };
@@ -1288,78 +1245,82 @@ const BusinessPlanAndGoles = () => {
         };
       } catch (e) { console.error("SWOT fetch error", e); }
 
-      let bhag: { title: string; initiatives: { name: string; progress: number }[] } = { title: "", initiatives: [] };
-      try {
-        const res = await fetch(`${BASE_URL}/business_compass/bhag`, { headers });
-        const json = await res.json();
-        bhag = {
-          title: json?.title || json?.data?.title || json?.bhag?.title || json?.goal || "",
-          initiatives: (json?.initiatives || json?.data?.initiatives || json?.bhag?.initiatives || []).map((i: any) => ({
-            name: i.name || i.title || "",
-            progress: i.progress ?? i.completion ?? 0,
-          })),
-        };
-      } catch (e) { console.error("BHAG fetch error", e); }
+      // 2. 🔴 THE ULTIMATE FIX: Smart Formatting from UI Elements
+      const extractSectionFromDOM = (headingRegex: RegExp, defaultTitle: string) => {
+        const allElements = Array.from(document.querySelectorAll("h2, h3, h4, p, span, div.text-lg, div.font-bold"));
+        const header = allElements.find(el => headingRegex.test(el.innerText || "") && el.children.length === 0);
+        
+        if (!header) return `--- ${defaultTitle} ---\n(No data found)\n\n`;
 
-      let year: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
-      try {
-        const res = await fetch(`${BASE_URL}/business_compass/medium_term`, { headers });
-        const json = await res.json();
-        const raw = json?.data || json?.medium_term || json;
-        year = {
-          title: raw?.title || raw?.goal || "",
-          targetDate: raw?.target_date || raw?.targetDate || "",
-          initiatives: (raw?.initiatives || []).map((i: any) => ({
-            name: i.name || i.title || "",
-            progress: i.progress ?? i.completion ?? 0,
-          })),
-        };
-      } catch (e) { console.error("Medium term fetch error", e); }
+        const container = header.closest(".border, .shadow-sm, section, .p-5, .p-6") || header.parentElement;
+        if (!container) return `--- ${defaultTitle} ---\n(No data found)\n\n`;
 
-      let quarter: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
-      try {
-        const res = await fetch(`${BASE_URL}/business_compass/short_term`, { headers });
-        const json = await res.json();
-        const raw = json?.data || json?.short_term || json;
-        quarter = {
-          title: raw?.title || raw?.goal || "",
-          targetDate: raw?.target_date || raw?.targetDate || "",
-          initiatives: (raw?.initiatives || []).map((i: any) => ({
-            name: i.name || i.title || "",
-            progress: i.progress ?? i.completion ?? 0,
-          })),
-        };
-      } catch (e) { console.error("Short term fetch error", e); }
+        const clone = container.cloneNode(true) as HTMLElement;
+        
+        // Remove UI elements (Icons, Buttons, Dropdowns)
+        clone.querySelectorAll("button, input, select, textarea, svg, img, a, .bp-modal-portal").forEach(el => el.remove());
 
-      let rocks: { title: string; targetDate: string; initiatives: { name: string; progress: number }[] } = { title: "", targetDate: "", initiatives: [] };
-      try {
-        const res = await fetch(`${BASE_URL}/business_compass/quarterly`, { headers });
-        const json = await res.json();
-        const raw = json?.data || json?.quarterly || json;
-        rocks = {
-          title: raw?.title || raw?.goal || "",
-          targetDate: raw?.target_date || raw?.targetDate || "",
-          initiatives: (raw?.initiatives || []).map((i: any) => ({
-            name: i.name || i.title || "",
-            progress: i.progress ?? i.completion ?? 0,
-          })),
-        };
-      } catch (e) { console.error("Quarterly fetch error", e); }
+        // 🟢 Force spacing so words don't stick together
+        clone.querySelectorAll("div, p, li, h1, h2, h3, h4").forEach(el => {
+           el.appendChild(document.createTextNode('\n')); // Add line break after blocks
+        });
+        clone.querySelectorAll("span, strong, b").forEach(el => {
+           el.appendChild(document.createTextNode(' ')); // Add space after inline tags
+        });
 
+        // Get raw text with injected spaces/newlines
+        const rawText = clone.textContent || "";
+        
+        // Clean lines (Remove excessive gaps)
+        const lines = rawText.split('\n')
+          .map(line => line.replace(/\s+/g, ' ').trim()) // Fix spacing
+          .filter(line => line.length > 0);
+
+        let formattedText = `--- ${defaultTitle} ---\n`;
+        
+        // Structure the output properly
+        lines.forEach((line, idx) => {
+          if (idx === 0 && headingRegex.test(line)) return; // Skip main header repetition
+
+          const lowerLine = line.toLowerCase();
+
+          if (lowerLine.includes("revenue:") || lowerLine.includes("profit:") || line.includes("Target:")) {
+            // Metrics (Line them up nicely)
+            formattedText += `  • ${line}\n`;
+          } 
+          else if (lowerLine.includes("initiatives")) {
+            // Section Divider
+            formattedText += `\n  [ ${line.toUpperCase()} ]\n`;
+          }
+          else if (line.startsWith("•") || line.startsWith("📅") || line.match(/^\d+%$/)) {
+            // Bullet points, Dates, and Progress (Indent these)
+            formattedText += `      ${line}\n`;
+          }
+          else {
+            // Main item title (like "money", "one man show", "namdba")
+            formattedText += `\n    > ${line}\n`;
+          }
+        });
+
+        return formattedText + `\n`;
+      };
+
+      // Format Document
       const d = new Date();
       const dateStr = d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
       let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
 
-      text += `CORE VALUES\n${"-".repeat(60)}\n`;
-      coreValues.length
-        ? coreValues.forEach((v, i) => { text += `${i + 1}. ${v.value}\n`; })
-        : (text += `(No core values)\n`);
+      // Core Values
+      text += `--- CORE VALUES ---\n`;
+      coreValues.length ? coreValues.forEach((v, i) => { text += `${i + 1}. ${v.value}\n`; }) : (text += `(No core values)\n`);
       text += `\n`;
 
-      text += `PURPOSE\n${"-".repeat(60)}\n`;
+      // Purpose
+      text += `--- PURPOSE ---\n`;
       text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
 
-      text += `BRAND PROMISES\n${"-".repeat(60)}\n`;
+      // Brand Promises
+      text += `--- BRAND PROMISES ---\n`;
       brandPromises.length
         ? brandPromises.forEach((p, i) => {
             text += `${i + 1}. ${p.text}\n`;
@@ -1368,34 +1329,14 @@ const BusinessPlanAndGoles = () => {
         : (text += `(No brand promises)\n`);
       text += `\n`;
 
-      text += `BHAG (BIG HAIRY AUDACIOUS GOAL)\n${"-".repeat(60)}\n`;
-      text += bhag.title ? `${bhag.title}\n` : `(No BHAG defined)\n`;
-      if (bhag.initiatives.length) {
-        text += `\nKey Initiatives:\n`;
-        bhag.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — Progress: ${init.progress}%\n`; });
-      }
-      text += `\n`;
+      // Goals Extracted properly from Screen
+      text += extractSectionFromDOM(/BHAG|Big Hairy Audacious/i, "BHAG");
+      text += extractSectionFromDOM(/Medium Term|3.*Year|5.*Year/i, "MEDIUM TERM PLAN");
+      text += extractSectionFromDOM(/Short Term|1.*Year|Annual/i, "SHORT TERM PLAN (1 YEAR)");
+      text += extractSectionFromDOM(/Quarterly|Rocks|90.*Day/i, "QUARTERLY PLAN (ROCKS)");
 
-      text += `THIS YEAR'S PLAN\n${"-".repeat(60)}\n`;
-      text += year.title ? `${year.title}\n` : `(No annual plan defined)\n`;
-      if (year.targetDate) text += `Target: ${year.targetDate}\n`;
-      if (year.initiatives.length) {
-        text += `\nAnnual Initiatives:\n`;
-        year.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
-      }
-      text += `\n`;
-
-      text += `THIS QUARTER (ROCKS)\n${"-".repeat(60)}\n`;
-      const q = rocks.title ? rocks : quarter;
-      text += q.title ? `${q.title}\n` : `(No quarterly plan defined)\n`;
-      if (q.targetDate) text += `Target: ${q.targetDate}\n`;
-      if (q.initiatives.length) {
-        text += `\nQuarterly Initiatives:\n`;
-        q.initiatives.forEach((init, i) => { text += `  ${i + 1}. ${init.name} — ${init.progress}%\n`; });
-      }
-      text += `\n`;
-
-      text += `CRITICAL NUMBERS\n${"-".repeat(60)}\n`;
+      // KPIs
+      text += `--- CRITICAL NUMBERS ---\n`;
       kpis.length
         ? kpis.forEach((kpi: any, i: number) => {
             text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
@@ -1407,7 +1348,8 @@ const BusinessPlanAndGoles = () => {
         : (text += `(No KPIs)\n`);
       text += `\n`;
 
-      text += `KEY PROCESSES\n${"-".repeat(60)}\n`;
+      // SOPs
+      text += `--- KEY PROCESSES ---\n`;
       sops.length
         ? sops.forEach((sop: any, i: number) => {
             text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
@@ -1418,7 +1360,8 @@ const BusinessPlanAndGoles = () => {
         : (text += `(No SOPs)\n`);
       text += `\n`;
 
-      text += `SWOT ANALYSIS\n${"-".repeat(60)}\n\n`;
+      // SWOT
+      text += `--- SWOT ANALYSIS ---\n\n`;
       (["strengths", "weaknesses", "opportunities", "threats"] as const).forEach((key) => {
         text += `${key.charAt(0).toUpperCase() + key.slice(1)}:\n`;
         swotData[key].length
@@ -1428,10 +1371,10 @@ const BusinessPlanAndGoles = () => {
       });
 
       await navigator.clipboard.writeText(text.trim());
-      alert("Business Plan copied to clipboard!");
+      toast.success("Business Plan copied to clipboard!"); 
     } catch (err) {
       console.error("Copy failed", err);
-      alert("Failed to copy plan.");
+      toast.error("Failed to copy plan.");
     } finally {
       setIsCopyingPlan(false);
     }
@@ -1972,9 +1915,6 @@ const BusinessPlanAndGoles = () => {
                 ) : (coreValues || []).length === 0 && !coreVideoUrl ? (
                   <div className="flex flex-col gap-3">
                     {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
-                    <p className="text-[12px] leading-relaxed" style={{ color: C.textMuted }}>
-                      {TRUNCATED}{" "}<span className="font-bold" style={{ color: C.primary }}>Read more</span>
-                    </p>
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
@@ -2270,8 +2210,7 @@ const BusinessPlanAndGoles = () => {
                   {/* KPI Linking */}
                   <div>
                     <label className="block text-[12px] font-black mb-3" style={{ color: C.textMain }}>
-                      Link KPIs to Promises{" "}
-                      <span className="font-semibold text-gray-400">(Max 3 per promise)</span>
+                      Link KPIs to Promises <span className="font-semibold text-gray-400">(Max 3 per promise)</span>
                     </label>
                     <div className="max-h-[280px] overflow-y-auto bp-scroll space-y-3 pr-1">
                       {(tempBrandPromises || [])

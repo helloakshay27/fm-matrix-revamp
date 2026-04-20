@@ -596,7 +596,7 @@ export const InvoiceAdd: React.FC = () => {
 
     // Fetch customer detail from API
     const fetchCustomerDetail = async (
-        customerId: string | number, 
+        customerId: string | number,
         preferredGstin?: string,
         newAddressToSelect?: { type: 'billing' | 'shipping', attention: string, address: string, pin_code: string }
     ) => {
@@ -638,8 +638,8 @@ export const InvoiceAdd: React.FC = () => {
             // Billing address logic
             let finalBilling = null;
             if (newAddressToSelect?.type === 'billing') {
-                finalBilling = nextBilling.find(a => 
-                    a.attention === newAddressToSelect.attention && 
+                finalBilling = nextBilling.find(a =>
+                    a.attention === newAddressToSelect.attention &&
                     a.address === newAddressToSelect.address &&
                     a.pin_code === newAddressToSelect.pin_code
                 );
@@ -648,16 +648,16 @@ export const InvoiceAdd: React.FC = () => {
                 finalBilling = nextBilling.find(a => String(a.id) === String(selectedBillingAddressId));
             }
             if (!finalBilling) {
-                finalBilling = data.default_billing_address 
-                    ? mapAddress(data.default_billing_address, 'billing') 
+                finalBilling = data.default_billing_address
+                    ? mapAddress(data.default_billing_address, 'billing')
                     : (nextBilling.length > 0 ? nextBilling[0] : null);
             }
 
             // Shipping address logic
             let finalShipping = null;
             if (newAddressToSelect?.type === 'shipping') {
-                finalShipping = nextShipping.find(a => 
-                    a.attention === newAddressToSelect.attention && 
+                finalShipping = nextShipping.find(a =>
+                    a.attention === newAddressToSelect.attention &&
                     a.address === newAddressToSelect.address &&
                     a.pin_code === newAddressToSelect.pin_code
                 );
@@ -666,8 +666,8 @@ export const InvoiceAdd: React.FC = () => {
                 finalShipping = nextShipping.find(a => String(a.id) === String(selectedShippingAddressId));
             }
             if (!finalShipping) {
-                finalShipping = data.default_shipping_address 
-                    ? mapAddress(data.default_shipping_address, 'shipping') 
+                finalShipping = data.default_shipping_address
+                    ? mapAddress(data.default_shipping_address, 'shipping')
                     : (nextShipping.length > 0 ? nextShipping[0] : null);
             }
 
@@ -699,6 +699,9 @@ export const InvoiceAdd: React.FC = () => {
         }).then(async (res) => {
             const q = res.data;
             // NOTE: Do NOT pre-fill referenceNumber (Order Number field) from quote's reference_number
+            if (q.quote_number) {
+                setReferenceNumber(q.quote_number);
+            }
             if (q.date) setSalesOrderDate(q.date);
             if (q.customer_notes) setCustomerNotes(q.customer_notes);
             if (q.terms_and_conditions) setTermsAndConditions(q.terms_and_conditions);
@@ -751,6 +754,9 @@ export const InvoiceAdd: React.FC = () => {
             const preferredGstin = addressDetail?.gst_detail?.gstin;
 
             // Keep the new invoice order number blank; conversion metadata is submitted separately.
+            if (saleOrder.sale_order_number) {
+                setReferenceNumber(saleOrder.sale_order_number);
+            }
             if (saleOrder.date) setSalesOrderDate(saleOrder.date);
             if (saleOrder.shipment_date) setExpectedShipmentDate(saleOrder.shipment_date);
             if (saleOrder.customer_notes) setCustomerNotes(saleOrder.customer_notes);
@@ -2687,8 +2693,8 @@ export const InvoiceAdd: React.FC = () => {
                                             key={t}
                                             onClick={() => setDrawerActiveTab(i === 0 ? 'details' : 'activity')}
                                             className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === (i === 0 ? 'details' : 'activity')
-                                                    ? "border-[#C72030] text-[#C72030]"
-                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                                ? "border-[#C72030] text-[#C72030]"
+                                                : "border-transparent text-gray-500 hover:text-gray-700"
                                                 }`}
                                         >
                                             {t}
