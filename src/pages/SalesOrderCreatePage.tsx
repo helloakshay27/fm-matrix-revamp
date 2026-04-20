@@ -273,6 +273,9 @@ export const SalesOrderCreatePage: React.FC = () => {
         }).then(async (res) => {
             const q = res.data;
             // Keep the new sales order's reference/order number blank, same as invoice conversion flow.
+            if (q.quote_number) {
+                setReferenceNumber(q.quote_number);
+            }
             if (q.date) setSalesOrderDate(q.date);
             if (q.customer_notes) setCustomerNotes(q.customer_notes);
             if (q.terms_and_conditions) setTermsAndConditions(q.terms_and_conditions);
@@ -313,7 +316,7 @@ export const SalesOrderCreatePage: React.FC = () => {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [loadingCustomers, setLoadingCustomers] = useState(false);
-    
+
     // Customer Details Drawer State
     const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
     const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
@@ -413,7 +416,7 @@ export const SalesOrderCreatePage: React.FC = () => {
     const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
     const fetchCustomerDetail = async (
-        customerId: string | number, 
+        customerId: string | number,
         preferredGstin?: string,
         newAddressToSelect?: { type: 'billing' | 'shipping', attention: string, address: string, pin_code: string }
     ) => {
@@ -460,8 +463,8 @@ export const SalesOrderCreatePage: React.FC = () => {
             // Billing address logic
             let finalBilling = null;
             if (newAddressToSelect?.type === 'billing') {
-                finalBilling = nextBilling.find(a => 
-                    a.attention === newAddressToSelect.attention && 
+                finalBilling = nextBilling.find(a =>
+                    a.attention === newAddressToSelect.attention &&
                     a.address === newAddressToSelect.address &&
                     a.pin_code === newAddressToSelect.pin_code
                 );
@@ -470,16 +473,16 @@ export const SalesOrderCreatePage: React.FC = () => {
                 finalBilling = nextBilling.find(a => String(a.id) === String(selectedBillingAddressId));
             }
             if (!finalBilling) {
-                finalBilling = data.default_billing_address 
-                    ? mapAddress(data.default_billing_address, 'billing') 
+                finalBilling = data.default_billing_address
+                    ? mapAddress(data.default_billing_address, 'billing')
                     : (nextBilling.length > 0 ? nextBilling[0] : null);
             }
 
             // Shipping address logic
             let finalShipping = null;
             if (newAddressToSelect?.type === 'shipping') {
-                finalShipping = nextShipping.find(a => 
-                    a.attention === newAddressToSelect.attention && 
+                finalShipping = nextShipping.find(a =>
+                    a.attention === newAddressToSelect.attention &&
                     a.address === newAddressToSelect.address &&
                     a.pin_code === newAddressToSelect.pin_code
                 );
@@ -488,8 +491,8 @@ export const SalesOrderCreatePage: React.FC = () => {
                 finalShipping = nextShipping.find(a => String(a.id) === String(selectedShippingAddressId));
             }
             if (!finalShipping) {
-                finalShipping = data.default_shipping_address 
-                    ? mapAddress(data.default_shipping_address, 'shipping') 
+                finalShipping = data.default_shipping_address
+                    ? mapAddress(data.default_shipping_address, 'shipping')
                     : (nextShipping.length > 0 ? nextShipping[0] : null);
             }
 
@@ -844,7 +847,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             if (res && res.data && Array.isArray(res.data)) {
                 const terms = res.data.map((pt: any) => ({ id: pt.id, name: pt.name, days: pt.no_of_days }));
                 setPaymentTermsList(terms);
-                
+
                 const defaultTerm = terms.find((t: any) => t.name.toLowerCase() === 'due on receipt' || t.name.toLowerCase() === 'due on reciept');
                 if (defaultTerm) {
                     setSelectedTerm((prev: any) => prev || defaultTerm.id);
@@ -2724,8 +2727,8 @@ export const SalesOrderCreatePage: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                        ? 'border-[#C72030] bg-red-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#C72030] bg-red-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
                                     if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
