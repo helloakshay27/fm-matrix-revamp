@@ -58,9 +58,17 @@ const columns: ColumnConfig[] = [
         hideable: false,
         draggable: false
     },
+
     {
         key: 'sale_order_number',
-        label: 'Order Number',
+        label: 'Sale Order Number',
+        sortable: true,
+        hideable: true,
+        draggable: true
+    },
+    {
+        key: 'reference_number',
+        label: 'Reference #',
         sortable: true,
         hideable: true,
         draggable: true
@@ -147,7 +155,7 @@ export const SalesOrderListPage: React.FC = () => {
     const lock_account_id = localStorage.getItem("lock_account_id");
 
 
-    
+
 
     // Fetch sales order data from API
     const fetchSalesOrderData = async (page = 1, per_page = 10, search = '', filters: SalesOrderFilters = {}) => {
@@ -175,7 +183,7 @@ export const SalesOrderListPage: React.FC = () => {
             const data = await response.json();
             console.log('API Response:', data);
             // Assume API returns { data: SalesOrder[], pagination: {...} }
-            setSalesOrderData(Array.isArray(data) ? data: []);
+            setSalesOrderData(Array.isArray(data) ? data : []);
             setPagination(data.pagination || {
                 current_page: page,
                 per_page: per_page,
@@ -265,24 +273,24 @@ export const SalesOrderListPage: React.FC = () => {
     const totalRecords = pagination.total_count;
     const totalPages = pagination.total_pages;
     const displayedData = salesOrderData;
-console.log('Sales Order Data:', salesOrderData);
+    console.log('Sales Order Data:', salesOrderData);
     // Render row function for enhanced table
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
                 {/* {order.status !== 'confirmed' && ( */}
-                    <input
-                        type="checkbox"
-                        checked={selectedRows.includes(order.id)}
-                        onChange={e => {
-                            setSelectedRows(prev =>
-                                e.target.checked
-                                    ? [...prev, order.id]
-                                    : prev.filter(id => id !== order.id)
-                            );
-                        }}
-                        title="Select for status update"
-                    />
+                <input
+                    type="checkbox"
+                    checked={selectedRows.includes(order.id)}
+                    onChange={e => {
+                        setSelectedRows(prev =>
+                            e.target.checked
+                                ? [...prev, order.id]
+                                : prev.filter(id => id !== order.id)
+                        );
+                    }}
+                    title="Select for status update"
+                />
                 {/* )} */}
                 <button
                     onClick={() => handleView(order.id)}
@@ -307,8 +315,14 @@ console.log('Sales Order Data:', salesOrderData);
                 </button> */}
             </div>
         ),
+
         sale_order_number: (
             <div className="font-medium text-blue-600">{order.sale_order_number}</div>
+        ),
+        reference_number: (
+            <span className="text-sm text-gray-600">
+                {order.reference_number || '-'}
+            </span>
         ),
         customer_name: (
             <span className="text-sm text-gray-900">{order.customer_name}</span>

@@ -830,7 +830,7 @@ export const BillDetails = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-primary" />
-                      Journal Entries
+                      Journal 
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -852,8 +852,8 @@ export const BillDetails = () => {
                                 <TableCell>
                                   {rec.ledger_id ? (
                                     <span
-                                      className="text-blue-600 cursor-pointer hover:underline"
-                                      onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
+                                      className="text-black-600 cursor-pointer hover:underline"
+                                      // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
                                     >
                                       {rec.ledger_name}
                                     </span>

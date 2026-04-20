@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CloseIcon from '@mui/icons-material/Close';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ImageIcon from '@mui/icons-material/Image';
+import DescriptionIcon from '@mui/icons-material/Description';
+import AudioFileIcon from '@mui/icons-material/AudioFile';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import axios from 'axios';
 import Invoice from '@/components/Invoice';
 import { getToken } from '@/utils/auth';
@@ -227,8 +235,8 @@ const formatPaymentInvoice = (invoiceData: any): any => {
       discount: totals.discount || 0,
       cgst: totals.cgst || 0,
       sgst: totals.sgst || 0,
-      cgst_per: 8,
-      sgst_per: 8,
+      cgst_per: 9,
+      sgst_per: 9,
       total_tax: (totals.cgst || 0) + (totals.sgst || 0),
       total_amount: totals.total_amount || 0,
       payment_mode: 'online',
@@ -267,6 +275,12 @@ export const ClubGroupMembershipDetails = () => {
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [transactionId, setTransactionId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  // File input ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragDropRef = useRef<HTMLDivElement>(null);
 
   // Invoice PDF state
   const [invoiceData, setInvoiceData] = useState<any>(null);
@@ -276,6 +290,105 @@ export const ClubGroupMembershipDetails = () => {
   const [isUploadingPDF, setIsUploadingPDF] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
+  // Helper function to get file type icon and color
+  const getFileTypeInfo = useCallback((fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+
+    if (['pdf'].includes(ext)) {
+      return { icon: PictureAsPdfIcon, color: '#DC2626', bgColor: '#FEE2E2', type: 'PDF' };
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      return { icon: ImageIcon, color: '#2563EB', bgColor: '#DBEAFE', type: 'Image' };
+    }
+    if (['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) {
+      return { icon: AudioFileIcon, color: '#9333EA', bgColor: '#F3E8FF', type: 'Audio' };
+    }
+    if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) {
+      return { icon: VideoLibraryIcon, color: '#EA580C', bgColor: '#FFEDD5', type: 'Video' };
+    }
+    if (['doc', 'docx', 'txt', 'rtf', 'xlsx', 'xls', 'csv', 'ppt', 'pptx'].includes(ext)) {
+      return { icon: DescriptionIcon, color: '#16A34A', bgColor: '#DCFCE7', type: 'Document' };
+    }
+    return { icon: AttachFileIcon, color: '#6B7280', bgColor: '#F3F4F6', type: 'File' };
+  }, []);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // Validate file sizes - max 10MB per file
+  const validateAndAddFiles = (filesToAdd: File[]) => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    filesToAdd.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push(`${file.name} (${formatFileSize(file.size)})`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    // Show error for oversized files
+    if (invalidFiles.length > 0) {
+      toast.dismiss();
+      invalidFiles.forEach((fileName) => {
+        toast.error(`${fileName} exceeds 10MB limit`);
+      });
+    }
+
+    // Add valid files
+    if (validFiles.length > 0) {
+      setAttachments([...attachments, ...validFiles]);
+      toast.dismiss();
+      toast.success(`${validFiles.length} file(s) added successfully`);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDrag = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const files = Array.from(e.dataTransfer.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+  };
+
+  // Handle attachment file selection
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove attachment
+  const removeAttachment = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
+
   // Payment API handler
   const handlePayment = async () => {
     if (!selectedBill?.id) return;
@@ -284,20 +397,25 @@ export const ClubGroupMembershipDetails = () => {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
 
+      // Create FormData payload
+      const formData = new FormData();
+      formData.append('bill_id', selectedBill.id.toString());
+      formData.append('payment[payment_mode]', paymentMode);
+      formData.append('payment[payment_method]', paymentMethod);
+      formData.append('payment[pg_transaction_id]', transactionId);
+
+      // Append attachments
+      attachments.forEach((file) => {
+        formData.append('attachments[]', file);
+      });
+
       const response = await axios.post(
         `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}/payment.json`,
-        {
-          bill_id: selectedBill.id,
-          payment: {
-            payment_mode: paymentMode,
-            payment_method: paymentMethod,
-            pg_transaction_id: transactionId
-          }
-        },
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
@@ -314,14 +432,17 @@ export const ClubGroupMembershipDetails = () => {
           setIsGeneratingInvoice(true);
           setAutoDownloadInvoice(true);
           setOpenPaymentModal(false);
+          setAttachments([]);
         } else {
           setOpenPaymentModal(false);
+          setAttachments([]);
           if (id) {
             fetchBillDetails(Number(id));
           }
         }
       } else {
         setOpenPaymentModal(false);
+        setAttachments([]);
         if (id) {
           fetchBillDetails(Number(id));
         }
@@ -1838,14 +1959,15 @@ export const ClubGroupMembershipDetails = () => {
             if (!open) {
               setPaymentMethod('upi');
               setTransactionId('');
+              setAttachments([]);
             }
           }}>
-            <DialogContent className="sm:max-w-[400px] bg-white">
+            <DialogContent className="sm:max-w-[600px] w-[95vw] bg-white max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Make Payment</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
+              <div className="space-y-4 w-full overflow-hidden px-1">
+                <div className="w-full">
                   <Label htmlFor="payment_mode">Payment Mode</Label>
                   <Select
                     value={paymentMode}
@@ -1861,7 +1983,7 @@ export const ClubGroupMembershipDetails = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="w-full">
                   <Label htmlFor="payment_method">Payment Method</Label>
                   <Select
                     value={paymentMethod}
@@ -1879,16 +2001,152 @@ export const ClubGroupMembershipDetails = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="w-full">
                   <Label htmlFor="transaction_id">Transaction ID</Label>
                   <Input
                     id="transaction_id"
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
                     placeholder="Enter Transaction ID"
-                    className="mt-1"
+                    className="mt-1 w-full"
                     disabled={paymentLoading}
                   />
+                </div>
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Attachments
+                    {attachments.length > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                        {attachments.length}
+                      </span>
+                    )}
+                  </label>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleAttachmentChange}
+                    disabled={paymentLoading}
+                    className="hidden"
+                    accept="*/*"
+                  />
+
+                  {/* Drag and Drop Area */}
+                  <div
+                    ref={dragDropRef}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    onClick={() => !paymentLoading && fileInputRef.current?.click()}
+                    className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                      } ${paymentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <CloudUploadIcon
+                        sx={{
+                          fontSize: 40,
+                          color: isDragActive ? '#3B82F6' : '#9CA3AF',
+                          transition: 'all 0.3s ease',
+                        }}
+                      />
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-gray-700">
+                          {isDragActive ? 'Drop files here' : 'Drag files here or click to browse'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Support: PDF, Images, Videos, Audio, Documents (Max size per file: 10MB)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* File List */}
+                  {attachments.length > 0 && (
+                    <div className="mt-5">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-gray-700">
+                          Files to upload ({attachments.length})
+                        </h3>
+                        {attachments.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setAttachments([])}
+                            disabled={paymentLoading}
+                            className="text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                          >
+                            Clear all
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {attachments.map((file, idx) => {
+                          const fileInfo = getFileTypeInfo(file.name);
+                          const IconComponent = fileInfo.icon;
+
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:shadow-sm transition-shadow"
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div
+                                  className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
+                                  style={{ backgroundColor: fileInfo.bgColor }}
+                                >
+                                  <IconComponent sx={{ fontSize: 20, color: fileInfo.color }} />
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {file.name}
+                                    </p>
+                                    <span
+                                      className="px-2 py-0.5 text-xs font-semibold rounded-full text-white flex-shrink-0"
+                                      style={{ backgroundColor: fileInfo.color }}
+                                    >
+                                      {fileInfo.type}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-0.5">
+                                    {formatFileSize(file.size)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAttachments(attachments.filter((_, i) => i !== idx));
+                                }}
+                                disabled={paymentLoading}
+                                className="ml-3 flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Remove file"
+                              >
+                                <CloseIcon sx={{ fontSize: 18 }} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Summary */}
+                      <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                        <p className="text-sm text-blue-800">
+                          <span className="font-semibold">{attachments.length}</span> file(s) ready to upload
+                          {' '}
+                          <span className="text-blue-600">
+                            ({formatFileSize(attachments.reduce((sum, f) => sum + f.size, 0))})
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <DialogFooter>

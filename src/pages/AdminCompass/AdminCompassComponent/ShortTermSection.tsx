@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
 // ── Design Tokens ──
 const C = {
@@ -251,7 +252,7 @@ const UserSelect = ({
 
       {open && (
         <div
-          className="absolute bottom-full left-0 right-0 mb-1 z-50 bg-white border rounded-xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto overflow-x-hidden"
+          className="absolute bottom-full left-0 right-0 mb-1 bg-white border rounded-xl shadow-[0_-10px_20px_rgba(0,0,0,0.08)] max-h-48 overflow-y-auto overflow-x-hidden"
           style={{ borderColor: C.borderLgt, fontFamily: C.font }}
         >
           {value && (
@@ -298,7 +299,6 @@ const UserSelect = ({
   );
 };
 
-// ── Types ──
 interface Goal {
   id?: number;
   title: string;
@@ -324,7 +324,6 @@ interface StrategicGoalData {
   profitTarget: string;
 }
 
-// ── Modal ──
 const Modal = ({
   children,
   onClose,
@@ -351,7 +350,6 @@ const Modal = ({
   );
 };
 
-// ── Skeleton ──
 const SkeletonCards = () => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {[1, 2, 3, 4].map((n) => (
@@ -383,6 +381,10 @@ const getPeriodBadgeLabel = (period: string): string => {
 export const ShortTermSection = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
+
+  // Info Tooltip State
+  const [isInfoHovered, setIsInfoHovered] = useState(false);
+  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [allGoals, setAllGoals] = useState<Goal[]>([]);
@@ -730,7 +732,7 @@ export const ShortTermSection = () => {
         current_value: Number(tempGoal.currentValue) || 0,
         progress_percentage: clampProgress(tempGoal.progress),
         unit: tempGoal.unit || "%",
-        period: SHORT_TERM_PERIOD,
+        period: tempGoal.period || SHORT_TERM_PERIOD,
         status: tempGoal.status || "On Track",
         owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : null,
         target_date: tempGoalDate ? formatDateForApi(tempGoalDate) : "",
@@ -825,8 +827,64 @@ export const ShortTermSection = () => {
             >
               Short-term Goals — This Year
             </h2>
-            <InfoIcon />
+            <span
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setInfoPos({
+                  top: rect.bottom + window.scrollY + 10,
+                  left: rect.left + window.scrollX + rect.width / 2,
+                  transform: "translateX(-50%)"
+                });
+                setIsInfoHovered(true);
+              }}
+              onMouseLeave={() => setIsInfoHovered(false)}
+              style={{ cursor: "help", display: "inline-flex" }}
+            >
+              <InfoIcon />
+            </span>
           </div>
+
+          {isInfoHovered && ReactDOM.createPortal(
+            <div 
+              style={{
+                position: "absolute",
+                top: infoPos.top,
+                left: infoPos.left,
+                transform: infoPos.transform,
+                zIndex: 99999,
+                background: "#16102b", // Dark purple/blue tint
+                color: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                padding: "16px",
+                width: 320,
+                textAlign: "center",
+                fontFamily: "'Poppins', sans-serif",
+                pointerEvents: "none",
+                border: "1px solid rgba(218,119,86,0.2)"
+              }}
+            >
+              <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800, color: "#fff" }}>
+                Short-term goals (This Year)
+              </h4>
+              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
+                Your top 3-5 goals for the calendar/fiscal year that ladder up to your medium-term vision. These should be specific, measurable, and achievable within 12 months.
+              </p>
+              <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#9ca3af" }}>
+                Think: Revenue targets, new products/services, market expansion, operational improvements
+              </p>
+              <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                <div style={{ fontStyle: "italic" }}>
+                  Example:
+                </div>
+                <div style={{ fontStyle: "italic" }}>
+                  "Achieve ₹50 Cr revenue, launch e-commerce platform, expand to 3 new cities, reduce customer complaints by 40%"
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
           {isFetching && <LoaderIcon className="w-4 h-4" />}
         </div>
 
@@ -929,7 +987,6 @@ export const ShortTermSection = () => {
             )}
           </div>
 
-          {/* ── Fetch Error ── */}
           {fetchError && (
             <div className="mb-5 bg-red-100 border border-red-300 text-red-700 text-sm font-semibold rounded-xl px-4 py-3 flex items-center justify-between gap-3">
               <span>⚠ {fetchError}</span>
@@ -939,7 +996,6 @@ export const ShortTermSection = () => {
             </div>
           )}
 
-          {/* ── Section label ── */}
           <div className="mb-3 flex items-center gap-2">
             <span
               className="text-[10px] font-black uppercase tracking-[0.15em]"
@@ -947,9 +1003,9 @@ export const ShortTermSection = () => {
             >
               Annual Initiatives
             </span>
+            {isFetching && <LoaderIcon className="w-3.5 h-3.5" />}
           </div>
 
-          {/* ── Goal Cards ── */}
           {isFetching ? (
             <SkeletonCards />
           ) : (
@@ -1475,6 +1531,7 @@ export const ShortTermSection = () => {
                   Set a measurable target for this year
                 </p>
               </div>
+
               <div
                 style={{
                   padding: "24px 28px",
@@ -1527,7 +1584,8 @@ export const ShortTermSection = () => {
                     <input
                       type="number"
                       step="any"
-                      value={tempGoal.targetValue}
+                      value={tempGoal.targetValue || ""}
+                      placeholder="e.g. 100"
                       onChange={(e) =>
                         setTempGoal({
                           ...tempGoal,
@@ -1539,6 +1597,7 @@ export const ShortTermSection = () => {
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
+                    {/* MODIFIED: Using native input type="date" */}
                     <input
                       type="date"
                       value={tempGoalDate}
@@ -1686,7 +1745,7 @@ export const ShortTermSection = () => {
                   <div>
                     <label className="st-label">Update Remarks</label>
                     <textarea
-                      placeholder="Add notes about progress..."
+                      placeholder="Add notes..."
                       value={tempGoal.updateRemarks}
                       onChange={(e) =>
                         setTempGoal({
@@ -1713,6 +1772,7 @@ export const ShortTermSection = () => {
                     fontSize: 15,
                     fontWeight: 800,
                     cursor: isSaving ? "not-allowed" : "pointer",
+                    transition: "background .15s",
                     opacity: isSaving ? 0.7 : 1,
                     display: "flex",
                     alignItems: "center",

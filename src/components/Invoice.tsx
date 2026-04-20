@@ -368,13 +368,13 @@ const Invoice = ({
                                 <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
                                     SL. NO.
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-3 px-1 py-2 text-[#1F5E2E] text-center">
                                     DESCRIPTION
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
                                     SAC/HSN CODE
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
                                     RATE (₹)
                                 </div>
                                 <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
@@ -383,12 +383,12 @@ const Invoice = ({
                                 <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
                                     TOTAL TAXABLE VALUE (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
+                                {/* <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-center">
                                     TAX RATE
                                 </div>
                                 <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-center">
                                     TAX AMOUNT (₹)
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                         {/* Table Rows */}
@@ -400,13 +400,13 @@ const Invoice = ({
                                         <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {index + 1}
                                         </div>
-                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm">
+                                        <div className="col-span-3 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {item.description}
                                         </div>
-                                        <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {item.hsn_code}
                                         </div>
-                                        <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {parseFloat(String(item.rate)).toLocaleString("en-IN", {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
@@ -421,7 +421,7 @@ const Invoice = ({
                                                 maximumFractionDigits: 2,
                                             })}
                                         </div>
-                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                        {/* <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {index === 0 ? `CGST (${cgstPercentage}%)` : `SGST (${sgstPercentage}%)`}
                                         </div>
                                         <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
@@ -435,7 +435,7 @@ const Invoice = ({
                                                     maximumFractionDigits: 2,
                                                 })
                                             }
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             ))}
@@ -454,7 +454,7 @@ const Invoice = ({
                                 </p>
                             </div>
                             <div className="flex justify-between mb-3">
-                                <p className="text-[#1F5E2E] font-bold">TOTAL CGST</p>
+                                <p className="text-[#1F5E2E] font-bold">TOTAL CGST ({cgstPercentage}%)</p>
                                 <p className="text-[#1F5E2E]">
                                     ₹{" "}
                                     {cgstAmount.toLocaleString("en-IN", {
@@ -464,7 +464,7 @@ const Invoice = ({
                                 </p>
                             </div>
                             <div className="flex justify-between">
-                                <p className="text-[#1F5E2E] font-bold">TOTAL SGST</p>
+                                <p className="text-[#1F5E2E] font-bold">TOTAL SGST ({sgstPercentage}%)</p>
                                 <p className="text-[#1F5E2E]">
                                     ₹{" "}
                                     {sgstAmount.toLocaleString("en-IN", {
@@ -527,7 +527,7 @@ const Invoice = ({
 
                             {/* Company Bank Details */}
                             <p className="text-[#1F5E2E] font-bold text-sm mb-1">
-                                COMFIRM BANK DETAILS
+                                CONFIRM BANK DETAILS
                             </p>
                             <p className="text-[#1F5E2E] text-sm mb-1">
                                 Account Name: PAUSE & PLAY MOVEMENT LABS PVT. LTD.

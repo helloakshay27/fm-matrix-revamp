@@ -496,6 +496,10 @@ export const BhagSection = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
 
+  const [isInfoHovered, setIsInfoHovered] = useState(false);
+  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
+  const infoBtnRef = useRef<HTMLSpanElement>(null);
+
   const [bhagStatement, setBhagStatement] = useState("");
   const [bhagVideoUrl, setBhagVideoUrl] = useState("");
   const [bhagTargetDate, setBhagTargetDate] = useState("");
@@ -622,20 +626,23 @@ export const BhagSection = () => {
       const apiDate = tempTargetDate ? toApiDate(tempTargetDate) : "";
       const payload: any = {
         goal: {
-          title: tempGoal.title.trim(),
-          description: tempGoal.description || "",
-          target_value: Number(tempGoal.targetValue) || 1,
-          current_value: Number(tempGoal.currentValue) || 0, // send as-is, e.g. 0.75
-          unit: tempGoal.unit || "days",
-          period: tempGoal.period || "BHAG", // ✅ use actual period
-          status: tempGoal.status || "On Track",
+          title: tempGoal?.title?.trim() || "",
+          description: tempGoal?.description || "",
+          target_value: Number(tempGoal?.targetValue) || 1,
+          current_value: Number(tempGoal?.currentValue) || 0,
+          unit: tempGoal?.unit || "days",
+          period: tempGoal?.period || "BHAG",
+          status: tempGoal?.status || "On Track",
           target_date: tempGoalDate ? toApiDate(tempGoalDate) : "",
-          update_remarks: tempGoal.updateRemarks || "",
+          update_remarks: tempGoal?.updateRemarks || "",
         },
+        extra_field: {
+          group_name: "business_plan_bhag",
+          values: [tempStatement.trim()],
+        }
       };
 
-      // ✅ only include owner_id if actually set (no undefined in JSON)
-      if (tempGoal.ownerId) {
+      if (tempGoal?.ownerId) {
         payload.goal.owner_id = Number(tempGoal.ownerId);
       }
       if (tempVideoUrl.trim())
@@ -863,10 +870,71 @@ export const BhagSection = () => {
                 letterSpacing: "0.15em",
                 color: "rgba(255,255,255,0.7)",
                 marginBottom: 7,
+                display: "flex",
+                alignItems: "center",
+                gap: 6
               }}
             >
               Long Term — BHAG
+              <span 
+                ref={infoBtnRef}
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setInfoPos({
+                    top: rect.bottom + window.scrollY + 10,
+                    left: rect.left + window.scrollX + rect.width / 2,
+                    transform: "translateX(-50%)"
+                  });
+                  setIsInfoHovered(true);
+                }}
+                onMouseLeave={() => setIsInfoHovered(false)}
+                style={{ cursor: "help", display: "inline-flex", opacity: 0.8 }}
+              >
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
             </div>
+            
+            {isInfoHovered && ReactDOM.createPortal(
+              <div 
+                style={{
+                  position: "absolute",
+                  top: infoPos.top,
+                  left: infoPos.left,
+                  transform: infoPos.transform,
+                  zIndex: 99999,
+                  background: "#ffffff",
+                  color: "#1a1a1a",
+                  borderRadius: 12,
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                  padding: "16px",
+                  width: 320,
+                  textAlign: "center",
+                  fontFamily: "'Poppins', sans-serif",
+                  pointerEvents: "none",
+                  border: "1px solid rgba(218,119,86,0.2)"
+                }}
+              >
+                <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800, color: "#8B1D1D" }}>
+                  Long Term - BHAG (Big Hairy Audacious Goal)
+                </h4>
+                <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#4b5563" }}>
+                  A bold 10-15 year goal that defines your ultimate long-term vision. It should seem almost impossible but inspire your entire team, being clear, compelling, and easy to communicate.
+                </p>
+                <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#6b7280" }}>
+                  From Scaling Up: "A true BHAG is clear and compelling, serves as a unifying focal point, and has a clear finish line."
+                </p>
+                <div style={{ fontSize: 11, color: "#4b5563" }}>
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>Indian Business Example:</div>
+                  <div style={{ fontStyle: "italic" }}>
+                    "Become India's most trusted regional pharma distributor serving 10,000 retailers across 5 states by 2035"
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )}
+
             <h2
               style={{
                 fontSize: 17,
@@ -1003,94 +1071,152 @@ export const BhagSection = () => {
                   No initiatives found. Add one below.
                 </p>
               )}
-              {initiatives.map((ini) => (
-                <div key={ini.id} className="bh-card">
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: 8,
-                      marginBottom: 14,
-                    }}
-                  >
+              {initiatives.map((ini) => {
+                // Determine display owner dynamically if not directly set
+                const ownerObj = usersList.find((u) => String(u.id) === String(ini.ownerId));
+                const displayOwner = ini.ownerName || (ownerObj ? (ownerObj.full_name || `${ownerObj.firstname || ""} ${ownerObj.lastname || ""}`).trim() : "");
+
+                return (
+                  <div key={ini.id} className="bh-card">
                     <div
                       style={{
                         display: "flex",
                         alignItems: "flex-start",
-                        gap: 10,
-                        flex: 1,
-                        minWidth: 0,
+                        justifyContent: "space-between",
+                        gap: 8,
+                        marginBottom: 14,
                       }}
                     >
                       <div
                         style={{
-                          width: 13,
-                          height: 13,
-                          borderRadius: "50%",
-                          border: `3px solid ${C.primary}`,
-                          background: "#fff",
-                          flexShrink: 0,
-                          marginTop: 3,
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 10,
+                          flex: 1,
+                          minWidth: 0,
                         }}
+                      >
+                        {/* Orange Circle */}
+                        <div
+                          style={{
+                            width: 13,
+                            height: 13,
+                            borderRadius: "50%",
+                            border: `3px solid ${C.primary}`,
+                            background: "#fff",
+                            flexShrink: 0,
+                            marginTop: 3,
+                          }}
+                        />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {/* Title */}
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: C.textMain,
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            {ini.title}
+                          </span>
+                          
+                          {/* Pill */}
+                          <div
+                            style={{
+                              display: "inline-block",
+                              background: "#FFF3EE",
+                              color: C.primary,
+                              fontSize: 9,
+                              fontWeight: 800,
+                              padding: "3px 8px",
+                              borderRadius: 12,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              alignSelf: "flex-start"
+                            }}
+                          >
+                            BHAG
+                          </div>
+
+                          {/* Owner & Target Date Info */}
+                          {(displayOwner || ini.targetDate) && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                fontSize: 11,
+                                fontWeight: 600,
+                                color: C.textMuted,
+                                marginTop: 2
+                              }}
+                            >
+                              {displayOwner && <span>• {displayOwner}</span>}
+                              {ini.targetDate && (
+                                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7e9cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                  </svg>
+                                  {toDisplayDate(ini.targetDate)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="bh-card-actions">
+                        <button
+                          className="edit"
+                          onClick={() => openGoalModal(ini)}
+                          title="Edit"
+                        >
+                          <EditIcon />
+                        </button>
+                        <button
+                          className="del"
+                          onClick={() => deleteGoal(ini.id as number)}
+                          title="Delete"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 10 }}
+                    >
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={ini.progress}
+                        onChange={(e) =>
+                          handleCardSlider(ini.id as number, e.target.value)
+                        }
+                        className="bh-slider-card"
+                        style={{ background: sliderBg(ini.progress) }}
                       />
                       <span
                         style={{
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: 700,
-                          color: C.textMain,
-                          lineHeight: 1.45,
+                          color: C.textMuted,
+                          minWidth: 34,
+                          textAlign: "right",
                         }}
                       >
-                        {ini.title}
+                        {ini.progress}%
                       </span>
                     </div>
-                    <div className="bh-card-actions">
-                      <button
-                        className="edit"
-                        onClick={() => openGoalModal(ini)}
-                        title="Edit"
-                      >
-                        <EditIcon />
-                      </button>
-                      <button
-                        className="del"
-                        onClick={() => deleteGoal(ini.id as number)}
-                        title="Delete"
-                      >
-                        <TrashIcon />
-                      </button>
-                    </div>
                   </div>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="1"
-                      value={ini.progress}
-                      onChange={(e) =>
-                        handleCardSlider(ini.id as number, e.target.value)
-                      }
-                      className="bh-slider-card"
-                      style={{ background: sliderBg(ini.progress) }}
-                    />
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: C.textMuted,
-                        minWidth: 34,
-                        textAlign: "right",
-                      }}
-                    >
-                      {ini.progress}%
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -1319,7 +1445,7 @@ export const BhagSection = () => {
                   }}
                 >
                   <FieldGroup>
-                    <label className="bh-label">Owner ID</label>
+                    <label className="bh-label">Owner</label>
                     <UserSelect
                       value={tempGoal.ownerId}
                       onChange={(id: any) =>

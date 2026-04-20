@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import {
@@ -21,6 +21,16 @@ import { API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
 import Receipt from "@/components/Reciept";
 import BookingReceipt from "@/components/BookingReceipt";
+import {
+  CloudUpload,
+  PictureAsPdf,
+  Image,
+  Description,
+  AudioFile,
+  VideoLibrary,
+  AttachFile,
+} from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 // Formatter helper: Converts facility booking API response into Invoice-compatible format
 const formatFacilityBookingInvoice = (apiResponse: any): any => {
@@ -105,6 +115,13 @@ export const AmenityBookingDetailsClubPage = () => {
   const [collectedPDF, setCollectedPDF] = useState<{ bill_id: number | string; base64: string; filename: string } | null>(null);
   const [isUploadingPDF, setIsUploadingPDF] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+
+  // Attachment state
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragDropRef = useRef<HTMLDivElement>(null);
+
   // Handle when PDF is generated
   const handleBase64Generated = (base64: string) => {
     console.log('PDF generated from Invoice');
@@ -211,23 +228,39 @@ export const AmenityBookingDetailsClubPage = () => {
     if (!id) return;
     setPaymentLoading(true);
     try {
-      const response = await axios.post(
-        `https://${baseUrl}/pms/admin/facility_bookings/${id}/payment`,
-        {
+      let data: any;
+      let headers: any = { Authorization: `Bearer ${token}` };
+
+      if (attachments.length > 0) {
+        const formData = new FormData();
+        formData.append('lock_payment[payment_mode]', paymentMode);
+        formData.append('lock_payment[payment_method]', paymentMethod);
+        formData.append('lock_payment[pg_transaction_id]', transactionId);
+        attachments.forEach((file) => {
+          formData.append('attachments[]', file);
+        });
+        data = formData;
+        headers['Content-Type'] = 'multipart/form-data';
+      } else {
+        data = {
           lock_payment: {
             payment_mode: paymentMode,
             payment_method: paymentMethod,
             pg_transaction_id: transactionId
           }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+        };
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/admin/facility_bookings/${id}/payment`,
+        data,
+        { headers }
       );
       toast.success('Payment request sent successfully!');
+
+      // Clear attachments on success
+      setAttachments([]);
 
       // Format and display invoice
       const responseData = response.data;
@@ -251,6 +284,8 @@ export const AmenityBookingDetailsClubPage = () => {
     } catch (error) {
       toast.error('Failed to send payment request');
       console.error('Payment error:', error);
+      // Clear attachments on error
+      setAttachments([]);
     } finally {
       setPaymentLoading(false);
     }
@@ -288,7 +323,94 @@ export const AmenityBookingDetailsClubPage = () => {
     }
   };
 
+  const getFileTypeInfo = useCallback((fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    if (['pdf'].includes(ext)) {
+      return { icon: PictureAsPdf, color: '#DC2626', bgColor: '#FEE2E2', type: 'PDF' };
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      return { icon: Image, color: '#2563EB', bgColor: '#DBEAFE', type: 'Image' };
+    }
+    if (['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) {
+      return { icon: AudioFile, color: '#9333EA', bgColor: '#F3E8FF', type: 'Audio' };
+    }
+    if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) {
+      return { icon: VideoLibrary, color: '#EA580C', bgColor: '#FFEDD5', type: 'Video' };
+    }
+    if (['doc', 'docx', 'txt', 'rtf', 'xlsx', 'xls', 'csv', 'ppt', 'pptx'].includes(ext)) {
+      return { icon: Description, color: '#16A34A', bgColor: '#DCFCE7', type: 'Document' };
+    }
+    return { icon: AttachFile, color: '#6B7280', bgColor: '#F3F4F6', type: 'File' };
+  }, []);
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const validateAndAddFiles = useCallback((filesToAdd: File[]) => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    filesToAdd.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push(`${file.name} (${formatFileSize(file.size)})`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      toast.dismiss();
+      invalidFiles.forEach((fileName) => {
+        toast.error(`${fileName} exceeds 10MB limit`);
+      });
+    }
+
+    if (validFiles.length > 0) {
+      setAttachments([...attachments, ...validFiles]);
+      toast.dismiss();
+      toast.success(`${validFiles.length} file(s) added successfully`);
+    }
+  }, [attachments]);
+
+  const handleDrag = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    const files = Array.from(e.dataTransfer.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+  };
+
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
 
   const fetchDetails = async () => {
     try {
@@ -994,14 +1116,15 @@ export const AmenityBookingDetailsClubPage = () => {
             setOpenPaymentModal(open);
             if (!open) {
               setTransactionId('');
+              setAttachments([]);
             }
           }}>
-            <DialogContent className="sm:max-w-[400px]">
+            <DialogContent className="sm:max-w-[600px] w-[95vw] bg-white max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Make Payment</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
+              <div className="space-y-4 overflow-hidden px-1">
+                <div className="w-full">
                   <Label htmlFor="payment_mode">Payment Mode</Label>
                   <Select
                     value={paymentMode}
@@ -1017,7 +1140,7 @@ export const AmenityBookingDetailsClubPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="w-full">
                   <Label htmlFor="payment_method">Payment Method</Label>
                   <Select
                     value={paymentMethod}
@@ -1035,7 +1158,7 @@ export const AmenityBookingDetailsClubPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="w-full">
                   <Label htmlFor="transaction_id">Transaction ID</Label>
                   <Input
                     id="transaction_id"
@@ -1046,6 +1169,107 @@ export const AmenityBookingDetailsClubPage = () => {
                     disabled={paymentLoading}
                     className="w-full mt-1"
                   />
+                </div>
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Attachments
+                    {attachments.length > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                        {attachments.length}
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleAttachmentChange}
+                    disabled={paymentLoading}
+                    className="hidden"
+                    accept="*/*"
+                  />
+                  <div
+                    ref={dragDropRef}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    onClick={() => !paymentLoading && fileInputRef.current?.click()}
+                    className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                      } ${paymentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div className="flex flex-col items-center justify-center">
+                      <CloudUpload
+                        style={{
+                          fontSize: 40,
+                          color: isDragActive ? '#3B82F6' : '#9CA3AF',
+                          marginBottom: 8,
+                          transition: 'all 0.3s ease',
+                        }}
+                      />
+                      <p className="text-sm font-medium text-gray-700">Drag files here or click to browse</p>
+                      <p className="text-xs text-gray-500 mt-1">Maximum file size: 10MB per file</p>
+                    </div>
+                  </div>
+                  {attachments.length > 0 && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                          {attachments.length}
+                        </span>
+                        <button
+                          onClick={() => setAttachments([])}
+                          className="text-sm text-red-600 hover:text-red-700 font-medium"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                        {attachments.map((file, index) => {
+                          const fileInfo = getFileTypeInfo(file.name);
+                          const IconComponent = fileInfo.icon;
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded transition-colors"
+                            >
+                              <div
+                                style={{ backgroundColor: fileInfo.bgColor }}
+                                className="p-2 rounded flex-shrink-0"
+                              >
+                                <IconComponent style={{ color: fileInfo.color, fontSize: 20 }} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    style={{ backgroundColor: fileInfo.bgColor, color: fileInfo.color }}
+                                    className="text-xs font-medium px-2 py-0.5 rounded"
+                                  >
+                                    {fileInfo.type}
+                                  </span>
+                                  <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeAttachment(index)}
+                                className="text-gray-400 hover:text-red-600 flex-shrink-0 transition-colors"
+                              >
+                                <CloseIcon style={{ fontSize: 18 }} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                        <p className="text-xs text-blue-700">
+                          <strong>{attachments.length} file(s)</strong> • <strong>{formatFileSize(attachments.reduce((sum, f) => sum + f.size, 0))}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <DialogFooter>

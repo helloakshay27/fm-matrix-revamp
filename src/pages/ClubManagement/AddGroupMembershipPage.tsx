@@ -306,8 +306,8 @@ const formatSingleBill = (billData: any, apiResponse: any, billIndex: number = 0
             discount: totals.discount || apiResponse?.allocation_payment_detail?.discount,
             cgst: totals.cgst || apiResponse?.allocation_payment_detail?.cgst,
             sgst: totals.sgst || apiResponse?.allocation_payment_detail?.sgst,
-            cgst_per: totals.cgst_percentage || apiResponse?.allocation_payment_detail?.cgst_per,
-            sgst_per: totals.sgst_percentage || apiResponse?.allocation_payment_detail?.sgst_per,
+            cgst_per: 9,
+            sgst_per: 9,
             total_tax:
                 totals.cgst && totals.sgst
                     ? totals.cgst + totals.sgst

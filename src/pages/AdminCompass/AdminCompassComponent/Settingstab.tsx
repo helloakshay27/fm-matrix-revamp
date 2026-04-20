@@ -507,6 +507,7 @@ const getNextMeeting = (configs: any[]): string | null => {
     meetingMinutes: number;
     label: string;
     time: string;
+    name: string;
   } | null = null;
 
   configs.forEach((c) => {
@@ -543,6 +544,7 @@ const getNextMeeting = (configs: any[]): string | null => {
           meetingMinutes,
           label: DAY_LABELS[jsIdx],
           time: timeStr,
+          name: c.name || "Meeting",
         };
       }
     });
@@ -551,7 +553,7 @@ const getNextMeeting = (configs: any[]): string | null => {
   if (!earliest) return null;
 
   // Format time to 12-hr for readability e.g. "09:00" → "9:00 AM"
-  const e = earliest as { label: string; time: string; meetingMinutes: number };
+  const e = earliest as { label: string; time: string; meetingMinutes: number; name: string };
   const totalMin = e.meetingMinutes;
   const hh = Math.floor(totalMin / 60);
   const mm = totalMin % 60;
@@ -560,7 +562,7 @@ const getNextMeeting = (configs: any[]): string | null => {
   const displayM = mm.toString().padStart(2, "0");
   const formattedTime = `${displayH}:${displayM} ${suffix}`;
 
-  return `${e.label} at ${formattedTime}`;
+  return `${e.name} - ${e.label} at ${formattedTime}`;
 };
 
 // ── ConfigCard ──

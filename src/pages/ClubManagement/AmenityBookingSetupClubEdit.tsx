@@ -1352,17 +1352,17 @@ export const EditBookingSetupClubPage = () => {
                             >
                                 Add
                             </Button>
-                            <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
+                            <div className="grid grid-cols-4 gap-2 mb-2 text-sm font-medium text-gray-600">
                                 <div>Start Time</div>
-                                <div>Break Time Start</div>
-                                <div>Break Time End</div>
+                                {/* <div>Break Time Start</div>
+                                <div>Break Time End</div> */}
                                 <div>End Time</div>
                                 <div>Concurrent Slots</div>
                                 <div>Slot by</div>
                                 {/* <div>Wrap Time</div> */}
                             </div>
                             {formData.slots.map((slot, index) => (
-                                <div key={index} className="grid grid-cols-7 gap-2 mb-2">
+                                <div key={index} className="grid grid-cols-4 gap-2 mb-2">
                                     <div className="flex gap-1">
                                         <FormControl size="small">
                                             <Select
@@ -1397,7 +1397,7 @@ export const EditBookingSetupClubPage = () => {
                                             </Select>
                                         </FormControl>
                                     </div>
-                                    <div className="flex gap-1">
+                                    {/* <div className="flex gap-1">
                                         <FormControl size="small">
                                             <Select
                                                 value={slot.breakTimeStart.hour}
@@ -1467,7 +1467,7 @@ export const EditBookingSetupClubPage = () => {
                                                 ))}
                                             </Select>
                                         </FormControl>
-                                    </div>
+                                    </div> */}
                                     <div className="flex gap-1">
                                         <FormControl size="small">
                                             <Select

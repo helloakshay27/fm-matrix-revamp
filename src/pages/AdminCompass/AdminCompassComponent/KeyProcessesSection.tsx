@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "sonner";
 
-// ── Design tokens — from BusinessPlanAndGoles ──
+// ── Design tokens ──
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
@@ -39,206 +39,70 @@ const getAuthHeaders = (): Record<string, string> => {
 
 // ── Icons ──
 const DocIcon = () => (
-  <svg
-    style={{ width: 17, height: 17, color: "#1a1a1a" }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-    />
+  <svg style={{ width: 17, height: 17, color: "#1a1a1a" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
 const FileIcon = () => (
-  <svg
-    style={{ width: 14, height: 14 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 9h1.5m-1.5 4h6m-6 4h6"
-    />
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1.5m-1.5 4h6m-6 4h6" />
   </svg>
 );
 const InfoIcon = () => (
-  <svg
-    style={{ width: 15, height: 15, color: "#1a1a1a", opacity: 0.5 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
+  <svg style={{ width: 15, height: 15, color: "#1a1a1a", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 const PlusIcon = () => (
-  <svg
-    style={{ width: 14, height: 14 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2.5}
-      d="M12 4v16m8-8H4"
-    />
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
   </svg>
 );
 const SelectIcon = () => (
-  <svg
-    style={{ width: 14, height: 14 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-    />
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
 const CloseIcon = () => (
-  <svg
-    style={{ width: 13, height: 13 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2.5}
-      d="M6 18L18 6M6 6l12 12"
-    />
+  <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
 const TrashIcon = () => (
-  <svg
-    style={{ width: 13, height: 13 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
+  <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
 const EditIcon = () => (
-  <svg
-    style={{ width: 13, height: 13 }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-    />
+  <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
 const SearchIcon = () => (
-  <svg
-    style={{ width: 15, height: 15, color: "#a3a3a3" }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-    />
+  <svg style={{ width: 15, height: 15, color: "#a3a3a3" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
 );
 const RunningIcon = () => (
-  <svg
-    style={{ width: 14, height: 14, color: "#16a34a" }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
+  <svg style={{ width: 14, height: 14, color: "#16a34a" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 const BrokenIcon = () => (
-  <svg
-    style={{ width: 14, height: 14, color: "#f87171" }}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-    />
+  <svg style={{ width: 14, height: 14, color: "#f87171" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
   </svg>
 );
 const LoaderIcon = () => (
-  <svg
-    style={{ width: 15, height: 15, animation: "kp-spin 0.8s linear infinite" }}
-    fill="none"
-    viewBox="0 0 24 24"
-  >
-    <circle
-      style={{ opacity: 0.25 }}
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth={4}
-    />
-    <path
-      style={{ opacity: 0.75 }}
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-    />
+  <svg style={{ width: 15, height: 15, animation: "kp-spin 0.8s linear infinite" }} fill="none" viewBox="0 0 24 24">
+    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
   </svg>
 );
 
-// ── Custom Searchable Select (Reusable for Users & Departments) ──
-const SearchableSelect = ({
-  value,
-  onChange,
-  options,
-  loading,
-  placeholder,
-}: any) => {
+// ── Custom Searchable Select ──
+const SearchableSelect = ({ value, onChange, options, loading, placeholder }: any) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -328,12 +192,8 @@ const SearchableSelect = ({
                 fontFamily: C.font,
                 color: C.textMuted,
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#f9f9f9")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "transparent")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f9f9f9")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               Clear selection
             </div>
@@ -357,12 +217,10 @@ const SearchableSelect = ({
                     fontWeight: isSelected ? 700 : 500,
                   }}
                   onMouseEnter={(e) => {
-                    if (!isSelected)
-                      e.currentTarget.style.background = "#f9f9f9";
+                    if (!isSelected) e.currentTarget.style.background = "#f9f9f9";
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSelected)
-                      e.currentTarget.style.background = "transparent";
+                    if (!isSelected) e.currentTarget.style.background = "transparent";
                   }}
                 >
                   {o.name}
@@ -483,7 +341,6 @@ const ThemeStyle = () => (
     .kp-list-item:hover { border-color: #e8e3de; box-shadow: 0 4px 12px rgba(218,119,86,0.09); }
     .kp-list-item.selected-item { border-color: #DA7756; background: #fdf9f7; }
 
-    /* UPDATE: Changed card to column flex to accommodate the document link at the bottom */
     .kp-process-card {
       background: #fff; border-radius: 14px;
       border: 1px solid #ebebeb; border-left: 4px solid #DA7756;
@@ -514,17 +371,32 @@ const ThemeStyle = () => (
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
       font-family: 'Poppins', sans-serif;
     }
+
+    /* ── Custom Tooltip Styles for Detailed Info ── */
+    .kp-tooltip {
+      position: absolute;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 380px;
+      background-color: #0B1221;
+      color: #ffffff;
+      padding: 18px 24px;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 99999;
+      font-size: 12px;
+      line-height: 1.6;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Poppins', sans-serif;
+      cursor: default;
+    }
   `}</style>
 );
 
 // ── Portal Modal ──
-const Modal = ({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) => {
+const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void; }) => {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -532,12 +404,7 @@ const Modal = ({
     };
   }, []);
   return ReactDOM.createPortal(
-    <div
-      className="kp-overlay"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="kp-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       {children}
     </div>,
     document.body
@@ -577,10 +444,7 @@ const BtnIcon = ({ children, onClick, title = "", danger = false }: any) => (
 );
 
 // ── Status badge ──
-const STATUS_CONFIG: Record<
-  string,
-  { bg: string; color: string; border: string }
-> = {
+const STATUS_CONFIG: Record<string, { bg: string; color: string; border: string }> = {
   "to start": { bg: "#fef9f0", color: "#92400e", border: "#fde68a" },
   running: { bg: "#f0fdf4", color: "#166534", border: "#bbf7d0" },
   broken: { bg: "#fef2f2", color: "#991b1b", border: "#fecaca" },
@@ -658,6 +522,9 @@ export const KeyProcessesSection = () => {
   const [form, setForm] = useState<any>(EMPTY_FORM);
   const [selectIds, setSelectIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // ── State for Image Info Tooltip ──
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
 
   const [departments, setDepartments] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -672,19 +539,12 @@ export const KeyProcessesSection = () => {
       });
       if (depRes.ok) {
         const dJson = await depRes.json();
-        const dList = Array.isArray(dJson)
-          ? dJson
-          : dJson.departments || dJson.data || [];
+        const dList = Array.isArray(dJson) ? dJson : dJson.departments || dJson.data || [];
         const mappedDepts = dList
           .filter((d) => d?.id)
           .map((d) => ({
             id: d.id,
-            name:
-              d.name ||
-              d.title ||
-              d.department_name ||
-              d.label ||
-              `Dept ${d.id}`,
+            name: d.name || d.title || d.department_name || d.label || `Dept ${d.id}`,
           }));
         setDepartments(mappedDepts);
       }
@@ -697,22 +557,14 @@ export const KeyProcessesSection = () => {
     try {
       setLoadingUsers(true);
       const orgId = localStorage.getItem("org_id") || "";
-      const userRes = await fetch(
-        `${BASE_URL}/api/users?organization_id=${orgId}`,
-        { headers: getAuthHeaders() }
-      );
+      const userRes = await fetch(`${BASE_URL}/api/users?organization_id=${orgId}`, { headers: getAuthHeaders() });
       if (userRes.ok) {
         const uJson = await userRes.json();
-        const uList = Array.isArray(uJson)
-          ? uJson
-          : uJson.users || uJson.data || [];
+        const uList = Array.isArray(uJson) ? uJson : uJson.users || uJson.data || [];
         const mappedUsers = uList
           .filter((u) => u?.id)
           .map((u) => {
-            const fName =
-              u.full_name ||
-              u.name ||
-              `${u.first_name || ""} ${u.last_name || ""}`.trim();
+            const fName = u.full_name || u.name || `${u.first_name || ""} ${u.last_name || ""}`.trim();
             return {
               id: u.id,
               name: fName || `User ${u.id}`,
@@ -747,9 +599,7 @@ export const KeyProcessesSection = () => {
       } catch {
         json = [];
       }
-      const records: any[] = Array.isArray(json)
-        ? json
-        : json.data || json.system_sops || [];
+      const records: any[] = Array.isArray(json) ? json : json.data || json.system_sops || [];
       const mapped: SopItem[] = records.map((r: any) => ({
         id: r.id,
         name: r.system_name || r.name || "",
@@ -944,7 +794,7 @@ export const KeyProcessesSection = () => {
       <div
         style={{
           borderRadius: 8,
-          overflow: "hidden",
+          // Removed overflow: "hidden" from here to prevent tooltip clipping
           border: `1px solid ${C.primaryBord}`,
           boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         }}
@@ -956,6 +806,9 @@ export const KeyProcessesSection = () => {
             justifyContent: "space-between",
             padding: "18px 20px",
             background: C.tealBg,
+            // Added explicit border-radius for the top header
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -986,7 +839,41 @@ export const KeyProcessesSection = () => {
             >
               Key Processes (SOPs)
             </h1>
-            <InfoIcon />
+
+            {/* ── Updated Info Icon with Image Exact Tooltip ── */}
+            <div
+              style={{ position: "relative", display: "flex", alignItems: "center", cursor: "pointer" }}
+              onMouseEnter={() => setShowInfoTooltip(true)}
+              onMouseLeave={() => setShowInfoTooltip(false)}
+            >
+              <InfoIcon />
+              {showInfoTooltip && (
+                <div className="kp-tooltip">
+                  <div style={{ fontWeight: 800, marginBottom: 12, fontSize: 13 }}>
+                    SWOT Analysis - Know Yourself
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ fontWeight: 800 }}>Strengths & Weaknesses:</span> What you control inside your business
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontWeight: 800 }}>Opportunities & Threats:</span> External market forces you must respond to
+                  </div>
+                  <div style={{ fontStyle: "italic", marginBottom: 16, color: "#cbd5e1" }}>
+                    From Scaling Up: "Leverage your strengths, shore up weaknesses, exploit opportunities, and protect against threats."
+                  </div>
+                  <div style={{ marginBottom: 4, color: "#cbd5e1" }}>
+                    Indian context examples:
+                  </div>
+                  <div style={{ fontStyle: "italic", color: "#cbd5e1" }}>
+                    Opportunity: Growing middle class, Digital India push, GST simplification
+                  </div>
+                  <div style={{ fontStyle: "italic", color: "#cbd5e1", marginTop: 4 }}>
+                    Threat: New competitors, regulatory changes, talent shortage in smaller cities
+                  </div>
+                </div>
+              )}
+            </div>
+
             {isFetching && <LoaderIcon />}
           </div>
 
@@ -1008,18 +895,12 @@ export const KeyProcessesSection = () => {
                 fontFamily: C.font,
                 transition: "background .15s",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.40)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.25)")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.40)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
             >
               <PlusIcon /> Create New
             </button>
-            <div
-              style={{ width: 1, height: 16, background: "rgba(0,0,0,0.15)" }}
-            />
+            <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.15)" }} />
             <button
               onClick={openSelect}
               style={{
@@ -1044,7 +925,8 @@ export const KeyProcessesSection = () => {
           </div>
         </div>
 
-        <div style={{ padding: 20, background: C.primaryBg }}>
+        {/* Added explicit border-radius for the bottom content area */}
+        <div style={{ padding: 20, background: C.primaryBg, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }}>
           {fetchError && (
             <div className="kp-error-banner" style={{ marginBottom: 16 }}>
               <span>⚠ {fetchError}</span>
@@ -1197,7 +1079,7 @@ export const KeyProcessesSection = () => {
                         gap: 4,
                         fontSize: 12,
                         fontWeight: 600,
-                        color: "#059669", // Deep Green
+                        color: "#059669",
                         textDecoration: "none",
                         width: "fit-content",
                         marginTop: 4,
