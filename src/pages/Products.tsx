@@ -12,6 +12,12 @@ import { EmployeeHeader } from "@/components/EmployeeHeader";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Product {
   id: string;
@@ -26,6 +32,7 @@ interface Product {
   problemSolved: string;
   demoLink?: string;
   type?: string;
+  isActive: boolean;
 }
 
 const productData: Product[] = [
@@ -46,6 +53,7 @@ const productData: Product[] = [
       "Paper checklists, WhatsApp photos, and Excel snag lists drive 5-15% rework costs, no audit trail, and RERA liability exposure at handover.",
     demoLink: "https://demo.snag360.com",
     type: "Facility Management",
+    isActive: true,
   },
   {
     id: "2",
@@ -64,6 +72,7 @@ const productData: Product[] = [
       "Developers manage CP onboarding, brokerage tracking, and payments in disconnected tools, causing CP disengagement, commission disputes, and broker loss to competitors.",
     demoLink: "https://demo.cpmanagement.com",
     type: "CRM",
+    isActive: true,
   },
   {
     id: "3",
@@ -81,6 +90,7 @@ const productData: Product[] = [
     problemSolved:
       "Organisations use 6-12 disconnected workplace tools, creating data silos, compliance risk, and no unified view of space, people, or facility health.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "4",
@@ -98,6 +108,7 @@ const productData: Product[] = [
     problemSolved:
       "Commercial tenants lack a single digital channel for building interactions, relying on WhatsApp, phone calls, and paper registers that cause delays, errors, and poor experience.",
     type: "Customer Portal",
+    isActive: false,
   },
   {
     id: "5",
@@ -115,6 +126,7 @@ const productData: Product[] = [
     problemSolved:
       "Organisations run projects across 4-6 disconnected tools, each storing company data on vendor infrastructure, creating context-switching, data fragmentation, and IP leakage risk.",
     type: "Facility Management",
+    isActive: true,
   },
   {
     id: "6",
@@ -132,6 +144,7 @@ const productData: Product[] = [
     problemSolved:
       "Vendor onboarding happens through emails and spreadsheets, causing 12-18 day delays, GST blind spots, duplicate records, no self-service, and higher procurement and regulatory risk.",
     type: "Vendor Portal",
+    isActive: true,
   },
   {
     id: "7",
@@ -149,6 +162,7 @@ const productData: Product[] = [
     problemSolved:
       "Procurement runs on emails, Excel comparatives, and manual approvals, creating compliance risk, weak vendor accountability, and no audit trail for contract terms.",
     type: "Vendor Portal",
+    isActive: false,
   },
   {
     id: "8",
@@ -166,6 +180,7 @@ const productData: Product[] = [
     problemSolved:
       "Loyalty programmes in complex industries rely on spreadsheets or rigid CRM modules, with no flexible rule engine, idle points, no escrow controls, and batch-blast marketing instead of event-triggered rewards.",
     type: "Loyalty",
+    isActive: true,
   },
   {
     id: "9",
@@ -183,6 +198,7 @@ const productData: Product[] = [
     problemSolved:
       "Incidents are reported informally via WhatsApp and phone, with no investigation framework, SLA tracking, or corrective action management, causing repeat safety events, compliance failures, rising LTIR, and weak audit readiness.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "10",
@@ -200,6 +216,7 @@ const productData: Product[] = [
     problemSolved:
       "Industrial operations rely on paper safety registers, phone-based reporting, and manual compliance tracking, causing near-miss under-reporting, contractor safety gaps, audit failures.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "11",
@@ -217,6 +234,7 @@ const productData: Product[] = [
     problemSolved:
       "Paper permit workflows let high-risk work proceed with bypassed approvals, undocumented risk assessments, and no field-level compliance tracking, making regulatory proof and safety auditing difficult.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "12",
@@ -234,6 +252,7 @@ const productData: Product[] = [
     problemSolved:
       "Parking facilities use manual registers, uncontrolled entry, phone-based slot requests, and unreconciled revenue, causing congestion, overbooking, lost revenue, poor experience, and lack of data on demand.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "13",
@@ -251,6 +270,7 @@ const productData: Product[] = [
     problemSolved:
       "Over 70% of premium Tier-1 clubs still use manual bookings and renewals, global platforms store member data offshore in DPDPA-sensitive ways, and no Indian competitor offers co-player matching, community features, or AI analytics.",
     type: "CRM",
+    isActive: true,
   },
   {
     id: "14",
@@ -268,6 +288,7 @@ const productData: Product[] = [
     problemSolved:
       "Most organisations run 5-12 disconnected FM tools with no integration, creating blind spots on facility health, missed compliance deadlines, and fragmented tenant experience.",
     type: "Facility Management",
+    isActive: true,
   },
   {
     id: "15",
@@ -285,6 +306,7 @@ const productData: Product[] = [
     problemSolved:
       "Developers rely on broker-mediated and in-person sales with no direct digital buyer channel, losing leads, increasing broker dependency, and lacking pre-booking buyer behaviour data.",
     type: "Pre - Sales",
+    isActive: false,
   },
   {
     id: "16",
@@ -302,6 +324,7 @@ const productData: Product[] = [
     problemSolved:
       "After booking, developers lose contact with buyers, leaving satisfied homebuyers idle with no referral system, no loyalty programme, and no way to capture home loan commission revenue.",
     type: "Post - Sales",
+    isActive: true,
   },
   {
     id: "17",
@@ -319,6 +342,7 @@ const productData: Product[] = [
     problemSolved:
       "After handover, developers lose contact with buyers while facility teams juggle 6-10 disconnected tools, unauthorised vendor apps expose community data, and satisfied residents are never formally captured for referrals.",
     type: "Customer Portal",
+    isActive: true,
   },
   {
     id: "18",
@@ -336,6 +360,7 @@ const productData: Product[] = [
     problemSolved:
       "Large organisations managing 50-500+ leased properties run on Excel and email, missing rent escalations, paying incorrect CAM charges, failing compliance audits, and lacking real-time lease liability visibility.",
     type: "Facility Management",
+    isActive: true,
   },
   {
     id: "19",
@@ -353,6 +378,7 @@ const productData: Product[] = [
     problemSolved:
       "Individuals manage goals, habits, and personal development across scattered apps and notebooks, leading to inconsistent follow-through, untracked progress, burnout risk, and a gap between intention and execution.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "20",
@@ -370,6 +396,7 @@ const productData: Product[] = [
     problemSolved:
       "Business strategy lives in offline decks and spreadsheets disconnected from execution, causing team misalignment, missed review cycles, no real-time goal visibility, and no chance to course-correct before targets are missed.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "21",
@@ -387,6 +414,7 @@ const productData: Product[] = [
     problemSolved:
       "Gate operations depend on physical registers, WhatsApp visitor approvals, and manual vehicle verification, creating unauthorised access risk, no real-time visibility, compliance audit gaps, and no traceable digital incident record.",
     type: "Visitor Management",
+    isActive: false,
   },
   {
     id: "22",
@@ -404,6 +432,7 @@ const productData: Product[] = [
     problemSolved:
       "Feedback is collected through untracked email surveys, WhatsApp polls, and physical forms, resulting in low response rates, unstructured data, no sentiment analysis, no trend tracking, and no actionable insight.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "23",
@@ -421,6 +450,7 @@ const productData: Product[] = [
     problemSolved:
       "Real estate sales teams use separate training and CRM tools, so knowledge gaps in product features and project updates lead to lost sales and inconsistent buyer pitches.",
     type: "CRM",
+    isActive: true,
   },
   {
     id: "24",
@@ -438,6 +468,7 @@ const productData: Product[] = [
     problemSolved:
       "Customer queries arrive via WhatsApp, email, and phone without unified tracking, causing missed SLAs, duplicate tickets, repeat follow-ups, and no visibility into backlog, resolution quality, or team performance.",
     type: "CRM",
+    isActive: false,
   },
   {
     id: "25",
@@ -455,6 +486,7 @@ const productData: Product[] = [
     problemSolved:
       "Generic CRMs are not built for real estate, lacking unit inventory, RERA fields, brokerage tracking, and payment milestone workflows, forcing Excel workarounds.",
     type: "CRM",
+    isActive: false,
   },
   {
     id: "26",
@@ -472,6 +504,7 @@ const productData: Product[] = [
     problemSolved:
       "HSW compliance is tracked through paper registers and email follow-ups across distributed teams, creating gaps in at-risk monitoring, missed training, no leadership visibility on safety tours, and weak audit readiness.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "27",
@@ -489,6 +522,7 @@ const productData: Product[] = [
     problemSolved:
       "Appointments are managed through phone calls, WhatsApp, and manual calendars, causing scheduling conflicts, high no-show rates, poor resource use, and undocumented, unassigned meeting outcomes.",
     type: "CRM",
+    isActive: false,
   },
   {
     id: "28",
@@ -506,6 +540,7 @@ const productData: Product[] = [
     problemSolved:
       "Financial operations are split across disconnected invoicing, payroll, and ledger tools, causing delayed month-end close, reconciliation errors, missed GST/TDS deadlines, and no real-time cash flow or receivables visibility.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "29",
@@ -523,6 +558,7 @@ const productData: Product[] = [
     problemSolved:
       "Meeting minutes are written manually, shared informally over WhatsApp, and never tracked, causing forgotten action items, undocumented decisions, and no accountability for commitments across internal, contractor, or client meetings.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "30",
@@ -540,6 +576,7 @@ const productData: Product[] = [
     problemSolved:
       "HR operations are spread across attendance devices, Excel payroll sheets, email leave approvals, and manual appraisals, creating statutory risk, payroll errors, delayed close, and no unified workforce view.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "31",
@@ -557,6 +594,7 @@ const productData: Product[] = [
     problemSolved:
       "ESG data is manually assembled from 10+ teams in Excel, creating inconsistent metrics, unverifiable claims, delayed disclosures, and no way to show measurable year-on-year progress in reviews.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "32",
@@ -574,6 +612,7 @@ const productData: Product[] = [
     problemSolved:
       "Organisations manage communication through separate tools for marketing emails, system notifications, and operational alerts, causing inconsistent messaging, no unified delivery tracking, manual campaign execution, and no visibility into sender reputation or cost.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "33",
@@ -591,6 +630,7 @@ const productData: Product[] = [
     problemSolved:
       "Organisations using Microsoft 365 or Google Workspace store documents and correspondence on foreign cloud servers, creating data sovereignty risk, subscription dependency, and compliance exposure under DPDPA or residency laws.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "34",
@@ -608,6 +648,7 @@ const productData: Product[] = [
     problemSolved:
       "Project budgets are built in Excel WBS files disconnected from procurement and accounting, causing cost overruns to surface late, manual variance calculations, and no early warning when costs near or exceed limits.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "35",
@@ -625,6 +666,7 @@ const productData: Product[] = [
     problemSolved:
       "Professionals handling multiple complex documents must read sequentially without cross-document insight, slowing synthesis, missing connections, and reducing knowledge extraction efficiency.",
     type: "Facility Management",
+    isActive: false,
   },
   {
     id: "36",
@@ -642,14 +684,34 @@ const productData: Product[] = [
     problemSolved:
       "Single-brand loyalty programmes have low redemption and engagement because points are siloed, so customers disengage when they cannot redeem across the services they actually use.",
     type: "Loyalty",
+    isActive: false,
   },
 ];
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProductType, setSelectedProductType] = useState("");
-  const [selectedIndustry, setSelectedIndustry] = useState("");
+  const [selectedProductTypes, setSelectedProductTypes] = useState<string[]>(
+    []
+  );
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState("active");
+
+  // Extract unique product types from data
+  const uniqueProductTypes = React.useMemo(() => {
+    const types = productData
+      .map((p) => p.type)
+      .filter((type): type is string => !!type);
+    return Array.from(new Set(types)).sort();
+  }, []);
+
+  // Extract unique industries from data
+  const uniqueIndustries = React.useMemo(() => {
+    const allIndustries = productData
+      .flatMap((p) => p.industries.split(",").map((i) => i.trim()))
+      .filter(Boolean);
+    return Array.from(new Set(allIndustries)).sort();
+  }, []);
 
   const columns: ColumnConfig[] = [
     {
@@ -666,6 +728,7 @@ const Products: React.FC = () => {
       draggable: true,
       defaultVisible: true,
     },
+
     {
       key: "businessSPOC1",
       label: "business SPOC1",
@@ -709,6 +772,13 @@ const Products: React.FC = () => {
       defaultVisible: true,
     },
     {
+      key: "isActive",
+      label: "status",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
       key: "demoLink",
       label: "Demo Link",
       sortable: false,
@@ -719,14 +789,29 @@ const Products: React.FC = () => {
 
   const renderCell = (product: Product, columnKey: string) => {
     switch (columnKey) {
+      case "isActive":
+        return (
+          <div className="flex items-center justify-center">
+            <span
+              className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                product.isActive
+                  ? "bg-green-50 text-green-700 border border-green-200"
+                  : "bg-gray-100 text-gray-600 border border-gray-300"
+              }`}
+            >
+              {product.isActive ? "Active" : "Inactive"}
+            </span>
+          </div>
+        );
       case "industries":
         return (
-          <div className="flex flex-wrap gap-1 max-w-sm">
+          <div className="flex flex-wrap gap-1.5">
             {product.industries &&
               product.industries.split(",").map((ind, i) => (
                 <span
                   key={i}
-                  className="px-1.5 py-0.5 bg-gray-50 text-gray-700 rounded text-[10px] font-bold border border-[#D3D1C7] whitespace-normal"
+                  className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-semibold border border-blue-200 whitespace-nowrap"
+                  title={ind.trim()}
                 >
                   {ind.trim()}
                 </span>
@@ -736,13 +821,13 @@ const Products: React.FC = () => {
       case "productDescription":
       case "problemSolved":
         return (
-          <div className="text-[11px] text-gray-700 leading-relaxed font-medium whitespace-normal min-w-[200px]">
+          <div className="text-xs text-gray-700 leading-relaxed font-normal whitespace-normal">
             {product[columnKey as keyof Product]}
           </div>
         );
       case "purpose":
         return (
-          <div className="text-[11px] text-gray-600 whitespace-normal min-w-[150px]">
+          <div className="text-xs text-gray-600 leading-relaxed font-normal whitespace-normal">
             {product.purpose}
           </div>
         );
@@ -752,37 +837,46 @@ const Products: React.FC = () => {
             href={product.demoLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+            className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
           >
-            Watch Demo <ExternalLink className="w-3 h-3" />
+            View Demo <ExternalLink className="w-3 h-3" />
           </a>
         ) : (
-          <span className="text-xs text-gray-400 font-medium italic">
-            Unavailable
-          </span>
+          <span className="text-xs text-gray-400 font-normal italic">N/A</span>
         );
       case "company":
         return (
-          <span className="text-xs font-bold text-gray-900">
+          <span className="text-xs font-semibold text-gray-900">
             {product.company}
           </span>
         );
       case "businessSPOC1":
-      case "businessSPOC2":
-        return (
-          <span className="text-xs font-medium text-gray-700">
-            {product[columnKey as keyof Product]}
+        return product.businessSPOC1 ? (
+          <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+            {product.businessSPOC1}
           </span>
+        ) : (
+          <span className="text-xs text-gray-400">-</span>
         );
-      case "name":
+      case "businessSPOC2":
+        return product.businessSPOC2 ? (
+          <span className="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 text-xs font-semibold border border-purple-200">
+            {product.businessSPOC2}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400">-</span>
+        );
+      case "name": {
+        const displayName = product.name.replace(/\s*\*\s*$/, "");
         return (
           <button
             onClick={() => navigate(`/product/${product.slug}`)}
-            className="text-blue-600 font-extrabold hover:underline text-left text-xs"
+            className="text-blue-600 font-bold hover:underline text-left text-xs leading-relaxed"
           >
-            {product.name}
+            {displayName}
           </button>
         );
+      }
       default:
         return (
           <span className="text-xs text-gray-900">
@@ -815,12 +909,21 @@ const Products: React.FC = () => {
         .includes(searchTerm.toLowerCase());
 
     const matchesType =
-      !selectedProductType || product.type === selectedProductType;
-    const matchesIndustry =
-      !selectedIndustry ||
-      product.industries.toLowerCase().includes(selectedIndustry.toLowerCase());
+      selectedProductTypes.length === 0 ||
+      (product.type && selectedProductTypes.includes(product.type));
 
-    return matchesSearch && matchesType && matchesIndustry;
+    const matchesIndustry =
+      selectedIndustries.length === 0 ||
+      selectedIndustries.some((industry) =>
+        product.industries.toLowerCase().includes(industry.toLowerCase())
+      );
+
+    const matchesStatus =
+      !selectedStatus ||
+      (selectedStatus === "active" && product.isActive) ||
+      (selectedStatus === "inactive" && !product.isActive);
+
+    return matchesSearch && matchesType && matchesIndustry && matchesStatus;
   });
 
   return (
@@ -836,6 +939,7 @@ const Products: React.FC = () => {
           text-transform: uppercase !important;
           letter-spacing: 0.025em !important;
           border-bottom: 2px solid #081d3a !important;
+          padding: 14px 12px !important;
         }
         /* Fix sorting icons */
         [data-radix-scroll-area-viewport] thead tr th svg {
@@ -844,16 +948,39 @@ const Products: React.FC = () => {
         /* Table content tweaks */
         td {
           vertical-align: top !important;
-          padding-top: 12px !important;
-          padding-bottom: 12px !important;
-          border-right: 1px solid #e2e8f0 !important;
+          padding: 14px 12px !important;
+          border-right: 1px solid #e5e7eb !important;
           white-space: normal !important;
           word-wrap: break-word !important;
+          font-size: 12px !important;
+          line-height: 1.6 !important;
         }
         th, [data-radix-scroll-area-viewport] thead tr th {
           white-space: normal !important;
           word-wrap: break-word !important;
         }
+        /* Column width controls */
+        td:nth-child(1) { min-width: 180px !important; max-width: 250px !important; } /* Product */
+        td:nth-child(2) { min-width: 150px !important; max-width: 200px !important; } /* Company */
+        td:nth-child(3) { min-width: 140px !important; max-width: 180px !important; text-align: center !important; } /* Status */
+        td:nth-child(4) { min-width: 140px !important; max-width: 150px !important; } /* SPOC1 */
+        td:nth-child(5) { min-width: 130px !important; max-width: 150px !important; } /* SPOC2 */
+        td:nth-child(6) { min-width: 250px !important; max-width: 300px !important; } /* Description */
+        td:nth-child(7) { min-width: 280px !important; max-width: 280px !important; } /* Purpose */
+        td:nth-child(8) { min-width: 250px !important; max-width: 400px !important; } /* Industries */
+        td:nth-child(9) { min-width: 250px !important; max-width: 300px !important; } /* Problem Solved */
+        td:nth-child(10) { min-width: 110px !important; max-width: 120px !important; } /* Demo Link */
+        /* Header width controls */
+        th:nth-child(1) { min-width: 180px !important; max-width: 200px !important; }
+        th:nth-child(2) { min-width: 100px !important; max-width: 110px !important; }
+        th:nth-child(3) { min-width: 90px !important; max-width: 90px !important; text-align: center !important; }
+        th:nth-child(4) { min-width: 130px !important; max-width: 150px !important; }
+        th:nth-child(5) { min-width: 130px !important; max-width: 150px !important; }
+        th:nth-child(6) { min-width: 250px !important; max-width: 300px !important; }
+        th:nth-child(7) { min-width: 250px !important; max-width: 300px !important; }
+        th:nth-child(8) { min-width: 280px !important; max-width: 400px !important; }
+        th:nth-child(9) { min-width: 200px !important; max-width: 250px !important; }
+        th:nth-child(10) { min-width: 200px !important; max-width: 320px !important; }
         /* Sharp Edges - No Rounding */
         * {
           border-radius: 0 !important;
@@ -862,8 +989,18 @@ const Products: React.FC = () => {
           appearance: none;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
           background-repeat: no-repeat;
-          background-position: right 1rem center;
+          background-position: right 0.75rem center;
           background-size: 1em;
+        }
+        /* Row hover effect */
+        tbody tr:hover {
+          background-color: #f9fafb !important;
+        }
+        /* Actions column */
+        td:last-child {
+          min-width: 80px !important;
+          text-align: center !important;
+          border-right: none !important;
         }
       `}</style>
       <EmployeeHeader />
@@ -882,7 +1019,7 @@ const Products: React.FC = () => {
         </div>
 
         {/* Header Section - Centered */}
-        <div className="text-center mb-10 py-6">
+        <div className="text-center mb-8 py-6">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">
             Lockated Products
           </h1>
@@ -894,7 +1031,9 @@ const Products: React.FC = () => {
         </div>
 
         {/* Table Container */}
-        <div className="bg-white shadow-sm overflow-x-auto w-full">
+        <div className=" shadow-sm overflow-x-auto w-full">
+          {/* Smart Filter Summary */}
+
           <EnhancedTable
             data={filteredProducts}
             columns={columns}
@@ -906,53 +1045,102 @@ const Products: React.FC = () => {
             hideTableExport={true}
             hideColumnsButton={false}
             leftActions={
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Product Type */}
-                <select
-                  value={selectedProductType}
-                  onChange={(e) => setSelectedProductType(e.target.value)}
-                  className="h-8 px-3 bg-white border border-[#D3D1C7] text-xs text-gray-600 focus:ring-1 focus:ring-blue-400 outline-none transition-all filter-select appearance-none pr-7"
-                >
-                  <option value="">Product Type</option>
-                  {[
-                    "Wallet Management",
-                    "CRM",
-                    "Visitor Management",
-                    "Facility Management",
-                    "Loyalty",
-                    "Pre - Sales",
-                    "Post - Sales",
-                    "Vendor Portal",
-                    "Customer Portal",
-                  ].map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Status Filter */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
+                    Status
+                  </label>
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="h-9 px-3 bg-white border border-[#D3D1C7] text-xs font-medium text-gray-700 focus:ring-1 focus:ring-[#DA7756] outline-none transition-all filter-select appearance-none pr-8"
+                  >
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
 
-                {/* Industry Type */}
-                <select
-                  value={selectedIndustry}
-                  onChange={(e) => setSelectedIndustry(e.target.value)}
-                  className="h-8 px-3 bg-white border border-[#D3D1C7] text-xs text-gray-600 focus:ring-1 focus:ring-blue-400 outline-none transition-all filter-select appearance-none pr-7"
-                >
-                  <option value="">Industry Type</option>
-                  {[
-                    "Real Estate Development",
-                    "Facility Management",
-                    "Manufacturing",
-                    "Government",
-                    "Hospitals",
-                    "Education",
-                    "Commercial Real Estate",
-                    "Enterprise",
-                  ].map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                {/* Product Type - Multi Select */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
+                    Product Type
+                    {selectedProductTypes.length > 0 && (
+                      <span className="ml-2 text-[#DA7756]">
+                        ({selectedProductTypes.length} selected)
+                      </span>
+                    )}
+                  </label>
+                  <select
+                    multiple
+                    value={selectedProductTypes}
+                    onChange={(e) => {
+                      const values = Array.from(
+                        e.target.selectedOptions,
+                        (option) => option.value
+                      );
+                      setSelectedProductTypes(values);
+                    }}
+                    className="h-9 px-3 bg-white border border-[#D3D1C7] text-xs font-medium text-gray-700 focus:ring-1 focus:ring-[#DA7756] outline-none transition-all min-w-[200px]"
+                    size={1}
+                  >
+                    {uniqueProductTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Industry Type - Multi Select */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
+                    Industry Type
+                    {selectedIndustries.length > 0 && (
+                      <span className="ml-2 text-[#DA7756]">
+                        ({selectedIndustries.length} selected)
+                      </span>
+                    )}
+                  </label>
+                  <select
+                    multiple
+                    value={selectedIndustries}
+                    onChange={(e) => {
+                      const values = Array.from(
+                        e.target.selectedOptions,
+                        (option) => option.value
+                      );
+                      setSelectedIndustries(values);
+                    }}
+                    className="h-9 px-3 bg-white border border-[#D3D1C7] text-xs font-medium text-gray-700 focus:ring-1 focus:ring-[#DA7756] outline-none transition-all min-w-[200px]"
+                    size={1}
+                  >
+                    {uniqueIndustries.map((industry) => (
+                      <option key={industry} value={industry}>
+                        {industry}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Clear Filters */}
+                {(selectedProductTypes.length > 0 ||
+                  selectedIndustries.length > 0 ||
+                  selectedStatus !== "active") && (
+                  <button
+                    onClick={() => {
+                      setSelectedProductTypes([]);
+                      setSelectedIndustries([]);
+                      setSelectedStatus("active");
+                      setSearchTerm("");
+                    }}
+                    className="self-end h-9 px-4 bg-[#DA7756] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#c86645] transition-all shadow-sm flex items-center gap-2"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Clear All
+                  </button>
+                )}
               </div>
             }
             rightActions={
@@ -963,7 +1151,7 @@ const Products: React.FC = () => {
                   placeholder="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 pr-3 h-8 w-48 bg-white border border-[#D3D1C7] text-xs focus:ring-1 focus:ring-blue-400 outline-none transition-all"
+                  className="pl-9 pr-3 h-8 w-56 bg-white border border-[#D3D1C7] text-xs font-medium text-gray-700 placeholder:text-gray-400 focus:ring-1 focus:ring-[#DA7756] outline-none transition-all"
                 />
               </div>
             }
