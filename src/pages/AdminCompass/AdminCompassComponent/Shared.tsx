@@ -130,11 +130,14 @@ export const fetchDailyLogsFromAPI = async ({
   }
 
   // Normalize mapping and attach total/submitted meta data to the array
-  const normalizedLogs = rawArray.map(normalizeLog);
+ const normalizedLogs = rawArray.map(normalizeLog);
   normalizedLogs.total =
     result?.data?.total || result?.total || rawArray.length;
   normalizedLogs.submitted =
     result?.data?.submitted || result?.submitted || rawArray.length;
+    
+  // ✅ BASS YE EK LINE ADD KRR TAAKI CONFIG (MEETING DAYS) GAYAB NA HO
+  normalizedLogs.config = result?.data?.config || result?.config || {};
 
   return normalizedLogs;
 };

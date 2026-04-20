@@ -274,6 +274,26 @@ const getItemTitle = (item) => {
 };
 
 // ─────────────────────────────────────────────
+// ✅ Non-working day detection
+// Uses meeting_days from API config e.g. ["Mon","Tue","Wed","Thu","Fri"]
+// ─────────────────────────────────────────────
+const DAY_MAP = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const checkIsNonWorkingDay = (dateStr, meetingDays) => {
+  // Agar API ne days nahi bheje, toh working day hi manega (false)
+  if (!dateStr || !Array.isArray(meetingDays) || meetingDays.length === 0)
+    return false;
+  
+  // Date split karke parse krr, taaki timezone browser ko shift na kare
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  if (isNaN(dateObj)) return false;
+  
+  const dayName = DAY_MAP[dateObj.getDay()];
+  return !meetingDays.includes(dayName);
+};
+
+// ─────────────────────────────────────────────
 // FormattedHighlights Component
 // ─────────────────────────────────────────────
 const FormattedHighlights = ({ text, isPending }) => {
@@ -911,7 +931,7 @@ const ReportDetailModal = ({ log, onClose }) => {
         document.body
       )}
 
-      {/* ── Add Task Modal — side panel portal ── */}
+      {/* ── Add Task Modal ── */}
       {isTaskModalOpen &&
         createPortal(
           <div className="fixed inset-0 z-[10000] flex">
@@ -951,12 +971,6 @@ const ReportDetailModal = ({ log, onClose }) => {
           document.body
         )}
 
-      {/*
-        ── AddIssueModal — MUI Dialog renders its own portal on document.body
-           with z-index 1300 by default. Our ReportDetailModal uses z-[9990]
-           which is higher, so MUI gets buried underneath.
-           Fix: wrap with MUI ThemeProvider to force zIndex.modal = 10001.
-      */}
       {isIssueModalOpen && (
         <MuiZIndexFix>
           <AddIssueModal
@@ -982,6 +996,10 @@ const DailyLogTab = () => {
   const [selectedDeptId, setSelectedDeptId] = useState("");
   const [selectedMeetingFilter, setSelectedMeetingFilter] = useState("");
   const [isGrouped, setIsGrouped] = useState(false);
+
+  // ✅ Non-working day state
+  const [isNonWorkingDay, setIsNonWorkingDay] = useState(false);
+  const [meetingDays, setMeetingDays] = useState([]);
 
   const [departments, setDepartments] = useState([]);
   const [isFetchingDepts, setIsFetchingDepts] = useState(false);
@@ -1045,7 +1063,23 @@ const DailyLogTab = () => {
         search: debouncedSearch,
       });
 
-      let logsArray = Array.isArray(response) ? response : [];
+      // ✅ Extract meeting_days from config and detect non-working day
+      // API response shape: { success, data: { config: { meeting_days: [...] }, total, reports: [...] } }
+      const configDays =
+        response?.config?.meeting_days ??
+        response?.data?.config?.meeting_days ??
+        [];
+      setMeetingDays(configDays);
+      setIsNonWorkingDay(checkIsNonWorkingDay(selectedDate, configDays));
+
+      // ✅ Extract reports array from nested data shape
+      let logsArray = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.reports)
+        ? response.reports
+        : Array.isArray(response?.data?.reports)
+        ? response.data.reports
+        : [];
 
       logsArray = logsArray.filter(
         (log) => log.status && log.status.toLowerCase().trim() === "submitted"
@@ -1082,13 +1116,17 @@ const DailyLogTab = () => {
       }
 
       setMetaSubmitted(logsArray.length);
-      setMetaExpected(response.total || 0);
+      // ✅ total from API: response.total or response.data.total
+      setMetaExpected(
+        response?.total ?? response?.data?.total ?? 0
+      );
     } catch (err) {
       setApiError(err.message);
       setApiLogs([]);
       setGroupedApiLogs({});
       setMetaSubmitted(0);
       setMetaExpected(0);
+      setIsNonWorkingDay(false);
       toast.error(`Failed to load logs: ${err.message}`);
     } finally {
       setIsLoading(false);
@@ -1100,6 +1138,7 @@ const DailyLogTab = () => {
     selectedDeptId,
     debouncedSearch,
   ]);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -1199,8 +1238,6 @@ const DailyLogTab = () => {
       className="pb-12 min-h-screen pt-0"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-
-
       {/* Header card */}
       <div className="bg-white rounded-[32px] border border-[#F0EBE8] shadow-sm p-6 sm:p-8 mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
@@ -1212,20 +1249,52 @@ const DailyLogTab = () => {
               <h1 className="text-[24px] font-black text-[#1A1A1A] tracking-tight">
                 Daily Report Log for {titleDate}
               </h1>
-              <div className="flex items-center gap-4 mt-1.5 text-[12px] font-bold text-[#8C8580] uppercase tracking-widest">
-                <span className="flex items-center gap-2">
-                  Submitted
-                  <span className="px-2 py-0.5 rounded-[6px] bg-[#2ECC71] text-white">
-                    {metaSubmitted}
+
+              {/* ✅ Submitted / Expected / Non-working day — mutually exclusive */}
+              <div className="flex items-center gap-4 mt-1.5 text-[12px] font-bold text-[#8C8580] uppercase tracking-widest flex-wrap">
+                {isNonWorkingDay ? (
+                  // ✅ Non-working day: hide Expected, show amber badge
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-amber-50 border border-amber-200 text-amber-700 normal-case tracking-normal text-[11px] font-bold">
+                    {/* Sun icon */}
+                    <svg
+                      className="w-3.5 h-3.5 shrink-0"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="8"
+                        cy="8"
+                        r="3"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l-1.06 1.06M4.16 11.84l-1.06 1.06"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    Non-working day — no reports expected
                   </span>
-                </span>
-                {metaExpected > 0 && (
-                  <span className="flex items-center gap-2">
-                    Expected
-                    <span className="px-2 py-0.5 rounded-[6px] bg-[#EB4A4A] text-white">
-                      {metaExpected}
+                ) : (
+                  <>
+                    <span className="flex items-center gap-2">
+                      Submitted
+                      <span className="px-2 py-0.5 rounded-[6px] bg-[#2ECC71] text-white">
+                        {metaSubmitted}
+                      </span>
                     </span>
-                  </span>
+                    {metaExpected > 0 && (
+                      <span className="flex items-center gap-2">
+                        Expected
+                        <span className="px-2 py-0.5 rounded-[6px] bg-[#EB4A4A] text-white">
+                          {metaExpected}
+                        </span>
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -1327,11 +1396,48 @@ const DailyLogTab = () => {
 
       {/* Error */}
       {apiError && (
-        <div className="bg-[#EB4A4A]/10 text-[#EB4A4A] text-sm font-bold p-5 rounded-[20px] flex items-center gap-3">
+        <div className="bg-[#EB4A4A]/10 text-[#EB4A4A] text-sm font-bold p-5 rounded-[20px] flex items-center gap-3 mb-6">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           {apiError.includes("No Auth Token")
             ? "No auth token. Please set it via bootstrapAuthToken() first."
             : `API Error: ${apiError}`}
+        </div>
+      )}
+
+      {/* ✅ Non-working day banner above table */}
+      {isNonWorkingDay && !isLoading && (
+        <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-5 mb-6 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5 text-amber-600"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="10"
+                cy="10"
+                r="3.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M14.72 5.28l-1.06 1.06M5.28 14.72l-1.06 1.06"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-black text-amber-800">
+              Non-working day
+            </p>
+            <p className="text-xs font-semibold text-amber-600 mt-0.5">
+              {titleDate} is not a scheduled meeting day. This meeting runs on{" "}
+              {meetingDays.join(", ")} — no reports are expected today.
+            </p>
+          </div>
         </div>
       )}
 
@@ -1394,7 +1500,9 @@ const DailyLogTab = () => {
                     colSpan={7}
                     className="text-center py-20 text-sm font-bold text-[#8C8580]"
                   >
-                    No reports found for the selected date and filters.
+                    {isNonWorkingDay
+                      ? "This is a non-working day — no reports are expected."
+                      : "No reports found for the selected date and filters."}
                   </td>
                 </tr>
               ) : isGrouped && sortedDepts.length === 0 ? (
@@ -1403,7 +1511,9 @@ const DailyLogTab = () => {
                     colSpan={7}
                     className="text-center py-20 text-sm font-bold text-[#8C8580]"
                   >
-                    No reports found for the selected date and filters.
+                    {isNonWorkingDay
+                      ? "This is a non-working day — no reports are expected."
+                      : "No reports found for the selected date and filters."}
                   </td>
                 </tr>
               ) : !isGrouped ? (
