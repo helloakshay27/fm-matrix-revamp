@@ -45,6 +45,12 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import axios from "axios";
+import {
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent,
+} from "@/components/ui/accordion";
 // Types
 interface SalesOrderItem {
     id: number;
@@ -414,6 +420,10 @@ export const SalesOrderDetailPage = () => {
         }
     });
     const taxRows = Object.entries(taxBreakdown);
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        return format(new Date(dateString), "dd/MM/yyyy");
+    };
 
     return (
         <div className="min-h-screen bg-background p-6">
@@ -593,6 +603,103 @@ export const SalesOrderDetailPage = () => {
 
                     {/* Order Details Tab */}
                     <TabsContent value="order-details" className="space-y-6">
+
+                        {salesOrder?.invoices && (
+                            <Accordion type="single" collapsible
+                            // defaultValue="sales-order"
+                            >
+                                <AccordionItem value="sales-order" className="border rounded-lg px-4">
+                                    <AccordionTrigger className="py-3 hover:no-underline">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-base">
+                                                Invoices
+                                            </span>
+
+                                            <Badge
+                                                variant="secondary"
+                                                className="h-5 px-2 text-xs rounded-full"
+                                            >
+                                                1
+                                            </Badge>
+                                        </div>
+                                    </AccordionTrigger>
+
+                                    <AccordionContent>
+                                        <div className="border rounded-lg overflow-hidden mt-2">
+                                            <Table>
+
+
+                                                <TableHeader>
+                                                    <TableRow className="bg-muted/50">
+                                                        <TableHead>Date</TableHead>
+                                                        <TableHead>Invoice#</TableHead>
+                                                        <TableHead>Status</TableHead>
+                                                        <TableHead>Due Date</TableHead>
+                                                        <TableHead className="text-right">Amount</TableHead>
+                                                        <TableHead className="text-right">Balance Due</TableHead>
+                                                        <TableHead className="text-center w-[60px]"></TableHead>
+                                                    </TableRow>
+                                                </TableHeader>                                                                    <TableBody>
+                                                    {salesOrder.invoices.map((inv, index) => (
+                                                        <TableRow key={inv.id || index} className="hover:bg-muted/40">
+
+                                                            {/* Date */}
+                                                            <TableCell>{formatDate(inv.date)}</TableCell>
+
+                                                            {/* Invoice Number */}
+                                                            <TableCell>
+                                                                <button
+                                                                    className="text-blue-600 hover:underline font-medium"
+                                                                    onClick={() => navigate(`/accounting/invoices/${inv.id}`)}
+                                                                >
+                                                                    {inv.invoice_number}
+                                                                </button>
+                                                            </TableCell>
+
+                                                            {/* Status */}
+                                                            <TableCell>
+                                                                <span
+                                                                    className={`text-xs font-semibold ${inv.status === "overdue"
+                                                                            ? "text-red-600"
+                                                                            : inv.status === "paid"
+                                                                                ? "text-green-600"
+                                                                                : "text-orange-500"
+                                                                        }`}
+                                                                >
+                                                                    {inv.status?.toUpperCase()}
+                                                                </span>
+                                                            </TableCell>
+
+                                                            {/* Due Date */}
+                                                            <TableCell>{formatDate(inv.due_date)}</TableCell>
+
+                                                            {/* Amount */}
+                                                            <TableCell className="text-right font-medium">
+                                                                ₹{inv.total_amount?.toFixed(2)}
+                                                            </TableCell>
+
+                                                            {/* Balance Due */}
+                                                            <TableCell className="text-right font-medium">
+                                                                ₹{inv.balance_due?.toFixed(2)}
+                                                            </TableCell>
+
+                                                            {/* Actions (3-dot menu like Zoho) */}
+                                                            {/* <TableCell className="text-center">
+                                                                <button className="p-2 rounded hover:bg-muted">
+                                                                    ⋮
+                                                                </button>
+                                                            </TableCell> */}
+
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        )}
+
                         {/* Order Information */}
                         <Card>
                             <CardHeader>
@@ -607,10 +714,10 @@ export const SalesOrderDetailPage = () => {
                                         <p className="text-sm font-medium text-muted-foreground">Order Number</p>
                                         <p className="text-base font-semibold mt-1">{salesOrder?.sale_order_number}</p>
                                     </div>
-                                     <div>
-                                         <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
-                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.reference_number || "N/A"}</p>
-                                     </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Reference Number</p>
+                                        <p className="text-base font-semibold mt-1 break-all">{salesOrder?.reference_number || "N/A"}</p>
+                                    </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Order Date</p>
                                         <p className="text-base font-semibold mt-1">
@@ -623,14 +730,14 @@ export const SalesOrderDetailPage = () => {
                                             {salesOrder?.shipment_date ? format(new Date(salesOrder.shipment_date), 'dd/MM/yyyy') : "N/A"}
                                         </p>
                                     </div>
-                                     <div>
-                                         <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
-                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.payment_term || "N/A"}</p>
-                                     </div>
-                                     <div>
-                                         <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                                         <p className="text-base font-semibold mt-1 break-all">{salesOrder?.subject || "N/A"}</p>
-                                     </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
+                                        <p className="text-base font-semibold mt-1 break-all">{salesOrder?.payment_term || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                                        <p className="text-base font-semibold mt-1 break-all">{salesOrder?.subject || "N/A"}</p>
+                                    </div>
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Delivery Method</p>
                                         <p className="text-base font-semibold mt-1">{salesOrder?.delivery_method}</p>
@@ -802,10 +909,10 @@ export const SalesOrderDetailPage = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                 <div>
-                                     <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-                                     <p className="text-base font-semibold mt-1 break-all">{salesOrder?.customer_name}</p>
-                                 </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+                                    <p className="text-base font-semibold mt-1 break-all">{salesOrder?.customer_name}</p>
+                                </div>
                                 <div>
                                     {/* <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         <Mail className="h-4 w-4" />
@@ -827,7 +934,7 @@ export const SalesOrderDetailPage = () => {
                                     </p>
                                     <p className="text-base mt-1 break-all whitespace-pre-wrap">{salesOrder?.customer_notes}</p>
                                 </div>
-                                 <div>
+                                <div>
                                     <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                         {/* <Phone className="h-4 w-4" /> */}
                                         Terms and Conditions
