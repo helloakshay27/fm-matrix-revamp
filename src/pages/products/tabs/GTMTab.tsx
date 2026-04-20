@@ -14,8 +14,8 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
   if (isClubGTM) {
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins text-[14px] font-bold tracking-wide">
-          {productData.name} - Go-To-Market Strategy
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+          <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - Go-To-Market Strategy</h2>
         </div>
         <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
           3 Target Groups based on product fit | Each TG has Sales Motion, Marketing Channels, 90-Day Launch Sequence, Partnership Strategy, and Summary
@@ -72,10 +72,10 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
               <div
-                className={`bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-sm font-semibold tracking-wide text-left" : "font-bold tracking-tight text-[14px] text-center"}`}
+                className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center"
               >
-                {productData.extendedContent?.detailedGTM?.sheet?.title ||
-                  "Post Possession — Go-to-market Strategy"}
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.extendedContent?.detailedGTM?.sheet?.title ||
+                  "Post Possession — Go-to-market Strategy"}</h2>
               </div>
 
               {productData.extendedContent?.detailedGTM?.sheet?.targetGroups
@@ -173,7 +173,7 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
         </div>
       ) : (
         <>
-          <div className="p-4 rounded-t-xl mb-0 flex justify-between items-center">
+          <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
             <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
               {productData.name} - GTM Strategy
             </h2>

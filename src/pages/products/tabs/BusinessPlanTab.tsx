@@ -20,8 +20,8 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
   if (isClubBusinessPlan) {
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins text-[14px] font-bold tracking-wide">
-          {productData.name} - Business Plan Builder
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+          <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - Business Plan Builder</h2>
         </div>
         <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
           10 Investor / Partner Questions | Each with suggested first-person answer, data source, and founder review flag
@@ -98,9 +98,9 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
         <div className="bg-transparent p-2">
           <div className="w-full bg-transparent">
             <div
-              className={`bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins ${isCpManagement ? "text-sm font-semibold tracking-wide text-left" : "text-[14px] font-bold tracking-wide"}`}
+              className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center"
             >
-              {productData.name} - Business Plan
+              <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - Business Plan</h2>
             </div>
             <div className="bg-[#F6F4EE] border border-[#D3D1C7] px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
               {hasFounderVoice
@@ -203,8 +203,8 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                 })
               )}
 
-              {/* Founder Review Checklist section - specific for Lease Management but could be generalized */}
-              {productData.name === "Lease Management" && bpData?.founderChecklist && (
+              {/* Founder Review Checklist section */}
+              {bpData?.founderChecklist && (
                 <div className="mt-8 border border-[#D3D1C7] bg-white">
                   <div className="bg-[#DA7756] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide font-poppins uppercase text-center">
                     Founder Review Checklist
@@ -250,8 +250,8 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
         <div className="overflow-x-auto bg-white p-3">
           <div className="min-w-[1850px] rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
-              <div className="bg-white text-gray-800 px-4 py-2 font-semibold font-poppins uppercase tracking-tight text-[11px] text-center border border-[#D3D1C7]">
-                Post Possession — Business Plan Builder (Pre-filled)
+              <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">Post Possession — Business Plan Builder (Pre-filled)</h2>
               </div>
 
               {bpData?.planQuestions?.length ? (
@@ -316,7 +316,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
 
   return (
     <div className="space-y-10">
-      <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] p-4 mb-0 flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
         <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
           {productData.name} - Business Plan
         </h2>

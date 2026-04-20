@@ -365,8 +365,7 @@ import OurGroup from "./pages/OurGroup";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import DocumentDrive from "./pages/DocumentDrive";
-import LoyaltyPage from "./pages/products/LoyaltyPage";
-import CustomerAppPage from "./pages/products/CustomerAppPage";
+import CustomerAppPage from "./pages/products/CustomerAppPage.tsx";
 import CustomerPostPossessionPage from "./pages/products/CustomerPostPossessionPage";
 import HiSocietyPage from "./pages/products/HiSocietyPage";
 import Snag360Page from "./pages/products/Snag360Page";
@@ -392,8 +391,7 @@ import PTWPage from "./pages/products/PTWPage";
 import ParkingPage from "./pages/products/ParkingPage";
 import FacilityManagementPage from "./pages/products/FacilityManagementPage";
 import CustomerAppPreSalesPage from "./pages/products/CustomerAppPreSalesPage";
-import CustomerAppPostSalesPage from "./pages/products/CustomerAppPostSalesPage";
-// import LeaseManagementPage from "./pages/products/LeaseManagementPage";
+// OLD: import LeaseManagementPage from './pages/products/LeaseManagementPage';
 // NEW: Isolated Lease Management Page
 import LeaseManagementPage from "./pages/products/lease-management/LeaseManagementPage";
 import LifeCompassPage from "./pages/products/LifeCompassPage";
@@ -5759,7 +5757,7 @@ function App() {
                           />
                           <Route
                             path="/product/customer-app-post-sales"
-                            element={<CustomerAppPostSalesPage />}
+                            element={<CustomerAppPage />}
                           />
                           <Route
                             path="/product/lease-management"
