@@ -8,6 +8,84 @@ interface SWOTTabProps {
 const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
   const isCpManagement = productData.name === "CP Management";
 
+  const swotData = productData.extendedContent?.detailedSWOT;
+  const isClubSWOT = !!swotData?.isClubSWOT;
+
+  if (isClubSWOT) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins text-[14px] font-bold tracking-wide text-center">
+          {productData.name} - SWOT Analysis
+        </div>
+        <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins text-center">
+          10 items per quadrant | Lockated / GoPhygital.work | India primary market context
+        </div>
+
+        <div className="mt-6 border border-[#D3D1C7] grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#D3D1C7]">
+          {/* STRENGTHS */}
+          <div className="bg-white">
+            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+              STRENGTHS
+            </div>
+            <div className="divide-y divide-[#D3D1C7]">
+              {swotData.strengths?.map((item: any, i: number) => (
+                <div key={i} className={`px-4 py-4 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}`}>
+                  <div className="font-bold text-[#1F2937] mb-1.5 uppercase tracking-wide">S{i + 1}: {item.headline}</div>
+                  <div className="text-[#4B5563] leading-relaxed font-medium">{item.explanation}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* WEAKNESSES */}
+          <div className="bg-white">
+            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+              WEAKNESSES
+            </div>
+            <div className="divide-y divide-[#D3D1C7]">
+              {swotData.weaknesses?.map((item: any, i: number) => (
+                <div key={i} className={`px-4 py-4 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}`}>
+                  <div className="font-bold text-[#1F2937] mb-1.5 uppercase tracking-wide">W{i + 1}: {item.headline}</div>
+                  <div className="text-[#4B5563] leading-relaxed font-medium">{item.explanation}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 border border-[#D3D1C7] grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#D3D1C7]">
+          {/* OPPORTUNITIES */}
+          <div className="bg-white">
+            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+              OPPORTUNITIES
+            </div>
+            <div className="divide-y divide-[#D3D1C7]">
+              {swotData.opportunities?.map((item: any, i: number) => (
+                <div key={i} className={`px-4 py-4 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}`}>
+                  <div className="font-bold text-[#1F2937] mb-1.5 uppercase tracking-wide">O{i + 1}: {item.headline}</div>
+                  <div className="text-[#4B5563] leading-relaxed font-medium">{item.explanation}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* THREATS */}
+          <div className="bg-white">
+            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+              THREATS
+            </div>
+            <div className="divide-y divide-[#D3D1C7]">
+              {swotData.threats?.map((item: any, i: number) => (
+                <div key={i} className={`px-4 py-4 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}`}>
+                  <div className="font-bold text-[#1F2937] mb-1.5 uppercase tracking-wide">T{i + 1}: {item.headline}</div>
+                  <div className="text-[#4B5563] leading-relaxed font-medium">{item.explanation}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {productData.excelLikeSwot ? (
@@ -15,12 +93,77 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
               <div
-                className={`bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-sm font-semibold tracking-wide text-left" : "font-bold tracking-tight text-[16px] text-center"}`}
+                className={`bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-sm font-semibold tracking-wide text-center" : "font-bold tracking-tight text-[16px] text-center"}`}
               >
-                {productData.name} - SWOT Analysis
+                {isCpManagement ? `${productData.name} — SWOT Analysis` : `${productData.name} - SWOT Analysis`}
               </div>
 
               {productData.extendedContent?.detailedSWOT ? (
+                isCpManagement ? (
+                  <div className="mt-3 space-y-0">
+                    <div className="bg-white text-center text-[11px] px-4 py-2 border border-[#E5E7EB] text-[#2C2C2C]/60 font-medium font-poppins italic">
+                      Grounded in product features, market context, and competitor landscape. Not generic.
+                    </div>
+                    {/* STRENGTHS | WEAKNESSES */}
+                    <div className="border border-[#D3D1C7] mt-3 grid grid-cols-2 divide-x divide-[#D3D1C7]">
+                      <div>
+                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                          STRENGTHS
+                        </div>
+                        <div className="divide-y divide-[#E5E7EB]">
+                          {productData.extendedContent.detailedSWOT.strengths.map((item, i) => (
+                            <div key={i} className={`px-4 py-3 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#F0F5EC]'}`}>
+                              <div className="font-semibold text-[#2C2C2C] mb-1">S{i + 1}&nbsp;&nbsp;{item.headline}</div>
+                              <div className="text-[#2C2C2C]/70 leading-relaxed font-medium">{item.explanation}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                          WEAKNESSES
+                        </div>
+                        <div className="divide-y divide-[#E5E7EB]">
+                          {productData.extendedContent.detailedSWOT.weaknesses.map((item, i) => (
+                            <div key={i} className={`px-4 py-3 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#F6F4EE]'}`}>
+                              <div className="font-semibold text-[#2C2C2C] mb-1">W{i + 1}&nbsp;&nbsp;{item.headline}</div>
+                              <div className="text-[#2C2C2C]/70 leading-relaxed font-medium">{item.explanation}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    {/* OPPORTUNITIES | THREATS */}
+                    <div className="border border-[#D3D1C7] mt-6 grid grid-cols-2 divide-x divide-[#D3D1C7]">
+                      <div>
+                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                          OPPORTUNITIES
+                        </div>
+                        <div className="divide-y divide-[#E5E7EB]">
+                          {productData.extendedContent.detailedSWOT.opportunities.map((item, i) => (
+                            <div key={i} className={`px-4 py-3 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#F6F4EE]'}`}>
+                              <div className="font-semibold text-[#2C2C2C] mb-1">O{i + 1}&nbsp;&nbsp;{item.headline}</div>
+                              <div className="text-[#2C2C2C]/70 leading-relaxed font-medium">{item.explanation}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                          THREATS
+                        </div>
+                        <div className="divide-y divide-[#E5E7EB]">
+                          {productData.extendedContent.detailedSWOT.threats.map((item, i) => (
+                            <div key={i} className={`px-4 py-3 text-[12px] font-poppins ${i % 2 === 0 ? 'bg-white' : 'bg-[#FEF2F2]'}`}>
+                              <div className="font-semibold text-[#2C2C2C] mb-1">T{i + 1}&nbsp;&nbsp;{item.headline}</div>
+                              <div className="text-[#2C2C2C]/70 leading-relaxed font-medium">{item.explanation}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                 <div className="mt-4 space-y-4">
                   <div className="bg-white border border-[#E5E7EB]">
                     <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55]">
@@ -201,6 +344,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                     </table>
                   </div>
                 </div>
+                )
               ) : (
                 <div className="p-10 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[2rem] m-4">
                   SWOT Analysis Data Coming Soon

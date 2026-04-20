@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { ProductData } from "../types";
 import { buildSummarySheetRows } from "../helpers";
 
@@ -7,10 +7,22 @@ interface SummaryTabProps {
 }
 
 const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
+  const [activePerspective, setActivePerspective] = useState(0);
+
+  const hasPerspectives = !!productData.extendedContent?.productSummaryNew?.perspectives?.length;
+
   const summarySheetRows = useMemo(
-    () => buildSummarySheetRows(productData),
-    [productData]
+    () => buildSummarySheetRows(productData, hasPerspectives ? activePerspective : -1),
+    [productData, hasPerspectives, activePerspective]
   );
+
+  if (productData.extendedContent?.rawSummaryTable) {
+    return (
+      <div className="animate-fade-in text-[#1a1a2e]">
+        {productData.extendedContent.rawSummaryTable}
+      </div>
+    );
+  }
 
   if (productData.excelLikeSummary) {
     return (
@@ -22,11 +34,27 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
         </div>
         <div className="w-full bg-[#F6F4EE]">
           <div className="py-4">
+            {hasPerspectives && (
+              <div className="flex justify-center gap-4 mb-4 px-4">
+                {productData.extendedContent?.productSummaryNew?.perspectives?.map((p, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActivePerspective(idx)}
+                    className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${
+                      activePerspective === idx
+                        ? "bg-[#DA7756] text-white shadow-md"
+                        : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
+                    }`}
+                  >
+                    {p.title}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="bg-white text-[#2C2C2C] px-4 py-3 font-semibold font-poppins uppercase tracking-tight text-[16px] text-center border-b border-[#D3D1C7]">
-              {productData.name} - Product Summary Brief
+              {hasPerspectives ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]?.title : productData.name} - Product Summary Brief
             </div>
-            {productData.extendedContent?.productSummaryNew
-              ?.summarySubtitle && (
+            {(!hasPerspectives && productData.extendedContent?.productSummaryNew?.summarySubtitle) && (
               <div className="bg-white border-b border-[#D3D1C7] px-4 py-2 text-[12px] leading-[1.5] text-[#2C2C2C]/60 italic font-medium font-poppins text-center">
                 {productData.extendedContent.productSummaryNew.summarySubtitle}
               </div>
@@ -82,11 +110,38 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
     );
   }
 
+  const currentSummaryData = hasPerspectives 
+    ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective] 
+    : productData.extendedContent?.productSummaryNew;
+  const currentSummaryTitle = hasPerspectives
+    ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]?.title
+    : productData.name;
+  const currentFeatureSummary = hasPerspectives
+    ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]?.featureSummary
+    : undefined;
+
   return (
     <div className="space-y-8 animate-fade-in overflow-x-auto">
+      {hasPerspectives && (
+        <div className="flex justify-center gap-4 mb-2 px-4 py-4 bg-[#F6F4EE]">
+          {productData.extendedContent?.productSummaryNew?.perspectives?.map((p, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActivePerspective(idx)}
+              className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${
+                activePerspective === idx
+                  ? "bg-[#DA7756] text-white shadow-md"
+                  : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
+              }`}
+            >
+              {p.title}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-2xl font-semibold tracking-tight font-poppins">
-          {productData.name} - Identity
+          {currentSummaryTitle} - Identity
         </h2>
         <p className="text-[10px] font-medium text-[#2C2C2C]/40 tracking-widest mt-1">
           LOCKATED / GOPHYGITAL | INTERNAL CONFIDENTIAL
@@ -95,7 +150,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <tbody>
-            {productData.extendedContent?.productSummaryNew?.identity?.map(
+            {currentSummaryData?.identity?.map(
               (r, i) => (
                 <tr key={i}>
                   <td className="border border-[#D3D1C7] p-4 font-semibold text-[#2C2C2C] w-1/4 bg-[#F6F4EE] font-poppins">
@@ -127,7 +182,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
             </tr>
           </thead>
           <tbody>
-            {productData.extendedContent?.productSummaryNew?.problemSolves?.map(
+            {currentSummaryData?.problemSolves?.map(
               (r, i) => (
                 <tr key={i}>
                   <td className="border border-[#D3D1C7] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
@@ -165,7 +220,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
             </tr>
           </thead>
           <tbody>
-            {productData.extendedContent?.productSummaryNew?.whoItIsFor?.map(
+            {currentSummaryData?.whoItIsFor?.map(
               (r, i) => (
                 <tr key={i}>
                   <td className="border-b border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
@@ -176,6 +231,9 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
                   </td>
                   <td className="border-b border-[#D3D1C7] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">
                     {r.frustration}
+                  </td>
+                  <td className="border-b border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                    {r.gain}
                   </td>
                 </tr>
               )
@@ -188,7 +246,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
         Feature Summary
       </div>
       <div className="border border-t-0 border-[#D3D1C7] p-4 text-sm text-[#2C2C2C]/80 bg-[#F6F4EE] font-medium leading-relaxed rounded-b-xl font-poppins">
-        {productData.extendedContent?.featureSummary || productData.brief}
+        {currentFeatureSummary || productData.extendedContent?.featureSummary || productData.brief}
       </div>
 
       <div className="bg-white text-[#2C2C2C] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] border-l-4 border-l-[#DA7756]">
@@ -207,7 +265,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
             </tr>
           </thead>
           <tbody>
-            {productData.extendedContent?.productSummaryNew?.today?.map(
+            {currentSummaryData?.today?.map(
               (r, i) => (
                 <tr key={i}>
                   <td className="border-b border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">

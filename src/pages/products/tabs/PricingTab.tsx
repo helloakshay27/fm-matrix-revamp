@@ -287,6 +287,189 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
             </div>
           </div>
         </div>
+      ) : dp?.isClubPricing ? (
+        /* ── CLUB MANAGEMENT LAYOUT ───────────────────────────────────────────── */
+        <>
+          {/* Legend bar */}
+          <div className="bg-[#F6F4EE] border border-[#D3D1C7] px-4 py-2 mt-2">
+            <p className="text-[11px] text-gray-800 font-semibold italic uppercase tracking-tighter font-poppins">
+              <span className="text-[#A1A1AA]">AHEAD = Lockated leads</span>
+              &nbsp;&nbsp;|&nbsp;&nbsp;
+              <span className="text-[#A1A1AA]">AT PAR = Equal capability</span>
+              &nbsp;&nbsp;|&nbsp;&nbsp;
+              <span className="text-[#A1A1AA]">GAP = Competitor leads</span>
+            </p>
+          </div>
+
+          {/* Section 1: Feature Comparison Matrix */}
+          {dp.clubFeatureComparison && dp.clubFeatureComparison.length > 0 && (
+            <div className="mt-4">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 1: Feature Comparison Matrix
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                <table className="w-full border-collapse text-[13px] bg-transparent font-poppins leading-[1.45] table-fixed">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-center">
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[25%] text-left">Feature Area</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Lockated</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Shawman</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">MINDBODY</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Glofox</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Omnify</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dp.clubFeatureComparison.map((f: any, i: number) => {
+                       const getStatusBg = (val: string) => {
+                         const tone = (val || "").toUpperCase();
+                         if (tone.includes("AHEAD")) return "bg-[#798C5E] text-white";
+                         if (tone.includes("GAP")) return "bg-[#C72030] text-white";
+                         if (tone.includes("AT PAR")) return "bg-[#F4E6C8] text-[#D97706]";
+                         return "";
+                       };
+                       return (
+                         <tr key={i} className={`align-middle border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                           <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line text-left">{f.feature}</td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.lockated)}`}>
+                               {f.lockated}
+                             </div>
+                           </td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.shawman)}`}>
+                               {f.shawman}
+                             </div>
+                           </td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.mindbody)}`}>
+                               {f.mindbody}
+                             </div>
+                           </td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.glofox)}`}>
+                               {f.glofox}
+                             </div>
+                           </td>
+                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.omnify)}`}>
+                               {f.omnify}
+                             </div>
+                           </td>
+                         </tr>
+                       );
+                    })}
+                    {dp.priceCompetitiveness && (
+                      <tr className="bg-white border-b border-[#D3D1C7]">
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] text-left">Price Competitiveness</td>
+                        <td colSpan={5} className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium leading-relaxed text-left whitespace-pre-line">
+                          {dp.priceCompetitiveness}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Section 2: Pricing Landscape (India Market) */}
+          {dp.clubPricingLandscapeRows && dp.clubPricingLandscapeRows.length > 0 && (
+            <div className="mt-6">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 2A: Pricing Landscape - India Market
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                <table className="w-full border-collapse text-[13px] bg-transparent font-poppins leading-[1.45] table-fixed">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-left">
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">Competitor</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Entry Price<br/>(INR/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Mid-Market<br/>(INR/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Enterprise<br/>(INR/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[22%]">Pricing Model</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[17%]">India Market Presence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dp.clubPricingLandscapeRows.map((r: any, i: number) => (
+                      <tr key={i} className={`align-top border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{r.competitor}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold whitespace-pre-line italic text-center">{r.entryPrice}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold whitespace-pre-line italic text-center">{r.midPrice}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-semibold whitespace-pre-line italic text-center">{r.enterprisePrice}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{r.model}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium whitespace-pre-line break-words">{r.segment}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Section 3: Lockated Positioning */}
+          {dp.clubPositioning && dp.clubPositioning.length > 0 && (
+            <div className="mt-6">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 3: Lockated Positioning
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                <table className="w-full border-collapse text-[13px] bg-transparent font-poppins leading-[1.45] table-fixed">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-left">
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[25%]">Positioning Dimension</th>
+                      <th className="border border-[#C4B89D] px-3 py-3">Statement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dp.clubPositioning.map((r: any, i: number) => (
+                      <tr key={i} className={`align-top border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{r.dimension}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium break-words whitespace-pre-line leading-relaxed">{r.statement}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Section 4: Value Propositions by Buyer Persona */}
+          {dp.valuePropositions && dp.valuePropositions.length > 0 && (
+            <div className="mt-6 mb-8">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-[13px] uppercase tracking-wide font-poppins">
+                Section 4: Key Value Propositions By Buyer Persona
+              </div>
+              <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                <table className="w-full border-collapse text-[13px] bg-transparent font-poppins leading-[1.45] table-fixed">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-left">
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Persona</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[20%]">Top Value Proposition</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">Proof Point / Feature</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[17%]">vs. Competitor</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[17%]">Business Impact</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[13%]">Objection Handler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dp.valuePropositions.map((r: any, i: number) => (
+                      <tr key={i} className={`align-top border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{r.role}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-semibold break-words whitespace-pre-line leading-relaxed">{r.prop}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#798C5E] font-bold break-words whitespace-pre-line leading-relaxed">{r.feature}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#C72030] font-medium break-words whitespace-pre-line leading-relaxed">{r.weakness}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium italic break-words whitespace-pre-line leading-relaxed">{r.outcome}</td>
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#A1A1AA] font-bold text-[11px] uppercase tracking-wide break-words whitespace-pre-line leading-relaxed">{r.objection}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
       ) : (dp?.isSnagPricing || (dp?.featureComparison && dp?.featureComparison[0]?.snag !== undefined)) ? (
         /* ── SNAG 360 LAYOUT ───────────────────────────────────────────── */
         <>
@@ -585,7 +768,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
               return (
                 <div className="mt-4">
                   <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-sm uppercase tracking-wider font-poppins">
-                    Section 1 — Feature Comparison vs Top Competitors
+                    Part A — Feature Comparison vs Market Standard
                   </div>
                   <div className="border border-[#D3D1C7] border-t-0 bg-white">
                     <table className="w-full border-collapse text-[10px] bg-transparent text-left font-poppins leading-[1.4]">
@@ -595,16 +778,13 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                             Feature Area
                           </th>
                           <th className="border border-[#D3D1C7] px-3 py-2 w-[25%] text-left">
-                            Competitor Landscape
+                            Market Standard (What Most Products Offer)
                           </th>
                           <th className="border border-[#D3D1C7] px-3 py-2 w-[25%] text-left">
-                            Our Product (VMS)
-                          </th>
-                          <th className="border border-[#D3D1C7] px-3 py-2 w-[8%] text-center">
-                            Status
+                            Our Product (Have / Roadmap / Gap)
                           </th>
                           <th className="border border-[#D3D1C7] px-3 py-2 text-left">
-                            Sales Insight
+                            Summary: Where Ahead / At Par / Gap That Will Cost Deals
                           </th>
                         </tr>
                       </thead>
@@ -622,9 +802,6 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                             </td>
                             <td className="border border-[#D3D1C7] px-3 py-2 text-[#4B5563] font-medium leading-snug">
                               {f.ourProduct}
-                            </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-center">
-                              <StatusBadge status={f.status} />
                             </td>
                             <td className="border border-[#D3D1C7] px-3 py-2 text-[#374151] font-medium leading-snug italic">
                               {f.summary}
@@ -727,47 +904,39 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
               // Legacy format: { ahead, atPar, gaps } strings
               return (
                 <div className="mt-6">
-                  <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-semibold text-sm uppercase tracking-wider font-poppins">
-                    Section 2 — Competitive Position Summary
+                  <div className="bg-[#F6F4EE] text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-bold text-sm uppercase tracking-wider font-poppins">
+                    Part B — Summary
                   </div>
-                  <div className="border border-[#D3D1C7] border-t-0 bg-white">
-                    <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.5]">
-                      <thead>
-                        <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
-                          <th className="border border-[#D3D1C7] px-4 py-2 w-[40%] text-left">
-                            VMS Advantage Areas
-                          </th>
-                          <th className="border border-[#D3D1C7] px-4 py-2 text-left">
-                            Competitor Threat Areas
-                          </th>
-                        </tr>
-                      </thead>
+                  <div className="border border-[#D3D1C7] border-t-0">
+                    <table className="w-full border-collapse text-[12px] bg-transparent font-poppins leading-[1.6] table-fixed">
                       <tbody>
-                        <tr className="bg-white">
-                          <td className="border border-[#D3D1C7] px-4 py-3 text-gray-800 whitespace-pre-line align-top font-medium leading-relaxed">
-                            {cs.ahead}
-                          </td>
-                          <td className="border border-[#D3D1C7] px-4 py-3 text-[#2C2C2C]/70 whitespace-pre-line align-top font-medium leading-relaxed">
-                            {cs.gaps}
-                          </td>
-                        </tr>
-                        {cs.atPar && (
-                          <tr className="bg-[#F6F4EE]">
-                            <td
-                              colSpan={2}
-                              className="border border-[#D3D1C7] px-4 py-2 text-gray-600 font-semibold uppercase text-[8px]"
-                            >
-                              AT PAR (comparable)
+                        {cs.ahead && (
+                          <tr className="align-top">
+                            <td className="border border-[#D3D1C7] px-4 py-4 font-bold uppercase text-[#2C2C2C] bg-[#E2EFDA] w-[22%] whitespace-pre-line">
+                              Where We Are Ahead of Market
+                            </td>
+                            <td className="border border-[#D3D1C7] px-4 py-4 text-[#2C2C2C] font-medium bg-[#F0F7EC] whitespace-pre-line leading-relaxed">
+                              {cs.ahead}
                             </td>
                           </tr>
                         )}
                         {cs.atPar && (
-                          <tr className="bg-[#F6F4EE]">
-                            <td
-                              colSpan={2}
-                              className="border border-[#D3D1C7] px-4 py-3 text-gray-600 whitespace-pre-line font-medium leading-relaxed"
-                            >
+                          <tr className="align-top">
+                            <td className="border border-[#D3D1C7] px-4 py-4 font-bold uppercase text-[#2C2C2C] bg-[#E2EFDA] w-[22%] whitespace-pre-line">
+                              Where We Are at Par
+                            </td>
+                            <td className="border border-[#D3D1C7] px-4 py-4 text-[#2C2C2C] font-medium bg-[#F0F7EC] whitespace-pre-line leading-relaxed">
                               {cs.atPar}
+                            </td>
+                          </tr>
+                        )}
+                        {cs.gaps && (
+                          <tr className="align-top">
+                            <td className="border border-[#D3D1C7] px-4 py-4 font-bold uppercase text-[#C72030] bg-[#FCE4E4] w-[22%] whitespace-pre-line">
+                              Gaps That Will Cost Us Deals
+                            </td>
+                            <td className="border border-[#D3D1C7] px-4 py-4 text-[#2C2C2C] font-medium bg-[#FEF2F2] whitespace-pre-line leading-relaxed">
+                              {cs.gaps}
                             </td>
                           </tr>
                         )}
@@ -973,23 +1142,17 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                       <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.4] table-fixed">
                         <thead>
                           <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[5%] text-center">
-                              #
-                            </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[20%] text-left">
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[25%] text-left">
                               Current Value Proposition
                             </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[13%] text-left">
-                              What It Communicates Today
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[20%] text-left">
+                              Segment it Addresses
                             </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[18%] text-left">
-                              Weakness / What's Missing
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[25%] text-left">
+                              Weakness in Current Framing
                             </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[26%] text-left">
-                              Sharpened / Expanded Version
-                            </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[18%] text-left">
-                              Proof Point to Add
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[30%] text-left">
+                              Sharpened or Expanded Version
                             </th>
                           </tr>
                         </thead>
@@ -999,9 +1162,6 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                               key={i}
                               className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                             >
-                              <td className="border border-[#D3D1C7] px-3 py-2 text-center font-bold text-[#2C2C2C]">
-                                {v.rank || `${i + 1}`}
-                              </td>
                               <td className="border border-[#D3D1C7] px-3 py-2 font-bold text-[#2C2C2C] whitespace-pre-line break-words">
                                 {v.currentProp}
                               </td>
@@ -1013,9 +1173,6 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                               </td>
                               <td className="border border-[#D3D1C7] px-3 py-2 text-gray-800 font-semibold leading-snug whitespace-pre-line break-words">
                                 {v.sharpened}
-                              </td>
-                              <td className="border border-[#D3D1C7] px-3 py-2 text-[#4B5563] font-medium leading-snug whitespace-pre-line break-words">
-                                {v.proofPoint || ""}
                               </td>
                             </tr>
                           ))}

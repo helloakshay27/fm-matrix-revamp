@@ -11,6 +11,15 @@ interface FeaturesTabProps {
 }
 
 const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
+  const customFeatures = useMemo(
+    () => productData.extendedContent?.rawFeaturesTable,
+    [productData.extendedContent?.rawFeaturesTable]
+  );
+
+  if (customFeatures) {
+    return <div className="w-full mt-4">{customFeatures}</div>;
+  }
+
   const excelFeatureRowStart = productData.excelFeatureRowStart ?? 1;
   const featureItems = useMemo(
     () => productData.extendedContent?.detailedFeatures ?? [],

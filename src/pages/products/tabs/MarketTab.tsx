@@ -22,6 +22,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
     productData.name === "CP Management" &&
     (!!detailedMarketAnalysis?.targetAudience?.length ||
       !!detailedMarketAnalysis?.competitorMapping?.length);
+  const isClubMarketSheet = !!detailedMarketAnalysis?.isClubMarket;
 
   // Snag360-specific format detection
   const isSnag360Format =
@@ -40,25 +41,122 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
           {productData.name} - Market Analysis
         </h2>
       </div>
-      {hasCpMarketSheet ? (
+      {isClubMarketSheet ? (
+        <div className="space-y-6">
+          <div className="bg-transparent p-3 border-x border-[#D3D1C7]">
+            <p className="text-[12px] text-[#2C2C2C]/60 font-medium leading-relaxed font-poppins">
+              India Primary Market | Global Secondary | Club Management SaaS | 10 Competitors | 10 Industry Segments
+            </p>
+          </div>
+          
+          <div className="border border-[#D3D1C7] bg-white">
+            <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+              SECTION 1: GLOBAL MARKET SIZE
+            </div>
+            <table className="w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
+              <thead>
+                <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[25%]">Metric</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[35%]">Value</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[40%]">Source / Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedMarketAnalysis.globalMarketSize?.map((row: any, index: number) => (
+                  <tr key={index} className={`align-top ${index % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                    <td className="border border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">{row.metric}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{row.value}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words italic">{row.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="border border-[#D3D1C7] bg-white">
+            <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+              SECTION 2: TOP 10 COMPETITORS
+            </div>
+            <table className="w-full table-fixed border-collapse text-[12px] leading-relaxed font-poppins">
+              <thead>
+                <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[16%]">Competitor</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[12%]">HQ / Market</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[12%]">India Pricing</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[12%]">Global Pricing</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[24%]">Strengths</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[24%]">Key Weaknesses vs Lockated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedMarketAnalysis.competitors?.map((row: any, index: number) => (
+                  <tr key={index} className={`align-top ${index % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                    <td className="border border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">{row.competitor}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{row.hq}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{row.indiaPricing}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{row.globalPricing}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#798C5E] font-medium whitespace-pre-line break-words">{row.strengths}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#b91c1c] font-medium whitespace-pre-line break-words">{row.weaknesses}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {detailedMarketAnalysis.competitorSummary && (
+              <div className="bg-[#F6F4EE] border-t border-[#D3D1C7] p-4 text-[13px] font-semibold text-[#2C2C2C] leading-relaxed break-words whitespace-pre-line font-poppins border-t-4 border-t-[#DA7756]/50">
+                {detailedMarketAnalysis.competitorSummary}
+              </div>
+            )}
+          </div>
+
+          <div className="border border-[#D3D1C7] bg-white rounded-b-xl overflow-hidden">
+            <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+              SECTION 3: TOP 10 INDUSTRIES BY RELEVANCE IN INDIA
+            </div>
+            <table className="w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
+              <thead>
+                <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                  <th className="border border-[#D3D1C7] p-3 text-center w-[5%]">#</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[18%]">Industry Segment</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[20%]">India Market Size Indicator</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[17%]">Why Club Management Matters</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[22%]">Key Pain Points</th>
+                  <th className="border border-[#D3D1C7] p-3 text-left w-[18%]">Revenue Potential for Lockated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailedMarketAnalysis.industries?.map((row: any, index: number) => (
+                  <tr key={index} className={`align-top ${index % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                    <td className="border border-[#D3D1C7] p-3 font-semibold text-center text-[#2C2C2C]/50">{row.rank}</td>
+                    <td className="border border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">{row.segment}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{row.indicator}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words italic">{row.whyMatters}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">{row.painPoints}</td>
+                    <td className="border border-[#D3D1C7] p-3 text-[#798C5E] font-bold whitespace-pre-line break-words">{row.revenuePotential}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : hasCpMarketSheet ? (
         <div className="space-y-6">
           <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
             {productData.name} - Market Analysis
           </div>
-          <div className="bg-white border border-[#D3D1C7] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
+          <div className="bg-white border border-[#D3D1C7] px-4 py-2 text-[12px] text-black font-medium italic font-poppins text-center">
             Part A: Target Audience - India and GCC only | Part B: Competitor
             Mapping
           </div>
 
           {!!detailedMarketAnalysis?.targetAudience?.length && (
             <div className="space-y-3">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+              <div className="bg-white text-black border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
                 Part A - Target Audience (India and GCC Only)
               </div>
               <div className="border border-[#D3D1C7] bg-white">
                 <table className="w-full table-fixed border-collapse text-[12px] leading-[1.55] font-poppins">
                   <thead>
-                    <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase">
+                    <tr className="bg-[#F6F4EE] text-black font-semibold uppercase">
                       <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[16%]">
                         Audience Segment
                       </th>
@@ -85,22 +183,22 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                         key={index}
                         className={`align-top ${index % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                       >
-                        <td className="border border-[#D3D1C7] px-3 py-3 font-semibold text-[#cdcdcd] whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
                           {row.segment}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                           {row.demographics}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                           {row.industry}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                           {row.painPoints}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                           {row.notSolved}
                         </td>
-                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#cdcdcd] font-medium whitespace-pre-line break-words">
+                        <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                           {row.goodEnough}
                         </td>
                       </tr>
@@ -113,7 +211,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
 
           {!!detailedMarketAnalysis?.competitorMapping?.length && (
             <div className="space-y-3">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+              <div className="bg-white text-black border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
                 Part B - Competitor Mapping (India and GCC)
               </div>
               <div className="border border-[#D3D1C7] bg-white">
@@ -338,34 +436,30 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
               {!!productData.extendedContent.detailedMarketAnalysis
                 .targetAudience?.length && (
                 <div className="border-x border-gray-400">
-                  <div className="bg-white text-gray-800 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide font-poppins border-b border-[#D3D1C7]">
-                    1A , INDUSTRY-LEVEL PAIN POINTS (Developer's perspective ,
-                    India & Global)
+                  <div className="bg-[#1F3864] text-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide font-poppins border-b border-[#D3D1C7]">
+                    1A , INDUSTRY-LEVEL PAIN POINTS (India &amp; GCC)
                   </div>
                   <div className="bg-transparent">
-                    <table className="w-full border-collapse text-[12px] leading-[1.45] table-fixed font-poppins">
+                    <table className="w-full border-collapse text-[11px] leading-[1.45] table-fixed font-poppins">
                       <thead>
-                        <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-bold uppercase text-center">
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
-                            Audience Segment
+                        <tr className="bg-[#2F5496] text-white font-bold uppercase text-center">
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[20%]">
+                            Industry &amp; Company Profile
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
-                            Demographics & Industry
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[24%]">
+                            Key Pain Points (3 per industry)
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[12%]">
-                            Geography
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[22%]">
+                            What happens if NOT solved
                           </th>
                           <th className="border border-[#C4B89D] px-3 py-3 w-[20%]">
-                            3 Key Pain Points
+                            &apos;Good enough&apos; today
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">
-                            What Happens If NOT Solved
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[7%]">
+                            Urgency
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
-                            'Good Enough' Today
-                          </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
-                            Trigger to Switch
+                          <th className="border border-[#C4B89D] px-3 py-3 w-[7%]">
+                            Primary Buyer
                           </th>
                         </tr>
                       </thead>
@@ -373,26 +467,24 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                         {productData.extendedContent.detailedMarketAnalysis.targetAudience.map(
                           (t, i) => (
                             <tr key={i} className="align-top">
-                              <td className="border border-[#D3D1C7] p-3 font-bold text-[#2C2C2C] bg-white whitespace-pre-line">
-                                {t.segment}
+                              <td className="border border-[#D3D1C7] p-3 font-bold text-[#2C2C2C] bg-white whitespace-pre-line break-words">
+                                <div>{t.segment}</div>
+                                {t.demographics && <div className="text-[10px] font-medium text-gray-600 mt-1">{t.demographics}</div>}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line">
-                                {t.demographics}
-                              </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line">
-                                {t.geography || ""}
-                              </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                 {t.painPoints}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                 {t.notSolved}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line italic">
+                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line italic break-words">
                                 {t.goodEnough}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#4B5563] font-medium whitespace-pre-line">
-                                {t.triggerToSwitch || ""}
+                              <td className="border border-[#D3D1C7] p-3 text-[#b91c1c] font-bold text-center whitespace-pre-line break-words">
+                                {t.urgency || ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] p-3 text-[#4B5563] font-medium whitespace-pre-line break-words">
+                                {t.primaryBuyer || ""}
                               </td>
                             </tr>
                           )
@@ -407,31 +499,27 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
               {!!productData.extendedContent.detailedMarketAnalysis
                 .companyPainPoints?.length && (
                 <div className="border-x border-gray-400 border-t">
-                  <div className="bg-white text-gray-800 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide font-poppins border-b border-[#D3D1C7]">
-                    1B , COMPANY-LEVEL PAIN POINTS (Specific developer profiles
-                    , India)
+                  <div className="bg-[#1F3864] text-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide font-poppins border-b border-[#D3D1C7]">
+                    1B , COMPANY-LEVEL PAIN POINTS (India &amp; GCC)
                   </div>
                   <div className="bg-transparent">
-                    <table className="w-full border-collapse text-[9px] leading-[1.2] table-fixed font-poppins">
+                    <table className="w-full border-collapse text-[11px] leading-[1.4] table-fixed font-poppins">
                       <thead>
-                        <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-bold uppercase text-center">
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[16%]">
-                            Company Type & Profile
+                        <tr className="bg-[#2F5496] text-white font-bold uppercase text-center">
+                          <th className="border border-[#C4B89D] px-2 py-2 w-[18%]">
+                            Company Type
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[18%]">
-                            Pain 1 (Referral / Sales Cost)
+                          <th className="border border-[#C4B89D] px-2 py-2 w-[21%]">
+                            Pain 1
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[18%]">
-                            Pain 2 (Loyalty / Retention)
+                          <th className="border border-[#C4B89D] px-2 py-2 w-[21%]">
+                            Pain 2
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[16%]">
-                            Pain 3 (Home Loan Revenue)
+                          <th className="border border-[#C4B89D] px-2 py-2 w-[21%]">
+                            Pain 3
                           </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[16%]">
-                            What 'Good Enough' Looks Like Now
-                          </th>
-                          <th className="border border-[#C4B89D] px-1.5 py-2 w-[16%]">
-                            What They're Willing to Pay
+                          <th className="border border-[#C4B89D] px-2 py-2 w-[19%]">
+                            Cost/Risk if unsolved
                           </th>
                         </tr>
                       </thead>
@@ -439,23 +527,20 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                         {productData.extendedContent.detailedMarketAnalysis.companyPainPoints.map(
                           (c, i) => (
                             <tr key={i} className="align-top">
-                              <td className="border border-[#D3D1C7] p-2 font-bold text-[#2C2C2C] bg-white whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 font-bold text-[#2C2C2C] bg-white whitespace-pre-line break-words">
                                 {c.companyType}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                 {c.pain1}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                 {c.pain2}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                 {c.pain3}
                               </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C]/80 font-medium whitespace-pre-line italic">
-                                {c.goodEnough}
-                              </td>
-                              <td className="border border-[#D3D1C7] p-2 text-[#374151] font-bold whitespace-pre-line">
-                                {c.willingToPay}
+                              <td className="border border-[#D3D1C7] p-2 text-[#b91c1c] font-bold whitespace-pre-line break-words">
+                                {c.costRisk || c.goodEnough || c.willingToPay || ""}
                               </td>
                             </tr>
                           )
@@ -467,9 +552,8 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
               )}
 
               {/* Section 2 Header */}
-              <div className="bg-white text-gray-800 border-y border-[#D3D1C7] px-4 py-2 text-xs font-bold uppercase tracking-wider font-poppins border-x">
-                SECTION 2 , COMPETITOR MAPPING | India | Reloy is the primary
-                named competitor
+              <div className="bg-[#1F3864] text-white border-y border-[#D3D1C7] px-4 py-2 text-xs font-bold uppercase tracking-wider font-poppins border-x">
+                SECTION 2 , COMPETITOR MAPPING (India &amp; GCC)
               </div>
 
               {/* Section 2 Content */}
@@ -477,29 +561,32 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                 .competitorMapping?.length && (
                 <div className="border-x border-gray-400">
                   <div className="bg-transparent">
-                    <table className="w-full border-collapse text-[12px] leading-[1.45] table-fixed font-poppins">
+                    <table className="w-full border-collapse text-[11px] leading-[1.45] table-fixed font-poppins">
                       <thead>
-                        <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-bold uppercase text-center">
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
-                            Competitor Name / Type
+                        <tr className="bg-[#2F5496] text-white font-bold uppercase text-center">
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[10%]">
+                            Competitor
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[13%]">
-                            Primary Target Customer
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[12%]">
+                            Primary Target
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[14%]">
-                            Pricing Model & Approx. Price Point
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[10%]">
+                            Pricing
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">
-                            Strongest Features & USPs
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[13%]">
+                            Discovery
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[16%]">
+                            Strengths &amp; USPs
+                          </th>
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[13%]">
                             Weaknesses
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
-                            Market Gap & How We Exploit It
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[13%]">
+                            Market Gap &rarr; Our Opportunity
                           </th>
-                          <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">
-                            Their Innovations That Threaten Us
+                          <th className="border border-[#C4B89D] px-2 py-3 w-[13%]">
+                            Their Innovation = Our Threat
                           </th>
                         </tr>
                       </thead>
@@ -507,35 +594,38 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
                         {productData.extendedContent.detailedMarketAnalysis.competitorMapping.map(
                           (c, i) => (
                             <tr key={i} className="align-top">
-                              <td className="border border-[#D3D1C7] p-3 font-bold text-[#2C2C2C] bg-white whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 font-bold text-[#2C2C2C] bg-white whitespace-pre-line break-words">
                                 {c.name}
                                 {c.isPrimary && (
                                   <div className="text-[10px] text-red-600 mt-1 uppercase font-black">
-                                    ★ Primary Direct Competitor
+                                    ★ Primary
                                   </div>
                                 )}
                                 {c.location && (
-                                  <div className="text-[10px] text-gray-500 font-medium mt-1 uppercase italic whitespace-pre-line">
+                                  <div className="text-[10px] text-gray-500 font-medium mt-1 italic">
                                     {c.location}
                                   </div>
                                 )}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-semibold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
                                 {c.targetCustomer}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line italic">
+                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-medium whitespace-pre-line italic break-words">
                                 {c.pricing}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#798C5E] font-bold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                {c.discovery || ""}
+                              </td>
+                              <td className="border border-[#D3D1C7] p-2 text-[#798C5E] font-bold whitespace-pre-line break-words">
                                 {c.strongestFeatures}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#b91c1c] font-bold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#b91c1c] font-bold whitespace-pre-line break-words">
                                 {c.weakness}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#4B5563] font-bold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#4B5563] font-bold whitespace-pre-line break-words">
                                 {c.marketGaps}
                               </td>
-                              <td className="border border-[#D3D1C7] p-3 text-[#D97706] font-bold whitespace-pre-line">
+                              <td className="border border-[#D3D1C7] p-2 text-[#D97706] font-bold whitespace-pre-line break-words">
                                 {c.threats}
                               </td>
                             </tr>
