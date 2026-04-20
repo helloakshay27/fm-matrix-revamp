@@ -1262,6 +1262,376 @@ const productData = {
         },
       ],
     },
+    detailedGTM: {
+      intro: "Three target groups. Four GTM components each: Sales Motion · Marketing Channels · 90-Day Launch Sequence · Partnership Strategy. TG Summary at close of each section.",
+      targetGroups: [
+        {
+          id: "TG1",
+          title: "TARGET GROUP 1 — Commercial Real Estate Developers & IT Park Operators (India)",
+          profile: "Professionally managed Grade-A commercial parks, SEZs, and mixed-use developments. Portfolio 50,000–2M+ sq ft, 5–100 buildings, 20–500+ tenants. Primary buyers: Head of Property Management / VP Facilities / COO. Primary pain: CAM billing disputes, compliance lapses, tenant SLA failures, vendor accountability. Deal size: INR 10–50L/year.",
+          salesMotion: {
+            headers: ["Component", "Detail", "Owner", "Timeline", "Success Metric"],
+            rows: [
+              ["ICP Definition", "Target the top 50 commercial RE developers and IT park operators in India by portfolio size. Priority geographies: Bengaluru, Hyderabad, Pune, Mumbai, Chennai, NCR. Minimum qualifying criteria: 3+ buildings, 50,000+ sq ft managed, professional FM team in place.", "Sales Lead", "Ongoing — refresh quarterly", "50 named accounts in CRM by Day 30"],
+              ["Outbound Sequence — C-Suite", "6-touch outbound to Head of Property Management / VP Facilities: Day 1 LinkedIn connect with personalised note referencing their portfolio; Day 3 email with a 1-page ROI brief specific to commercial RE; Day 7 follow-up email with a relevant case study (IT park, CAM billing outcome); Day 14 phone call; Day 21 WhatsApp message with a 90-second video walkthrough; Day 28 final email. No cold decks — every touchpoint leads with an outcome.", "AE + SDR", "Always-on", "30% reply rate; 15% demo conversion from outbound"],
+              ["Discovery Framework", "Every first call follows SPIN structure: Situation (how many buildings, current tools, team size), Problem (biggest FM pain this quarter — billing, compliance, or tenant complaints?), Implication (what does that cost you monthly in wasted time, disputes, or attrition?), Need-payoff (if you could close a CAM dispute in 2 hours instead of 2 weeks, what would that mean for your team?). Objective: get to a quantified pain statement before the demo.", "AE", "First call", "80% of demos preceded by a quantified pain statement"],
+              ["Demo Structure", "30-minute demo, three acts. Act 1 (10 min): Live CAM billing walkthrough — show a monthly invoice being auto-generated from tenant occupancy data. This wins the finance team. Act 2 (10 min): Helpdesk live ticket raise, auto-assign, TAT escalation demo — wins the FM team. Act 3 (10 min): Compliance Tracker renewal alert and vendor email trigger — wins the legal/admin team. Close with: 'Which of these three problems would you like to solve first?'", "AE + SE", "Every demo", "50% demo-to-proposal conversion"],
+              ["Proposal & Commercial", "Standard proposal: 3-tier structure. Tier 1 (Core): Maintenance + Utility + Security modules, per sq ft pricing. Tier 2 (Operations): + Finance (CAM Billing) + Property Management. Tier 3 (Full Stack): + Safety + VAS + Marketplace. Present all three tiers in every proposal — anchoring on Tier 3 makes Tier 2 feel like the sensible choice. Include implementation timeline (14 days first site), reference contacts, and a 90-day success guarantee.", "AE + Finance", "Post-demo", "Average deal size ≥ INR 18L/year"],
+              ["Negotiation & Close", "Primary discount lever: multi-year contract (10% for 2-year, 15% for 3-year) — not module removal. Secondary lever: phased rollout (first 3 sites at a lower rate, full portfolio rate from site 4). Never discount below INR 8/sq ft/year. If the deal stalls, offer a 30-day paid pilot on 2 sites with a credit toward the annual contract on conversion.", "AE + Sales Lead", "Deal stage 4–5", "≥ 70% close rate on proposals submitted"],
+              ["Post-Sale Handoff", "On contract signature: AE introduces CSM within 24 hours. CSM schedules onboarding kickoff within 48 hours. Implementation begins within 7 days. AE remains copied on all communications for first 60 days. At day 60, AE returns for an expansion conversation — which additional modules or sites are ready to add?", "AE + CSM", "Post-signature", "First site live within 14 days of contract signing"],
+            ],
+          },
+          marketingChannels: {
+            headers: ["Channel", "Execution Detail", "Budget Allocation", "Frequency / Cadence", "KPI"],
+            rows: [
+              ["Industry Events — CREDAI & CII FM Summit", "Attend CREDAI National Convention, CII National FM Summit, and NAREDCO events as a sponsor or speaker. Target: 1 speaking slot per quarter on a topic like 'How Grade-A parks are cutting CAM disputes by 80%' — a peer-education talk that is a product demo in disguise. Booth at every event with a live demo kiosk running the CAM billing module.", "INR 8–12L/year for events, travel, booth", "2–3 events/quarter", "15–20 qualified meetings per event; 3–5 pipeline opportunities per event"],
+              ["LinkedIn Thought Leadership", "Publish 2 posts per week from the FM Matrix company page and the founder's personal profile. Content mix: 40% customer outcome stories (anonymised data — 'An IT park in Pune reduced CAM disputes by 83%'), 30% FM industry insight (compliance trends, energy benchmarks), 30% product updates. Target: FM Heads, Property Directors, COOs at RE companies. Use LinkedIn Sales Navigator for targeted outreach to ICP connections who engage with content.", "INR 1.5–2L/month (content creation + LinkedIn ads targeting FM Heads at RE companies)", "Daily posts; weekly sponsored content", "500 new ICP followers/month; 20 inbound demo requests/month from LinkedIn"],
+              ["SEO — FM Pain-Point Content", "Build a content cluster around high-intent search terms: 'CAM billing software India', 'facilities management compliance tracker', 'helpdesk software for commercial real estate', 'PTW software India'. Publish 4 long-form articles per month (1,500+ words). Each article ends with a specific CTA: '→ See how FM Matrix handles [topic] — book a 20-minute demo.' Target: 5,000 organic visits/month within 6 months.", "INR 80K–1.2L/month (content writer + SEO tool)", "4 articles/month; keyword review quarterly", "5,000 organic visits/month by month 6; 50+ inbound leads/month from SEO"],
+              ["Customer Case Study Programme", "Publish one detailed case study per month from the existing 75-site base. Format: 800-word narrative with 3 quantified outcomes, a customer quote, and a before/after data table. Distribute: website, LinkedIn, email to sales prospects, and leave-behind in every proposal. Priority verticals for first 6 studies: IT park CAM billing, IFM SLA compliance, hospital PPM, manufacturing safety, co-working NPS, SEZ multi-site.", "INR 30–50K per case study (design + copywriting)", "1 per month minimum", "Every proposal includes a relevant industry case study; case studies cited in ≥ 60% of closed deals"],
+              ["Email Nurture — ICP Database", "Build a database of 2,000+ FM Heads and Property Directors at target accounts (LinkedIn + events + paid list). Monthly email newsletter: FM Matrix Briefing — 3 FM industry data points, 1 customer story, 1 product update, 1 CTA. Separate drip sequence for demo no-shows and post-demo stalled deals: 5-touch, outcome-focused, no feature lists.", "INR 40–60K/month (email tool + content)", "Monthly newsletter; weekly drip to warm leads", "30% open rate; 5% click-to-demo rate; 20 re-engaged stalled deals/month"],
+              ["Google Ads — Competitor & Problem Keywords", "Run PPC campaigns on competitor brand terms (Facilio alternative, FixMyBuilding alternative) and high-intent problem terms (CAM billing software, FM compliance tracker, helpdesk for commercial buildings). Landing page per campaign: headline matches the search term, above-the-fold demo CTA, single customer stat, no feature list.", "INR 1.5–2.5L/month", "Always-on; review weekly", "CPL ≤ INR 3,000; 40+ qualified leads/month from paid"],
+              ["Reference Customer Programme", "Identify 10 'champion' customers from the existing base willing to take reference calls for new prospects. Compensate with: 1 month free subscription or a Marketplace extension credit. Build a reference matching system: new prospect in hospitality → connected to existing hospitality customer. Track reference-to-close conversion as a separate pipeline metric.", "INR 0 cash (module credits); 20 hrs/month CSM time", "Ongoing", "Reference call arranged within 48 hours of request; reference-assisted deals close 40% faster"],
+            ],
+          },
+          launchSequence: {
+            headers: ["Phase", "Days", "Actions & Milestones", "Owner", "Exit Criteria"],
+            rows: [
+              ["Foundation", "Days 1–15", "Build ICP target list of 50 named accounts. Load into CRM with firmographic data. Assign 2 AEs to TG1. Finalise TG1 demo script (CAM billing as Act 1). Record a 90-second CAM billing demo video for LinkedIn and outbound. Launch LinkedIn thought leadership: first 3 posts published. Brief existing RE customers on reference programme — secure 5 reference commitments. Set up Google Ads campaigns on competitor and problem keywords.", "Sales Lead + Marketing", "50 accounts in CRM; demo script finalised; 5 reference customers confirmed; ads live"],
+              ["Outreach & Pipeline Build", "Days 16–45", "Begin 6-touch outbound sequence to all 50 target accounts simultaneously. Host first virtual FM roundtable (invite 20 FM Heads from target accounts — topic: 'State of Commercial FM in India 2025'). Not a product demo — a peer conversation. FM Matrix moderates and follows up with all attendees. Target: 15 demos booked from outbound + roundtable. Submit first speaking proposal to CREDAI or CII FM Summit. Publish first customer case study (IT park, CAM billing outcome).", "AEs + Marketing", "15 demos booked; 1 case study published; roundtable with 15+ attendees"],
+              ["Demo & Proposal Conversion", "Days 46–70", "Run all 15 demos using the 3-act structure. Follow every demo with a proposal within 48 hours. Begin reference calls for deals at proposal stage. Identify 3 deals most likely to close in 90 days — assign Sales Lead to support. Run a 30-day paid pilot offer for deals that stall on proof. Attend first industry event if scheduled. Launch SEO content cluster — first 4 articles published.", "AEs + Sales Lead + CSM", "8–10 proposals submitted; 3 pilot agreements signed"],
+              ["Close & Activate", "Days 71–90", "Close 3–5 new TG1 accounts. Begin onboarding immediately — CSM kickoff within 48 hours of signature for each new account. Capture initial activation metrics (tickets logged, PPM checklists completed, compliance items tracked). Book a 30-day check-in call with all new accounts to collect early outcome data for the next case study. Brief the pipeline on Q2 targets — new outbound sequence begins for remaining 35 accounts.", "AEs + CSM + Marketing", "3–5 new logos signed; all new sites live within 14 days; 1 new case study in pipeline"],
+            ],
+          },
+          partnershipStrategy: {
+            headers: ["Partner Type", "Target Partners", "Value Exchange", "Activation Plan", "Revenue Potential"],
+            rows: [
+              ["Real Estate Consultants & Project Managers", "JLL India, CBRE India, Cushman & Wakefield India, Knight Frank India — their RE consulting and property management arms work directly with developers setting up new commercial parks.", "FM Matrix gets introductions to new projects at the fit-out stage — the best moment to sell. Partners get a platform their clients will use, improving their own service delivery. Revenue share: 10–15% of first-year contract value for referred accounts.", "Identify the Head of FM / Property & Asset Management at each consultancy. Invite to a private product walkthrough. Propose a co-branded case study after the first joint deal. Formalise with a channel agreement within 60 days.", "5–8 introductions/quarter per active partner. Each introduction has a 30–40% close rate. 3 active partners = 6–10 new logos/quarter."],
+              ["Property Technology (PropTech) Platforms", "NoBroker for Business, Square Yards, and commercial listing platforms that serve the same developer audience. They have the relationships; we have the operations software.", "FM Matrix listed as a recommended FM platform on their business/developer product pages. Co-marketing: joint webinars, featured in their newsletters to developer clients. No revenue share — pure co-marketing to a shared audience.", "Approach product partnerships team at each platform. Propose a content collaboration first (joint webinar on 'FM as a tenant retention tool'). Convert to a referral arrangement after demonstrating lead quality.", "50–100 new ICP introductions/quarter from PropTech platform newsletters and events."],
+              ["MEP & Building Services Contractors", "Voltas, Blue Star, Hitachi (HVAC), Johnson Controls, Schindler/KONE (lifts) — these companies service the very assets that FM Matrix tracks. They are in every commercial building.", "FM Matrix becomes the digital record for their service activities. They become a channel: when a developer asks their HVAC contractor 'how do I track maintenance?', the contractor recommends FM Matrix. Revenue share: 8% of first-year contract for referred accounts.", "Identify the Service Head and Key Accounts Manager at the top 10 MEP contractors in India. Present FM Matrix as a tool that makes their own service delivery easier to track and report. Pilot with 1–2 contractors who service existing FM Matrix clients.", "Long sales cycle (3–6 months to formalise) but high volume — top MEP contractors each service 50–200 buildings. 2 active MEP partners = 15–25 new logos/year."],
+              ["FM Matrix Customer Referral Network", "Existing 75 deployed sites — the most underutilised sales asset we have. FM Heads at IT parks and commercial RE companies talk to each other at industry events, through professional networks (IWFM India, BIFM), and informally.", "Formal referral programme: any existing customer who introduces a new paying account receives 1 month free subscription or a Marketplace extension credit. Recognition: 'FM Matrix Champion' badge on their account profile and a LinkedIn callout.", "Email all existing customers with the referral programme details in Month 1. Follow up with a personal call from the CSM to identify 2–3 peers they could introduce. Track referrals as a separate pipeline source in CRM.", "If 20% of existing 75 sites make 1 referral each = 15 warm introductions/year with a 50%+ close rate = 7–8 new logos from zero incremental sales cost."],
+            ],
+          },
+          summary: [
+            { label: "Why This TG Wins First", value: "The pain is acute, quantified, and recurs monthly (CAM billing, compliance, vendor SLAs). Budget exists — RE developers already spend INR 5–20L/year on fragmented tools. Decision cycle is 4–8 weeks for mid-market. And every closed logo in this segment becomes a reference that accelerates the next deal. This is the TG that funds the rest of the GTM." },
+            { label: "The One Move That Changes Everything", value: "One marquee logo — a recognised Grade-A developer (Embassy, DLF, RMZ, Prestige, Godrej Properties) — using FM Matrix publicly. Everything else in this TG's GTM becomes easier: events invite you to speak, competitors have to respond, and every mid-market developer in the country takes your call." },
+            { label: "Biggest Risk", value: "Long internal approval cycles at large RE companies. A deal that should take 6 weeks takes 6 months because procurement, legal, and IT all need sign-off. Mitigation: always have a champion inside the account who is measured on the outcome we solve (SLA, billing, compliance). If the champion is not the buyer, qualify out early." },
+            { label: "90-Day Revenue Target", value: "3–5 new TG1 logos. Average contract INR 18–22L/year. Revenue from TG1 in 90 days: INR 54–110L in new ARR committed." },
+            { label: "Key Metrics to Track", value: "Named accounts in CRM → Demos booked → Proposals submitted → Pilots signed → Logos closed → Sites activated within 14 days → NPS at 60 days → Expansion conversation booked at 90 days." },
+          ],
+        },
+        {
+          id: "TG2",
+          title: "TARGET GROUP 2 — Integrated Facility Management (IFM) Service Companies (India)",
+          profile: "B2B FM service companies managing 10–200+ client sites across India. They deploy staff (housekeeping, security, maintenance, soft services) and manage FM operations on behalf of enterprise clients. Companies: BVG, ISS, OCS, Quess FM, SIS, Sodexo India, Compass Group, CBRE FM arm. Primary buyer: COO / Head of Operations / VP Client Delivery. Pain: no unified platform across client sites, SLA proof for contract renewals, workforce deployment efficiency, client billing accuracy. Deal size: INR 25–80L/year (company-wide licence).",
+          salesMotion: {
+            headers: ["Component", "Detail", "Owner", "Timeline", "Success Metric"],
+            rows: [
+              ["ICP & Account Prioritisation", "Target 20 IFM companies managing 10+ client sites in India. Tier 1 (immediate): companies with 50+ sites and in-house tech teams — they understand the problem and have budget authority. Tier 2 (90 days): companies with 10–50 sites who are losing contract renewals due to SLA reporting gaps. Exclude very small operators (<10 sites) — not yet at the pain threshold.", "Sales Lead", "Month 1", "20 named IFM accounts in CRM; tiered and assigned"],
+              ["Executive-Level Entry", "IFM deals are won at the COO or VP Operations level — not the middle manager. Every outbound touchpoint must reach the C-suite. Entry approach: connect via industry mutual introductions (IWFM India, BIFM events, LinkedIn). First meeting positioning: not 'buy our software' but 'we want to understand how you manage SLA reporting across your client base today — we're building something specifically for IFM operating models.'", "Sales Lead + AE", "Weeks 1–3 of outreach", "C-suite meeting secured at ≥ 40% of targeted IFM companies"],
+              ["IFM-Specific Value Proposition", "The IFM pitch has four outcomes: (1) SLA compliance proof — real-time TAT data you can show clients at monthly reviews instead of manually compiled reports; (2) workforce deployment visibility — who is where, doing what, at every client site, in real time; (3) billing accuracy — consumption reports, GRN/GDN tracking, and vendor POs that map directly to client invoices without manual reconciliation; (4) contract renewal leverage — when a client asks 'prove your SLA was 95% last quarter,' you pull it up in 30 seconds.", "AE + Sales Lead", "Discovery & demo", "80% of IFM prospects identify at least 2 of the 4 outcomes as their top pain"],
+              ["Pilot as the Entry Strategy", "IFM companies are risk-averse — they manage other people's buildings and any tool failure is a client-facing problem. Lead with a structured paid pilot: deploy FM Matrix on 5 client sites for 60 days at a fixed fee (INR 2–3L). At day 60, present a side-by-side SLA comparison report: manual process vs. FM Matrix. If SLA compliance improved and reporting time dropped, the conversion to full contract is near-automatic.", "AE + CSM", "Post-discovery", "60% pilot-to-full-contract conversion rate"],
+              ["Contract Structure — Per-Seat + Per-Site", "Two structures to offer: (a) Per-site licence: INR 8–12L/year per 10 client sites managed — scales with their business growth. (b) Per-seat (deployed workforce) + per-site: INR 500–800/deployed worker/month + INR 50K/site/year. Always present both and let the COO choose. Build in a growth clause: rate holds for 2 years regardless of how many sites they add — this accelerates their internal rollout.", "AE + Finance", "Proposal stage", "Average IFM contract value ≥ INR 35L/year"],
+              ["Post-Sale: Deployment at Scale", "IFM deals involve deploying FM Matrix to 20–50 client sites simultaneously. Create a dedicated IFM onboarding playbook: site template configuration (one site configured, replicated across all client sites in 48 hours), staff training programme (2-hour onboarding session for site FMs, 30-minute field staff WhatsApp onboarding), and a monthly client SLA report template auto-generated from FM Matrix data.", "CSM + Implementation", "Post-signature", "All contracted sites live within 30 days; monthly SLA reports generated from Day 1"],
+            ],
+          },
+          marketingChannels: {
+            headers: ["Channel", "Execution Detail", "Budget Allocation", "Frequency / Cadence", "KPI"],
+            rows: [
+              ["IWFM India & BIFM Events", "IFM companies are highly concentrated in their professional associations — IWFM India and BIFM member events. Attend every chapter meeting, submit a speaker application for the annual conference (topic: 'How technology is changing the SLA conversation with clients'). Host an invite-only dinner for COOs and Heads of Operations from the top 15 IFM companies at the annual conference — 20 people, one FM Matrix case study, one structured roundtable discussion.", "INR 3–5L/year for events + hospitality", "Quarterly chapter events; annual conference", "10 C-suite relationships built per year; 5 pipeline opportunities from events"],
+              ["LinkedIn — IFM-Specific Content", "Separate content track for IFM audience on LinkedIn. Weekly posts targeting: FM Operations Heads, COOs at service companies, Head of Account Delivery. Content focus: SLA reporting best practices, workforce deployment efficiency, client retention strategies for FM companies. Tone: peer-to-peer, not vendor-to-buyer. Run LinkedIn InMail campaigns to COOs at the 20 target IFM companies — 3-message sequence, each message leads with a different outcome.", "INR 1–1.5L/month (content + InMail)", "2 posts/week; InMail campaign monthly", "15 IFM C-suite connections per month; 5 meeting requests from InMail per quarter"],
+              ["IFM Industry Report — Annual Publication", "Commission a 'State of IFM Operations in India' annual report — 20 pages, data from FM Matrix deployments (anonymised), industry benchmarks, SLA compliance trends, workforce deployment efficiency stats. Distribute to every IFM company in India digitally, and as a physical copy to the top 50 at industry events. Position FM Matrix as the thought leader who understands the IFM operating model from the inside.", "INR 2–3L/year (research + design + print)", "Annual publication; quarterly data updates on website", "500 downloads in first month; 20 warm inbound leads from IFM companies per year"],
+              ["Webinar Series — 'The IFM Operating System'", "Quarterly virtual webinar specifically for IFM operations teams. Topics: Q1 — 'Eliminating SLA disputes with real-time data'; Q2 — 'How to deploy FM software across 50 client sites in 30 days'; Q3 — 'The numbers: how IFM companies are cutting workforce deployment cost by 20%'; Q4 — 'Winning contract renewals with FM data'. Each webinar features 1 FM Matrix IFM customer as a speaker. Gated registration captures IFM company details for follow-up.", "INR 50K per webinar (production + promotion)", "Quarterly", "100+ registrations per webinar; 20 warm leads per webinar; 5 demos booked per webinar"],
+              ["Direct Mail — Physical ROI Pack", "Send a physical 'IFM ROI Pack' to the COO of every Tier 1 IFM company. Contents: a personalised 1-page letter from the FM Matrix founder; a laminated one-page case study with 3 quantified outcomes from a comparable IFM deployment; a QR code linking to a personalised video walkthrough; and a business card with a direct calendar link. Physical mail cuts through the digital noise in a segment where COOs are flooded with vendor emails.", "INR 1.5–2K per pack; INR 30–40K total for 20 packs", "One-time blast + quarterly new contact refresh", "30% response rate; 6–8 meetings booked from physical mail campaign"],
+            ],
+          },
+          launchSequence: {
+            headers: ["Phase", "Days", "Actions & Milestones", "Owner", "Exit Criteria"],
+            rows: [
+              ["Intelligence & Positioning", "Days 1–20", "Map all 20 target IFM companies: org chart (identify COO, VP Operations, Head of Technology), current tools, contract renewal calendar. Build IFM-specific demo environment: pre-load a mock multi-site IFM setup with 5 client sites, different SLA configurations per client, and a monthly SLA report pre-generated. This is not a generic demo — it mirrors exactly how an IFM company uses the product. Finalise IFM pricing structure. Write the IFM-specific ROI one-pager.", "Sales Lead + SE + Marketing", "20 IFM accounts mapped; IFM demo environment live; ROI one-pager complete"],
+              ["C-Suite Outreach & First Meetings", "Days 21–45", "Begin C-suite outreach sequence to all 20 targets simultaneously. Use mutual introductions from IWFM India network where available — warm introductions convert at 3x the rate of cold outbound. Target: 8 first meetings booked. Host the IFM COO dinner (if an industry event falls in this window) or a standalone virtual roundtable. Send physical ROI packs to all Tier 1 targets. Publish first IFM-specific LinkedIn content series: 3 posts in 10 days on SLA reporting.", "Sales Lead + Marketing", "8 first meetings booked; physical ROI packs sent to all 20 targets"],
+              ["Discovery, Demo & Pilot Agreements", "Days 46–70", "Run discovery sessions with all 8 first-meeting accounts. Use the IFM-specific value proposition framework. Follow every discovery with a demo using the IFM demo environment. Focus on the monthly SLA report — show how it is auto-generated in 30 seconds. Propose a 60-day paid pilot to the 3–4 most qualified accounts. Pilot fee: INR 2.5L (credited toward annual contract on conversion). First quarterly webinar launched — targeting 100+ registrations from IFM community.", "AEs + Sales Lead + Marketing", "3–4 pilot agreements signed; 100+ webinar registrations; 4 additional meetings from webinar follow-up"],
+              ["Pilot Execution & Full Contract Conversion", "Days 71–90", "Pilots are live on 5 client sites each. CSM conducts weekly check-ins with each pilot account. At day 60 of pilot (approximately day 80 of the 90-day sequence), present the outcome report: SLA compliance before vs. during pilot, reporting time before vs. during pilot, any compliance gaps caught. Target: 2–3 pilot accounts convert to full contract. Begin contract negotiations. Pipeline: 5+ additional IFM accounts in active qualification.", "CSM + AEs + Sales Lead", "2–3 pilot-to-full-contract conversions; full contract value ≥ INR 30L/account; 5 additional accounts in active qualification"],
+            ],
+          },
+          partnershipStrategy: {
+            headers: ["Partner Type", "Target Partners", "Value Exchange", "Activation Plan", "Revenue Potential"],
+            rows: [
+              ["IFM Companies as Channel Partners (White-Label or Co-Brand)", "Top 5 IFM companies by site count: BVG, ISS, Quess FM, SIS, Sodexo India. The play: IFM company deploys FM Matrix as their proprietary FM operating platform — branded as 'BVG Operations Platform powered by FM Matrix' or similar. They sell the platform to their clients as a value-add; FM Matrix receives a per-site licence fee.", "IFM company gets a technology differentiator in their sales pitch ('we come with a digital FM platform — our competitors don't'). FM Matrix gets multi-site deployments without direct sales effort at each client site. Revenue share: INR 4–6L/year per 10 client sites deployed through the IFM partner.", "Identify 2 IFM companies willing to pilot the co-brand model. Start with one willing to deploy FM Matrix on 20 client sites. Build a white-label configuration layer (customisable branding, logo, colour scheme) — a 4-week engineering effort. Sign a formal channel agreement with minimum annual deployment commitments.", "1 active IFM channel partner = 20–50 client site deployments/year = INR 8–25L/year additional ARR per partner with near-zero incremental sales cost."],
+              ["HR & Workforce Management SaaS Platforms", "Darwinbox, Keka, greytHR — HR platforms used by IFM companies to manage their deployed workforce. Attendance data from FM Matrix (facial recognition, geo-tagged check-ins) and shift rosters from Staff Management module are highly valuable inputs to payroll and workforce analytics.", "Build a bidirectional data integration: attendance and hours from FM Matrix flow into the HR platform's payroll module. FM Matrix gets listed as a 'partner integration' in the HR platform's marketplace — putting FM Matrix in front of every IFM company using that HR tool. No revenue share — pure ecosystem play that increases FM Matrix stickiness.", "Approach Darwinbox and Keka partnership teams. Propose a joint webinar: 'How IFM companies are connecting FM operations to payroll accuracy.' Build the integration (4–6 weeks engineering). Get listed in their integration marketplace within 90 days.", "Each HR platform integration listing generates 5–10 warm inbound leads from IFM companies per quarter — leads that are already sold on the problem."],
+              ["Security Manpower Agencies", "G4S India, Securitas India, SIS (Security and Intelligence Services) — companies that deploy thousands of security staff across facilities. Patrolling, staff management, and incident management modules in FM Matrix directly serve their operational needs.", "Security agencies get a digital operations platform for their deployed guards at no additional cost (included in the site licence). In return, they recommend FM Matrix when their enterprise clients ask about FM software. Revenue share: 8% of first-year contract for accounts introduced by the security agency.", "Identify the Operations Director at the top 5 security agencies. Demonstrate the Patrolling and Gate Management modules — show how missed patrol alerts and QR checkpoint data protect the agency from SLA disputes with their own clients. Propose a joint pilot at 3 sites.", "Security agencies serve 50–200 enterprise clients each. Even a 5% conversion rate from introductions = 5–10 new logos per active security agency partner."],
+            ],
+          },
+          summary: [
+            { label: "Why This TG Has the Highest Revenue Multiplier", value: "One IFM company deal is worth 20–50 direct client deals in revenue terms — and it deploys to those sites with a fraction of the implementation effort because the IFM company manages the rollout. The IFM channel is how FM Matrix scales to 500+ sites without scaling the sales team proportionally." },
+            { label: "The One Move That Changes Everything", value: "One mid-size IFM company (20–50 client sites) publicly deploying FM Matrix as their operating platform and talking about it at an industry event. This signals to every other IFM company that technology is now a competitive differentiator in their bids — and that FM Matrix is the tool their competitors are using." },
+            { label: "Biggest Risk", value: "IFM companies are notoriously slow to adopt new technology — their margins are thin and any operational disruption is a client-facing risk. The pilot model directly addresses this: low commitment, fast proof, clear exit. But the pilot must be managed obsessively. A failed pilot in this TG spreads faster than a successful one." },
+            { label: "90-Day Revenue Target", value: "2–3 full IFM contracts converted from pilots. Average contract INR 35–45L/year. New ARR from TG2 in 90 days: INR 70–135L committed. Plus 3–4 active pilots that convert in month 4–5." },
+            { label: "Key Metrics to Track", value: "C-suite meetings booked → Discovery sessions → Pilots signed → Pilot activation rate (sites live/sites contracted) → Pilot-to-contract conversion → Average sites per IFM contract → Monthly SLA reports generated per account (usage depth signal)." },
+          ],
+        },
+        {
+          id: "TG3",
+          title: "TARGET GROUP 3 — GCC Commercial Real Estate & Free Zone Operators (UAE, Saudi Arabia, Oman)",
+          profile: "Developers and operators of Grade-A commercial RE, free zones, mixed-use developments, and business parks across UAE, Saudi Arabia, and Oman. Portfolio: 5–100+ buildings, government-linked or private. Regulatory environment: Civil Defence UAE, DEWA smart metering, Saudi Vision 2030 ESG mandates, Oman regulatory framework. Primary buyers: Head of Asset Management / FM Director / COO. Pain: ESG reporting gaps, tenant SLA failures, compliance with local authority requirements, no digital FM platform that understands GCC context. Deal size: AED 150K–800K/year (INR 35L–2Cr).",
+          salesMotion: {
+            headers: ["Component", "Detail", "Owner", "Timeline", "Success Metric"],
+            rows: [
+              ["GCC Entry Market Selection", "Phase 1 (Year 1): UAE (Dubai, Abu Dhabi) as primary market. Oman as secondary, leveraging existing deployments for references. Phase 2 (Year 2): Saudi Arabia (Riyadh, NEOM corridor). Phase 3 (Year 3): Qatar, Bahrain, Kuwait. The sequencing is deliberate: UAE has the most mature FM software market in GCC, the most international buyer profiles, and the best channel partner ecosystem. Start here. Win here. Use UAE references to open Saudi.", "Sales Lead + GCC Country Manager", "Month 1 strategy lock", "UAE named account list of 30 companies; Oman reference cases documented"],
+              ["GCC Country Manager — Non-Negotiable Hire", "Do not run GCC enterprise sales from India. Hire a GCC Country Manager (Dubai-based) with 5+ years of B2B SaaS or FM solutions sales in UAE. This person must have relationships at: TECOM Group, DIFC, Emaar Properties, Aldar Properties, DWTC, and 3–5 free zone operators. Relationship capital in GCC enterprise cannot be bought with a good pitch — it comes from years of in-market presence. Budget: AED 250–350K all-in total compensation.", "CEO / Hiring", "Hire by Day 45", "GCC Country Manager in seat; first 10 accounts targeted by Day 60"],
+              ["GCC Discovery — Three Different Entry Questions", "GCC buyers are not moved by the same pain points as Indian buyers. Three questions that open GCC conversations: (1) 'How are you preparing your ESG report for your government or investor reporting this year — what data are you pulling and from where?' (2) 'When Civil Defence conducts an inspection, how quickly can you pull your compliance certificate registry?' (3) 'What does tenant churn cost you in a free zone, and what are you doing at the FM level to reduce it?'", "GCC Country Manager + Sales Lead", "First meetings", "80% of GCC prospects identify ESG reporting or compliance readiness as a top-3 pain"],
+              ["GCC Demo — Localised for Regulatory Context", "Build a GCC-specific demo environment: UAE building hierarchy (Building → Tower → Floor → Unit), DEWA compliance certificate tracker, Civil Defence NOC renewal alerts, Arabic language toggle (even if partial), AED currency billing in CAM module. The ESG reporting export should be the Act 1 of every GCC demo — not maintenance tickets. The GCC buyer's burning question is 'how do I prove to my government, my board, or my investors that this building is compliant and sustainable?' Lead with that answer.", "SE + GCC Country Manager", "Before first GCC demo", "GCC demo environment live; 50% demo-to-proposal conversion"],
+              ["GCC Procurement Navigation", "GCC enterprise procurement is formal and slow: RFP → vendor shortlist → technical evaluation → commercial negotiation → legal review → payment. Build a GCC-specific procurement readiness pack: ISO 27001 compliance documentation, data residency confirmation (UAE cloud hosting), Arabic language capability roadmap, reference list of Oman deployments. Submit this pack at the RFP stage, not the proposal stage. Payment terms: require 50% upfront on contract signature — GCC payment cycles can run 60–120 days.", "GCC Country Manager + Legal + Finance", "Pre-RFP", "Procurement readiness pack complete; all GCC contracts include 50% upfront clause"],
+              ["GCC Enterprise Pricing", "GCC pricing: AED 22–38/sq ft/year depending on module tier and portfolio size. Always quote in AED. Three tiers: Core FM (AED 22–26), Full Stack (AED 28–32), Enterprise with ESG reporting + Safety (AED 34–38). Implementation fee: AED 35,000–75,000 per deployment (non-negotiable — covers UAE data residency setup, localised configuration, and on-site training). Multi-year incentive: 10% discount on Year 2 and 3 if paid upfront.", "GCC Country Manager + Finance", "Proposal stage", "Average GCC deal AED ≥ 250K/year; implementation fee collected on all deals"],
+            ],
+          },
+          marketingChannels: {
+            headers: ["Channel", "Execution Detail", "Budget Allocation", "Frequency / Cadence", "KPI"],
+            rows: [
+              ["FM Expo Dubai & MEFMA Events", "FM Expo Dubai is the defining event for the GCC FM industry — every major operator, consultancy, and software vendor exhibits here. Take a booth. Run live demos every hour. Host a hosted buyer programme: invite 15 pre-qualified FM Directors to a private 60-minute session at the booth — not a demo, a working session where they map their FM pain against FM Matrix modules. MEFMA events are critical for relationship-building — attend every chapter meeting and apply for a speaking slot.", "AED 80–120K for FM Expo (booth, setup, hospitality, travel)", "FM Expo annual; MEFMA quarterly events", "50 qualified meetings at FM Expo; 10 pipeline opportunities; 3 speaking slot applications/year"],
+              ["LinkedIn GCC — Arabic & English Bilingual Content", "Run a separate GCC-focused LinkedIn content track targeting UAE and Saudi FM Directors, Asset Managers, and COOs at RE companies. Content in English (primary) with Arabic captions on key posts. Topics: UAE Net Zero 2050 compliance requirements for buildings, Civil Defence NOC management, ESG reporting benchmarks for GCC Grade-A offices, Vision 2030 smart building mandate. Use LinkedIn Campaign Manager to geo-target UAE and Saudi — exclude India-based audiences.", "AED 8–12K/month (content + GCC-targeted paid promotion)", "3 posts/week; monthly paid campaign", "200 new GCC ICP followers/month; 5 inbound demo requests/month from GCC LinkedIn"],
+              ["GCC Proptech & RE Industry Press", "Get FM Matrix covered in: Arabian Business, Gulf Business, Construction Week Gulf, Facilities Management Middle East (FMME Magazine), and PropertiCom. Target: 2 editorial features per quarter. Angle: 'Indian FM tech company that has deployed in Oman now expanding to UAE — here's what they built that no Western platform offers.' The India-origin-plus-proven-in-GCC angle is genuinely newsworthy in a market dominated by Western enterprise software.", "AED 0 for editorial (earned media); AED 15–25K for sponsored content in FMME Magazine quarterly", "2 editorial pitches/month; 1 sponsored piece/quarter", "4 editorial mentions per quarter; 500+ article reads per piece; 10 warm inbound leads per quarter from press"],
+              ["GCC ESG Webinar Series — Regulatory Compliance Focus", "Monthly 45-minute webinar specifically for GCC RE operators on ESG compliance. Topics: 'How to prepare your TCFD report from your building operations data', 'UAE Net Zero 2050 — what your FM platform needs to track', 'Civil Defence compliance automation for multi-building portfolios'. Invite 1 GCC industry expert or consultant as co-presenter to add credibility. Gated registration in English and Arabic. Follow up every registrant with a personalised outreach within 24 hours.", "AED 5–8K per webinar (production + promotion)", "Monthly", "80+ GCC registrations per webinar; 15 warm leads per webinar; 5 demos booked per webinar"],
+              ["GCC RE Developer Associations — RERA & ULI", "Build relationships with RERA (Real Estate Regulatory Authority UAE), ULI (Urban Land Institute) GCC chapter, and the Saudi Real Estate General Authority. These bodies regularly organise developer roundtables where FM software is not typically discussed — which creates an opening. Position FM Matrix as the technology layer that helps developers meet the regulatory standards these bodies enforce.", "AED 20–30K/year membership + event fees", "Quarterly events; annual conference", "3 speaking or panel appearances/year; 10 warm introductions to developer members/year"],
+            ],
+          },
+          launchSequence: {
+            headers: ["Phase", "Days", "Actions & Milestones", "Owner", "Exit Criteria"],
+            rows: [
+              ["GCC Market Readiness", "Days 1–20", "Complete UAE cloud hosting setup (AWS/Azure UAE region) — this is a blocker for all enterprise GCC deals. Hire or contract the GCC Country Manager. Build GCC demo environment (AED pricing, UAE building hierarchy, Civil Defence certificate tracker, ESG report export). Compile Oman reference cases into GCC-specific case study format (PDF in English + Arabic summary). Identify 30 target GCC accounts: UAE (20) and Saudi (10 for outreach only — deals in Year 2). Apply for FM Expo Dubai booth and speaker slots. Submit 2 press pitches to Arabian Business and FMME Magazine.", "CEO + Engineering + GCC Hire", "UAE cloud live; GCC demo ready; GCC Country Manager contracted; 30 accounts mapped"],
+              ["First Market Entry & Meetings", "Days 21–50", "GCC Country Manager begins relationship-building in UAE: attend 2 MEFMA events, schedule meetings at TECOM Group, Aldar Properties, DIFC, and 3 free zone operators. Cold outreach to remaining 15 UAE targets. Host first GCC ESG webinar — promote via LinkedIn GCC targeting and MEFMA network. Target: 10 first meetings booked in UAE. Brief Oman clients on reference programme — confirm 3 Oman reference contacts willing to speak to UAE prospects.", "GCC Country Manager + Marketing", "10 first meetings booked; 3 Oman reference contacts confirmed; GCC ESG webinar with 80+ registrations"],
+              ["Discovery, Demo & Proposal Pipeline", "Days 51–75", "Run discovery sessions with all 10 UAE first-meeting accounts. Prioritise the ESG reporting and compliance pain in every discovery. Demo using GCC environment — lead with ESG export, then compliance tracker, then helpdesk. Submit proposals to 5 most qualified accounts within 48 hours of demo. Attend FM Expo Dubai (if within this window) or a MEFMA event for 10 additional warm meetings. First press article published (Arabian Business or FMME). Begin Saudi outreach — introductory emails only in this phase; meetings in Q2.", "GCC Country Manager + AEs + Marketing", "5 proposals submitted; 10 additional meetings from FM Expo/MEFMA; first press article live"],
+              ["First GCC Logos & Reference Building", "Days 76–90", "Close 2–3 first GCC accounts. Begin onboarding immediately. These first UAE accounts are more than revenue — they are the reference stories that unlock the next 20 accounts. Assign the highest-quality CSM to GCC accounts (GCC clients have zero tolerance for implementation delays). At 30 days post-go-live, capture outcome data: compliance gaps caught, energy consumption visibility, ESG data automated. Prepare a GCC-specific case study for press release. Begin Saudi Arabia account mapping for Q2 launch.", "GCC Country Manager + CSM + Marketing", "2–3 GCC accounts signed; all live within 21 days; GCC case study drafted; Saudi account list ready"],
+            ],
+          },
+          partnershipStrategy: {
+            headers: ["Partner Type", "Target Partners", "Value Exchange", "Activation Plan", "Revenue Potential"],
+            rows: [
+              ["GCC FM & RE Consultancies", "CBRE GCC, JLL GCC, Cushman & Wakefield GCC, Savills Middle East — all of whom provide FM consulting, asset management, and property management services to GCC RE developers. They are trusted advisors to the exact buyer profile we are targeting.", "FM Matrix is recommended as the FM platform of choice for new developer mandates and FM transformation projects the consultancy is running. Partners benefit from offering a modern, proven FM platform that makes their service delivery more data-driven. Revenue share: 12–15% of first-year contract for referred accounts.", "GCC Country Manager schedules introductory meetings with the Head of FM/Asset Management at each GCC consultancy. Propose a co-marketing arrangement: FM Matrix provides FM tech expertise; consultancy provides RE sector credibility. Formalise with a channel agreement within 90 days of first meeting.", "Each active GCC consultancy partner introduces 3–6 qualified opportunities/year. At a 40% close rate and average AED 300K deal: 1 active partner = AED 360K–720K new ARR/year."],
+              ["GCC System Integrators (SI)", "G42 (Abu Dhabi), Injazat, Almajal, SAIT (Saudi Advanced Industries Technology) — IT and digital transformation system integrators who implement enterprise software for GCC government and semi-government entities. They run the procurement relationships that FM Matrix cannot access directly.", "FM Matrix provides the FM platform that SIs propose as part of digital transformation projects for their government and RE clients. SI gets a technology partner with a proven deployment track record (75+ sites) and GCC references. FM Matrix gets access to government and sovereign RE accounts that require SI-led procurement.", "Identify the partnership or alliances manager at 3 target GCC SIs. Present FM Matrix's technical architecture, API capability, and deployment track record. Provide a sandbox environment for the SI's technical team to evaluate. Target: 1 SI partnership agreement signed within 90 days. Co-bid on 1 government FM digitisation project within 6 months.", "1 government FM project through a GCC SI partner = AED 800K–2.5M contract. Even 1 SI-introduced government deal per year transforms the GCC revenue line."],
+              ["UAE Free Zone Authorities", "TECOM Group (Dubai Internet City, Dubai Media City, Dubai Knowledge Park), DIFC, ADGM (Abu Dhabi Global Market), RAKEZ — free zone authorities that manage the FM of their own zones AND influence the FM decisions of the 5,000–50,000 companies that operate within their zones.", "FM Matrix becomes the recommended FM platform for businesses operating within the free zone. Free zone authority gets a modern FM tool for their own operations. Tenant companies in the free zone see FM Matrix as the authority-endorsed solution. This is a platform distribution play — not just a single account win.", "GCC Country Manager approaches the Head of Operations or FM Director at TECOM, DIFC, and ADGM. Offer to deploy FM Matrix for the free zone's own facilities at a significantly reduced rate — treating it as a strategic investment, not a commercial deal. Once deployed for the authority, begin marketing to the tenant base through the authority's internal communication channels.", "TECOM manages 10 business parks with 75,000+ businesses as tenants. Even a 0.5% conversion of TECOM tenants to FM Matrix = 375 new accounts. The authority relationship is the highest-leverage distribution play in the GCC."],
+              ["ESG & Sustainability Consultancies", "Sustainability consultancies operating in GCC: Sustainalytics, EY Sustainability, Deloitte ESG practice, WSP (environmental consulting). These firms are being hired by RE developers to prepare ESG reports and achieve green building certifications (LEED, BREEAM, Estidama). They need a data source.", "FM Matrix's Utility modules (Energy, Water, Waste, Green Inventory) and ESG report export become the data infrastructure that ESG consultancies use to build their client reports. FM Matrix is recommended to every ESG consulting client who needs an FM platform that can produce structured ESG data automatically.", "Approach the Managing Director of the GCC ESG practice at EY, Deloitte, or WSP. Demonstrate how FM Matrix data maps to GRI Standards and TCFD framework outputs. Propose a white-label or co-branded ESG report output — 'FM Matrix ESG Data powered by [Consultancy Name]'.", "Each active ESG consultancy partnership generates 4–8 qualified FM Matrix introductions per year. ESG-motivated buyers have strong budget authority and shorter decision cycles — they are solving a board-level reporting problem."],
+            ],
+          },
+          summary: [
+            { label: "Why This TG Is the Growth Engine at 18–36 Months", value: "GCC deal sizes are 3–5x India deal sizes. The regulatory tailwind (Vision 2030, UAE Net Zero, ESG mandates) is creating urgency that India does not yet have at the same intensity. And once we have 5–10 GCC reference accounts, every GCC enterprise deal becomes dramatically easier to close — because GCC buyers talk to each other at every industry event." },
+            { label: "The One Move That Changes Everything", value: "A TECOM Group or Aldar Properties deployment — a name that every GCC RE developer and free zone operator knows. This single logo signals that FM Matrix is not an 'Indian startup trying GCC' but an enterprise-grade platform trusted by the GCC's most recognised property operators." },
+            { label: "Biggest Risk", value: "GCC procurement timelines are long (6–18 months for government-adjacent accounts) and payment terms are slow. Cash flow risk is real if the GCC pipeline is large but slow to convert. Mitigation: require 50% upfront on all GCC contracts; keep India revenue as the base and GCC as the upside. Do not over-hire in GCC before first 3 logos are signed." },
+            { label: "90-Day Revenue Target", value: "2–3 GCC accounts signed. Average AED 250–300K/year. GCC ARR committed in 90 days: AED 500K–900K (INR 1.2–2.2 Cr). These are foundational logos — the revenue target is secondary to the reference value they create." },
+            { label: "Key Metrics to Track", value: "UAE accounts in CRM → First meetings booked (GCC Country Manager) → Demos run → Proposals submitted → Procurement stage reached → Contracts signed → Days to go-live (target ≤ 21) → ESG reports generated per account → GCC NPS at 60 days → Saudi pipeline meetings booked." },
+          ],
+        },
+      ],
+      masterSummary: [
+        { label: "Combined 90-Day New ARR Target", value: "TG1 (Commercial RE India): INR 54–110L  +  TG2 (IFM India): INR 70–135L  +  TG3 (GCC): INR 120–220L. Total new ARR committed in 90 days: INR 2.4–4.6 Cr across all three TGs." },
+        { label: "Headcount Required to Execute", value: "Sales: 2 dedicated AEs for TG1, 1 Sales Lead for TG2 (C-suite relationship role), 1 GCC Country Manager for TG3. CSM: 2 CSMs (one India-focused, one GCC-focused). Marketing: 1 content/demand gen manager. SE (Sales Engineer): 1 shared across TG1 and TG2. Total GTM headcount: 8 people." },
+        { label: "Budget Required (90-Day GTM Investment)", value: "Events (India + GCC): INR 15–20L. Digital marketing (LinkedIn, SEO, PPC): INR 6–9L/month = INR 18–27L over 90 days. Content & case studies: INR 5–8L. GCC Country Manager (90-day cost): INR 6–8L. Infrastructure (UAE cloud): INR 3–4L. Total: INR 47–67L in GTM investment to generate INR 2.4–4.6 Cr new ARR — a 4–7x return in the first 90 days." },
+        { label: "The Single GTM Principle Across All Three TGs", value: "Every sales and marketing motion in this GTM is built on one idea: proof beats pitch. A customer story beats a feature slide. An outcome number beats a module list. A reference call beats a demo video. The most important GTM investment we can make is turning our existing 75 deployed sites into 75 proof points — one for every industry, every geography, every buyer persona. The GTM plan above describes the channels and sequences. The fuel is referenceable outcomes. Invest in case studies as aggressively as you invest in sales headcount." },
+      ],
+    },
+    detailedMetrics: {
+      partATitle: "PART A — 10 CLIENT IMPACT METRICS",
+      partASubtitle: "What to track at the client's end after go-live — and what to display on the landing page",
+      clientImpact: [
+        {
+          metric: "Maintenance Ticket Resolution Time",
+          whatItMeasures: "Average time from ticket creation to closure — the core SLA measure for any FM operation.",
+          baseline: "3–7 days (manual dispatch, WhatsApp coordination)",
+          impactRange: "Reduced to 1–2 days (40–70% improvement)",
+          featureDrives: "Helpdesk — Auto Workflow Assignment, 5-Level Escalation, TAT-Based Reporting",
+          howCaused: "Auto-assignment eliminates the manual dispatch lag. TAT tracking creates accountability at every level. 5-level escalation ensures no ticket stagnates beyond defined thresholds. Together, these remove the 2–4 days of dead time between ticket creation and first action.",
+          landingPage: "Resolution time dropped from 5 days to 1.5 days (+70%) at a 10-building IT park in Pune within 60 days of go-live.",
+        },
+        {
+          metric: "Compliance Certificate Lapse Rate",
+          whatItMeasures: "Percentage of statutory certificates (fire NOC, lift inspection, AMC) that expire without renewal — a direct legal liability measure.",
+          baseline: "15–30% lapse rate (manual Excel tracking, missed reminders)",
+          impactRange: "Reduced to 0–2% (85–100% improvement)",
+          featureDrives: "Compliance Tracker — Renewal Alerts, Email Trigger to AMC Vendors",
+          howCaused: "Automated multi-channel alerts to FM team, admin, and vendors at configurable lead times eliminate the manual calendar-chasing. The email trigger to AMC vendors removes the dependency on the FM team to chase renewals. Certificate status is visible in real time — not discovered at audit.",
+          landingPage: "Compliance lapse rate fell from 22% to 0% across 8 sites within the first quarter, preventing 3 potential regulatory notices.",
+        },
+        {
+          metric: "CAM Billing Cycle Time",
+          whatItMeasures: "Days taken to generate, validate, and send monthly CAM invoices to tenants — a finance efficiency and cash flow metric.",
+          baseline: "10–15 days (manual Excel calculation, manual invoice creation)",
+          impactRange: "Reduced to 1–3 days (70–90% improvement)",
+          featureDrives: "CAM Billing Automation, Customer Master (CRM)",
+          howCaused: "CAM charges are auto-calculated from configured billing rules and live occupancy data in Customer Master. Invoice generation is one click. Elimination of manual calculation removes the 7–12 days of reconciliation and error correction that make up the current cycle. Finance teams go from billing spreadsheet to sent invoice in hours.",
+          landingPage: "CAM billing cycle reduced from 12 days to 2 days (+83%) at a 50-tenant commercial complex, reducing DSO by 10 days.",
+        },
+        {
+          metric: "Unplanned Asset Downtime (Hours per Month)",
+          whatItMeasures: "Total hours per month that critical assets (HVAC, lifts, generators) are non-operational due to unplanned failures — a productivity and tenant satisfaction metric.",
+          baseline: "40–80 hours/month/building (reactive maintenance culture, no PPM discipline)",
+          impactRange: "Reduced to 10–25 hours/month (50–75% improvement)",
+          featureDrives: "Digital Checklist (PPM/AMC), Asset — EBOM & Cost of Ownership, Inventory — Insufficient Stock Alerts",
+          howCaused: "PPM checklists ensure preventive maintenance runs on schedule and is documented. EBOM and inventory alerts ensure the right spares are in stock before a job — eliminating the 'waiting for parts' downtime that extends reactive repairs. Cost of Ownership data flags assets approaching end-of-life before they fail catastrophically.",
+          landingPage: "Unplanned HVAC downtime fell from 65 hours/month to 18 hours/month (-72%) at a 200,000 sq ft corporate campus after 90 days of PPM discipline.",
+        },
+        {
+          metric: "Vendor SLA Compliance Rate",
+          whatItMeasures: "Percentage of vendor work orders completed within the agreed service level — a procurement performance and contract value metric.",
+          baseline: "55–70% SLA compliance (no real-time tracking, verbal follow-ups)",
+          impactRange: "Improved to 82–95% (20–40 percentage point improvement)",
+          featureDrives: "Vendor Management — SLA Tracking & Ratings, Vendor Audit, PO/WO with Multi-Level Approval",
+          howCaused: "Digital work orders create a clear contractual record with timestamps. Vendor performance ratings create accountability and healthy competition between vendors. Vendor audit findings auto-escalate non-compliance, removing the 'soft conversation' culture that allows chronic underperformance. Vendors who know they are rated perform differently.",
+          landingPage: "Vendor SLA compliance rose from 62% to 91% (+47%) across a portfolio of 12 managed sites after implementing Vendor Management and Audit modules.",
+        },
+        {
+          metric: "FM Operational Cost per Sq Ft (Monthly)",
+          whatItMeasures: "Total FM operating expenditure divided by managed area — the single number a CFO or Head of FM uses to benchmark operational efficiency.",
+          baseline: "INR 18–28/sq ft/month (high manual labour cost, reactive spend, over-stocked inventory)",
+          impactRange: "Reduced to INR 14–22/sq ft/month (15–25% cost reduction)",
+          featureDrives: "Cost Approval System, Inventory Management, Asset — Cost of Ownership, PO/WO, Soft Services Scheduling",
+          howCaused: "Cost Approval prevents unauthorised R&M spend and builds a budget-vs-actual view for every expense. Inventory demand management reduces over-purchasing and wastage. PPM reduces expensive emergency repair callouts. Soft Services scheduling optimises housekeeping staff deployment. Together, these create a data-driven FM budget that replaces gut-feel spending.",
+          landingPage: "FM operating cost fell from INR 24/sq ft/month to INR 18/sq ft/month (-25%) at a 300,000 sq ft SEZ campus within 6 months, saving INR 1.8 Cr annually.",
+        },
+        {
+          metric: "Tenant / Occupant Satisfaction Score (NPS or CSAT)",
+          whatItMeasures: "Net Promoter Score or Customer Satisfaction Score collected from tenants and occupants — the leading indicator of lease renewal and tenant retention.",
+          baseline: "NPS: +10 to +25 / CSAT: 55–65% (slow complaint resolution, no communication, no amenity access)",
+          impactRange: "NPS: +40 to +60 / CSAT: 78–90% (30–60 point NPS improvement)",
+          featureDrives: "Survey Module, Helpdesk (TAT), Events & Broadcast, VAS (F&B, Facility Booking, Loyalty), Space Management",
+          howCaused: "Faster ticket resolution (measured by TAT reports) directly improves the most common complaint: 'no one responds.' Events & Broadcast keeps tenants informed. F&B, facility booking, and loyalty rewards create positive touchpoints beyond complaint management. Survey module closes the loop — tenants feel heard when their feedback is acted upon.",
+          landingPage: "Tenant NPS increased from +18 to +52 (+189%) at a co-working operator with 800 members within 3 months of activating VAS and Survey modules.",
+        },
+        {
+          metric: "Safety Incident Rate (per 100 workers per month)",
+          whatItMeasures: "Number of reportable safety incidents per 100 workers per month — a regulatory compliance, insurance, and human welfare metric.",
+          baseline: "1.5–3.5 incidents/100 workers/month (manual PTW, no KRCC enforcement, paper incident logs)",
+          impactRange: "Reduced to 0.3–0.8 incidents/100 workers/month (70–85% improvement)",
+          featureDrives: "PTW — Permit to Work, MSafe (KRCC, Training, LMC), Incident Management, Preparedness Checklist",
+          howCaused: "PTW ensures no high-risk task begins without documented safety controls and approval — eliminating the 'we'll start and sort paperwork later' culture. KRCC ensures every worker is safety-qualified before their first day. Incident Management captures near-misses (not just incidents) creating a leading-indicator view that enables intervention before accidents occur.",
+          landingPage: "Reportable safety incidents fell from 2.8 to 0.4 per 100 workers/month (-86%) at a pharmaceutical manufacturing campus within 4 months of implementing PTW and MSafe.",
+        },
+        {
+          metric: "Space Utilisation Rate",
+          whatItMeasures: "Percentage of bookable desks, meeting rooms, and shared spaces that are actually occupied during working hours — a real estate cost optimisation metric.",
+          baseline: "35–50% average utilisation (no booking data, ghost bookings, no visibility)",
+          impactRange: "Improved to 65–85% (30–70% relative improvement in utilisation visibility and optimisation)",
+          featureDrives: "Space Management — Hot Desking, Facility Booking, VAS Space Management",
+          howCaused: "Booking data makes utilisation visible for the first time — you cannot optimise what you cannot see. Ghost bookings (reserved but unused) are surfaced and cancelled, freeing space. Approval workflows for seat allocation reduce hoarding behaviour. Over time, utilisation data enables real estate consolidation decisions — the highest-value outcome for a CFO evaluating hybrid workspace costs.",
+          landingPage: "Meeting room utilisation rose from 41% to 79% (+93%) at a 1,200-seat corporate campus within 60 days, enabling the client to defer a planned expansion of 3 meeting rooms worth INR 45L.",
+        },
+        {
+          metric: "Energy & Water Cost Reduction (Monthly)",
+          whatItMeasures: "Month-on-month reduction in utility spend driven by consumption monitoring, leak detection, and anomaly alerts — a direct P&L impact metric.",
+          baseline: "0% reduction (no monitoring, manual meter reads, no anomaly detection)",
+          impactRange: "8–20% reduction in energy/water bills (INR 2–15L/month depending on facility size)",
+          featureDrives: "Energy Meters Monitoring, Water Management — Leak Detection, Waste Management, STP Operations",
+          howCaused: "Anomaly alerts on energy consumption identify HVAC systems running inefficiently or equipment left on after hours — issues that are invisible without monitoring. Water leak detection prevents slow leaks that add up to hundreds of thousands of litres monthly. Waste tracking enables recycling vendor revenue, partially offsetting disposal costs. Each module converts invisible waste into visible savings.",
+          landingPage: "Energy costs reduced by 14% (INR 4.2L/month) at a 150,000 sq ft manufacturing campus within 3 months of activating the Energy Meter and anomaly alert modules.",
+        },
+      ],
+      partBTitle: "PART B — NORTH STAR METRIC + TOP 10 LAUNCH METRICS",
+      partBSubtitle: "First 30 Days and First 3 Months",
+      northStar: {
+        metric: "Number of Active Sites Running Core FM Workflows (Helpdesk + PPM + Compliance) Daily",
+        definition: "A site is 'active' when it logs at least 3 tickets OR completes at least 1 PPM checklist OR reviews 1 compliance item within the last 7 days. Everything else — revenue, retention, NPS — follows from this.",
+        why: "Revenue is a lagging indicator. NPS is a lagging indicator. Active daily workflow usage is the leading indicator that a site will renew, expand, and refer. If sites are live but not using core workflows, every other metric is at risk. Track this weekly. Build every onboarding and CSM motion around moving new sites to active status within 14 days of go-live.",
+      },
+      launchMetrics: [
+        {
+          metric: "Active Sites (North Star)",
+          whatItMeasures: "Sites running Helpdesk + PPM + Compliance workflows at least 3x/week — confirms operational embedding, not just installation.",
+          category: "Adoption",
+          d30Current: "60% of new go-lives active within 14 days (Target: 6 of 10 new sites)",
+          m3Current: "85% of all deployed sites active (Target: 64 of 75 existing + new sites)",
+          d30Phase1: "70% active within 10 days (AI onboarding wizard reduces setup time from 3 days to 4 hrs)",
+          m3Phase1: "92% active sustained (WhatsApp notifications + AI routing increase daily engagement by ~30%)",
+        },
+        {
+          metric: "Time-to-First-Value (TTFV)",
+          whatItMeasures: "Days from contract signing to the moment the client logs their first resolved ticket and completed PPM checklist — the speed of demonstrated ROI.",
+          category: "Onboarding",
+          d30Current: "TTFV under 14 days for 70% of new sites",
+          m3Current: "TTFV under 10 days for 80% of new sites",
+          d30Phase1: "TTFV under 7 days for 80% of new sites (AI setup wizard + bulk import from CSV)",
+          m3Phase1: "TTFV under 5 days for 90% of new sites",
+        },
+        {
+          metric: "Monthly Recurring Revenue (MRR)",
+          whatItMeasures: "Total contracted monthly revenue across all active sites — the primary revenue health metric.",
+          category: "Revenue",
+          d30Current: "INR 35–50L MRR from existing 75 sites + 5–8 new sites closed in month 1",
+          m3Current: "INR 60–85L MRR (75 base + 15–20 new sites, 0% churn)",
+          d30Phase1: "INR 40–55L MRR (AI features justify 10–15% price uplift on new deals)",
+          m3Phase1: "INR 75–100L MRR (Broader addressable market from IoT + offline mode unlocking manufacturing/hospital deals)",
+        },
+        {
+          metric: "Net Revenue Retention (NRR)",
+          whatItMeasures: "MRR at end of period ÷ MRR at start, including expansions and churn — measures whether existing customers are growing or shrinking in value.",
+          category: "Retention",
+          d30Current: "NRR ≥ 100% (No churned sites in month 1; at least 2 expansion deals from existing customers)",
+          m3Current: "NRR ≥ 108–115% (5–8% expansion from module upsells + 0–1 churn)",
+          d30Phase1: "NRR ≥ 102% (Phase 1 features reduce churn risk but expansion takes time to land)",
+          m3Phase1: "NRR ≥ 115–125% (AI features + ESG reporting create clear upsell motion; marketplace extensions drive expansion revenue)",
+        },
+        {
+          metric: "Customer Acquisition Cost (CAC)",
+          whatItMeasures: "Total sales and marketing spend ÷ number of new customers acquired — measures go-to-market efficiency.",
+          category: "Growth Efficiency",
+          d30Current: "CAC: INR 2.5–4L per site (Direct enterprise sales, 2–4 week cycle for mid-market)",
+          m3Current: "CAC: INR 2–3.5L per site (Reference customers reduce sales cycle; word-of-mouth begins)",
+          d30Phase1: "CAC: INR 2.5–4L per site (No significant GTM change in 30 days from Phase 1 roadmap)",
+          m3Phase1: "CAC: INR 1.5–2.5L per site (ROI calculator + competitive battlecard shorten cycle by 20–30%)",
+        },
+        {
+          metric: "LTV:CAC Ratio",
+          whatItMeasures: "Lifetime Value of a customer ÷ CAC — measures whether the unit economics of acquisition are healthy. Target ≥ 3x.",
+          category: "Unit Economics",
+          d30Current: "LTV:CAC ≥ 3.5x (Avg contract INR 12L/year × 4-year avg retention = INR 48L LTV vs INR 3L CAC)",
+          m3Current: "LTV:CAC ≥ 4.5x (Improved retention and expansion improve LTV; CAC falls with referrals)",
+          d30Phase1: "LTV:CAC ≥ 4x (AI features improve retention, slightly raising LTV)",
+          m3Phase1: "LTV:CAC ≥ 6–8x (Marketplace revenue + higher ASP from enterprise features raise LTV significantly)",
+        },
+        {
+          metric: "Activation Rate",
+          whatItMeasures: "Percentage of newly onboarded sites that complete the full activation checklist within 14 days (setup complete, 10+ tickets logged, first PPM checklist completed, first compliance item tracked).",
+          category: "Onboarding",
+          d30Current: "Activation rate ≥ 65% (With current manual onboarding process and CSM support)",
+          m3Current: "Activation rate ≥ 75% (Improved onboarding playbook and reference documentation)",
+          d30Phase1: "Activation rate ≥ 78% (AI setup wizard reduces configuration friction significantly)",
+          m3Phase1: "Activation rate ≥ 90% (WhatsApp notifications ensure field staff engage with platform from day 1)",
+        },
+        {
+          metric: "Churn Rate (Monthly)",
+          whatItMeasures: "Percentage of active sites that cancel or go non-responsive in a given month — the single most important retention signal in the first 90 days.",
+          category: "Retention",
+          d30Current: "Monthly churn ≤ 1% (Target: 0 churned sites in month 1; most churn risk is 90+ days post go-live)",
+          m3Current: "Monthly churn ≤ 1.5% (Some early adopters who were mis-sold or under-onboarded will surface by month 3)",
+          d30Phase1: "Monthly churn ≤ 0.8% (Faster activation reduces the 'never really started' churn category)",
+          m3Phase1: "Monthly churn ≤ 0.5% (Offline mode + AI routing solve the two biggest early churn drivers: field staff not using mobile app)",
+        },
+        {
+          metric: "Daily Active Users per Site (DAU/Site)",
+          whatItMeasures: "Average number of unique users logging in and taking an action in FM Matrix per day per deployed site — measures depth of adoption, not just breadth.",
+          category: "Engagement",
+          d30Current: "DAU/Site ≥ 8 users/day (Helpdesk assignee, FM manager, security staff as minimum active users)",
+          m3Current: "DAU/Site ≥ 15 users/day (Finance team, housekeeping supervisors, and tenants beginning to engage)",
+          d30Phase1: "DAU/Site ≥ 10 users/day (WhatsApp integration makes it accessible to field staff who won't open an app)",
+          m3Phase1: "DAU/Site ≥ 22 users/day (Tenant-facing VAS features + WhatsApp-native flows bring occupants into daily usage)",
+        },
+        {
+          metric: "Net Promoter Score (Customer NPS)",
+          whatItMeasures: "Likelihood of FM Head or Property Manager to recommend FM Matrix to a peer — the leading indicator of organic pipeline and reference customer availability.",
+          category: "Customer Health",
+          d30Current: "NPS ≥ +35 (Surveyed at end of month 1 from sites that have completed activation)",
+          m3Current: "NPS ≥ +50 (Surveyed at 90 days from all active sites)",
+          d30Phase1: "NPS ≥ +40 (Faster activation and AI routing improvements create a better first impression)",
+          m3Phase1: "NPS ≥ +60 (ESG reporting, ROI calculator, and AI insights give customers something tangible to show their leadership — the biggest driver of promoter behaviour)",
+        },
+        {
+          metric: "Marketplace Extension Attach Rate",
+          whatItMeasures: "Percentage of active sites that have installed at least one Marketplace extension (Lease Management, Accounting, Cloud Telephony, Loyalty Rule Engine) — measures platform stickiness beyond core FM.",
+          category: "Expansion Revenue",
+          d30Current: "Attach rate ≥ 15% (Target: 10–12 of 75 sites have at least one extension active by end of month 1)",
+          m3Current: "Attach rate ≥ 30% (Target: 25–30 sites, driven by active CSM upsell motion)",
+          d30Phase1: "Attach rate ≥ 18% (AI app recommendation in marketplace surfaces relevant extensions to right users)",
+          m3Phase1: "Attach rate ≥ 45% (AI app recommendations + SAP connector drive significantly higher extension adoption among enterprise accounts)",
+        },
+      ],
+    },
   },
 };
 
@@ -2027,6 +2397,247 @@ const FMMatrixBusinessPlanTab: React.FC = () => {
   );
 };
 
+// GTM Tab for FM Matrix
+const FMMatrixGTMTab: React.FC = () => {
+  const gtmData = productData.extendedContent?.detailedGTM;
+  const targetGroups = gtmData?.targetGroups || [];
+  const masterSummary = gtmData?.masterSummary || [];
+
+  const sectionLabels = ["SALES MOTION", "MARKETING CHANNELS", "90-DAY LAUNCH SEQUENCE", "PARTNERSHIP STRATEGY"];
+
+  const getSectionData = (tg: typeof targetGroups[0], sectionIdx: number) => {
+    const sections = [tg.salesMotion, tg.marketingChannels, tg.launchSequence, tg.partnershipStrategy];
+    return sections[sectionIdx];
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">FM MATRIX — Go-To-Market Strategy</h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        3 Target Groups | Each with: Sales Motion · Marketing Channels · 90-Day Launch Sequence · Partnership Strategy · TG Summary
+      </p>
+
+      {targetGroups.map((tg, tgIdx) => (
+        <div key={tgIdx} className="space-y-4 mb-10">
+          {/* TG Header */}
+          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+            {tg.title}
+          </div>
+
+          {/* Profile */}
+          <div className="bg-[#d9e1f2] border border-[#b8cce4] px-4 py-3 text-[11px] font-poppins text-[#2C2C2C] leading-relaxed">
+            <strong>Profile:</strong> {tg.profile}
+          </div>
+
+          {/* 4 Sections */}
+          {sectionLabels.map((label, sIdx) => {
+            const section = getSectionData(tg, sIdx);
+            return (
+              <div key={sIdx}>
+                <div className="bg-[#4f81bd] text-white px-4 py-2 font-semibold text-[11px] font-poppins">
+                  {tgIdx + 1}.{sIdx + 1} &nbsp; {label}
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-[11px] font-poppins">
+                    <thead>
+                      <tr className="bg-[#4f81bd]/70 text-white font-semibold">
+                        {section.headers.map((h: string, i: number) => (
+                          <th key={i} className="border border-[#b8cce4] p-2 text-left align-top whitespace-nowrap">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.rows.map((row: string[], i: number) => (
+                        <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                          {row.map((cell: string, j: number) => (
+                            <td
+                              key={j}
+                              className={`border border-[#b8cce4] p-2 align-top leading-relaxed ${
+                                j === 0 ? "font-semibold text-[#2C2C2C] min-w-[120px]" : "text-[#2C2C2C]/80"
+                              }`}
+                            >
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* TG Summary */}
+          <div className="bg-[#1f3a5f] text-white px-4 py-2 font-semibold text-[11px] font-poppins">
+            TG SUMMARY
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[11px] font-poppins">
+              <tbody>
+                {tg.summary.map((s: { label: string; value: string }, i: number) => (
+                  <tr key={i} className={i % 2 === 0 ? "bg-[#d9e1f2]" : "bg-[#eaf0fb]"}>
+                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#1f3a5f] w-[22%] align-top">
+                      {s.label}
+                    </td>
+                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 leading-relaxed align-top">
+                      {s.value}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+
+      {/* Cross-TG Master Summary */}
+      <div className="bg-[#5c3317] text-white px-4 py-3 font-semibold text-sm font-poppins mt-4">
+        CROSS-TG GTM MASTER SUMMARY — 90-Day Combined Targets
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <tbody>
+            {masterSummary.map((s: { label: string; value: string }, i: number) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-[#fdf3ec]" : "bg-white"}>
+                <td className="border border-[#e0c4b0] p-2 font-semibold text-[#5c3317] w-[22%] align-top">
+                  {s.label}
+                </td>
+                <td className="border border-[#e0c4b0] p-2 text-[#2C2C2C]/80 leading-relaxed align-top">
+                  {s.value}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// Metrics Tab for FM Matrix
+const FMMatrixMetricsTab: React.FC = () => {
+  const metrics = productData.extendedContent?.detailedMetrics;
+  const clientImpact = metrics?.clientImpact || [];
+  const northStar = metrics?.northStar;
+  const launchMetrics = metrics?.launchMetrics || [];
+
+  const categoryColor: Record<string, string> = {
+    "Adoption": "bg-[#e2efda] text-[#375623]",
+    "Onboarding": "bg-[#d9e1f2] text-[#1f3a5f]",
+    "Revenue": "bg-[#fce4d6] text-[#7b2c0d]",
+    "Retention": "bg-[#fff2cc] text-[#7d5a00]",
+    "Growth Efficiency": "bg-[#ededed] text-[#404040]",
+    "Unit Economics": "bg-[#f4ccff] text-[#5a006e]",
+    "Engagement": "bg-[#daeef3] text-[#1a5c6b]",
+    "Customer Health": "bg-[#ffd7d7] text-[#7b0000]",
+    "Expansion Revenue": "bg-[#e8f5e9] text-[#1b5e20]",
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+        <h2 className="text-xl font-semibold font-poppins">FM MATRIX — Metrics & Impact Tracker</h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
+        Part A: 10 Client Impact Metrics (landing page proof points) | Part B: North Star Metric + 10 Launch Metrics with 30-day and 3-month targets
+      </p>
+
+      {/* PART A */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+        {metrics?.partATitle} — {metrics?.partASubtitle}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center w-[3%]">#</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[12%]">Metric Name</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[10%]">What It Measures</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[12%]">Baseline (Before FM Matrix)</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[12%]">Impact Range (After FM Matrix)</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[13%]">Feature That Drives It</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[18%]">How the Impact Is Caused</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[20%]">Landing Page Proof Point</th>
+            </tr>
+          </thead>
+          <tbody>
+            {clientImpact.map((m, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">{i + 1}</td>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] align-top">{m.metric}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 align-top leading-relaxed">{m.whatItMeasures}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 align-top leading-relaxed">{m.baseline}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#1f5c2e] font-semibold align-top leading-relaxed">{m.impactRange}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#1f3a5f] align-top leading-relaxed">{m.featureDrives}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 align-top leading-relaxed">{m.howCaused}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#DA7756] font-semibold align-top leading-relaxed">{m.landingPage}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* PART B — North Star */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-6">
+        {metrics?.partBTitle} — {metrics?.partBSubtitle}
+      </div>
+
+      {northStar && (
+        <div className="border border-[#b8cce4] rounded overflow-hidden">
+          <div className="bg-[#4f81bd] text-white px-4 py-2 font-semibold text-[12px] font-poppins">
+            ⭐ NORTH STAR METRIC: {northStar.metric}
+          </div>
+          <div className="bg-[#d9e1f2] px-4 py-3 text-[11px] font-poppins text-[#2C2C2C] leading-relaxed">
+            <strong>Definition:</strong> {northStar.definition}
+          </div>
+          <div className="bg-[#eaf0fb] px-4 py-3 text-[11px] font-poppins text-[#2C2C2C]/80 leading-relaxed">
+            <strong>Why this is the North Star:</strong> {northStar.why}
+          </div>
+        </div>
+      )}
+
+      {/* Launch Metrics Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-left w-[14%]">Metric</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[14%]">What It Measures</th>
+              <th className="border border-[#b8cce4] p-2 text-center w-[8%]">Category</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[16%]">30-Day Target (Current Launch)</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[16%]">3-Month Target (Current Launch)</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[16%]">30-Day Target (Post Phase 1)</th>
+              <th className="border border-[#b8cce4] p-2 text-left w-[16%]">3-Month Target (Post Phase 1)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {launchMetrics.map((m, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] align-top">{m.metric}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 align-top leading-relaxed">{m.whatItMeasures}</td>
+                <td className="border border-[#b8cce4] p-2 text-center align-top">
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${categoryColor[m.category] || "bg-[#eee] text-[#333]"}`}>
+                    {m.category}
+                  </span>
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 align-top leading-relaxed">{m.d30Current}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 align-top leading-relaxed">{m.m3Current}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#1f5c2e] align-top leading-relaxed">{m.d30Phase1}</td>
+                <td className="border border-[#b8cce4] p-2 text-[#1f5c2e] align-top leading-relaxed">{m.m3Phase1}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const FacilityManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const tabsScrollRef = useRef<HTMLDivElement>(null);
@@ -2128,8 +2739,18 @@ const FacilityManagementPage: React.FC = () => {
             <FMMatrixBusinessPlanTab />
           </TabsContent>
 
+          {/* GTM Tab */}
+          <TabsContent value="gtm" className="space-y-6 animate-fade-in">
+            <FMMatrixGTMTab />
+          </TabsContent>
+
+          {/* Metrics Tab */}
+          <TabsContent value="metrics" className="space-y-6 animate-fade-in">
+            <FMMatrixMetricsTab />
+          </TabsContent>
+
           {/* Placeholder Tabs */}
-          {["gtm", "metrics", "assets"].map((tab) => (
+          {["assets"].map((tab) => (
             <TabsContent key={tab} value={tab} className="space-y-6 animate-fade-in">
               <div className="bg-white border border-[#C4B89D] p-8 rounded-lg text-center">
                 <p className="text-[#2C2C2C]/60 font-poppins">
