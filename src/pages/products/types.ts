@@ -104,6 +104,31 @@ export interface ProductData {
       priority?: string;
       notes?: string;
     }[];
+    featureBenchmark?: {
+      featureArea: string;
+      marketStandard: string;
+      ourProduct: string;
+      status: string;
+      whereWeStand: string;
+      dealImpact: string;
+    }[];
+    valuePropositions?: {
+      num: string;
+      current: string;
+      communicates: string;
+      weakness: string;
+      sharpened: string;
+      proofPoint: string;
+    }[];
+    pricingData?: {
+      label: string;
+      detail: string;
+      highlight?: "info" | "now" | "future" | "risk";
+    }[];
+    positioningData?: {
+      question: string;
+      answer: string;
+    }[];
     detailedMarketAnalysis?: {
       marketMatrixSubtitle?: string;
       marketMatrixRows?: {
