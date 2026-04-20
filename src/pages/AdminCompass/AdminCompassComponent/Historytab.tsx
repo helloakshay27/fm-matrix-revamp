@@ -65,6 +65,14 @@ const compileMeetingNotes = (historyData: any): string => {
   let text = "";
 
   if (keyDiscussionPoints) {
+    // ── Always show "Key Discussion Points:" heading above the content ──
+    const hasHeading = keyDiscussionPoints
+      .trimStart()
+      .toLowerCase()
+      .startsWith("key discussion points");
+    if (!hasHeading) {
+      text += "Key Discussion Points:\n";
+    }
     text += keyDiscussionPoints;
     text += "\n";
   }
@@ -110,21 +118,21 @@ const compileMeetingNotes = (historyData: any): string => {
       if (source.accomplishments.length > 0) {
         text += `**Accomplishments:**\n`;
         source.accomplishments.forEach((item: any) => {
-          const title = item.title || item.name || (typeof item === "string" ? item : "");
+          const title =
+            item.title || item.name || (typeof item === "string" ? item : "");
           const isDone =
             item.status === "done" ||
             item.status === "completed" ||
             item.completed === true;
-          // Empty title toh "—" dikhao
           text += `${isDone ? "✓" : "○"} ${title.trim() || "—"}\n`;
         });
       }
 
-      // ✅ FIX: Use item.name first (API uses "name" not "title" for tasks_issues)
       if (source.tasks_issues.length > 0) {
         text += `**Tasks & Issues:**\n`;
         source.tasks_issues.forEach((item: any) => {
-          const title = item.name || item.title || (typeof item === "string" ? item : "");
+          const title =
+            item.name || item.title || (typeof item === "string" ? item : "");
           if (title) {
             text += `[${item.status || "open"}] ${title}\n`;
           }
@@ -135,11 +143,11 @@ const compileMeetingNotes = (historyData: any): string => {
         text += `**Big Win:** ${source.big_win}\n`;
       }
 
-      // ✅ FIX: Use item.title || item.name for tomorrow_plan
       if (source.tomorrow_plan.length > 0) {
         text += `**Tomorrow's Plan:**\n`;
         source.tomorrow_plan.forEach((item: any) => {
-          const title = item.title || item.name || (typeof item === "string" ? item : "");
+          const title =
+            item.title || item.name || (typeof item === "string" ? item : "");
           if (title) {
             text += `- ${title}\n`;
           }
@@ -167,7 +175,8 @@ const CustomSelect = ({
 
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
