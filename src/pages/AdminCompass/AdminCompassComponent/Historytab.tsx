@@ -39,9 +39,6 @@ const cleanDiscussionPoints = (rawText: string) => {
 // ─────────────────────────────────────────────
 // Compile all API data into one plain-text block
 // ─────────────────────────────────────────────
-// ─────────────────────────────────────────────
-// Compile all API data into one plain-text block
-// ─────────────────────────────────────────────
 const compileMeetingNotes = (historyData: any): string => {
   if (!historyData) return "";
 
@@ -72,7 +69,7 @@ const compileMeetingNotes = (historyData: any): string => {
     text += "\n";
   }
 
-  // 👇 YAHAN FIX KIYA HAI: Ab sirf unka aayega jinka properly "submitted" hai
+  // Only submitted reports
   const submittedReports = memberReports.filter(
     (r: any) => r.status === "submitted"
   );
@@ -113,19 +110,24 @@ const compileMeetingNotes = (historyData: any): string => {
       if (source.accomplishments.length > 0) {
         text += `**Accomplishments:**\n`;
         source.accomplishments.forEach((item: any) => {
-          const title = item.title || item;
+          const title = item.title || item.name || (typeof item === "string" ? item : "");
           const isDone =
             item.status === "done" ||
             item.status === "completed" ||
             item.completed === true;
-          text += `${isDone ? "✓" : "○"} ${title}\n`;
+          // Empty title toh "—" dikhao
+          text += `${isDone ? "✓" : "○"} ${title.trim() || "—"}\n`;
         });
       }
 
+      // ✅ FIX: Use item.name first (API uses "name" not "title" for tasks_issues)
       if (source.tasks_issues.length > 0) {
         text += `**Tasks & Issues:**\n`;
         source.tasks_issues.forEach((item: any) => {
-          text += `[${item.status || "open"}] ${item.title || item}\n`;
+          const title = item.name || item.title || (typeof item === "string" ? item : "");
+          if (title) {
+            text += `[${item.status || "open"}] ${title}\n`;
+          }
         });
       }
 
@@ -133,10 +135,14 @@ const compileMeetingNotes = (historyData: any): string => {
         text += `**Big Win:** ${source.big_win}\n`;
       }
 
+      // ✅ FIX: Use item.title || item.name for tomorrow_plan
       if (source.tomorrow_plan.length > 0) {
         text += `**Tomorrow's Plan:**\n`;
         source.tomorrow_plan.forEach((item: any) => {
-          text += `${item.title || item}\n`;
+          const title = item.title || item.name || (typeof item === "string" ? item : "");
+          if (title) {
+            text += `- ${title}\n`;
+          }
         });
       }
 
@@ -146,21 +152,22 @@ const compileMeetingNotes = (historyData: any): string => {
 
   return text.trim();
 };
-// ── CUSTOM SELECT (Same concept as ReportsTab, adapted for HistoryTab theme) ──
+
+// ── CUSTOM SELECT ──
 const CustomSelect = ({
   value,
   onChange,
   options,
   placeholder = "Select...",
   disabled = false,
-}) => {
+}: any) => {
   const [open, setOpen] = React.useState(false);
-  const ref = React.useRef(null);
-  const selected = options.find((o) => String(o.value) === String(value));
+  const ref = React.useRef<HTMLDivElement>(null);
+  const selected = options.find((o: any) => String(o.value) === String(value));
 
   React.useEffect(() => {
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -216,7 +223,7 @@ const CustomSelect = ({
           }}
         >
           <div className="py-1.5">
-            {options.map((opt) => {
+            {options.map((opt: any) => {
               const isSelected = String(value) === String(opt.value);
               return (
                 <button
@@ -385,7 +392,6 @@ const HistoryTab = () => {
       return;
     }
 
-    // Load the full text (including Detailed Reports) into the textarea
     const fullCompiledNotes = compileMeetingNotes(historyData);
     setMeetingNotesText(fullCompiledNotes);
     setIsEditModalOpen(true);
@@ -420,7 +426,6 @@ const HistoryTab = () => {
       const existingMeetingNotes: any[] =
         existingReportData.meeting_notes || [];
 
-      // Only save the top Key Discussion Points part, ignore any edits made to DETAILED REPORTS
       const finalDiscussionPoints = cleanDiscussionPoints(meetingNotesText);
 
       const updatedFirstNote = {
@@ -485,7 +490,6 @@ const HistoryTab = () => {
   };
 
   // ── Derived ──
-  // ── Derived ──
   const selectedMeetingLabel =
     meetings.find((m) => String(m.id) === String(selectedMeetingId))?.name ??
     "Meeting";
@@ -503,7 +507,6 @@ const HistoryTab = () => {
 
   const memberReports: any[] = historyData?.member_reports || [];
 
-  // 👇 YAHAN STRICT FILTER LAGA DIYA HAI: Sirf aur sirf submitted wale hi count honge
   const submittedCount = memberReports.filter(
     (r: any) => r.status === "submitted"
   ).length;
@@ -523,6 +526,7 @@ const HistoryTab = () => {
 
   const compiledNotes = compileMeetingNotes(historyData);
   const hasSubmissions = submittedCount > 0 || !!getMeetingJournalId();
+
   const formatSubmittedAt = (isoStr: string | null) => {
     if (!isoStr) return null;
     return new Date(isoStr).toLocaleString("en-IN", {
@@ -555,7 +559,7 @@ const HistoryTab = () => {
           {/* Custom Meeting Dropdown */}
           <CustomSelect
             value={selectedMeetingId}
-            onChange={(val) => setSelectedMeetingId(val)}
+            onChange={(val: string) => setSelectedMeetingId(val)}
             disabled={isFetchingMeetings}
             placeholder="Select Meeting"
             options={meetings.map((m) => ({

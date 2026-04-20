@@ -56,6 +56,7 @@ const BtnPrimary = ({
   className = "",
   icon: Icon,
   disabled = false,
+  loading = false,
 }: any) => (
   <button
     disabled={disabled}
@@ -65,7 +66,7 @@ const BtnPrimary = ({
       className
     )}
   >
-    {Icon && <Icon className={cn("w-4 h-4", disabled && "animate-spin")} />}{" "}
+    {Icon && <Icon className={cn("w-4 h-4", loading && "animate-spin")} />}{" "}
     {children}
   </button>
 );
@@ -277,9 +278,14 @@ const DailyTab = () => {
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  // ── Stable calendar row — only refreshed on arrow navigation, not card clicks ──
+  const [calendarDateRow, setCalendarDateRow] = useState<any[]>([]);
+  const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
+  // ── CHANGE 1: Track originally saved notes to detect user edits ──
+  const [savedMeetingNotes, setSavedMeetingNotes] = useState("");
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -328,6 +334,11 @@ const DailyTab = () => {
 
       if (json.success) {
         setDailyData(json.data);
+        // Only update the visible calendar tiles on arrow navigation (or first load)
+        if (isArrowNav.current || calendarDateRow.length === 0) {
+          setCalendarDateRow(json.data?.date_row || []);
+        }
+        isArrowNav.current = false;
         const reports: any[] =
           json.data?.member_reports || json.data?.reports || [];
         const headId = json.data?.config?.meeting_head?.id;
@@ -358,17 +369,21 @@ const DailyTab = () => {
 
           if (savedDiscussion) {
             setMeetingNotes(savedDiscussion);
+            // ── CHANGE 2: Sync savedMeetingNotes with what came from the API ──
+            setSavedMeetingNotes(savedDiscussion);
           } else {
             const missed: any[] = json.data?.missed_members || [];
             if (missed.length > 0) {
-              setMeetingNotes(
+              const prefill =
                 `**Team Members Who Missed Report (${missed.length}):**\n` +
-                  missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
-                  `\n\n**Key Discussion Points:**\n`
-              );
+                missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
+                `\n\n**Key Discussion Points:**\n`;
+              setMeetingNotes(prefill);
             } else {
               setMeetingNotes("");
             }
+            // ── CHANGE 3: No saved notes from API → baseline is empty ──
+            setSavedMeetingNotes("");
           }
         }
       } else {
@@ -381,6 +396,11 @@ const DailyTab = () => {
       setIsLoading(false);
     }
   };
+
+  // Reset calendar when meeting changes so the new meeting's tiles load fresh
+  useEffect(() => {
+    setCalendarDateRow([]);
+  }, [selectedMeetingId]);
 
   useEffect(() => {
     loadDailyData(false);
@@ -478,6 +498,7 @@ const DailyTab = () => {
   };
 
   const changeDate = (days: number) => {
+    isArrowNav.current = true;
     const d = new Date(activeDate);
     d.setDate(d.getDate() + days);
     setActiveDate(d.toISOString().split("T")[0]);
@@ -662,7 +683,7 @@ const DailyTab = () => {
     return meetingNotesArray;
   };
 
-  // ── Save Meeting (POST) ──
+  // ── Save Meeting (POST) — first time only ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
       toast.error("Please select a specific meeting.");
@@ -733,7 +754,63 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Meeting (PATCH) ──
+  // ── CHANGE 4: Update Meeting Notes Only (PATCH) ──
+  // Called when the date is already submitted. Only patches key_discussion_points
+  // in the meeting_notes array — does NOT re-submit member data.
+  const handleUpdateNotesOnly = async () => {
+    if (!meetingJournalId) {
+      toast.error("No saved meeting found to update.");
+      return;
+    }
+    setIsSavingMeeting(true);
+    try {
+      const allReports = dailyData?.member_reports || dailyData?.reports || [];
+      const allMissed = dailyData?.missed_members || [];
+      // Rebuild meeting_notes array with the new discussion text
+      const meetingNotesArray = buildMeetingNotesArray(
+        allReports,
+        allMissed,
+        meetingNotes
+      );
+
+      // Fetch the existing report_data so we don't clobber other fields
+      const existingRd =
+        allReports.find(
+          (r: any) =>
+            r.journal_id === meetingJournalId &&
+            Array.isArray(r.report_data?.meeting_notes)
+        )?.report_data || {};
+
+      const payload = {
+        user_journal: {
+          report_data: {
+            ...existingRd,
+            meeting_notes: meetingNotesArray,
+          },
+        },
+      };
+
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
+        {
+          method: "PATCH",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+      toast.success("Meeting notes updated!");
+      // ── CHANGE 5: Sync baseline so the button disables again ──
+      setSavedMeetingNotes(meetingNotes);
+      loadDailyData(true);
+    } catch (err: any) {
+      toast.error("Error updating meeting notes: " + err.message);
+    } finally {
+      setIsSavingMeeting(false);
+    }
+  };
+
+  // ── Update Full Meeting (PATCH) — kept for future use / manual call ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.", {
@@ -797,6 +874,7 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting updated successfully!");
+      setSavedMeetingNotes(meetingNotes);
       loadDailyData(true);
     } catch (err: any) {
       toast.error("Error updating meeting: " + err.message);
@@ -807,10 +885,21 @@ const DailyTab = () => {
 
   // ── Derived Data ──
   const dateRow = dailyData?.date_row || [];
+  const calendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
   const config = dailyData?.config;
   const topDateStr = dailyData?.date || activeDate;
   const configName =
     config?.name || (selectedMeetingId === "all" ? "All Meetings" : "Meeting");
+
+  // ── CHANGE 6: Derive whether the active date's meeting is already submitted ──
+  const activeDateStatus = calendarRow.find(
+    (d: any) => d.full_date === activeDate
+  )?.status;
+  const isActiveDateSubmitted =
+    activeDateStatus === "done" || activeDateStatus === "submitted";
+
+  // ── CHANGE 7: Has the user typed something new compared to what's saved? ──
+  const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
   let memberReports = dailyData?.member_reports || dailyData?.reports || [];
   let failedMembers = dailyData?.missed_members || [];
@@ -916,11 +1005,11 @@ const DailyTab = () => {
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
           >
-            {dateRow.map((dateItem: any) => {
+            {calendarRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
               const isUpcoming = rawStatus === "upcoming";
-              // ── UPCOMING: plain text style (image jaisa) ──
+              // ── UPCOMING: plain text style ──
               if (isUpcoming) {
                 return (
                   <div
@@ -1242,7 +1331,7 @@ const DailyTab = () => {
                     <textarea
                       value={meetingNotes}
                       onChange={(e) => setMeetingNotes(e.target.value)}
-className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
+                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
                       placeholder="Enter meeting remarks, feedback, action items..."
                     />
                   </div>
@@ -1261,20 +1350,44 @@ className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm 
                         Select All
                       </span>
                     </label>
-                    {meetingJournalId ? (
+
+                    {/* ── CHANGE 8: Smart button logic ── */}
+                    {isActiveDateSubmitted ? (
+                      // Date is already green (submitted) → only allow notes update
+                      <div className="flex items-center gap-2">
+                        {!notesChanged && (
+                          <span className="text-[11px] text-neutral-400 font-medium italic">
+                            Edit notes to enable update
+                          </span>
+                        )}
+                        <BtnPrimary
+                          icon={isSavingMeeting ? Loader2 : RefreshCw}
+                          onClick={handleUpdateNotesOnly}
+                          disabled={isSavingMeeting || !notesChanged}
+                          loading={isSavingMeeting}
+                          className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                        >
+                          {isSavingMeeting ? "Updating..." : "Update Notes"}
+                        </BtnPrimary>
+                      </div>
+                    ) : meetingJournalId ? (
+                      // Has a journal but date not yet fully marked submitted
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : RefreshCw}
                         onClick={handleUpdateMeeting}
                         disabled={isSavingMeeting}
+                        loading={isSavingMeeting}
                         className="bg-blue-600 hover:bg-blue-700 border-blue-700"
                       >
                         {isSavingMeeting ? "Updating..." : "Update Meeting"}
                       </BtnPrimary>
                     ) : (
+                      // First time save
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : FileText}
                         onClick={handleSaveMeeting}
                         disabled={isSavingMeeting}
+                        loading={isSavingMeeting}
                       >
                         {isSavingMeeting ? "Saving..." : "Save Meeting"}
                       </BtnPrimary>

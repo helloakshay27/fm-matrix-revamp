@@ -29,6 +29,7 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  ClipboardList,
 } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
+import axios from "axios";
 
 // Types based on actual API response
 interface PoInventory {
@@ -143,6 +145,9 @@ export const PurchaseOrderDetailPage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
   // Fetch purchase order data from API
   const fetchPurchaseOrderDetail = useCallback(async () => {
     setLoading(true);
@@ -208,6 +213,77 @@ export const PurchaseOrderDetailPage = () => {
   useEffect(() => {
     fetchPurchaseOrderDetail();
   }, [fetchPurchaseOrderDetail]);
+
+
+  const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showConvertMenu, setShowConvertMenu] = useState(false);
+  useEffect(() => {
+    const fetchLockAccount = async () => {
+      try {
+        const response = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        });
+        const hasApproval = Array.isArray(response.data?.approvals) &&
+          response.data.approvals.some((a: any) => a.approval_type === "purchase_order" && a.active);
+        setHasSaleOrderApproval(hasApproval);
+      } catch (e) {
+        console.error("Failed to fetch lock account", e);
+      }
+    };
+    if (baseUrl && token) fetchLockAccount();
+  }, []);
+
+  // Close convert dropdown on outside click
+  useEffect(() => {
+    const handler = () => setShowConvertMenu(false);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const updateStatus = async (status: string) => {
+    try {
+      setActionLoading(true);
+      const response = await axios.patch(
+        `https://${baseUrl}/pms/purchase_orders/${id}.json`,
+        { pms_purchase_order: { status } },
+        { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+      );
+      if (response.status === 422) {
+        const { message, errors } = response.data;
+        const msg = Array.isArray(errors) && errors.length > 0
+          ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
+          : message || "Failed to update status";
+        sonnerToast.error(msg);
+        return;
+      }
+      sonnerToast.success(`Purchase order ${status.replace("_", " ")} successfully`);
+      // fetchSalesOrder();
+      fetchPurchaseOrderDetail();
+    } catch (error) {
+      sonnerToast.error("Failed to update status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const updateApprovalStatus = async (status: string) => {
+    try {
+      setActionLoading(true);
+      await axios.post(
+        `https://${baseUrl}/pms/purchase_orders/${id}/update_approval_status.json`,
+        { status, comment: "" },
+        { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+      );
+      sonnerToast.success(`Purchase order ${status.replace("_", " ")} successfully`);
+      // fetchSalesOrder();
+      fetchPurchaseOrderDetail();
+    } catch (error) {
+      sonnerToast.error("Failed to update approval status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
@@ -392,7 +468,7 @@ export const PurchaseOrderDetailPage = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Badge className={`${getStatusColor(status)} border`}>
               {status.toUpperCase()}
             </Badge>
@@ -403,7 +479,120 @@ export const PurchaseOrderDetailPage = () => {
             >
               Convert to Bill
             </Button>
-          </div>x
+          </div>x */}
+
+
+
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge className={`${getStatusColor(purchaseOrder.status)} border`}>
+              {purchaseOrder.status?.toUpperCase()}
+            </Badge>
+
+            {/* {(purchaseOrder as any)?.approval_status?.approval_levels?.length > 0 && (
+                                      <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => setShowApprovalLog(true)}
+                                          className="gap-2"
+                                      >
+                                          <ClipboardList className="h-4 w-4" />
+                                          Approval Log
+                                      </Button>
+                                  )} */}
+
+            {/* ── WITHOUT APPROVAL ── */}
+            {!hasSaleOrderApproval && (
+              <>
+                {/* Draft → Mark as Confirmed */}
+                {purchaseOrder.status === "draft" && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("issued")}
+                  >
+                    Mark as Issued
+                  </Button>
+                )}
+
+                {/* Confirmed → Convert to Invoice */}
+                {purchaseOrder.status === "issued" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
+                  >
+                    Convert to Bill
+                  </Button>
+                )}
+              </>
+            )}
+
+            {/* ── WITH APPROVAL ── */}
+            {hasSaleOrderApproval && (
+              <>
+                {/* Draft → Submit for Approval */}
+                {purchaseOrder.status === "draft" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("pending_approval")}
+                  >
+                    Submit for Approval
+                  </Button>
+                )}
+
+                {/* Pending Approval + can_approve → Approve / Reject */}
+                {purchaseOrder.status === "pending_approval" && (purchaseOrder as any).can_approve && (
+                  <>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 text-white hover:bg-green-700"
+                      disabled={actionLoading}
+                      onClick={() => updateApprovalStatus("approved")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-red-600 text-white hover:bg-red-700"
+                      disabled={actionLoading}
+                      onClick={() => updateApprovalStatus("rejected")}
+                    >
+                      Reject
+                    </Button>
+                  </>
+                )}
+
+                {/* Approved → Mark as Confirmed */}
+                {purchaseOrder.status === "approved" && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("issued")}
+                  >
+                    Mark as Issued
+                  </Button>
+                )}
+
+                {/* Issued → Convert to Bill */}
+                {purchaseOrder.status === "issued" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
+                  >
+                    Convert to Bill
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -662,7 +851,7 @@ export const PurchaseOrderDetailPage = () => {
                           <div className="flex justify-between items-center px-6 py-3 border-b">
                             <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
                             <span className="font-semibold text-base">
-                              ₹{purchaseOrder.sub_total_amount?.toFixed(2) || purchaseOrder.net_amount_formatted }
+                              ₹{purchaseOrder.sub_total_amount?.toFixed(2) || purchaseOrder.net_amount_formatted}
                             </span>
                           </div>
 

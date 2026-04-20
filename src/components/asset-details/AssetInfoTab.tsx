@@ -90,6 +90,19 @@ interface Asset {
   it_asset?: boolean;
   is_meter?: boolean;
   meter_category_name?: string;
+  equipment_id?: string;
+  meter_type?: string;
+  location_type?: string;
+  spv_code?: {
+    id?: number;
+    asset_id?: number;
+    spv_plant_code?: string | null;
+    spv_org_code?: string | null;
+    spv_company_code?: string | null;
+    service_location?: string | null;
+    need_qr?: boolean;
+    qr_done?: boolean | null;
+  } | null;
 }
 type ExtraFieldsGrouped = {
   [group: string]: { field_name: string; field_value: string }[];
@@ -518,6 +531,28 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         </span>
                       </div>
 
+                      {/* Equipment Id */}
+                      <div className="flex items-start">
+                        <span className="w-28 text-gray-500 text-sm">
+                          Equipment Id
+                        </span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.equipment_id || "-"}
+                        </span>
+                      </div>
+
+                      {/* Meter Type */}
+                      <div className="flex items-start">
+                        <span className="w-28 text-gray-500 text-sm">
+                          Meter Type
+                        </span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.meter_type || "-"}
+                        </span>
+                      </div>
+
                       {/* Asset Details Extra Fields */}
                       {asset.extra_fields_grouped?.["Asset Details"]?.map(
                         (field, idx) => (
@@ -716,6 +751,44 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                 </div>
               )}
 
+              {/* Other Details - SPV Code (only when spv_code is a non-null object) */}
+              {asset.spv_code && typeof asset.spv_code === 'object' && (
+                <div className="w-full bg-white rounded-lg shadow-sm border mb-6">
+                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-8 h-8" style={{ color: "#C72030" }} />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-black">
+                      Other Details
+                    </h3>
+                  </div>
+                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-gray-600 font-medium">SPV Plant Code</TableHead>
+                          <TableHead className="text-gray-600 font-medium">SPV Org Code</TableHead>
+                          <TableHead className="text-gray-600 font-medium">SPV Company Code</TableHead>
+                          <TableHead className="text-gray-600 font-medium">Service Location</TableHead>
+                          <TableHead className="text-gray-600 font-medium">Need QR</TableHead>
+                          <TableHead className="text-gray-600 font-medium">QR Done</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>{asset.spv_code.spv_plant_code ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.spv_org_code ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.spv_company_code ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.service_location ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.need_qr ? "Yes" : "No"}</TableCell>
+                          <TableCell>{asset.spv_code.qr_done != null ? (asset.spv_code.qr_done ? "Yes" : "No") : "-"}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Movement Details */}
                 <div className="w-full bg-white rounded-lg shadow-sm border">
@@ -838,6 +911,17 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         ))}
                       </div>
                     </div>
+
+                    {/* Location Type */}
+                    {asset.location_type && (
+                      <div className="mt-6 flex items-start text-sm text-gray-800">
+                        <span className="text-gray-500 w-32">Location Type</span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.location_type}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

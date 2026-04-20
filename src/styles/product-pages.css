@@ -1,0 +1,787 @@
+/**
+ * FM Matrix - Global Product Pages Styling
+ * Applies ONLY to product pages and routes
+ * Uses Lockated Brand Guidelines
+ * Includes security layer styling
+ * All rules use !important for precedence
+ */
+
+/* ========================================
+   CSS VARIABLES - LOCKATED BRAND COLORS
+   ======================================== */
+:root {
+  --product-primary: #da7756 !important;
+  --product-bg: #f6f4ee !important;
+  --product-text: #2c2c2c !important;
+  --product-border: #c4b89d !important;
+  --product-table-header: #4f81bd !important;
+  --product-section-header: #1f3a5f !important;
+  --product-security-dark: #1a1a1a !important;
+  --product-font:
+    "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+/* ========================================
+   PRODUCT PAGE WRAPPER - SCOPE ALL STYLES
+   ======================================== */
+.product-page-wrapper {
+  min-height: 100vh !important;
+  background-color: var(--product-bg) !important;
+  padding-bottom: 5rem !important;
+  user-select: none !important;
+  font-family: var(--product-font) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Poppins Font Import */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+/* Force Poppins on all product page elements */
+.product-page-wrapper,
+.product-page-wrapper * {
+  font-family: var(--product-font) !important;
+}
+
+/* ========================================
+   SECURITY LAYER - BLUR & LOCKDOWN
+   ======================================== */
+
+/* Blur effect when no face detected */
+.product-page-wrapper.security-blurred {
+  filter: blur(48px) brightness(0.5) !important;
+  pointer-events: none !important;
+}
+
+/* Security overlay backgrounds */
+.security-overlay-dark {
+  background-color: var(--product-security-dark) !important;
+  min-height: 100vh !important;
+}
+
+.security-camera-icon-wrapper {
+  width: 5rem !important;
+  height: 5rem !important;
+  border-radius: 9999px !important;
+  background-color: rgb(243, 244, 246) !important;
+  border: 1px solid rgba(209, 213, 219, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.security-camera-icon-wrapper.pulsing {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+}
+
+.security-shield-alert-wrapper {
+  width: 5rem !important;
+  height: 5rem !important;
+  border-radius: 9999px !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* Screenshot blank overlay */
+.security-screenshot-blank {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  background-color: white !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Session watermark overlay */
+.security-watermark-overlay {
+  pointer-events: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9990 !important;
+  overflow: hidden !important;
+  user-select: none !important;
+  background-image: repeating-linear-gradient(
+    -35deg,
+    transparent,
+    transparent 120px,
+    rgba(218, 119, 86, 0.04) 120px,
+    rgba(218, 119, 86, 0.04) 121px
+  ) !important;
+}
+
+.security-watermark-text {
+  position: absolute !important;
+  white-space: nowrap !important;
+  color: rgba(55, 65, 81, 0.06) !important;
+  font-family: ui-monospace, monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3em !important;
+  transform: rotate(-20deg) !important;
+}
+
+/* Live camera preview badge */
+.security-camera-badge {
+  position: fixed !important;
+  top: 1rem !important;
+  right: 1rem !important;
+  z-index: 9992 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.375rem !important;
+  user-select: none !important;
+}
+
+.security-camera-ring {
+  position: relative !important;
+  border-radius: 9999px !important;
+  padding: 2px !important;
+}
+
+.security-camera-ring.active {
+  background: linear-gradient(135deg, #4ade80, #16a34a) !important;
+}
+
+.security-camera-ring.inactive {
+  background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+}
+
+.security-camera-video-container {
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+  background-color: black !important;
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.security-camera-video {
+  width: 56px !important;
+  height: 56px !important;
+  object-fit: cover !important;
+  transform: scaleX(-1) !important;
+  display: block !important;
+}
+
+.security-status-indicator {
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  border-radius: 9999px !important;
+  border: 2px solid white !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.security-status-indicator.active {
+  background-color: #4ade80 !important;
+}
+
+.security-status-indicator.inactive {
+  background-color: #ef4444 !important;
+}
+
+.security-status-label {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 9999px !important;
+  padding: 0.125rem 0.625rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0 !important;
+}
+
+.security-status-text {
+  font-size: 9px !important;
+  font-family: ui-monospace, monospace !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+}
+
+.security-session-id {
+  font-size: 7px !important;
+  font-family: ui-monospace, monospace !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ========================================
+   HEADER SECTION
+   ======================================== */
+.product-page-wrapper .product-header {
+  position: relative !important;
+  margin-bottom: 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  background-color: var(--product-bg) !important;
+  padding-top: 1rem !important;
+}
+
+.product-page-wrapper .product-back-button-container {
+  width: 100% !important;
+  max-width: 80rem !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.product-page-wrapper .product-back-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  color: var(--product-text) !important;
+  border: 1px solid rgba(196, 184, 157, 0.5) !important;
+  padding: 0.375rem 0.75rem !important;
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  transition: all 0.2s ease !important;
+  background-color: transparent !important;
+  cursor: pointer !important;
+}
+
+.product-page-wrapper .product-back-button:hover {
+  background-color: rgba(218, 119, 86, 0.08) !important;
+  border-color: rgba(218, 119, 86, 0.3) !important;
+  color: var(--product-primary) !important;
+}
+
+.product-page-wrapper .product-header-content {
+  text-align: center !important;
+  width: 100% !important;
+  max-width: 80rem !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+.product-page-wrapper .product-industry-badge {
+  display: inline-block !important;
+  padding: 0.375rem 1rem !important;
+  background-color: rgba(218, 119, 86, 0.1) !important;
+  color: var(--product-primary) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+  margin-bottom: 0.75rem !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  border: 1px solid rgba(218, 119, 86, 0.2) !important;
+}
+
+.product-page-wrapper .product-title {
+  font-size: 2.25rem !important;
+  font-weight: 600 !important;
+  color: var(--product-text) !important;
+  margin-bottom: 1rem !important;
+  letter-spacing: -0.025em !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-description {
+  font-size: 0.875rem !important;
+  color: rgba(44, 44, 44, 0.7) !important;
+  line-height: 1.625 !important;
+  max-width: 48rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  font-family: var(--product-font) !important;
+}
+
+@media (min-width: 1024px) {
+  .product-page-wrapper .product-back-button-container,
+  .product-page-wrapper .product-header-content {
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+  }
+
+  .product-page-wrapper .product-title {
+    font-size: 3rem !important;
+  }
+}
+
+/* ========================================
+   TAB NAVIGATION
+   ======================================== */
+.product-page-wrapper .product-tabs-container {
+  max-width: 80rem !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+@media (min-width: 1024px) {
+  .product-page-wrapper .product-tabs-container {
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
+  }
+}
+
+.product-page-wrapper .product-tabs-scroll {
+  overflow-x: auto !important;
+  margin-bottom: 2rem !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.product-page-wrapper .product-tabs-scroll::-webkit-scrollbar {
+  display: none !important;
+}
+
+.product-page-wrapper .product-tabs-inner {
+  display: flex !important;
+  justify-content: flex-start !important;
+  padding-bottom: 0.5rem !important;
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+}
+
+.product-page-wrapper .product-tabs-list {
+  display: inline-flex !important;
+  gap: 0.25rem !important;
+  background-color: var(--product-bg) !important;
+  border: 1.31px solid var(--product-border) !important;
+  border-radius: 9999px !important;
+  padding: 0.375rem !important;
+  height: auto !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.product-page-wrapper .product-tab-trigger {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  padding-top: 0.625rem !important;
+  padding-bottom: 0.625rem !important;
+  border-radius: 9999px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.05em !important;
+  transition: all 0.3s ease !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  background-color: transparent !important;
+  cursor: pointer !important;
+  border: none !important;
+}
+
+.product-page-wrapper .product-tab-trigger[data-state="active"] {
+  background-color: white !important;
+  color: var(--product-primary) !important;
+  font-weight: 600 !important;
+}
+
+.product-page-wrapper .product-tab-trigger[data-state="inactive"] {
+  color: rgba(44, 44, 44, 0.5) !important;
+}
+
+.product-page-wrapper .product-tab-trigger[data-state="inactive"]:hover {
+  color: rgba(218, 119, 86, 0.7) !important;
+}
+
+/* ========================================
+   TAB CONTENT SECTIONS
+   ======================================== */
+.product-page-wrapper .product-tab-content {
+  padding: 2rem 1.5rem !important;
+  background-color: white !important;
+  border-radius: 1rem !important;
+  border: 1px solid rgba(196, 184, 157, 0.3) !important;
+  margin-bottom: 2rem !important;
+}
+
+.product-page-wrapper .product-section-title {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: var(--product-text) !important;
+  margin-bottom: 1.5rem !important;
+  font-family: var(--product-font) !important;
+  border-bottom: 2px solid var(--product-primary) !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.product-page-wrapper .product-subsection-title {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: var(--product-section-header) !important;
+  background-color: rgba(31, 58, 95, 0.05) !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0.5rem !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+  border-left: 4px solid var(--product-table-header) !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-paragraph {
+  font-size: 0.875rem !important;
+  line-height: 1.75 !important;
+  color: rgba(44, 44, 44, 0.8) !important;
+  margin-bottom: 1rem !important;
+  font-family: var(--product-font) !important;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+.product-page-wrapper .product-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border: 1px solid rgba(196, 184, 157, 0.3) !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+.product-page-wrapper .product-table thead {
+  background-color: var(--product-table-header) !important;
+  color: white !important;
+}
+
+.product-page-wrapper .product-table th {
+  padding: 0.875rem 1rem !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: 0.025em !important;
+  border-bottom: 2px solid rgba(196, 184, 157, 0.3) !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-table tbody tr {
+  border-bottom: 1px solid rgba(196, 184, 157, 0.2) !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.product-page-wrapper .product-table tbody tr:hover {
+  background-color: rgba(218, 119, 86, 0.03) !important;
+}
+
+.product-page-wrapper .product-table tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.product-page-wrapper .product-table td {
+  padding: 0.875rem 1rem !important;
+  font-size: 0.875rem !important;
+  color: rgba(44, 44, 44, 0.85) !important;
+  vertical-align: top !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-table td strong {
+  color: var(--product-text) !important;
+  font-weight: 600 !important;
+}
+
+/* ========================================
+   LISTS
+   ======================================== */
+.product-page-wrapper .product-list {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.product-page-wrapper .product-list-item {
+  position: relative !important;
+  padding-left: 1.75rem !important;
+  margin-bottom: 0.75rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.625 !important;
+  color: rgba(44, 44, 44, 0.8) !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-list-item::before {
+  content: "→" !important;
+  position: absolute !important;
+  left: 0 !important;
+  color: var(--product-primary) !important;
+  font-weight: 700 !important;
+}
+
+.product-page-wrapper .product-nested-list {
+  list-style: disc !important;
+  padding-left: 2rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.product-page-wrapper .product-nested-list-item {
+  margin-bottom: 0.5rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.625 !important;
+  color: rgba(44, 44, 44, 0.75) !important;
+  font-family: var(--product-font) !important;
+}
+
+/* ========================================
+   CARDS & PANELS
+   ======================================== */
+.product-page-wrapper .product-card {
+  background-color: white !important;
+  border: 1px solid rgba(196, 184, 157, 0.3) !important;
+  border-radius: 0.75rem !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.product-page-wrapper .product-card:hover {
+  border-color: rgba(218, 119, 86, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(218, 119, 86, 0.1) !important;
+}
+
+.product-page-wrapper .product-card-title {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: var(--product-text) !important;
+  margin-bottom: 0.75rem !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-card-content {
+  font-size: 0.875rem !important;
+  line-height: 1.625 !important;
+  color: rgba(44, 44, 44, 0.75) !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-highlight-box {
+  background-color: rgba(218, 119, 86, 0.05) !important;
+  border-left: 4px solid var(--product-primary) !important;
+  padding: 1rem 1.25rem !important;
+  border-radius: 0.5rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.product-page-wrapper .product-info-box {
+  background-color: rgba(79, 129, 189, 0.05) !important;
+  border-left: 4px solid var(--product-table-header) !important;
+  padding: 1rem 1.25rem !important;
+  border-radius: 0.5rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* ========================================
+   BADGES & TAGS
+   ======================================== */
+.product-page-wrapper .product-badge {
+  display: inline-block !important;
+  padding: 0.25rem 0.75rem !important;
+  background-color: rgba(218, 119, 86, 0.1) !important;
+  color: var(--product-primary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(218, 119, 86, 0.2) !important;
+  margin-right: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  font-family: var(--product-font) !important;
+}
+
+.product-page-wrapper .product-tag-success {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  color: #16a34a !important;
+  border-color: rgba(34, 197, 94, 0.2) !important;
+}
+
+.product-page-wrapper .product-tag-warning {
+  background-color: rgba(251, 191, 36, 0.1) !important;
+  color: #d97706 !important;
+  border-color: rgba(251, 191, 36, 0.2) !important;
+}
+
+.product-page-wrapper .product-tag-danger {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: #dc2626 !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.product-page-wrapper .product-tag-info {
+  background-color: rgba(79, 129, 189, 0.1) !important;
+  color: var(--product-table-header) !important;
+  border-color: rgba(79, 129, 189, 0.2) !important;
+}
+
+/* ========================================
+   GRID LAYOUTS
+   ======================================== */
+.product-page-wrapper .product-grid-2 {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 1.5rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+@media (min-width: 768px) {
+  .product-page-wrapper .product-grid-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.product-page-wrapper .product-grid-3 {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 1.5rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+@media (min-width: 768px) {
+  .product-page-wrapper .product-grid-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-page-wrapper .product-grid-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* ========================================
+   RESPONSIVE UTILITIES
+   ======================================== */
+@media (max-width: 768px) {
+  .product-page-wrapper .product-title {
+    font-size: 1.875rem !important;
+  }
+
+  .product-page-wrapper .product-tab-content {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .product-page-wrapper .product-table {
+    font-size: 0.8125rem !important;
+  }
+
+  .product-page-wrapper .product-table th,
+  .product-page-wrapper .product-table td {
+    padding: 0.625rem 0.75rem !important;
+  }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.product-page-wrapper .product-fade-in {
+  animation: fadeIn 0.4s ease-out !important;
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+.product-page-wrapper .no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.product-page-wrapper .no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Custom scrollbar for product pages */
+.product-page-wrapper ::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.product-page-wrapper ::-webkit-scrollbar-track {
+  background-color: rgba(196, 184, 157, 0.1) !important;
+  border-radius: 4px !important;
+}
+
+.product-page-wrapper ::-webkit-scrollbar-thumb {
+  background-color: rgba(218, 119, 86, 0.4) !important;
+  border-radius: 4px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.product-page-wrapper ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(218, 119, 86, 0.6) !important;
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+  .product-page-wrapper .product-back-button,
+  .product-page-wrapper .security-camera-badge,
+  .product-page-wrapper .security-watermark-overlay {
+    display: none !important;
+  }
+
+  .product-page-wrapper {
+    background-color: white !important;
+  }
+
+  .product-page-wrapper .product-tab-content {
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+.product-page-wrapper *:focus-visible {
+  outline: 2px solid var(--product-primary) !important;
+  outline-offset: 2px !important;
+}
+
+.product-page-wrapper button:focus-visible,
+.product-page-wrapper a:focus-visible {
+  outline: 2px solid var(--product-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Screen reader only text */
+.product-page-wrapper .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}
