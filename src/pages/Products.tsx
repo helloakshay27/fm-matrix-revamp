@@ -450,7 +450,7 @@ const productData: Product[] = [
     problemSolved:
       "Real estate sales teams use separate training and CRM tools, so knowledge gaps in product features and project updates lead to lost sales and inconsistent buyer pitches.",
     type: "CRM",
-    isActive: true,
+    isActive: false,
   },
   {
     id: "24",
@@ -960,8 +960,8 @@ const Products: React.FC = () => {
           word-wrap: break-word !important;
         }
         /* Column width controls */
-        td:nth-child(1) { min-width: 180px !important; max-width: 250px !important; } /* Product */
-        td:nth-child(2) { min-width: 150px !important; max-width: 200px !important; } /* Company */
+        td:nth-child(1) { min-width: 80px !important; max-width: 250px !important; } /* Product */
+        td:nth-child(2) { min-width: 250px !important; max-width: 300px !important; } /* Company */
         td:nth-child(3) { min-width: 140px !important; max-width: 180px !important; text-align: center !important; } /* Status */
         td:nth-child(4) { min-width: 140px !important; max-width: 150px !important; } /* SPOC1 */
         td:nth-child(5) { min-width: 130px !important; max-width: 150px !important; } /* SPOC2 */
@@ -971,8 +971,8 @@ const Products: React.FC = () => {
         td:nth-child(9) { min-width: 250px !important; max-width: 300px !important; } /* Problem Solved */
         td:nth-child(10) { min-width: 110px !important; max-width: 120px !important; } /* Demo Link */
         /* Header width controls */
-        th:nth-child(1) { min-width: 180px !important; max-width: 200px !important; }
-        th:nth-child(2) { min-width: 100px !important; max-width: 110px !important; }
+        th:nth-child(1) { min-width: 80px !important; max-width: 200px !important; }
+        th:nth-child(2) { min-width: 250px !important; max-width: 300px !important; }
         th:nth-child(3) { min-width: 90px !important; max-width: 90px !important; text-align: center !important; }
         th:nth-child(4) { min-width: 130px !important; max-width: 150px !important; }
         th:nth-child(5) { min-width: 130px !important; max-width: 150px !important; }
