@@ -363,27 +363,30 @@ const DailyTab = () => {
         setMeetingJournalId(meetingJournalReport?.journal_id ?? null);
 
         if (!skipNotesRestore) {
-          const savedDiscussion: string =
-            meetingJournalReport?.report_data?.meeting_notes?.[0]
-              ?.key_discussion_points || "";
+          const DEFAULT_DISCUSSION = "Key Discussion Points:\n";
 
-          if (savedDiscussion) {
+          if (meetingJournalReport) {
+            // Already submitted — load saved key_discussion_points
+            // savedMeetingNotes synced so button stays disabled until user edits
+            const savedDiscussion: string =
+              meetingJournalReport?.report_data?.meeting_notes?.[0]
+                ?.key_discussion_points || DEFAULT_DISCUSSION;
             setMeetingNotes(savedDiscussion);
-            // ── CHANGE 2: Sync savedMeetingNotes with what came from the API ──
             setSavedMeetingNotes(savedDiscussion);
           } else {
+            // First time — prefill missed members + default discussion heading
             const missed: any[] = json.data?.missed_members || [];
+            let prefill = "";
             if (missed.length > 0) {
-              const prefill =
+              prefill =
                 `**Team Members Who Missed Report (${missed.length}):**\n` +
                 missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
-                `\n\n**Key Discussion Points:**\n`;
-              setMeetingNotes(prefill);
-            } else {
-              setMeetingNotes("");
+                `\n\n`;
             }
-            // ── CHANGE 3: No saved notes from API → baseline is empty ──
-            setSavedMeetingNotes("");
+            prefill += DEFAULT_DISCUSSION;
+            setMeetingNotes(prefill);
+            // baseline = prefill so button enables only when user adds content below
+            setSavedMeetingNotes(prefill);
           }
         }
       } else {
@@ -755,8 +758,6 @@ const DailyTab = () => {
   };
 
   // ── CHANGE 4: Update Meeting Notes Only (PATCH) ──
-  // Called when the date is already submitted. Only patches key_discussion_points
-  // in the meeting_notes array — does NOT re-submit member data.
   const handleUpdateNotesOnly = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.");
@@ -766,14 +767,12 @@ const DailyTab = () => {
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
-      // Rebuild meeting_notes array with the new discussion text
       const meetingNotesArray = buildMeetingNotesArray(
         allReports,
         allMissed,
         meetingNotes
       );
 
-      // Fetch the existing report_data so we don't clobber other fields
       const existingRd =
         allReports.find(
           (r: any) =>
@@ -810,7 +809,7 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Full Meeting (PATCH) — kept for future use / manual call ──
+  // ── Update Full Meeting (PATCH) ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.", {
@@ -1009,12 +1008,14 @@ const DailyTab = () => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
               const isUpcoming = rawStatus === "upcoming";
-              // ── UPCOMING: plain text style ──
+
+              // ── UPCOMING: plain text style, unclickable ──
               if (isUpcoming) {
                 return (
                   <div
                     key={dateItem.full_date}
-                    className="relative select-none cursor-default"
+                    className="relative select-none cursor-not-allowed"
+                    title="Upcoming – not selectable"
                     style={{ width: 100, height: 120 }}
                   >
                     <div className="flex flex-col items-center justify-center w-full h-full border-[3px] border-[#C5BFBB] rounded-[18px] bg-transparent transition-all duration-200">
@@ -1071,11 +1072,23 @@ const DailyTab = () => {
                 displayLabel = "Holiday";
               }
 
+              // ── Holiday dates: unclickable ──
+              const isHoliday =
+                rawStatus === "holiday" || rawStatus === "non_meeting";
+
               return (
                 <div
                   key={dateItem.full_date}
-                  onClick={() => setActiveDate(dateItem.full_date)}
-                  className="relative select-none cursor-pointer"
+                  onClick={
+                    isHoliday
+                      ? undefined
+                      : () => setActiveDate(dateItem.full_date)
+                  }
+                  className={cn(
+                    "relative select-none",
+                    isHoliday ? "cursor-not-allowed" : "cursor-pointer"
+                  )}
+                  title={isHoliday ? "Holiday – not selectable" : undefined}
                 >
                   <div
                     className="flex flex-col items-center justify-center rounded-[18px] transition-all duration-200"
@@ -1084,6 +1097,7 @@ const DailyTab = () => {
                       height: 120,
                       background: bg,
                       color: textColor,
+
                       boxShadow: isSelected
                         ? "0 0 0 3px #ffffff, 0 0 0 6px #D7E5FC"
                         : "0 3px 10px rgba(0,0,0,0.09)",
@@ -1353,7 +1367,6 @@ const DailyTab = () => {
 
                     {/* ── CHANGE 8: Smart button logic ── */}
                     {isActiveDateSubmitted ? (
-                      // Date is already green (submitted) → only allow notes update
                       <div className="flex items-center gap-2">
                         {!notesChanged && (
                           <span className="text-[11px] text-neutral-400 font-medium italic">
@@ -1371,7 +1384,6 @@ const DailyTab = () => {
                         </BtnPrimary>
                       </div>
                     ) : meetingJournalId ? (
-                      // Has a journal but date not yet fully marked submitted
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : RefreshCw}
                         onClick={handleUpdateMeeting}
@@ -1382,7 +1394,6 @@ const DailyTab = () => {
                         {isSavingMeeting ? "Updating..." : "Update Meeting"}
                       </BtnPrimary>
                     ) : (
-                      // First time save
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : FileText}
                         onClick={handleSaveMeeting}
