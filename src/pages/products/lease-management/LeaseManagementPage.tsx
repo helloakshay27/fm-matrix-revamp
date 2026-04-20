@@ -187,7 +187,7 @@ export default function LeaseManagementPage() {
             </button>
 
             {/* Product Title */}
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-md"
                 style={{ backgroundColor: BRAND_COLORS.primary }}
@@ -211,10 +211,10 @@ export default function LeaseManagementPage() {
                   {productMetadata.industries}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             {/* Owner Info */}
-            <div className="hidden md:flex items-center gap-2">
+            {/* <div className="hidden md:flex items-center gap-2">
               <span
                 className="text-xs"
                 style={{ color: BRAND_COLORS.textSecondary }}
@@ -227,7 +227,7 @@ export default function LeaseManagementPage() {
               >
                 {productMetadata.owner}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </header>
@@ -243,13 +243,6 @@ export default function LeaseManagementPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center py-2">
             {/* Scroll Left Button */}
-            <button
-              onClick={() => scrollTabs("left")}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 mr-2"
-              style={{ color: BRAND_COLORS.textSecondary }}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
 
             {/* Tabs Container */}
             <div
@@ -289,13 +282,6 @@ export default function LeaseManagementPage() {
             </div>
 
             {/* Scroll Right Button */}
-            <button
-              onClick={() => scrollTabs("right")}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 ml-2"
-              style={{ color: BRAND_COLORS.textSecondary }}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>
@@ -314,7 +300,7 @@ export default function LeaseManagementPage() {
         </div>
 
         {/* Tab Navigation Footer */}
-        <div className="flex items-center justify-between mt-6">
+        {/* <div className="flex items-center justify-between mt-6">
           <button
             onClick={handlePrevTab}
             disabled={currentTabIndex === 0}
@@ -369,7 +355,7 @@ export default function LeaseManagementPage() {
             Next
             <ChevronRight className="w-4 h-4" />
           </button>
-        </div>
+        </div> */}
       </main>
     </div>
   );

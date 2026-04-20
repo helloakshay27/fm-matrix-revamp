@@ -393,9 +393,9 @@ import ParkingPage from "./pages/products/ParkingPage";
 import FacilityManagementPage from "./pages/products/FacilityManagementPage";
 import CustomerAppPreSalesPage from "./pages/products/CustomerAppPreSalesPage";
 import CustomerAppPostSalesPage from "./pages/products/CustomerAppPostSalesPage";
-import LeaseManagementPage from "./pages/products/LeaseManagementPage";
+// import LeaseManagementPage from "./pages/products/LeaseManagementPage";
 // NEW: Isolated Lease Management Page
-// import LeaseManagementPage from "./pages/products/lease-management/LeaseManagementPage";
+import LeaseManagementPage from "./pages/products/lease-management/LeaseManagementPage";
 import LifeCompassPage from "./pages/products/LifeCompassPage";
 import BusinessCompassPage from "./pages/products/BusinessCompassPage";
 import GateManagementPage from "./pages/products/GateManagementPage";

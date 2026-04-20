@@ -1,246 +1,295 @@
-// Lease Management - Business Plan Tab Component
-import React from "react";
-import { businessPlanQuestions } from "../data";
+// Lease Management - Business Plan Builder Tab Component
+import React, { useState } from "react";
 import {
-  FileText,
-  HelpCircle,
-  MessageSquare,
-  ChevronDown,
-  Lightbulb,
-} from "lucide-react";
-import { useState } from "react";
+  businessPlanQuestions,
+  lessorBusinessPlanQuestions,
+  founderReviewChecklist,
+} from "../data";
 
 // Lockated Brand Colors
 const BRAND_COLORS = {
   primary: "#DA7756",
-  primaryLight: "rgba(218, 119, 86, 0.1)",
+  darkBg: "#1e293b",
   background: "#F6F4EE",
   text: "#2C2C2C",
   textSecondary: "#5A5A5A",
   cardBorder: "#C4B89D",
   white: "#FFFFFF",
-  success: "#89F7E7",
-  warning: "#EDC488",
-  secondaryGreen: "#798C5E",
-  secondaryTeal: "#9EC8BA",
 };
 
-export const BusinessPlanTab: React.FC = () => {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+const SectionTitle: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
+  <div
+    className="px-4 py-3 font-bold text-white text-sm"
+    style={{ backgroundColor: BRAND_COLORS.darkBg }}
+  >
+    {children}
+  </div>
+);
 
-  const toggleQuestion = (index: number) => {
-    setExpandedIndex(expandedIndex === index ? null : index);
-  };
+const QuestionHeader: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
+  <div
+    className="px-4 py-2 font-semibold text-white text-sm"
+    style={{ backgroundColor: "#1D4ED8" }}
+  >
+    {children}
+  </div>
+);
+
+const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <td
+    className="px-4 py-2 font-semibold align-top"
+    style={{
+      color: BRAND_COLORS.white,
+      backgroundColor: "#1D4ED8",
+      borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+      borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
+      width: 160,
+      minWidth: 140,
+    }}
+  >
+    {children}
+  </td>
+);
+
+export const BusinessPlanTab: React.FC = () => {
+  const [perspective, setPerspective] = useState<"lessee" | "lessor">("lessee");
+
+  const questions =
+    perspective === "lessee"
+      ? businessPlanQuestions
+      : lessorBusinessPlanQuestions;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div
-          className="p-2 rounded-lg"
-          style={{ backgroundColor: BRAND_COLORS.primaryLight }}
-        >
-          <FileText
-            className="w-5 h-5"
-            style={{ color: BRAND_COLORS.primary }}
-          />
-        </div>
-        <div>
-          <h2
-            className="text-xl font-semibold"
-            style={{
-              color: BRAND_COLORS.text,
-              fontFamily: "Poppins, sans-serif",
-            }}
-          >
-            Business Plan Q&A
-          </h2>
-          <p className="text-sm" style={{ color: BRAND_COLORS.textSecondary }}>
-            Investor and stakeholder questions addressed
-          </p>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            backgroundColor: BRAND_COLORS.white,
-          }}
-        >
-          <p
-            className="text-2xl font-bold"
-            style={{ color: BRAND_COLORS.primary }}
-          >
-            {businessPlanQuestions.length}
-          </p>
-          <p className="text-xs" style={{ color: BRAND_COLORS.textSecondary }}>
-            Key Questions
-          </p>
-        </div>
-        <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            backgroundColor: BRAND_COLORS.white,
-          }}
-        >
-          <p
-            className="text-2xl font-bold"
-            style={{ color: BRAND_COLORS.secondaryGreen }}
-          >
-            Comprehensive
-          </p>
-          <p className="text-xs" style={{ color: BRAND_COLORS.textSecondary }}>
-            Coverage
-          </p>
-        </div>
-        <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            backgroundColor: BRAND_COLORS.white,
-          }}
-        >
-          <p
-            className="text-2xl font-bold"
-            style={{ color: BRAND_COLORS.text }}
-          >
-            B2B SaaS
-          </p>
-          <p className="text-xs" style={{ color: BRAND_COLORS.textSecondary }}>
-            Business Model
-          </p>
-        </div>
-      </div>
-
-      {/* FAQ Accordion */}
-      <div className="space-y-3">
-        {businessPlanQuestions.map((item, index) => {
-          const isExpanded = expandedIndex === index;
-
-          return (
-            <div
-              key={index}
-              className="rounded-xl border overflow-hidden transition-all duration-300"
-              style={{
-                borderColor: isExpanded
-                  ? BRAND_COLORS.primary
-                  : BRAND_COLORS.cardBorder,
-                backgroundColor: BRAND_COLORS.white,
-              }}
-            >
-              {/* Question Header */}
-              <button
-                onClick={() => toggleQuestion(index)}
-                className="w-full px-5 py-4 flex items-start gap-3 text-left transition-colors hover:bg-gray-50"
-              >
-                <div
-                  className="p-1.5 rounded-lg mt-0.5 flex-shrink-0"
-                  style={{
-                    backgroundColor: isExpanded
-                      ? BRAND_COLORS.primary
-                      : BRAND_COLORS.primaryLight,
-                  }}
-                >
-                  <HelpCircle
-                    className="w-4 h-4"
-                    style={{
-                      color: isExpanded
-                        ? BRAND_COLORS.white
-                        : BRAND_COLORS.primary,
-                    }}
-                  />
-                </div>
-                <div className="flex-1">
-                  <span
-                    className="font-medium"
-                    style={{ color: BRAND_COLORS.text }}
-                  >
-                    {item.question}
-                  </span>
-                </div>
-                <ChevronDown
-                  className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                  style={{ color: BRAND_COLORS.textSecondary }}
-                />
-              </button>
-
-              {/* Answer */}
-              {isExpanded && (
-                <div
-                  className="px-5 pb-5 border-t"
-                  style={{ borderColor: BRAND_COLORS.cardBorder }}
-                >
-                  <div
-                    className="mt-4 p-4 rounded-lg"
-                    style={{ backgroundColor: BRAND_COLORS.background }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <MessageSquare
-                        className="w-4 h-4 mt-0.5 flex-shrink-0"
-                        style={{ color: BRAND_COLORS.secondaryGreen }}
-                      />
-                      <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        {item.suggestedAnswer || item.answer}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Tip Section */}
-      <div
-        className="rounded-xl border p-5 flex items-start gap-4"
-        style={{
-          borderColor: BRAND_COLORS.primary,
-          backgroundColor: BRAND_COLORS.primaryLight,
-        }}
-      >
-        <Lightbulb
-          className="w-6 h-6 flex-shrink-0"
-          style={{ color: BRAND_COLORS.primary }}
-        />
-        <div>
-          <h4
-            className="font-semibold mb-2"
-            style={{ color: BRAND_COLORS.text }}
-          >
-            Pro Tip for Stakeholders
-          </h4>
-          <p className="text-sm" style={{ color: BRAND_COLORS.textSecondary }}>
-            These business plan questions form the foundation of our product
-            strategy and market positioning. They are regularly updated based on
-            market feedback, customer interviews, and competitive analysis to
-            ensure our approach remains relevant and compelling.
-          </p>
-        </div>
-      </div>
-
-      {/* Expand/Collapse All */}
-      <div className="flex justify-center gap-3">
+    <div className="space-y-6">
+      {/* Perspective Toggle */}
+      <div className="flex gap-2">
         <button
-          onClick={() => setExpandedIndex(null)}
-          className="px-4 py-2 rounded-lg text-sm border transition-all hover:bg-gray-50"
+          onClick={() => setPerspective("lessee")}
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
           style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            color: BRAND_COLORS.textSecondary,
+            backgroundColor:
+              perspective === "lessee"
+                ? BRAND_COLORS.primary
+                : BRAND_COLORS.white,
+            color:
+              perspective === "lessee" ? BRAND_COLORS.white : BRAND_COLORS.text,
+            border: `1px solid ${BRAND_COLORS.cardBorder}`,
           }}
         >
-          Collapse All
+          Lessee Perspective
+        </button>
+        <button
+          onClick={() => setPerspective("lessor")}
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+          style={{
+            backgroundColor:
+              perspective === "lessor"
+                ? BRAND_COLORS.primary
+                : BRAND_COLORS.white,
+            color:
+              perspective === "lessor" ? BRAND_COLORS.white : BRAND_COLORS.text,
+            border: `1px solid ${BRAND_COLORS.cardBorder}`,
+          }}
+        >
+          Lessor Perspective
         </button>
       </div>
+
+      {/* Title Section */}
+      <div
+        className="rounded-lg border overflow-hidden"
+        style={{ borderColor: BRAND_COLORS.cardBorder }}
+      >
+        <SectionTitle>
+          Business Plan Builder —{" "}
+          {perspective === "lessee" ? "LESSEE" : "LESSOR"} PERSPECTIVE
+        </SectionTitle>
+        <div
+          className="px-4 py-2 text-sm"
+          style={{
+            color: BRAND_COLORS.textSecondary,
+            backgroundColor: BRAND_COLORS.background,
+          }}
+        >
+          Purpose: Pre-filled answers to all 10 business plan questions, written
+          in first-person as the founder, grounded in all data from Tabs 1–6.
+          India primary, Global secondary.
+        </div>
+      </div>
+
+      {/* Questions */}
+      {questions.map((item, index) => (
+        <div
+          key={index}
+          className="rounded-lg border overflow-hidden"
+          style={{ borderColor: BRAND_COLORS.cardBorder }}
+        >
+          <QuestionHeader>{item.question}</QuestionHeader>
+          <table
+            className="w-full text-sm border-collapse"
+            style={{ tableLayout: "fixed" }}
+          >
+            <tbody>
+              {/* Suggested Answer */}
+              <tr>
+                <FieldLabel>SUGGESTED ANSWER</FieldLabel>
+                <td
+                  className="px-4 py-3"
+                  style={{
+                    color: BRAND_COLORS.text,
+                    backgroundColor: BRAND_COLORS.white,
+                    borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {item.suggestedAnswer || item.answer}
+                </td>
+              </tr>
+              {/* Source */}
+              {item.source && (
+                <tr>
+                  <td
+                    className="px-4 py-2 font-semibold align-top"
+                    style={{
+                      color: BRAND_COLORS.text,
+                      backgroundColor: BRAND_COLORS.background,
+                      borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
+                    }}
+                  >
+                    Source:
+                  </td>
+                  <td
+                    className="px-4 py-2"
+                    style={{
+                      color: BRAND_COLORS.textSecondary,
+                      backgroundColor: BRAND_COLORS.background,
+                      borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                    }}
+                  >
+                    {item.source}
+                  </td>
+                </tr>
+              )}
+              {/* Founder Review */}
+              {item.founderNote && (
+                <tr>
+                  <td
+                    className="px-4 py-2 font-semibold align-top"
+                    style={{
+                      color: BRAND_COLORS.text,
+                      backgroundColor: BRAND_COLORS.white,
+                      borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
+                    }}
+                  >
+                    Founder review:
+                  </td>
+                  <td
+                    className="px-4 py-2"
+                    style={{
+                      color: BRAND_COLORS.textSecondary,
+                      backgroundColor: BRAND_COLORS.white,
+                      borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                    }}
+                  >
+                    {item.founderNote}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      {/* Founder Review Checklist - only show for lessee */}
+      {perspective === "lessee" && (
+        <div
+          className="rounded-lg border overflow-hidden"
+          style={{ borderColor: BRAND_COLORS.cardBorder }}
+        >
+          <SectionTitle>
+            FOUNDER REVIEW CHECKLIST — Items requiring personal founder input
+            before use
+          </SectionTitle>
+          <div className="overflow-x-auto">
+            <table
+              className="w-full text-sm border-collapse"
+              style={{ minWidth: 800 }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: BRAND_COLORS.background }}>
+                  {[
+                    "Checkbox",
+                    "Question",
+                    "What to verify or personalise",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-2 text-left font-semibold"
+                      style={{
+                        color: BRAND_COLORS.text,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                        borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {founderReviewChecklist.map((item, i) => (
+                  <tr
+                    key={i}
+                    style={{
+                      backgroundColor:
+                        i % 2 === 0
+                          ? BRAND_COLORS.white
+                          : BRAND_COLORS.background,
+                    }}
+                  >
+                    <td
+                      className="px-4 py-2 text-center"
+                      style={{
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                        borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
+                        width: 80,
+                      }}
+                    >
+                      [ ]
+                    </td>
+                    <td
+                      className="px-4 py-2 font-medium"
+                      style={{
+                        color: BRAND_COLORS.text,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                        borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
+                        minWidth: 250,
+                      }}
+                    >
+                      {item.question}
+                    </td>
+                    <td
+                      className="px-4 py-2"
+                      style={{
+                        color: BRAND_COLORS.textSecondary,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      }}
+                    >
+                      {item.whatToVerify}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
