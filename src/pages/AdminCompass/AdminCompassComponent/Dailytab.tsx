@@ -284,6 +284,7 @@ const DailyTab = () => {
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
+  // ── CHANGE 1: Track originally saved notes to detect user edits ──
   const [savedMeetingNotes, setSavedMeetingNotes] = useState("");
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
@@ -368,6 +369,7 @@ const DailyTab = () => {
 
           if (savedDiscussion) {
             setMeetingNotes(savedDiscussion);
+            // ── CHANGE 2: Sync savedMeetingNotes with what came from the API ──
             setSavedMeetingNotes(savedDiscussion);
           } else {
             const missed: any[] = json.data?.missed_members || [];
@@ -380,6 +382,7 @@ const DailyTab = () => {
             } else {
               setMeetingNotes("");
             }
+            // ── CHANGE 3: No saved notes from API → baseline is empty ──
             setSavedMeetingNotes("");
           }
         }
@@ -394,18 +397,14 @@ const DailyTab = () => {
     }
   };
 
+  // Reset calendar when meeting changes so the new meeting's tiles load fresh
+  useEffect(() => {
+    setCalendarDateRow([]);
+  }, [selectedMeetingId]);
+
   useEffect(() => {
     loadDailyData(false);
   }, [selectedMeetingId, activeDate]);
-
-  // ── Optimistically mark active date as "done" in calendar ──
-  const markActiveDateDone = () => {
-    setCalendarDateRow((prev) =>
-      prev.map((d: any) =>
-        d.full_date === activeDate ? { ...d, status: "done" } : d
-      )
-    );
-  };
 
   // ── GET Past Feedbacks ──
   const loadPastFeedbacks = async (targetUserId: string | number) => {
@@ -747,8 +746,6 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting saved successfully!");
-      // ── Optimistically mark calendar date as done ──
-      markActiveDateDone();
       loadDailyData(true);
     } catch (err: any) {
       toast.error("Error saving meeting: " + err.message);
@@ -757,7 +754,9 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Meeting Notes Only (PATCH) ──
+  // ── CHANGE 4: Update Meeting Notes Only (PATCH) ──
+  // Called when the date is already submitted. Only patches key_discussion_points
+  // in the meeting_notes array — does NOT re-submit member data.
   const handleUpdateNotesOnly = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.");
@@ -767,12 +766,14 @@ const DailyTab = () => {
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
+      // Rebuild meeting_notes array with the new discussion text
       const meetingNotesArray = buildMeetingNotesArray(
         allReports,
         allMissed,
         meetingNotes
       );
 
+      // Fetch the existing report_data so we don't clobber other fields
       const existingRd =
         allReports.find(
           (r: any) =>
@@ -799,8 +800,7 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting notes updated!");
-      // ── Optimistically mark calendar date as done ──
-      markActiveDateDone();
+      // ── CHANGE 5: Sync baseline so the button disables again ──
       setSavedMeetingNotes(meetingNotes);
       loadDailyData(true);
     } catch (err: any) {
@@ -810,7 +810,7 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Full Meeting (PATCH) ──
+  // ── Update Full Meeting (PATCH) — kept for future use / manual call ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.", {
@@ -874,8 +874,6 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting updated successfully!");
-      // ── Optimistically mark calendar date as done ──
-      markActiveDateDone();
       setSavedMeetingNotes(meetingNotes);
       loadDailyData(true);
     } catch (err: any) {
@@ -893,12 +891,14 @@ const DailyTab = () => {
   const configName =
     config?.name || (selectedMeetingId === "all" ? "All Meetings" : "Meeting");
 
+  // ── CHANGE 6: Derive whether the active date's meeting is already submitted ──
   const activeDateStatus = calendarRow.find(
     (d: any) => d.full_date === activeDate
   )?.status;
   const isActiveDateSubmitted =
     activeDateStatus === "done" || activeDateStatus === "submitted";
 
+  // ── CHANGE 7: Has the user typed something new compared to what's saved? ──
   const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
   let memberReports = dailyData?.member_reports || dailyData?.reports || [];
@@ -971,6 +971,7 @@ const DailyTab = () => {
 
         {/* ── Calendar Body ── */}
         {isLoading && !dailyData ? (
+          /* Skeleton loader */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -984,6 +985,7 @@ const DailyTab = () => {
             ))}
           </div>
         ) : noMeetings ? (
+          /* ── No Meetings Empty State ── */
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5EFEB] border border-[#EAE3DF]">
               <Calendar className="w-7 h-7 text-[#CE8261] opacity-40" />
@@ -998,6 +1000,7 @@ const DailyTab = () => {
             </div>
           </div>
         ) : (
+          /* ── Normal Calendar ── */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -1006,7 +1009,7 @@ const DailyTab = () => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
               const isUpcoming = rawStatus === "upcoming";
-
+              // ── UPCOMING: plain text style ──
               if (isUpcoming) {
                 return (
                   <div
@@ -1038,6 +1041,7 @@ const DailyTab = () => {
                 );
               }
 
+              // ── PAST / TODAY / HOLIDAY: colored card ──
               let bg = "#F0EDEA",
                 textColor = "#9CA3AF",
                 labelBg = "rgba(0,0,0,0.07)",
@@ -1113,6 +1117,7 @@ const DailyTab = () => {
           </div>
         )}
 
+        {/* Legend — always show except when no meetings */}
         {!noMeetings && (
           <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-2">
             <div className="flex items-center gap-2.5">
@@ -1205,6 +1210,7 @@ const DailyTab = () => {
         </div>
       )}
 
+      {/* ══ NO MEETINGS — full info banner ══ */}
       {noMeetings && (
         <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 border border-orange-200 shrink-0 mt-0.5">
@@ -1345,8 +1351,9 @@ const DailyTab = () => {
                       </span>
                     </label>
 
-                    {/* ── Smart button logic ── */}
+                    {/* ── CHANGE 8: Smart button logic ── */}
                     {isActiveDateSubmitted ? (
+                      // Date is already green (submitted) → only allow notes update
                       <div className="flex items-center gap-2">
                         {!notesChanged && (
                           <span className="text-[11px] text-neutral-400 font-medium italic">
@@ -1364,6 +1371,7 @@ const DailyTab = () => {
                         </BtnPrimary>
                       </div>
                     ) : meetingJournalId ? (
+                      // Has a journal but date not yet fully marked submitted
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : RefreshCw}
                         onClick={handleUpdateMeeting}
@@ -1374,6 +1382,7 @@ const DailyTab = () => {
                         {isSavingMeeting ? "Updating..." : "Update Meeting"}
                       </BtnPrimary>
                     ) : (
+                      // First time save
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : FileText}
                         onClick={handleSaveMeeting}
@@ -1685,7 +1694,7 @@ const DailyTab = () => {
                                             >
                                               <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
                                               <span className="leading-relaxed">
-                                                {getItemTitle(item) || "—"}
+                                                {getItemTitle(item)}
                                               </span>
                                             </li>
                                           )
@@ -2189,6 +2198,7 @@ const DailyTab = () => {
         select:focus { outline: none; }
         .calendar-row::-webkit-scrollbar { display: none; }
         
+        /* SHIMMER SKELETON ANIMATION */
         @keyframes shimmer {
           0% { background-position: -1000px 0; }
           100% { background-position: 1000px 0; }
