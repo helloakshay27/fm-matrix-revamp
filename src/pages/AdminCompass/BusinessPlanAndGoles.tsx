@@ -1001,28 +1001,8 @@ const TOOLTIP_CONTENT: Record<string, { title: string, desc: string, example: st
 // ─────────────────────────────────
 //  CoreValuesInlineCard
 // ─────────────────────────────────
-const CV_STATIC_DESC = [
-  { letter: "I", label: "Innovation", desc: "We embrace innovative solutions to redefine real estate." },
-  { letter: "N", label: "Nurturing", desc: "We foster a supportive environment for growth." },
-  { letter: "A", label: "Agility", desc: "We adapt swiftly to industry changes." },
-  { letter: "R", label: "Resilience", desc: "We persist through challenges and setbacks." },
-  { letter: "E", label: "Empowerment", desc: "We empower our teams to take initiative and lead." },
-];
-const CV_FULL_TEXT = CV_STATIC_DESC.map((d) => `${d.letter} - ${d.label}: ${d.desc}`).join(" ");
-const TRUNCATED = CV_FULL_TEXT.length > 80 ? CV_FULL_TEXT.slice(0, 80).trimEnd() + "..." : CV_FULL_TEXT;
 
 const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({ values }) => {
-  const [hovered, setHovered] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const wrapRef = React.useRef<HTMLDivElement>(null);
-
-  const handleMouseEnter = () => {
-    if (!wrapRef.current) return;
-    const rect = wrapRef.current.getBoundingClientRect();
-    setPos({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
-    setHovered(true);
-  };
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
@@ -1035,29 +1015,6 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({ values 
             {v.value}
           </span>
         ))}
-      </div>
-      <div ref={wrapRef} className="cursor-default" onMouseEnter={handleMouseEnter} onMouseLeave={() => setHovered(false)}>
-        <p className="text-[12px] leading-relaxed select-none" style={{ color: C.textMuted }}>
-          {TRUNCATED}{" "}
-          <span className="font-bold" style={{ color: C.primary }}>Read more</span>
-        </p>
-        {hovered && ReactDOM.createPortal(
-          <div style={{
-            position: "absolute", top: pos.top, left: pos.left, zIndex: 99999,
-            background: "#fffaf8", border: "1px solid rgba(218,119,86,0.20)",
-            borderRadius: 16, boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-            padding: "16px 18px", width: 340, fontSize: 13, lineHeight: 1.6,
-            color: C.textMuted, pointerEvents: "none", fontFamily: "'Poppins', sans-serif",
-          }}>
-            {CV_STATIC_DESC.map((d) => (
-              <p key={d.letter} style={{ margin: "0 0 6px" }}>
-                <strong style={{ color: C.primary, fontWeight: 800 }}>{d.letter}</strong>
-                {" - "}{d.label}: {d.desc}
-              </p>
-            ))}
-          </div>,
-          document.body
-        )}
       </div>
     </div>
   );
@@ -1958,9 +1915,6 @@ const BusinessPlanAndGoles = () => {
                 ) : (coreValues || []).length === 0 && !coreVideoUrl ? (
                   <div className="flex flex-col gap-3">
                     {emptyAddBtn(() => openTopModal("core"), "Add Core Values")}
-                    <p className="text-[12px] leading-relaxed" style={{ color: C.textMuted }}>
-                      {TRUNCATED}{" "}<span className="font-bold" style={{ color: C.primary }}>Read more</span>
-                    </p>
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
