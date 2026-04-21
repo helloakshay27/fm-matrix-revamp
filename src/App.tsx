@@ -5665,7 +5665,7 @@ function App() {
                             element={<CustomerAppPage />}
                           />
                           <Route
-                            path="/product/customer-post-possession"
+                            path="/product/customer-app-post-possession"
                             element={<CustomerPostPossessionPage />}
                           />
                           <Route
